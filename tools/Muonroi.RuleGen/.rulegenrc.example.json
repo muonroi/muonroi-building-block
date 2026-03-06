@@ -1,0 +1,27 @@
+{
+  "extract": {
+    "sourceDir": "src/Handlers",
+    "outputDir": "src/Generated/Rules",
+    "namespace": "MyApp.Generated.Rules",
+    "contextType": "MyApp.Domain.OrderContext",
+    "pattern": "**/*Handler.cs",
+    "excludePatterns": [
+      "**/bin/**",
+      "**/obj/**",
+      "**/*.g.cs",
+      "**/*.Generated.cs"
+    ],
+    "generateTests": true,
+    "validate": true,
+    "organizeByNamespace": false,
+    "parallel": true
+  },
+  "conventions": {
+    "requirePartialForMerge": true
+  },
+  "validation": {
+    "detectCycles": true,
+    "requireUniqueCode": true,
+    "requireXmlDocs": false
+  }
+}

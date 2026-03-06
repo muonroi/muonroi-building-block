@@ -1,0 +1,27 @@
+{
+  "name": "balanced",
+  "grpc": {
+    "maxP95IncreasePercent": 10.0,
+    "maxErrorRate": 0.01
+  },
+  "messageBus": {
+    "maxP95IncreasePercent": 10.0,
+    "maxErrorRate": 0.01,
+    "maxLag": 1000
+  },
+  "distributedCache": {
+    "maxP95IncreasePercent": 10.0,
+    "maxErrorRate": 0.01,
+    "minHitRate": 0.70
+  },
+  "auditTrail": {
+    "maxP95IncreasePercent": 10.0,
+    "maxErrorRate": 0.01,
+    "maxTamperDetections": 0
+  },
+  "antiTampering": {
+    "maxP95IncreasePercent": 10.0,
+    "maxErrorRate": 0.01,
+    "maxTamperDetections": 0
+  }
+}

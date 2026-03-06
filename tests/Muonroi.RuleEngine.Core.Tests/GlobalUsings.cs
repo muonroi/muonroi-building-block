@@ -1,0 +1,10 @@
+global using Microsoft.Extensions.Logging;
+global using Muonroi.RuleEngine.Abstractions;
+global using System.Collections.Generic;
+global using Xunit;
+global using Muonroi.Rules.Flags;
+global using Microsoft.Extensions.DependencyInjection;
+global using Muonroi.RuleEngine.Core;
+global using System.Diagnostics.Metrics;
+global using OpenTelemetry;
+global using OpenTelemetry.Metrics;

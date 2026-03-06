@@ -1,0 +1,40 @@
+replicaCount: 4
+
+autoscaling:
+  enabled: true
+  minReplicas: 4
+  maxReplicas: 15
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+ingress:
+  enabled: true
+  hosts:
+    - host: rule-engine.muonroi.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: rule-engine-prod-tls
+      hosts:
+        - rule-engine.muonroi.com
+
+config:
+  license:
+    mode: Online
+    tier: Enterprise
+    endpoint: https://license.muonroi.com/api
+  telemetry:
+    enabled: true
+
+resources:
+  requests:
+    cpu: 800m
+    memory: 1Gi
+  limits:
+    cpu: 1500m
+    memory: 2Gi
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 3

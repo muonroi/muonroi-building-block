@@ -1,0 +1,37 @@
+using Muonroi.Core.Abstractions.Context;
+using Serilog.Core;
+
+namespace Muonroi.Observability.Logging;
+
+public sealed class TenantIdEnricher(ISystemExecutionContextAccessor accessor) : ILogEventEnricher
+{
+    private readonly ISystemExecutionContextAccessor _accessor =
+        accessor ?? throw new ArgumentNullException(nameof(accessor));
+
+    public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
+    {
+        ArgumentNullException.ThrowIfNull(logEvent);
+        ArgumentNullException.ThrowIfNull(propertyFactory);
+
+        ISystemExecutionContext context = _accessor.Get();
+        if (!string.IsNullOrWhiteSpace(context.TenantId))
+        {
+            logEvent.AddOrUpdateProperty(propertyFactory.CreateProperty("TenantId", context.TenantId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(context.UserId))
+        {
+            logEvent.AddOrUpdateProperty(propertyFactory.CreateProperty("UserId", context.UserId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(context.CorrelationId))
+        {
+            logEvent.AddOrUpdateProperty(propertyFactory.CreateProperty("CorrelationId", context.CorrelationId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(context.SourceType))
+        {
+            logEvent.AddOrUpdateProperty(propertyFactory.CreateProperty("SourceType", context.SourceType));
+        }
+    }
+}

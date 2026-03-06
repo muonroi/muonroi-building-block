@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "muonroi-rule-engine.fullname" . }}-test-connection"
+  labels:
+    {{- include "muonroi-rule-engine.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox:1.36
+      command: ["sh", "-c"]
+      args:
+        - >
+          wget -qO- http://{{ include "muonroi-rule-engine.fullname" . }}:{{ .Values.service.port }}/health/ready
+          && echo "Rule engine is reachable";
+  restartPolicy: Never

@@ -1,0 +1,25 @@
+_format_version: "3.0"
+
+services:
+  - name: sample-service
+    url: http://example.com
+    routes:
+      - name: sample-route
+        paths:
+          - /
+
+# Apply rate limiting for each consumer/tenant
+plugins:
+  - name: rate-limiting
+    service: sample-service
+    config:
+      minute: 60
+      policy: redis
+      limit_by: consumer
+      redis_host: redis
+      redis_port: 6379
+
+# Consumers represent tenants
+consumers:
+  - username: tenant-a
+  - username: tenant-b

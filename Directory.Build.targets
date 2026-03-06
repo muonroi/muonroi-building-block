@@ -1,0 +1,9 @@
+<Project>
+  <Target Name="DeduplicateGlobalAnalyzerConfigFiles" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <_UniqueGlobalAnalyzerConfigFiles Include="@(GlobalAnalyzerConfigFiles->Distinct())" />
+      <GlobalAnalyzerConfigFiles Remove="@(GlobalAnalyzerConfigFiles)" />
+      <GlobalAnalyzerConfigFiles Include="@(_UniqueGlobalAnalyzerConfigFiles)" />
+    </ItemGroup>
+  </Target>
+</Project>

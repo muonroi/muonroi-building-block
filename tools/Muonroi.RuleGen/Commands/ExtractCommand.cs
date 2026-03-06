@@ -1,0 +1,444 @@
+using Muonroi.RuleGen.Cli;
+using Muonroi.RuleGen.Models;
+using Muonroi.RuleGen.Services;
+using Muonroi.RuleGen.Writers;
+using Spectre.Console;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+
+namespace Muonroi.RuleGen.Commands;
+
+internal static class ExtractCommand
+{
+    public static async Task<int> RunAsync(CommandContext context)
+    {
+        ExtractOptions options = ExtractOptions.FromContext(context);
+
+        IReadOnlyList<string> sourceFiles = SourceDiscoveryService.Discover(
+            context.WorkingDirectory,
+            options.Source,
+            options.SourceDir,
+            options.Project,
+            options.Pattern,
+            options.ExcludePatterns);
+
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        IReadOnlyList<ExtractedRuleDefinition> definitions = [];
+
+        await AnsiConsole.Progress()
+            .StartAsync(async ctx =>
+            {
+                var task = ctx.AddTask("[green]Extracting rules[/]", maxValue: sourceFiles.Count);
+                definitions = await RoslynRuleExtractor.ExtractAsync(
+                    sourceFiles,
+                    options.Namespace,
+                    options.ContextType,
+                    options.Parallel,
+                    CancellationToken.None);
+                task.Value = sourceFiles.Count;
+            });
+
+        if (definitions.Count == 0)
+        {
+            CommandLineWriter.WriteError("No methods marked with [MExtractAsRule] were found.");
+            return 2;
+        }
+
+        ValidationReport? validation = null;
+        if (options.Validate)
+        {
+            validation = RuleValidationService.Validate(definitions);
+            foreach (string warning in validation.Warnings)
+            {
+                CommandLineWriter.WriteWarning(warning);
+            }
+
+            if (validation.HasErrors)
+            {
+                foreach (string error in validation.Errors)
+                {
+                    CommandLineWriter.WriteError(error);
+                }
+
+                return 3;
+            }
+        }
+
+        Directory.CreateDirectory(options.Output);
+
+        string author = AuditMetadataService.ResolveAuthor();
+        string? commit = AuditMetadataService.ResolveGitCommit(context.WorkingDirectory);
+
+        foreach (ExtractedRuleDefinition definition in definitions)
+        {
+            string rendered = RuleClassWriter.Render(definition, options.TenantId, author, commit);
+
+            string outputDir = options.OrganizeByNamespace
+                ? Path.Combine(options.Output, (definition.SourceNamespace ?? "global").Replace('.', Path.DirectorySeparatorChar))
+                : options.Output;
+            Directory.CreateDirectory(outputDir);
+
+            string outputPath = Path.Combine(outputDir, $"{RuleClassWriter.ToIdentifier(definition.Code)}.g.cs");
+            await File.WriteAllTextAsync(outputPath, rendered);
+        }
+
+        if (options.GenerateTests)
+        {
+            string testDir = Path.Combine(options.Output, "Tests");
+            Directory.CreateDirectory(testDir);
+            DiscoveredRuleType[] ruleTypes = [.. definitions
+                .Select(d => new DiscoveredRuleType($"{RuleClassWriter.ToIdentifier(d.Code)}Rule", d.ContextType))
+                .DistinctBy(x => $"{x.ClassName}|{x.ContextType}")];
+
+            foreach (DiscoveredRuleType? ruleType in ruleTypes)
+            {
+                string testContent = TestScaffoldWriter.Render(ruleType, $"{options.Namespace}.Tests");
+                string testPath = Path.Combine(testDir, $"{ruleType.ClassName}Tests.cs");
+                await File.WriteAllTextAsync(testPath, testContent);
+            }
+        }
+
+        stopwatch.Stop();
+        PrintSummaryTable(definitions, sourceFiles.Count, stopwatch.ElapsedMilliseconds);
+        return 0;
+    }
+
+    private static void PrintSummaryTable(IReadOnlyList<ExtractedRuleDefinition> definitions, int fileCount, long elapsedMs)
+    {
+        var table = new Table().Border(TableBorder.Rounded);
+        table.AddColumn("File");
+        table.AddColumn("Rules");
+        table.AddColumn("Status");
+
+        var grouped = definitions.GroupBy(d => Path.GetFileName(d.SourceFile));
+        foreach (var group in grouped)
+        {
+            table.AddRow(group.Key, group.Count().ToString(), "[green]✓ OK[/]");
+        }
+
+        AnsiConsole.Write(new Panel(table).Header("[bold green]Rule Extraction Summary[/]"));
+        AnsiConsole.MarkupLine($"Total: [bold yellow]{definitions.Count}[/] rules from [bold yellow]{fileCount}[/] files in [bold blue]{elapsedMs}[/] ms.");
+    }
+
+    internal sealed class ExtractOptions
+    {
+        private static readonly Regex FileScopedNamespaceRegex =
+            new(@"^\s*namespace\s+([A-Za-z_][A-Za-z0-9_\.]*)\s*;", RegexOptions.Multiline | RegexOptions.CultureInvariant);
+
+        private static readonly Regex BlockNamespaceRegex =
+            new(@"^\s*namespace\s+([A-Za-z_][A-Za-z0-9_\.]*)\s*\{", RegexOptions.Multiline | RegexOptions.CultureInvariant);
+
+        public required string Output { get; init; }
+        public required string Namespace { get; init; }
+        public required string Pattern { get; init; }
+        public required IReadOnlyList<string> ExcludePatterns { get; init; }
+        public string? Source { get; init; }
+        public string? SourceDir { get; init; }
+        public string? Project { get; init; }
+        public string? ContextType { get; init; }
+        public string? TenantId { get; init; }
+        public bool GenerateTests { get; init; }
+        public bool Validate { get; init; }
+        public bool OrganizeByNamespace { get; init; }
+        public bool Parallel { get; init; }
+
+        public static ExtractOptions FromContext(CommandContext context)
+        {
+            RuleGenExtractConfig cfg = context.Config.Extract;
+
+            string? source = OptionReader.GetString(context, "source", cfg.Source);
+            string? sourceDir = OptionReader.GetString(context, "source-dir", cfg.SourceDir);
+            string? project = OptionReader.GetString(context, "project", cfg.Project);
+            string? output = OptionReader.GetString(context, "output", cfg.OutputDir);
+            string resolvedOutput = ResolveOutputPath(context, output, source, sourceDir, project);
+            string? namespaceOption = OptionReader.GetString(context, "namespace");
+            string resolvedNamespace = ResolveNamespace(
+                context,
+                namespaceOption,
+                cfg.Namespace,
+                source,
+                sourceDir,
+                project,
+                resolvedOutput);
+
+            return new ExtractOptions
+            {
+                Source = source,
+                SourceDir = sourceDir,
+                Project = project,
+                Output = resolvedOutput,
+                Namespace = resolvedNamespace,
+                ContextType = OptionReader.GetString(context, "context", cfg.ContextType),
+                Pattern = OptionReader.GetString(context, "pattern", cfg.Pattern) ?? "**/*.cs",
+                ExcludePatterns = OptionReader.GetCsvList(context, "exclude", cfg.ExcludePatterns),
+                GenerateTests = OptionReader.GetBool(context, "generate-tests", cfg.GenerateTests),
+                Validate = OptionReader.GetBool(context, "validate", cfg.Validate),
+                OrganizeByNamespace = OptionReader.GetBool(context, "organize-by-namespace", cfg.OrganizeByNamespace),
+                Parallel = OptionReader.GetBool(context, "parallel", cfg.Parallel),
+                TenantId = OptionReader.GetString(context, "tenant")
+            };
+        }
+
+        private static string ResolveOutputPath(
+            CommandContext context,
+            string? output,
+            string? source,
+            string? sourceDir,
+            string? project)
+        {
+            if (!string.IsNullOrWhiteSpace(output))
+            {
+                return Path.GetFullPath(output, context.WorkingDirectory);
+            }
+
+            if (!string.IsNullOrWhiteSpace(source))
+            {
+                string sourcePath = Path.GetFullPath(source, context.WorkingDirectory);
+                if (Directory.Exists(sourcePath))
+                {
+                    return Path.Combine(sourcePath, "Rules");
+                }
+
+                string sourceParent = Path.GetDirectoryName(sourcePath)
+                    ?? throw new InvalidOperationException($"Cannot resolve parent directory for source path '{sourcePath}'.");
+                return Path.Combine(sourceParent, "Rules");
+            }
+
+            if (!string.IsNullOrWhiteSpace(sourceDir))
+            {
+                string sourceDirPath = Path.GetFullPath(sourceDir, context.WorkingDirectory);
+                return Path.Combine(sourceDirPath, "Rules");
+            }
+
+            if (!string.IsNullOrWhiteSpace(project))
+            {
+                string projectPath = Path.GetFullPath(project, context.WorkingDirectory);
+                string projectDir = Path.GetDirectoryName(projectPath)
+                    ?? throw new InvalidOperationException($"Cannot resolve directory for project path '{projectPath}'.");
+                return Path.Combine(projectDir, "Generated", "Rules");
+            }
+
+            throw new InvalidOperationException(
+                "Missing output location. Provide --output or at least one of --source/--source-dir/--project so output can be inferred.");
+        }
+
+        private static string ResolveNamespace(
+            CommandContext context,
+            string? namespaceOption,
+            string? configuredNamespace,
+            string? source,
+            string? sourceDir,
+            string? project,
+            string resolvedOutputPath)
+        {
+            if (!string.IsNullOrWhiteSpace(namespaceOption))
+            {
+                return namespaceOption!;
+            }
+
+            string? sourceNamespace = TryResolveSourceNamespace(context, source, sourceDir, project);
+            if (string.IsNullOrWhiteSpace(sourceNamespace))
+            {
+                return configuredNamespace ?? "Generated.Rules";
+            }
+
+            string sourceAnchorDirectory = ResolveSourceAnchorDirectory(context, source, sourceDir, project);
+            string computed = ComputeNamespaceByRelativePath(sourceNamespace!, sourceAnchorDirectory, resolvedOutputPath);
+            if (!string.IsNullOrWhiteSpace(computed))
+            {
+                return computed;
+            }
+
+            return configuredNamespace ?? sourceNamespace!;
+        }
+
+        private static string ResolveSourceAnchorDirectory(
+            CommandContext context,
+            string? source,
+            string? sourceDir,
+            string? project)
+        {
+            if (!string.IsNullOrWhiteSpace(source))
+            {
+                string sourcePath = Path.GetFullPath(source, context.WorkingDirectory);
+                if (Directory.Exists(sourcePath))
+                {
+                    return sourcePath;
+                }
+
+                return Path.GetDirectoryName(sourcePath) ?? context.WorkingDirectory;
+            }
+
+            if (!string.IsNullOrWhiteSpace(sourceDir))
+            {
+                return Path.GetFullPath(sourceDir, context.WorkingDirectory);
+            }
+
+            if (!string.IsNullOrWhiteSpace(project))
+            {
+                string projectPath = Path.GetFullPath(project, context.WorkingDirectory);
+                return Path.GetDirectoryName(projectPath) ?? context.WorkingDirectory;
+            }
+
+            return context.WorkingDirectory;
+        }
+
+        private static string? TryResolveSourceNamespace(
+            CommandContext context,
+            string? source,
+            string? sourceDir,
+            string? project)
+        {
+            if (!string.IsNullOrWhiteSpace(source))
+            {
+                string sourcePath = Path.GetFullPath(source, context.WorkingDirectory);
+                if (File.Exists(sourcePath) && sourcePath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+                {
+                    string sourceContent = File.ReadAllText(sourcePath);
+                    string ns = TryReadNamespace(sourceContent);
+                    if (!string.IsNullOrWhiteSpace(ns))
+                    {
+                        return ns;
+                    }
+                }
+
+                if (Directory.Exists(sourcePath))
+                {
+                    return TryReadNamespaceFromDirectory(sourcePath);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(sourceDir))
+            {
+                string sourceDirectory = Path.GetFullPath(sourceDir, context.WorkingDirectory);
+                if (Directory.Exists(sourceDirectory))
+                {
+                    return TryReadNamespaceFromDirectory(sourceDirectory);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(project))
+            {
+                string projectPath = Path.GetFullPath(project, context.WorkingDirectory);
+                string projectDirectory = Path.GetDirectoryName(projectPath) ?? context.WorkingDirectory;
+                if (Directory.Exists(projectDirectory))
+                {
+                    return TryReadNamespaceFromDirectory(projectDirectory);
+                }
+            }
+
+            return null;
+        }
+
+        private static string? TryReadNamespaceFromDirectory(string directoryPath)
+        {
+            try
+            {
+                foreach (string file in Directory.EnumerateFiles(directoryPath, "*.cs", SearchOption.AllDirectories))
+                {
+                    string content = File.ReadAllText(file);
+                    string ns = TryReadNamespace(content);
+                    if (!string.IsNullOrWhiteSpace(ns))
+                    {
+                        return ns;
+                    }
+                }
+            }
+            catch
+            {
+                // best effort only
+            }
+
+            return null;
+        }
+
+        private static string TryReadNamespace(string content)
+        {
+            Match m1 = FileScopedNamespaceRegex.Match(content ?? string.Empty);
+            if (m1.Success)
+            {
+                return m1.Groups[1].Value.Trim();
+            }
+
+            Match m2 = BlockNamespaceRegex.Match(content ?? string.Empty);
+            return m2.Success ? m2.Groups[1].Value.Trim() : string.Empty;
+        }
+
+        private static string ComputeNamespaceByRelativePath(
+            string sourceNamespace,
+            string sourceAnchorDirectory,
+            string targetDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(sourceNamespace))
+            {
+                return string.Empty;
+            }
+
+            List<string> namespaceParts = sourceNamespace
+                .Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries)
+                .ToList();
+            string sourceFullPath = Path.GetFullPath(sourceAnchorDirectory);
+            string targetFullPath = Path.GetFullPath(targetDirectory);
+            string relative = Path.GetRelativePath(sourceFullPath, targetFullPath);
+            string[] segments = relative
+                .Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string raw in segments)
+            {
+                string segment = raw.Trim();
+                if (string.Equals(segment, ".", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (string.Equals(segment, "..", StringComparison.Ordinal))
+                {
+                    if (namespaceParts.Count > 0)
+                    {
+                        namespaceParts.RemoveAt(namespaceParts.Count - 1);
+                    }
+
+                    continue;
+                }
+
+                string normalized = NormalizeNamespaceSegment(segment);
+                if (!string.IsNullOrWhiteSpace(normalized))
+                {
+                    namespaceParts.Add(normalized);
+                }
+            }
+
+            return namespaceParts.Count == 0 ? sourceNamespace : string.Join(".", namespaceParts);
+        }
+
+        private static string NormalizeNamespaceSegment(string segment)
+        {
+            if (string.IsNullOrWhiteSpace(segment))
+            {
+                return string.Empty;
+            }
+
+            char[] buffer = segment.ToCharArray();
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                if (!char.IsLetterOrDigit(buffer[i]) && buffer[i] != '_')
+                {
+                    buffer[i] = '_';
+                }
+            }
+
+            string normalized = new string(buffer).Trim('_');
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return string.Empty;
+            }
+
+            if (char.IsDigit(normalized[0]))
+            {
+                normalized = "_" + normalized;
+            }
+
+            return normalized;
+        }
+    }
+}

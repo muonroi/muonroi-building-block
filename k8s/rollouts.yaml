@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: rule-service
+spec:
+  replicas: 3
+  strategy:
+    canary:
+      steps:
+      - setWeight: 20
+      - pause: {duration: 60}
+      - setWeight: 40
+      - pause: {duration: 60}
+      - setWeight: 60
+      - pause: {duration: 60}
+      - setWeight: 80
+      - pause: {duration: 60}
+      - setWeight: 100
+      trafficRouting:
+        istio:
+          virtualService:
+            name: rule-service
+            routes:
+            - primary
+      analysis:
+        templates:
+        - templateName: error-budget
+        startingStep: 2
+        args:
+        - name: service-name
+          value: rule-service
+  template:
+    metadata:
+      labels:
+        app: rule-service
+    spec:
+      containers:
+      - name: rule-service
+        image: ghcr.io/example/rule-service:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: error-budget
+spec:
+  metrics:
+  - name: error-rate
+    interval: 1m
+    successCondition: result < 0.05
+    failureLimit: 1
+    provider:
+      prometheus:
+        address: http://prometheus:9090
+        query: |
+          sum(rate(http_requests_total{job="rule-service",status!~"2.*"}[1m])) /
+          sum(rate(http_requests_total{job="rule-service"}[1m]))

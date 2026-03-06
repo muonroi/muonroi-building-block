@@ -1,0 +1,25 @@
+{
+  "title": "Tenant Overview",
+  "templating": {
+    "list": [
+      {
+        "name": "tenant",
+        "type": "query",
+        "query": "label_values(traces_spanmetrics_calls_total, tenant_id)",
+        "label": "Tenant"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Request Rate",
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_duration_count{tenant_id=\"$tenant\"}[5m]))",
+          "format": "time_series"
+        }
+      ]
+    }
+  ]
+}

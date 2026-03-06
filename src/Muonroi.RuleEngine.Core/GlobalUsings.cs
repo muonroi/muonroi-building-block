@@ -1,0 +1,13 @@
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Logging.Abstractions;
+global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.RuleEngine.Abstractions;
+global using Muonroi.RuleEngine.Core.Tracing;
+global using System.Collections.Generic;
+global using System.Diagnostics;
+global using System.Diagnostics.Metrics;
+global using System.Linq;
+global using System.Reflection;
+global using System.Text.Json;
+global using Muonroi.RuleEngine.Core.Telemetry;

@@ -1,0 +1,43 @@
+name: Publish VS Code Extension
+
+on:
+  push:
+    tags:
+      - 'vsix-v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (package only)'
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: tools/Muonroi.RuleGen/vscode-extension
+        run: npm ci
+
+      - name: Package extension
+        working-directory: tools/Muonroi.RuleGen/vscode-extension
+        run: npx @vscode/vsce package
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: muonroi-rulegen-vsix
+          path: tools/Muonroi.RuleGen/vscode-extension/*.vsix
+
+      - name: Publish to VS Code Marketplace
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run == false }}
+        working-directory: tools/Muonroi.RuleGen/vscode-extension
+        run: npx @vscode/vsce publish --pat "${{ secrets.VSCE_PAT }}"

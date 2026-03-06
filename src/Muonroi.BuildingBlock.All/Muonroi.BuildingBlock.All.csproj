@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>Metapackage for Muonroi Building Block - Includes all sub-packages for a complete infrastructure setup.</Description>
+    <PackageId>Muonroi.BuildingBlock.All</PackageId>
+    <Version>1.0.0-alpha.1</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <IsCommercialPackage>true</IsCommercialPackage>
+    <PackageLicenseFile>LICENSE-COMMERCIAL</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Muonroi.AspNetCore\Muonroi.AspNetCore.csproj" />
+    <ProjectReference Include="..\Muonroi.Core\Muonroi.Core.csproj" />
+    <ProjectReference Include="..\Muonroi.Auth\Muonroi.Auth.csproj" />
+    <ProjectReference Include="..\Muonroi.AuthZ\Muonroi.AuthZ.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.Dapper\Muonroi.Data.Dapper.csproj" />
+    <ProjectReference Include="..\Muonroi.RuleEngine.Core\Muonroi.RuleEngine.Core.csproj" />
+    <ProjectReference Include="..\Muonroi.RuleEngine.Runtime.Web\Muonroi.RuleEngine.Runtime.Web.csproj" />
+    <ProjectReference Include="..\Muonroi.Governance\Muonroi.Governance.csproj" />
+    <ProjectReference Include="..\Muonroi.Messaging.MassTransit\Muonroi.Messaging.MassTransit.csproj" />
+    <ProjectReference Include="..\Muonroi.Caching.Memory\Muonroi.Caching.Memory.csproj" />
+    <ProjectReference Include="..\Muonroi.Caching.Redis\Muonroi.Caching.Redis.csproj" />
+    <ProjectReference Include="..\Muonroi.Grpc\Muonroi.Grpc.csproj" />
+    <ProjectReference Include="..\Muonroi.SignalR\Muonroi.SignalR.csproj" />
+    <ProjectReference Include="..\Muonroi.Tenancy.Core\Muonroi.Tenancy.Core.csproj" />
+    <ProjectReference Include="..\Muonroi.Observability\Muonroi.Observability.csproj" />
+    <ProjectReference Include="..\Muonroi.Resilience\Muonroi.Resilience.csproj" />
+    <ProjectReference Include="..\Muonroi.Mapper\Muonroi.Mapper.csproj" />
+    <ProjectReference Include="..\Muonroi.Secrets\Muonroi.Secrets.csproj" />
+    <ProjectReference Include="..\Muonroi.ServiceDiscovery.Consul\Muonroi.ServiceDiscovery.Consul.csproj" />
+    <ProjectReference Include="..\Muonroi.Governance.Abstractions\Muonroi.Governance.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Governance.Enterprise\Muonroi.Governance.Enterprise.csproj" />
+    <ProjectReference Include="..\Muonroi.BackgroundJobs.Hangfire\Muonroi.BackgroundJobs.Hangfire.csproj" />
+    <ProjectReference Include="..\Muonroi.BackgroundJobs.Quartz\Muonroi.BackgroundJobs.Quartz.csproj" />
+  </ItemGroup>
+</Project>

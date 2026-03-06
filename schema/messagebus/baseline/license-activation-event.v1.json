@@ -1,0 +1,26 @@
+{
+  "name": "license-activation-event",
+  "version": 1,
+  "required": [
+    "licenseId",
+    "projectId",
+    "fingerprint"
+  ],
+  "properties": {
+    "licenseId": {
+      "type": "string"
+    },
+    "projectId": {
+      "type": "string"
+    },
+    "fingerprint": {
+      "type": "string"
+    },
+    "issuedAt": {
+      "type": "string"
+    },
+    "features": {
+      "type": "array"
+    }
+  }
+}

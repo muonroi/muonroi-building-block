@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable">
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidRuleGenVsixPackage">
+    <Menus>
+      <Menu guid="guidRuleGenCmdSet" id="RuleGenTopMenu" priority="0x0100" type="Menu">
+        <Parent guid="guidRuleGenCmdSet" id="RuleGenToolsGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Muonroi RuleGen</ButtonText>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <Groups>
+      <Group guid="guidRuleGenCmdSet" id="RuleGenToolsGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
+
+      <Group guid="guidRuleGenCmdSet" id="RuleGenMenuGroup" priority="0x0100">
+        <Parent guid="guidRuleGenCmdSet" id="RuleGenTopMenu" />
+      </Group>
+
+      <Group guid="guidRuleGenCmdSet" id="RuleGenProjectCtxGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE" />
+      </Group>
+      <Group guid="guidRuleGenCmdSet" id="RuleGenItemCtxGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
+      </Group>
+      <Group guid="guidRuleGenCmdSet" id="RuleGenFolderCtxGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE" />
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <Button guid="guidRuleGenCmdSet" id="RuleGenExtract" priority="0x0100" type="Button">
+        <Parent guid="guidRuleGenCmdSet" id="RuleGenMenuGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Extract</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidRuleGenCmdSet" id="RuleGenMerge" priority="0x0110" type="Button">
+        <Parent guid="guidRuleGenCmdSet" id="RuleGenMenuGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Merge</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidRuleGenCmdSet" id="RuleGenWatch" priority="0x0120" type="Button">
+        <Parent guid="guidRuleGenCmdSet" id="RuleGenMenuGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Watch</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidRuleGenCmdSet" id="RuleGenStopWatch" priority="0x0130" type="Button">
+        <Parent guid="guidRuleGenCmdSet" id="RuleGenMenuGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Stop Watch</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <CommandPlacements>
+    <CommandPlacement guid="guidRuleGenCmdSet" id="RuleGenTopMenu" priority="0x0200">
+      <Parent guid="guidRuleGenCmdSet" id="RuleGenProjectCtxGroup" />
+    </CommandPlacement>
+    <CommandPlacement guid="guidRuleGenCmdSet" id="RuleGenTopMenu" priority="0x0210">
+      <Parent guid="guidRuleGenCmdSet" id="RuleGenItemCtxGroup" />
+    </CommandPlacement>
+    <CommandPlacement guid="guidRuleGenCmdSet" id="RuleGenTopMenu" priority="0x0220">
+      <Parent guid="guidRuleGenCmdSet" id="RuleGenFolderCtxGroup" />
+    </CommandPlacement>
+  </CommandPlacements>
+
+  <Symbols>
+    <GuidSymbol name="guidRuleGenVsixPackage" value="{4A57B18C-56CC-40A4-A628-E4C020C93EC6}" />
+
+    <GuidSymbol name="guidRuleGenCmdSet" value="{E3BC86C2-67AE-4D5B-8372-BFEBC8E78D5B}">
+      <IDSymbol name="RuleGenTopMenu" value="0x1010" />
+      <IDSymbol name="RuleGenToolsGroup" value="0x1000" />
+      <IDSymbol name="RuleGenMenuGroup" value="0x1001" />
+      <IDSymbol name="RuleGenProjectCtxGroup" value="0x1002" />
+      <IDSymbol name="RuleGenItemCtxGroup" value="0x1003" />
+      <IDSymbol name="RuleGenFolderCtxGroup" value="0x1004" />
+
+      <IDSymbol name="RuleGenExtract" value="0x0100" />
+      <IDSymbol name="RuleGenMerge" value="0x0101" />
+      <IDSymbol name="RuleGenWatch" value="0x0102" />
+      <IDSymbol name="RuleGenStopWatch" value="0x0103" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

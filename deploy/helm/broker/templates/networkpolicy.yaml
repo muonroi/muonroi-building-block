@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "broker.fullname" . }}-np
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ include "broker.name" . }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - {}
+  egress:
+    - {}

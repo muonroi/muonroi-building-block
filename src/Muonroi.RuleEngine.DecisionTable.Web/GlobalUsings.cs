@@ -1,0 +1,10 @@
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Mvc;
+global using System.Text;
+global using Muonroi.RuleEngine.DecisionTable.Converters;
+global using Muonroi.RuleEngine.DecisionTable.Models;
+global using Muonroi.RuleEngine.DecisionTable.Serializers;
+global using Muonroi.RuleEngine.DecisionTable.Stores;
+global using Muonroi.RuleEngine.DecisionTable.Validators;
+global using Muonroi.RuleEngine.DecisionTable.Web.ViewModels;
+global using DecisionTableModel = Muonroi.RuleEngine.DecisionTable.Models.DecisionTable;

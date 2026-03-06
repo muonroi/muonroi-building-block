@@ -1,0 +1,17 @@
+global using Grpc.Core;
+global using Grpc.Core.Interceptors;
+global using Microsoft.AspNetCore.Builder;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Options;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.Core.Abstractions.Models.Common;
+global using Muonroi.Tenancy.Core;
+global using System;
+global using System.Collections.Generic;
+global using System.Diagnostics;
+global using System.Linq;
+global using System.Reflection;
+global using System.Security.Claims;
+global using System.Threading.Tasks;

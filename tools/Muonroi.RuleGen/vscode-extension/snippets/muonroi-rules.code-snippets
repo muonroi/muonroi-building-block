@@ -1,0 +1,28 @@
+{
+  "MExtractAsRule Method": {
+    "prefix": "mrule",
+    "body": [
+      "[MExtractAsRule("${1:RULE_CODE}", Order = ${2:0}, HookPoint = HookPoint.${3|BeforeRule,AfterRule,Error|})]",
+      "public async Task<RuleResult> ${4:HandleAsync}(${5:MyContext} ctx, FactBag facts, CancellationToken ct)",
+      "{",
+      "    $0",
+      "    return RuleResult.Passed();",
+      "}"
+    ],
+    "description": "Muonroi rule extraction method template"
+  },
+  "Rule Result Passed": {
+    "prefix": "rrp",
+    "body": [
+      "return RuleResult.Passed();"
+    ],
+    "description": "Rule Result Passed"
+  },
+  "Rule Result Failure": {
+    "prefix": "rrf",
+    "body": [
+      "return RuleResult.Failure("${1:Reason}");"
+    ],
+    "description": "Rule Result Failure"
+  }
+}

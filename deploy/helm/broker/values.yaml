@@ -1,0 +1,21 @@
+image:
+  repository: ghcr.io/owner/broker
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 5672
+livenessProbe:
+  command: ["/bin/sh", "-c", "nc -z localhost 5672"]
+  initialDelaySeconds: 10
+  periodSeconds: 10
+readinessProbe:
+  command: ["/bin/sh", "-c", "nc -z localhost 5672"]
+  initialDelaySeconds: 5
+  periodSeconds: 10
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 80
+env: []

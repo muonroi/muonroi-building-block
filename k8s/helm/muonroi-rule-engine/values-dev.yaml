@@ -1,0 +1,32 @@
+replicaCount: 1
+
+autoscaling:
+  enabled: false
+
+ingress:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 150m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+config:
+  license:
+    mode: Offline
+    tier: Free
+  telemetry:
+    enabled: false
+
+postgresql:
+  primary:
+    persistence:
+      size: 2Gi
+
+redis:
+  master:
+    persistence:
+      size: 1Gi

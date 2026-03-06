@@ -1,0 +1,16 @@
+global using Microsoft.Extensions.Caching.Distributed;
+global using Microsoft.Extensions.Caching.Memory;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.Caching.Abstractions.Distributed;
+global using Muonroi.Governance.License;
+global using Muonroi.Tenancy.Core;
+global using System;
+global using System.Collections.Concurrent;
+global using System.Diagnostics;
+global using System.Security.Cryptography;
+global using System.Text;
+global using System.Text.Json;
+global using System.Threading;
+global using System.Threading.Tasks;

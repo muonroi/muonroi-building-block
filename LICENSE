@@ -1,0 +1,25 @@
+Muonroi Building Block - Dual License
+
+This repository contains two licensed components:
+
+1. OSS Core
+   Files: src/Muonroi.Core.*, src/Muonroi.*.Abstractions, src/Muonroi.Governance,
+          src/Muonroi.RuleEngine.Abstractions, src/Muonroi.RuleEngine.Core,
+          src/Muonroi.RuleEngine.SourceGenerators, src/Muonroi.RuleEngine.Testing,
+          src/Muonroi.Tenancy.*, src/Muonroi.Data.Abstractions, src/Muonroi.Auth,
+          src/Muonroi.AspNetCore, src/Muonroi.Http, src/Muonroi.Resilience,
+          src/Muonroi.Mapper, src/Muonroi.Mediator, src/Muonroi.Messaging.Abstractions,
+          src/Muonroi.Observability, src/Muonroi.BackgroundJobs.Abstractions,
+          src/Muonroi.BuildingBlock.Shared, src/Muonroi.Caching.Abstractions
+   License: Apache License 2.0 - see LICENSE-APACHE
+
+2. Commercial Modules
+   Files: src/Muonroi.Governance.Enterprise, src/Muonroi.AuthZ, src/Muonroi.Caching.Redis,
+          src/Muonroi.Messaging.MassTransit, src/Muonroi.BackgroundJobs.Hangfire,
+          src/Muonroi.BackgroundJobs.Quartz, src/Muonroi.SignalR, src/Muonroi.Grpc,
+          src/Muonroi.Secrets, src/Muonroi.Bff, src/Muonroi.ServiceDiscovery.Consul,
+          src/Muonroi.RuleEngine.Runtime.Web, src/Muonroi.RuleEngine.DecisionTable.Web,
+          src/Muonroi.UiEngine.Catalog
+   License: Muonroi Commercial License - see LICENSE-COMMERCIAL
+
+Copyright (c) 2024-2026 Le Anh Phi / Muonroi Framework

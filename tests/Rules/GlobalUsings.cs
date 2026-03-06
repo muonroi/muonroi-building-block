@@ -1,0 +1,10 @@
+global using Muonroi.Rules.Table;
+global using Muonroi.Rules.Feel;
+global using Muonroi.Rules.Lint;
+global using Muonroi.Rules.Rules;
+global using Muonroi.Core.Abstractions.Models;
+global using Muonroi.Core.Abstractions.Response;
+global using Xunit;
+global using System;
+global using System.Collections.Generic;
+global using System.Threading.Tasks;

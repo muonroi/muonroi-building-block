@@ -1,0 +1,13 @@
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Muonroi.Core.Abstractions.Configuration;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.Core.Helpers;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Reflection;
+global using System.Security.Cryptography;
+global using System.Text.Json;
+global using System.Text.Json.Serialization;
+global using BCrypts = BCrypt.Net.BCrypt;

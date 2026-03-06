@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "muonroi-rule-engine.fullname" . }}
+  labels:
+    {{- include "muonroi-rule-engine.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "muonroi-rule-engine.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+      labels:
+        {{- include "muonroi-rule-engine.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            capabilities:
+              {{- toYaml .Values.securityContext.capabilities | nindent 14 }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: ASPNETCORE_URLS
+              value: http://+:8080
+            - name: LicenseConfigs__Mode
+              value: {{ .Values.config.license.mode | quote }}
+            - name: LicenseConfigs__Tier
+              value: {{ .Values.config.license.tier | quote }}
+            - name: LicenseConfigs__Online__Endpoint
+              value: {{ .Values.config.license.endpoint | quote }}
+            - name: DatabaseConfigs__DbType
+              value: {{ .Values.config.database.type | quote }}
+            - name: DatabaseConfigs__ConnectionStrings__PostgreSqlConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "muonroi-rule-engine.fullname" . }}
+                  key: database-connection-string
+            - name: RedisConfigs__Enable
+              value: {{ .Values.config.redis.enabled | quote }}
+            - name: RedisConfigs__Host
+              value: {{ include "muonroi-rule-engine.redisHost" . | quote }}
+            - name: RedisConfigs__Port
+              value: {{ .Values.redis.enabled | ternary "6379" (.Values.config.redis.port | toString) | quote }}
+            - name: RedisConfigs__Password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "muonroi-rule-engine.fullname" . }}
+                  key: redis-password
+            - name: MultiTenantConfigs__Enabled
+              value: {{ .Values.config.multiTenant.enabled | quote }}
+            - name: MultiTenantConfigs__RequireTenantClaim
+              value: {{ .Values.config.multiTenant.requireTenantClaim | quote }}
+            - name: RuleEngineConfigs__Quota__Enabled
+              value: {{ .Values.config.quota.enabled | quote }}
+            - name: RuleEngineConfigs__Quota__DefaultTier
+              value: {{ .Values.config.quota.defaultTier | quote }}
+            - name: OpenTelemetry__OtlpEndpoint
+              value: {{ .Values.config.telemetry.otlpEndpoint | quote }}
+            - name: OpenTelemetry__ServiceName
+              value: {{ .Values.config.telemetry.serviceName | quote }}
+          volumeMounts:
+            - name: config
+              mountPath: /app/appsettings.Production.json
+              subPath: appsettings.Production.json
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "muonroi-rule-engine.fullname" . }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

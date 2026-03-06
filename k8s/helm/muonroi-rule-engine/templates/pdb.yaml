@@ -1,0 +1,13 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "muonroi-rule-engine.fullname" . }}
+  labels:
+    {{- include "muonroi-rule-engine.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "muonroi-rule-engine.selectorLabels" . | nindent 6 }}
+{{- end }}

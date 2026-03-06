@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://muonroi.com/schema/ui/m-ui-manifest.v1.schema.json",
+  "title": "MUiManifestV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAtUtc",
+    "userId",
+    "groups"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "mui.manifest.v1"
+    },
+    "generatedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "tenantId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/group"
+      }
+    }
+  },
+  "$defs": {
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "groupName",
+        "groupDisplayName",
+        "items"
+      ],
+      "properties": {
+        "groupName": {
+          "type": "string"
+        },
+        "groupDisplayName": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/item"
+          }
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "permissionName",
+        "uiKey",
+        "type",
+        "displayName",
+        "order",
+        "route",
+        "isPublished",
+        "isGranted",
+        "isVisible",
+        "isEnabled",
+        "isHidden",
+        "children"
+      ],
+      "properties": {
+        "permissionName": {
+          "type": "string"
+        },
+        "uiKey": {
+          "type": "string"
+        },
+        "parentUiKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "menu",
+            "tab",
+            "action"
+          ]
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "icon": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "order": {
+          "type": "integer"
+        },
+        "route": {
+          "type": "string"
+        },
+        "isPublished": {
+          "type": "boolean"
+        },
+        "isGranted": {
+          "type": "boolean"
+        },
+        "isVisible": {
+          "type": "boolean"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "isHidden": {
+          "type": "boolean"
+        },
+        "disabledReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/item"
+          }
+        }
+      }
+    }
+  }
+}

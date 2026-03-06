@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "muonroi-rule-engine.fullname" . }}
+  labels:
+    {{- include "muonroi-rule-engine.labels" . | nindent 4 }}
+data:
+  appsettings.Production.json: |
+    {
+      "LicenseConfigs": {
+        "Mode": {{ .Values.config.license.mode | quote }},
+        "Tier": {{ .Values.config.license.tier | quote }},
+        "Online": {
+          "Endpoint": {{ .Values.config.license.endpoint | quote }}
+        }
+      },
+      "DatabaseConfigs": {
+        "DbType": {{ .Values.config.database.type | quote }}
+      },
+      "RedisConfigs": {
+        "Enable": {{ .Values.config.redis.enabled }},
+        "Host": {{ include "muonroi-rule-engine.redisHost" . | quote }},
+        "Port": {{ .Values.redis.enabled | ternary 6379 .Values.config.redis.port }}
+      },
+      "MultiTenantConfigs": {
+        "Enabled": {{ .Values.config.multiTenant.enabled }},
+        "RequireTenantClaim": {{ .Values.config.multiTenant.requireTenantClaim }}
+      },
+      "RuleEngineConfigs": {
+        "Quota": {
+          "Enabled": {{ .Values.config.quota.enabled }},
+          "DefaultTier": {{ .Values.config.quota.defaultTier | quote }}
+        }
+      },
+      "OpenTelemetry": {
+        "OtlpEndpoint": {{ .Values.config.telemetry.otlpEndpoint | quote }},
+        "ServiceName": {{ .Values.config.telemetry.serviceName | quote }}
+      }
+    }

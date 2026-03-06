@@ -1,0 +1,25 @@
+{
+  "PolicyId": "pol_f35b8509",
+  "Version": "1.0.0",
+  "LicenseId": "LIC-2024-DEMO-0001",
+  "IssuedAt": "2026-02-07T09:49:54.0617525+00:00",
+  "ExpiresAt": "2027-02-07T09:49:54.061898+00:00",
+  "Enforcement": {
+    "EnforceOnDatabase": true,
+    "EnableAntiTampering": true,
+    "FailMode": 1,
+    "MaxApiRequestsPerMinute": 10,
+    "MaxDbOperationsPerMinute": 5
+  },
+  "FeatureQuotas": {
+    "api.create": {
+      "MaxUsagePerDay": 1000,
+      "MaxConcurrentUsage": 0
+    },
+    "db.save": {
+      "MaxUsagePerDay": 5000,
+      "MaxConcurrentUsage": 0
+    }
+  },
+  "Signature": "GFPmRhyyIptxaPpDS8aJCR1HsU9k/hwd8yuyh8EuwYATXn1V6uWdHU2VPKpNSG4wnS/P5xm5gUYWptWYvCqLmQFE0a7JOl3rRsw/TjfnDjtSyJhOc\u002B8\u002Biv5u2LIRCuPIHW3XClArcujdiljPgH2s6udx9A7tfvL8ZBqdUVSWrsYmyN0fVK050g1R/rydNjV9Wwp3Vobkhr73PGIrErBEhJcCTPgNjlJNtPvoY\u002BgN1SnTQFVL/fnDNX73xCqmLokOsWWV3EMOfh2s3fW0Cqv/mqDAln7bs49imR90lZEBpue1X\u002B5abWpTMXIT37RFfcPWk//O8t8DZn2BSP0mpwJsiw=="
+}

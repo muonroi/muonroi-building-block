@@ -1,0 +1,413 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://muonroi.com/schema/ui/m-ui-engine.v1.schema.json",
+  "title": "MUiEngineManifestV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAtUtc",
+    "userId",
+    "navigationGroups",
+    "screens",
+    "actions",
+    "dataSources"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "mui.engine.v1"
+    },
+    "generatedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "tenantId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "navigationGroups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/navigationGroup"
+      }
+    },
+    "screens": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/screen"
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/action"
+      }
+    },
+    "dataSources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dataSource"
+      }
+    }
+  },
+  "$defs": {
+    "navigationGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "groupName",
+        "groupDisplayName",
+        "items"
+      ],
+      "properties": {
+        "groupName": {
+          "type": "string"
+        },
+        "groupDisplayName": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/navigationNode"
+          }
+        }
+      }
+    },
+    "navigationNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nodeKey",
+        "uiKey",
+        "title",
+        "route",
+        "type",
+        "order",
+        "isVisible",
+        "isEnabled",
+        "actionKeys",
+        "children"
+      ],
+      "properties": {
+        "nodeKey": {
+          "type": "string"
+        },
+        "uiKey": {
+          "type": "string"
+        },
+        "parentUiKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "route": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "menu",
+            "tab",
+            "action"
+          ]
+        },
+        "icon": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "order": {
+          "type": "integer"
+        },
+        "isVisible": {
+          "type": "boolean"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "disabledReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "screenKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "actionKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/navigationNode"
+          }
+        }
+      }
+    },
+    "screen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "screenKey",
+        "uiKey",
+        "title",
+        "route",
+        "isVisible",
+        "isEnabled",
+        "actionKeys",
+        "layout",
+        "components"
+      ],
+      "properties": {
+        "screenKey": {
+          "type": "string"
+        },
+        "uiKey": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "route": {
+          "type": "string"
+        },
+        "isVisible": {
+          "type": "boolean"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "disabledReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dataSourceKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "actionKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/layout"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "template",
+        "areas"
+      ],
+      "properties": {
+        "template": {
+          "type": "string"
+        },
+        "areas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/layoutArea"
+          }
+        }
+      }
+    },
+    "layoutArea": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "areaKey",
+        "purpose",
+        "order"
+      ],
+      "properties": {
+        "areaKey": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer"
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "componentKey",
+        "uiKey",
+        "screenKey",
+        "componentType",
+        "slot",
+        "order",
+        "actionKeys",
+        "props"
+      ],
+      "properties": {
+        "componentKey": {
+          "type": "string"
+        },
+        "uiKey": {
+          "type": "string"
+        },
+        "screenKey": {
+          "type": "string"
+        },
+        "componentType": {
+          "type": "string"
+        },
+        "slot": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer"
+        },
+        "dataSourceKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "actionKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actionKey",
+        "uiKey",
+        "permissionName",
+        "label",
+        "route",
+        "actionType",
+        "isVisible",
+        "isEnabled"
+      ],
+      "properties": {
+        "actionKey": {
+          "type": "string"
+        },
+        "uiKey": {
+          "type": "string"
+        },
+        "permissionName": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "route": {
+          "type": "string"
+        },
+        "actionType": {
+          "type": "string"
+        },
+        "isVisible": {
+          "type": "boolean"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "disabledReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "targetScreenKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "dataSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataSourceKey",
+        "uiKey",
+        "screenKey",
+        "endpointPath",
+        "httpMethod"
+      ],
+      "properties": {
+        "dataSourceKey": {
+          "type": "string"
+        },
+        "uiKey": {
+          "type": "string"
+        },
+        "screenKey": {
+          "type": "string"
+        },
+        "endpointPath": {
+          "type": "string"
+        },
+        "httpMethod": {
+          "type": "string"
+        },
+        "requestModel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "responseModel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

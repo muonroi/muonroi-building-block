@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="muonroi-commercial" value="https://nuget.pkg.github.com/muonroi/index.json" />
+  </packageSources>
+  <packageSourceCredentials>
+    <muonroi-commercial>
+      <add key="Username" value="YOUR_GITHUB_USERNAME" />
+      <add key="ClearTextPassword" value="YOUR_PERSONAL_ACCESS_TOKEN" />
+    </muonroi-commercial>
+  </packageSourceCredentials>
+</configuration>

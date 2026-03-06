@@ -1,0 +1,20 @@
+1. Access the service:
+{{- if .Values.ingress.enabled }}
+  URL(s):
+{{- range .Values.ingress.hosts }}
+    - http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else }}
+  ClusterIP service:
+    kubectl get svc {{ include "muonroi-rule-engine.fullname" . }} -n {{ .Release.Namespace }}
+{{- end }}
+
+2. Check deployment status:
+  kubectl rollout status deployment/{{ include "muonroi-rule-engine.fullname" . }} -n {{ .Release.Namespace }}
+
+3. Run chart connectivity test:
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+4. Verify health endpoint:
+  kubectl port-forward svc/{{ include "muonroi-rule-engine.fullname" . }} 8080:{{ .Values.service.port }} -n {{ .Release.Namespace }}
+  curl http://localhost:8080/health/ready

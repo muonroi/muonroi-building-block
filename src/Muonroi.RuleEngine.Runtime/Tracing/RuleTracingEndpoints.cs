@@ -1,0 +1,62 @@
+namespace Muonroi.RuleEngine.Runtime.Tracing;
+
+public static class RuleTracingEndpoints
+{
+    public static IEndpointRouteBuilder MapRuleTracingEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        ArgumentNullException.ThrowIfNull(endpoints);
+
+        RouteGroupBuilder group = endpoints.MapGroup("/muonroi/rule-debugger");
+
+        group.MapPost(
+            "/{tenantId}/enable",
+            async Task<IResult> (
+                string tenantId,
+                EnableRuleDebuggerRequest? body,
+                IRuleDebuggerModeService service,
+                CancellationToken ct) =>
+            {
+                int durationMinutes = body?.DurationMinutes ?? 30;
+                if (durationMinutes <= 0)
+                {
+                    durationMinutes = 30;
+                }
+
+                await service.EnableAsync(tenantId, TimeSpan.FromMinutes(durationMinutes), ct);
+                return Results.Ok(new
+                {
+                    TenantId = tenantId,
+                    Enabled = true,
+                    DurationMinutes = durationMinutes
+                });
+            });
+
+        group.MapPost(
+            "/{tenantId}/disable",
+            async Task<IResult> (string tenantId, IRuleDebuggerModeService service, CancellationToken ct) =>
+            {
+                await service.DisableAsync(tenantId, ct);
+                return Results.Ok(new { TenantId = tenantId, Enabled = false });
+            });
+
+        group.MapGet(
+            "/{tenantId}/traces",
+            async Task<IResult> (
+                string tenantId,
+                string? correlationId,
+                DateTimeOffset? from,
+                IRuleTraceStore store,
+                CancellationToken ct) =>
+            {
+                IReadOnlyList<RuleTraceEntry> entries = await store.QueryAsync(tenantId, correlationId, from, ct);
+                return Results.Ok(entries);
+            });
+
+        return endpoints;
+    }
+
+    public sealed class EnableRuleDebuggerRequest
+    {
+        public int DurationMinutes { get; init; } = 30;
+    }
+}

@@ -1,0 +1,13 @@
+[
+  {
+    "WorkflowName": "login",
+    "Tenant": "default",
+    "Rules": [
+      "ValidateLoginInfo",
+      "LoadUser",
+      "CheckAccountLock",
+      "VerifyPassword",
+      "GenerateToken"
+    ]
+  }
+]

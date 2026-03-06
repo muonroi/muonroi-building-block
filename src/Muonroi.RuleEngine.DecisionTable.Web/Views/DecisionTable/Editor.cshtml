@@ -1,0 +1,20 @@
+@{
+    Layout = "~/Views/Shared/_DecisionTableLayout.cshtml";
+}
+
+<mu-decision-table
+    id="decision-table-container"
+    api-base="/api/v1/decision-tables"
+    validate-endpoint="/api/v1/decision-tables/{id}/validate"
+    export-endpoint="/api/v1/decision-tables/{id}/export/{format}"
+    feel-endpoint="/api/v1/feel/autocomplete"
+    history-endpoint="/api/v1/decision-tables/{id}/versions"
+    audit-endpoint="/api/v1/decision-tables/{id}/audit"
+    reorder-endpoint="/api/v1/decision-tables/{id}/rows/reorder"
+    max-rows="1000"
+    enable-excel-import="true"
+    enable-version-diff="true"
+    class="decision-table-editor">
+</mu-decision-table>
+
+<script src="~/assets/muonroi-rule-components.iife.js"></script>

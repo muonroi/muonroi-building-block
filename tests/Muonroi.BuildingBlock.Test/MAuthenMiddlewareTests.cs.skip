@@ -1,0 +1,165 @@
+namespace Muonroi.BuildingBlock.Test;
+
+public class MAuthenMiddlewareTests
+{
+    private static (MTokenInfo Info, MAuthenticateTokenHelper<TestPerm> Helper) CreateTokenHelper()
+    {
+        MTokenInfo info = new()
+        {
+            SigningKeys = "testkey123456789012345678901234567890",
+            Issuer = "issuer",
+            Audience = "audience",
+            ExpiryMinutes = 60,
+            RefreshTokenTtl = 5,
+            RefreshTokenEim = 5,
+            UseRsa = false,
+            MultiTenantEnabled = false
+        };
+        return (info, new MAuthenticateTokenHelper<TestPerm>(info));
+    }
+
+    private static bool InvokeIsAllowAnonymous(HttpContext ctx)
+    {
+        var mi = typeof(MAuthenMiddleware<TestDbContext, TestPerm>)
+            .GetMethod("IsAllowAnonymous", BindingFlags.NonPublic | BindingFlags.Static)!;
+        return (bool)mi.Invoke(null, [ctx])!;
+    }
+
+    [Fact]
+    public void Constructor_Allows_Null_Dependencies()
+    {
+        MAuthenMiddleware<TestDbContext, TestPerm> mw = new(null!, null!, null!);
+        Assert.NotNull(mw);
+    }
+
+    [Fact]
+    public void Constructor_With_Valid_Dependencies()
+    {
+        var opt = new DbContextOptionsBuilder<TestDbContext>().UseInMemoryDatabase("ctor_db").Options;
+        using TestDbContext db = new(opt);
+        MAuthenMiddleware<TestDbContext, TestPerm> mw = new(db,
+            new MultiLevelCacheService(new MemoryCache(new MemoryCacheOptions()), new InMemoryDistributedCache()),
+            new NullSerilogLogger());
+        Assert.NotNull(mw);
+    }
+
+    [Fact]
+    public void IsAllowAnonymous_Returns_True_For_Anonymous_Endpoint()
+    {
+        DefaultHttpContext ctx = new();
+        Endpoint endpoint = new(_ => Task.CompletedTask, new EndpointMetadataCollection(new AllowAnonymousAttribute()),
+            "t");
+        ctx.SetEndpoint(endpoint);
+        Assert.True(InvokeIsAllowAnonymous(ctx));
+    }
+
+    [Fact]
+    public void IsAllowAnonymous_Returns_False_For_Authorized_Endpoint()
+    {
+        DefaultHttpContext ctx = new();
+        Endpoint endpoint = new(_ => Task.CompletedTask, new EndpointMetadataCollection(new AuthorizeAttribute()), "t");
+        ctx.SetEndpoint(endpoint);
+        Assert.False(InvokeIsAllowAnonymous(ctx));
+    }
+
+    [Fact]
+    public void IsAllowAnonymous_Returns_False_When_No_Endpoint()
+    {
+        DefaultHttpContext ctx = new();
+        Assert.False(InvokeIsAllowAnonymous(ctx));
+    }
+
+    [Fact]
+    public void IsAllowAnonymous_Default_True_When_No_Attributes()
+    {
+        DefaultHttpContext ctx = new();
+        Endpoint endpoint = new(_ => Task.CompletedTask, new EndpointMetadataCollection(), "t");
+        ctx.SetEndpoint(endpoint);
+        Assert.True(InvokeIsAllowAnonymous(ctx));
+    }
+
+    [Fact]
+    public async Task InvokeAsync_Valid_Token_Calls_Next()
+    {
+        TenantContext.CurrentTenantId = "t";
+        var opt = new DbContextOptionsBuilder<TestDbContext>().UseInMemoryDatabase("invoke_valid").Options;
+        using TestDbContext db = new(opt);
+        MUser user = new() { UserName = "u", EmailAddress = "u@a.com", Name = "n", Surname = "s", Password = "p" };
+        await db.Users.AddAsync(user);
+        await db.SaveChangesAsync();
+        var (_, helper) = CreateTokenHelper();
+        var validity = Guid.NewGuid().ToString();
+        MUserModel model = new(user.EntityId.ToString(), user.UserName, validity, null);
+        List<Claim> extra = [new(ClaimConstants.TokenValidityKey, validity)];
+        var token = helper.GenerateAuthenticateToken(model, [TestPerm.Read], extra);
+        MRefreshToken refresh = new()
+        {
+            Token = "r",
+            TokenValidityKey = validity,
+            CreatorUserId = user.EntityId,
+            CreationTime = Clock.UtcNow,
+            LastUsedDate = Clock.UtcNow,
+            ExpiredDate = Clock.UtcNow.AddMinutes(10)
+        };
+        await db.RefreshTokens.AddAsync(refresh);
+        await db.SaveChangesAsync();
+        DefaultHttpContext ctx = new();
+        ctx.Request.Headers.Authorization = token;
+        MultiLevelCacheService cache = new(new MemoryCache(new MemoryCacheOptions()), new InMemoryDistributedCache());
+        var called = false;
+
+        Task Next(HttpContext c)
+        {
+            called = true;
+            return Task.CompletedTask;
+        }
+
+        MAuthenMiddleware<TestDbContext, TestPerm> mw = new(db, cache, new NullSerilogLogger());
+        await mw.InvokeAsync(ctx, Next);
+        Assert.True(called);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_Invalid_Token_Does_Not_Call_Next()
+    {
+        TenantContext.CurrentTenantId = "t";
+        var opt = new DbContextOptionsBuilder<TestDbContext>().UseInMemoryDatabase("invoke_invalid").Options;
+        using TestDbContext db = new(opt);
+        DefaultHttpContext ctx = new();
+        ctx.Request.Headers.Authorization = "Bearer invalid";
+        MultiLevelCacheService cache = new(new MemoryCache(new MemoryCacheOptions()), new InMemoryDistributedCache());
+        var called = false;
+
+        Task Next(HttpContext c)
+        {
+            called = true;
+            return Task.CompletedTask;
+        }
+
+        MAuthenMiddleware<TestDbContext, TestPerm> mw = new(db, cache, new NullSerilogLogger());
+        await mw.InvokeAsync(ctx, Next);
+        Assert.False(called);
+        Assert.Equal(StatusCodes.Status401Unauthorized, ctx.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_Missing_Header_Sets_401()
+    {
+        var opt = new DbContextOptionsBuilder<TestDbContext>().UseInMemoryDatabase("invoke_missing").Options;
+        using TestDbContext db = new(opt);
+        DefaultHttpContext ctx = new();
+        MultiLevelCacheService cache = new(new MemoryCache(new MemoryCacheOptions()), new InMemoryDistributedCache());
+        var called = false;
+
+        Task Next(HttpContext c)
+        {
+            called = true;
+            return Task.CompletedTask;
+        }
+
+        MAuthenMiddleware<TestDbContext, TestPerm> mw = new(db, cache, new NullSerilogLogger());
+        await mw.InvokeAsync(ctx, Next);
+        Assert.False(called);
+        Assert.Equal(StatusCodes.Status401Unauthorized, ctx.Response.StatusCode);
+    }
+}

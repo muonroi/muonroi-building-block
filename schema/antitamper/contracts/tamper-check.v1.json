@@ -1,0 +1,31 @@
+{
+  "name": "anti-tamper-check",
+  "version": 1,
+  "required": [
+    "scope",
+    "status",
+    "tenantId",
+    "durationMs",
+    "detected"
+  ],
+  "properties": {
+    "scope": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "actionType": {
+      "type": "string"
+    },
+    "durationMs": {
+      "type": "number"
+    },
+    "detected": {
+      "type": "boolean"
+    }
+  }
+}

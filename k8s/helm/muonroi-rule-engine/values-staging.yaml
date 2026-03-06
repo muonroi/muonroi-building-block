@@ -1,0 +1,34 @@
+replicaCount: 2
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 65
+
+ingress:
+  enabled: true
+  hosts:
+    - host: rule-engine-staging.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: rule-engine-staging-tls
+      hosts:
+        - rule-engine-staging.example.com
+
+config:
+  license:
+    mode: Offline
+    tier: Professional
+  telemetry:
+    enabled: true
+
+resources:
+  requests:
+    cpu: 350m
+    memory: 384Mi
+  limits:
+    cpu: 800m
+    memory: 768Mi

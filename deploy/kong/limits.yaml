@@ -1,0 +1,23 @@
+_format_version: "3.0"
+
+consumers:
+  - username: tenant-a
+  - username: tenant-b
+
+plugins:
+  - name: rate-limiting
+    consumer:
+      username: tenant-a
+    config:
+      minute: 1000
+      policy: local
+    tags:
+      - tenant-a
+  - name: rate-limiting
+    consumer:
+      username: tenant-b
+    config:
+      minute: 500
+      policy: local
+    tags:
+      - tenant-b

@@ -1,0 +1,14 @@
+global using Microsoft.AspNetCore.Builder;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.SignalR;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.Extensions.Hosting;
+global using Microsoft.AspNetCore.Routing;
+global using Microsoft.Extensions.DependencyInjection.Extensions;
+global using Muonroi.Core.Abstractions.Constants;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.Core.Abstractions.Models;
+global using Muonroi.RuleEngine.Abstractions;
+global using Muonroi.RuleEngine.Runtime.Rules;
+global using System.Security.Claims;
+global using System.Text.Json;

@@ -1,0 +1,98 @@
+{
+  "name": "muonroi-rulegen-vscode",
+  "displayName": "Muonroi RuleGen",
+  "description": "VS Code helpers for Muonroi RuleGen with premium license-gated capabilities.",
+  "publisher": "muonroi",
+  "version": "2.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muonroi/MuonroiBuildingBlock.git"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:csharp",
+    "onCommand:muonroi.activateLicense",
+    "onCommand:muonroi.publishRuleset",
+    "onCommand:muonroi.watchMode",
+    "onCommand:muonroi.ruleExplorer"
+  ],
+  "scripts": {
+    "package": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "muonroi.rulegen.extractAll",
+        "title": "Muonroi RuleGen: Extract All Rules"
+      },
+      {
+        "command": "muonroi.rulegen.watch",
+        "title": "Muonroi RuleGen: Start Rule Watcher"
+      },
+      {
+        "command": "muonroi.rulegen.gotoRule",
+        "title": "Muonroi RuleGen: Go to Generated Rule"
+      },
+      {
+        "command": "muonroi.activateLicense",
+        "title": "Muonroi: Activate License"
+      },
+      {
+        "command": "muonroi.publishRuleset",
+        "title": "Muonroi: Publish Ruleset to Control Plane"
+      },
+      {
+        "command": "muonroi.watchMode",
+        "title": "Muonroi: Enable Watch Mode (hot-reload)"
+      },
+      {
+        "command": "muonroi.ruleExplorer",
+        "title": "Muonroi: Open Rule Explorer"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "muonroiRuleExplorer",
+          "name": "Muonroi Rule Explorer",
+          "when": "muonroi.ruleExplorerEnabled"
+        }
+      ]
+    },
+    "snippets": [
+      {
+        "language": "csharp",
+        "path": "./snippets/muonroi-rules.code-snippets"
+      }
+    ],
+    "codeLensProviders": [
+      {
+        "language": "csharp"
+      }
+    ],
+    "configuration": {
+      "title": "Muonroi",
+      "properties": {
+        "muonroi.licenseKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your Muonroi license key (MRR-...)."
+        },
+        "muonroi.controlPlaneUrl": {
+          "type": "string",
+          "default": "https://cp.muonroi.com",
+          "description": "URL of your Muonroi Control Plane instance (Enterprise)."
+        },
+        "muonroi.licenseServerUrl": {
+          "type": "string",
+          "default": "https://license.muonroi.com",
+          "description": "License Server URL (self-host override supported)."
+        }
+      }
+    }
+  }
+}

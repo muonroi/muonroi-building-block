@@ -1,0 +1,37 @@
+{
+  "name": "audit-trail-chain-entry",
+  "version": 1,
+  "required": [
+    "sequence",
+    "timestamp",
+    "tenantId",
+    "actionType",
+    "signature"
+  ],
+  "properties": {
+    "sequence": {
+      "type": "integer"
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "actionType": {
+      "type": "string"
+    },
+    "actionName": {
+      "type": "string"
+    },
+    "payloadHash": {
+      "type": "string"
+    },
+    "previousSignature": {
+      "type": "string"
+    },
+    "signature": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,47 @@
+<Project>
+  <PropertyGroup>
+    <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
+    <NoWarn>$(NoWarn);NU1605</NoWarn>
+    <EnforceExtendedAnalyzerRules Condition="'$(MSBuildProjectName)' == 'Muonroi.RuleEngine.SourceGenerators'">true</EnforceExtendedAnalyzerRules>
+    <!-- OSS default - commercial packages override this in their .csproj -->
+    <PackageLicenseFile>LICENSE-APACHE</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/muonroi/MuonroiBuildingBlock</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/muonroi/MuonroiBuildingBlock</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Authors>Le Anh Phi</Authors>
+    <Company>Muonroi Framework</Company>
+    <Copyright>Copyright (c) 2024-2026 Le Anh Phi</Copyright>
+
+    <!-- NuGet publish quality -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageTags>muonroi;dotnet;framework;building-block;microservices;multi-tenancy</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsCommercialPackage)' != 'true'">
+    <None Include="$(MSBuildThisFileDirectory)LICENSE-APACHE"
+          Pack="true" PackagePath="\"
+          />
+    <None Include="$(MSBuildThisFileDirectory)README.md"
+          Pack="true" PackagePath="\"
+          Condition="Exists('$(MSBuildThisFileDirectory)README.md')" />
+    <None Include="$(MSBuildThisFileDirectory)icon.png"
+          Pack="true" PackagePath="\"
+          Condition="Exists('$(MSBuildThisFileDirectory)icon.png')" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsCommercialPackage)' == 'true'">
+    <None Include="$(MSBuildThisFileDirectory)LICENSE-COMMERCIAL"
+          Pack="true" PackagePath="\"
+          />
+    <None Include="$(MSBuildThisFileDirectory)README.md"
+          Pack="true" PackagePath="\"
+          Condition="Exists('$(MSBuildThisFileDirectory)README.md')" />
+    <None Include="$(MSBuildThisFileDirectory)icon.png"
+          Pack="true" PackagePath="\"
+          Condition="Exists('$(MSBuildThisFileDirectory)icon.png')" />
+  </ItemGroup>
+</Project>

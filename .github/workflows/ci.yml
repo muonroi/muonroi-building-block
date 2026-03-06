@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+      - develop
+      - main
+  pull_request:
+    branches:
+      - dev
+      - master
+      - develop
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+
+      - name: Proto Governance (Buf lint + breaking)
+        run: bash scripts/buf-check.sh
+
+      - name: Message Bus Contract Governance
+        run: bash scripts/check-messagebus-contracts.sh
+
+      - name: Message Bus SLO Gate (optional)
+        if: ${{ hashFiles('schema/messagebus/metrics/current.json') != '' }}
+        run: pwsh ./scripts/check-messagebus-slo.ps1 -CurrentMetricsPath schema/messagebus/metrics/current.json -BaselineMetricsPath schema/messagebus/metrics/baseline.json
+
+      - name: Distributed Cache Contract Governance
+        run: bash scripts/check-distributed-cache-contracts.sh
+
+      - name: Distributed Cache SLO Gate (optional)
+        if: ${{ hashFiles('schema/distributedcache/metrics/current.json') != '' }}
+        run: pwsh ./scripts/check-distributed-cache-slo.ps1 -CurrentMetricsPath schema/distributedcache/metrics/current.json -BaselineMetricsPath schema/distributedcache/metrics/baseline.json
+
+      - name: Audit Trail Contract Governance
+        run: bash scripts/check-audittrail-contracts.sh
+
+      - name: Audit Trail SLO Gate (optional)
+        if: ${{ hashFiles('schema/audittrail/metrics/current.json') != '' }}
+        run: pwsh ./scripts/check-audittrail-slo.ps1 -CurrentMetricsPath schema/audittrail/metrics/current.json -BaselineMetricsPath schema/audittrail/metrics/baseline.json
+
+      - name: Anti-Tampering Contract Governance
+        run: bash scripts/check-antitamper-contracts.sh
+
+      - name: Anti-Tampering SLO Gate (optional)
+        if: ${{ hashFiles('schema/antitamper/metrics/current.json') != '' }}
+        run: pwsh ./scripts/check-antitamper-slo.ps1 -CurrentMetricsPath schema/antitamper/metrics/current.json -BaselineMetricsPath schema/antitamper/metrics/baseline.json
+
+      - name: Restore
+        run: dotnet restore Muonroi.BuildingBlock.sln
+
+      - name: Modular Boundary Check
+        run: pwsh ./scripts/check-modular-boundaries.ps1 -RepoRoot .
+
+      - name: Build
+        run: dotnet build Muonroi.BuildingBlock.sln --configuration Release --no-restore
+
+      - name: Test BuildingBlock Unit Suite
+        run: dotnet test tests/Muonroi.BuildingBlock.Test/Muonroi.BuildingBlock.Test.csproj --configuration Release --no-build --verbosity minimal
+
+      - name: Test Tenancy Suite
+        run: dotnet test tests/Tenancy/Muonroi.Tenancy.Tests.csproj --configuration Release --no-build --verbosity minimal

@@ -1,0 +1,31 @@
+{
+  "name": "distributed-cache-operation",
+  "version": 1,
+  "required": [
+    "operation",
+    "layer",
+    "status",
+    "tenantId",
+    "durationMs"
+  ],
+  "properties": {
+    "operation": {
+      "type": "string"
+    },
+    "layer": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "durationMs": {
+      "type": "number"
+    },
+    "hit": {
+      "type": "boolean"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+apiVersion: v2
+name: muonroi-rule-engine
+description: Helm chart for Muonroi Rule Engine with decision table, FEEL, and multi-tenant quota support
+type: application
+version: 1.0.0
+appVersion: "2.0.0"
+keywords:
+  - rule-engine
+  - decision-table
+  - dmn
+  - feel
+  - multi-tenant
+home: https://github.com/muonroi/MuonroiBuildingBlock
+sources:
+  - https://github.com/muonroi/MuonroiBuildingBlock
+maintainers:
+  - name: Muonroi Team
+    email: support@muonroi.com
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: "17.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled

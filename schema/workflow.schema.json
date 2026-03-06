@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["id", "hitPolicy", "rules"],
+  "properties": {
+    "id": { "type": "string" },
+    "hitPolicy": { "type": "string", "enum": ["FIRST", "UNIQUE"] },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "range", "outputs"],
+        "properties": {
+          "id": { "type": "string" },
+          "range": {
+            "type": "object",
+            "required": ["min", "max"],
+            "properties": {
+              "min": { "type": "number" },
+              "max": { "type": "number" }
+            }
+          },
+          "outputs": { "type": "object", "minProperties": 1 }
+        }
+      }
+    }
+  }
+}

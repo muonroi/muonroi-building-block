@@ -1,0 +1,57 @@
+namespace Muonroi.RuleEngine.Core.Tests;
+
+public class RuleEngineTelemetryTests
+{
+    private sealed class DummyRule : IRule<string>
+    {
+        public string Name => "Dummy";
+        public IEnumerable<Type> Dependencies => [];
+        public string Code => "D1";
+        public int Order => 0;
+        public IReadOnlyList<string> DependsOn => [];
+        public HookPoint HookPoint => HookPoint.BeforePersist;
+        public RuleType Type => RuleType.Validation;
+
+        public Task ExecuteAsync(string context, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task<RuleResult> EvaluateAsync(string ctx, FactBag facts, CancellationToken ct)
+        {
+            return Task.FromResult(RuleResult.Passed());
+        }
+    }
+
+    [Fact]
+    public async Task RulesFiredCounter_Increments_WhenRuleExecuted()
+    {
+        using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter("Muonroi.RuleEngine")
+            .AddOtlpExporter(o =>
+            {
+                o.Endpoint = new Uri("http://localhost:4317");
+                o.ExportProcessorType = ExportProcessorType.Simple;
+            })
+            .Build();
+
+        long fired = 0;
+        using MeterListener listener = new();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == "Muonroi.RuleEngine" && instrument.Name == "rules.fired")
+                l.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((_, measurement, _, _) => fired += measurement);
+        listener.Start();
+
+        DummyRule rule = new();
+        RuleOrchestrator<string> orchestrator = new([rule], [], null, Array.Empty<IRuleEventListener<string>>());
+        await orchestrator.ExecuteAsync("ctx");
+
+        listener.Dispose();
+        meterProvider.ForceFlush();
+
+        Assert.Equal(1, fired);
+    }
+}

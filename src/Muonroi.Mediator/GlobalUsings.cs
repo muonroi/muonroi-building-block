@@ -1,0 +1,11 @@
+global using FluentValidation;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.Mapper.Interfaces;
+global using System;
+global using System.Collections.Generic;
+global using System.Diagnostics;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;

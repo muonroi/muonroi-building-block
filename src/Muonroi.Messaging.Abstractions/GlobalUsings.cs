@@ -1,0 +1,9 @@
+global using Microsoft.Extensions.DependencyInjection;
+global using Muonroi.Core.Abstractions.SeedWorks;
+global using Muonroi.Core.Abstractions.Response;
+global using Muonroi.Core.Abstractions.Models;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;

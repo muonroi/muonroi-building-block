@@ -1,0 +1,6 @@
+apiVersion: v2
+name: broker
+description: Sample message broker chart
+version: 0.1.0
+appVersion: "1.0.0"
+type: application

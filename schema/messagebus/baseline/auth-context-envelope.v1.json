@@ -1,0 +1,24 @@
+{
+  "name": "auth-context-envelope",
+  "version": 1,
+  "required": [
+    "correlationId"
+  ],
+  "properties": {
+    "correlationId": {
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    },
+    "username": {
+      "type": "string"
+    },
+    "accessToken": {
+      "type": "string"
+    }
+  }
+}
