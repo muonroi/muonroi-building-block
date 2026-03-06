@@ -1,0 +1,11 @@
+global using FluentAssertions;
+global using Microsoft.Extensions.DependencyInjection;
+global using System;
+global using System.Collections.Generic;
+global using System.Reflection;
+global using System.Runtime.CompilerServices;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Muonroi.Mediator.Mediator;
+global using Muonroi.Mediator.Mediator.Interfaces;
+global using Xunit;

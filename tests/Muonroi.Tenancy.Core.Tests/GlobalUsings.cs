@@ -1,0 +1,9 @@
+global using FluentAssertions;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.Extensions.Options;
+global using System;
+global using System.Collections.Generic;
+global using System.Security.Claims;
+global using System.Threading.Tasks;
+global using Muonroi.Core.Abstractions.Constants;
+global using Xunit;
