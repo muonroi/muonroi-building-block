@@ -24,7 +24,16 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(Options.Create(options));
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
 
-        if (!string.IsNullOrWhiteSpace(options.SqlServerConnectionString))
+        if (!string.IsNullOrWhiteSpace(options.PostgresConnectionString))
+        {
+            services.AddDbContext<DecisionTableDbContext>((_, db) =>
+            {
+                db.UseNpgsql(options.PostgresConnectionString);
+            });
+            services.AddScoped<IDecisionTableStore, EfCoreDecisionTableStore>();
+            services.AddHostedService<DecisionTableDatabaseMigrator>();
+        }
+        else if (!string.IsNullOrWhiteSpace(options.SqlServerConnectionString))
         {
             services.AddDbContext<DecisionTableDbContext>((_, db) =>
             {

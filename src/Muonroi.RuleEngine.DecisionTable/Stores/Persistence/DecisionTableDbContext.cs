@@ -34,7 +34,7 @@ internal sealed class DecisionTableDbContext(
             entity.Property(x => x.Name).HasMaxLength(256);
             entity.Property(x => x.HitPolicy).HasMaxLength(64);
             entity.Property(x => x.TenantId).HasMaxLength(128);
-            entity.Property(x => x.PayloadJson).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.PayloadJson);
             entity.HasIndex(x => x.ModifiedAt);
             entity.HasIndex(x => new { x.TenantId, x.IsDeleted });
             entity.HasIndex(x => new { x.HitPolicy, x.IsDeleted });
@@ -48,7 +48,7 @@ internal sealed class DecisionTableDbContext(
             entity.Property(x => x.ChangeType).HasMaxLength(64);
             entity.Property(x => x.Actor).HasMaxLength(256);
             entity.Property(x => x.Reason).HasMaxLength(512);
-            entity.Property(x => x.PayloadJson).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.PayloadJson);
             entity.HasIndex(x => new { x.TableId, x.Version }).IsUnique();
             entity.HasIndex(x => new { x.TableId, x.Timestamp });
         });
@@ -60,7 +60,7 @@ internal sealed class DecisionTableDbContext(
             entity.Property(x => x.Action).HasMaxLength(64);
             entity.Property(x => x.Actor).HasMaxLength(256);
             entity.Property(x => x.Reason).HasMaxLength(512);
-            entity.Property(x => x.PayloadJson).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.PayloadJson);
             entity.HasIndex(x => new { x.TableId, x.Timestamp });
             entity.HasIndex(x => x.Timestamp);
         });
