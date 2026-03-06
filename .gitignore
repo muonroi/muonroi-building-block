@@ -400,3 +400,5 @@ tools/private.pem
 tools/public.pem
 tools/MockLicenseServer/server_private_key.pem
 tools/MockLicenseServer/server_public_key.pem
+*.pem
+*.snk
