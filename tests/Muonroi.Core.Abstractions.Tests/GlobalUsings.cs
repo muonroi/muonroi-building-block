@@ -1,0 +1,11 @@
+global using FluentAssertions;
+global using System;
+global using System.Collections.Generic;
+global using System.Globalization;
+global using System.Security.Claims;
+global using System.Text;
+global using System.Text.Json;
+global using Muonroi.Core.Abstractions.Models;
+global using Muonroi.Core.Abstractions.SeedWorks;
+global using Muonroi.Core.Abstractions.Serialization;
+global using Xunit;

@@ -1,0 +1,11 @@
+global using FluentAssertions;
+global using Microsoft.Extensions.Caching.Distributed;
+global using Microsoft.Extensions.Caching.Memory;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Muonroi.Caching.Memory.MultiLevel;
+global using Muonroi.Tenancy.Core;
+global using Xunit;
