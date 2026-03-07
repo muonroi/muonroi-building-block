@@ -25,7 +25,9 @@ public sealed class UiEngineCapabilityResolver(IEnumerable<IUiEngineManifestCont
             }
         }
 
-        foreach ((string moduleId, TenantTier requiredTier) in moduleTiers.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+        foreach ((string moduleId, TenantTier requiredTier) in moduleTiers
+            .Where(x => !string.Equals(x.Key, "rule-engine", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
         {
             capabilities.Add(new MUiEngineCapability
             {
@@ -38,13 +40,13 @@ public sealed class UiEngineCapabilityResolver(IEnumerable<IUiEngineManifestCont
 
         if (moduleTiers.Count > 0)
         {
-            TenantTier minTier = moduleTiers.Values.Min();
+            TenantTier ruleEngineTier = moduleTiers.TryGetValue("rule-engine", out TenantTier t) ? t : moduleTiers.Values.Min();
             capabilities.Insert(0, new MUiEngineCapability
             {
                 CapabilityKey = "rule-engine",
                 DisplayName = "Rule Engine",
-                RequiredTier = minTier.ToString(),
-                IsEnabled = tenantTier >= minTier
+                RequiredTier = ruleEngineTier.ToString(),
+                IsEnabled = tenantTier >= ruleEngineTier
             });
         }
 

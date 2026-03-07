@@ -1,0 +1,13 @@
+global using MassTransit;
+global using MassTransit.Configuration;
+global using Muonroi.Core.Abstractions.Constants;
+global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.Messaging.MassTransit.Messaging;
+global using NSubstitute;
+global using System;
+global using System.Collections.Generic;
+global using System.IO;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Xunit;
