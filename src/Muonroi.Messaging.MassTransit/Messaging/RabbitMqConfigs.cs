@@ -19,4 +19,8 @@ public class RabbitMqConfigs
     public int HeartbeatSeconds { get; set; } = 30;
 
     public bool PublisherConfirmation { get; set; } = true;
+
+    public string DeadLetterExchange { get; set; } = string.Empty;
+
+    public bool UseQuorumQueues { get; set; } = false;
 }

@@ -19,4 +19,6 @@ public class KafkaConfigs
     public string SaslUsername { get; set; } = string.Empty;
 
     public string SaslPassword { get; set; } = string.Empty;
+
+    public string DeadLetterTopic { get; set; } = string.Empty;
 }

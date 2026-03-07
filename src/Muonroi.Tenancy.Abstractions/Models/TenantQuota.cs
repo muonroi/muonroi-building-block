@@ -15,6 +15,8 @@ public sealed class TenantQuota
     public int MaxRuleComplexity { get; set; } = 10;
     public int MaxWorkflowSizeKB { get; set; } = 500;
     public int MaxExecutionTimeMs { get; set; } = 5000;
+    public int MaxMessagesPerDay { get; set; } = 10_000;
+    public int MaxMessagesPerMinute { get; set; } = 500;
     public TenantTier Tier { get; set; } = TenantTier.Free;
 }
 
@@ -46,7 +48,9 @@ public static class TenantQuotaPresets
                 MaxWorkflowExecutionsPerHour = 100,
                 MaxRuleComplexity = 5,
                 MaxWorkflowSizeKB = 50,
-                MaxExecutionTimeMs = 1000
+                MaxExecutionTimeMs = 1000,
+                MaxMessagesPerDay = 1000,
+                MaxMessagesPerMinute = 50
             };
             return free;
         }
@@ -70,7 +74,9 @@ public static class TenantQuotaPresets
                 MaxWorkflowExecutionsPerHour = 1000,
                 MaxRuleComplexity = 10,
                 MaxWorkflowSizeKB = 200,
-                MaxExecutionTimeMs = 3000
+                MaxExecutionTimeMs = 3000,
+                MaxMessagesPerDay = 10_000,
+                MaxMessagesPerMinute = 200
             };
             return quota;
         }
@@ -94,7 +100,9 @@ public static class TenantQuotaPresets
                 MaxWorkflowExecutionsPerHour = 10_000,
                 MaxRuleComplexity = 20,
                 MaxWorkflowSizeKB = 1000,
-                MaxExecutionTimeMs = 10_000
+                MaxExecutionTimeMs = 10_000,
+                MaxMessagesPerDay = 100_000,
+                MaxMessagesPerMinute = 1000
             };
             return quota;
         }
@@ -118,7 +126,9 @@ public static class TenantQuotaPresets
                 MaxWorkflowExecutionsPerHour = int.MaxValue,
                 MaxRuleComplexity = int.MaxValue,
                 MaxWorkflowSizeKB = int.MaxValue,
-                MaxExecutionTimeMs = 60_000
+                MaxExecutionTimeMs = 60_000,
+                MaxMessagesPerDay = int.MaxValue,
+                MaxMessagesPerMinute = int.MaxValue
             };
             return quota;
         }

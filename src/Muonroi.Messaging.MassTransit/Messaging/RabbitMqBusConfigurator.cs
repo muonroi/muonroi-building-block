@@ -16,11 +16,13 @@ public class RabbitMqBusConfigurator : IBusConfigurator
 
         configurator.UsingRabbitMq((context, cfg) =>
         {
-            cfg.Host(rabbit.Host, rabbit.VirtualHost, h =>
+            cfg.Host(rabbit.Host, (ushort)rabbit.Port, rabbit.VirtualHost, h =>
             {
                 h.Username(rabbit.Username);
                 h.Password(rabbit.Password);
+                h.Heartbeat(TimeSpan.FromSeconds(rabbit.HeartbeatSeconds));
                 h.PublisherConfirmation = rabbit.PublisherConfirmation;
+                
                 if (rabbit.UseSsl)
                 {
                     h.UseSsl(s =>
@@ -32,6 +34,12 @@ public class RabbitMqBusConfigurator : IBusConfigurator
                     });
                 }
             });
+
+            if (rabbit.UseQuorumQueues)
+            {
+                cfg.SetQuorumQueue();
+            }
+
             cfg.ConfigureEndpoints(context);
         });
     }
