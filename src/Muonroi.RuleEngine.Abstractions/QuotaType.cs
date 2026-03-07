@@ -10,5 +10,7 @@ public enum QuotaType
     StorageUsageMB,
     TotalRules,
     TotalDecisionTables,
-    TotalWorkflows
+    TotalWorkflows,
+    MessagesPerDay,
+    MessagesPerMinute
 }

@@ -42,9 +42,17 @@ public static class MassTransitHandler
 
             x.AddConsumeFilter(typeof(AmqpContextConsumeFilter<>));
             x.AddConsumeFilter(typeof(TenantContextConsumeFilter<>));
+            x.AddConsumeFilter(typeof(RuleEngineRoutingFilter<>));
             x.AddConsumeFilter(typeof(EcsConsumeLoggingFilter<>));
+            
+            x.AddPublishFilter(typeof(MuonroiContextPublishFilter<>));
+            x.AddPublishFilter(typeof(TenantQuotaMessagingFilter<>));
             x.AddPublishFilter(typeof(EcsPublishLoggingFilter<>));
+            
+            x.AddSendFilter(typeof(MuonroiContextSendFilter<>));
+            x.AddSendFilter(typeof(TenantQuotaMessagingFilter<>));
             x.AddSendFilter(typeof(EcsSendLoggingFilter<>));
+            
             x.ApplyRuntimePolicies(configs.Runtime);
 
             configure?.Invoke(x);
@@ -78,6 +86,17 @@ public static class MassTransitHandler
                 break;
         }
 
+        return services;
+    }
+
+    public static IServiceCollection AddOutboxRelay(this IServiceCollection services)
+    {
+        // Register as singleton first so it can be resolved by concrete type for IOutboxRelayService.
+        // AddHostedService<T> only registers as IHostedService — GetRequiredService<T> would fail
+        // without the explicit singleton registration below.
+        services.AddSingleton<OutboxRelayBackgroundService>();
+        services.AddHostedService(sp => sp.GetRequiredService<OutboxRelayBackgroundService>());
+        services.TryAddTransient<IOutboxRelayService>(sp => sp.GetRequiredService<OutboxRelayBackgroundService>());
         return services;
     }
 }
