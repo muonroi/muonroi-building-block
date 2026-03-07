@@ -71,6 +71,51 @@
 
 ---
 
+## 0. Workspace
+
+The workspace root is the **common parent directory** of all repos. The exact absolute path differs per machine — **never hardcode it**.
+
+**Detect workspace root at runtime:**
+```shell
+# Bash / Git Bash (from inside any repo):
+workspace=$(dirname "$(git rev-parse --show-toplevel)")
+
+# PowerShell (from inside any repo):
+$workspace = Split-Path (git rev-parse --show-toplevel) -Parent
+```
+
+**Structure** — identical on all machines; only the drive letter or parent path differs:
+```
+<workspace-root>/
+├── muonroi-building-block/          ← .NET library packages (OSS + Commercial)
+├── muonroi-ui-engine/               ← TypeScript UI libraries (OSS + Commercial)
+├── muonroi-control-plane/           ← SaaS Control Plane (private)
+├── muonroi-license-server/          ← License Server (private)
+├── Muonroi.BaseTemplate/            ← Dotnet base project template
+├── Muonroi.Modular.Template/        ← Modular monolith template
+├── Muonroi.Microservices.Template/  ← Microservices template
+├── Docs/
+│   └── muonroi-docs/                ← System-wide documentation (Docusaurus, branch: main)
+├── GodProject/                      ← Legacy monolith (read-only reference)
+├── LocalNuget/                      ← Local NuGet feed output
+├── LocalNuGetFeed/                  ← Local NuGet feed (alternate)
+└── _tmp/                            ← Temp/debug artifacts (never commit)
+```
+
+**Default branches:**
+- `muonroi-building-block`, `muonroi-ui-engine`, `muonroi-control-plane`, `muonroi-license-server` → **`develop`**
+- `Muonroi.BaseTemplate`, `Muonroi.Modular.Template`, `Muonroi.Microservices.Template`, `muonroi-docs` → **`main`**
+
+**Docs update rule:**
+> When implementing a new feature or changing existing API/behavior, you **MUST** update or add documentation in `<workspace-root>/Docs/muonroi-docs/docs/`:
+> - `03-guides/` — feature guides, integration how-to
+> - `05-reference/` — API and interface reference
+> - `06-resources/` — CHANGELOG, migration guides
+
+> ⚠️ Never hardcode absolute paths in plans, scripts, or agent instructions. Always derive `<workspace-root>` at runtime.
+
+---
+
 ## 2. Repository Responsibilities
 
 ### 2.1 `muonroi-building-block` (public)

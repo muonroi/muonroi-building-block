@@ -80,29 +80,38 @@ Legacy repos still active:
 
 ## Workspace Layout
 
-Root: `D:\sources\Core`
+Root: **the common parent directory of all repos** — differs per machine, never hardcode it.
 
-Allowed top-level folders:
-1. Repos: `muonroi-building-block`, `muonroi-ui-engine`, `muonroi-control-plane`, `muonroi-license-server`, `Muonroi.BaseTemplate`, `Muonroi.Modular.Template`, `Muonroi.Microservices.Template`, `Muonroi.Docs`
-2. Local package feeds: `LocalNuget`, `LocalNuGetFeed`
-3. Temporary workspace: `_tmp`
-4. Legacy/snapshot: `GodProject`, `CompanyLibs`, `Templates`, `Testing`, `Docs`
+**Detect workspace root at runtime:**
+```shell
+# Bash / Git Bash:
+workspace=$(dirname "$(git rev-parse --show-toplevel)")
+# PowerShell:
+$workspace = Split-Path (git rev-parse --show-toplevel) -Parent
+```
+
+Allowed top-level folders under `<workspace-root>/`:
+1. Repos: `muonroi-building-block`, `muonroi-ui-engine`, `muonroi-control-plane`, `muonroi-license-server`, `Muonroi.BaseTemplate`, `Muonroi.Modular.Template`, `Muonroi.Microservices.Template`
+2. Docs: `Docs/muonroi-docs/`
+3. Local package feeds: `LocalNuget`, `LocalNuGetFeed`
+4. Temporary workspace: `_tmp`
+5. Legacy/snapshot: `GodProject`
 
 Rules:
 - Never create ad-hoc folders at root for debug/verify.
-- Generated verification projects → `D:\sources\Core\_tmp\verify-runs\<run-id>`
-- Template snapshots → `D:\sources\Core\_tmp\template-snapshots\<snapshot-id>`
+- Generated verification projects → `<workspace-root>/_tmp/verify-runs/<run-id>`
+- Template snapshots → `<workspace-root>/_tmp/template-snapshots/<snapshot-id>`
 
 ---
 
 ## Debug Artifact Convention
 
-- Debug scripts → `D:\sources\Core\_tmp\scripts\debug`
-- Runtime logs → `D:\sources\Core\_tmp\logs\<task-id>`
-- Intermediate results (json/txt/csv) → `D:\sources\Core\_tmp\results\<task-id>`
+- Debug scripts → `<workspace-root>/_tmp/scripts/debug`
+- Runtime logs → `<workspace-root>/_tmp/logs/<task-id>`
+- Intermediate results (json/txt/csv) → `<workspace-root>/_tmp/results/<task-id>`
 - Forbidden artifact locations: repo roots, project root, template folders
 - File naming: scripts `<task>_<yyyyMMdd_HHmmss>.ps1`; logs `<task>.out.log`
-- Cleanup: after task, move evidence to `_tmp\results\<task-id>`, remove debug files.
+- Cleanup: after task, move evidence to `_tmp/results/<task-id>`, remove debug files.
 
 ---
 
@@ -159,35 +168,42 @@ All steps are local-only (no publish to public NuGet).
 1. Bump library version:
 
 ```powershell
-cd D:\sources\Core\muonroi-building-block
+# Detect workspace root first:
+$root = Split-Path (git rev-parse --show-toplevel) -Parent
+
+cd "$root\muonroi-building-block"
 .\scripts\bump-version.ps1 -Version 1.9.11
 ```
 
 2. Local package outputs:
-   - `D:\sources\Core\LocalNuget`
-   - `D:\sources\Core\LocalNuGetFeed`
+   - `<workspace-root>/LocalNuget`
+   - `<workspace-root>/LocalNuGetFeed`
 
 3. Bump template package versions (`.csproj` and `.nuspec`) to same version.
 
 4. Pack each template to local feed:
 
 ```powershell
-cd D:\sources\Core\Muonroi.BaseTemplate
-dotnet pack .\Muonroi.BaseTemplate.csproj -c Release -o D:\sources\Core\LocalNuget
+$root = Split-Path (git rev-parse --show-toplevel) -Parent
 
-cd D:\sources\Core\Muonroi.Modular.Template
-dotnet pack .\Muonroi.Modular.csproj -c Release -o D:\sources\Core\LocalNuget
+cd "$root\Muonroi.BaseTemplate"
+dotnet pack .\Muonroi.BaseTemplate.csproj -c Release -o "$root\LocalNuget"
 
-cd D:\sources\Core\Muonroi.Microservices.Template
-dotnet pack .\Muonroi.Microservices.csproj -c Release -o D:\sources\Core\LocalNuget
+cd "$root\Muonroi.Modular.Template"
+dotnet pack .\Muonroi.Modular.csproj -c Release -o "$root\LocalNuget"
+
+cd "$root\Muonroi.Microservices.Template"
+dotnet pack .\Muonroi.Microservices.csproj -c Release -o "$root\LocalNuget"
 ```
 
 5. Reinstall local templates:
 
 ```powershell
-dotnet new install D:\sources\Core\LocalNuget\Muonroi.BaseTemplate.1.9.11.nupkg --force
-dotnet new install D:\sources\Core\LocalNuget\Muonroi.Modular.Template.1.9.11.nupkg --force
-dotnet new install D:\sources\Core\LocalNuget\Muonroi.Microservices.Template.1.9.11.nupkg --force
+$root = Split-Path (git rev-parse --show-toplevel) -Parent
+
+dotnet new install "$root\LocalNuget\Muonroi.BaseTemplate.1.9.11.nupkg" --force
+dotnet new install "$root\LocalNuget\Muonroi.Modular.Template.1.9.11.nupkg" --force
+dotnet new install "$root\LocalNuget\Muonroi.Microservices.Template.1.9.11.nupkg" --force
 ```
 
 ---
@@ -212,14 +228,16 @@ dotnet run
 1. Generate master/child key assets:
 
 ```powershell
-cd D:\sources\Core\muonroi-building-block
+$root = Split-Path (git rev-parse --show-toplevel) -Parent
+cd "$root\muonroi-building-block"
 .\scripts\flow-license-server.ps1 -Organization "Muonroi Local Verify" -NoRunServer
 ```
 
 2. Run full runtime verification for `Free/Paid/Enterprise` modes:
 
 ```powershell
-cd D:\sources\Core\muonroi-building-block
+$root = Split-Path (git rev-parse --show-toplevel) -Parent
+cd "$root\muonroi-building-block"
 .\scripts\flow-license-modes.ps1 -Organization "Muonroi Local Verify"
 ```
 

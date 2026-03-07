@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Core.Helpers;
 using Muonroi.RuleEngine.DecisionTable.Converters;
 using Muonroi.RuleEngine.DecisionTable.Serializers;
 using Muonroi.RuleEngine.DecisionTable.Stores;
@@ -23,6 +24,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton(Options.Create(options));
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
+        services.TryAddSingleton<IMDateTimeService, MDateTimeService>();
 
         if (!string.IsNullOrWhiteSpace(options.PostgresConnectionString))
         {

@@ -13,5 +13,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.Caching.Redis\Muonroi.Caching.Redis.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Caching.Memory\Muonroi.Caching.Memory.csproj" />
   </ItemGroup>
 </Project>
