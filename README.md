@@ -76,6 +76,11 @@ dotnet add package Muonroi.RuleEngine.Core
 - Commercial editions: [COMMERCIAL-EDITIONS.md](COMMERCIAL-EDITIONS.md)
 - OSS/commercial boundary: [OSS-BOUNDARY.md](OSS-BOUNDARY.md)
 
+## Samples
+
+- [LoanApproval sample](samples/LoanApproval/README.md)
+- [MultiTenantSaaS sample](samples/MultiTenantSaaS/README.md)
+
 ## License
 
 This repository uses dual licensing:
