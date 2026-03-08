@@ -1,6 +1,3 @@
-using System.CodeDom.Compiler;
-using System.Globalization;
-using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -8,10 +5,14 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.Tenancy.Core;
 using Muonroi.UiEngine.Catalog.Attributes;
 using Muonroi.UiEngine.Catalog.Models;
+using System.CodeDom.Compiler;
+using System.Globalization;
+using System.Reflection;
 using RuntimeRuleOptions = Muonroi.RuleEngine.Runtime.Rules.RuleOptions;
 
 namespace Muonroi.UiEngine.Catalog.Services;
@@ -19,7 +20,7 @@ namespace Muonroi.UiEngine.Catalog.Services;
 public sealed class CatalogScanService(
     IApiDescriptionGroupCollectionProvider apiDescriptions,
     IServiceProvider serviceProvider,
-    ILogger<CatalogScanService> logger,
+    IMLog<CatalogScanService> logger,
     IOptionsMonitor<RuntimeRuleOptions>? runtimeRuleOptions = null) : ICatalogScanService
 {
     public Task<IReadOnlyList<MUiEngineCatalogApiDescriptor>> ScanApisAsync(CancellationToken cancellationToken = default)
@@ -294,7 +295,7 @@ public sealed class CatalogScanService(
 
     private Dictionary<(string route, string method), (string? ContextType, string? WorkflowName)> BuildBoundContextsByAction()
     {
-        Dictionary<(string route, string method), (string? ContextType, string? WorkflowName)> mappings = new();
+        Dictionary<(string route, string method), (string? ContextType, string? WorkflowName)> mappings = [];
 
         foreach (ApiDescription api in apiDescriptions.ApiDescriptionGroups.Items.SelectMany(group => group.Items))
         {

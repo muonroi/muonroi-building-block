@@ -47,13 +47,13 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
         };
 
         // Try to create with design-time compatible constructor
-        // MDbContext-derived classes should have: (DbContextOptions, IMediator, ILicenseGuard?, ILogger?)
+        // MDbContext-derived classes should have: (DbContextOptions, IMediator, ILicenseGuard?, IMLog?)
         Type contextType = typeof(TContext);
 
         // Try full constructor first
         ConstructorInfo? fullCtor = contextType.GetConstructor([
             typeof(DbContextOptions<TContext>), typeof(IMediator),
-            typeof(ILicenseGuard), typeof(ILogger<>).MakeGenericType(contextType)
+            typeof(ILicenseGuard), typeof(IMLog<>).MakeGenericType(contextType)
         ]);
 
         if (fullCtor != null)
@@ -64,7 +64,7 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
         // Try constructor with base DbContextOptions
         ConstructorInfo? baseCtor = contextType.GetConstructor([
             typeof(DbContextOptions), typeof(IMediator),
-            typeof(ILicenseGuard), typeof(ILogger<>).MakeGenericType(contextType)
+            typeof(ILicenseGuard), typeof(IMLog<>).MakeGenericType(contextType)
         ]);
 
         if (baseCtor != null)

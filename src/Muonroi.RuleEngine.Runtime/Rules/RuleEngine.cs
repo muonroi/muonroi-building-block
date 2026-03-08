@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
@@ -8,7 +10,7 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 /// <typeparam name="T">Type of context passed to each rule.</typeparam>
 public sealed class RuleEngine<T>(
     IOptionsMonitor<RuleOptions>? options = null,
-    ILogger<RuleEngine<T>>? logger = null,
+    IMLog<RuleEngine<T>>? logger = null,
     IRuleActivationStrategy<T>? activation = null,
     ILicenseGuard? licenseGuard = null)
 {
@@ -62,7 +64,10 @@ public sealed class RuleEngine<T>(
         try
         {
             baseCode = rule.Code;
-            if (string.IsNullOrWhiteSpace(baseCode)) throw new InvalidOperationException("Rule code cannot be empty");
+            if (string.IsNullOrWhiteSpace(baseCode))
+            {
+                throw new InvalidOperationException("Rule code cannot be empty");
+            }
         }
         catch
         {
@@ -73,7 +78,9 @@ public sealed class RuleEngine<T>(
         string code = baseCode;
         int suffix = 1;
         while (_rules.Any(r => r.Descriptor.Code.Equals(code, StringComparison.OrdinalIgnoreCase)))
+        {
             code = $"{baseCode}_{suffix++}";
+        }
 
         return code;
     }
@@ -95,18 +102,27 @@ public sealed class RuleEngine<T>(
 
         void Visit(string code)
         {
-            if (visited.Contains(code)) return;
+            if (visited.Contains(code))
+            {
+                return;
+            }
 
             if (!visiting.Add(code))
+            {
                 throw new InvalidOperationException($"Circular rule dependency detected for '{code}'.");
+            }
 
             if (!dict.TryGetValue(code, out (IRule<T> Rule, RuleDescriptor Descriptor) entry))
+            {
                 throw new InvalidOperationException($"Rule '{code}' not registered but referenced as a dependency.");
+            }
 
             foreach (string dep in entry.Descriptor.DependsOn)
             {
                 if (!dict.ContainsKey(dep))
+                {
                     throw new InvalidOperationException($"Missing dependency '{dep}' for rule '{code}'.");
+                }
 
                 Visit(dep);
             }
@@ -116,7 +132,10 @@ public sealed class RuleEngine<T>(
             result.Add(entry);
         }
 
-        foreach (string? code in dict.Values.OrderBy(r => r.Descriptor.Order).Select(r => r.Descriptor.Code)) Visit(code);
+        foreach (string? code in dict.Values.OrderBy(r => r.Descriptor.Order).Select(r => r.Descriptor.Code))
+        {
+            Visit(code);
+        }
 
         return result;
     }
@@ -149,7 +168,10 @@ public sealed class RuleEngine<T>(
             try
             {
                 await ExecuteRulesAsync(context, selectedRuleCodes, ruleTypes, cancellationToken).ConfigureAwait(false);
-                if (tx is not null) await transactional.CommitTransactionAsync(tx).ConfigureAwait(false);
+                if (tx is not null)
+                {
+                    await transactional.CommitTransactionAsync(tx).ConfigureAwait(false);
+                }
             }
             catch
             {
@@ -173,7 +195,9 @@ public sealed class RuleEngine<T>(
         {
             string? current = TenantContext.CurrentTenantId;
             if (!string.IsNullOrWhiteSpace(current) && scoped.TenantId != current)
+            {
                 throw new UnauthorizedAccessException("Cross tenant rule execution detected.");
+            }
         }
 
         IEnumerable<(IRule<T> Rule, RuleDescriptor Descriptor)> rulesToRun =
@@ -216,7 +240,10 @@ public sealed class RuleEngine<T>(
         }
 
         string[] unused = [.. _rules.Select(r => r.Descriptor.Code).Except(executed, StringComparer.OrdinalIgnoreCase)];
-        if (unused.Length > 0) logger?.LogWarning("Registered rules not executed: {Rules}", string.Join(", ", unused));
+        if (unused.Length > 0)
+        {
+            logger?.Warn("Registered rules not executed: {Rules}", string.Join(", ", unused));
+        }
     }
 
     private IEnumerable<(IRule<T> Rule, RuleDescriptor Descriptor)> GetRulesToRun(
@@ -226,7 +253,10 @@ public sealed class RuleEngine<T>(
     {
         IEnumerable<(IRule<T> Rule, RuleDescriptor Descriptor)> rules = _rules;
 
-        if (ruleTypes is { Length: > 0 }) rules = rules.Where(r => ruleTypes.Contains(r.Descriptor.HookPoint));
+        if (ruleTypes is { Length: > 0 })
+        {
+            rules = rules.Where(r => ruleTypes.Contains(r.Descriptor.HookPoint));
+        }
 
         if (selectedRuleCodes != null && selectedRuleCodes.Any())
         {
@@ -247,11 +277,16 @@ public sealed class RuleEngine<T>(
             string? tenant = TenantContext.CurrentTenantId;
             if (!string.IsNullOrWhiteSpace(tenant) &&
                 options.CurrentValue.TenantRuleToggles.TryGetValue(tenant, out Dictionary<string, bool>? tenantToggles))
+            {
                 rules = rules.Where(r =>
                     !tenantToggles.TryGetValue(r.Descriptor.Code, out bool enabled) || enabled);
+            }
         }
 
-        if (activation is not null) rules = rules.Where(r => activation.IsActive(r.Rule, context));
+        if (activation is not null)
+        {
+            rules = rules.Where(r => activation.IsActive(r.Rule, context));
+        }
 
         return rules;
     }

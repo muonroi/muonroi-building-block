@@ -1,18 +1,17 @@
-using Microsoft.Extensions.Logging;
-using Muonroi.Governance.License;
-using Muonroi.Governance.Policy;
+using Muonroi.Governance.Operations;
+using Muonroi.Logging.Abstractions;
 
-namespace Muonroi.Governance.Operations;
+namespace Muonroi.Governance.Enterprise.Operations;
 
 public sealed class MUpgradeCompatibilityService(
-    ILogger<MUpgradeCompatibilityService>? logger = null) : IMUpgradeCompatibilityService
+    IMLog<MUpgradeCompatibilityService>? logger = null) : IMUpgradeCompatibilityService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
     };
 
-    private readonly ILogger<MUpgradeCompatibilityService>? _logger = logger;
+    private readonly IMLog<MUpgradeCompatibilityService>? _logger = logger;
 
     public MUpgradeCompatibilityResult Evaluate(MUpgradeCompatibilityRequest request)
     {
@@ -423,7 +422,7 @@ public sealed class MUpgradeCompatibilityService(
         string resolved = Path.GetFullPath(path);
         if (!File.Exists(resolved))
         {
-            _logger?.LogWarning("Compatibility checker: file '{Path}' not found.", resolved);
+            _logger?.Warn("Compatibility checker: file '{Path}' not found.", resolved);
             return default;
         }
 
@@ -434,7 +433,7 @@ public sealed class MUpgradeCompatibilityService(
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Compatibility checker failed to parse '{Path}'.", resolved);
+            _logger?.Error(ex, "Compatibility checker failed to parse '{Path}'.", resolved);
             return default;
         }
     }
@@ -527,7 +526,7 @@ public sealed class MUpgradeCompatibilityService(
         }
 
         string[] parts = normalized.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (parts.Length < 2 || parts.Length > 3)
+        if (parts.Length is < 2 or > 3)
         {
             return false;
         }

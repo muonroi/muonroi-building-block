@@ -14,7 +14,7 @@ public abstract class MSagaDbContext(
     DbContextOptions options,
     IMediator mediator,
     ILicenseGuard? licenseGuard = null,
-    ILogger<MDbContext>? logger = null,
+    IMLog<MDbContext>? logger = null,
     IMDateTimeService? dateTimeService = null,
     ISystemExecutionContextAccessor? executionContextAccessor = null)
     : MDbContext(options, mediator, licenseGuard, logger, dateTimeService)

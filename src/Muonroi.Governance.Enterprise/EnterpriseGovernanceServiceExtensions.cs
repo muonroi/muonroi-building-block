@@ -1,6 +1,12 @@
 using Muonroi.Governance.Compliance;
+using Muonroi.Governance.Enterprise.Compliance;
+using Muonroi.Governance.Enterprise.License;
+using Muonroi.Governance.Enterprise.Operations;
+using Muonroi.Governance.Enterprise.Policy;
+using Muonroi.Governance.Enterprise.ServerValidation;
 using Muonroi.Governance.Operations;
 using Muonroi.Governance.ServerValidation;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.Enterprise;
 
@@ -23,12 +29,12 @@ public static class EnterpriseGovernanceServiceExtensions
             IPolicyStore store = sp.GetRequiredService<IPolicyStore>();
             PolicyVerifier verifier = sp.GetRequiredService<PolicyVerifier>();
             IMDateTimeService dateTimeService = sp.GetRequiredService<IMDateTimeService>();
-            ILogger<PolicyEnforcer>? logger = sp.GetService<ILogger<PolicyEnforcer>>();
+            IMLog<PolicyEnforcer>? logger = sp.GetService<IMLog<PolicyEnforcer>>();
             LicensePolicy? policy = store.Load();
 
             if (policy is not null && !verifier.Verify(policy))
             {
-                logger?.LogWarning("[Policy] Enterprise policy signature verification failed. Enforcement disabled.");
+                logger?.Warn("[Policy] Enterprise policy signature verification failed. Enforcement disabled.");
                 policy = null;
             }
 

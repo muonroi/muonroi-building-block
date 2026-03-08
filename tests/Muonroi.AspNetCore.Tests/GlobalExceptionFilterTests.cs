@@ -5,7 +5,7 @@ public class GlobalExceptionFilterTests
     [Fact]
     public void OnException_Sets_ProblemDetails_And_Marks_Handled()
     {
-        GlobalExceptionFilter filter = new(NullLogger<GlobalExceptionFilter>.Instance);
+        GlobalExceptionFilter filter = new(Substitute.For<IMLog<GlobalExceptionFilter>>());
         DefaultHttpContext httpContext = new();
         ActionContext actionContext = new(httpContext, new RouteData(), new ActionDescriptor());
         ExceptionContext exceptionContext = new(actionContext, [])
@@ -30,3 +30,4 @@ public class GlobalExceptionFilterTests
         filter.Should().NotBeNull();
     }
 }
+

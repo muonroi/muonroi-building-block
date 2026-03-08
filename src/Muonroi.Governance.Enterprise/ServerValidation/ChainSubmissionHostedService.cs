@@ -1,8 +1,6 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Logging.Abstractions;
 
-namespace Muonroi.Governance.ServerValidation;
+namespace Muonroi.Governance.Enterprise.ServerValidation;
 
 /// <summary>
 /// Background service that periodically submits action chains to the license server.
@@ -10,13 +8,14 @@ namespace Muonroi.Governance.ServerValidation;
 public sealed class ChainSubmissionHostedService(
     IServiceProvider serviceProvider,
     LicenseConfigs configs,
-    ILogger<ChainSubmissionHostedService>? logger = null,
+    IMLog<ChainSubmissionHostedService>? logger = null,
     LicenseState? licenseState = null)
     : BackgroundService
 {
     private readonly LicenseState _licenseState = licenseState ?? LicenseState.CreateFree();
     private readonly ConcurrentDictionary<string, long> _lastSubmittedSequenceByTenant = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (!configs.EnableServerValidation)

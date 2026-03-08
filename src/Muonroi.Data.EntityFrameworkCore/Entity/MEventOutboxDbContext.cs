@@ -11,7 +11,7 @@ public class MEventOutboxDbContext(
     DbContextOptions<MEventOutboxDbContext> options,
     IMediator mediator,
     ILicenseGuard? licenseGuard = null,
-    ILogger<MDbContext>? logger = null)
+    IMLog<MDbContext>? logger = null)
     : MDbContext(options, mediator, licenseGuard, logger), IEventOutboxStore
 {
     public DbSet<EventOutbox> OutboxEvents => Set<EventOutbox>();

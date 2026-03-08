@@ -1,9 +1,5 @@
-using System.Net.Http.Json;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Muonroi.Governance.Policy;
+using System.Net.Http.Json;
 
 namespace Muonroi.Governance.License;
 
@@ -104,10 +100,10 @@ public static class LicenseServiceCollectionExtensions
 
             var request = new
             {
-                LicenseId = existingLicense.LicenseId,
+                existingLicense.LicenseId,
                 Fingerprint = fingerprint,
-                ProjectSeed = configs.ProjectSeed,
-                ServerNonce = existingLicense.ServerNonce
+                configs.ProjectSeed,
+                existingLicense.ServerNonce
             };
 
             HttpResponseMessage response = client.PostAsJsonAsync($"{configs.Online.Endpoint}/validate", request).GetAwaiter().GetResult();
@@ -130,14 +126,20 @@ public static class LicenseServiceCollectionExtensions
     private static LicensePayload? LoadLocalLicense(LicenseConfigs configs)
     {
         string? path = configs.LicenseFilePath;
-        if (string.IsNullOrWhiteSpace(path)) return null;
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
 
         if (!Path.IsPathRooted(path))
         {
             path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, path));
         }
 
-        if (!File.Exists(path)) return null;
+        if (!File.Exists(path))
+        {
+            return null;
+        }
 
         try
         {

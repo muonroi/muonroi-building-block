@@ -3,6 +3,7 @@ using Grpc.Net.Client.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.License;
 using Muonroi.Grpc.Grpc;
 namespace Muonroi.Grpc.Grpc;

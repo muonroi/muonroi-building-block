@@ -1,3 +1,6 @@
+using Muonroi.Logging.Abstractions;
+using System.Text.RegularExpressions;
+
 namespace Muonroi.RuleEngine.Core.Tests;
 
 public class RuleOrchestratorLoggingTests
@@ -44,14 +47,10 @@ public class RuleOrchestratorLoggingTests
         }
     }
 
-    private sealed class ListLogger<T> : ILogger<T>
+    private sealed class ListLogger<T> : IMLog<T>
     {
         public List<string> Logs { get; } = [];
 
-        IDisposable? ILogger.BeginScope<TState>(TState state)
-        {
-            return NullScope.Instance;
-        }
 
         public bool IsEnabled(LogLevel logLevel)
         {
@@ -64,9 +63,63 @@ public class RuleOrchestratorLoggingTests
             Logs.Add(formatter(state, exception));
         }
 
+        public IMLogContextScope BeginProperty(string key, object? value)
+        {
+            return NullLogScope.Instance;
+        }
+
+        public void Info(string messageTemplate, params object[] args)
+        {
+            Logs.Add(FormatMessage(messageTemplate, args));
+        }
+
+        public void Warn(string messageTemplate, params object[] args)
+        {
+            Logs.Add(FormatMessage(messageTemplate, args));
+        }
+
+        public void Error(Exception? ex, string messageTemplate, params object[] args)
+        {
+            Logs.Add(FormatMessage(messageTemplate, args));
+        }
+
+        public void Debug(string messageTemplate, params object[] args)
+        {
+            Logs.Add(FormatMessage(messageTemplate, args));
+        }
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        {
+            return NullScope.Instance;
+        }
+
+        private static string FormatMessage(string template, params object[] args)
+        {
+            int index = 0;
+            return Regex.Replace(template, @"\{[^}]+\}", _ =>
+            {
+                if (index >= args.Length)
+                {
+                    return string.Empty;
+                }
+
+                object? value = args[index++];
+                return value?.ToString() ?? string.Empty;
+            });
+        }
+
         private sealed class NullScope : IDisposable
         {
             public static readonly NullScope Instance = new();
+
+            public void Dispose()
+            {
+            }
+        }
+
+        private sealed class NullLogScope : IMLogContextScope
+        {
+            public static readonly NullLogScope Instance = new();
 
             public void Dispose()
             {

@@ -1,5 +1,4 @@
-using Microsoft.Extensions.Hosting;
-using MsLogger = Microsoft.Extensions.Logging.ILogger<Muonroi.Governance.License.LicenseRefreshHostedService>;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.License;
 
@@ -14,22 +13,23 @@ public sealed class LicenseRefreshHostedService(
     ILicenseActivationService activationService,
     LicenseConfigs configs,
     LicenseStateNotifier stateNotifier,
-    MsLogger? logger = null)
+    IMLog<LicenseRefreshHostedService>? logger = null)
     : BackgroundService
 {
+    /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Only run if online mode is configured
         if (configs.Mode != LicenseMode.Online || string.IsNullOrWhiteSpace(configs.Online.Endpoint))
         {
-            logger?.LogInformation("[License] Offline mode - background refresh disabled.");
+            logger?.Info("[License] Offline mode - background refresh disabled.");
             return;
         }
 
         TimeSpan refreshInterval = TimeSpan.FromMinutes(
             configs.Online.RefreshMinutes > 0 ? configs.Online.RefreshMinutes : 1440);
 
-        logger?.LogInformation("[License] Background refresh enabled. Interval: {Interval}", refreshInterval);
+        logger?.Info("[License] Background refresh enabled. Interval: {Interval}", refreshInterval);
 
         // Initial delay to allow app startup
         await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
@@ -38,18 +38,18 @@ public sealed class LicenseRefreshHostedService(
         {
             try
             {
-                logger?.LogDebug("[License] Refreshing license from server...");
+                logger?.Debug("[License] Refreshing license from server...");
                 LicenseActivationResult result = await activationService.RefreshAsync(stoppingToken);
 
                 if (result.IsSuccess)
                 {
-                    logger?.LogInformation("[License] License refreshed successfully. Expires: {Expiry}",
+                    logger?.Info("[License] License refreshed successfully. Expires: {Expiry}",
                         result.Payload?.ExpiresAt);
                     stateNotifier.NotifyRefreshed(result.Payload!);
                 }
                 else
                 {
-                    logger?.LogWarning("[License] Refresh failed: {Error}. Continuing with cached license.",
+                    logger?.Warn("[License] Refresh failed: {Error}. Continuing with cached license.",
                         result.Error);
                 }
             }
@@ -59,7 +59,7 @@ public sealed class LicenseRefreshHostedService(
             }
             catch (Exception ex)
             {
-                logger?.LogError(ex, "[License] Unexpected error during refresh.");
+                logger?.Error(ex, "[License] Unexpected error during refresh.");
             }
 
             await Task.Delay(refreshInterval, stoppingToken);
@@ -76,13 +76,22 @@ public sealed class LicenseStateNotifier
     private readonly object _lock = new();
     private LicensePayload? _latestPayload;
 
+    /// <inheritdoc/>
     public event Action<LicensePayload>? OnLicenseRefreshed;
 
+    /// <inheritdoc/>
     public LicensePayload? LatestPayload
     {
-        get { lock (_lock) return _latestPayload; }
+        get
+        {
+            lock (_lock)
+            {
+                return _latestPayload;
+            }
+        }
     }
 
+    /// <inheritdoc/>
     public void NotifyRefreshed(LicensePayload payload)
     {
         lock (_lock)

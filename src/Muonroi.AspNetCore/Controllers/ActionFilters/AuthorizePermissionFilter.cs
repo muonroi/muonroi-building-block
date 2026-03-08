@@ -3,7 +3,7 @@ namespace Muonroi.AspNetCore.Controllers.ActionFilters;
 public class AuthorizePermissionFilter<TDbContext>(
     TDbContext dbContext,
     IMultiLevelCacheService cacheService,
-    ILogger<AuthorizePermissionFilter<TDbContext>> logger) : IAsyncActionFilter
+    IMLog<AuthorizePermissionFilter<TDbContext>> logger) : IAsyncActionFilter
     where TDbContext : MDbContext
 {
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -30,7 +30,7 @@ public class AuthorizePermissionFilter<TDbContext>(
         string? userIdString = context.HttpContext.User.FindFirst(ClaimConstants.UserIdentifier)?.Value;
         if (!Guid.TryParse(userIdString, out Guid userId))
         {
-            logger.LogWarning("User id invalid");
+            logger.Warn("User id invalid");
             throw new PermissionDeniedException("Invalid user id");
         }
 
@@ -44,12 +44,9 @@ public class AuthorizePermissionFilter<TDbContext>(
             !TenantSecurityValidator.TryValidate(currentTenantId, claimTenantId, null, requireTenantClaim,
                 out string? tenantError))
         {
-            logger.LogWarning(
+            logger.Warn(
                 "Tenant validation failed ({ErrorCode}) while checking permission for user {User}. ClaimTenant={ClaimTenant}, ContextTenant={ContextTenant}",
-                tenantError,
-                userId,
-                claimTenantId,
-                currentTenantId);
+                tenantError);
             throw new PermissionDeniedException("Tenant validation failed");
         }
 
@@ -66,12 +63,9 @@ public class AuthorizePermissionFilter<TDbContext>(
             {
                 if (!pdpDecision.IsAllowed)
                 {
-                    logger.LogWarning(
+                    logger.Warn(
                         "PDP denied permission for user {User} in tenant {Tenant}. Source={Source}, Correlation={Correlation}",
-                        userId,
-                        currentTenantId,
-                        pdpDecision.DecisionSource,
-                        pdpRequest.CorrelationId);
+                        pdpDecision.DecisionSource);
                     throw new PermissionDeniedException("Permission denied");
                 }
 
@@ -103,10 +97,8 @@ public class AuthorizePermissionFilter<TDbContext>(
         if (!IsAuthorized(attributes, userPermissions))
         {
             string required = string.Join(", ", attributes.Select(a => $"{a.PermissionKey}:{a.MatchMode}"));
-            logger.LogWarning(
+            logger.Warn(
                 "Permission denied for user {User} in tenant {Tenant}. Required={Required}",
-                userId,
-                currentTenantId,
                 required);
             throw new PermissionDeniedException("Permission denied");
         }

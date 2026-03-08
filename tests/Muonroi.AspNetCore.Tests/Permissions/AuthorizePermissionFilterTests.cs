@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Muonroi.AspNetCore.Attributes;
 using Muonroi.AspNetCore.Controllers.ActionFilters;
 using Muonroi.AspNetCore.Exceptions;
@@ -75,7 +74,7 @@ public class AuthorizePermissionFilterTests
         TenantContext.CurrentTenantId = "t1";
         // Using a fake cache service for simplicity
         FakeCacheService svc = new(["perm"]);
-        NullLogger<AuthorizePermissionFilter<TestDbContext>> logger = NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance;
+        IMLog<AuthorizePermissionFilter<TestDbContext>> logger = Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>();
         AuthorizePermissionFilter<TestDbContext> filter = new(db, svc, logger);
 
         DefaultHttpContext httpContext = new()
@@ -121,7 +120,7 @@ public class AuthorizePermissionFilterTests
         await db.SaveChangesAsync();
         TenantContext.CurrentTenantId = "t1";
         FakeCacheService svc = new([]);
-        NullLogger<AuthorizePermissionFilter<TestDbContext>> logger = NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance;
+        IMLog<AuthorizePermissionFilter<TestDbContext>> logger = Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>();
         AuthorizePermissionFilter<TestDbContext> filter = new(db, svc, logger);
 
         DefaultHttpContext httpContext = new()
@@ -154,7 +153,7 @@ public class AuthorizePermissionFilterTests
         using TestDbContext db = new(options);
         TenantContext.CurrentTenantId = "t1";
         FakeCacheService svc = new([]);
-        NullLogger<AuthorizePermissionFilter<TestDbContext>> logger = NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance;
+        IMLog<AuthorizePermissionFilter<TestDbContext>> logger = Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>();
         AuthorizePermissionFilter<TestDbContext> filter = new(db, svc, logger);
 
         DefaultHttpContext httpContext = new()
@@ -186,7 +185,7 @@ public class AuthorizePermissionFilterTests
         await using TestDbContext db = new(options);
         string userId = Guid.NewGuid().ToString();
         FakeCacheService cache = new(["OtherPermission"]);
-        NullLogger<AuthorizePermissionFilter<TestDbContext>> logger = NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance;
+        IMLog<AuthorizePermissionFilter<TestDbContext>> logger = Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>();
         AuthorizePermissionFilter<TestDbContext> filter = new(db, cache, logger);
 
         string? originalTenant = TenantContext.CurrentTenantId;
@@ -232,7 +231,7 @@ public class AuthorizePermissionFilterTests
         await using TestDbContext db = new(options);
         string userId = Guid.NewGuid().ToString();
         FakeCacheService cache = new(["SomePermission"]);
-        NullLogger<AuthorizePermissionFilter<TestDbContext>> logger = NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance;
+        IMLog<AuthorizePermissionFilter<TestDbContext>> logger = Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>();
         AuthorizePermissionFilter<TestDbContext> filter = new(db, cache, logger);
 
         string? originalTenant = TenantContext.CurrentTenantId;
@@ -277,7 +276,7 @@ public class AuthorizePermissionFilterTests
         await using TestDbContext db = new(options);
         string userId = Guid.NewGuid().ToString();
         FakeCacheService cache = new(["orders.read"]);
-        NullLogger<AuthorizePermissionFilter<TestDbContext>> logger = NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance;
+        IMLog<AuthorizePermissionFilter<TestDbContext>> logger = Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>();
         AuthorizePermissionFilter<TestDbContext> filter = new(db, cache, logger);
 
         string? originalTenant = TenantContext.CurrentTenantId;
@@ -317,7 +316,7 @@ public class AuthorizePermissionFilterTests
         await using TestDbContext db = new(options);
         string userId = Guid.NewGuid().ToString();
         FakeCacheService cache = new(["orders.read", "orders.manage"]);
-        NullLogger<AuthorizePermissionFilter<TestDbContext>> logger = NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance;
+        IMLog<AuthorizePermissionFilter<TestDbContext>> logger = Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>();
         AuthorizePermissionFilter<TestDbContext> filter = new(db, cache, logger);
 
         string? originalTenant = TenantContext.CurrentTenantId;
@@ -362,7 +361,7 @@ public class AuthorizePermissionFilterTests
         await using TestDbContext db = new(options);
         string userId = Guid.NewGuid().ToString();
         FakeCacheService cache = new(["orders.read"]);
-        NullLogger<AuthorizePermissionFilter<TestDbContext>> logger = NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance;
+        IMLog<AuthorizePermissionFilter<TestDbContext>> logger = Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>();
         AuthorizePermissionFilter<TestDbContext> filter = new(db, cache, logger);
 
         string? originalTenant = TenantContext.CurrentTenantId;
@@ -403,7 +402,7 @@ public class AuthorizePermissionFilterTests
         await using TestDbContext db = new(options);
         string userId = Guid.NewGuid().ToString();
         FakeCacheService cache = new(["orders.read"]);
-        NullLogger<AuthorizePermissionFilter<TestDbContext>> logger = NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance;
+        IMLog<AuthorizePermissionFilter<TestDbContext>> logger = Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>();
         AuthorizePermissionFilter<TestDbContext> filter = new(db, cache, logger);
 
         string? originalTenant = TenantContext.CurrentTenantId;
@@ -473,3 +472,4 @@ public class AuthorizePermissionFilterTests
         }
     }
 }
+

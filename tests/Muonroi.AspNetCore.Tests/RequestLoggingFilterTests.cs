@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.AspNetCore.Tests;
 
 public class RequestLoggingFilterTests
@@ -10,7 +12,7 @@ public class RequestLoggingFilterTests
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
-    private sealed class ListLogger<T> : ILogger<T>, IDisposable
+    private sealed class ListLogger<T> : IMLog<T>, IDisposable
     {
         public readonly List<object?> States = [];
         private bool _disposed;
@@ -50,9 +52,49 @@ public class RequestLoggingFilterTests
         {
             States.Add(state);
         }
+
+        public IMLogContextScope BeginProperty(string key, object? value)
+        {
+            return NullLogContextScope.Instance;
+        }
+
+        public void Info(string messageTemplate, params object[] args)
+        {
+            if (args.Length == 1)
+            {
+                States.Add(args[0]);
+                return;
+            }
+
+            States.Add(messageTemplate);
+        }
+
+        public void Warn(string messageTemplate, params object[] args)
+        {
+            States.Add(messageTemplate);
+        }
+
+        public void Error(Exception? ex, string messageTemplate, params object[] args)
+        {
+            States.Add(messageTemplate);
+        }
+
+        public void Debug(string messageTemplate, params object[] args)
+        {
+            States.Add(messageTemplate);
+        }
+
+        private sealed class NullLogContextScope : IMLogContextScope
+        {
+            public static readonly NullLogContextScope Instance = new();
+
+            public void Dispose()
+            {
+            }
+        }
     }
 
-    private sealed class ThrowLogger<T> : ILogger<T>
+    private sealed class ThrowLogger<T> : IMLog<T>
     {
         public bool IsEnabled(LogLevel logLevel)
         {
@@ -74,9 +116,43 @@ public class RequestLoggingFilterTests
             return NullDisposable.Instance;
         }
 
+        public IMLogContextScope BeginProperty(string key, object? value)
+        {
+            return NullLogContextScope.Instance;
+        }
+
+        public void Info(string messageTemplate, params object[] args)
+        {
+            throw new InvalidOperationException("log fail");
+        }
+
+        public void Warn(string messageTemplate, params object[] args)
+        {
+            throw new InvalidOperationException("log fail");
+        }
+
+        public void Error(Exception? ex, string messageTemplate, params object[] args)
+        {
+            throw new InvalidOperationException("log fail");
+        }
+
+        public void Debug(string messageTemplate, params object[] args)
+        {
+            throw new InvalidOperationException("log fail");
+        }
+
         private sealed class NullDisposable : IDisposable
         {
             public static readonly NullDisposable Instance = new();
+            public void Dispose()
+            {
+            }
+        }
+
+        private sealed class NullLogContextScope : IMLogContextScope
+        {
+            public static readonly NullLogContextScope Instance = new();
+
             public void Dispose()
             {
             }
@@ -136,7 +212,7 @@ public class RequestLoggingFilterTests
     {
         IConfiguration config = new ConfigurationBuilder().Build();
         RequestLoggingFilter filter = new(
-            NullLogger<RequestLoggingFilter>.Instance,
+            null,
             new MJsonSerializeService(),
             new MAuthenticateInfoContext(false),
             config,
@@ -177,7 +253,7 @@ public class RequestLoggingFilterTests
     [Fact]
     public void Constructor_Creates_Instance()
     {
-        ILogger<RequestLoggingFilter> logger = Substitute.For<ILogger<RequestLoggingFilter>>();
+        IMLog<RequestLoggingFilter> logger = Substitute.For<IMLog<RequestLoggingFilter>>();
         IMJsonSerializeService json = Substitute.For<IMJsonSerializeService>();
         IConfiguration config = new ConfigurationBuilder().AddInMemoryCollection([]).Build();
         IHostEnvironment environment = Substitute.For<IHostEnvironment>();

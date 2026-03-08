@@ -13,7 +13,7 @@ internal sealed class DecisionTableDbContext(
     IMediator mediator,
     IOptions<DecisionTableEngineOptions> optionsAccessor,
     ILicenseGuard? licenseGuard = null,
-    ILogger<MDbContext>? logger = null)
+    IMLog<MDbContext>? logger = null)
     : MDbContext(options, mediator, licenseGuard, logger)
 {
     private readonly string _schema = string.IsNullOrWhiteSpace(optionsAccessor.Value.Schema) ? "dbo" : optionsAccessor.Value.Schema;

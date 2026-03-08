@@ -1,7 +1,10 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.ServiceDiscovery.Consul.Consul;
 
 public static class ConsulHandler
 {
+    private sealed class ConsulHandlerLogger { }
     public static IServiceCollection AddServiceDiscovery(this IServiceCollection services, IConfiguration configuration,
         IWebHostEnvironment environment)
     {
@@ -9,13 +12,22 @@ public static class ConsulHandler
         configuration.GetSection(ConsulConfigs.SectionName).Bind(consulConfigs);
         services.TryAddSingleton(consulConfigs);
 
-        if (!consulConfigs.Enable || !consulConfigs.UseDiscovery) return services;
-        if (environment.IsDevelopment()) return services;
+        if (!consulConfigs.Enable || !consulConfigs.UseDiscovery)
+        {
+            return services;
+        }
+
+        if (environment.IsDevelopment())
+        {
+            return services;
+        }
 
         if (string.IsNullOrEmpty(consulConfigs.ServiceName) ||
             string.IsNullOrEmpty(consulConfigs.ConsulAddress))
         {
-            Console.WriteLine("Consul configuration is missing or incomplete. Service Discovery will be disabled.");
+            // Cannot use IMLog<T> here (DI container not yet built).
+            // Returning silently — Consul client will simply not be registered.
+            // The absence of IConsulClient in DI is the signal that discovery is disabled.
             return services;
         }
 
@@ -34,21 +46,34 @@ public static class ConsulHandler
         IWebHostEnvironment environment)
     {
         ConsulConfigs? consulSettings = app.ApplicationServices.GetService<ConsulConfigs>();
-        if (consulSettings is null) return app;
-        if (!consulSettings.Enable || !consulSettings.UseDiscovery) return app;
-        if (environment.IsDevelopment()) return app;
+        if (consulSettings is null)
+        {
+            return app;
+        }
+
+        if (!consulSettings.Enable || !consulSettings.UseDiscovery)
+        {
+            return app;
+        }
+
+        if (environment.IsDevelopment())
+        {
+            return app;
+        }
+
+        IMLog<ConsulHandlerLogger> logger = app.ApplicationServices.GetRequiredService<IMLog<ConsulHandlerLogger>>();
 
         if (string.IsNullOrEmpty(consulSettings.ServiceName) ||
             string.IsNullOrEmpty(consulSettings.ConsulAddress))
         {
-            Console.WriteLine("Consul configuration is missing or incomplete. Service Discovery will be disabled.");
+            logger.Warn("Consul configuration is missing or incomplete. Service Discovery will be disabled.");
             return app;
         }
 
         IConsulClient? consulClient = app.ApplicationServices.GetService<IConsulClient>();
         if (consulClient is null)
         {
-            Console.WriteLine("Consul client is not registered. Service Discovery will be disabled.");
+            logger.Warn("Consul client is not registered. Service Discovery will be disabled.");
             return app;
         }
 
@@ -71,7 +96,9 @@ public static class ConsulHandler
         }
 
         if (string.IsNullOrWhiteSpace(address) || port == 0)
+        {
             throw new InvalidOperationException("Service address or port could not be determined.");
+        }
 
         AgentServiceRegistration registration = new()
         {

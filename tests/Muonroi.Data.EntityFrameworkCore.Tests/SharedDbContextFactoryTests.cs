@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class SharedDbContextFactoryTests
@@ -6,7 +8,7 @@ public class SharedDbContextFactoryTests
         DbContextOptions<FactoryTestDbContext> options,
         IMediator mediator,
         ILicenseGuard? licenseGuard = null,
-        ILogger<FactoryTestDbContext>? logger = null)
+        IMLog<FactoryTestDbContext>? logger = null)
         : MDbContext(options, mediator, licenseGuard, null, new MDateTimeService())
     {
     }

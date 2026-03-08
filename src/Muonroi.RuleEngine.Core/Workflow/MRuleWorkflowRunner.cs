@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.RuleEngine.Core.Workflow;
 
 /// <summary>
@@ -7,12 +9,11 @@ namespace Muonroi.RuleEngine.Core.Workflow;
 public sealed class MRuleWorkflowRunner<TContext>(
     IMRuleExecutionRouter<TContext> ruleRouter,
     Microsoft.Extensions.Options.IOptions<MRuleWorkflowOptions>? options,
-    ILogger<MRuleWorkflowRunner<TContext>>? logger = null) : IMRuleWorkflowRunner<TContext>
+    IMLog<MRuleWorkflowRunner<TContext>>? logger = null) : IMRuleWorkflowRunner<TContext>
 {
     private readonly MRuleWorkflowOptions _options = options?.Value ?? new MRuleWorkflowOptions();
-    private readonly ILogger<MRuleWorkflowRunner<TContext>> _logger =
-        logger ?? NullLogger<MRuleWorkflowRunner<TContext>>.Instance;
 
+    /// <inheritdoc/>
     public async Task<MRuleWorkflowResult<TContext>> ExecuteAsync(
         TContext context,
         MRuleWorkflowDefinition<TContext> workflow,
@@ -46,7 +47,7 @@ public sealed class MRuleWorkflowRunner<TContext>(
             executionContext.CurrentStepId = currentStepId;
             executedSteps.Add(currentStepId);
 
-            _logger.LogDebug(
+            logger?.Debug(
                 "Executing workflow step {StepId} ({StepType}) in workflow {WorkflowName}",
                 step.Id,
                 step.StepType,

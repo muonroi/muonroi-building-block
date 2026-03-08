@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Muonroi.Core.Abstractions.Constants;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Governance.License;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Grpc.Grpc;
 
@@ -9,7 +10,7 @@ public class GrpcServerInterceptor(
     ISystemExecutionContextAccessor executionContextAccessor,
     ITenantContextPolicy tenantContextPolicy,
     MTokenInfo tokenInfo,
-    ILogger<GrpcServerInterceptor> logger,
+    IMLog<GrpcServerInterceptor>? logger = null,
     LicenseState? licenseState = null,
     IOptions<GrpcServicesConfig>? grpcConfigOptions = null,
     GrpcRateLimiter? rateLimiter = null,
@@ -22,8 +23,6 @@ public class GrpcServerInterceptor(
     private readonly ITenantContextPolicy _tenantContextPolicy = tenantContextPolicy;
     private readonly bool _multiTenantEnabled = tokenInfo.MultiTenantEnabled;
     private readonly LicenseState _licenseState = licenseState ?? LicenseState.CreateFree();
-    private readonly ILogger<GrpcServerInterceptor> _logger =
-        logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GrpcServerInterceptor>.Instance;
     private readonly GrpcServerConfig _serverConfig = grpcConfigOptions?.Value.Server ?? new GrpcServerConfig();
     private readonly GrpcRateLimiter _rateLimiter = rateLimiter ?? new GrpcRateLimiter();
     private readonly bool _requireTenantClaimForAuthenticatedUser =
@@ -43,7 +42,7 @@ public class GrpcServerInterceptor(
         using ContextMirrorScope contextMirror = ContextMirrorScope.Apply(executionContext, logScopeFactory);
         using Activity? activity = StartActivity(context.Method, "unary", executionContext.TenantId);
 
-        _logger.LogInformation("gRPC call {Method} started CorrelationId={CorrelationId}",
+        logger?.Info("gRPC call {Method} started CorrelationId={CorrelationId}",
             context.Method, executionContext.CorrelationId);
 
         Stopwatch sw = Stopwatch.StartNew();
@@ -52,7 +51,7 @@ public class GrpcServerInterceptor(
         try
         {
             TResponse response = await continuation(request, context);
-            _logger.LogInformation("gRPC call {Method} completed CorrelationId={CorrelationId}",
+            logger?.Info("gRPC call {Method} completed CorrelationId={CorrelationId}",
                 context.Method, executionContext.CorrelationId);
             return response;
         }
@@ -215,7 +214,7 @@ public class GrpcServerInterceptor(
         string? apiKey = context.RequestHeaders.GetValue(CustomHeader.ApiKey)?.Trim();
 
         List<string> permissions = user?.Claims
-                .Where(x => x.Type == ClaimConstants.Permission || x.Type == ClaimTypes.Role)
+                .Where(x => x.Type is ClaimConstants.Permission or ClaimTypes.Role)
                 .Select(x => x.Value)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Distinct(StringComparer.OrdinalIgnoreCase)

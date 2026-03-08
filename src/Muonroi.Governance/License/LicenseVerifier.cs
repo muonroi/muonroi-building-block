@@ -1,7 +1,4 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
-using System.Text;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.License;
 
@@ -9,7 +6,7 @@ public sealed class LicenseVerifier(
     LicenseConfigs configs,
     IHostEnvironment? environment,
     IMJsonSerializeService jsonSerializeService,
-    ILogger<LicenseVerifier>? logger = null)
+    IMLog<LicenseVerifier>? logger = null)
 {
     public async Task<LicenseState> VerifyAsync(LicensePayload? payload, string runtimeFingerprint)
     {
@@ -24,16 +21,23 @@ public sealed class LicenseVerifier(
     {
         // No license file = Free tier (always valid, limited features)
         if (payload is null)
+        {
             return Finalize(LicenseState.CreateFree());
+        }
 
         // Free license ID means explicit free tier
         if (payload.LicenseId == "FREE")
+        {
             return Finalize(LicenseState.CreateFree());
+        }
 
         if (payload.NotBefore.HasValue && payload.NotBefore.Value > DateTimeOffset.UtcNow)
+        {
             return new LicenseState { IsValid = false, Error = "License not active yet.", Payload = payload };
+        }
 
         if (payload.ExpiresAt.HasValue && payload.ExpiresAt.Value < DateTimeOffset.UtcNow)
+        {
             return new LicenseState
             {
                 IsValid = false,
@@ -41,6 +45,7 @@ public sealed class LicenseVerifier(
                 Error = "License expired.",
                 Payload = payload
             };
+        }
 
         if (!string.IsNullOrWhiteSpace(payload.Fingerprint) &&
             !payload.Fingerprint.Equals(runtimeFingerprint, StringComparison.OrdinalIgnoreCase))
@@ -61,10 +66,10 @@ public sealed class LicenseVerifier(
         {
             if (configs.SkipSignatureVerification)
             {
-                logger?.LogWarning(
+                logger?.Warn(
                     "[License] SkipSignatureVerification is ignored for non-free licenses. Signature validation is mandatory.");
             }
-            logger?.LogWarning(
+            logger?.Warn(
                 "[License] Signature verification failed for license {LicenseId}. Falling back to restricted mode.",
                 payload.LicenseId ?? "UNKNOWN");
             return new LicenseState { IsValid = false, Error = "Signature invalid.", Payload = payload };
@@ -79,28 +84,38 @@ public sealed class LicenseVerifier(
     private LicenseState Finalize(LicenseState state)
     {
         LicenseEnforcementMode mode = configs.GetEffectiveEnforcementMode(state.Tier);
-        logger?.LogInformation("[License] Verified tier: {Tier}. Enforcement Mode: {Mode}", state.Tier, mode);
+        logger?.Info("[License] Verified tier: {Tier}. Enforcement Mode: {Mode}", state.Tier, mode);
         return state;
     }
 
     private static LicenseTier DetermineTier(LicensePayload payload)
     {
         if (payload.AllowedFeatures == null || payload.AllowedFeatures.Length == 0)
+        {
             return LicenseTier.Licensed;
+        }
 
         // Wildcard = Enterprise
         if (payload.AllowedFeatures.Contains("*"))
+        {
             return LicenseTier.Enterprise;
+        }
 
         return LicenseTier.Licensed;
     }
 
     private bool VerifySignature(LicensePayload payload)
     {
-        if (string.IsNullOrWhiteSpace(payload.Signature)) return false;
+        if (string.IsNullOrWhiteSpace(payload.Signature))
+        {
+            return false;
+        }
 
         string? keyPath = ResolvePath(configs.PublicKeyPath, environment);
-        if (string.IsNullOrWhiteSpace(keyPath) || !File.Exists(keyPath)) return false;
+        if (string.IsNullOrWhiteSpace(keyPath) || !File.Exists(keyPath))
+        {
+            return false;
+        }
 
         string publicKey = File.ReadAllText(keyPath);
         using RSA rsa = RSA.Create();
@@ -126,8 +141,16 @@ public sealed class LicenseVerifier(
 
     private static string? ResolvePath(string? path, IHostEnvironment? environment)
     {
-        if (string.IsNullOrWhiteSpace(path)) return null;
-        if (Path.IsPathRooted(path)) return path;
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        if (Path.IsPathRooted(path))
+        {
+            return path;
+        }
+
         string root = !string.IsNullOrWhiteSpace(environment?.ContentRootPath)
             ? environment.ContentRootPath
             : AppContext.BaseDirectory;

@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 using Muonroi.Observability.Logging;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Observability;
 

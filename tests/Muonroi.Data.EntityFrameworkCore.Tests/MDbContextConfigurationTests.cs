@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class MDbContextConfigurationTests
@@ -11,7 +13,7 @@ public class MDbContextConfigurationTests
         DbContextOptions<ConfigTestDbContext> options,
         IMediator mediator,
         ILicenseGuard? licenseGuard = null,
-        ILogger<ConfigTestDbContext>? logger = null)
+        IMLog<ConfigTestDbContext>? logger = null)
         : MDbContext(options, mediator, licenseGuard, null, new MDateTimeService())
     {
     }

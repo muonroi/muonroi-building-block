@@ -22,7 +22,7 @@ public class MExceptionMiddlewareTests
     {
         MExceptionMiddleware middleware = new(
             _ => Task.CompletedTask,
-            NullLogger<MExceptionMiddleware>.Instance,
+            Substitute.For<IMLog<MExceptionMiddleware>>(),
             new MJsonSerializeService(),
             new MAuthenticateInfoContext(false),
             new FakeEnvironment());
@@ -34,7 +34,7 @@ public class MExceptionMiddlewareTests
     {
         Assert.Throws<ArgumentNullException>(() => new MExceptionMiddleware(
             null!,
-            NullLogger<MExceptionMiddleware>.Instance,
+            Substitute.For<IMLog<MExceptionMiddleware>>(),
             new MJsonSerializeService(),
             new MAuthenticateInfoContext(false),
             new FakeEnvironment()));
@@ -47,7 +47,7 @@ public class MExceptionMiddlewareTests
         context.Response.Body = new MemoryStream();
         MExceptionMiddleware middleware = new(
             _ => Task.CompletedTask,
-            NullLogger<MExceptionMiddleware>.Instance,
+            Substitute.For<IMLog<MExceptionMiddleware>>(),
             new MJsonSerializeService(),
             new MAuthenticateInfoContext(false) { Language = "en" },
             new FakeEnvironment());
@@ -66,7 +66,7 @@ public class MExceptionMiddlewareTests
         DefaultHttpContext context = new();
         MExceptionMiddleware middleware = new(
             _ => Task.CompletedTask,
-            NullLogger<MExceptionMiddleware>.Instance,
+            Substitute.For<IMLog<MExceptionMiddleware>>(),
             new MJsonSerializeService(),
             new MAuthenticateInfoContext(false),
             new FakeEnvironment());
@@ -87,7 +87,7 @@ public class MExceptionMiddlewareTests
 
         MExceptionMiddleware middleware = new(
             Next,
-            NullLogger<MExceptionMiddleware>.Instance,
+            Substitute.For<IMLog<MExceptionMiddleware>>(),
             new MJsonSerializeService(),
             new MAuthenticateInfoContext(false) { Language = "en" },
             new FakeEnvironment());
@@ -100,3 +100,4 @@ public class MExceptionMiddlewareTests
         Assert.Equal(StatusCodes.Status500InternalServerError, context.Response.StatusCode);
     }
 }
+

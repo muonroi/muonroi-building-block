@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.RuleEngine.Core.Tests;
 
 public class RuleOrchestratorMultiTenantTests
@@ -37,7 +39,7 @@ public class RuleOrchestratorMultiTenantTests
             new RuleOrchestrator<string>(
                 sp.GetRequiredKeyedService<IEnumerable<IRule<string>>>("workflow:tenantA"),
                 sp.GetKeyedService<IEnumerable<IHookHandler<string>>>("workflow:tenantA") ?? [],
-                sp.GetService<ILogger<RuleOrchestrator<string>>>(),
+                sp.GetService<IMLog<RuleOrchestrator<string>>>(),
                 sp.GetKeyedService<IEnumerable<IRuleEventListener<string>>>("workflow:tenantA") ?? []));
 
         IServiceProvider provider = services.BuildServiceProvider();

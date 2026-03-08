@@ -38,6 +38,7 @@ global using Muonroi.Core.Abstractions.Enums;
 global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Core.Abstractions.SeedWorks;
 global using Muonroi.Governance.Abstractions.License;
+global using Muonroi.Logging.Abstractions;
 global using Muonroi.Mediator.Mediator.Interfaces;
 global using NSubstitute;
 global using Swashbuckle.AspNetCore.SwaggerGen;
