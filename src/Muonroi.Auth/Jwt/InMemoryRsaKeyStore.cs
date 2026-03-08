@@ -1,21 +1,34 @@
 namespace Muonroi.Auth.Jwt;
 
+/// <summary>
+/// An in-memory implementation of the IRsaKeyStore.
+/// </summary>
 public class InMemoryRsaKeyStore : IRsaKeyStore
 {
     private readonly ConcurrentDictionary<string, RsaSecurityKey> _keys = new();
     private string _currentKid = string.Empty;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="InMemoryRsaKeyStore"/> class and rotates the initial keys.
+    /// </summary>
     public InMemoryRsaKeyStore()
     {
         RotateKeys();
     }
 
+    /// <summary>
+    /// Gets the current signing credentials using the active RSA key.
+    /// </summary>
+    /// <returns>The active signing credentials.</returns>
     public SigningCredentials GetCurrentSigningCredentials()
     {
         RsaSecurityKey key = _keys[_currentKid];
         return new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
     }
 
+    /// <summary>
+    /// Rotates the RSA keys by creating a new active key and keeping up to two previous keys.
+    /// </summary>
     public void RotateKeys()
     {
         RSA rsa = RSA.Create(2048);
@@ -44,11 +57,20 @@ public class InMemoryRsaKeyStore : IRsaKeyStore
         }
     }
 
+    /// <summary>
+    /// Retrieves a specific security key by its key identifier (KID).
+    /// </summary>
+    /// <param name="kid">The unique key identifier.</param>
+    /// <returns>The security key if found; otherwise, null.</returns>
     public SecurityKey? GetKey(string kid)
     {
         return _keys.TryGetValue(kid, out RsaSecurityKey? key) ? key : null;
     }
 
+    /// <summary>
+    /// Gets the JSON Web Key Set (JWKS) containing all public keys currently in the store.
+    /// </summary>
+    /// <returns>The set of JSON Web Keys.</returns>
     public JsonWebKeySet GetJsonWebKeySet()
     {
         JsonWebKeySet jsonWebKeySet = new();

@@ -3,10 +3,21 @@ using Muonroi.AspNetCore.Models.Changes;
 
 namespace Muonroi.AspNetCore.Services;
 
+/// <summary>
+/// An in-memory implementation of <see cref="IRuleChangeProposalStore"/> for testing and local development.
+/// </summary>
+/// <param name="dateTimeService">The date time service.</param>
 public sealed class InMemoryRuleChangeProposalStore(IMDateTimeService dateTimeService) : IRuleChangeProposalStore
 {
     private readonly ConcurrentDictionary<Guid, RuleChangeProposal> _proposals = new();
 
+    /// <summary>
+    /// Proposes a new rule change asynchronously.
+    /// </summary>
+    /// <param name="request">The proposal request.</param>
+    /// <param name="proposedBy">The user proposing the change.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="RuleChangeProposal"/> representing the newly created proposal.</returns>
     public Task<RuleChangeProposal> ProposeAsync(
         ProposeRuleChangeRequest request,
         string proposedBy,
@@ -33,6 +44,12 @@ public sealed class InMemoryRuleChangeProposalStore(IMDateTimeService dateTimeSe
         return Task.FromResult(Clone(proposal));
     }
 
+    /// <summary>
+    /// Gets a specific proposal by its unique identifier asynchronously.
+    /// </summary>
+    /// <param name="proposalId">The unique identifier of the proposal.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The <see cref="RuleChangeProposal"/> if found; otherwise, null.</returns>
     public Task<RuleChangeProposal?> GetAsync(
         Guid proposalId,
         CancellationToken cancellationToken = default)
@@ -46,6 +63,14 @@ public sealed class InMemoryRuleChangeProposalStore(IMDateTimeService dateTimeSe
         return Task.FromResult<RuleChangeProposal?>(Clone(proposal));
     }
 
+    /// <summary>
+    /// Approves a pending rule change proposal asynchronously.
+    /// </summary>
+    /// <param name="proposalId">The unique identifier of the proposal to approve.</param>
+    /// <param name="reviewedBy">The user reviewing the proposal.</param>
+    /// <param name="note">An optional note regarding the approval.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The updated <see cref="RuleChangeProposal"/> if successful; otherwise, null.</returns>
     public Task<RuleChangeProposal?> ApproveAsync(
         Guid proposalId,
         string reviewedBy,
@@ -73,6 +98,14 @@ public sealed class InMemoryRuleChangeProposalStore(IMDateTimeService dateTimeSe
         }
     }
 
+    /// <summary>
+    /// Rejects a pending rule change proposal asynchronously.
+    /// </summary>
+    /// <param name="proposalId">The unique identifier of the proposal to reject.</param>
+    /// <param name="reviewedBy">The user reviewing the proposal.</param>
+    /// <param name="note">An optional note regarding the rejection.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The updated <see cref="RuleChangeProposal"/> if successful; otherwise, null.</returns>
     public Task<RuleChangeProposal?> RejectAsync(
         Guid proposalId,
         string reviewedBy,
@@ -100,6 +133,12 @@ public sealed class InMemoryRuleChangeProposalStore(IMDateTimeService dateTimeSe
         }
     }
 
+    /// <summary>
+    /// Lists all pending rule change proposals for a specific tenant asynchronously.
+    /// </summary>
+    /// <param name="tenantId">The tenant identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A list of pending <see cref="RuleChangeProposal"/> objects.</returns>
     public Task<IReadOnlyList<RuleChangeProposal>> ListPendingAsync(
         string tenantId,
         CancellationToken cancellationToken = default)

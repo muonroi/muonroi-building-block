@@ -1,35 +1,125 @@
 namespace Muonroi.Tenancy.Abstractions.Models;
 
+/// <summary>
+/// Represents the quota limits for a tenant.
+/// </summary>
 public sealed class TenantQuota
 {
+    /// <summary>
+    /// Gets or sets the unique identifier of the tenant.
+    /// </summary>
     public string TenantId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the maximum number of rules allowed per tenant.
+    /// </summary>
     public int MaxRulesPerTenant { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets the maximum number of rule executions allowed per day.
+    /// </summary>
     public int MaxRuleExecutionsPerDay { get; set; } = 10_000;
+
+    /// <summary>
+    /// Gets or sets the maximum number of concurrent executions allowed.
+    /// </summary>
     public int MaxConcurrentExecutions { get; set; } = 10;
+
+    /// <summary>
+    /// Gets or sets the maximum number of decision tables allowed.
+    /// </summary>
     public int MaxDecisionTables { get; set; } = 50;
+
+    /// <summary>
+    /// Gets or sets the maximum number of JSON workflows allowed.
+    /// </summary>
     public int MaxJsonWorkflows { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets the maximum storage allowed in megabytes (MB).
+    /// </summary>
     public int MaxStorageMB { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets the maximum number of API requests allowed per minute.
+    /// </summary>
     public int MaxApiRequestsPerMinute { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets the maximum number of rule evaluations allowed per second.
+    /// </summary>
     public int MaxRuleEvaluationsPerSecond { get; set; } = 50;
+
+    /// <summary>
+    /// Gets or sets the maximum number of workflow executions allowed per hour.
+    /// </summary>
     public int MaxWorkflowExecutionsPerHour { get; set; } = 500;
+
+    /// <summary>
+    /// Gets or sets the maximum complexity allowed for a single rule.
+    /// </summary>
     public int MaxRuleComplexity { get; set; } = 10;
+
+    /// <summary>
+    /// Gets or sets the maximum size allowed for a workflow in kilobytes (KB).
+    /// </summary>
     public int MaxWorkflowSizeKB { get; set; } = 500;
+
+    /// <summary>
+    /// Gets or sets the maximum execution time allowed for a rule/workflow in milliseconds.
+    /// </summary>
     public int MaxExecutionTimeMs { get; set; } = 5000;
+
+    /// <summary>
+    /// Gets or sets the maximum number of messages allowed per day.
+    /// </summary>
     public int MaxMessagesPerDay { get; set; } = 10_000;
+
+    /// <summary>
+    /// Gets or sets the maximum number of messages allowed per minute.
+    /// </summary>
     public int MaxMessagesPerMinute { get; set; } = 500;
+
+    /// <summary>
+    /// Gets or sets the tenant tier.
+    /// </summary>
     public TenantTier Tier { get; set; } = TenantTier.Free;
 }
 
+/// <summary>
+/// Specifies the tier of a tenant.
+/// </summary>
 public enum TenantTier
 {
+    /// <summary>
+    /// Free tier.
+    /// </summary>
     Free,
+
+    /// <summary>
+    /// Starter tier.
+    /// </summary>
     Starter,
+
+    /// <summary>
+    /// Professional tier.
+    /// </summary>
     Professional,
+
+    /// <summary>
+    /// Enterprise tier.
+    /// </summary>
     Enterprise
 }
 
+/// <summary>
+/// Provides predefined quota presets for different tenant tiers.
+/// </summary>
 public static class TenantQuotaPresets
 {
+    /// <summary>
+    /// Gets the quota preset for the Free tier.
+    /// </summary>
     public static TenantQuota Free
     {
         get
@@ -56,6 +146,9 @@ public static class TenantQuotaPresets
         }
     }
 
+    /// <summary>
+    /// Gets the quota preset for the Starter tier.
+    /// </summary>
     public static TenantQuota Starter
     {
         get
@@ -82,6 +175,9 @@ public static class TenantQuotaPresets
         }
     }
 
+    /// <summary>
+    /// Gets the quota preset for the Professional tier.
+    /// </summary>
     public static TenantQuota Professional
     {
         get
@@ -108,6 +204,9 @@ public static class TenantQuotaPresets
         }
     }
 
+    /// <summary>
+    /// Gets the quota preset for the Enterprise tier.
+    /// </summary>
     public static TenantQuota Enterprise
     {
         get

@@ -6,9 +6,18 @@ using Muonroi.Tenancy.Core;
 
 namespace Muonroi.AspNetCore.Services;
 
+/// <summary>
+/// Resolves the controller execution context from the current HTTP context.
+/// </summary>
+/// <param name="configuration">The application configuration.</param>
 public sealed class MDefaultControllerExecutionContextResolver(IConfiguration configuration)
     : IMControllerExecutionContextResolver
 {
+    /// <summary>
+    /// Resolves the execution context from the specified HTTP context.
+    /// </summary>
+    /// <param name="httpContext">The current HTTP context.</param>
+    /// <returns>A <see cref="MControllerExecutionContext"/> representing the current execution state.</returns>
     public MControllerExecutionContext Resolve(HttpContext httpContext)
     {
         IAuthenticateInfoContext? authContext =

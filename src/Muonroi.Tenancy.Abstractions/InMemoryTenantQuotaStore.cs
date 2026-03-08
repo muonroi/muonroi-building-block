@@ -6,17 +6,24 @@ using System.Text.Json;
 namespace Muonroi.Tenancy.Abstractions;
 
 
+/// <summary>
+/// An in-memory implementation of the <see cref="ITenantQuotaStore"/> interface.
+/// </summary>
+/// <param name="dateTimeService">Service for retrieving current date and time.</param>
+/// <param name="jsonSerializeService">Service for JSON serialization and deserialization.</param>
 public sealed class InMemoryTenantQuotaStore(IMDateTimeService dateTimeService, IMJsonSerializeService jsonSerializeService) : ITenantQuotaStore
 {
     private readonly ConcurrentDictionary<string, TenantQuota> _quotas = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<QuotaType, int>> _usage = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <inheritdoc />
     public Task<TenantQuota?> GetQuotaAsync(string tenantId, CancellationToken ct = default)
     {
         _quotas.TryGetValue(tenantId, out TenantQuota? quota);
         return Task.FromResult(quota is null ? null : Clone(quota));
     }
 
+    /// <inheritdoc />
     public Task SaveQuotaAsync(string tenantId, TenantQuota quota, CancellationToken ct = default)
     {
         quota.TenantId = tenantId;
@@ -24,6 +31,7 @@ public sealed class InMemoryTenantQuotaStore(IMDateTimeService dateTimeService, 
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public Task RecordUsageAsync(string tenantId, QuotaType type, int amount, CancellationToken ct = default)
     {
         ConcurrentDictionary<QuotaType, int> bucket = _usage.GetOrAdd(tenantId, _ => new ConcurrentDictionary<QuotaType, int>());
@@ -31,6 +39,7 @@ public sealed class InMemoryTenantQuotaStore(IMDateTimeService dateTimeService, 
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public async Task<QuotaUsage> GetUsageAsync(string tenantId, CancellationToken ct = default)
     {
         TenantQuota quota = await GetQuotaAsync(tenantId, ct) ?? TenantQuotaPresets.Free;
@@ -46,6 +55,7 @@ public sealed class InMemoryTenantQuotaStore(IMDateTimeService dateTimeService, 
         return result;
     }
 
+    /// <inheritdoc />
     public Task ResetDailyCountersAsync(CancellationToken ct = default)
     {
         _usage.Clear();

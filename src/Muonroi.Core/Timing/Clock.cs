@@ -31,6 +31,9 @@ public static class Clock
     /// </summary>
     public static DateTime UtcNow => Provider.UtcNow;
 
+    /// <summary>
+    /// Gets the <see cref="DateTimeKind"/> supported by the current <see cref="Provider"/>.
+    /// </summary>
     public static DateTimeKind Kind => Provider.Kind;
 
     /// <summary>

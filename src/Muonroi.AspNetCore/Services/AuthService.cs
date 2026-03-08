@@ -2,6 +2,11 @@ using Muonroi.Core.Helpers;
 
 namespace Muonroi.AspNetCore.Services;
 
+/// <summary>
+/// Service for user authentication and session management.
+/// </summary>
+/// <typeparam name="TPermission">The type of the permission enum.</typeparam>
+/// <typeparam name="TDbContext">The type of the database context.</typeparam>
 public class AuthService<TPermission, TDbContext>(
     TDbContext dbContext,
     IAuthenticateInfoContext context,
@@ -10,6 +15,11 @@ public class AuthService<TPermission, TDbContext>(
     where TPermission : Enum
     where TDbContext : MDbContext
 {
+    /// <summary>
+    /// Logs out the current user by revoking their active refresh token asynchronously.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="MResponse{Object}"/> indicating the result.</returns>
     public async Task<MResponse<object>> LogoutAsync(CancellationToken cancellationToken)
     {
         MResponse<object> result = new();
@@ -60,6 +70,11 @@ public class AuthService<TPermission, TDbContext>(
         return result;
     }
 
+    /// <summary>
+    /// Logs out the current user from all devices by revoking all their refresh tokens asynchronously.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="MResponse{Object}"/> indicating the result.</returns>
     public async Task<MResponse<object>> LogoutAllAsync(CancellationToken cancellationToken)
     {
         MResponse<object> result = new();
@@ -98,7 +113,12 @@ public class AuthService<TPermission, TDbContext>(
         return result;
     }
 
-
+    /// <summary>
+    /// Registers a new user asynchronously.
+    /// </summary>
+    /// <param name="request">The registration request model.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="MResponse{LoginResponseModel}"/> containing the result of the registration.</returns>
     public async Task<MResponse<LoginResponseModel>> RegisterAsync(RegisterRequestModel request,
         CancellationToken cancellationToken)
     {
@@ -152,6 +172,15 @@ public class AuthService<TPermission, TDbContext>(
         return result;
     }
 
+    /// <summary>
+    /// Authenticates a user and generates tokens asynchronously.
+    /// </summary>
+    /// <param name="request">The login request model.</param>
+    /// <param name="tokenInfo">The token configuration information.</param>
+    /// <param name="tokenHelper">The helper for generating and validating tokens.</param>
+    /// <param name="cacheService">The cache service for session management.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="MResponse{LoginResponseModel}"/> containing the authenticated tokens.</returns>
     public async Task<MResponse<LoginResponseModel>> LoginAsync(LoginRequestModel request,
         MTokenInfo tokenInfo,
         MAuthenticateTokenHelper<TPermission> tokenHelper,
@@ -166,6 +195,15 @@ public class AuthService<TPermission, TDbContext>(
         return await authenticateRepository.Login(request, cancellationToken);
     }
 
+    /// <summary>
+    /// Refreshes an expired authentication token using a refresh token asynchronously.
+    /// </summary>
+    /// <param name="request">The refresh token request model.</param>
+    /// <param name="tokenInfo">The token configuration information.</param>
+    /// <param name="tokenHelper">The helper for generating and validating tokens.</param>
+    /// <param name="cacheService">The cache service for session management.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="MResponse{RefreshTokenResponseModel}"/> containing the new tokens.</returns>
     public async Task<MResponse<RefreshTokenResponseModel>> RefreshTokenAsync(RefreshTokenRequestModel request,
         MTokenInfo tokenInfo,
         MAuthenticateTokenHelper<TPermission> tokenHelper,

@@ -5,8 +5,19 @@ namespace Muonroi.RuleEngine.Abstractions;
 /// </summary>
 public enum HookPoint
 {
+    /// <summary>
+    /// Executes before a rule is fired.
+    /// </summary>
     BeforeRule,
+
+    /// <summary>
+    /// Executes after a rule is fired.
+    /// </summary>
     AfterRule,
+
+    /// <summary>
+    /// Executes when an error occurs during rule execution.
+    /// </summary>
     Error,
     /// <summary>
     /// Executes before input validation happens.

@@ -1,5 +1,13 @@
 namespace Muonroi.AspNetCore.Middleware;
 
+/// <summary>
+/// Middleware for handling unhandled exceptions and providing a standardized error response.
+/// </summary>
+/// <param name="next">The next delegate in the middleware pipeline.</param>
+/// <param name="logger">The logger for this middleware.</param>
+/// <param name="serializeService">The JSON serialization service.</param>
+/// <param name="authContext">The authentication info context.</param>
+/// <param name="environment">The host environment.</param>
 public class MExceptionMiddleware(
     RequestDelegate next,
     IMLog<MExceptionMiddleware> logger,
@@ -13,6 +21,11 @@ public class MExceptionMiddleware(
     private readonly MAuthenticateInfoContext _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
     private readonly IHostEnvironment _environment = environment ?? throw new ArgumentNullException(nameof(environment));
 
+    /// <summary>
+    /// Invokes the middleware.
+    /// </summary>
+    /// <param name="context">The HTTP context.</param>
+    /// <returns>A task that represents the completion of the middleware invocation.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         try

@@ -2,8 +2,17 @@ using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.AspNetCore.OpenApi.OpenApi;
 
+/// <summary>
+/// Represents the Swagger/OpenAPI default values for the API explorer.
+/// </summary>
+/// <param name="jsonSerializeService">The JSON serialization service.</param>
 public class SwaggerDefaultValues(IMJsonSerializeService jsonSerializeService) : IOperationFilter
 {
+    /// <summary>
+    /// Applies the filter to the specified operation using the given context.
+    /// </summary>
+    /// <param name="operation">The operation to apply the filter to.</param>
+    /// <param name="context">The filter context.</param>
     public void Apply(OpenApiOperation? operation, OperationFilterContext context)
     {
         Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription apiDescription = context.ApiDescription;
@@ -41,7 +50,7 @@ public class SwaggerDefaultValues(IMJsonSerializeService jsonSerializeService) :
                 description.DefaultValue is not DBNull &&
                 description.ModelMetadata is { } modelMetadata)
             {
-                string json = JsonSerializer.Serialize(description.DefaultValue, modelMetadata.ModelType); // MBB002-exempt: requires Type-based overload not available in IMJsonSerializeService wrapper
+                string json = jsonSerializeService.Serialize(description.DefaultValue); // MBB002-exempt: requires Type-based overload not available in IMJsonSerializeService wrapper
                 parameter.Schema.Default = OpenApiAnyFactory.CreateFromJson(json);
             }
 

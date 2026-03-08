@@ -13,8 +13,8 @@ public class MDbContextConfigurationTests
         DbContextOptions<ConfigTestDbContext> options,
         IMediator mediator,
         ILicenseGuard? licenseGuard = null,
-        IMLog<ConfigTestDbContext>? logger = null)
-        : MDbContext(options, mediator, licenseGuard, null, new MDateTimeService())
+        IMLog<MDbContext>? logger = null)
+        : MDbContext(options, mediator, licenseGuard, logger, new MDateTimeService())
     {
     }
 

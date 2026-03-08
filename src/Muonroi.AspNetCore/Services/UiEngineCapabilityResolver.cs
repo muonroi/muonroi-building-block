@@ -2,10 +2,19 @@ using Muonroi.Tenancy.Abstractions.Models;
 
 namespace Muonroi.AspNetCore.Services;
 
+/// <summary>
+/// Resolves UI engine capabilities based on tenant tiers and module contributors.
+/// </summary>
+/// <param name="contributors">The collection of UI engine manifest contributors.</param>
 public sealed class UiEngineCapabilityResolver(IEnumerable<IUiEngineManifestContributor> contributors)
 {
     private readonly IReadOnlyList<IUiEngineManifestContributor> _contributors = [.. contributors];
 
+    /// <summary>
+    /// Builds the list of capabilities for a specific tenant tier.
+    /// </summary>
+    /// <param name="tenantTier">The tenant tier to evaluate capabilities for.</param>
+    /// <returns>A list of <see cref="MUiEngineCapability"/> objects.</returns>
     public List<MUiEngineCapability> BuildCapabilities(TenantTier tenantTier)
     {
         List<MUiEngineCapability> capabilities = [];
@@ -53,6 +62,11 @@ public sealed class UiEngineCapabilityResolver(IEnumerable<IUiEngineManifestCont
         return capabilities;
     }
 
+    /// <summary>
+    /// Parses a string representation of a tenant tier.
+    /// </summary>
+    /// <param name="value">The string value to parse.</param>
+    /// <returns>The parsed <see cref="TenantTier"/>, or <see cref="TenantTier.Free"/> if parsing fails.</returns>
     public static TenantTier ParseTier(string? value)
     {
         if (Enum.TryParse(value, true, out TenantTier tier))

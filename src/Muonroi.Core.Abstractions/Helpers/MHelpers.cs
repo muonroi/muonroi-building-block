@@ -1,11 +1,19 @@
 namespace Muonroi.Core.Abstractions.Helpers;
 
+/// <summary>
+/// Helper methods for Muonroi.
+/// </summary>
 public static class MHelpers
 {
     private static readonly ConcurrentDictionary<string, Dictionary<string, string>> ErrorMessages = new();
     private static ResourceSetting? _resourceSetting;
     private static Assembly? _resourceAssembly;
 
+    /// <summary>
+    /// Initializes the helper with resource settings and assembly.
+    /// </summary>
+    /// <param name="resourceSetting">The resource setting.</param>
+    /// <param name="resourceAssembly">The resource assembly.</param>
     public static void Initialize(ResourceSetting resourceSetting, Assembly resourceAssembly)
     {
         ErrorMessages.Clear();
@@ -13,11 +21,23 @@ public static class MHelpers
         _resourceAssembly = resourceAssembly;
     }
 
+    /// <summary>
+    /// Generates an error result message for a property.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="propertyValue">The value of the property.</param>
+    /// <returns>A string representing the error result.</returns>
     public static string GenerateErrorResult(string propertyName, object propertyValue)
     {
         return $"{char.ToLowerInvariant(propertyName[0])}{propertyName[1..]}: {propertyValue}";
     }
 
+    /// <summary>
+    /// Gets the error message for the specified error code and language.
+    /// </summary>
+    /// <param name="errorCode">The error code.</param>
+    /// <param name="lang">The language code (optional).</param>
+    /// <returns>The error message string.</returns>
     public static string GetErrorMessage(string errorCode, string? lang = null)
     {
         if (string.IsNullOrWhiteSpace(lang))
@@ -80,6 +100,11 @@ public static class MHelpers
         return reader.ReadToEnd();
     }
 
+    /// <summary>
+    /// Gets the setting value for the specified key.
+    /// </summary>
+    /// <param name="key">The setting key.</param>
+    /// <returns>The setting value.</returns>
     public static string GetSettingValue(this string key)
     {
         return _resourceSetting != null && _resourceSetting.TryGetValue(key, out string? value) ? value : "vi-VN";
