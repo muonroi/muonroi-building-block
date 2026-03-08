@@ -3,7 +3,7 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity;
 public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnitOfWork, IMDataContext, ITransactionalRuleContext, IIdentityAuth
 {
     private readonly IMediator _mediator;
-    private readonly ILogger<MDbContext>? _logger;
+    private readonly IMLog<MDbContext>? _logger;
     private readonly ILicenseGuard? _licenseGuard;
     private readonly IMDateTimeService? _dateTimeService;
 
@@ -27,7 +27,7 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
     public virtual DbSet<MTenantQuotaUsage> TenantQuotaUsages { get; set; }
     public virtual DbSet<MWebAuthnCredential> WebAuthnCredentials { get; set; }
 
-    public MDbContext(DbContextOptions options, IMediator mediator, ILicenseGuard? licenseGuard = null, ILogger<MDbContext>? logger = null, IMDateTimeService? dateTimeService = null)
+    public MDbContext(DbContextOptions options, IMediator mediator, ILicenseGuard? licenseGuard = null, IMLog<MDbContext>? logger = null, IMDateTimeService? dateTimeService = null)
         : base(options)
     {
         _mediator = mediator;
@@ -156,13 +156,13 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
 
         IEnumerable<Task> tasks = domainEvents.Select(async domainEvent =>
         {
-            Console.WriteLine($"Dispatching InternalEvent: {domainEvent.GetType()}");
+            _logger?.Debug("Dispatching InternalEvent: {EventType}", domainEvent.GetType().Name);
             await _mediator.Publish((Mediator.Mediator.Interfaces.INotification)domainEvent);
-            Console.WriteLine($"Dispatched InternalEvent: {domainEvent.GetType()}");
+            _logger?.Debug("Dispatched InternalEvent: {EventType}", domainEvent.GetType().Name);
         });
 
         await Task.WhenAll(tasks);
-        _logger?.LogInformation("Dispatched {Count} domain events successfully", domainEvents.Count);
+        _logger?.Info("Dispatched {Count} domain events successfully", domainEvents.Count);
         _trackEntities.Clear();
     }
 
@@ -275,15 +275,10 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         {
             if (!typeof(MEntity).IsAssignableFrom(entityType.ClrType) && !entityType.IsOwned())
             {
-                ConsoleColor originalColor = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine(
-                    $"[WARNING] Architecture Violation: Entity '{entityType.ClrType.Name}' SHOULD inherit from '{nameof(MEntity)}'.");
-                Console.WriteLine(
-                    $"          - Benefit: Auto Audit, Soft-Delete, Snowflake ID, Multi-Tenant Security.");
-                Console.WriteLine(
-                    $"          - Guide: https://github.com/muonroi/MuonroiBuildingBlock/blob/main/docs/backend-guide.md#1-entity");
-                Console.ForegroundColor = originalColor;
+                _logger?.Warn(
+                    "[Architecture] Entity '{EntityName}' SHOULD inherit from '{BaseType}' — Benefit: Auto Audit, Soft-Delete, Snowflake ID, Multi-Tenant Security | Guide: {Guide}",
+                    entityType.ClrType.Name, nameof(MEntity),
+                    "https://github.com/muonroi/MuonroiBuildingBlock/blob/main/docs/backend-guide.md#1-entity");
             }
 
             LambdaExpression? combinedFilter = entityType.GetQueryFilter();

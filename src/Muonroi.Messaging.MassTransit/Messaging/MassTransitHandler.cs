@@ -1,3 +1,5 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 public static class MassTransitHandler

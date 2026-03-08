@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Configuration;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Caching.Redis.Redis;
 

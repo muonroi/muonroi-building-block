@@ -1,19 +1,21 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.AspNetCore.Tests;
 
 public class MControllerBaseTests
 {
-    private sealed class DummyController(IMediator mediator, ILogger logger)
+    private sealed class DummyController(IMediator mediator, IMLog<MControllerBase> logger)
         : MControllerBase(mediator, logger)
     {
         public IMediator MediatorProp => Mediator;
-        public ILogger LoggerProp => Logger;
+        public IMLog<MControllerBase> LoggerProp => Logger;
     }
 
     [Fact]
     public void Constructor_Initializes_Dependencies()
     {
         IMediator mediator = Substitute.For<IMediator>();
-        ILogger logger = Substitute.For<ILogger>();
+        IMLog<MControllerBase> logger = Substitute.For<IMLog<MControllerBase>>();
 
         DummyController controller = new(mediator, logger);
 
@@ -41,7 +43,7 @@ public class MControllerBaseTests
     [Fact]
     public void Logger_Returns_Value()
     {
-        ILogger logger = Substitute.For<ILogger>();
+        IMLog<MControllerBase> logger = Substitute.For<IMLog<MControllerBase>>();
         DummyController controller = new(null!, logger);
         Assert.Same(logger, controller.LoggerProp);
     }

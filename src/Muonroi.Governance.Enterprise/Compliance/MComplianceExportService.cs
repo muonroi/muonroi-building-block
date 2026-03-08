@@ -1,13 +1,15 @@
+using Muonroi.Governance.Compliance;
 using Muonroi.Governance.ControlPlane;
+using Muonroi.Logging.Abstractions;
 
-namespace Muonroi.Governance.Compliance;
+namespace Muonroi.Governance.Enterprise.Compliance;
 
 public sealed class MComplianceExportService(
     LicenseConfigs licenseConfigs,
     IFingerprintChainStore chainStore,
     IEnumerable<IMControlPlaneStore> controlPlaneStores,
     IHostEnvironment? hostEnvironment = null,
-    ILogger<MComplianceExportService>? logger = null) : IMComplianceExportService
+    IMLog<MComplianceExportService>? logger = null) : IMComplianceExportService
 {
     private const string GenesisHash = "GENESIS";
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -22,7 +24,7 @@ public sealed class MComplianceExportService(
     private readonly IEnumerable<IMControlPlaneStore> _controlPlaneStores =
         controlPlaneStores ?? [];
     private readonly IHostEnvironment? _hostEnvironment = hostEnvironment;
-    private readonly ILogger<MComplianceExportService>? _logger = logger;
+    private readonly IMLog<MComplianceExportService>? _logger = logger;
     private readonly object _lock = new();
 
     public bool IsEnabled => _licenseConfigs.Compliance.Enabled;
@@ -116,7 +118,7 @@ public sealed class MComplianceExportService(
             }
             catch (Exception ex)
             {
-                _logger?.LogWarning(ex, "Failed to load control-plane registry for compliance export.");
+                _logger?.Error(ex, "Failed to load control-plane registry for compliance export.");
                 registry = new MControlPlaneRegistry();
             }
 
@@ -379,7 +381,7 @@ public sealed class MComplianceExportService(
             }
             catch (Exception ex)
             {
-                _logger?.LogWarning(ex, "Failed to prune compliance evidence pack '{File}'.", file);
+                _logger?.Error(ex, "Failed to prune compliance evidence pack '{File}'.", file);
             }
         }
 

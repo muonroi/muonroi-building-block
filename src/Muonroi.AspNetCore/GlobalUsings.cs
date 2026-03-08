@@ -19,6 +19,7 @@ global using Microsoft.Net.Http.Headers;
 global using Muonroi.AspNetCore.Attributes;
 global using Muonroi.AspNetCore.Exceptions;
 global using Muonroi.AspNetCore.Logging;
+global using Muonroi.Logging.Abstractions;
 global using Muonroi.AspNetCore.Services;
 global using Muonroi.Caching.Memory.MultiLevel;
 global using Muonroi.Core.Abstractions.Constants;

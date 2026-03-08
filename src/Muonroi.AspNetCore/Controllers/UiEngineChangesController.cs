@@ -26,7 +26,7 @@ public sealed class UiEngineChangesController(
     IAuthorizationPolicyProvider policyProvider,
     IMDateTimeService dateTimeService,
     IUiEngineSchemaNotifier? schemaNotifier,
-    ILogger<UiEngineChangesController> logger) : ControllerBase
+    IMLog<UiEngineChangesController> logger) : ControllerBase
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.UiEngine.Changes");
 
@@ -79,7 +79,7 @@ public sealed class UiEngineChangesController(
         activity?.SetTag("change.id", record.ChangeId.ToString());
         activity?.SetTag("rule.count", record.NewOrder.Count);
 
-        logger.LogInformation(
+        logger.Info(
             "Applied UI engine rule change {ChangeId} for tenant {TenantId} and route {Route} with {RuleCount} rules.",
             record.ChangeId,
             tenantId,
@@ -301,7 +301,7 @@ public sealed class UiEngineChangesController(
         activity?.SetTag("endpoint.route", endpointRoute);
         activity?.SetTag("change.id", record.ChangeId.ToString());
 
-        logger.LogInformation(
+        logger.Info(
             "Rolled back UI engine rule change for tenant {TenantId} and route {Route}.",
             tenantId,
             endpointRoute);

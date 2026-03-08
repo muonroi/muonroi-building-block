@@ -3,7 +3,7 @@ namespace Muonroi.AspNetCore.Controllers.ActionFilters;
 public class RequireAuthenticatedTokenFilter<TDbContext, TPermission>(
     TDbContext dbContext,
     IMultiLevelCacheService cacheService,
-    ILogger logger)
+    IMLog<MDbContext> logger)
     : IAsyncActionFilter
     where TDbContext : MDbContext
     where TPermission : Enum

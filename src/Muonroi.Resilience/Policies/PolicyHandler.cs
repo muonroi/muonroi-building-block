@@ -1,14 +1,8 @@
-using Microsoft.Extensions.Logging;
-using Polly;
-using Polly.CircuitBreaker;
-using Polly.Retry;
-using Polly.Timeout;
-using System;
-using System.Threading.Tasks;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Resilience.Policies;
 
-public class PolicyHandler(ILogger<PolicyHandler> logger)
+public class PolicyHandler(IMLog<PolicyHandler> logger)
 {
     public ResiliencePipeline<T> CreateDefaultPipeline<T>(string serviceName)
     {
@@ -22,7 +16,7 @@ public class PolicyHandler(ILogger<PolicyHandler> logger)
                 Delay = TimeSpan.FromSeconds(1),
                 OnRetry = args =>
                 {
-                    logger.LogWarning("Retrying {ServiceName} due to {Exception}. Attempt: {Attempt}", 
+                    logger.LogWarning("Retrying {ServiceName} due to {Exception}. Attempt: {Attempt}",
                         serviceName, args.Outcome.Exception?.Message, args.AttemptNumber);
                     return default;
                 }
@@ -36,13 +30,13 @@ public class PolicyHandler(ILogger<PolicyHandler> logger)
                 BreakDuration = TimeSpan.FromSeconds(30),
                 OnOpened = args =>
                 {
-                    logger.LogError("Circuit breaker opened for {ServiceName} for {BreakDuration}s", 
+                    logger.LogError("Circuit breaker opened for {ServiceName} for {BreakDuration}s",
                         serviceName, args.BreakDuration.TotalSeconds);
                     return default;
                 },
                 OnClosed = args =>
                 {
-                    logger.LogInformation("Circuit breaker closed for {ServiceName}", serviceName);
+                    logger?.Info("Circuit breaker closed for {ServiceName}", serviceName);
                     return default;
                 }
             })

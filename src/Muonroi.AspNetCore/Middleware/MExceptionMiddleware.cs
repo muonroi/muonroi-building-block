@@ -2,13 +2,13 @@ namespace Muonroi.AspNetCore.Middleware;
 
 public class MExceptionMiddleware(
     RequestDelegate next,
-    ILogger<MExceptionMiddleware> logger,
+    IMLog<MExceptionMiddleware> logger,
     IMJsonSerializeService serializeService,
     MAuthenticateInfoContext authContext,
     IHostEnvironment environment)
 {
     private readonly RequestDelegate _next = next ?? throw new ArgumentNullException(nameof(next));
-    private readonly ILogger<MExceptionMiddleware> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IMLog<MExceptionMiddleware> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IMJsonSerializeService _serializeService = serializeService ?? throw new ArgumentNullException(nameof(serializeService));
     private readonly MAuthenticateInfoContext _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
     private readonly IHostEnvironment _environment = environment ?? throw new ArgumentNullException(nameof(environment));
@@ -21,7 +21,7 @@ public class MExceptionMiddleware(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred.");
+            _logger.Error(ex, "An unhandled exception occurred.");
             await HandleExceptionAsync(context, ex);
         }
     }

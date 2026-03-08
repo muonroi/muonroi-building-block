@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using Muonroi.Governance.License;
+using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.Tenancy.Abstractions;
 using Muonroi.Tenancy.Core;
@@ -18,7 +19,7 @@ namespace Muonroi.Rules.Rules;
 /// <typeparam name="T">Type of context passed to each rule.</typeparam>
 public sealed class RuleEngine<T>(
     IOptionsMonitor<RuleOptions>? options = null,
-    ILogger? logger = null,
+    IMLog<RuleEngine<T>>? logger = null,
     IRuleActivationStrategy<T>? activation = null,
     ILicenseGuard? licenseGuard = null)
 {
@@ -250,7 +251,7 @@ public sealed class RuleEngine<T>(
         string[] unused = [.. _rules.Select(r => r.Descriptor.Code).Except(executed, StringComparer.OrdinalIgnoreCase)];
         if (unused.Length > 0)
         {
-            logger?.LogWarning("Registered rules not executed: {Rules}", string.Join(", ", unused));
+            logger?.Warn("Registered rules not executed: {Rules}", string.Join(", ", unused));
         }
     }
 

@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
@@ -106,7 +108,10 @@ public sealed class RulesEngineService(
                     cancellationToken);
         }
 
-        if (json is null) return new FactBag();
+        if (json is null)
+        {
+            return new FactBag();
+        }
 
         CachedWorkflowDefinition definition = GetOrCreateWorkflowDefinition(tenantId, workflowName, json);
         string[]? codes = definition.RuleCodes;
@@ -217,8 +222,8 @@ public sealed class RulesEngineService(
         IEnumerable<IHookHandler<TContext>> hooks = _serviceProvider?.GetServices<IHookHandler<TContext>>() ?? [];
         IEnumerable<IRuleEventListener<TContext>> listeners =
             _serviceProvider?.GetServices<IRuleEventListener<TContext>>() ?? [];
-        Microsoft.Extensions.Logging.ILogger<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>? logger =
-            _serviceProvider?.GetService<Microsoft.Extensions.Logging.ILogger<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>>();
+        IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>? logger =
+            _serviceProvider?.GetService<IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>>();
         ITenantQuotaTracker? quotaTracker = _serviceProvider?.GetService<ITenantQuotaTracker>();
         IRuleExecutionTracer? tracer = _serviceProvider?.GetService<IRuleExecutionTracer>();
         ISystemExecutionContextAccessor? contextAccessor = _serviceProvider?.GetService<ISystemExecutionContextAccessor>();
@@ -261,8 +266,7 @@ public sealed class RulesEngineService(
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
-        Task<FactBag>? invoke = closed.Invoke(this, [codes, context, executionMode, cancellationToken]) as Task<FactBag>;
-        if (invoke is null)
+        if (closed.Invoke(this, [codes, context, executionMode, cancellationToken]) is not Task<FactBag> invoke)
         {
             throw new InvalidOperationException("Unable to invoke code-based dry-run bridge.");
         }
@@ -298,8 +302,7 @@ public sealed class RulesEngineService(
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
-        Task<FactBag>? invoke = closed.Invoke(this, [workflowName, workflows, context]) as Task<FactBag>;
-        if (invoke is null)
+        if (closed.Invoke(this, [workflowName, workflows, context]) is not Task<FactBag> invoke)
         {
             throw new InvalidOperationException("Unable to invoke legacy dry-run bridge.");
         }

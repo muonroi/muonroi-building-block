@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
 using Muonroi.AspNetCore.Attributes;
 using Muonroi.AspNetCore.Controllers.ActionFilters;
 using Muonroi.AspNetCore.Exceptions;
@@ -23,7 +22,7 @@ public class PermissionFilterPdpModeTests
     [Fact]
     public async Task PdpAuthoritativeAllow_BypassesLocalBitmask()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ServiceProvider sp = new ServiceCollection()
             .AddSingleton<IMPolicyDecisionService>(new StubPdpService(MPolicyDecisionResult.Allowed("pdp.opa")))
             .BuildServiceProvider();
@@ -53,7 +52,7 @@ public class PermissionFilterPdpModeTests
     [Fact]
     public async Task PdpAuthoritativeDeny_BlocksEvenWhenLocalBitmaskAllows()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ServiceProvider sp = new ServiceCollection()
             .AddSingleton<IMPolicyDecisionService>(new StubPdpService(MPolicyDecisionResult.Denied("pdp.opa")))
             .BuildServiceProvider();
@@ -78,7 +77,7 @@ public class PermissionFilterPdpModeTests
     [Fact]
     public async Task PdpFallback_UsesLocalBitmaskAuthorization()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ServiceProvider sp = new ServiceCollection()
             .AddSingleton<IMPolicyDecisionService>(
                 new StubPdpService(MPolicyDecisionResult.LocalFallback("local.fallback")))
@@ -118,3 +117,4 @@ public class PermissionFilterPdpModeTests
         }
     }
 }
+

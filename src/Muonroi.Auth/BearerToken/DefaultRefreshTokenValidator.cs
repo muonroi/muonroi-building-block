@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Configuration;
 using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Auth.BearerToken;
 
@@ -7,7 +8,7 @@ public class DefaultRefreshTokenValidator<TDbContext, TPermission>(
     TDbContext dbContext,
     IMultiLevelCacheService cacheService,
     IOptions<AuthOptions> authOptions,
-    ILogger<DefaultRefreshTokenValidator<TDbContext, TPermission>> logger,
+    IMLog<MDbContext> logger,
     MTokenInfo tokenInfo)
     : IRefreshTokenValidator
     where TDbContext : MDbContext

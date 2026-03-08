@@ -2,7 +2,7 @@ using Muonroi.Core.Extensions;
 
 namespace Muonroi.AspNetCore.Middleware;
 
-public class MCookieAuthMiddleware(RequestDelegate next, ILogger<MCookieAuthMiddleware> logger)
+public class MCookieAuthMiddleware(RequestDelegate next, IMLog<MCookieAuthMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context, MTokenInfo tokenInfo)
     {
@@ -16,7 +16,7 @@ public class MCookieAuthMiddleware(RequestDelegate next, ILogger<MCookieAuthMidd
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Failed to decrypt auth cookie.");
+                logger.Error(ex, "Failed to decrypt auth cookie.");
             }
         }
 

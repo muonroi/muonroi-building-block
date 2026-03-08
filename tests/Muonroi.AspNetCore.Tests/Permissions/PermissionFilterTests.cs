@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Muonroi.AspNetCore.Attributes;
 using Muonroi.AspNetCore.Controllers.ActionFilters;
@@ -26,7 +25,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task AllowAnonymous_AllowsExecution()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         DefaultHttpContext ctx = new();
         Endpoint endpoint = new(_ => Task.CompletedTask,
             new EndpointMetadataCollection(new AllowAnonymousAttribute()), "test");
@@ -48,7 +47,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task NoPermissionAttributes_AllowsExecution()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         DefaultHttpContext ctx = new();
         Endpoint endpoint = new(_ => Task.CompletedTask, new EndpointMetadataCollection(), "test");
         ctx.SetEndpoint(endpoint);
@@ -69,7 +68,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task MissingPermissionClaim_Throws()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         DefaultHttpContext ctx = new()
         {
             User = new ClaimsPrincipal(new ClaimsIdentity())
@@ -91,7 +90,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task HasRequiredPermission_Allows()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ClaimsIdentity id = new([new Claim(ClaimConstants.Permission, ((long)TestPerm.Read).ToString())]);
         DefaultHttpContext ctx = new()
         {
@@ -117,7 +116,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task LackingPermission_Throws()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ClaimsIdentity id = new([new Claim(ClaimConstants.Permission, ((long)TestPerm.Read).ToString())]);
         DefaultHttpContext ctx = new()
         {
@@ -140,7 +139,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task UserWithPermission_ExecutesNextAndLeavesResultNull()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ClaimsIdentity id = new([new Claim(ClaimConstants.Permission, ((long)TestPerm.Read).ToString())]);
         DefaultHttpContext ctx = new()
         {
@@ -169,7 +168,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task UserWithoutPermission_DoesNotCallNextAndThrows()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ClaimsIdentity id = new([new Claim(ClaimConstants.Permission, ((long)TestPerm.One).ToString())]);
         DefaultHttpContext ctx = new()
         {
@@ -195,7 +194,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task AllMode_Requires_All_Configured_Permissions()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ClaimsIdentity id = new([new Claim(ClaimConstants.Permission, ((long)TestPerm.Write).ToString())]);
         DefaultHttpContext ctx = new()
         {
@@ -224,7 +223,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task MixedAnyAllMode_MissingAllRequirement_ShouldThrow()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ClaimsIdentity id = new([new Claim(ClaimConstants.Permission, ((long)TestPerm.Read).ToString())]);
         DefaultHttpContext ctx = new()
         {
@@ -250,7 +249,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task TenantMismatch_Throws()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ClaimsIdentity id = new(
         [
             new Claim(ClaimConstants.Permission, ((long)TestPerm.Read).ToString()),
@@ -283,7 +282,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task TenantMatch_Allows()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ClaimsIdentity id = new(
         [
             new Claim(ClaimConstants.Permission, ((long)TestPerm.Read).ToString()),
@@ -321,7 +320,7 @@ public class PermissionFilterTests
     [Fact]
     public async Task StrictMultiTenantMode_MissingTenantClaim_Throws()
     {
-        PermissionFilter<TestPerm> filter = new(NullLogger<PermissionFilter<TestPerm>>.Instance);
+        PermissionFilter<TestPerm> filter = new(Substitute.For<IMLog<PermissionFilter<TestPerm>>>());
         ClaimsIdentity id = new(
         [
             new Claim(ClaimConstants.Permission, ((long)TestPerm.Read).ToString())
@@ -359,3 +358,4 @@ public class PermissionFilterTests
         }
     }
 }
+

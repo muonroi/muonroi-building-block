@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
@@ -16,7 +17,8 @@ public static class RuleEngineServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
-        services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.RuleEngine);
+        // File-backed store is available in all tiers (Free, Licensed, Enterprise).
+        // EnsureFeatureOrThrow is reserved for Postgres/Redis-backed stores (AddMRuleEngineWithPostgres).
 
         RuleStoreConfigs storeConfigs = new();
         configuration.GetSection(RuleStoreConfigs.SectionName).Bind(storeConfigs);

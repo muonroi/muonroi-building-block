@@ -1,4 +1,6 @@
-namespace Muonroi.Governance.License;
+using Muonroi.Governance.License;
+
+namespace Muonroi.Governance.Abstractions.License;
 
 public static class LicenseGuardExtensions
 {
@@ -13,7 +15,13 @@ public static class LicenseGuardExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrEmpty(featureName);
 
-        using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions
+        // NOTE: intentionally NOT using `using` here.
+        // BuildServiceProvider shares singleton instances (e.g. IMLogFactory / Serilog) with the
+        // main IServiceCollection. Disposing the intermediate provider would dispose those shared
+        // instances, silencing all subsequent Log.Fatal / Log.Error calls in the host startup path.
+        // The small GC leak at startup time is acceptable; do NOT add `using` or `.Dispose()`.
+        // MBB007-exempt: startup-time check — IMLog<T> not yet resolvable
+        ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
             ValidateOnBuild = false,
             ValidateScopes = false

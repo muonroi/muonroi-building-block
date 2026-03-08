@@ -25,7 +25,7 @@ public static class CrudRuleExtensions
         {
             IEnumerable<IRule<CrudContext<TEntity>>> rules = sp.GetServices<IRule<CrudContext<TEntity>>>();
             IEnumerable<IHookHandler<CrudContext<TEntity>>> hooks = sp.GetServices<IHookHandler<CrudContext<TEntity>>>();
-            ILogger<RuleOrchestrator<CrudContext<TEntity>>>? logger = sp.GetService<ILogger<RuleOrchestrator<CrudContext<TEntity>>>>();
+            IMLog<RuleOrchestrator<CrudContext<TEntity>>>? logger = sp.GetService<IMLog<RuleOrchestrator<CrudContext<TEntity>>>>();
             IEnumerable<IRuleEventListener<CrudContext<TEntity>>> listeners = sp.GetServices<IRuleEventListener<CrudContext<TEntity>>>();
 
             return new RuleOrchestrator<CrudContext<TEntity>>(rules, hooks, logger, listeners);

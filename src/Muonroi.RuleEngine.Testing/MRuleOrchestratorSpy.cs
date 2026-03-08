@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.RuleEngine.Testing;
 
@@ -13,7 +14,7 @@ public sealed class MRuleOrchestratorSpy<TContext>
     public MRuleOrchestratorSpy(
         IEnumerable<IRule<TContext>> rules,
         IEnumerable<IHookHandler<TContext>>? hooks = null,
-        ILogger<RuleOrchestrator<TContext>>? logger = null)
+        IMLog<RuleOrchestrator<TContext>>? logger = null)
     {
         _orchestrator = new RuleOrchestrator<TContext>(
             rules,

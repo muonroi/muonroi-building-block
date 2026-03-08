@@ -1,11 +1,7 @@
+using Muonroi.Logging.Abstractions;
 using System.Net.Http.Json;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
-using Microsoft.Extensions.Logging;
 
-namespace Muonroi.Governance.License;
+namespace Muonroi.Governance.Enterprise.License;
 
 /// <summary>
 /// Handles online license activation to generate activation proofs.
@@ -28,7 +24,7 @@ public sealed class LicenseActivator(
     IHttpClientFactory httpClientFactory,
     LicenseConfigs configs,
     IMJsonSerializeService jsonSerializeService,
-    ILogger<LicenseActivator>? logger = null)
+    IMLog<LicenseActivator>? logger = null)
 {
     private readonly string _basePath = AppDomain.CurrentDomain.BaseDirectory;
 
@@ -45,7 +41,7 @@ public sealed class LicenseActivator(
         }
         catch (Exception ex)
         {
-            logger?.LogWarning(ex, "[License] Activation failed - will retry later or use offline mode");
+            logger?.Error(ex, "[License] Activation failed - will retry later or use offline mode");
             return false;
         }
     }
@@ -189,7 +185,7 @@ public sealed class LicenseActivator(
                 }
                 catch (Exception ex)
                 {
-                    logger?.LogWarning(ex, "[License] Failed to read license file: {Path}", filePath);
+                    logger?.Error(ex, "[License] Failed to read license file: {Path}", filePath);
                 }
             }
         }

@@ -16,4 +16,7 @@
   <ItemGroup>
     <PackageReference Include="Consul" Version="1.7.14.7" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
+  </ItemGroup>
 </Project>

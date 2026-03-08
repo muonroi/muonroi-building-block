@@ -1,3 +1,4 @@
+using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Runtime.Web.Hubs;
 
 namespace Muonroi.RuleEngine.Runtime.Web.Services;
@@ -5,14 +6,14 @@ namespace Muonroi.RuleEngine.Runtime.Web.Services;
 public sealed class RuleSetHubNotifier(
     IRuleSetChangeNotifier notifier,
     IHubContext<RuleSetChangeHub> hubContext,
-    ILogger<RuleSetHubNotifier> logger) : IHostedService, IDisposable
+    IMLog<RuleSetHubNotifier> logger) : IHostedService, IDisposable
 {
     private IDisposable? _subscription;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _subscription = notifier.Subscribe(NotifyClientsAsync);
-        logger.LogInformation("RuleSetHubNotifier subscribed to rule change events.");
+        logger?.Info("RuleSetHubNotifier subscribed to rule change events.");
         return Task.CompletedTask;
     }
 

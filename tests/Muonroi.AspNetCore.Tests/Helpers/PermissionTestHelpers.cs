@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Muonroi.Logging.Abstractions;
 using Muonroi.AspNetCore.Services;
 using Muonroi.Data.EntityFrameworkCore.Entity;
 using Muonroi.Core.Abstractions.Interfaces;
@@ -38,7 +39,7 @@ public class TestDbContext : MDbContext
     }
 
     public TestDbContext(DbContextOptions options, IMediator mediator, ILicenseGuard? licenseGuard = null,
-        ILogger<TestDbContext>? logger = null)
+        IMLog<MDbContext>? logger = null)
         : base(options, mediator, licenseGuard, logger)
     {
     }

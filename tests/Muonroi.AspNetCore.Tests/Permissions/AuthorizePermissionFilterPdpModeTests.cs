@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
 using Muonroi.AspNetCore.Attributes;
 using Muonroi.AspNetCore.Controllers.ActionFilters;
 using Muonroi.AspNetCore.Exceptions;
@@ -48,7 +47,7 @@ public class AuthorizePermissionFilterPdpModeTests
         AuthorizePermissionFilter<TestDbContext> filter = new(
             db,
             new PassThroughCacheService(),
-            NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance);
+            Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>());
 
         DefaultHttpContext httpContext = new()
         {
@@ -124,7 +123,7 @@ public class AuthorizePermissionFilterPdpModeTests
         AuthorizePermissionFilter<TestDbContext> filter = new(
             db,
             new PassThroughCacheService(),
-            NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance);
+            Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>());
 
         DefaultHttpContext httpContext = new()
         {
@@ -196,7 +195,7 @@ public class AuthorizePermissionFilterPdpModeTests
         AuthorizePermissionFilter<TestDbContext> filter = new(
             db,
             new PassThroughCacheService(),
-            NullLogger<AuthorizePermissionFilter<TestDbContext>>.Instance);
+            Substitute.For<IMLog<AuthorizePermissionFilter<TestDbContext>>>());
 
         DefaultHttpContext httpContext = new()
         {
@@ -257,3 +256,4 @@ public class AuthorizePermissionFilterPdpModeTests
         }
     }
 }
+
