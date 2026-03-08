@@ -20,6 +20,7 @@ public interface IRuleEventListener<TContext>
     /// <param name="changes">Collection of fact changes produced by the rule.</param>
     /// <param name="context">Execution context.</param>
     /// <param name="duration">Execution duration.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     Task OnRuleFiredAsync(
         IRule<TContext> rule,
         RuleResult result,

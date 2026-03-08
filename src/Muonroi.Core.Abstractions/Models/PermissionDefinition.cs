@@ -55,5 +55,8 @@ public class PermissionDefinition
     /// Display name of the group.
     /// </summary>
     public string GroupDisplayName { get; set; } = string.Empty;
+    /// <summary>
+    /// The list of permissions.
+    /// </summary>
     public IEnumerable<string> Permissions { get; set; } = [];
 }

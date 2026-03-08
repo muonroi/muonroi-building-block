@@ -1,5 +1,13 @@
 namespace Muonroi.Core.Abstractions.Helpers;
 
+/// <summary>
+/// Helper for generating authentication tokens.
+/// </summary>
+/// <typeparam name="TPermission">The type of the permission.</typeparam>
+/// <param name="tokenConfig">The token configuration.</param>
+/// <param name="signer">The token signer.</param>
+/// <param name="dateTimeService">The date time service.</param>
+/// <param name="logger">The logger.</param>
 public class MAuthenticateTokenHelper<TPermission>(
     MTokenInfo tokenConfig,
     ITokenSigner signer,
@@ -10,6 +18,13 @@ public class MAuthenticateTokenHelper<TPermission>(
     private readonly MTokenInfo _tokenConfig = tokenConfig ?? throw new ArgumentNullException(nameof(tokenConfig));
     private readonly ITokenSigner _signer = signer ?? throw new ArgumentNullException(nameof(signer));
 
+    /// <summary>
+    /// Generates an authentication token for the specified user and permissions.
+    /// </summary>
+    /// <param name="user">The user model.</param>
+    /// <param name="permissions">The list of permissions.</param>
+    /// <param name="claims">Optional additional claims.</param>
+    /// <returns>A string representing the generated token.</returns>
     public string GenerateAuthenticateToken(MUserModel user, List<TPermission> permissions, List<Claim>? claims = null)
     {
         ArgumentNullException.ThrowIfNull(permissions);

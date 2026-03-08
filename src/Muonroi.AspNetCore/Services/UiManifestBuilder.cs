@@ -1,7 +1,18 @@
 namespace Muonroi.AspNetCore.Services;
 
+/// <summary>
+/// Provides functionality to build a UI manifest based on user permissions.
+/// </summary>
 public sealed class UiManifestBuilder
 {
+    /// <summary>
+    /// Builds the UI manifest for a specific user and tenant.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="tenantId">The unique identifier of the tenant.</param>
+    /// <param name="permissions">The list of available permissions.</param>
+    /// <param name="grantedPermissionIds">The set of permission IDs granted to the user.</param>
+    /// <returns>A <see cref="MUiManifest"/> representing the user's UI structure.</returns>
     public static MUiManifest BuildUiManifest(
         Guid userId,
         string? tenantId,

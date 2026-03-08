@@ -2,6 +2,7 @@
 
 namespace Muonroi.AspNetCore.Attributes;
 
+
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
 public class AuthorizePermissionAttribute : Attribute
 {

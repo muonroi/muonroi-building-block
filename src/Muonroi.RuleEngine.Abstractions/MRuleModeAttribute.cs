@@ -6,5 +6,8 @@ namespace Muonroi.RuleEngine.Abstractions;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public class MRuleModeAttribute(RuleExecutionMode mode) : Attribute
 {
+    /// <summary>
+    /// Gets the preferred rule execution mode.
+    /// </summary>
     public RuleExecutionMode Mode { get; } = mode;
 }

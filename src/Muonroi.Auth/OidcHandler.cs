@@ -3,8 +3,18 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace Muonroi.Auth;
 
+/// <summary>
+/// Provides extension methods for OpenID Connect (OIDC) authentication.
+/// </summary>
 public static class OidcHandler
 {
+    /// <summary>
+    /// Adds OpenID Connect login authentication to the service collection.
+    /// </summary>
+    /// <param name="services">The service collection to add authentication to.</param>
+    /// <param name="configuration">The configuration to bind OIDC settings from.</param>
+    /// <param name="scheme">The authentication scheme name (default is "oidc").</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddOidcLogin(this IServiceCollection services, IConfiguration configuration,
         string scheme = "oidc")
     {
