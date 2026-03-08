@@ -33,4 +33,10 @@ public class DistributedCacheKeyBuilderTests
         DistributedCacheKeyBuilder.NormalizeTenantId(" tenant-a ").Should().Be("tenant-a");
         DistributedCacheKeyBuilder.NormalizeTenantId(" ").Should().BeNull();
     }
+
+    [Fact]
+    public void Build_Handles_Null_Arguments()
+    {
+        DistributedCacheKeyBuilder.Build("key", null, null).Should().Be("key");
+    }
 }
