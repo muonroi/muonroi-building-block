@@ -285,7 +285,7 @@ public class MultiLevelCacheService : IMultiLevelCacheService
 
     private string BuildCacheKey(string key)
     {
-        return DistributedCacheKeyBuilder.Build(key, _cacheKeyNamespace);
+        return DistributedCacheKeyBuilder.Build(key, _cacheKeyNamespace, ResolveTenantId());
     }
 
     private string? ResolveTenantId()

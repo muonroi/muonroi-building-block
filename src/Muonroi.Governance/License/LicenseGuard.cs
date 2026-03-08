@@ -42,15 +42,15 @@ public sealed class LicenseGuard : ILicenseGuard
 
         _enhancer.OnEnsureValid(actionType, Current);
 
+        if (!Current.IsValid)
+        {
+            HandleInvalidLicense();
+        }
+
         if (!Current.HasFeature(actionType))
         {
             throw new InvalidOperationException(
                 $"[LICENSE] Feature '{actionType}' is not included in your license. Tier: {Tier}.");
-        }
-
-        if (!Current.IsValid)
-        {
-            HandleInvalidLicense();
         }
 
         if (_configs.EnableChain)
