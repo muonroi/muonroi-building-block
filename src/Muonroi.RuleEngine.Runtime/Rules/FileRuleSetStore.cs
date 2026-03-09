@@ -9,10 +9,15 @@ public sealed class FileRuleSetStore : IRuleSetStore
     private readonly string _rootPath;
     private readonly IRuleSetSigner? _signer;
     private readonly RuleStoreConfigs _configs;
+    private readonly ISystemExecutionContextAccessor _executionContext;
     private readonly Regex _segmentRegex;
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> WorkflowLocks = new(StringComparer.OrdinalIgnoreCase);
 
-    public FileRuleSetStore(string rootPath, IRuleSetSigner? signer = null, RuleStoreConfigs? configs = null)
+    public FileRuleSetStore(
+        string rootPath,
+        IRuleSetSigner? signer = null,
+        RuleStoreConfigs? configs = null,
+        ISystemExecutionContextAccessor? executionContextAccessor = null)
     {
         if (string.IsNullOrWhiteSpace(rootPath))
             throw new ArgumentException("Root path must not be empty.", nameof(rootPath));
@@ -32,14 +37,15 @@ public sealed class FileRuleSetStore : IRuleSetStore
             ? "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
             : _configs.AllowedPathSegmentPattern;
         _segmentRegex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        _executionContext = executionContextAccessor ?? new SystemExecutionContextAccessor();
     }
 
     private string GetTenantDirectory()
     {
-        string? tenant = TenantContext.CurrentTenantId;
+        string? tenant = _executionContext.Get().TenantId;
         string tenantSegment = string.IsNullOrWhiteSpace(tenant)
             ? "default"
-            : SanitizeSegment(tenant, nameof(TenantContext.CurrentTenantId));
+            : SanitizeSegment(tenant, "TenantId");
         return EnsureUnderRoot(Path.Combine(_rootPath, tenantSegment));
     }
 

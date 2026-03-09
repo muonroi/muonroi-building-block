@@ -7,7 +7,8 @@ namespace Muonroi.RuleEngine.DecisionTable.Web.Controllers;
 [Route("api/v1/decision-tables")]
 public sealed class DecisionTableController(
     IDecisionTableStore store,
-    DecisionTableValidator validator) : ControllerBase
+    DecisionTableValidator validator,
+    IDecisionTableExecutor executor) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List(
@@ -197,6 +198,48 @@ public sealed class DecisionTableController(
 
         DecisionTableModel? table = await store.GetByIdAsync(id, cancellationToken);
         return Ok(table);
+    }
+
+    [HttpPost("{id}/execute")]
+    public async Task<IActionResult> Execute(
+        string id,
+        [FromBody] DecisionTableExecuteRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        DecisionTableModel? table = await store.GetByIdAsync(id, cancellationToken);
+        if (table is null)
+        {
+            return NotFound();
+        }
+
+        IReadOnlyDictionary<string, object?> inputs = (request?.Inputs ?? new Dictionary<string, object?>())
+            .ToDictionary(
+                x => x.Key,
+                x => NormalizeInputValue(x.Value),
+                StringComparer.OrdinalIgnoreCase);
+
+        DecisionTableExecutionResult executionResult;
+        try
+        {
+            executionResult = await executor.ExecuteAsync(table, inputs, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+
+        return Ok(new DecisionTableExecuteResponse
+        {
+            Matched = executionResult.Matched,
+            HitPolicy = executionResult.HitPolicy.ToString(),
+            EvaluationTimeMs = executionResult.EvaluationTime.TotalMilliseconds,
+            MatchedRowIds = executionResult.MatchedRowIds,
+            Outputs = [.. executionResult.Outputs.Select(x => new DecisionTableOutputItem
+            {
+                RowId = x.RowId,
+                Outputs = x.Outputs
+            })]
+        });
     }
 
     [HttpGet("{id}/versions")]
@@ -404,5 +447,28 @@ public sealed class DecisionTableController(
         }
 
         return result;
+    }
+
+    private static object? NormalizeInputValue(object? value)
+    {
+        if (value is not JsonElement element)
+        {
+            return value;
+        }
+
+        return element.ValueKind switch
+        {
+            JsonValueKind.Null => null,
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Number when element.TryGetInt32(out int intValue) => intValue,
+            JsonValueKind.Number when element.TryGetInt64(out long longValue) => longValue,
+            JsonValueKind.Number when element.TryGetDouble(out double doubleValue) => doubleValue,
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Array => element.EnumerateArray().Select(x => NormalizeInputValue(x)).ToList(),
+            JsonValueKind.Object => element.EnumerateObject()
+                .ToDictionary(x => x.Name, x => NormalizeInputValue(x.Value), StringComparer.OrdinalIgnoreCase),
+            _ => element.GetRawText()
+        };
     }
 }

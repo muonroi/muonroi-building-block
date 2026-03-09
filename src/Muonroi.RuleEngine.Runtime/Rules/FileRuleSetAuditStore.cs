@@ -5,7 +5,10 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 /// <summary>
 /// File-backed NDJSON audit store for runtime ruleset governance actions.
 /// </summary>
-public sealed class FileRuleSetAuditStore(string rootPath, IMJsonSerializeService jsonSerializeService)
+public sealed class FileRuleSetAuditStore(
+    string rootPath,
+    IMJsonSerializeService jsonSerializeService,
+    ISystemExecutionContextAccessor? executionContextAccessor = null)
     : IRuleSetAuditStore
 {
     private readonly string _rootPath = Path.GetFullPath(string.IsNullOrWhiteSpace(rootPath)
@@ -14,6 +17,8 @@ public sealed class FileRuleSetAuditStore(string rootPath, IMJsonSerializeServic
 
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> FileLocks =
         new(StringComparer.OrdinalIgnoreCase);
+    private readonly ISystemExecutionContextAccessor _executionContext =
+        executionContextAccessor ?? new SystemExecutionContextAccessor();
 
     public async Task AppendAsync(RuleSetAuditEntry entry, CancellationToken cancellationToken = default)
     {
@@ -108,11 +113,12 @@ public sealed class FileRuleSetAuditStore(string rootPath, IMJsonSerializeServic
         return Path.GetFullPath(path);
     }
 
-    private static string ResolveTenantId()
+    private string ResolveTenantId()
     {
-        return string.IsNullOrWhiteSpace(TenantContext.CurrentTenantId)
+        string? tenantId = _executionContext.Get().TenantId;
+        return string.IsNullOrWhiteSpace(tenantId)
             ? "default"
-            : TenantContext.CurrentTenantId!;
+            : tenantId;
     }
 
     private static string SanitizeSegment(string value)

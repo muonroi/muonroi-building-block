@@ -31,5 +31,6 @@
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
     <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Rules\Muonroi.Rules.csproj" />
   </ItemGroup>
 </Project>

@@ -37,6 +37,7 @@ public static class RuleEngineServiceCollectionExtensions
 
         ReplaceSingleton(services, storeConfigs);
         ReplaceSingleton(services, controlPlaneOptions);
+        services.TryAddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
         services.TryAddSingleton<IRuleSetDefinitionValidator, RuleSetDefinitionValidator>();
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
@@ -64,14 +65,16 @@ public static class RuleEngineServiceCollectionExtensions
             IHostEnvironment? env = sp.GetService<IHostEnvironment>();
             string rootPath = ResolveRootPath(storeConfigs, env);
             IRuleSetSigner? signer = sp.GetService<IRuleSetSigner>();
-            return new FileRuleSetStore(rootPath, signer, storeConfigs);
+            ISystemExecutionContextAccessor executionContextAccessor = sp.GetRequiredService<ISystemExecutionContextAccessor>();
+            return new FileRuleSetStore(rootPath, signer, storeConfigs, executionContextAccessor);
         });
         services.TryAddSingleton<IRuleSetAuditStore>(sp =>
         {
             IHostEnvironment? env = sp.GetService<IHostEnvironment>();
             string rootPath = ResolveRootPath(storeConfigs, env);
             IMJsonSerializeService serializer = sp.GetRequiredService<IMJsonSerializeService>();
-            return new FileRuleSetAuditStore(rootPath, serializer);
+            ISystemExecutionContextAccessor executionContextAccessor = sp.GetRequiredService<ISystemExecutionContextAccessor>();
+            return new FileRuleSetAuditStore(rootPath, serializer, executionContextAccessor);
         });
         services.TryAddScoped<RulesEngineService>();
 
@@ -96,6 +99,7 @@ public static class RuleEngineServiceCollectionExtensions
         ReplaceSingleton(services, storeConfigs);
         ReplaceSingleton(services, controlPlaneOptions);
 
+        services.TryAddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
         services.TryAddSingleton<IRuleSetDefinitionValidator, RuleSetDefinitionValidator>();
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();

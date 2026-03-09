@@ -5,7 +5,7 @@ namespace Muonroi.RuleEngine.DecisionTable.Validators;
 
 public sealed class GapDetector
 {
-    public static IReadOnlyList<string> Detect(DecisionTableModel table)
+    public IReadOnlyList<string> Detect(DecisionTableModel table)
     {
         List<string> gaps = [];
         if (table.InputColumns.Count != 1)

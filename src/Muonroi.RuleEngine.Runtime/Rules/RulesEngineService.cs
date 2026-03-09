@@ -13,7 +13,8 @@ public sealed class RulesEngineService(
     IRuleSetChangeNotifier? notifier = null,
     IServiceProvider? serviceProvider = null,
     IRuleSetDefinitionValidator? validator = null,
-    ICanaryRolloutService? canaryRolloutService = null)
+    ICanaryRolloutService? canaryRolloutService = null,
+    ISystemExecutionContextAccessor? executionContextAccessor = null)
 {
     private readonly ReSettings _settings = settings ?? new ReSettings();
     private readonly ILicenseGuard? _licenseGuard = licenseGuard;
@@ -22,6 +23,10 @@ public sealed class RulesEngineService(
     private readonly IServiceProvider? _serviceProvider = serviceProvider;
     private readonly IRuleSetDefinitionValidator _validator = validator ?? new RuleSetDefinitionValidator();
     private readonly ICanaryRolloutService? _canaryRolloutService = canaryRolloutService;
+    private readonly ISystemExecutionContextAccessor _executionContext =
+        executionContextAccessor ??
+        serviceProvider?.GetService<ISystemExecutionContextAccessor>() ??
+        new SystemExecutionContextAccessor();
 
     private static readonly ConcurrentDictionary<string, CachedWorkflowDefinition> WorkflowCache =
         new(StringComparer.OrdinalIgnoreCase);
@@ -226,10 +231,8 @@ public sealed class RulesEngineService(
             _serviceProvider?.GetService<IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>>();
         ITenantQuotaTracker? quotaTracker = _serviceProvider?.GetService<ITenantQuotaTracker>();
         IRuleExecutionTracer? tracer = _serviceProvider?.GetService<IRuleExecutionTracer>();
-        ISystemExecutionContextAccessor? contextAccessor = _serviceProvider?.GetService<ISystemExecutionContextAccessor>();
-
         Muonroi.RuleEngine.Core.RuleOrchestrator<TContext> orchestrator =
-            new(resolvedRules, hooks, logger, listeners, quotaTracker, tracer, contextAccessor);
+            new(resolvedRules, hooks, logger, listeners, quotaTracker, tracer, _executionContext);
         OrchestratorResult execution = await orchestrator.ExecuteWithResultAsync(
             context,
             executionMode ?? ExecutionMode.AllOrNothing,
@@ -457,11 +460,12 @@ public sealed class RulesEngineService(
         }
     }
 
-    private static string ResolveTenantId()
+    private string ResolveTenantId()
     {
-        return string.IsNullOrWhiteSpace(TenantContext.CurrentTenantId)
+        string? tenantId = _executionContext.Get().TenantId;
+        return string.IsNullOrWhiteSpace(tenantId)
             ? "default"
-            : TenantContext.CurrentTenantId!;
+            : tenantId;
     }
 
     private static string BuildWorkflowCacheKey(string tenantId, string workflowName)

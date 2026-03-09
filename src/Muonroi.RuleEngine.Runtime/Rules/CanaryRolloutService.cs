@@ -5,9 +5,12 @@ public sealed class CanaryRolloutService(
     IRuleSetStore store,
     IRuleSetAuditStore auditStore,
     IRuleSetChangeNotifier? notifier = null,
-    IMemoryCache? memoryCache = null) : ICanaryRolloutService
+    IMemoryCache? memoryCache = null,
+    ISystemExecutionContextAccessor? executionContextAccessor = null) : ICanaryRolloutService
 {
     private static readonly TimeSpan CanaryLookupCacheTtl = TimeSpan.FromSeconds(30);
+    private readonly ISystemExecutionContextAccessor _executionContext =
+        executionContextAccessor ?? new SystemExecutionContextAccessor();
 
     public async Task<CanaryRolloutRecord> StartCanaryAsync(
         StartCanaryRequest request,
@@ -333,10 +336,11 @@ public sealed class CanaryRolloutService(
             .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)];
     }
 
-    private static string ResolveTenantId()
+    private string ResolveTenantId()
     {
-        return string.IsNullOrWhiteSpace(TenantContext.CurrentTenantId)
+        string? tenantId = _executionContext.Get().TenantId;
+        return string.IsNullOrWhiteSpace(tenantId)
             ? "default"
-            : TenantContext.CurrentTenantId!;
+            : tenantId;
     }
 }
