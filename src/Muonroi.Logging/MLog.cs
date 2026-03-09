@@ -50,25 +50,25 @@ public sealed class MLog<T>(
     }
 
     /// <inheritdoc />
-    public void Info(string messageTemplate, params object[] args)
+    public void Info(string messageTemplate, params object?[] args)
     {
         _inner.LogInformation(messageTemplate, args);
     }
 
     /// <inheritdoc />
-    public void Warn(string messageTemplate, params object[] args)
+    public void Warn(string messageTemplate, params object?[] args)
     {
         _inner.LogWarning(messageTemplate, args);
     }
 
     /// <inheritdoc />
-    public void Error(Exception? ex, string messageTemplate, params object[] args)
+    public void Error(Exception? ex, string messageTemplate, params object?[] args)
     {
         _inner.LogError(ex, messageTemplate, args);
     }
 
     /// <inheritdoc />
-    public void Debug(string messageTemplate, params object[] args)
+    public void Debug(string messageTemplate, params object?[] args)
     {
         _inner.LogDebug(messageTemplate, args);
     }

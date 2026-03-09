@@ -38,22 +38,22 @@ public class FeatureFlagEvaluatorTests
             return NullLogScope.Instance;
         }
 
-        public void Info(string messageTemplate, params object[] args)
+        public void Info(string messageTemplate, params object?[] args)
         {
             Logs.Add(messageTemplate);
         }
 
-        public void Warn(string messageTemplate, params object[] args)
+        public void Warn(string messageTemplate, params object?[] args)
         {
             Logs.Add(messageTemplate);
         }
 
-        public void Error(Exception? ex, string messageTemplate, params object[] args)
+        public void Error(Exception? ex, string messageTemplate, params object?[] args)
         {
             Logs.Add(messageTemplate);
         }
 
-        public void Debug(string messageTemplate, params object[] args)
+        public void Debug(string messageTemplate, params object?[] args)
         {
             Logs.Add(messageTemplate);
         }

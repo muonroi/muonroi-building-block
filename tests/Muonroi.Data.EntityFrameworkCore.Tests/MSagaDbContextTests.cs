@@ -14,7 +14,7 @@ public class MSagaDbContextTests
     public class TestSaga : IMuonroiSaga
     {
         public Guid CorrelationId { get; set; }
-        public string? TenantId { get; set; }
+        public string TenantId { get; set; } = string.Empty;
         public DateTime CreationTime { get; set; }
         public DateTime? LastModificationTime { get; set; }
     }

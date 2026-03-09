@@ -1,6 +1,7 @@
 using Muonroi.RuleEngine.Runtime.Web.Contributors;
 using Muonroi.RuleEngine.Runtime.Web.Services;
 using Muonroi.RuleEngine.Runtime.Tracing;
+using Muonroi.Governance.License;
 
 namespace Muonroi.RuleEngine.Runtime.Web;
 
@@ -10,6 +11,7 @@ public static class RuleEngineRuntimeWebExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.RequireMinimumTierFromProof(LicenseTier.Licensed, "rule-engine.runtime.web");
         services.AddRuleEngineStore(configuration);
         services.AddRuleEngineTracing(options =>
             configuration.GetSection(RuleTracingOptions.SectionName).Bind(options));

@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Governance.License;
 using Muonroi.RuleEngine.DecisionTable.Models;
 using Muonroi.RuleEngine.DecisionTable.Validators;
 using Muonroi.RuleEngine.DecisionTable.Web;
@@ -224,11 +226,27 @@ public sealed class DecisionTableTrack5Tests
         });
 
         builder.WebHost.UseTestServer();
+        builder.Services.AddSingleton(CreateLicensedState());
         builder.Services.AddDecisionTableWeb();
 
         WebApplication app = builder.Build();
         app.MapControllers();
         return app;
+    }
+
+    private static LicenseState CreateLicensedState()
+    {
+        return new LicenseState
+        {
+            IsValid = true,
+            Tier = LicenseTier.Licensed,
+            Features = ["decision-table.web", FreeTierFeatures.Premium.RuleEngine],
+            Payload = new LicensePayload
+            {
+                LicenseId = "tests-decision-table",
+                AllowedFeatures = ["decision-table.web", FreeTierFeatures.Premium.RuleEngine]
+            }
+        };
     }
 
     private static async Task<DecisionTableModel> CreateTableAsync(HttpClient client, DecisionTableModel table)

@@ -13,7 +13,8 @@ public sealed class RuleDryRunService(
     IServiceProvider serviceProvider,
     ISystemExecutionContextAccessor executionContextAccessor,
     ReSettings? settings = null,
-    ILicenseGuard? licenseGuard = null) : IRuleDryRunService
+    ILicenseGuard? licenseGuard = null,
+    ProofTierAccessor? proofTierAccessor = null) : IRuleDryRunService
 {
     private const string ContextTypeKey = "__contextType";
     private static readonly TimeSpan MaxDuration = TimeSpan.FromSeconds(10);
@@ -25,6 +26,7 @@ public sealed class RuleDryRunService(
         executionContextAccessor ?? throw new ArgumentNullException(nameof(executionContextAccessor));
     private readonly ReSettings _settings = settings ?? new ReSettings();
     private readonly ILicenseGuard? _licenseGuard = licenseGuard;
+    private readonly ProofTierAccessor? _proofTierAccessor = proofTierAccessor;
 
     public async Task<RuleDryRunResult> RunAsync(
         string ruleSetContent,
@@ -99,6 +101,7 @@ public sealed class RuleDryRunService(
         Stopwatch stopwatch,
         CancellationToken cancellationToken)
     {
+        _proofTierAccessor?.RequireMinimumTier(LicenseTier.Licensed, FreeTierFeatures.Premium.RuleEngine);
         _licenseGuard?.EnsureFeature(FreeTierFeatures.Premium.RuleEngine);
 
         Workflow[] workflows = DeserializeLegacyWorkflows(ruleSetContent);
@@ -175,6 +178,7 @@ public sealed class RuleDryRunService(
         Stopwatch stopwatch,
         CancellationToken cancellationToken)
     {
+        _proofTierAccessor?.RequireMinimumTier(LicenseTier.Licensed, FreeTierFeatures.Premium.RuleEngine);
         _licenseGuard?.EnsureFeature(FreeTierFeatures.Premium.RuleEngine);
 
         string? explicitContextType = ExtractContextType(normalizedInputs);

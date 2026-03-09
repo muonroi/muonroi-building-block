@@ -1,5 +1,6 @@
 using Muonroi.Logging.Abstractions;
 using System.Net.Http.Json;
+using Muonroi.Governance.Abstractions.Integrity;
 
 namespace Muonroi.Governance.Enterprise.License;
 
@@ -24,6 +25,7 @@ public sealed class LicenseActivator(
     IHttpClientFactory httpClientFactory,
     LicenseConfigs configs,
     IMJsonSerializeService jsonSerializeService,
+    IAssemblyHashCollector assemblyHashCollector,
     IMLog<LicenseActivator>? logger = null)
 {
     private readonly string _basePath = AppDomain.CurrentDomain.BaseDirectory;
@@ -68,7 +70,8 @@ public sealed class LicenseActivator(
             MachineFingerprint = GetMachineFingerprint(),
             ProductVersion = GetProductVersion(),
             ActivationTime = DateTimeOffset.UtcNow,
-            Environment = GetEnvironmentName()
+            Environment = GetEnvironmentName(),
+            AssemblyManifest = assemblyHashCollector.Collect()
         };
 
         // 3. Send activation request to server

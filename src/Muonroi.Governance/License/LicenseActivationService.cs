@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Hosting;
+using Muonroi.Governance.Abstractions.Integrity;
 
 namespace Muonroi.Governance.License;
 
@@ -14,17 +15,20 @@ public sealed class LicenseActivationService : ILicenseActivationService
     private readonly IHostEnvironment? _environment;
     private readonly HttpClient _httpClient;
     private readonly IMJsonSerializeService _jsonSerializeService;
+    private readonly IAssemblyHashCollector _hashCollector;
 
     public LicenseActivationService(
         LicenseConfigs configs,
         ILicenseFingerprintProvider fingerprintProvider,
         IMJsonSerializeService jsonSerializeService,
+        IAssemblyHashCollector hashCollector,
         IHostEnvironment? environment = null,
         HttpClient? httpClient = null)
     {
         _configs = configs;
         _fingerprintProvider = fingerprintProvider;
         _jsonSerializeService = jsonSerializeService;
+        _hashCollector = hashCollector;
         _environment = environment;
         _httpClient = httpClient ?? new HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(
@@ -45,17 +49,18 @@ public sealed class LicenseActivationService : ILicenseActivationService
         try
         {
             string fingerprint = _fingerprintProvider.GetFingerprint();
-            LicenseActivationRequest request = new()
+            ActivationRequest request = new()
             {
                 LicenseKey = licenseKey,
-                Fingerprint = fingerprint,
-                ProjectSeed = _configs.ProjectSeed,
-                MachineName = Environment.MachineName,
-                ApplicationName = _environment?.ApplicationName
+                MachineFingerprint = fingerprint,
+                ProductVersion = _environment?.ApplicationName ?? "unknown",
+                ActivationTime = DateTimeOffset.UtcNow,
+                Environment = _environment?.EnvironmentName ?? "Production",
+                AssemblyManifest = _hashCollector.Collect()
             };
 
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync(
-                $"{_configs.Online.Endpoint}/activate",
+                $"{_configs.Online.Endpoint.TrimEnd('/')}/api/v1/activate",
                 request,
                 cancellationToken);
 
@@ -65,12 +70,14 @@ public sealed class LicenseActivationService : ILicenseActivationService
                 return LicenseActivationResult.Failed($"Server returned {response.StatusCode}: {error}");
             }
 
-            LicensePayload? payload = await response.Content.ReadFromJsonAsync<LicensePayload>(cancellationToken: cancellationToken);
-            if (payload == null)
+            ActivationResponse? activation = await response.Content.ReadFromJsonAsync<ActivationResponse>(cancellationToken: cancellationToken);
+            if (activation?.Success != true || activation.Proof?.SignedLicensePayload == null)
             {
-                return LicenseActivationResult.Failed("Server returned empty payload.");
+                return LicenseActivationResult.Failed(activation?.Error ?? "Server returned invalid activation proof.");
             }
 
+            LicensePayload payload = activation.Proof.SignedLicensePayload;
+            await SaveActivationProofAsync(activation.Proof, cancellationToken);
             // Save license locally for offline use
             await SaveLicenseLocallyAsync(payload, cancellationToken);
 
@@ -209,9 +216,38 @@ public sealed class LicenseActivationService : ILicenseActivationService
         await File.WriteAllTextAsync(path, json, cancellationToken);
     }
 
+    private async Task SaveActivationProofAsync(ActivationProof proof, CancellationToken cancellationToken)
+    {
+        string? path = ResolveActivationProofPath();
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        string? directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string json = _jsonSerializeService.Serialize(proof);
+        await File.WriteAllTextAsync(path, json, cancellationToken);
+    }
+
     private string? ResolveLicensePath()
     {
         string? path = _configs.LicenseFilePath;
+        if (string.IsNullOrWhiteSpace(path)) return null;
+        if (Path.IsPathRooted(path)) return path;
+        string root = !string.IsNullOrWhiteSpace(_environment?.ContentRootPath)
+            ? _environment.ContentRootPath
+            : AppContext.BaseDirectory;
+        return Path.GetFullPath(Path.Combine(root, path));
+    }
+
+    private string? ResolveActivationProofPath()
+    {
+        string? path = _configs.ActivationProofPath;
         if (string.IsNullOrWhiteSpace(path)) return null;
         if (Path.IsPathRooted(path)) return path;
         string root = !string.IsNullOrWhiteSpace(_environment?.ContentRootPath)

@@ -43,14 +43,18 @@ public sealed class LicenseRefreshHostedService(
 
                 if (result.IsSuccess)
                 {
+                    object expiryValue = result.Payload?.ExpiresAt is { } expiresAt
+                        ? expiresAt
+                        : "<unknown>";
                     logger?.Info("[License] License refreshed successfully. Expires: {Expiry}",
-                        result.Payload?.ExpiresAt);
+                        expiryValue);
                     stateNotifier.NotifyRefreshed(result.Payload!);
                 }
                 else
                 {
+                    object errorValue = result.Error ?? "<unknown>";
                     logger?.Warn("[License] Refresh failed: {Error}. Continuing with cached license.",
-                        result.Error);
+                        errorValue);
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

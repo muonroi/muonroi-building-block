@@ -1,5 +1,7 @@
 using Muonroi.Governance.Policy;
 using System.Net.Http.Json;
+using Muonroi.Governance.Abstractions.Integrity;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Muonroi.Governance.License;
 
@@ -37,8 +39,12 @@ public static class LicenseServiceCollectionExtensions
 
         services.TryAddSingleton<LicenseStore>();
         services.TryAddSingleton<LicenseVerifier>();
+        services.TryAddSingleton<LicenseRuntimeStatus>();
+        services.TryAddSingleton<ProofTierAccessor>();
+        services.TryAddSingleton<IAssemblyHashCollector, AssemblyHashCollector>();
         services.TryAddSingleton<ILicenseFingerprintProvider, DefaultLicenseFingerprintProvider>();
         services.TryAddSingleton<LicenseStateNotifier>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, LicenseConfigurationValidationHostedService>());
 
         services.TryAddSingleton(sp =>
         {
@@ -46,9 +52,11 @@ public static class LicenseServiceCollectionExtensions
             LicenseStore store = sp.GetRequiredService<LicenseStore>();
             LicenseVerifier verifier = sp.GetRequiredService<LicenseVerifier>();
             ILicenseFingerprintProvider fpProvider = sp.GetRequiredService<ILicenseFingerprintProvider>();
+            LicenseRuntimeStatus runtimeStatus = sp.GetRequiredService<LicenseRuntimeStatus>();
             string fingerprint = fpProvider.GetFingerprint();
             ILoggerFactory? loggerFactory = sp.GetService<ILoggerFactory>();
             ILogger<LicenseState>? logger = loggerFactory?.CreateLogger<LicenseState>();
+            ActivationProof? activationProof = store.LoadActivationProof();
 
             LicensePayload? payload = null;
             if (cfg.Mode == LicenseMode.Online && !string.IsNullOrWhiteSpace(cfg.Online.Endpoint))
@@ -57,7 +65,9 @@ public static class LicenseServiceCollectionExtensions
             }
 
             payload ??= store.Load();
-            return verifier.VerifyAsync(payload, fingerprint).GetAwaiter().GetResult();
+            LicenseState state = verifier.VerifyAsync(payload, activationProof, fingerprint).GetAwaiter().GetResult();
+            runtimeStatus.InitializeFromProof(state.ActivationProof);
+            return state;
         });
 
         services.TryAddSingleton<IFingerprintChainStore>(_ => new NoopFingerprintChainStore());
@@ -72,8 +82,9 @@ public static class LicenseServiceCollectionExtensions
             LicenseConfigs cfg = sp.GetRequiredService<LicenseConfigs>();
             ILicenseFingerprintProvider fpProvider = sp.GetRequiredService<ILicenseFingerprintProvider>();
             IMJsonSerializeService jsonSerializeService = sp.GetRequiredService<IMJsonSerializeService>();
+            IAssemblyHashCollector hashCollector = sp.GetRequiredService<IAssemblyHashCollector>();
             IHostEnvironment? env = sp.GetService<IHostEnvironment>();
-            return new LicenseActivationService(cfg, fpProvider, jsonSerializeService, env);
+            return new LicenseActivationService(cfg, fpProvider, jsonSerializeService, hashCollector, env);
         });
 
         if (configs.Mode == LicenseMode.Online && !string.IsNullOrWhiteSpace(configs.Online.Endpoint))

@@ -32,9 +32,11 @@ public sealed class FeatureFlagEvaluator(IFeatureFlagClient client, IMLog<Featur
 
         if (!EqualityComparer<T>.Default.Equals(currentResult, shadowResult))
         {
+            object currentValue = currentResult is null ? "<null>" : currentResult;
+            object shadowValue = shadowResult is null ? "<null>" : shadowResult;
             logger?.Info(
                 "Shadow diff for {Flag} tenant {Tenant} segment {Segment}: {Current} vs {Shadow}",
-                flag, context.TenantId, context.Segment, currentResult, shadowResult);
+                flag, context.TenantId, context.Segment ?? string.Empty, currentValue, shadowValue);
         }
 
         return currentResult;
