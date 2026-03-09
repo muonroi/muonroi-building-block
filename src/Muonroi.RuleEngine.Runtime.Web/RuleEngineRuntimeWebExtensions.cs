@@ -14,6 +14,7 @@ public static class RuleEngineRuntimeWebExtensions
         services.AddRuleEngineTracing(options =>
             configuration.GetSection(RuleTracingOptions.SectionName).Bind(options));
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IUiEngineManifestContributor, RuntimeRuleSetManifestContributor>());
+        services.TryAddScoped<IRuleDryRunService, RuleDryRunService>();
         services.AddSignalR();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, RuleSetHubNotifier>());
         services.AddControllers().AddApplicationPart(typeof(RuleEngineRuntimeWebExtensions).Assembly);

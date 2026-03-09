@@ -8,7 +8,8 @@ namespace Muonroi.RuleEngine.Runtime.Web.Controllers;
 [Route("api/v1/rule-engine/rulesets")]
 public sealed class RuntimeRuleSetController(
     RulesEngineService service,
-    IRuleSetAuditStore auditStore) : ControllerBase
+    IRuleSetAuditStore auditStore,
+    ISystemExecutionContextAccessor executionContextAccessor) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> ListWorkflows(CancellationToken cancellationToken = default)
@@ -211,9 +212,9 @@ public sealed class RuntimeRuleSetController(
             Version = version,
             Actor = actor,
             Detail = detail,
-            TenantId = string.IsNullOrWhiteSpace(Muonroi.Tenancy.Core.TenantContext.CurrentTenantId)
+            TenantId = string.IsNullOrWhiteSpace(executionContextAccessor.Get().TenantId)
                 ? "default"
-                : Muonroi.Tenancy.Core.TenantContext.CurrentTenantId!
+                : executionContextAccessor.Get().TenantId!
         };
         await auditStore.AppendAsync(entry, cancellationToken);
     }

@@ -5,6 +5,7 @@ global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.AspNetCore.Routing;
 global using Microsoft.Extensions.DependencyInjection.Extensions;
+global using Muonroi.Core.Abstractions.Context;
 global using Muonroi.Core.Abstractions.Constants;
 global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Core.Abstractions.Models;

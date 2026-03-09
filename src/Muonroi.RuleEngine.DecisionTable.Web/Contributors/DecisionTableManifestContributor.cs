@@ -119,8 +119,11 @@ public sealed class DecisionTableManifestContributor : IUiEngineManifestContribu
                             ["exportEndpoint"] = "/api/v1/decision-tables/{id}/export/{format}",
                             ["feelEndpoint"] = "/api/v1/feel/autocomplete",
                             ["historyEndpoint"] = "/api/v1/decision-tables/{id}/versions",
+                            ["historyVersionEndpoint"] = "/api/v1/decision-tables/{id}/versions/{v}",
+                            ["diffEndpoint"] = "/api/v1/decision-tables/{id}/versions/{v1}/diff/{v2}",
                             ["auditEndpoint"] = "/api/v1/decision-tables/{id}/audit",
                             ["reorderEndpoint"] = "/api/v1/decision-tables/{id}/rows/reorder",
+                            ["executeEndpoint"] = "/api/v1/decision-tables/{id}/execute",
                             ["maxRows"] = "1000",
                             ["enableExcelImport"] = "true",
                             ["enableVersionDiff"] = "true"

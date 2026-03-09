@@ -48,7 +48,11 @@ public static class TenantServiceCollectionExtensions
         if (licenseFeatureGate is null)
         {
             throw new InvalidOperationException(
-                "[LICENSE] ITenantLicenseFeatureGate is not registered. Call AddLicenseProtection before AddTenantContext.");
+                "[Muonroi] ITenantLicenseFeatureGate is not registered. " +
+                "Call AddLicenseProtection() before AddTenantContext(). " +
+                "Example:\n" +
+                "  services.AddLicenseProtection(config);\n" +
+                "  services.AddTenantContext(config);");
         }
 
         if (!licenseFeatureGate.HasFeature(TenantLicenseFeatures.Premium.MultiTenant))

@@ -3,11 +3,16 @@ using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Validators;
 
-public sealed class OverlapDetector
+public sealed class MultiColumnOverlapDetector
 {
-    public IReadOnlyList<string> Detect(DecisionTableModel table)
+    public IReadOnlyList<ConflictReport> Detect(DecisionTableModel table)
     {
-        List<string> overlaps = [];
+        if (table.HitPolicy != HitPolicy.Unique)
+        {
+            return [];
+        }
+
+        List<ConflictReport> conflicts = [];
         DecisionTableRow[] rows = [.. table.Rows
             .Where(x => x.IsEnabled)
             .OrderBy(x => x.Order)];
@@ -16,30 +21,41 @@ public sealed class OverlapDetector
         {
             for (int j = i + 1; j < rows.Length; j++)
             {
-                if (RowsCanOverlap(table, rows[i], rows[j]))
+                List<string> overlappingColumns = [];
+                int count = Math.Min(table.InputColumns.Count, Math.Min(rows[i].InputCells.Count, rows[j].InputCells.Count));
+                bool hasOverlap = true;
+
+                for (int c = 0; c < count; c++)
                 {
-                    overlaps.Add($"{rows[i].Id} overlaps {rows[j].Id}");
+                    CellExpression left = DecisionTableExpressionEvaluator.ParseCellExpression(rows[i].InputCells[c].Expression);
+                    CellExpression right = DecisionTableExpressionEvaluator.ParseCellExpression(rows[j].InputCells[c].Expression);
+                    if (!CellExpressionsCanOverlap(left, right))
+                    {
+                        hasOverlap = false;
+                        break;
+                    }
+
+                    overlappingColumns.Add(table.InputColumns[c].Name);
                 }
+
+                if (!hasOverlap)
+                {
+                    continue;
+                }
+
+                string columns = overlappingColumns.Count == 0
+                    ? "all input columns"
+                    : string.Join(", ", overlappingColumns);
+                conflicts.Add(new ConflictReport
+                {
+                    Row1Index = rows[i].Order,
+                    Row2Index = rows[j].Order,
+                    Description = $"Rows '{rows[i].Id}' and '{rows[j].Id}' overlap on {columns}."
+                });
             }
         }
 
-        return overlaps;
-    }
-
-    private static bool RowsCanOverlap(DecisionTableModel table, DecisionTableRow left, DecisionTableRow right)
-    {
-        int count = Math.Min(table.InputColumns.Count, Math.Min(left.InputCells.Count, right.InputCells.Count));
-        for (int i = 0; i < count; i++)
-        {
-            CellExpression a = DecisionTableExpressionEvaluator.ParseCellExpression(left.InputCells[i].Expression);
-            CellExpression b = DecisionTableExpressionEvaluator.ParseCellExpression(right.InputCells[i].Expression);
-            if (!CellExpressionsCanOverlap(a, b))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return conflicts;
     }
 
     private static bool CellExpressionsCanOverlap(CellExpression a, CellExpression b)
@@ -55,7 +71,6 @@ public sealed class OverlapDetector
             double aMax = a.Max ?? double.MaxValue;
             double bMin = b.Min ?? double.MinValue;
             double bMax = b.Max ?? double.MaxValue;
-
             return aMin <= bMax && bMin <= aMax;
         }
 
@@ -100,4 +115,11 @@ public sealed class OverlapDetector
 
         return range.IncludeMax ? num <= range.Max.Value : num < range.Max.Value;
     }
+}
+
+public sealed class ConflictReport
+{
+    public int Row1Index { get; init; }
+    public int Row2Index { get; init; }
+    public string Description { get; init; } = string.Empty;
 }

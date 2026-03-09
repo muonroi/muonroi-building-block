@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Muonroi.RuleEngine.DecisionTable.Models;
+using Muonroi.Rules.Feel;
 
 namespace Muonroi.RuleEngine.DecisionTable.Converters;
 
@@ -66,7 +67,49 @@ internal static partial class DecisionTableExpressionEvaluator
             return true;
         }
 
-        return true;
+        int quoteCount = expression.Count(x => x == '\'' || x == '"');
+        if (quoteCount % 2 != 0)
+        {
+            return false;
+        }
+
+        int openParens = expression.Count(x => x == '(');
+        int closeParens = expression.Count(x => x == ')');
+        if (openParens != closeParens)
+        {
+            return false;
+        }
+
+        return expression.Length > 0;
+    }
+
+    public static object? EvaluateOutput(
+        string expression,
+        IReadOnlyDictionary<string, object?> variables,
+        string? columnDataType = null)
+    {
+        string normalized = (expression ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return null;
+        }
+
+        Dictionary<string, object> feelVariables = new(StringComparer.OrdinalIgnoreCase);
+        foreach ((string key, object? value) in variables)
+        {
+            if (value is not null)
+            {
+                feelVariables[key] = value;
+            }
+        }
+
+        object? output = FeelEvaluator.EvaluateValue(normalized, feelVariables);
+        if (output is null)
+        {
+            output = ParseLiteral(normalized);
+        }
+
+        return CoerceOutput(output, columnDataType);
     }
 
     public static CellExpression ParseCellExpression(string expression)
@@ -309,5 +352,54 @@ internal static partial class DecisionTableExpressionEvaluator
     private static string NormalizeValue(object? value)
     {
         return Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+    }
+
+    private static object? ParseLiteral(string expression)
+    {
+        string raw = expression.Trim();
+        if (raw.Length >= 2 &&
+            ((raw.StartsWith('"') && raw.EndsWith('"')) || (raw.StartsWith('\'') && raw.EndsWith('\''))))
+        {
+            return raw[1..^1];
+        }
+
+        if (bool.TryParse(raw, out bool boolValue))
+        {
+            return boolValue;
+        }
+
+        if (double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out double number))
+        {
+            return number;
+        }
+
+        if (string.Equals(raw, "null", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return raw;
+    }
+
+    private static object? CoerceOutput(object? output, string? columnDataType)
+    {
+        if (output is null || string.IsNullOrWhiteSpace(columnDataType))
+        {
+            return output;
+        }
+
+        string type = columnDataType.Trim().ToLowerInvariant();
+        return type switch
+        {
+            "number" or "numeric" when output is not double =>
+                double.TryParse(Convert.ToString(output, CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture, out double n)
+                    ? n
+                    : output,
+            "boolean" or "bool" when output is not bool =>
+                bool.TryParse(Convert.ToString(output, CultureInfo.InvariantCulture), out bool b)
+                    ? b
+                    : output,
+            _ => output
+        };
     }
 }

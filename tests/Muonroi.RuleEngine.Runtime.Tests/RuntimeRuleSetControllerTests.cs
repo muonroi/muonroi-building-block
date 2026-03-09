@@ -1,11 +1,11 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.RuleEngine.Runtime.Rules;
 using Muonroi.RuleEngine.Runtime.Web.Controllers;
 using Muonroi.RuleEngine.Runtime.Web.ViewModels;
-using Muonroi.Tenancy.Core;
 using System.Text.Json;
 using Xunit;
 
@@ -17,11 +17,12 @@ public sealed class RuntimeRuleSetControllerTests
     public async Task Save_Then_Export_ShouldReturnPersistedRuleset()
     {
         string root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        FileRuleSetStore store = new(root);
-        RulesEngineService service = new(store);
-        FileRuleSetAuditStore auditStore = new(root, new MJsonSerializeService());
+        SystemExecutionContextAccessor accessor = new();
+        FileRuleSetStore store = new(root, executionContextAccessor: accessor);
+        RulesEngineService service = new(store, executionContextAccessor: accessor);
+        FileRuleSetAuditStore auditStore = new(root, new MJsonSerializeService(), accessor);
 
-        RuntimeRuleSetController controller = new(service, auditStore)
+        RuntimeRuleSetController controller = new(service, auditStore, accessor)
         {
             ControllerContext = new ControllerContext
             {
@@ -42,7 +43,7 @@ public sealed class RuntimeRuleSetControllerTests
             ActivateAfterSave = true
         };
 
-        TenantContext.CurrentTenantId = "tenant-api";
+        SetTenant(accessor, "tenant-api");
         IActionResult saveResult = await controller.Save("wf-api", saveRequest);
         OkObjectResult saveOk = saveResult.Should().BeOfType<OkObjectResult>().Subject;
         RuleSetSaveResponse savePayload = saveOk.Value.Should().BeOfType<RuleSetSaveResponse>().Subject;
@@ -56,7 +57,7 @@ public sealed class RuntimeRuleSetControllerTests
 
         RuleSetAuditPage auditPage = await auditStore.QueryAsync("wf-api");
         auditPage.TotalCount.Should().BeGreaterThanOrEqualTo(1);
-        TenantContext.CurrentTenantId = null;
+        accessor.Clear();
     }
 
     [Fact]
@@ -64,7 +65,11 @@ public sealed class RuntimeRuleSetControllerTests
     {
         string root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         RulesEngineService service = new(new FileRuleSetStore(root));
-        RuntimeRuleSetController controller = new(service, new FileRuleSetAuditStore(root, new MJsonSerializeService()))
+        SystemExecutionContextAccessor accessor = new();
+        RuntimeRuleSetController controller = new(
+            service,
+            new FileRuleSetAuditStore(root, new MJsonSerializeService(), accessor),
+            accessor)
         {
             ControllerContext = new ControllerContext
             {
@@ -89,5 +94,19 @@ public sealed class RuntimeRuleSetControllerTests
 
         payload.IsValid.Should().BeFalse();
         payload.Errors.Should().Contain(x => x.Code == "WorkflowMismatch");
+    }
+
+    private static void SetTenant(ISystemExecutionContextAccessor accessor, string tenantId)
+    {
+        accessor.Set(new SystemExecutionContext(
+            tenantId,
+            userId: null,
+            username: null,
+            correlationId: Guid.NewGuid().ToString("N"),
+            accessToken: null,
+            apiKey: null,
+            isAuthenticated: false,
+            permissions: [],
+            sourceType: "tests"));
     }
 }

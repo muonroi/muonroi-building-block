@@ -16,6 +16,7 @@ using Muonroi.RuleEngine.Runtime.Rules;
 using Muonroi.RuleEngine.Runtime.Tracing;
 using Muonroi.RuleEngine.Core.Tracing;
 using Microsoft.AspNetCore.Authorization;
+using Muonroi.Core.Abstractions.Context;
 
 public class RuleEngineWebTests
 {
@@ -36,6 +37,7 @@ public class RuleEngineWebTests
                 .AddApplicationPart(typeof(RuleEngineRuntimeEndpointExtensions).Assembly);
                 
                 services.AddSignalR();
+                services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
                 
                 // Mock dependencies for RulesEngineService
                 var storeMock = new Mock<IRuleSetStore>();

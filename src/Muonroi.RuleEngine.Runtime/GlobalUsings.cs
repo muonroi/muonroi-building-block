@@ -15,8 +15,6 @@ global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Governance.License;
 global using Muonroi.RuleEngine.Abstractions;
 global using Muonroi.RuleEngine.Core.Tracing;
-global using Muonroi.Tenancy.Abstractions;
-global using Muonroi.Tenancy.Core;
 global using RulesEngine.Models;
 global using StackExchange.Redis;
 global using System;

@@ -12,7 +12,8 @@ public sealed class RuleEngine<T>(
     IOptionsMonitor<RuleOptions>? options = null,
     IMLog<RuleEngine<T>>? logger = null,
     IRuleActivationStrategy<T>? activation = null,
-    ILicenseGuard? licenseGuard = null)
+    ILicenseGuard? licenseGuard = null,
+    ISystemExecutionContextAccessor? executionContextAccessor = null)
 {
     private readonly List<(IRule<T> Rule, RuleDescriptor Descriptor)> _rules = [];
     private readonly ConcurrentDictionary<string, CachedExecutionPlan> _executionPlanCache =
@@ -27,6 +28,8 @@ public sealed class RuleEngine<T>(
 
     private static readonly Histogram<double> _durations =
         _meter.CreateHistogram<double>("rule_duration_ms", "ms", "Rule execution duration");
+    private readonly ISystemExecutionContextAccessor _executionContext =
+        executionContextAccessor ?? new SystemExecutionContextAccessor();
 
     public RuleEngine<T> AddRule(IRule<T> rule, RuleDescriptor descriptor)
     {
@@ -191,10 +194,12 @@ public sealed class RuleEngine<T>(
         licenseGuard?.EnsureFeature(FreeTierFeatures.Premium.RuleEngine);
 
         // ✅ Security check: cross-tenant access prevention
-        if (context is ITenantScoped scoped)
+        string? contextTenantId = ResolveContextTenantId(context);
+        if (!string.IsNullOrWhiteSpace(contextTenantId))
         {
-            string? current = TenantContext.CurrentTenantId;
-            if (!string.IsNullOrWhiteSpace(current) && scoped.TenantId != current)
+            string? current = _executionContext.Get().TenantId;
+            if (!string.IsNullOrWhiteSpace(current) &&
+                !string.Equals(contextTenantId, current, StringComparison.OrdinalIgnoreCase))
             {
                 throw new UnauthorizedAccessException("Cross tenant rule execution detected.");
             }
@@ -207,7 +212,7 @@ public sealed class RuleEngine<T>(
         foreach ((IRule<T> rule, RuleDescriptor descriptor) in GetOrderedPlan(rulesToRun))
         {
             Stopwatch sw = Stopwatch.StartNew();
-            string? tenantId = TenantContext.CurrentTenantId;
+            string? tenantId = _executionContext.Get().TenantId;
             try
             {
                 await rule.ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
@@ -274,7 +279,7 @@ public sealed class RuleEngine<T>(
         // Tenant-specific feature flags override global toggles
         if (options?.CurrentValue?.TenantRuleToggles?.Count > 0)
         {
-            string? tenant = TenantContext.CurrentTenantId;
+            string? tenant = _executionContext.Get().TenantId;
             if (!string.IsNullOrWhiteSpace(tenant) &&
                 options.CurrentValue.TenantRuleToggles.TryGetValue(tenant, out Dictionary<string, bool>? tenantToggles))
             {
@@ -329,6 +334,24 @@ public sealed class RuleEngine<T>(
     {
         Interlocked.Increment(ref _rulesVersion);
         _executionPlanCache.Clear();
+    }
+
+    private static string? ResolveContextTenantId(T context)
+    {
+        if (context is null)
+        {
+            return null;
+        }
+
+        PropertyInfo? tenantIdProperty = context.GetType().GetProperty(
+            "TenantId",
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        if (tenantIdProperty?.GetValue(context) is not string tenantId)
+        {
+            return null;
+        }
+
+        return string.IsNullOrWhiteSpace(tenantId) ? null : tenantId;
     }
 
     private sealed record CachedExecutionPlan(
