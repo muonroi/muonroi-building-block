@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Extensions;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
 

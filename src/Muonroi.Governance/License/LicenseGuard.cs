@@ -1,3 +1,5 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.Governance.License;
 
 public sealed class LicenseGuard : ILicenseGuard

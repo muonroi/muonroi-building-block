@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Governance.Abstractions.Integrity;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.License;
 

@@ -1,10 +1,10 @@
+using FluentAssertions;
+using Moq;
+using Muonroi.Governance.Abstractions.License;
+using Muonroi.Governance.License;
 namespace Muonroi.Integration.Tests;
 
-using System;
-using Muonroi.Governance.License;
-using FluentAssertions;
-using Xunit;
-using Moq;
+
 
 public class LicenseFlowTests
 {
@@ -12,30 +12,30 @@ public class LicenseFlowTests
     public void EnterpriseLicense_ShouldEnableAllFeatures()
     {
         // Arrange
-        var configs = new LicenseConfigs { FailMode = LicenseFailMode.Hard };
-        var payload = new LicensePayload 
-        { 
+        LicenseConfigs configs = new() { FailMode = LicenseFailMode.Hard };
+        LicensePayload payload = new()
+        {
             LicenseId = "ENT-001",
-            AllowedFeatures = new[] { "*" } 
+            AllowedFeatures = new[] { "*" }
         };
-        var state = new LicenseState 
-        { 
-            IsValid = true, 
-            Tier = LicenseTier.Enterprise, 
-            Payload = payload 
+        LicenseState state = new()
+        {
+            IsValid = true,
+            Tier = LicenseTier.Enterprise,
+            Payload = payload
         };
-        
-        var chainStoreMock = new Mock<IFingerprintChainStore>();
-        var signerMock = new Mock<IFingerprintSigner>();
-        
-        var guard = new LicenseGuard(configs, state, chainStoreMock.Object, signerMock.Object);
+
+        Mock<IFingerprintChainStore> chainStoreMock = new();
+        Mock<IFingerprintSigner> signerMock = new();
+
+        LicenseGuard guard = new(configs, state, chainStoreMock.Object, signerMock.Object);
 
         // Act & Assert
-        
+
         // Should not throw for any feature
-        var act1 = () => guard.EnsureFeature("rule-engine");
-        var act2 = () => guard.EnsureFeature("any-feature");
-        
+        Action act1 = () => guard.EnsureFeature("rule-engine");
+        Action act2 = () => guard.EnsureFeature("any-feature");
+
         act1.Should().NotThrow();
         act2.Should().NotThrow();
     }
@@ -44,19 +44,19 @@ public class LicenseFlowTests
     public void FreeLicense_ShouldRestrictPremiumFeatures()
     {
         // Arrange
-        var configs = new LicenseConfigs { FailMode = LicenseFailMode.Hard };
-        var state = LicenseState.CreateFree();
-        
-        var chainStoreMock = new Mock<IFingerprintChainStore>();
-        var signerMock = new Mock<IFingerprintSigner>();
-        
-        var guard = new LicenseGuard(configs, state, chainStoreMock.Object, signerMock.Object);
+        LicenseConfigs configs = new() { FailMode = LicenseFailMode.Hard };
+        LicenseState state = LicenseState.CreateFree();
+
+        Mock<IFingerprintChainStore> chainStoreMock = new();
+        Mock<IFingerprintSigner> signerMock = new();
+
+        LicenseGuard guard = new(configs, state, chainStoreMock.Object, signerMock.Object);
 
         // Act & Assert
-        
+
         // DistributedCache is premium
-        var act = () => guard.EnsureFeature(FreeTierFeatures.Premium.DistributedCache);
-        
+        Action act = () => guard.EnsureFeature(FreeTierFeatures.Premium.DistributedCache);
+
         act.Should().Throw<InvalidOperationException>()
            .WithMessage("*not available*");
     }
@@ -65,23 +65,23 @@ public class LicenseFlowTests
     public void InvalidLicense_WithHardFail_ShouldThrow()
     {
         // Arrange
-        var configs = new LicenseConfigs { FailMode = LicenseFailMode.Hard };
+        LicenseConfigs configs = new() { FailMode = LicenseFailMode.Hard };
         // Feature must be allowed but IsValid must be false to trigger SEC_ERR_01
-        var payload = new LicensePayload 
-        { 
+        LicensePayload payload = new()
+        {
             LicenseId = "LIC-001",
-            AllowedFeatures = new[] { "some-action" } 
+            AllowedFeatures = new[] { "some-action" }
         };
-        var state = new LicenseState { IsValid = false, Tier = LicenseTier.Licensed, Payload = payload };
-        
-        var chainStoreMock = new Mock<IFingerprintChainStore>();
-        var signerMock = new Mock<IFingerprintSigner>();
-        
-        var guard = new LicenseGuard(configs, state, chainStoreMock.Object, signerMock.Object);
+        LicenseState state = new() { IsValid = false, Tier = LicenseTier.Licensed, Payload = payload };
+
+        Mock<IFingerprintChainStore> chainStoreMock = new();
+        Mock<IFingerprintSigner> signerMock = new();
+
+        LicenseGuard guard = new(configs, state, chainStoreMock.Object, signerMock.Object);
 
         // Act & Assert
-        var act = () => guard.EnsureValid("some-action");
-        
+        Action act = () => guard.EnsureValid("some-action");
+
         act.Should().Throw<InvalidOperationException>()
            .WithMessage("*SEC_ERR_01*");
     }

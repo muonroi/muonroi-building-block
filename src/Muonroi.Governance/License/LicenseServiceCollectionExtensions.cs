@@ -2,6 +2,7 @@ using Muonroi.Governance.Policy;
 using System.Net.Http.Json;
 using Muonroi.Governance.Abstractions.Integrity;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.License;
 

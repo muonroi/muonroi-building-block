@@ -1,3 +1,4 @@
+using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.Enterprise.Policy;
 
 namespace Muonroi.Governance.License;

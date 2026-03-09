@@ -1,0 +1,54 @@
+name: Bug Report
+description: Report a reproducible defect in muonroi-building-block
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for concrete defects. For design questions, use GitHub Discussions after it is enabled for the repository.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken?
+      placeholder: Ruleset activation returns 409 for approved version 5...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Exact steps, payloads, and commands to reproduce.
+      placeholder: |
+        1. Configure ...
+        2. Call ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Package or commit version
+      placeholder: 0.1.2 / develop@abcdef
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include .NET version, OS, database, Redis, and any commercial packages involved.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Context

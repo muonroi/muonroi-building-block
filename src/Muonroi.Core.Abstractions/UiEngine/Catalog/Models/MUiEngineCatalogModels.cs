@@ -152,6 +152,83 @@ public sealed class MUiEngineCatalogGraph
 }
 
 /// <summary>
+/// Represents a captured catalog snapshot.
+/// </summary>
+public sealed class MUiEngineCatalogSnapshot
+{
+    /// <summary>
+    /// The snapshot identifier.
+    /// </summary>
+    public Guid SnapshotId { get; set; }
+
+    /// <summary>
+    /// The tenant that owns this snapshot.
+    /// </summary>
+    public string TenantId { get; set; } = "_global";
+
+    /// <summary>
+    /// The capture timestamp in UTC.
+    /// </summary>
+    public DateTime CapturedAt { get; set; }
+
+    /// <summary>
+    /// The captured graph payload.
+    /// </summary>
+    public MUiEngineCatalogGraph Graph { get; set; } = new();
+
+    /// <summary>
+    /// The number of API nodes contained in the snapshot.
+    /// </summary>
+    public int ApiCount { get; set; }
+
+    /// <summary>
+    /// The number of rule nodes contained in the snapshot.
+    /// </summary>
+    public int RuleCount { get; set; }
+
+    /// <summary>
+    /// The number of binding edges contained in the snapshot.
+    /// </summary>
+    public int BindingCount { get; set; }
+}
+
+/// <summary>
+/// Summary metadata for a captured catalog snapshot.
+/// </summary>
+public sealed class CatalogSnapshotSummary
+{
+    /// <summary>
+    /// The snapshot identifier.
+    /// </summary>
+    public Guid SnapshotId { get; set; }
+
+    /// <summary>
+    /// The owning tenant.
+    /// </summary>
+    public string TenantId { get; set; } = "_global";
+
+    /// <summary>
+    /// The capture timestamp in UTC.
+    /// </summary>
+    public DateTime CapturedAt { get; set; }
+
+    /// <summary>
+    /// Number of API nodes in the snapshot.
+    /// </summary>
+    public int ApiCount { get; set; }
+
+    /// <summary>
+    /// Number of rule nodes in the snapshot.
+    /// </summary>
+    public int RuleCount { get; set; }
+
+    /// <summary>
+    /// Number of binding edges in the snapshot.
+    /// </summary>
+    public int BindingCount { get; set; }
+}
+
+/// <summary>
 /// Represents a node in the catalog graph.
 /// </summary>
 public sealed class MUiEngineCatalogGraphNode
