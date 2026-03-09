@@ -177,6 +177,9 @@ public sealed class OnlineLicenseConfigs
     public string? ChainSubmissionEndpoint { get; set; } = "/api/v1/chain/submit";
     public int TimeoutSeconds { get; set; } = 10;
     public int RefreshMinutes { get; set; } = 1440;
+    public bool EnableHeartbeat { get; set; } = false;
+    public int HeartbeatIntervalMinutes { get; set; } = 240;
+    public int RevocationGraceHours { get; set; } = 24;
 
     /// <summary>
     /// TIER 3+: Enable certificate pinning to prevent fake server and MITM attacks.

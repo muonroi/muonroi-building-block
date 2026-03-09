@@ -58,7 +58,7 @@ public class RequestLoggingFilterTests
             return NullLogContextScope.Instance;
         }
 
-        public void Info(string messageTemplate, params object[] args)
+        public void Info(string messageTemplate, params object?[] args)
         {
             if (args.Length == 1)
             {
@@ -69,17 +69,17 @@ public class RequestLoggingFilterTests
             States.Add(messageTemplate);
         }
 
-        public void Warn(string messageTemplate, params object[] args)
+        public void Warn(string messageTemplate, params object?[] args)
         {
             States.Add(messageTemplate);
         }
 
-        public void Error(Exception? ex, string messageTemplate, params object[] args)
+        public void Error(Exception? ex, string messageTemplate, params object?[] args)
         {
             States.Add(messageTemplate);
         }
 
-        public void Debug(string messageTemplate, params object[] args)
+        public void Debug(string messageTemplate, params object?[] args)
         {
             States.Add(messageTemplate);
         }
@@ -121,22 +121,22 @@ public class RequestLoggingFilterTests
             return NullLogContextScope.Instance;
         }
 
-        public void Info(string messageTemplate, params object[] args)
+        public void Info(string messageTemplate, params object?[] args)
         {
             throw new InvalidOperationException("log fail");
         }
 
-        public void Warn(string messageTemplate, params object[] args)
+        public void Warn(string messageTemplate, params object?[] args)
         {
             throw new InvalidOperationException("log fail");
         }
 
-        public void Error(Exception? ex, string messageTemplate, params object[] args)
+        public void Error(Exception? ex, string messageTemplate, params object?[] args)
         {
             throw new InvalidOperationException("log fail");
         }
 
-        public void Debug(string messageTemplate, params object[] args)
+        public void Debug(string messageTemplate, params object?[] args)
         {
             throw new InvalidOperationException("log fail");
         }

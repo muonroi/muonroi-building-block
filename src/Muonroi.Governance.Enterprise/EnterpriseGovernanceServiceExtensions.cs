@@ -44,8 +44,10 @@ public static class EnterpriseGovernanceServiceExtensions
         services.Replace(ServiceDescriptor.Singleton<ILicenseGuardEnhancer>(sp =>
         {
             LicenseConfigs configs = sp.GetRequiredService<LicenseConfigs>();
+            CodeIntegrityVerifier integrityVerifier = sp.GetRequiredService<CodeIntegrityVerifier>();
+            AntiTamperDetector antiTamperDetector = sp.GetRequiredService<AntiTamperDetector>();
             PolicyEnforcer? policyEnforcer = sp.GetService<PolicyEnforcer>();
-            return new EnterpriseLicenseGuardEnhancer(configs, policyEnforcer);
+            return new EnterpriseLicenseGuardEnhancer(configs, integrityVerifier, antiTamperDetector, policyEnforcer);
         }));
 
         services.Replace(ServiceDescriptor.Singleton<IFingerprintChainStore>(sp =>
@@ -73,6 +75,8 @@ public static class EnterpriseGovernanceServiceExtensions
         }));
 
         services.TryAddSingleton<LicenseActivator>();
+        services.TryAddSingleton<AntiTamperDetector>();
+        services.TryAddSingleton<CodeIntegrityVerifier>();
 
         services.TryAddSingleton<TpmAnchor>();
         services.TryAddSingleton<ChainSubmitter>();
@@ -86,6 +90,13 @@ public static class EnterpriseGovernanceServiceExtensions
         if (configs.EnableServerValidation || configs.FallbackToOnlineActivation)
         {
             services.AddHostedService<ChainSubmissionHostedService>();
+        }
+
+        if (configs.Mode == LicenseMode.Online &&
+            !string.IsNullOrWhiteSpace(configs.Online.Endpoint) &&
+            configs.Online.EnableHeartbeat)
+        {
+            services.AddHostedService<LicenseHeartbeatService>();
         }
 
         if (configs.Compliance.Enabled && configs.Compliance.EnableBackgroundExport)

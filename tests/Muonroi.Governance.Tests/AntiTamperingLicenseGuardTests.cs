@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Governance.Abstractions.Integrity;
 using Muonroi.Tenancy.Core;
 
 namespace Muonroi.Governance.Tests;
@@ -174,12 +175,17 @@ public class AntiTamperingLicenseGuardTests
 
     private static LicenseGuard CreateGuard(LicenseConfigs configs, LicenseState state)
     {
-        EnterpriseLicenseGuardEnhancer enhancer = new(configs);
+        LicenseRuntimeStatus runtimeStatus = new();
+        EnterpriseLicenseGuardEnhancer enhancer = new(
+            configs,
+            new CodeIntegrityVerifier(new EmptyAssemblyHashCollector()),
+            new AntiTamperDetector(configs));
         return new LicenseGuard(
             configs,
             state,
             new NoopFingerprintChainStore(),
             new HmacFingerprintSigner(state.Payload, configs),
+            runtimeStatus,
             enhancer);
     }
 
@@ -210,5 +216,13 @@ public class AntiTamperingLicenseGuardTests
         state.Payload.LicenseId = "LIC-ANTITAMPER-001";
         state.Payload.AllowedFeatures = features;
         return state;
+    }
+
+    private sealed class EmptyAssemblyHashCollector : IAssemblyHashCollector
+    {
+        public IReadOnlyList<AssemblyManifestEntry> Collect()
+        {
+            return [];
+        }
     }
 }

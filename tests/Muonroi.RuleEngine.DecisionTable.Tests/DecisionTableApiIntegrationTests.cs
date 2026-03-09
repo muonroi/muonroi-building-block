@@ -4,7 +4,9 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Muonroi.Governance.License;
 using Muonroi.RuleEngine.DecisionTable.Models;
 using Muonroi.RuleEngine.DecisionTable.Web;
 using DecisionTableModel = Muonroi.RuleEngine.DecisionTable.Models.DecisionTable;
@@ -51,11 +53,27 @@ public sealed class DecisionTableApiIntegrationTests
         });
 
         builder.WebHost.UseTestServer();
+        builder.Services.AddSingleton(CreateLicensedState());
         builder.Services.AddDecisionTableWeb();
 
         WebApplication app = builder.Build();
         app.MapControllers();
         return app;
+    }
+
+    private static LicenseState CreateLicensedState()
+    {
+        return new LicenseState
+        {
+            IsValid = true,
+            Tier = LicenseTier.Licensed,
+            Features = ["decision-table.web", FreeTierFeatures.Premium.RuleEngine],
+            Payload = new LicensePayload
+            {
+                LicenseId = "tests-decision-table",
+                AllowedFeatures = ["decision-table.web", FreeTierFeatures.Premium.RuleEngine]
+            }
+        };
     }
 
     private static DecisionTableModel BuildTable()

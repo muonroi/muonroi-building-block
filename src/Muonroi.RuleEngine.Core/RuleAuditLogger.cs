@@ -12,12 +12,16 @@ public sealed class RuleAuditLogger<TContext>(IMLog<RuleAuditLogger<TContext>> l
     public Task OnRuleMatchedAsync(IRule<TContext> rule, TContext context, FactBag facts,
         CancellationToken cancellationToken = default)
     {
-        string? corrId = Activity.Current?.TraceId.ToString();
+        object correlationId = Activity.Current?.TraceId.ToString() ?? string.Empty;
+        object[] matchedArgs =
+        [
+            rule.Name ?? string.Empty,
+            facts.AsReadOnly(),
+            correlationId
+        ];
         logger?.Info(
             "Rule matched {Rule} with facts {@Facts} (corrId: {CorrId})",
-            rule.Name,
-            facts.AsReadOnly(),
-            corrId);
+            matchedArgs);
         return Task.CompletedTask;
     }
 
@@ -34,14 +38,18 @@ public sealed class RuleAuditLogger<TContext>(IMLog<RuleAuditLogger<TContext>> l
         Dictionary<string, object?> diff = changes.ToDictionary(
             kvp => kvp.Key,
             kvp => (object?)new { kvp.Value.OldValue, kvp.Value.NewValue });
-        string? corrId = Activity.Current?.TraceId.ToString();
-        logger?.Info(
-            "Rule fired {Rule} in {Duration} ms with changes {@Changes} (Success: {Success}, corrId: {CorrId})",
-            rule.Name,
+        object correlationId = Activity.Current?.TraceId.ToString() ?? string.Empty;
+        object[] firedArgs =
+        [
+            rule.Name ?? string.Empty,
             duration.TotalMilliseconds,
             diff,
             result.IsSuccess,
-            corrId);
+            correlationId
+        ];
+        logger?.Info(
+            "Rule fired {Rule} in {Duration} ms with changes {@Changes} (Success: {Success}, corrId: {CorrId})",
+            firedArgs);
         return Task.CompletedTask;
     }
 }

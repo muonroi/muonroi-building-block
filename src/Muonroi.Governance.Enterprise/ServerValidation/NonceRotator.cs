@@ -40,7 +40,8 @@ public sealed class NonceRotator(
             {
                 status = "error";
                 activity?.SetStatus(ActivityStatusCode.Error, response.Error ?? "nonce-rotation-rejected");
-                logger?.Warn("[License] Nonce rotation failed: {Error}", response.Error);
+                object errorValue = response.Error ?? "<unknown>";
+                logger?.Warn("[License] Nonce rotation failed: {Error}", errorValue);
             }
         }
         catch (Exception ex)

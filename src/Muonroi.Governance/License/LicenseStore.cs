@@ -21,7 +21,12 @@ public sealed class LicenseStore(
             catch { }
         }
 
-        // 2. Fallback: try ActivationProofPath and extract SignedLicensePayload
+        ActivationProof? proof = LoadActivationProof();
+        return proof?.SignedLicensePayload;
+    }
+
+    public ActivationProof? LoadActivationProof()
+    {
         string? proofPath = ResolvePath(configs.ActivationProofPath, environment);
         if (string.IsNullOrWhiteSpace(proofPath) || !File.Exists(proofPath))
         {
@@ -31,16 +36,9 @@ public sealed class LicenseStore(
         try
         {
             string proofContent = File.ReadAllText(proofPath);
-            using JsonDocument doc = JsonDocument.Parse(proofContent);
-            // Try camelCase "signedLicensePayload" first, then PascalCase
-            if (doc.RootElement.TryGetProperty("signedLicensePayload", out JsonElement payloadEl) ||
-                doc.RootElement.TryGetProperty("SignedLicensePayload", out payloadEl))
-            {
-                string payloadJson = payloadEl.GetRawText();
-                // MBB002-exempt: activation proof boundary — format conversion from camelCase activation proof to LicensePayload
-                return JsonSerializer.Deserialize<LicensePayload>(payloadJson,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            }
+            // MBB002-exempt: activation proof boundary — tolerant parsing for old/new proof casing
+            return JsonSerializer.Deserialize<ActivationProof>(proofContent,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
         catch { }
 
@@ -63,6 +61,24 @@ public sealed class LicenseStore(
 
         string json = jsonSerializeService.Serialize(payload);
 
+        File.WriteAllText(path, json);
+    }
+
+    public void SaveActivationProof(ActivationProof proof)
+    {
+        string? path = ResolvePath(configs.ActivationProofPath, environment);
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        string? directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string json = jsonSerializeService.Serialize(proof);
         File.WriteAllText(path, json);
     }
 

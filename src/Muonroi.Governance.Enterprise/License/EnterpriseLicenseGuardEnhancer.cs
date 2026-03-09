@@ -9,9 +9,12 @@ namespace Muonroi.Governance.License;
 /// </summary>
 public sealed class EnterpriseLicenseGuardEnhancer(
     LicenseConfigs configs,
+    CodeIntegrityVerifier codeIntegrityVerifier,
+    AntiTamperDetector tamperDetector,
     PolicyEnforcer? policyEnforcer = null) : ILicenseGuardEnhancer
 {
-    private readonly AntiTamperDetector _tamperDetector = new(configs);
+    private readonly AntiTamperDetector _tamperDetector = tamperDetector;
+    private readonly CodeIntegrityVerifier _codeIntegrityVerifier = codeIntegrityVerifier;
     private static readonly ConcurrentDictionary<string, DateTimeOffset> LastAntiTamperChecks =
         new(StringComparer.OrdinalIgnoreCase);
 
@@ -20,7 +23,7 @@ public sealed class EnterpriseLicenseGuardEnhancer(
         LicenseEnforcementMode mode = startupConfigs.GetEffectiveEnforcementMode(state.Tier);
         if (mode == LicenseEnforcementMode.Production && state.Tier != LicenseTier.Free)
         {
-            _ = CodeIntegrityVerifier.VerifyIntegrity(throwOnFailure: GetEffectiveFailMode() != LicenseFailMode.Soft);
+            _ = _codeIntegrityVerifier.VerifyIntegrity(state, throwOnFailure: GetEffectiveFailMode() != LicenseFailMode.Soft);
         }
 
         if (startupConfigs.EnableAntiTampering && mode == LicenseEnforcementMode.Production)

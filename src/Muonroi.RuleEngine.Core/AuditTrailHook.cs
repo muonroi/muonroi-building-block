@@ -22,9 +22,20 @@ public sealed class AuditTrailHook<TContext>(
         CancellationToken cancellationToken = default)
     {
         object? minimal = projector?.Invoke(context);
+        object durationValue = duration?.TotalMilliseconds ?? 0d;
+        object contextValue = minimal ?? "<null>";
+        object[] logArgs =
+        [
+            point,
+            rule.Name ?? string.Empty,
+            result.IsSuccess,
+            durationValue,
+            contextValue,
+            facts
+        ];
         logger?.Info(
             "Audit {Point} {Rule} Success:{Success} Duration:{Duration} Context:{@Context} Facts:{@Facts}",
-            point, rule.Name, result.IsSuccess, duration?.TotalMilliseconds, minimal, facts);
+            logArgs);
         return Task.CompletedTask;
     }
 }

@@ -19,14 +19,14 @@ public interface IMLog<T> : ILogger<T>
     /// </summary>
     /// <param name="messageTemplate">The message template.</param>
     /// <param name="args">The message arguments.</param>
-    void Info(string messageTemplate, params object[] args);
+    void Info(string messageTemplate, params object?[] args);
 
     /// <summary>
     /// Logs a warning message.
     /// </summary>
     /// <param name="messageTemplate">The message template.</param>
     /// <param name="args">The message arguments.</param>
-    void Warn(string messageTemplate, params object[] args);
+    void Warn(string messageTemplate, params object?[] args);
 
     /// <summary>
     /// Logs an error message.
@@ -34,12 +34,12 @@ public interface IMLog<T> : ILogger<T>
     /// <param name="ex">The exception related to the error, if any.</param>
     /// <param name="messageTemplate">The message template.</param>
     /// <param name="args">The message arguments.</param>
-    void Error(Exception? ex, string messageTemplate, params object[] args);
+    void Error(Exception? ex, string messageTemplate, params object?[] args);
 
     /// <summary>
     /// Logs a debug message.
     /// </summary>
     /// <param name="messageTemplate">The message template.</param>
     /// <param name="args">The message arguments.</param>
-    void Debug(string messageTemplate, params object[] args);
+    void Debug(string messageTemplate, params object?[] args);
 }
