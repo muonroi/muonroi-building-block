@@ -1,3 +1,5 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.Governance.Compliance;
 
 public sealed class MComplianceEvidencePackService(

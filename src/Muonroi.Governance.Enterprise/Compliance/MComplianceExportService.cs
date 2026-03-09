@@ -1,3 +1,4 @@
+using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.Compliance;
 using Muonroi.Governance.ControlPlane;
 using Muonroi.Logging.Abstractions;

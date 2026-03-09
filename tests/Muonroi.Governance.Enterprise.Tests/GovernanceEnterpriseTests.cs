@@ -1,8 +1,8 @@
+using Muonroi.Governance.Abstractions.License;
+using Muonroi.Governance.License;
+
 namespace Muonroi.Governance.Enterprise.Tests;
 
-using System;
-using Muonroi.Governance.License;
-using Xunit;
 
 public class GovernanceEnterpriseTests
 {
@@ -10,11 +10,11 @@ public class GovernanceEnterpriseTests
     public void HmacFingerprintSigner_ComputeSignature_ShouldBeConsistent()
     {
         // Arrange
-        var payload = new LicensePayload { LicenseId = "TEST_LICENSE", Signature = "SIG", ServerNonce = "NONCE" };
-        var configs = new LicenseConfigs { ProjectSeed = "SEED", FingerprintSalt = "SALT" };
-        var signer = new HmacFingerprintSigner(payload, configs);
-        
-        var context = new LicenseActionContext
+        LicensePayload payload = new() { LicenseId = "TEST_LICENSE", Signature = "SIG", ServerNonce = "NONCE" };
+        LicenseConfigs configs = new() { ProjectSeed = "SEED", FingerprintSalt = "SALT" };
+        HmacFingerprintSigner signer = new(payload, configs);
+
+        LicenseActionContext context = new()
         {
             TenantId = "TenantA",
             ActionType = "ACTION",

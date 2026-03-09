@@ -1,4 +1,6 @@
-namespace Muonroi.Governance.License;
+using Muonroi.Governance.License;
+
+namespace Muonroi.Governance.Abstractions.License;
 
 public sealed class LicenseConfigs
 {
@@ -25,10 +27,10 @@ public sealed class LicenseConfigs
     public bool FallbackToOnlineActivation { get; set; } = true;
     public string? FingerprintSalt { get; set; }
     private string? _projectSeed;
-    public string? ProjectSeed 
-    { 
-        get => Obfuscate(_projectSeed); 
-        set => _projectSeed = Obfuscate(value); 
+    public string? ProjectSeed
+    {
+        get => Obfuscate(_projectSeed);
+        set => _projectSeed = Obfuscate(value);
     }
 
     /// <summary>
@@ -56,12 +58,15 @@ public sealed class LicenseConfigs
 
     private static string? Obfuscate(string? input)
     {
-        if (string.IsNullOrEmpty(input)) return input;
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
         // Simple XOR with a fixed internal key to hide it from plain memory scanners
         char[] chars = input.ToCharArray();
         for (int i = 0; i < chars.Length; i++)
         {
-            chars[i] = (char)(chars[i] ^ (0x57 + i));
+            chars[i] = (char)(chars[i] ^ 0x57 + i);
         }
         return new string(chars);
     }
@@ -153,9 +158,15 @@ public sealed class LicenseConfigs
     /// </summary>
     public LicenseEnforcementMode GetEffectiveEnforcementMode(LicenseTier tier)
     {
-        if (EnforcementMode.HasValue) return EnforcementMode.Value;
+        if (EnforcementMode.HasValue)
+        {
+            return EnforcementMode.Value;
+        }
 
-        if (tier == LicenseTier.Free) return LicenseEnforcementMode.Free;
+        if (tier == LicenseTier.Free)
+        {
+            return LicenseEnforcementMode.Free;
+        }
 
         string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
         if (env.Equals("Development", StringComparison.OrdinalIgnoreCase))

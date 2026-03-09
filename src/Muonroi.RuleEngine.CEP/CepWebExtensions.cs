@@ -1,13 +1,54 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Core.Helpers;
+using Muonroi.RuleEngine.CEP.Abstractions;
+using Muonroi.RuleEngine.CEP.Options;
+using Muonroi.RuleEngine.CEP.Persistence;
+using Muonroi.RuleEngine.CEP.Repositories;
 
 namespace Muonroi.RuleEngine.CEP;
 
 public static class CepWebExtensions
 {
-    public static IServiceCollection AddCepWeb(this IServiceCollection services)
+    public static IServiceCollection AddCepWeb(
+        this IServiceCollection services,
+        Action<CepOptions>? configure = null)
     {
+        CepOptions options = new();
+        configure?.Invoke(options);
+
+        services.AddSingleton(Microsoft.Extensions.Options.Options.Create(options));
+        services.TryAddSingleton<IMDateTimeService, MDateTimeService>();
+        services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
+        services.TryAddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
+
+        if (!string.IsNullOrWhiteSpace(options.PostgresConnectionString))
+        {
+            services.AddDbContext<CepConfigDbContext>((_, db) =>
+            {
+                db.UseNpgsql(options.PostgresConnectionString);
+            });
+            services.TryAddScoped<ICepConfigRepository, EfCoreCepConfigRepository>();
+            services.AddHostedService<CepConfigDatabaseMigrator>();
+        }
+        else if (!string.IsNullOrWhiteSpace(options.SqlServerConnectionString))
+        {
+            services.AddDbContext<CepConfigDbContext>((_, db) =>
+            {
+                db.UseSqlServer(options.SqlServerConnectionString);
+            });
+            services.TryAddScoped<ICepConfigRepository, EfCoreCepConfigRepository>();
+            services.AddHostedService<CepConfigDatabaseMigrator>();
+        }
+        else
+        {
+            services.TryAddSingleton<ICepConfigRepository, InMemoryCepConfigRepository>();
+        }
+
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IUiEngineManifestContributor, Contributors.CepManifestContributor>());
         services.AddControllers().AddApplicationPart(typeof(Controllers.CepController).Assembly);
         return services;

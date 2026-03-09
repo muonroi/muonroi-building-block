@@ -1,6 +1,7 @@
+using Muonroi.Governance.Abstractions.Integrity;
+using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 using System.Net.Http.Json;
-using Muonroi.Governance.Abstractions.Integrity;
 
 namespace Muonroi.Governance.Enterprise.License;
 
@@ -156,7 +157,7 @@ public sealed class LicenseActivator(
 
     /// <summary>
     /// Reads the license key from configuration.
-    /// Supports multiple sources: file, environment variable, or direct config.
+    /// Supports multiple sources: direct config property, file, or environment variable.
     /// </summary>
     private async Task<string?> ReadLicenseKeyAsync()
     {
@@ -193,7 +194,7 @@ public sealed class LicenseActivator(
             }
         }
 
-        // 2. Try environment variable
+        // 2. Try environment variable (legacy/explicit fallback)
         string? envKey = Environment.GetEnvironmentVariable("MUONROI_LICENSE_KEY");
         if (!string.IsNullOrEmpty(envKey))
         {

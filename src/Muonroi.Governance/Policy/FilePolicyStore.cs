@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Hosting;
+using Muonroi.Governance.Abstractions.License;
 using System.Text.Json;
 
 namespace Muonroi.Governance.Policy;

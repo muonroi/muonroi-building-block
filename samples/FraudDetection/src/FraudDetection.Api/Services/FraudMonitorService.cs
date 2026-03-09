@@ -1,0 +1,77 @@
+using System.Collections.Concurrent;
+using Muonroi.RuleEngine.CEP;
+using Muonroi.RuleEngine.CEP.Abstractions;
+using Muonroi.RuleEngine.CEP.Builder;
+using FraudDetection.Api.Models;
+
+namespace FraudDetection.Api.Services;
+
+public sealed class FraudMonitorService(ICepConfigRepository repository)
+{
+    public const string DefaultConfigId = "high-velocity-cards";
+
+    private readonly ConcurrentDictionary<string, WindowRegistration> _windows = new(StringComparer.OrdinalIgnoreCase);
+
+    public async Task<FraudEvaluationResult> EvaluateAsync(
+        TransactionEvaluationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        CepConfig config = await repository.GetAsync(DefaultConfigId, cancellationToken)
+            ?? throw new InvalidOperationException($"CEP config '{DefaultConfigId}' is missing for the current tenant.");
+
+        string registrationKey = $"{config.TenantId}:{config.Id}";
+        WindowRegistration registration = _windows.AddOrUpdate(
+            registrationKey,
+            _ => CreateRegistration(config),
+            (_, existing) => existing.Version == config.UpdatedAtUtc.Ticks ? existing : CreateRegistration(config));
+
+        IReadOnlyList<CepEvent<TransactionEvaluationRequest>> activeWindow = registration.Window.Add(
+            request.CardId,
+            request,
+            request.TimestampUtc.Kind == DateTimeKind.Utc ? request.TimestampUtc : request.TimestampUtc.ToUniversalTime());
+
+        int threshold = ParseThreshold(config.Metadata);
+        decimal totalAmount = activeWindow.Sum(x => x.Value.Amount);
+
+        return new FraudEvaluationResult
+        {
+            TenantId = config.TenantId,
+            CardId = request.CardId,
+            AlertTriggered = activeWindow.Count >= threshold,
+            EventCount = activeWindow.Count,
+            Threshold = threshold,
+            WindowSizeSeconds = (int)Math.Round(config.WindowSize.TotalSeconds),
+            TotalAmount = totalAmount
+        };
+    }
+
+    private static WindowRegistration CreateRegistration(CepConfig config)
+    {
+        CepWindow<TransactionEvaluationRequest> window = CepWindowBuilder
+            .For<TransactionEvaluationRequest>(config)
+            .CorrelateBy(x => x.CardId)
+            .Build();
+
+        return new WindowRegistration(config.UpdatedAtUtc.Ticks, window);
+    }
+
+    private static int ParseThreshold(IReadOnlyDictionary<string, string> metadata)
+    {
+        return metadata.TryGetValue("threshold", out string? raw) && int.TryParse(raw, out int value) && value > 0
+            ? value
+            : 3;
+    }
+
+    private sealed record WindowRegistration(long Version, CepWindow<TransactionEvaluationRequest> Window);
+}
+
+public sealed record FraudEvaluationResult
+{
+    public string TenantId { get; init; } = "_global";
+    public string CardId { get; init; } = string.Empty;
+    public bool AlertTriggered { get; init; }
+    public int EventCount { get; init; }
+    public int Threshold { get; init; }
+    public int WindowSizeSeconds { get; init; }
+    public decimal TotalAmount { get; init; }
+}
