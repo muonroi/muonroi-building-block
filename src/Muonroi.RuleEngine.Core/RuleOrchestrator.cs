@@ -733,7 +733,10 @@ public sealed class RuleOrchestrator<TContext>(
         HashSet<string> visiting = [];
         HashSet<string> visited = [];
 
-        foreach (string code in map.Keys)
+        foreach (string code in map.Values
+                     .OrderBy(rule => rule.Order)
+                     .ThenBy(rule => rule.Code, StringComparer.OrdinalIgnoreCase)
+                     .Select(rule => rule.Code))
         {
             Visit(code);
         }
@@ -752,7 +755,9 @@ public sealed class RuleOrchestrator<TContext>(
                 throw new InvalidOperationException("Cyclic rule dependency detected.");
             }
 
-            foreach (string dep in map[code].DependsOn)
+            foreach (string dep in map[code].DependsOn
+                         .OrderBy(dep => map[dep].Order)
+                         .ThenBy(dep => dep, StringComparer.OrdinalIgnoreCase))
             {
                 if (!map.ContainsKey(dep))
                 {

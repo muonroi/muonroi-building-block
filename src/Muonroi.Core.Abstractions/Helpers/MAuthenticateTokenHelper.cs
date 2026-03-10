@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.Core.Abstractions.Helpers;
 
 /// <summary>
@@ -12,7 +14,7 @@ public class MAuthenticateTokenHelper<TPermission>(
     MTokenInfo tokenConfig,
     ITokenSigner signer,
     IMDateTimeService dateTimeService,
-    ILogger<MAuthenticateTokenHelper<TPermission>>? logger = null)
+    IMLog<MAuthenticateTokenHelper<TPermission>>? logger = null)
     where TPermission : Enum
 {
     private readonly MTokenInfo _tokenConfig = tokenConfig ?? throw new ArgumentNullException(nameof(tokenConfig));
@@ -28,7 +30,7 @@ public class MAuthenticateTokenHelper<TPermission>(
     public string GenerateAuthenticateToken(MUserModel user, List<TPermission> permissions, List<Claim>? claims = null)
     {
         ArgumentNullException.ThrowIfNull(permissions);
-        logger?.LogInformation("Generating token for {User}", user.UserGuid);
+        logger?.Info("Generating token for {User}", user.UserGuid);
         List<Claim> privateClaims =
         [
             new(ClaimConstants.Username, user.Username),
@@ -80,7 +82,7 @@ public class MAuthenticateTokenHelper<TPermission>(
         JwtSecurityTokenHandler tokenHandler = new();
         SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
         string result = tokenHandler.WriteToken(token);
-        logger?.LogInformation("Generated token for {User}", user.UserGuid);
+        logger?.Info("Generated token for {User}", user.UserGuid);
         return result;
     }
 }

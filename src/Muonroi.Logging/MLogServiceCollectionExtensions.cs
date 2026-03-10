@@ -16,6 +16,7 @@ public static class MLogServiceCollectionExtensions
 
         builder.Services.AddSingleton<IMLogContext, MLogContext>();
         builder.Services.AddSingleton(typeof(IMLog<>), typeof(MLog<>));
+        builder.Services.AddSingleton<IMLogFactory, MLogFactory>();
         builder.Services.AddSingleton<ILogScopeFactory, MLogScopeFactory>();
         return builder;
     }

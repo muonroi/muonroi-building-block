@@ -1,5 +1,3 @@
-using Muonroi.Logging.Abstractions;
-
 namespace Muonroi.AspNetCore.Tests;
 
 public class RequestLoggingFilterTests
@@ -84,6 +82,11 @@ public class RequestLoggingFilterTests
             States.Add(messageTemplate);
         }
 
+        public void InfoTrace(string messageTemplate, params object?[] args)
+        {
+            throw new NotImplementedException();
+        }
+
         private sealed class NullLogContextScope : IMLogContextScope
         {
             public static readonly NullLogContextScope Instance = new();
@@ -139,6 +142,11 @@ public class RequestLoggingFilterTests
         public void Debug(string messageTemplate, params object?[] args)
         {
             throw new InvalidOperationException("log fail");
+        }
+
+        public void InfoTrace(string messageTemplate, params object?[] args)
+        {
+            throw new NotImplementedException();
         }
 
         private sealed class NullDisposable : IDisposable
