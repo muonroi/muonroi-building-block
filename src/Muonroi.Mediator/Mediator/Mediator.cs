@@ -1,43 +1,30 @@
 using Muonroi.Mediator.Mediator.Interfaces;
-using System.Reflection;
+using Muonroi.Mediator.Mediator.Pipeline;
 using System.Runtime.CompilerServices;
 
 namespace Muonroi.Mediator.Mediator;
 
+/// <summary>Delegate used by MMediator to resolve services from the DI container.</summary>
 public delegate object? ServiceFactory(Type serviceType);
 
+/// <summary>
+/// Default <see cref="IMediator"/> implementation.
+/// Uses a compiled-delegate wrapper cache to eliminate per-call reflection overhead.
+/// After the first call for a given request type, dispatch is purely interface-based — no reflection.
+/// </summary>
 public class MMediator(ServiceFactory serviceFactory) : IMediator
 {
+    // ───────────────────────────── Send ─────────────────────────────
+
     public async Task<MResponse> Send<MResponse>(IRequest<MResponse> request,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
         Type requestType = request.GetType();
-        Type handlerType = typeof(IRequestHandler<,>).MakeGenericType(requestType, typeof(MResponse));
-        object handler = serviceFactory(handlerType) ??
-                      throw new InvalidOperationException($"Handler for {requestType} not found");
-        MethodInfo handleMethod = handlerType.GetMethod("Handle")!;
-        RequestHandlerDelegate<MResponse> handlerDelegate = () =>
-            (Task<MResponse>)handleMethod.Invoke(handler, [request, cancellationToken])!;
-        if (serviceFactory(
-                typeof(IEnumerable<>).MakeGenericType(
-                    typeof(IPipelineBehavior<,>).MakeGenericType(requestType, typeof(MResponse)))) is
-            not IEnumerable<object> behaviors)
-        {
-            return await handlerDelegate();
-        }
-
-        {
-            foreach (object? behavior in behaviors.Reverse())
-            {
-                RequestHandlerDelegate<MResponse> next = handlerDelegate;
-                MethodInfo behaviorHandle = behavior.GetType().GetMethod("Handle")!;
-                handlerDelegate = () =>
-                    (Task<MResponse>)behaviorHandle.Invoke(behavior, [request, next, cancellationToken])!;
-            }
-        }
-
-        return await handlerDelegate();
+        RequestHandlerBase wrapper = RequestHandlerWrapperCache.GetOrCreate<MResponse>(requestType);
+        object? result = await wrapper.Handle(request, serviceFactory, cancellationToken);
+        return (MResponse)result!;
     }
 
     public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
@@ -48,94 +35,92 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
 
     public Task<object?> Send(object request, CancellationToken cancellationToken = default)
     {
-        if (request is null)
-        {
-            throw new NullReferenceException(nameof(request));
-        }
+        ArgumentNullException.ThrowIfNull(request);
+        
+        Type requestType = request.GetType();
+        Type? responseType = requestType.GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequest<>))
+            ?.GetGenericArguments()[0];
 
-        return SendDynamic((dynamic)request, cancellationToken);
+        if (responseType == null)
+            throw new InvalidOperationException($"Object of type {requestType.Name} does not implement IRequest<T>.");
+
+        RequestHandlerBase wrapper = RequestHandlerWrapperCache.GetOrCreate(requestType, responseType);
+        return wrapper.Handle(request, serviceFactory, cancellationToken);
     }
 
-    private async Task<object?> SendDynamic<MResponse>(IRequest<MResponse> request, CancellationToken cancellationToken)
-    {
-        MResponse? response = await Send(request, cancellationToken);
-        return response;
-    }
+    // ───────────────────────────── Publish ─────────────────────────────
 
-    public async Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
-        where TNotification : Interfaces.INotification
+    public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
+        where TNotification : INotification
     {
         ArgumentNullException.ThrowIfNull(notification);
-        Type notificationType = typeof(INotificationHandler<>).MakeGenericType(notification.GetType());
-        if (serviceFactory(
-                typeof(IEnumerable<>).MakeGenericType(notificationType)) is not IEnumerable<object> handlers)
-        {
-            return;
-        }
+        MNotificationStrategy strategy = notification is IMStrategyNotification s
+            ? s.Strategy
+            : MNotificationStrategy.Sequential;
+        return PublishInternal(notification, strategy, cancellationToken);
+    }
 
-        foreach (object handler in handlers)
-        {
-            MethodInfo method = handler.GetType().GetMethod("Handle")!;
-            await (Task)method.Invoke(handler, [notification, cancellationToken])!;
-        }
+    public Task Publish<TNotification>(TNotification notification, MNotificationStrategy strategy,
+        CancellationToken cancellationToken = default)
+        where TNotification : INotification
+    {
+        ArgumentNullException.ThrowIfNull(notification);
+        return PublishInternal(notification, strategy, cancellationToken);
     }
 
     public Task Publish(object notification, CancellationToken cancellationToken = default)
     {
-        Type notificationType = notification.GetType();
-        _ = typeof(Interfaces.INotification).IsAssignableFrom(notificationType)
-            ? notificationType
-            : throw new InvalidOperationException("Notification does not implement INotification");
-        MethodInfo method = typeof(MMediator).GetMethod(nameof(Publish), [typeof(Interfaces.INotification), typeof(CancellationToken)])!;
-        return (Task)method.Invoke(this, [notification, cancellationToken])!;
+        ArgumentNullException.ThrowIfNull(notification);
+        if (notification is not INotification n)
+            throw new InvalidOperationException("Notification does not implement INotification.");
+        
+        MNotificationStrategy strategy = n is IMStrategyNotification s ? s.Strategy : MNotificationStrategy.Sequential;
+        NotificationHandlerWrapperBase wrapper = RequestHandlerWrapperCache.GetOrCreateNotification(n.GetType());
+        return wrapper.Handle(notification, serviceFactory, cancellationToken, strategy);
     }
 
-    public async IAsyncEnumerable<MResponse> CreateStream<MResponse>(
-        IStreamRequest<MResponse> request,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    private Task PublishInternal<TNotification>(TNotification notification,
+        MNotificationStrategy strategy, CancellationToken cancellationToken)
+        where TNotification : INotification
     {
-        Type requestType = request.GetType();
-        Type handlerType = typeof(IStreamRequestHandler<,>).MakeGenericType(requestType, typeof(MResponse));
-        object? handler = serviceFactory(handlerType);
-        if (handler == null)
-        {
-            yield break;
-        }
-
-        MethodInfo streamHandle = handler.GetType().GetMethod("Handle")!;
-        object? result;
-        try
-        {
-            result = streamHandle.Invoke(handler, [request, cancellationToken]);
-        }
-        catch (TargetInvocationException ex) when (ex.InnerException is not null)
-        {
-            throw ex.InnerException;
-        }
-
-        if (result is IAsyncEnumerable<MResponse> asyncEnumerable)
-        {
-            await foreach (MResponse? item in asyncEnumerable.WithCancellation(cancellationToken))
-            {
-                yield return item;
-            }
-        }
-        else
-        {
-            throw new InvalidOperationException(
-                $"Handler {handler.GetType().Name} does not return IAsyncEnumerable<{typeof(MResponse).Name}>");
-        }
+        NotificationHandlerWrapperBase wrapper = RequestHandlerWrapperCache.GetOrCreateNotification(typeof(TNotification));
+        return wrapper.Handle(notification, serviceFactory, cancellationToken, strategy);
     }
 
+    // ───────────────────────────── CreateStream ─────────────────────────────
+
+    public IAsyncEnumerable<MResponse> CreateStream<MResponse>(
+        IStreamRequest<MResponse> request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        Type requestType = request.GetType();
+        StreamHandlerWrapperBase wrapper = RequestHandlerWrapperCache.GetOrCreateStream<MResponse>(requestType);
+        
+        return YieldStream<MResponse>(wrapper.CreateStream(request, serviceFactory, cancellationToken), cancellationToken);
+    }
 
     public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
         Type requestType = request.GetType();
-        Type responseType = requestType.GetInterfaces()
-            .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IStreamRequest<>))
-            .GetGenericArguments()[0];
-        MethodInfo method = typeof(MMediator).GetMethod(nameof(CreateStream),
-            [typeof(IStreamRequest<>).MakeGenericType(responseType), typeof(CancellationToken)])!;
-        return (IAsyncEnumerable<object?>)method.Invoke(this, [request, cancellationToken])!;
+        Type? responseType = requestType.GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IStreamRequest<>))
+            ?.GetGenericArguments()[0];
+
+        if (responseType == null)
+            throw new InvalidOperationException($"Object of type {requestType.Name} does not implement IStreamRequest<T>.");
+
+        StreamHandlerWrapperBase wrapper = RequestHandlerWrapperCache.GetOrCreateStream(requestType, responseType);
+        return wrapper.CreateStream(request, serviceFactory, cancellationToken);
+    }
+
+    private static async IAsyncEnumerable<T> YieldStream<T>(IAsyncEnumerable<object?> stream, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await foreach (object? item in stream.WithCancellation(cancellationToken))
+        {
+            yield return (T)item!;
+        }
     }
 }

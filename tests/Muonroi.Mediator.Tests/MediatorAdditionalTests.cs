@@ -23,7 +23,8 @@ public class MediatorAdditionalTests
         ServiceProvider serviceProvider = services.BuildServiceProvider();
         IMediator mediator = serviceProvider.GetRequiredService<IMediator>();
 
-        await Assert.ThrowsAsync<TargetInvocationException>(() => mediator.Send(new MediatorTests.PingRequest()));
+        // v2: no TargetInvocationException wrapping — exception propagates directly (no reflection on hot path)
+        await Assert.ThrowsAsync<InvalidOperationException>(() => mediator.Send(new MediatorTests.PingRequest()));
     }
 
     [Fact]
@@ -59,7 +60,7 @@ public class MediatorAdditionalTests
     {
         MMediator mediator = new(_ => null);
 
-        await Assert.ThrowsAsync<RuntimeBinderException>(() => mediator.Send(new object()));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => mediator.Send(new object()));
     }
 
     private class PingVoid : IRequest
@@ -148,7 +149,8 @@ public class MediatorAdditionalTests
         ServiceProvider serviceProvider = services.BuildServiceProvider();
         IMediator mediator = serviceProvider.GetRequiredService<IMediator>();
 
-        await Assert.ThrowsAsync<TargetInvocationException>(
+        // v2: no TargetInvocationException wrapping — exception propagates directly
+        await Assert.ThrowsAsync<InvalidOperationException>(
             () => mediator.Send((object)new MediatorTests.PingRequest()));
     }
 }

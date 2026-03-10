@@ -78,7 +78,8 @@ public class MediatorExceptionTests
     {
         MMediator mediator = new(new EmptyServiceFactory());
 
-        await Assert.ThrowsAsync<NullReferenceException>(async () =>
+        // v2: ArgumentNullException instead of NullReferenceException (direct null guard via ArgumentNullException.ThrowIfNull)
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
         {
             IAsyncEnumerable<int> stream = mediator.CreateStream<int>(null!);
             await foreach (int _ in stream)
@@ -92,6 +93,7 @@ public class MediatorExceptionTests
     {
         MMediator mediator = new(new EmptyServiceFactory());
 
-        await Assert.ThrowsAsync<NullReferenceException>(() => mediator.Send((object)null!));
+        // v2: ArgumentNullException instead of NullReferenceException (direct null guard via ArgumentNullException.ThrowIfNull)
+        await Assert.ThrowsAsync<ArgumentNullException>(() => mediator.Send((object)null!));
     }
 }
