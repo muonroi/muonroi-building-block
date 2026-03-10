@@ -93,6 +93,8 @@ public class MediatorTests
         ServiceCollection services = [];
         List<string> log = [];
         services.AddSingleton<IList<string>>(log);
+        // Pipeline behaviors are registered explicitly (not via assembly scan).
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddMediator(typeof(MediatorTests).Assembly);
 
         ServiceProvider serviceProvider = services.BuildServiceProvider();

@@ -223,7 +223,13 @@ public sealed class LicenseVerifier(
             return "Activation proof license mismatch.";
         }
 
-        if (proof.ExpiresAt != payload.ExpiresAt)
+        // Compare to second precision — sub-second precision may differ due to serialization rounding
+        // across the license server's top-level ExpiresAt vs SignedLicensePayload.ExpiresAt
+        long proofSec   = proof.ExpiresAt.ToUniversalTime().Ticks / TimeSpan.TicksPerSecond;
+        long payloadSec = payload.ExpiresAt.HasValue
+            ? payload.ExpiresAt.Value.ToUniversalTime().Ticks / TimeSpan.TicksPerSecond
+            : 0;
+        if (proofSec != payloadSec)
         {
             return "Activation proof expiry mismatch.";
         }
