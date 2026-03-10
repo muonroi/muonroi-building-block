@@ -1,6 +1,6 @@
+using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Mediator.Exceptions;
-using Muonroi.Mediator.Mediator.Interfaces;
 using Muonroi.RuleEngine.Abstractions;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -13,33 +13,40 @@ namespace Muonroi.Mediator.Behaviours;
 /// </summary>
 public sealed class MRuleEngineBehavior<TRequest, TResponse>(
     Mediator.ServiceFactory serviceFactory,
-    IMLog<MRuleEngineBehavior<TRequest, TResponse>>? logger = null)
+    IMLog<MRuleEngineBehavior<TRequest, TResponse>>? logger = null,
+    IMTraceContext? traceContext = null)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
     private static readonly ConcurrentDictionary<Type, RuleMetadata?> _metadataCache = new();
 
+    /// <inheritdoc/>
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
         RuleMetadata? metadata = GetRuleMetadata();
-        if (metadata == null) return await next();
-
-        object ruleRequest = request;
-        object ctx = metadata.BuildRuleContextMethod.Invoke(ruleRequest, null)!;
-        
-        // Resolve rules: IEnumerable<IRule<TRuleContext>>
-        Type rulesType = typeof(IEnumerable<>).MakeGenericType(typeof(IRule<>).MakeGenericType(metadata.RuleContextType));
-        IEnumerable<object>? rules = serviceFactory(rulesType) as IEnumerable<object>;
-
-        if (rules == null)
+        if (metadata == null)
         {
             return await next();
         }
 
-        var ruleList = rules.ToList();
+        // ── Diagnostics ──────────────────────────────────────────────────────────
+        using IDisposable? behaviorNode = traceContext?.Current?.BeginNode("RuleEngine", MTraceNodeType.PipelineBehavior);
+
+        object ruleRequest = request;
+        object ctx = metadata.BuildRuleContextMethod.Invoke(ruleRequest, null)!;
+
+        // Resolve rules: IEnumerable<IRule<TRuleContext>>
+        Type rulesType = typeof(IEnumerable<>).MakeGenericType(typeof(IRule<>).MakeGenericType(metadata.RuleContextType));
+
+        if (serviceFactory(rulesType) is not IEnumerable<object> rules)
+        {
+            return await next();
+        }
+
+        List<object> ruleList = rules.ToList();
         if (ruleList.Count == 0)
         {
             return await next();
@@ -74,10 +81,19 @@ public sealed class MRuleEngineBehavior<TRequest, TResponse>(
         foreach (var x in phaseRules)
         {
             object rule = x.Rule;
+
+            // ── Diagnostics ──────────────────────────────────────────────────
+            var session = traceContext?.Current;
+            using var ruleNode = session?.BeginNode(x.Code, MTraceNodeType.Rule);
             
+            var facts = new FactBag();
+            session?.RecordFactSnapshot("before", facts.AsReadOnly());
+
             // Invoke EvaluateAsync
-            Task<RuleResult> evalTask = (Task<RuleResult>)metadata.EvaluateAsyncMethod.Invoke(rule, [ctx, new FactBag(), ct])!;
+            Task<RuleResult> evalTask = (Task<RuleResult>)metadata.EvaluateAsyncMethod.Invoke(rule, [ctx, facts, ct])!;
+
             RuleResult result = await evalTask;
+            session?.RecordFactSnapshot("after", facts.AsReadOnly());
 
             if (result.IsSuccess)
             {
@@ -92,7 +108,9 @@ public sealed class MRuleEngineBehavior<TRequest, TResponse>(
                     x.Code, string.Join("; ", result.Errors));
 
                 if (throwOnFailure)
+                {
                     throw new MRuleViolationException(x.Code, result.Errors);
+                }
             }
         }
     }
@@ -104,7 +122,10 @@ public sealed class MRuleEngineBehavior<TRequest, TResponse>(
             Type? ruleInterface = requestType.GetInterfaces()
                 .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMRuleRequest<,>));
 
-            if (ruleInterface == null) return null;
+            if (ruleInterface == null)
+            {
+                return null;
+            }
 
             Type responseType = ruleInterface.GetGenericArguments()[0];
             Type ruleContextType = ruleInterface.GetGenericArguments()[1];

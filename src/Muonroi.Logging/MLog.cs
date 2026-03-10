@@ -1,16 +1,20 @@
+using Microsoft.Extensions.Logging;
+using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Diagnostics;
+using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.Logging;
 
 /// <summary>
 /// A custom logger implementation that provides additional context and helper methods.
 /// </summary>
 /// <typeparam name="T">The category type for the logger.</typeparam>
-/// <param name="inner">The underlying <see cref="ILogger{T}"/> instance.</param>
-/// <param name="accessor">The execution context accessor to retrieve context data.</param>
-/// <param name="logContext">The logging context used to push properties.</param>
 public sealed class MLog<T>(
     ILogger<T> inner,
     ISystemExecutionContextAccessor accessor,
-    IMLogContext logContext) : IMLog<T>
+    IMLogContext logContext,
+    IMTraceContext? traceContext = null) : IMLog<T>
 {
     private readonly ILogger<T> _inner = inner ?? throw new ArgumentNullException(nameof(inner));
     private readonly ISystemExecutionContextAccessor _accessor =
@@ -53,36 +57,62 @@ public sealed class MLog<T>(
     public void Info(string messageTemplate, params object?[] args)
     {
         _inner.LogInformation(messageTemplate, args);
+        RecordTrace("INFO", messageTemplate, args);
     }
 
     /// <inheritdoc />
     public void Warn(string messageTemplate, params object?[] args)
     {
         _inner.LogWarning(messageTemplate, args);
+        RecordTrace("WARN", messageTemplate, args);
     }
 
     /// <inheritdoc />
     public void Error(Exception? ex, string messageTemplate, params object?[] args)
     {
         _inner.LogError(ex, messageTemplate, args);
+        RecordTrace("ERROR", messageTemplate, args, ex);
     }
 
     /// <inheritdoc />
     public void Debug(string messageTemplate, params object?[] args)
     {
         _inner.LogDebug(messageTemplate, args);
+        RecordTrace("DEBUG", messageTemplate, args);
+    }
+
+    /// <inheritdoc />
+    public void InfoTrace(string messageTemplate, params object?[] args)
+    {
+        _inner.LogInformation(messageTemplate, args);
+        RecordTrace("TRACE", messageTemplate, args);
+    }
+
+    private void RecordTrace(string level, string template, object?[] args, Exception? ex = null)
+    {
+        var session = traceContext?.Current;
+        if (session is { IsActive: true })
+        {
+            var message = string.Format(template.Replace("{", "{{").Replace("}", "}}"), args);
+            if (ex != null) message += $" | Exception: {ex.Message}";
+            session.Record($"[{level}] {message}");
+        }
     }
 
     private IDisposable? BeginExecutionScope()
     {
         ISystemExecutionContext context = _accessor.Get();
-        return _inner.BeginScope(new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        if (context == null || context == SystemExecutionContext.Empty)
         {
-            ["TenantId"] = context.TenantId,
-            ["UserId"] = context.UserId,
-            ["CorrelationId"] = context.CorrelationId,
-            ["SourceType"] = context.SourceType
-        });
+            return null;
+        }
+
+        IMLogContextScope tenantScope = _logContext.PushProperty(LogPropertyConventions.TenantId, context.TenantId);
+        IMLogContextScope userScope = _logContext.PushProperty(LogPropertyConventions.UserId, context.UserId);
+        IMLogContextScope correlationScope =
+            _logContext.PushProperty(LogPropertyConventions.CorrelationId, context.CorrelationId);
+
+        return new CombinedScope(tenantScope, new CombinedScope(userScope, correlationScope));
     }
 
     private sealed class CombinedScope(IDisposable? left, IDisposable? right) : IDisposable
