@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Muonroi.Governance.Abstractions.Integrity;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.Governance.Abstractions.License;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.License;
 
@@ -55,8 +56,8 @@ public static class LicenseServiceCollectionExtensions
             ILicenseFingerprintProvider fpProvider = sp.GetRequiredService<ILicenseFingerprintProvider>();
             LicenseRuntimeStatus runtimeStatus = sp.GetRequiredService<LicenseRuntimeStatus>();
             string fingerprint = fpProvider.GetFingerprint();
-            ILoggerFactory? loggerFactory = sp.GetService<ILoggerFactory>();
-            ILogger<LicenseState>? logger = loggerFactory?.CreateLogger<LicenseState>();
+            IMLogFactory? logFactory = sp.GetService<IMLogFactory>();
+            IMLog<LicenseState>? logger = logFactory?.CreateLogger<LicenseState>();
             ActivationProof? activationProof = store.LoadActivationProof();
 
             LicensePayload? payload = null;
@@ -97,7 +98,7 @@ public static class LicenseServiceCollectionExtensions
     }
 
     private static LicensePayload? ValidateOnline(LicenseConfigs configs, string fingerprint,
-        ILogger<LicenseState>? logger)
+        IMLog<LicenseState>? logger)
     {
         try
         {
@@ -121,15 +122,15 @@ public static class LicenseServiceCollectionExtensions
             HttpResponseMessage response = client.PostAsJsonAsync($"{configs.Online.Endpoint}/validate", request).GetAwaiter().GetResult();
             if (response.IsSuccessStatusCode)
             {
-                logger?.LogDebug("[License] Online validation successful.");
+                logger?.Debug("[License] Online validation successful.");
                 return response.Content.ReadFromJsonAsync<LicensePayload>().GetAwaiter().GetResult();
             }
 
-            logger?.LogWarning("[License] Online validation failed: {Status}", response.StatusCode);
+            logger?.Warn("[License] Online validation failed: {Status}", response.StatusCode);
         }
         catch (Exception ex)
         {
-            logger?.LogWarning("[License] Online validation error: {Message}. Using cached license.", ex.Message);
+            logger?.Warn("[License] Online validation error: {Message}. Using cached license.", ex.Message);
         }
 
         return null;

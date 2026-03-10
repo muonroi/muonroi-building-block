@@ -1,10 +1,9 @@
 namespace Muonroi.Logging.Abstractions;
 
 /// <summary>
-/// Defines a generic logging interface that extends <see cref="ILogger{TCategoryName}"/>.
+/// Defines a logging interface that extends <see cref="ILogger"/>.
 /// </summary>
-/// <typeparam name="T">The type whose name is used for the logger category.</typeparam>
-public interface IMLog<T> : ILogger<T>
+public interface IMLog : ILogger
 {
     /// <summary>
     /// Begins a logging scope with the specified property key and value.
@@ -45,7 +44,34 @@ public interface IMLog<T> : ILogger<T>
 
     /// <summary>
     /// Logs with an explicit trace node name override (for rule-level context).
-    /// When inside a rule execution, this is set automatically by the diagnostics layer.
     /// </summary>
     void InfoTrace(string messageTemplate, params object?[] args);
+}
+
+/// <summary>
+/// Defines a generic logging interface that extends <see cref="ILogger{TCategoryName}"/> and <see cref="IMLog"/>.
+/// </summary>
+/// <typeparam name="T">The type whose name is used for the logger category.</typeparam>
+public interface IMLog<out T> : IMLog, ILogger<T>
+{
+}
+
+/// <summary>
+/// Defines a factory interface for creating <see cref="IMLog"/> instances.
+/// </summary>
+public interface IMLogFactory : IDisposable
+{
+    /// <summary>
+    /// Creates a new <see cref="IMLog"/> instance for the specified type.
+    /// </summary>
+    /// <typeparam name="T">The type to create the logger for.</typeparam>
+    /// <returns>A new <see cref="IMLog{T}"/> instance.</returns>
+    IMLog<T> CreateLogger<T>();
+
+    /// <summary>
+    /// Creates a new <see cref="IMLog"/> instance for the specified category name.
+    /// </summary>
+    /// <param name="categoryName">The category name for the logger.</param>
+    /// <returns>A new <see cref="IMLog"/> instance.</returns>
+    IMLog CreateLogger(string categoryName);
 }

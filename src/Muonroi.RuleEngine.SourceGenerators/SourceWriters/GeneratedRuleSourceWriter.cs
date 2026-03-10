@@ -73,7 +73,7 @@ internal static class GeneratedRuleSourceWriter
         sb.AppendLine($"    public HookPoint HookPoint => HookPoint.{definition.HookPoint};");
         sb.AppendLine("    public RuleType Type => RuleType.Validation;");
         sb.AppendLine($"    public string Name => \"{Escape(className)}\";");
-        sb.AppendLine($"    public IEnumerable<Type> Dependencies => {dependenciesProperty};");
+        sb.AppendLine($"    public IEnumerable<System.Type> Dependencies => {dependenciesProperty};");
         sb.AppendLine();
 
         foreach (string attr in definition.CustomAttributes)
@@ -104,9 +104,9 @@ internal static class GeneratedRuleSourceWriter
         sb.AppendLine("        }");
         sb.AppendLine("    }");
         sb.AppendLine();
-        sb.AppendLine($"    public async Task ExecuteAsync({definition.ContextType} context, CancellationToken cancellationToken = default)");
+        sb.AppendLine($"    public Task ExecuteAsync({definition.ContextType} context, CancellationToken cancellationToken = default)");
         sb.AppendLine("    {");
-        sb.AppendLine("        _ = await EvaluateAsync(context, new FactBag(), cancellationToken);");
+        sb.AppendLine("        return Task.CompletedTask;");
         sb.AppendLine("    }");
 
         foreach (string line in helperMethods)
@@ -273,7 +273,7 @@ internal static class GeneratedRuleSourceWriter
     {
         if (dependencies.Count == 0)
         {
-            return "Array.Empty<Type>()";
+            return "Array.Empty<System.Type>()";
         }
 
         string types = string.Join(", ", dependencies.Select(d => $"typeof({d.TypeName})"));

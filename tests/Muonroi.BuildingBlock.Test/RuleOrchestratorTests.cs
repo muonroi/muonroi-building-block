@@ -105,4 +105,27 @@ public class RuleOrchestratorTests
 
         Assert.Equal(new[] { "A" }, executed);
     }
+
+    [Fact]
+    public async Task ExecuteAsync_UsesOrderAsFallbackWhenNoDependenciesExist()
+    {
+        List<string> executed = [];
+
+        TestRule<RuleA> second = new("SECOND", HookPoint.BeforePersist, order: 20, action: _ =>
+        {
+            executed.Add("SECOND");
+            return Task.FromResult(RuleResult.Success());
+        });
+
+        TestRule<RuleB> first = new("FIRST", HookPoint.BeforePersist, order: 10, action: _ =>
+        {
+            executed.Add("FIRST");
+            return Task.FromResult(RuleResult.Success());
+        });
+
+        RuleOrchestrator<object> orchestrator = CreateOrchestrator(second, first);
+        await orchestrator.ExecuteAsync(new object());
+
+        Assert.Equal(new[] { "FIRST", "SECOND" }, executed);
+    }
 }

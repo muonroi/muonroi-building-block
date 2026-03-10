@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Muonroi.RuleEngine.SourceGenerators.Authoring;
 using Muonroi.RuleEngine.SourceGenerators.Models;
 using Muonroi.RuleEngine.SourceGenerators.SourceWriters;
 using Muonroi.RuleEngine.SourceGenerators.Diagnostics;
@@ -134,6 +135,8 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
             // Metadata
             string[] customAttributes = methodSymbol.GetAttributes()
                 .Where(a => !a.AttributeClass?.Name.Contains("ExtractAsRule") == true)
+                .Where(a => !string.Equals(a.AttributeClass?.ToDisplayString(), "Muonroi.RuleEngine.Abstractions.Authoring.MRuleContextDescriptionAttribute", StringComparison.Ordinal))
+                .Where(a => !string.Equals(a.AttributeClass?.ToDisplayString(), "Muonroi.RuleEngine.Abstractions.Authoring.MRuleFactDescriptionAttribute", StringComparison.Ordinal))
                 .Select(a => $"[{a.AttributeClass?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)}]")
                 .ToArray();
 
@@ -191,22 +194,28 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
             }
         }
 
-        // Generate Files
-        if (diagnosticsOnly)
+        string rootNamespace = definitions
+            .Select(definition => definition.SourceNamespace)
+            .FirstOrDefault(sourceNamespace => !string.IsNullOrWhiteSpace(sourceNamespace))
+            ?? ToIdentifier(compilation.AssemblyName ?? "MuonroiRuleAssembly");
+
+        if (!diagnosticsOnly)
         {
-            return;
+            foreach (var def in definitions)
+            {
+                // Skip generation for duplicate codes to avoid duplicate hintName/source conflicts.
+                if (duplicateCodes.Contains(def.Code))
+                {
+                    continue;
+                }
+                string source = GeneratedRuleSourceWriter.Render(def);
+                context.AddSource($"{ToIdentifier(def.Code)}Rule.g.cs", source);
+            }
         }
 
-        foreach (var def in definitions)
-        {
-            // Skip generation for duplicate codes to avoid duplicate hintName/source conflicts.
-            if (duplicateCodes.Contains(def.Code))
-            {
-                continue;
-            }
-            string source = GeneratedRuleSourceWriter.Render(def);
-            context.AddSource($"{ToIdentifier(def.Code)}Rule.g.cs", source);
-        }
+        AuthoringManifestDefinition manifest = RuleAuthoringManifestExtractor.Build(compilation, distinctMethods);
+        string manifestSource = RuleAuthoringManifestSourceWriter.Render(rootNamespace, manifest);
+        context.AddSource($"{ToIdentifier(compilation.AssemblyName ?? "RuleAssembly")}.RuleAuthoringManifestProvider.g.cs", manifestSource);
     }
 
     private static string GetHookPointName(TypedConstant constant)

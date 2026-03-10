@@ -138,9 +138,9 @@ internal static class RuleClassWriter
         sb.AppendLine("        }");
         sb.AppendLine("    }");
         sb.AppendLine();
-        sb.AppendLine($"    public async Task ExecuteAsync({definition.ContextType} context, CancellationToken cancellationToken = default)");
+        sb.AppendLine($"    public Task ExecuteAsync({definition.ContextType} context, CancellationToken cancellationToken = default)");
         sb.AppendLine("    {");
-        sb.AppendLine("        _ = await EvaluateAsync(context, new FactBag(), cancellationToken);");
+        sb.AppendLine("        return Task.CompletedTask;");
         sb.AppendLine("    }");
 
         foreach (string line in helperMethods)
