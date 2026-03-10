@@ -105,7 +105,7 @@ public static class ServiceCollectionExtensions
 
     /// <summary>
     /// Registers standard ecosystem behaviors for Muonroi.
-    /// Order (Outer-to-Inner): ExceptionHandler -> Logging -> Tenant -> Auth -> Validation -> Pre/Post
+    /// Order (Outer-to-Inner): ExceptionHandler -> Diagnostics -> Tenant -> Auth -> Validation -> Pre/Post
     /// </summary>
     public static MMediatorOptions AddMuonroiEcosystem(this MMediatorOptions options)
     {
@@ -115,7 +115,7 @@ public static class ServiceCollectionExtensions
         options.AddBehavior(typeof(ValidationBehavior<,>));
         options.AddBehavior(typeof(MAuthorizationBehavior<,>));
         options.AddBehavior(typeof(MTenantValidationBehavior<,>));
-        options.AddBehavior(typeof(LoggingBehavior<,>));
+        options.AddBehavior(typeof(MDiagnosticsBehavior<,>));
         options.AddBehavior(typeof(MExceptionHandlerBehavior<,>));
         return options;
     }

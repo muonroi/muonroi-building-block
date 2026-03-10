@@ -42,4 +42,10 @@ public interface IMLog<T> : ILogger<T>
     /// <param name="messageTemplate">The message template.</param>
     /// <param name="args">The message arguments.</param>
     void Debug(string messageTemplate, params object?[] args);
+
+    /// <summary>
+    /// Logs with an explicit trace node name override (for rule-level context).
+    /// When inside a rule execution, this is set automatically by the diagnostics layer.
+    /// </summary>
+    void InfoTrace(string messageTemplate, params object?[] args);
 }

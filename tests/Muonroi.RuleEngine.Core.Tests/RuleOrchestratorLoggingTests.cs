@@ -88,6 +88,11 @@ public class RuleOrchestratorLoggingTests
             Logs.Add(FormatMessage(messageTemplate, args));
         }
 
+        public void InfoTrace(string messageTemplate, params object?[] args)
+        {
+            Logs.Add(FormatMessage(messageTemplate, args));
+        }
+
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
             return NullScope.Instance;

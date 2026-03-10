@@ -58,6 +58,11 @@ public class FeatureFlagEvaluatorTests
             Logs.Add(messageTemplate);
         }
 
+        public void InfoTrace(string messageTemplate, params object?[] args)
+        {
+            Logs.Add(messageTemplate);
+        }
+
         private sealed class NullDisposable : IDisposable
         {
             public static readonly NullDisposable Instance = new();

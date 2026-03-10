@@ -3,6 +3,8 @@ namespace Muonroi.RuleEngine.Core.Tracing;
 public sealed record RuleTraceEntry
 {
     public string TraceId { get; init; } = Guid.NewGuid().ToString("N");
+    public string? TraceSessionId { get; init; }
+    public string? ParentNodeId { get; init; }
     public string TenantId { get; init; } = string.Empty;
     public string CorrelationId { get; init; } = string.Empty;
     public string UserId { get; init; } = string.Empty;
