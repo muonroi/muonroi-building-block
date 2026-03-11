@@ -1,8 +1,11 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.Extensions.AI;
 using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Core.Helpers;
 using Muonroi.RuleGen.Mcp.Infrastructure;
+using Muonroi.RuleGen.Mcp.Prompts;
+using Muonroi.RuleGen.Mcp.Resources;
 using Muonroi.RuleGen.Mcp.Tools.Compliance;
 using Muonroi.RuleGen.Mcp.Tools.DecisionTableGen;
 using Muonroi.RuleGen.Mcp.Tools.Policy;
@@ -236,5 +239,269 @@ public sealed class DeveloperMcpToolTests
         Assert.True(validateResult.GetProperty("IsValid").GetBoolean());
         Assert.True(File.Exists(Path.Combine(workspace.RootPath, "workflow.json")));
         Assert.True(File.Exists(Path.Combine(workspace.RootPath, "workflow.dmn.xml")));
+    }
+
+    [Fact]
+    public void SuggestWrapperTool_Returns_Muonroi_Replacements_For_Common_Violations()
+    {
+        SuggestEcosystemWrapperTool tool = new(_jsonService);
+
+        JsonElement dateTimePayload = JsonSerializer.Deserialize<JsonElement>(tool.Execute("DateTime.UtcNow"));
+        JsonElement jsonPayload = JsonSerializer.Deserialize<JsonElement>(
+            tool.Execute("JsonSerializer.Serialize(payload)", violationType: "JsonSerializer"));
+
+        Assert.Equal("MBB001", dateTimePayload.GetProperty("MbbRule").GetString());
+        Assert.Equal("_dateTimeService.UtcNow()", dateTimePayload.GetProperty("Corrected").GetString());
+        Assert.Equal("IMDateTimeService _dateTimeService", dateTimePayload.GetProperty("RequiredDependency").GetString());
+
+        Assert.Equal("MBB002", jsonPayload.GetProperty("MbbRule").GetString());
+        Assert.Equal("_jsonSerializeService.Serialize(value)", jsonPayload.GetProperty("Corrected").GetString());
+        Assert.True(jsonPayload.GetProperty("ExemptionAvailable").GetBoolean());
+    }
+
+    [Fact]
+    public void TranslateFeelTool_Translates_Both_Directions()
+    {
+        TranslateFeelTool tool = new(_jsonService);
+
+        JsonElement feelToCSharp = JsonSerializer.Deserialize<JsonElement>(
+            tool.Execute("order.total = 10 and status = 'ok'", "feel-to-csharp"));
+        JsonElement cSharpToFeel = JsonSerializer.Deserialize<JsonElement>(
+            tool.Execute("ctx.Order.Total == 10 && ctx.Status == \"ok\"", "csharp-to-feel"));
+
+        Assert.Equal("ctx.Order.Total == 10 && status == \"ok\"", feelToCSharp.GetProperty("translated").GetString());
+        Assert.Equal("order.total = 10 and status = \"ok\"", cSharpToFeel.GetProperty("translated").GetString());
+    }
+
+    [Fact]
+    public async Task WatchRulesTool_Detects_Changes_And_Regenerates_Output()
+    {
+        using TestWorkspace workspace = new();
+        WriteRuleGenProject(workspace);
+        _ = workspace.WriteFile(
+            Path.Combine("Handlers", "OrderRuleSource.cs"),
+            BuildRuleSource("ORDER_CHECK", "OrderRuleSource", "EvaluateOrderAsync", includeContext: true));
+
+        WatchRulesTool tool = new(_jsonService);
+
+        Task writeTask = Task.Run(async () =>
+        {
+            await Task.Delay(400);
+            _ = workspace.WriteFile(
+                Path.Combine("Handlers", "ReviewRuleSource.cs"),
+                BuildRuleSource("REVIEW_CHECK", "ReviewRuleSource", "EvaluateReviewAsync"));
+        });
+
+        string payload = await tool.ExecuteAsync(
+            Path.Combine("Handlers"),
+            Path.Combine("Generated", "Rules"),
+            @namespace: "Generated.Rules",
+            debounceMs: 150,
+            durationSeconds: 2,
+            workingDirectory: workspace.RootPath,
+            ct: CancellationToken.None);
+        await writeTask;
+
+        JsonElement result = JsonSerializer.Deserialize<JsonElement>(payload);
+        string reviewRuleFile = Path.Combine(workspace.RootPath, "Generated", "Rules", "REVIEW_CHECK.g.cs");
+
+        Assert.True(result.GetProperty("Started").GetBoolean());
+        Assert.True(result.GetProperty("InitialExtractSucceeded").GetBoolean());
+        Assert.True(result.GetProperty("EventCount").GetInt32() > 0);
+        Assert.True(File.Exists(reviewRuleFile));
+        Assert.Contains(
+            reviewRuleFile,
+            result.GetProperty("Files").EnumerateArray().Select(x => x.GetString()).Where(x => x is not null).Cast<string>(),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task VerifyRulesTool_Passes_After_Extract_Generates_Expected_Files()
+    {
+        using TestWorkspace workspace = new();
+        WriteRuleGenProject(workspace);
+        _ = workspace.WriteFile(
+            Path.Combine("Handlers", "OrderRuleSource.cs"),
+            BuildRuleSource("ORDER_CHECK", "OrderRuleSource", "EvaluateOrderAsync", includeContext: true));
+
+        ExtractRulesTool extractTool = new(_jsonService);
+        _ = await extractTool.ExecuteAsync(
+            Path.Combine("Handlers"),
+            Path.Combine("Generated", "Rules"),
+            @namespace: "Generated.Rules",
+            workingDirectory: workspace.RootPath,
+            ct: CancellationToken.None);
+
+        VerifyRulesTool verifyTool = new(_jsonService);
+        string payload = await verifyTool.ExecuteAsync(
+            Path.Combine("Handlers"),
+            Path.Combine("Generated", "Rules"),
+            @namespace: "Generated.Rules",
+            workingDirectory: workspace.RootPath,
+            ct: CancellationToken.None);
+        JsonElement result = JsonSerializer.Deserialize<JsonElement>(payload);
+
+        Assert.True(result.GetProperty("Passed").GetBoolean());
+        Assert.Empty(result.GetProperty("MissingFiles").EnumerateArray());
+        Assert.Empty(result.GetProperty("ExtraFiles").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task GenerateTestsTool_Creates_Rule_Test_Scaffolds()
+    {
+        using TestWorkspace workspace = new();
+        WriteRuleGenProject(workspace);
+        _ = workspace.WriteFile(
+            Path.Combine("Handlers", "OrderRuleSource.cs"),
+            BuildRuleSource("ORDER_CHECK", "OrderRuleSource", "EvaluateOrderAsync", includeContext: true));
+
+        ExtractRulesTool extractTool = new(_jsonService);
+        _ = await extractTool.ExecuteAsync(
+            Path.Combine("Handlers"),
+            Path.Combine("Generated", "Rules"),
+            @namespace: "Generated.Rules",
+            workingDirectory: workspace.RootPath,
+            ct: CancellationToken.None);
+
+        GenerateTestsTool generateTestsTool = new(_jsonService);
+        string payload = await generateTestsTool.ExecuteAsync(
+            Path.Combine("Generated", "Rules"),
+            Path.Combine("Generated", "Tests"),
+            @namespace: "Generated.Rules",
+            workingDirectory: workspace.RootPath,
+            ct: CancellationToken.None);
+        JsonElement result = JsonSerializer.Deserialize<JsonElement>(payload);
+
+        Assert.Equal(1, result.GetProperty("GeneratedCount").GetInt32());
+        string testFile = result.GetProperty("Files").EnumerateArray().Select(x => x.GetString()).First(x => !string.IsNullOrWhiteSpace(x))!;
+        Assert.True(File.Exists(testFile));
+        Assert.Contains("Tests", Path.GetFileNameWithoutExtension(testFile), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DeveloperResources_ShouldExpose_Rules_And_Patterns()
+    {
+        DeveloperResourceHandler resourceHandler = new(_jsonService);
+
+        JsonElement rulesPayload = JsonSerializer.Deserialize<JsonElement>(resourceHandler.GetRules());
+        JsonElement patternsPayload = JsonSerializer.Deserialize<JsonElement>(resourceHandler.GetPatterns());
+
+        string[] codes = rulesPayload.EnumerateArray()
+            .Select(item => item.GetProperty("Code").GetString())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Cast<string>()
+            .ToArray();
+
+        Assert.Contains("MBB001", codes);
+        Assert.Contains("MBB007", codes);
+        Assert.Contains("IMDateTimeService", patternsPayload.GetProperty("time").GetString(), StringComparison.Ordinal);
+        Assert.Contains("IMJsonSerializeService", patternsPayload.GetProperty("serialization").GetString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DeveloperResources_ShouldExpose_OssBoundary_And_ToolingReference()
+    {
+        DeveloperResourceHandler resourceHandler = new(_jsonService);
+
+        JsonElement ossBoundaryPayload = JsonSerializer.Deserialize<JsonElement>(resourceHandler.GetOssBoundary());
+        JsonElement toolingPayload = JsonSerializer.Deserialize<JsonElement>(resourceHandler.GetToolingReference());
+
+        string[] ossPackages = ossBoundaryPayload.GetProperty("oss").EnumerateArray()
+            .Select(item => item.GetString())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Cast<string>()
+            .ToArray();
+        string[] ruleGenTools = toolingPayload.GetProperty("ruleGen").EnumerateArray()
+            .Select(item => item.GetString())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Cast<string>()
+            .ToArray();
+
+        Assert.Contains("Muonroi.RuleEngine.Abstractions", ossPackages);
+        Assert.Contains("watch", ruleGenTools);
+        Assert.Contains("feel translate", ruleGenTools);
+    }
+
+    [Fact]
+    public void CreateRulePrompt_Should_Describe_Mandatory_Workflow()
+    {
+        CreateRuleFromRequirementsPrompt prompt = new();
+
+        ChatMessage message = prompt.GetPrompt("amount > 100", "OrderContext", "Sample.Rules");
+
+        Assert.Contains("Read muonroi://ecosystem/rules", message.Text, StringComparison.Ordinal);
+        Assert.Contains("muonroi_rulegen_extract", message.Text, StringComparison.Ordinal);
+        Assert.Contains("muonroi_rulegen_register", message.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FixMbbViolationsPrompt_Should_Reference_Compliance_Tools()
+    {
+        FixMbbViolationsPrompt prompt = new();
+
+        ChatMessage message = prompt.GetPrompt(["src/OrderService.cs"]);
+
+        Assert.Contains("muonroi_compliance_check", message.Text, StringComparison.Ordinal);
+        Assert.Contains("muonroi_compliance_suggest_wrapper", message.Text, StringComparison.Ordinal);
+        Assert.Contains("src/OrderService.cs", message.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ScaffoldNewFeaturePrompt_Should_Reference_Scaffolding_Sequence()
+    {
+        ScaffoldNewFeaturePrompt prompt = new();
+
+        ChatMessage message = prompt.GetPrompt("OrderReview", "OrderContext", "Sample.Features");
+
+        Assert.Contains("muonroi_scaffold_service", message.Text, StringComparison.Ordinal);
+        Assert.Contains("muonroi_scaffold_repository", message.Text, StringComparison.Ordinal);
+        Assert.Contains("muonroi_compliance_check", message.Text, StringComparison.Ordinal);
+    }
+
+    private static void WriteRuleGenProject(TestWorkspace workspace)
+    {
+        workspace.WriteFile(
+            "Sample.csproj",
+            $$"""
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net8.0</TargetFramework>
+                <ImplicitUsings>enable</ImplicitUsings>
+                <Nullable>enable</Nullable>
+              </PropertyGroup>
+              <ItemGroup>
+                <ProjectReference Include="{{workspace.GetRepoRelativePath(@"src\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj")}}" />
+              </ItemGroup>
+            </Project>
+            """);
+    }
+
+    private static string BuildRuleSource(string ruleCode, string className, string methodName, bool includeContext = false)
+    {
+        string contextBlock = includeContext
+            ? """
+
+        public sealed class OrderContext
+        {
+            public decimal Amount { get; set; }
+        }
+        """
+            : string.Empty;
+
+        return $$"""
+        using Muonroi.RuleEngine.Abstractions;
+
+        namespace Sample.Handlers;
+
+        public sealed class {{className}}
+        {
+            [MExtractAsRule("{{ruleCode}}", Order = 0, HookPoint = HookPoint.BeforeRule)]
+            public Task<RuleResult> {{methodName}}(OrderContext ctx, FactBag facts, CancellationToken ct = default)
+            {
+                return Task.FromResult(RuleResult.Passed());
+            }
+        }
+        {{contextBlock}}
+        """;
     }
 }

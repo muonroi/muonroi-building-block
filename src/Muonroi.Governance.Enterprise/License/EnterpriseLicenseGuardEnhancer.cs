@@ -1,5 +1,6 @@
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.Enterprise.Policy;
+using Muonroi.Core.Abstractions.Context;
 
 namespace Muonroi.Governance.License;
 
@@ -12,10 +13,12 @@ public sealed class EnterpriseLicenseGuardEnhancer(
     LicenseConfigs configs,
     CodeIntegrityVerifier codeIntegrityVerifier,
     AntiTamperDetector tamperDetector,
-    PolicyEnforcer? policyEnforcer = null) : ILicenseGuardEnhancer
+    PolicyEnforcer? policyEnforcer = null,
+    ISystemExecutionContextAccessor? executionContextAccessor = null) : ILicenseGuardEnhancer
 {
     private readonly AntiTamperDetector _tamperDetector = tamperDetector;
     private readonly CodeIntegrityVerifier _codeIntegrityVerifier = codeIntegrityVerifier;
+    private readonly ISystemExecutionContextAccessor? _executionContextAccessor = executionContextAccessor;
     private static readonly ConcurrentDictionary<string, DateTimeOffset> LastAntiTamperChecks =
         new(StringComparer.OrdinalIgnoreCase);
 
@@ -89,7 +92,8 @@ public sealed class EnterpriseLicenseGuardEnhancer(
             return;
         }
 
-        RunAntiTamperingCheck("startup", TenantContext.CurrentTenantId, "license.guard.startup", force: true);
+        string? startupTenantId = _executionContextAccessor?.Get()?.TenantId;
+        RunAntiTamperingCheck("startup", startupTenantId, "license.guard.startup", force: true);
     }
 
     private void TryRunRuntimeAntiTamperingCheck(string actionType, LicenseState state)
@@ -104,7 +108,7 @@ public sealed class EnterpriseLicenseGuardEnhancer(
             return;
         }
 
-        string? tenantId = TenantContext.CurrentTenantId;
+        string? tenantId = _executionContextAccessor?.Get()?.TenantId;
         string tenantPartition = AntiTamperingTenantPartition.Normalize(tenantId);
         DateTimeOffset now = DateTimeOffset.UtcNow;
         TimeSpan interval = TimeSpan.FromSeconds(Math.Max(0, configs.AntiTamperingCheckIntervalSeconds));
