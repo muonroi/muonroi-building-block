@@ -122,6 +122,9 @@ Rules:
   1. Plan completed.
   2. Unit tests pass 100%.
   3. New test cases added for each upgraded behavior.
+- **Tool priority**: use MCP tools and plugins first whenever they can solve the task. Shell commands are fallback, not the default.
+- **Avoid PowerShell for solvable MCP work**: for scripting, file/data manipulation, parsing, structured transforms, and small automation tasks, prefer MCP tools and especially MCP Python.
+- **C# XML docs are mandatory**: every new or modified C# type/member must include XML documentation comments in the same implementation pass.
 - Developer-facing API naming must use `M` prefix:
   1. Classes: `MRepository`, `MQuery`, ...
   2. Extension classes/method groups: `M...Extensions`
@@ -427,6 +430,11 @@ builder.Services.AddDecisionTableWeb(o => o.SqlServerConnectionString = connecti
 ```
 
 Never leave `DecisionTableEngineOptions` without a connection string in production — it falls back to `InMemoryDecisionTableStore` which loses data on restart.
+
+### 12. XML Documentation — Mandatory For C# Implementations
+
+All new or modified C# types and members must include XML documentation comments as part of the implementation.
+Do not defer XML docs to a later cleanup pass.
 
 ---
 

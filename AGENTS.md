@@ -281,6 +281,7 @@ Enforced by:
 - **AsyncLocal** → only in `Core.Abstractions.Context` (MBB004)
 - **Logging** → `IMLog<T>`, never `ILogger<T>` directly
 - **Execution context** → `ISystemExecutionContextAccessor`, never static TenantContext reads
+- **XML documentation** → every new or modified C# type/member must include XML documentation comments
 - Static extension classes exempt: add `// MBBxxx-exempt: static-class boundary`
 
 ### TypeScript (muonroi-ui-engine, muonroi-control-plane/apps)
@@ -307,6 +308,9 @@ Enforced by:
 6. **Commercial package guard** — `Governance.Enterprise` registration (`AddMEnterpriseGovernance`) requires valid `ActivationProof`; do not stub this out in production.
 7. **Test gate** — "done" means 100% unit tests pass AND new behavior has test coverage.
 8. **UI package drift** — `muonroi-control-plane/packages/` contains mirrored copies; run `sync-ui-packages.mjs` after any ui-engine change. Long-term goal: publish to npm registry.
+9. **Tool priority** — MCP tools and plugins are the highest-priority execution path; use them before shell commands whenever they can solve the task.
+10. **Avoid PowerShell when MCP can do it** — for scripting, data processing, file inspection, structured transformations, or small automation tasks, prefer MCP tools and especially MCP Python instead of ad-hoc PowerShell commands.
+11. **C# documentation gate** — all new or changed C# code must ship with XML documentation comments as part of the implementation, not as a later cleanup pass.
 
 ---
 
