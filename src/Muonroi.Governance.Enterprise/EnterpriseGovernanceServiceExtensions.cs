@@ -7,6 +7,7 @@ using Muonroi.Governance.Enterprise.Policy;
 using Muonroi.Governance.Enterprise.ServerValidation;
 using Muonroi.Governance.Operations;
 using Muonroi.Governance.ServerValidation;
+using Muonroi.Core.Abstractions.Context;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.Enterprise;
@@ -48,7 +49,9 @@ public static class EnterpriseGovernanceServiceExtensions
             CodeIntegrityVerifier integrityVerifier = sp.GetRequiredService<CodeIntegrityVerifier>();
             AntiTamperDetector antiTamperDetector = sp.GetRequiredService<AntiTamperDetector>();
             PolicyEnforcer? policyEnforcer = sp.GetService<PolicyEnforcer>();
-            return new EnterpriseLicenseGuardEnhancer(configs, integrityVerifier, antiTamperDetector, policyEnforcer);
+            ISystemExecutionContextAccessor? contextAccessor = sp.GetService<ISystemExecutionContextAccessor>();
+            return new EnterpriseLicenseGuardEnhancer(
+                configs, integrityVerifier, antiTamperDetector, policyEnforcer, contextAccessor);
         }));
 
         services.Replace(ServiceDescriptor.Singleton<IFingerprintChainStore>(sp =>

@@ -20,8 +20,9 @@ public sealed class AntiTamperDetector(LicenseConfigs configs)
     public bool DetectTampering()
     {
         if (IsDebuggerAttached()) return true;
+        if (IsProfilerAttached()) return true;
         
-        if (_isWindows && configs.EnableHardwareBreakpointDetection)
+        if (_isWindows && configs.EnableHardwareBreakpointDetection && !Environment.Is64BitProcess)
         {
             if (CheckHardwareBreakpoints()) return true;
         }
@@ -36,6 +37,23 @@ public sealed class AntiTamperDetector(LicenseConfigs configs)
 
         // Native debugger check (Windows only)
         if (_isWindows && IsDebuggerPresent()) return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Detects if a managed or native profiler is attached via environment variables.
+    /// Works on all platforms and architectures including 64-bit.
+    /// </summary>
+    private static bool IsProfilerAttached()
+    {
+        // .NET Framework and .NET Core profiler attach signal
+        string? corProfiling = Environment.GetEnvironmentVariable("COR_ENABLE_PROFILING");
+        if (corProfiling == "1") return true;
+
+        // .NET Core / .NET 5+ profiler attach signal
+        string? coreclrProfiling = Environment.GetEnvironmentVariable("CORECLR_ENABLE_PROFILING");
+        if (coreclrProfiling == "1") return true;
 
         return false;
     }

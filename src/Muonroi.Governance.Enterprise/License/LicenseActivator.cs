@@ -55,7 +55,7 @@ public sealed class LicenseActivator(
     /// </summary>
     public async Task<ActivationProof> ActivateAsync(CancellationToken cancellationToken = default)
     {
-        logger?.LogInformation("[License] Starting online activation...");
+        logger?.Info("[License] Starting online activation...");
 
         // 1. Read license key
         string? licenseKey = await ReadLicenseKeyAsync();
@@ -80,7 +80,7 @@ public sealed class LicenseActivator(
         string activationUrl = configs.Online.Endpoint ?? "https://license.muonroi.com";
         string endpoint = $"{activationUrl.TrimEnd('/')}/api/v1/activate";
 
-        logger?.LogInformation("[License] Connecting to activation server: {Endpoint}", endpoint);
+        logger?.Info("[License] Connecting to activation server: {Endpoint}", endpoint);
 
         HttpResponseMessage response;
         try
@@ -116,12 +116,8 @@ public sealed class LicenseActivator(
         ActivationProof proof = activationResponse.Proof;
         await SaveActivationProofAsync(proof);
 
-        logger?.LogInformation(
-            "[License] ✅ Activation successful!\n" +
-            "   Organization: {Organization}\n" +
-            "   Tier: {Tier}\n" +
-            "   Valid until: {ExpiresAt:yyyy-MM-dd}\n" +
-            "   Proof saved to: {ProofPath}",
+        logger?.Info(
+            "[License] Activation successful - Org: {Organization} Tier: {Tier} ValidUntil: {ExpiresAt:yyyy-MM-dd} ProofPath: {ProofPath}",
             proof.OrganizationName,
             proof.Tier,
             proof.ExpiresAt,
@@ -129,7 +125,7 @@ public sealed class LicenseActivator(
 
         if (!string.IsNullOrEmpty(activationResponse.Message))
         {
-            logger?.LogInformation("[License] Server message: {Message}", activationResponse.Message);
+            logger?.Info("[License] Server message: {Message}", activationResponse.Message);
         }
 
         return proof;
@@ -152,7 +148,7 @@ public sealed class LicenseActivator(
 
         await File.WriteAllTextAsync(proofPath, json);
 
-        logger?.LogDebug("[License] Activation proof saved to: {Path}", proofPath);
+        logger?.Debug("[License] Activation proof saved to: {Path}", proofPath);
     }
 
     /// <summary>
