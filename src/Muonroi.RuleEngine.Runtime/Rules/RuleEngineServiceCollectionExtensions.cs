@@ -42,6 +42,11 @@ public static class RuleEngineServiceCollectionExtensions
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
 
+        // Graph parser and context adapters for flow graph execution
+        services.TryAddSingleton<RuleGraphParser>();
+        services.TryAddSingleton(typeof(IContextProjector<>), typeof(ReflectionContextProjector<>));
+        services.TryAddSingleton(typeof(IContextFactory<>), typeof(ReflectionContextFactory<>));
+
         services.TryAddSingleton<IRuleSetChangeNotifier>(sp =>
         {
             IConnectionMultiplexer? redis = sp.GetService<IConnectionMultiplexer>();
@@ -104,6 +109,11 @@ public static class RuleEngineServiceCollectionExtensions
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
         services.TryAddSingleton<IRuleSetAuditSigner>(_ => CreateAuditSigner(controlPlaneOptions));
+
+        // Graph parser and context adapters for flow graph execution
+        services.TryAddSingleton<RuleGraphParser>();
+        services.TryAddSingleton(typeof(IContextProjector<>), typeof(ReflectionContextProjector<>));
+        services.TryAddSingleton(typeof(IContextFactory<>), typeof(ReflectionContextFactory<>));
         services.TryAddSingleton<IRuleSetChangeNotifier, InMemoryRuleSetChangeNotifier>();
 
         services.AddDbContext<RuleEngineDbContext>(options => options.UseNpgsql(connectionString));
