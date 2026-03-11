@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>muonroi-mcp-dev</AssemblyName>
+    <RootNamespace>Muonroi.RuleGen.Mcp</RootNamespace>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Core\Muonroi.Core.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Governance.Abstractions\Muonroi.Governance.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Governance\Muonroi.Governance.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.RuleEngine.DecisionTable\Muonroi.RuleEngine.DecisionTable.csproj" />
+    <ProjectReference Include="..\Muonroi.RuleGen\Muonroi.RuleGen.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="ModelContextProtocol" Version="1.1.0" />
+  </ItemGroup>
+</Project>
