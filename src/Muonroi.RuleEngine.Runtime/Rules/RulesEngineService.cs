@@ -961,9 +961,14 @@ public sealed class RulesEngineService(
             }
 
             _log?.Info("Resolved node '{NodeId}' as FEEL adapter.", entry.NodeId);
-            return new FeelRuleAdapter<TContext>(
-                entry.NodeId, entry.FeelExpression, projector, feelLog)
-            { Order = entry.Order, DependsOn = entry.DependsOn };
+            return WrapRuleEntry(
+                new FeelRuleAdapter<TContext>(
+                    entry.NodeId,
+                    entry.FeelExpression,
+                    entry.OutputFields,
+                    projector,
+                    feelLog),
+                entry);
         }
 
         // Type B-2: Liquid action
@@ -980,11 +985,16 @@ public sealed class RulesEngineService(
             }
 
             _log?.Info("Resolved node '{NodeId}' as Liquid adapter.", entry.NodeId);
-            return new LiquidRuleAdapter<TContext>(
-                entry.NodeId, entry.LiquidTemplate,
-                entry.LiquidOutputFormat, entry.LiquidOutputKey ?? "liquidOutput",
-                projector, jsonSvc, liquidLog)
-            { Order = entry.Order, DependsOn = entry.DependsOn };
+            return WrapRuleEntry(
+                new LiquidRuleAdapter<TContext>(
+                    entry.NodeId,
+                    entry.LiquidTemplate,
+                    entry.LiquidOutputFormat,
+                    entry.LiquidOutputKey ?? "liquidOutput",
+                    projector,
+                    jsonSvc,
+                    liquidLog),
+                entry);
         }
 
         // Type B-3: Decision Table
@@ -1001,10 +1011,16 @@ public sealed class RulesEngineService(
             }
 
             _log?.Info("Resolved node '{NodeId}' as Decision Table adapter.", entry.NodeId);
-            return new DecisionTableRuleAdapter<TContext>(
-                entry.NodeId, entry.DecisionTableId,
-                dtStore, dtExecutor, projector, dtLog, entry.FailOnNoMatch)
-            { Order = entry.Order, DependsOn = entry.DependsOn };
+            return WrapRuleEntry(
+                new DecisionTableRuleAdapter<TContext>(
+                    entry.NodeId,
+                    entry.DecisionTableId,
+                    dtStore,
+                    dtExecutor,
+                    projector,
+                    dtLog,
+                    entry.FailOnNoMatch),
+                entry);
         }
 
         // Type B-4: Sub Flow
@@ -1022,10 +1038,15 @@ public sealed class RulesEngineService(
                 entry.NodeId,
                 entry.SubFlowCode);
             return new SubFlowRuleAdapter<TContext>(
-                entry.NodeId, entry.SubFlowCode,
-                entry.InputMappings, entry.OutputMappings,
-                this, projector, subLog)
-            { Order = entry.Order, DependsOn = entry.DependsOn };
+                entry.NodeId,
+                entry.SubFlowCode,
+                entry.InputMappings,
+                entry.OutputMappings,
+                this,
+                projector,
+                subLog) is { } subFlowRule
+                ? WrapRuleEntry(subFlowRule, entry)
+                : null;
         }
 
         // Skip trigger/end/unknown nodes
@@ -1130,9 +1151,14 @@ public sealed class RulesEngineService(
                 _serviceProvider?.GetService<IMLog<FeelRuleAdapter<FactBagRuleContext>>>();
             if (log is null) return null;
             _log?.Info("Resolved node '{NodeId}' as FEEL adapter inside sub-flow.", entry.NodeId);
-            return new FeelRuleAdapter<FactBagRuleContext>(
-                entry.NodeId, entry.FeelExpression, projector, log)
-            { Order = entry.Order, DependsOn = entry.DependsOn };
+            return WrapRuleEntry(
+                new FeelRuleAdapter<FactBagRuleContext>(
+                    entry.NodeId,
+                    entry.FeelExpression,
+                    entry.OutputFields,
+                    projector,
+                    log),
+                entry);
         }
 
         // Type B-2: Liquid action
@@ -1145,11 +1171,16 @@ public sealed class RulesEngineService(
                 ?? new Muonroi.Core.Abstractions.SeedWorks.MJsonSerializeService();
             if (log is null) return null;
             _log?.Info("Resolved node '{NodeId}' as Liquid adapter inside sub-flow.", entry.NodeId);
-            return new LiquidRuleAdapter<FactBagRuleContext>(
-                entry.NodeId, entry.LiquidTemplate,
-                entry.LiquidOutputFormat, entry.LiquidOutputKey ?? "liquidOutput",
-                projector, jsonSvc, log)
-            { Order = entry.Order, DependsOn = entry.DependsOn };
+            return WrapRuleEntry(
+                new LiquidRuleAdapter<FactBagRuleContext>(
+                    entry.NodeId,
+                    entry.LiquidTemplate,
+                    entry.LiquidOutputFormat,
+                    entry.LiquidOutputKey ?? "liquidOutput",
+                    projector,
+                    jsonSvc,
+                    log),
+                entry);
         }
 
         // Type B-3: Decision Table
@@ -1161,10 +1192,16 @@ public sealed class RulesEngineService(
                 _serviceProvider.GetService<IMLog<DecisionTableRuleAdapter<FactBagRuleContext>>>();
             if (dtStore is null || dtExecutor is null || log is null) return null;
             _log?.Info("Resolved node '{NodeId}' as Decision Table adapter inside sub-flow.", entry.NodeId);
-            return new DecisionTableRuleAdapter<FactBagRuleContext>(
-                entry.NodeId, entry.DecisionTableId,
-                dtStore, dtExecutor, projector, log, entry.FailOnNoMatch)
-            { Order = entry.Order, DependsOn = entry.DependsOn };
+            return WrapRuleEntry(
+                new DecisionTableRuleAdapter<FactBagRuleContext>(
+                    entry.NodeId,
+                    entry.DecisionTableId,
+                    dtStore,
+                    dtExecutor,
+                    projector,
+                    log,
+                    entry.FailOnNoMatch),
+                entry);
         }
 
         // Type B-4: Sub Flow
@@ -1178,10 +1215,15 @@ public sealed class RulesEngineService(
                 entry.NodeId,
                 entry.SubFlowCode);
             return new SubFlowRuleAdapter<FactBagRuleContext>(
-                entry.NodeId, entry.SubFlowCode,
-                entry.InputMappings, entry.OutputMappings,
-                this, projector, log)
-            { Order = entry.Order, DependsOn = entry.DependsOn };
+                entry.NodeId,
+                entry.SubFlowCode,
+                entry.InputMappings,
+                entry.OutputMappings,
+                this,
+                projector,
+                log) is { } subFlowRule
+                ? WrapRuleEntry(subFlowRule, entry)
+                : null;
         }
 
         return null;
@@ -1284,7 +1326,9 @@ public sealed class RulesEngineService(
 
     private static IRule<TContext> WrapRuleEntry<TContext>(IRule<TContext> rule, RuleGraphEntry entry)
     {
-        return new RuleEntryOverrideAdapter<TContext>(rule, entry.Order, entry.DependsOn);
+        return new GraphRuleDispatchAdapter<TContext>(
+            new RuleEntryOverrideAdapter<TContext>(rule, entry.Order, entry.DependsOn),
+            entry);
     }
 
     private sealed record CachedWorkflowDefinition(

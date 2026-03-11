@@ -73,6 +73,9 @@ internal sealed class RuleFlowNodeData
 
     [JsonPropertyName("subFlowConfig")]
     public RuleFlowSubFlowConfig? SubFlowConfig { get; init; }
+
+    [JsonPropertyName("outputFields")]
+    public List<RuleFlowFeelOutputField> OutputFields { get; init; } = [];
 }
 
 internal sealed class RuleFlowContractReference
@@ -112,6 +115,18 @@ internal sealed class RuleFlowSubFlowConfig
 
     [JsonPropertyName("outputMappings")]
     public List<RuleFlowOutputMapping> OutputMappings { get; init; } = [];
+}
+
+internal sealed class RuleFlowFeelOutputField
+{
+    [JsonPropertyName("path")]
+    public string Path { get; init; } = string.Empty;
+
+    [JsonPropertyName("valueExpression")]
+    public string ValueExpression { get; init; } = string.Empty;
+
+    [JsonPropertyName("dataType")]
+    public string DataType { get; init; } = "string";
 }
 
 internal sealed class RuleFlowInputMapping

@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Diagnostics;
 
@@ -75,5 +75,12 @@ internal static class RuleGenDiagnostics
         category: "RuleGen",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
-}
 
+    public static readonly DiagnosticDescriptor InvalidFeelExpression = new(
+        id: "MRG010",
+        title: "Invalid FEEL Expression",
+        messageFormat: "Rule '{0}': Expression='{1}' failed FEEL validation: {2}",
+        category: "RuleGen",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+}

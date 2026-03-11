@@ -1,18 +1,38 @@
+using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Authoring;
 using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
-public sealed class MRuleAuthoringManifestRegistry(IServiceProvider? serviceProvider = null)
+/// <summary>
+/// Discovers rule authoring manifests from loaded assemblies and falls back to reflection when no generated provider exists.
+/// </summary>
+public sealed class MRuleAuthoringManifestRegistry
 {
-    private readonly IServiceProvider? _serviceProvider = serviceProvider;
+    private readonly IServiceProvider? _serviceProvider;
+    private readonly IReadOnlyList<Assembly>? _assemblies;
     private readonly ConcurrentDictionary<string, MRuleAuthoringManifest> _cache = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MRuleAuthoringManifestRegistry"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">The optional service provider used to create manifest providers and rules.</param>
+    /// <param name="assemblies">The optional assembly set to inspect instead of the current app domain.</param>
+    public MRuleAuthoringManifestRegistry(IServiceProvider? serviceProvider = null, IEnumerable<Assembly>? assemblies = null)
+    {
+        _serviceProvider = serviceProvider;
+        _assemblies = assemblies?.ToArray();
+    }
+
+    /// <summary>
+    /// Gets the manifests discovered from the configured assembly set.
+    /// </summary>
+    /// <returns>The ordered manifest list.</returns>
     public IReadOnlyList<MRuleAuthoringManifest> GetManifests()
     {
         List<MRuleAuthoringManifest> manifests = [];
-        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        foreach (Assembly assembly in GetAssemblies())
         {
             MRuleAuthoringManifest? manifest = GetManifest(assembly);
             if (manifest is not null)
@@ -28,15 +48,25 @@ public sealed class MRuleAuthoringManifestRegistry(IServiceProvider? serviceProv
             .ToArray();
     }
 
+    /// <summary>
+    /// Gets the authoring manifest for a specific assembly.
+    /// </summary>
+    /// <param name="assembly">The assembly to inspect.</param>
+    /// <returns>The discovered or generated manifest.</returns>
     public MRuleAuthoringManifest? GetManifest(Assembly assembly)
     {
         string key = assembly.FullName ?? assembly.GetName().Name ?? Guid.NewGuid().ToString("N");
         return _cache.GetOrAdd(key, _ => BuildManifest(assembly));
     }
 
+    private IReadOnlyList<Assembly> GetAssemblies()
+    {
+        return _assemblies ?? AppDomain.CurrentDomain.GetAssemblies();
+    }
+
     private MRuleAuthoringManifest BuildManifest(Assembly assembly)
     {
-        foreach (Type providerType in assembly.GetTypes()
+        foreach (Type providerType in GetLoadableTypes(assembly)
                      .Where(type => typeof(IRuleAuthoringManifestProvider).IsAssignableFrom(type) &&
                                     !type.IsAbstract &&
                                     !type.IsInterface))
@@ -53,7 +83,7 @@ public sealed class MRuleAuthoringManifestRegistry(IServiceProvider? serviceProv
     private MRuleAuthoringManifest BuildReflectionFallback(Assembly assembly)
     {
         List<MRuleAuthoringEntry> rules = [];
-        foreach (Type type in assembly.GetTypes().Where(type => !type.IsAbstract && !type.IsInterface))
+        foreach (Type type in GetLoadableTypes(assembly).Where(type => !type.IsAbstract && !type.IsInterface))
         {
             Type? ruleInterface = type.GetInterfaces()
                 .FirstOrDefault(candidate => candidate.IsGenericType &&
@@ -79,6 +109,7 @@ public sealed class MRuleAuthoringManifestRegistry(IServiceProvider? serviceProv
                 ? [.. list]
                 : boxed?.DependsOn?.ToArray() ?? [];
             Type contextType = ruleInterface.GetGenericArguments()[0];
+            MRuleCatalogEntryAttribute? catalogAttribute = type.GetCustomAttribute<MRuleCatalogEntryAttribute>();
 
             rules.Add(new MRuleAuthoringEntry
             {
@@ -86,7 +117,13 @@ public sealed class MRuleAuthoringManifestRegistry(IServiceProvider? serviceProv
                 Order = order,
                 DependsOn = dependsOn,
                 ContextTypeName = contextType.FullName,
-                ContextSchema = BuildReflectionSchema(contextType)
+                ContextSchema = BuildReflectionSchema(contextType),
+                DisplayName = catalogAttribute?.DisplayName ?? code,
+                Category = catalogAttribute?.Category,
+                Icon = catalogAttribute?.Icon,
+                Tags = catalogAttribute?.Tags ?? [],
+                Description = catalogAttribute?.Description,
+                IsPaletteVisible = catalogAttribute?.IsPaletteVisible ?? true
             });
         }
 
@@ -95,6 +132,9 @@ public sealed class MRuleAuthoringManifestRegistry(IServiceProvider? serviceProv
             AssemblyName = assembly.GetName().Name ?? "Unknown.Assembly",
             AssemblyVersion = assembly.GetName().Version?.ToString() ?? "1.0.0.0",
             Rules = rules
+                .OrderBy(rule => rule.Order)
+                .ThenBy(rule => rule.Code, StringComparer.OrdinalIgnoreCase)
+                .ToArray()
         };
     }
 
@@ -116,6 +156,22 @@ public sealed class MRuleAuthoringManifestRegistry(IServiceProvider? serviceProv
         catch
         {
             return null;
+        }
+    }
+
+    private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            return ex.Types.Where(type => type is not null)!;
+        }
+        catch
+        {
+            return [];
         }
     }
 

@@ -40,6 +40,7 @@ internal sealed record ExtractedRuleDefinition(
     string? DocumentationComment,
     string? MethodBody,
     string? ExpressionBody,
+    string? FeelExpression,
     bool IsAsync,
     string SourceFile,
     int SourceLine);

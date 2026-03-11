@@ -16,7 +16,13 @@ internal sealed record AuthoringRuleDefinition(
     string? ContextDescription,
     AuthoringSchemaNode? ContextSchema,
     IReadOnlyList<AuthoringFactDefinition> ConsumedFacts,
-    IReadOnlyList<AuthoringFactDefinition> ProducedFacts);
+    IReadOnlyList<AuthoringFactDefinition> ProducedFacts,
+    string? DisplayName,
+    string? Category,
+    string? Icon,
+    IReadOnlyList<string> Tags,
+    string? Description,
+    bool IsPaletteVisible);
 
 internal sealed record AuthoringFactDefinition(
     string Key,
@@ -50,3 +56,11 @@ internal sealed record AuthoringFactOverride(
 internal sealed record AuthoringContextOverride(
     string? Title,
     string? Description);
+
+internal sealed record CatalogMetadataDefinition(
+    string? DisplayName,
+    string? Category,
+    string? Icon,
+    IReadOnlyList<string> Tags,
+    string? Description,
+    bool? IsPaletteVisible);
