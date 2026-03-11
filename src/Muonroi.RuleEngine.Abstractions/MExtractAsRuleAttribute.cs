@@ -25,4 +25,9 @@ public class MExtractAsRuleAttribute(string code) : Attribute
     /// Gets or sets the list of rule codes that must be executed before this rule.
     /// </summary>
     public string[] DependsOn { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets an inline FEEL expression used to generate the rule body.
+    /// </summary>
+    public string? Expression { get; set; }
 }

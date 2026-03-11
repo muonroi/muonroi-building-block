@@ -37,9 +37,7 @@ public class TestRules
 }
 ";
         var compilation = CreateCompilation(source);
-        var generator = new ExtractAsRuleGenerator();
-        
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+        GeneratorDriver driver = CreateDriver();
 
         // Act
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var diagnostics);
@@ -92,16 +90,13 @@ public sealed class TestRules
 }
 ";
         Compilation compilation = CreateCompilation(source);
-        var generator = new ExtractAsRuleGenerator();
-
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+        GeneratorDriver driver = CreateDriver();
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var diagnostics);
 
         Assert.Empty(diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error));
-        GeneratorRunResult runResult = driver.GetRunResult().Results.Single();
-        string generated = string.Join("\n\n", runResult.GeneratedSources.Select(item => item.SourceText.ToString()));
+        string generated = string.Join("\n\n", GetGeneratedSources(driver.GetRunResult()).Select(item => item.SourceText.ToString()));
 
-        Assert.Contains("MGeneratedRuleAuthoringManifestProvider", generated);
+        Assert.Contains("GeneratedManifestProvider", generated);
         Assert.Contains("RULE_ORDER_VALIDATE", generated);
         Assert.Contains("validatedOrderId", generated);
         Assert.Contains("existingStatus", generated);
@@ -144,13 +139,11 @@ public sealed class TestRules
 ";
 
         Compilation compilation = CreateCompilation(source);
-        var generator = new ExtractAsRuleGenerator();
-
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+        GeneratorDriver driver = CreateDriver();
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
 
         Assert.Empty(diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error));
-        string generated = string.Join("\n\n", driver.GetRunResult().Results.Single().GeneratedSources.Select(item => item.SourceText.ToString()));
+        string generated = string.Join("\n\n", GetGeneratedSources(driver.GetRunResult()).Select(item => item.SourceText.ToString()));
 
         Assert.Contains("public Task ExecuteAsync(OrderContext context, CancellationToken cancellationToken = default)", generated);
         Assert.DoesNotContain("_ = await EvaluateAsync(context, new FactBag(), cancellationToken);", generated);
@@ -211,18 +204,16 @@ namespace TestNamespace
 ";
 
         Compilation compilation = CreateCompilation(source);
-        var generator = new ExtractAsRuleGenerator();
-
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+        GeneratorDriver driver = CreateDriver();
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
 
         Assert.Empty(diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error));
-        string generated = string.Join("\n\n", driver.GetRunResult().Results.Single().GeneratedSources.Select(item => item.SourceText.ToString()));
+        string generated = string.Join("\n\n", GetGeneratedSources(driver.GetRunResult()).Select(item => item.SourceText.ToString()));
 
         Assert.Contains("IEnumerable<System.Type>", generated);
         Assert.DoesNotContain("MRuleContextDescriptionAttribute", generated);
         Assert.DoesNotContain("MRuleFactDescriptionAttribute", generated);
-        Assert.Contains("MGeneratedRuleAuthoringManifestProvider", generated);
+        Assert.Contains("GeneratedManifestProvider", generated);
     }
 
     [Fact]
@@ -259,28 +250,42 @@ public sealed class TestRules
 ";
 
         Compilation compilation = CreateCompilation(source);
-        var generator = new ExtractAsRuleGenerator();
         AnalyzerConfigOptionsProvider optionsProvider = new TestAnalyzerConfigOptionsProvider(
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["build_property.MuonroiRuleGenDiagnosticsOnly"] = "true"
             });
 
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            generators: [generator.AsSourceGenerator()],
-            additionalTexts: ImmutableArray<AdditionalText>.Empty,
-            parseOptions: (CSharpParseOptions?)compilation.SyntaxTrees.First().Options,
-            optionsProvider: optionsProvider);
+        GeneratorDriver driver = CreateDriver((CSharpParseOptions?)compilation.SyntaxTrees.First().Options, optionsProvider);
 
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
 
         Assert.Empty(diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error));
-        GeneratorRunResult runResult = driver.GetRunResult().Results.Single();
-        string generated = string.Join("\n\n", runResult.GeneratedSources.Select(item => item.SourceText.ToString()));
+        string generated = string.Join("\n\n", GetGeneratedSources(driver.GetRunResult()).Select(item => item.SourceText.ToString()));
 
         Assert.DoesNotContain("RULE_ORDER_MANIFEST_ONLYRule", generated);
-        Assert.Contains("MGeneratedRuleAuthoringManifestProvider", generated);
+        Assert.Contains("GeneratedManifestProvider", generated);
         Assert.Contains("RULE_ORDER_MANIFEST_ONLY", generated);
+    }
+
+    private static GeneratorDriver CreateDriver(CSharpParseOptions? parseOptions = null, AnalyzerConfigOptionsProvider? optionsProvider = null)
+    {
+        IIncrementalGenerator[] generators =
+        [
+            new ExtractAsRuleGenerator(),
+            new RuleCatalogRegistrationGenerator()
+        ];
+
+        return CSharpGeneratorDriver.Create(
+            generators: generators.Select(generator => generator.AsSourceGenerator()),
+            additionalTexts: ImmutableArray<AdditionalText>.Empty,
+            parseOptions: parseOptions,
+            optionsProvider: optionsProvider);
+    }
+
+    private static ImmutableArray<GeneratedSourceResult> GetGeneratedSources(GeneratorDriverRunResult runResult)
+    {
+        return [.. runResult.Results.SelectMany(result => result.GeneratedSources)];
     }
 
     private static Compilation CreateCompilation(string source)

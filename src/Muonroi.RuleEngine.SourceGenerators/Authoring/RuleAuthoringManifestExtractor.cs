@@ -37,6 +37,7 @@ internal static class RuleAuthoringManifestExtractor
                 .FirstOrDefault(parameter => !IsFactBag(parameter.Type) && !IsCancellationToken(parameter.Type));
             AuthoringContextOverride contextOverride = ReadContextOverride(methodSymbol);
             Dictionary<string, AuthoringFactOverride> factOverrides = ReadFactOverrides(methodSymbol);
+            CatalogMetadataDefinition catalog = ReadCatalogMetadata(methodSymbol);
 
             rules.Add(new AuthoringRuleDefinition(
                 code,
@@ -47,7 +48,13 @@ internal static class RuleAuthoringManifestExtractor
                 contextOverride.Description,
                 FactSchemaWalker.Walk(contextParameter?.Type, contextOverride.Description),
                 ExtractConsumedFacts(method, model, factOverrides),
-                ExtractProducedFacts(method, model, factOverrides)));
+                ExtractProducedFacts(method, model, factOverrides),
+                catalog.DisplayName ?? code,
+                catalog.Category,
+                catalog.Icon,
+                catalog.Tags,
+                catalog.Description,
+                catalog.IsPaletteVisible ?? true));
         }
 
         return new AuthoringManifestDefinition(
@@ -278,6 +285,62 @@ internal static class RuleAuthoringManifestExtractor
         }
 
         return overrides;
+    }
+
+    private static CatalogMetadataDefinition ReadCatalogMetadata(IMethodSymbol methodSymbol)
+    {
+        AttributeData? attribute = methodSymbol.GetAttributes()
+            .FirstOrDefault(item => string.Equals(item.AttributeClass?.Name, "MRuleCatalogEntryAttribute", StringComparison.Ordinal))
+            ?? methodSymbol.ContainingType.GetAttributes()
+                .FirstOrDefault(item => string.Equals(item.AttributeClass?.Name, "MRuleCatalogEntryAttribute", StringComparison.Ordinal));
+        if (attribute is null)
+        {
+            return new CatalogMetadataDefinition(null, null, null, [], null, null);
+        }
+
+        string? displayName = null;
+        string? category = null;
+        string? icon = null;
+        List<string> tags = [];
+        string? description = null;
+        bool? isPaletteVisible = null;
+
+        foreach (KeyValuePair<string, TypedConstant> argument in attribute.NamedArguments)
+        {
+            if (string.Equals(argument.Key, "DisplayName", StringComparison.Ordinal))
+            {
+                displayName = argument.Value.Value?.ToString();
+            }
+            else if (string.Equals(argument.Key, "Category", StringComparison.Ordinal))
+            {
+                category = argument.Value.Value?.ToString();
+            }
+            else if (string.Equals(argument.Key, "Icon", StringComparison.Ordinal))
+            {
+                icon = argument.Value.Value?.ToString();
+            }
+            else if (string.Equals(argument.Key, "Tags", StringComparison.Ordinal) && argument.Value.Kind == TypedConstantKind.Array)
+            {
+                foreach (TypedConstant value in argument.Value.Values)
+                {
+                    string? tag = value.Value?.ToString();
+                    if (!string.IsNullOrWhiteSpace(tag))
+                    {
+                        tags.Add(tag!);
+                    }
+                }
+            }
+            else if (string.Equals(argument.Key, "Description", StringComparison.Ordinal))
+            {
+                description = argument.Value.Value?.ToString();
+            }
+            else if (string.Equals(argument.Key, "IsPaletteVisible", StringComparison.Ordinal) && argument.Value.Value is bool visible)
+            {
+                isPaletteVisible = visible;
+            }
+        }
+
+        return new CatalogMetadataDefinition(displayName, category, icon, tags, description, isPaletteVisible);
     }
 
     private static bool TryResolveStringValue(ExpressionSyntax expression, SemanticModel model, out string value)

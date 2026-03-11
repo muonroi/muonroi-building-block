@@ -314,7 +314,228 @@ Enforced by:
 
 ---
 
-## 7. Track Status (as of 2026-03-06)
+## 7. Known Packages — Do Not Miss
+
+### Actor Map — CRITICAL: Who Uses What
+
+**Three distinct actors. Each uses a completely different layer. Never confuse them.**
+
+```
+ACTOR 1: End-user (người dùng cuối của app)
+  App FE  →  @muonroi/m-ui-engine-angular / m-ui-engine-primeng / m-ui-engine-react
+             Renders metadata-driven forms, grids, wizards for end-users.
+             End-users have NO knowledge of rule engine.
+             Example: nhân viên cảng dùng wizard 5 bước trong ePORT.
+
+ACTOR 2: Developer (builds the app)
+  App BE  →  Muonroi.RuleEngine.Runtime + RuleEngine.SourceGenerators
+             Installs these into their own backend service.
+             Fetches active rulesets from Control Plane at startup.
+             Executes rules in-process on each request.
+             Does NOT need Runtime.Web or DecisionTable.Web.
+
+ACTOR 3: BA / Product Owner (authors rules)
+  Browser →  Control Plane Dashboard (muonroi-control-plane React app)
+             Uses Runtime.Web API to save/activate/dry-run rulesets.
+             Uses DecisionTable.Web API + mu-decision-table component to author IF/THEN tables.
+             Has NO direct access to developer's app.
+```
+
+**Rule of thumb**: `Runtime.Web` and `DecisionTable.Web` = **Control Plane packages**, not developer app packages.
+The developer's app only needs `RuleEngine.Runtime`. The BA uses the Control Plane dashboard.
+
+### muonroi-building-block/src/ — packages by deployment target
+
+**Developer's own app (BE) — install these:**
+
+| Package | Type | Purpose |
+|---------|------|---------|
+| `Muonroi.RuleEngine.Runtime` | OSS | Core execution — `RuleOrchestrator<T>`, rule pipeline, FactBag, hot-reload listener. This is what developer's app installs. |
+| `Muonroi.RuleEngine.SourceGenerators` | OSS | `[MExtractAsRule]` → generates `IRule<TContext>` at build time. Install in developer's app. |
+| `Muonroi.RuleEngine.Abstractions` | OSS | Contracts: `IRule<T>`, `IRulesEngineService`, `FactBag`, `OrchestratorResult`. |
+| `Muonroi.AuthZ` | Commercial | Rule-driven authorization bridge — `IAuthorizationPolicyEvaluator`, `MuonroiAuthorizationHandler`, `IRuleRowFilter<T>`. Install in developer's app if using AuthZ. Track 7. |
+| `Muonroi.Observability` | Mixed | OTel wiring for `ActivitySource("Muonroi.RuleEngine")`, metrics counters, histogram. |
+| `Muonroi.Logging` / `.Abstractions` | OSS | `IMLog<T>` (auto-enriches with TenantId/UserId/CorrelationId), `IMLogContext`, `IMTraceContext`. |
+
+**Control Plane server — these live there, NOT in developer's app:**
+
+| Package | Type | Actor | Purpose |
+|---------|------|-------|---------|
+| `Muonroi.RuleEngine.Runtime.Web` | Commercial | **BA + Developer** | HTTP API for ruleset CRUD/activate/dry-run (`/api/v1/rule-engine/rulesets`). SignalR hub for hot-reload push. `RuntimeRuleSetManifestContributor` declares screens/actions in dashboard. **Lives in Control Plane, not developer's app.** |
+| `Muonroi.RuleEngine.DecisionTable.Web` | Commercial | **BA** | HTTP API for Decision Table CRUD/execute/import (`/api/v1/decision-tables`). Wires `mu-decision-table` Lit component into dashboard via `DecisionTableManifestContributor`. **Lives in Control Plane, not developer's app.** |
+| `Muonroi.UiEngine.Catalog` | Commercial | **Developer/Architect** | Introspection — scans deployed `IRule<T>` + API endpoints, builds dependency graph. 7 REST endpoints (`/api/v1/ui-engine/catalog/*`). Per-tenant snapshot store. `[BindRuleContext]` attribute. **Lives in Control Plane.** |
+
+**UI Manifest Contributor pattern** (IUiEngineManifestContributor):
+- Both `Runtime.Web` and `DecisionTable.Web` implement this
+- They self-register their screens, actions, data sources into the dashboard at startup
+- `DecisionTableManifestContributor` order=100 (module: `decision-table`, tier: `Professional`)
+- `RuntimeRuleSetManifestContributor` order=140 (module: `runtime-ruleset`, tier: `Starter`)
+- Adding a new commercial package = its screens appear in dashboard automatically
+
+### muonroi-control-plane/src/ — key projects agents often overlook
+
+| Project | Purpose |
+|---------|---------|
+| `Muonroi.ControlPlane.Mcp` | **MCP Server** — 42+ MCP tools for AI agents to manage rules, approvals, canary, tenants, audit, decision tables, FEEL autocomplete. Resources (`muonroi://rulesets/*`, `muonroi://tenants/*`, etc.). Prompts for analyze/compliance/dry-run workflows. Uses `ModelContextProtocol.AspNetCore`. Fully implemented. |
+| `Muonroi.ControlPlane.Api` | Main API. Check `Program.cs` to see which endpoints are actually mapped — some library endpoints (e.g. `MapRuleTracingEndpoints`) exist in the package but may not be wired yet. |
+
+### muonroi-ui-engine — FE packages by actor
+
+| Package | Actor | Purpose |
+|---------|-------|---------|
+| `@muonroi/m-ui-engine-core` | End-user | Metadata-driven base components (forms, grids, validation) |
+| `@muonroi/m-ui-engine-angular` | End-user | Angular 20 bindings for UI Engine components |
+| `@muonroi/m-ui-engine-primeng` | End-user | PrimeNG-based UI Engine components |
+| `@muonroi/m-ui-engine-react` | End-user | React bindings |
+| `@muonroi/m-ui-engine-rule-comp` | **BA** | Rule Studio components (flow graph, palette, FEEL editor) — used in Control Plane dashboard |
+| `mu-decision-table` (Lit) | **BA** | Decision Table editor web component — used in Control Plane dashboard |
+
+**Do NOT confuse**: `m-ui-engine-angular` (end-user app) vs `m-ui-engine-rule-comp` (BA in dashboard).
+
+### Production consumer — ePORT
+
+Real-world usage of the rule engine in production:
+- Backend: `D:/sources/TCIS.ePORT/tcis.eport.fullcontainerdelivery.aggregate.services/src/v2/Applications/Commands/Create/`
+- Frontend: `D:/sources/TEP/tcis.eport.web/` (Angular 20 + PrimeNG — **end-user** facing, not BA)
+- Uses: `[MExtractAsRule]`, `FactBag`, `IRulesEngineService`, `CreateRuleContext`, `IWorkContextAccessor`
+- 10 compiled C# rules (FCD_V2_TAX_VALID through FCD_V2_BOOKING_ELIGIBLE)
+- ePORT frontend uses `@muonroi/m-ui-engine-angular` / `m-ui-engine-primeng` (Actor 1 — end-user layer)
+
+---
+
+## 8. Source Code Exploration Guide
+
+**Follow this order to avoid missing important context.**
+
+### Step 1 — Read context files first (before touching any code)
+
+```
+1. CLAUDE.md (root workspace)         — rules, coding standards, track status
+2. ~/.claude/projects/.../MEMORY.md   — accumulated session knowledge
+3. Docs/MainMap.txt                   — competitive analysis, known gaps
+4. Docs/implement_*.txt               — plan files for current/planned tracks
+```
+
+### Step 2 — Discover package structure
+
+For .NET (muonroi-building-block):
+```
+Glob: src/**/*.csproj
+  → Note package name, <IsCommercialPackage> flag (Commercial vs OSS)
+  → Note <TargetFramework> (net8.0 vs netstandard2.0 for source generators)
+  → Read <PackageReference> to understand dependencies
+```
+
+For TypeScript (muonroi-ui-engine):
+```
+Glob: packages/*/package.json
+  → Note name, version, dependencies
+```
+
+For Control Plane:
+```
+src/Muonroi.ControlPlane.Api/Program.cs  ← what's actually wired at runtime
+src/Muonroi.ControlPlane.Mcp/           ← MCP tools available to AI agents
+apps/control-plane-dashboard/src/pages/ ← existing UI pages
+```
+
+### Step 3 — Understand a new package (reading order)
+
+```
+1. *.csproj                     → dependencies, tier, target framework
+2. *Abstractions package first  → interfaces, records, enums (contracts)
+3. *Extensions.cs               → DI registration, what gets wired
+4. Core service/adapter files   → implementation
+5. tests/                       → expected behavior, edge cases
+```
+
+### Step 4 — Cross-reference search
+
+When you find an interface/method, always check:
+```
+Grep across ALL repos (building-block + control-plane + ui-engine + ePORT)
+  → Who implements it?
+  → Who consumes it?
+  → Is it wired in any Program.cs?
+
+Example: found MapRuleTracingEndpoints
+  → Grep all repos → found in RuleTracingEndpoints.cs (defines)
+     AND RuleEngineRuntimeEndpointExtensions.cs (calls it)
+     BUT control-plane Program.cs does NOT call MapRuleEngineRuntimeWeb()
+  → Conclusion: endpoints exist in library but not exposed in running service
+```
+
+### Step 5 — Common traps to avoid
+
+```
+TRAP 1: GodProject/ = legacy copy of old building-block
+  → Always confirm you are reading from muonroi-building-block/src/
+    not GodProject/Hello/MuonroiBuildingBlock/src/
+  → When grep returns hits from both → ignore GodProject hits
+
+TRAP 2: Package exists ≠ endpoint is wired
+  → Muonroi.RuleEngine.Runtime.Web has MapRuleTracingEndpoints()
+  → But control-plane Program.cs must call MapRuleEngineRuntimeWeb() to expose it
+  → Always check Program.cs wiring before assuming feature is live
+
+TRAP 3: UiEngine.Catalog ≠ Rule Catalog for BA authoring
+  → Muonroi.UiEngine.Catalog = introspection (scans deployed rules, builds graph)
+  → "Rule Catalog" in plan = authoring-time BA palette (typed I/O schema)
+  → They are different; the plan catalog should BUILD ON UiEngine.Catalog
+
+TRAP 4: Binary files in grep results
+  → grep across workspace includes .dll, .db files — skip them
+  → Only act on .cs, .ts, .json, .csproj text file hits
+
+TRAP 5: Control Plane has Mcp project
+  → Muonroi.ControlPlane.Mcp is a full MCP Server (42+ tools)
+  → If implementing anything rule-management-related, check if MCP tool already exists
+  → MCP tools: muonroi_ruleset_*, muonroi_approval_*, muonroi_canary_*,
+    muonroi_tenant_*, muonroi_audit_*, muonroi_decision_table_*, muonroi_feel_*
+
+TRAP 6: Runtime.Web and DecisionTable.Web are NOT for the developer's app
+  → These two packages live in the Control Plane server, not in the developer's backend
+  → Developer's app installs: RuleEngine.Runtime + SourceGenerators only
+  → Runtime.Web = BA uses dashboard to manage rulesets via HTTP API
+  → DecisionTable.Web = BA uses dashboard to author IF/THEN decision tables
+  → If asked to "add rule engine to developer's app" → do NOT reference these packages
+
+TRAP 7: UI Engine packages have two separate actor layers
+  → @muonroi/m-ui-engine-angular / primeng / react = END-USER layer (install in developer's app FE)
+  → @muonroi/m-ui-engine-rule-comp / mu-decision-table = BA layer (only in Control Plane dashboard)
+  → Never install rule-comp or mu-decision-table into an end-user facing Angular/React app
+```
+
+### Step 6 — Check OrchestratorResult and trace data
+
+When analyzing rule execution results, look for:
+```
+OrchestratorResult (returned from ExecuteWithResultAsync):
+  .IsSuccess
+  .RuleResults["RULE_CODE"].IsPass   ← per-rule verdict
+  .Facts                             ← output FactBag
+  .Errors                            ← human-readable errors
+
+IRuleExecutionTracer trace entries:
+  .InputFactsJson  ← FactBag snapshot BEFORE rule ran
+  .OutputFactsJson ← FactBag snapshot AFTER rule ran
+  .ChangedFactKeys ← diff
+  .ElapsedMs, .Phase, .IsSuccess
+```
+
+### Step 7 — Plan files location
+
+All implementation plans stored in `Docs/`:
+```
+implement_rule_studio_ux_fix_plan.txt   — Phase 1-4 (Publish fix, Condition facts, Branch semantics)
+implement_rule_runtime_deep_plan.txt    — Phase A-F (Expression compiler, Catalog, UI palette)
+implement_track7_authz_plan.txt         — Rule-driven Authorization
+MainMap.txt                             — Competitive analysis, unique features, gaps
+```
+
+---
+
+## 9. Track Status (as of 2026-03-11)
 
 | Track | Description | Status |
 |-------|-------------|--------|

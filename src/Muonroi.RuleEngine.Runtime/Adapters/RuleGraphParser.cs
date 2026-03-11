@@ -29,19 +29,38 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
         List<RuleFlowNode> executableNodes = graph.Nodes
             .Where(n => ExecutableTypes.Contains(n.Type))
             .ToList();
+        HashSet<string> executableNodeIds = [.. executableNodes.Select(node => node.Id)];
 
         List<RuleFlowNode> ordered = TopologicalSort(executableNodes, graph.Edges);
+
+        Dictionary<string, List<RuleGraphIncomingEdge>> incomingEdges = BuildIncomingEdges(graph.Edges, executableNodeIds);
+        HashSet<string> nodesWithAlwaysEdges = BuildOutgoingBranchSet(graph.Edges, "always");
+        HashSet<string> nodesWithOnFalseEdges = BuildOutgoingBranchSet(graph.Edges, "on-false");
+        HashSet<string> nodesWithOnErrorEdges = BuildOutgoingBranchSet(graph.Edges, "on-error");
 
         List<RuleGraphEntry> entries = new(ordered.Count);
         for (int i = 0; i < ordered.Count; i++)
         {
-            entries.Add(MapNodeToEntry(ordered[i], i));
+            RuleFlowNode node = ordered[i];
+            entries.Add(MapNodeToEntry(
+                node,
+                i,
+                incomingEdges.TryGetValue(node.Id, out List<RuleGraphIncomingEdge>? incoming) ? incoming : [],
+                nodesWithAlwaysEdges.Contains(node.Id),
+                nodesWithOnFalseEdges.Contains(node.Id),
+                nodesWithOnErrorEdges.Contains(node.Id)));
         }
 
         return entries;
     }
 
-    private static RuleGraphEntry MapNodeToEntry(RuleFlowNode node, int fallbackOrder)
+    private static RuleGraphEntry MapNodeToEntry(
+        RuleFlowNode node,
+        int fallbackOrder,
+        IReadOnlyList<RuleGraphIncomingEdge> incomingEdges,
+        bool hasAlwaysEdge,
+        bool hasOnFalseEdge,
+        bool hasOnErrorEdge)
     {
         RuleFlowNodeData data = node.Data;
         string? ruleCode = FirstNonEmpty(
@@ -72,6 +91,7 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
             // Type B-1: FEEL
             FeelExpression = string.Equals(data.Expression?.Language, "feel", StringComparison.OrdinalIgnoreCase)
                 ? data.Expression!.Body : null,
+            OutputFields = MapOutputFields(data.OutputFields),
 
             // Type B-2: Liquid
             LiquidTemplate = string.Equals(data.Expression?.Language, "liquid", StringComparison.OrdinalIgnoreCase)
@@ -88,7 +108,28 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
             SubFlowCode    = subFlowCode,
             InputMappings  = MapInputMappings(data.SubFlowConfig?.InputMappings),
             OutputMappings = MapOutputMappings(data.SubFlowConfig?.OutputMappings),
+            IncomingEdges = incomingEdges,
+            HasAlwaysEdge = hasAlwaysEdge,
+            HasOnFalseEdge = hasOnFalseEdge,
+            HasOnErrorEdge = hasOnErrorEdge
         };
+    }
+
+    private static IReadOnlyList<FeelOutputField> MapOutputFields(IEnumerable<RuleFlowFeelOutputField>? source)
+    {
+        if (source is null)
+        {
+            return [];
+        }
+
+        return [.. source
+            .Where(field => !string.IsNullOrWhiteSpace(field.Path) && !string.IsNullOrWhiteSpace(field.ValueExpression))
+            .Select(field => new FeelOutputField
+            {
+                Path = field.Path.Trim(),
+                ValueExpression = field.ValueExpression.Trim(),
+                DataType = string.IsNullOrWhiteSpace(field.DataType) ? "string" : field.DataType.Trim()
+            })];
     }
 
     private static IReadOnlyList<SubFlowInputMapping> MapInputMappings(
@@ -113,6 +154,43 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
             ParentPath     = FirstNonEmpty(m.ParentPath, m.TargetPath) ?? string.Empty,
             ExposeToParent = m.ExposeToParent,
         })];
+    }
+
+    private static Dictionary<string, List<RuleGraphIncomingEdge>> BuildIncomingEdges(
+        IEnumerable<RuleFlowEdge> edges,
+        ISet<string> executableNodeIds)
+    {
+        Dictionary<string, List<RuleGraphIncomingEdge>> incomingEdges = new(StringComparer.OrdinalIgnoreCase);
+        foreach (RuleFlowEdge edge in edges)
+        {
+            if (string.IsNullOrWhiteSpace(edge.Source) || string.IsNullOrWhiteSpace(edge.Target) ||
+                !executableNodeIds.Contains(edge.Source) || !executableNodeIds.Contains(edge.Target))
+            {
+                continue;
+            }
+
+            if (!incomingEdges.TryGetValue(edge.Target, out List<RuleGraphIncomingEdge>? incoming))
+            {
+                incoming = [];
+                incomingEdges[edge.Target] = incoming;
+            }
+
+            incoming.Add(new RuleGraphIncomingEdge
+            {
+                SourceNodeId = edge.Source,
+                EdgeType = string.IsNullOrWhiteSpace(edge.EdgeType) ? "always" : edge.EdgeType.Trim()
+            });
+        }
+
+        return incomingEdges;
+    }
+
+    private static HashSet<string> BuildOutgoingBranchSet(IEnumerable<RuleFlowEdge> edges, string edgeType)
+    {
+        return [.. edges
+            .Where(edge => string.Equals(edge.EdgeType, edgeType, StringComparison.OrdinalIgnoreCase))
+            .Select(edge => edge.Source)
+            .Where(source => !string.IsNullOrWhiteSpace(source))];
     }
 
     private bool TryExtractGraph(string graphJson, out RuleFlowGraph? graph)
