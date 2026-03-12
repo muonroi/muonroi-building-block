@@ -26,7 +26,7 @@ public interface ISystemExecutionContext
     string CorrelationId { get; }
 
     /// <summary>
-    /// Gets the access token associated with the current context.
+    /// Gets the access token associated with the current context. This token can be forwarded by downstream transports such as gRPC clients.
     /// </summary>
     string? AccessToken { get; }
 
@@ -125,7 +125,7 @@ public class SystemExecutionContext : ISystemExecutionContext
     public string CorrelationId { get; }
 
     /// <summary>
-    /// Gets the access token.
+    /// Gets the access token. This token can be forwarded by downstream transports such as gRPC clients.
     /// </summary>
     public string? AccessToken { get; }
 

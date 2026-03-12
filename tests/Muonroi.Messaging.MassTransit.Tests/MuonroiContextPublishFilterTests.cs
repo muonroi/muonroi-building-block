@@ -6,8 +6,6 @@ using Muonroi.Core.Abstractions.Models.Common;
 using Muonroi.Messaging.MassTransit.Messaging;
 using NSubstitute;
 using Xunit;
-using Headers = MassTransit.Headers;
-
 namespace Muonroi.Messaging.MassTransit.Tests;
 
 public class MuonroiContextPublishFilterTests

@@ -29,6 +29,11 @@ public class MessageBusConfigs
     /// If true, runs the Muonroi Rule Engine for each incoming message to decide routing/filtering.
     /// </summary>
     public bool EnableRuleEngineRouting { get; set; } = false;
+
+    /// <summary>
+    /// If true, resolves dynamic routing rules from the Redis routing table before DI routers.
+    /// </summary>
+    public bool EnableRedisRoutingTable { get; set; } = false;
 }
 
 public class MessageBusRuntimeConfigs

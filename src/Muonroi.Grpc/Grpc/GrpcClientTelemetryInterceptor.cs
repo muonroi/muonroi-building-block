@@ -4,6 +4,9 @@ using Muonroi.Governance.License;
 
 namespace Muonroi.Grpc.Grpc;
 
+/// <summary>
+/// Tracks outbound gRPC client telemetry and forwards correlation and API key metadata.
+/// </summary>
 public sealed class GrpcClientTelemetryInterceptor(
     ISystemExecutionContextAccessor contextAccessor,
     LicenseState? licenseState = null,
@@ -15,6 +18,15 @@ public sealed class GrpcClientTelemetryInterceptor(
     private readonly LicenseState _licenseState = licenseState ?? LicenseState.CreateFree();
     private readonly ILicenseGuard? _licenseGuard = licenseGuard;
 
+    /// <summary>
+    /// Intercepts unary gRPC client calls to enrich telemetry and metadata.
+    /// </summary>
+    /// <typeparam name="TRequest">The request type.</typeparam>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <param name="request">The outgoing request.</param>
+    /// <param name="context">The client interceptor context.</param>
+    /// <param name="continuation">The continuation delegate.</param>
+    /// <returns>The wrapped asynchronous unary call.</returns>
     public override AsyncUnaryCall<TResponse> AsyncUnaryCall<TRequest, TResponse>(
         TRequest request,
         ClientInterceptorContext<TRequest, TResponse> context,
@@ -47,27 +59,40 @@ public sealed class GrpcClientTelemetryInterceptor(
 
     private Metadata AppendMetadata(Metadata? headers)
     {
-        Metadata metadata = headers ?? [];
+        Metadata metadata = [];
+        if (headers is not null)
+        {
+            foreach (Metadata.Entry entry in headers)
+            {
+                if (entry.IsBinary)
+                {
+                    metadata.Add(entry.Key, entry.ValueBytes);
+                    continue;
+                }
+
+                metadata.Add(entry.Key, entry.Value);
+            }
+        }
+
         ISystemExecutionContext current = _contextAccessor.Get();
         if (!string.IsNullOrWhiteSpace(current.CorrelationId) &&
-            metadata.GetValue(CustomHeader.CorrelationId) is null)
+            !ContainsHeader(metadata, CustomHeader.CorrelationId))
         {
             metadata.Add(CustomHeader.CorrelationId, current.CorrelationId);
         }
 
         if (!string.IsNullOrWhiteSpace(current.ApiKey) &&
-            metadata.GetValue(CustomHeader.ApiKey) is null)
+            !ContainsHeader(metadata, CustomHeader.ApiKey))
         {
             metadata.Add(CustomHeader.ApiKey, current.ApiKey);
         }
 
-        if (!string.IsNullOrWhiteSpace(current.TenantId) &&
-            metadata.GetValue(CustomHeader.TenantId) is null)
-        {
-            metadata.Add(CustomHeader.TenantId, current.TenantId);
-        }
-
         return metadata;
+    }
+
+    private static bool ContainsHeader(Metadata metadata, string key)
+    {
+        return metadata.Any(entry => string.Equals(entry.Key, key, StringComparison.OrdinalIgnoreCase));
     }
 
     private static async Task<TResponse> HandleResponseAsync<TResponse>(

@@ -4,7 +4,7 @@ using ServerGrpcServiceOptions = global::Grpc.AspNetCore.Server.GrpcServiceOptio
 
 public class GrpcHandlerTests
 {
-    private sealed class DummyGrpcClient : ClientBase<DummyGrpcClient>
+    private class DummyGrpcClient : ClientBase<DummyGrpcClient>
     {
         public DummyGrpcClient(CallInvoker callInvoker) : base(callInvoker)
         {
@@ -24,7 +24,7 @@ public class GrpcHandlerTests
         }
     }
 
-    private sealed class AnotherGrpcClient : ClientBase<AnotherGrpcClient>
+    private class AnotherGrpcClient : ClientBase<AnotherGrpcClient>
     {
         public AnotherGrpcClient(CallInvoker callInvoker) : base(callInvoker)
         {
@@ -105,6 +105,19 @@ public class GrpcHandlerTests
     }
 
     [Fact]
+    public void AddGrpcClient_Adds_Client_Without_Server_Registration()
+    {
+        ServiceCollection services = CreateLicensedServices();
+
+        GrpcHandler.AddGrpcClient<DummyGrpcClient>(services, "http://localhost");
+
+        ServiceProvider provider = services.BuildServiceProvider();
+        provider.GetService<DummyGrpcClient>().Should().NotBeNull();
+        provider.GetService<ISystemExecutionContextAccessor>().Should().NotBeNull();
+        provider.GetService<GrpcClientTelemetryInterceptor>().Should().NotBeNull();
+    }
+
+    [Fact]
     public void AddGrpcClients_Adds_Multiple()
     {
         ServiceCollection services = CreateLicensedServices();
@@ -149,6 +162,33 @@ public class GrpcHandlerTests
 
         ServiceProvider provider = services.BuildServiceProvider();
         provider.GetService<DummyGrpcClient>().Should().NotBeNull();
+    }
+
+    [Fact]
+    public void AddGrpcClients_Binds_Forwarding_Flags_Into_Active_Config_Model()
+    {
+        ServiceCollection services = CreateLicensedServices();
+
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["GrpcServicesConfig:ClientDefaults:ForwardAuthToken"] = "true",
+                ["GrpcServicesConfig:ClientDefaults:ForwardTenantId"] = "true",
+                ["GrpcServicesConfig:Services:ClientA:Uri"] = "http://localhost",
+                ["GrpcServicesConfig:Services:ClientA:ForwardTenantId"] = "false"
+            })
+            .Build();
+
+        services.AddGrpcClients(configuration, new Dictionary<string, Type>
+        {
+            ["ClientA"] = typeof(DummyGrpcClient)
+        });
+
+        ServiceProvider provider = services.BuildServiceProvider();
+        GrpcServicesConfig config = provider.GetRequiredService<IOptions<GrpcServicesConfig>>().Value;
+
+        config.ClientDefaults.ForwardAuthToken.Should().BeTrue();
+        config.Services!["ClientA"].ForwardTenantId.Should().BeFalse();
     }
 
     [Fact]

@@ -18,6 +18,7 @@
     <ProjectReference Include="..\Muonroi.Mapper\Muonroi.Mapper.csproj" />
     <ProjectReference Include="..\Muonroi.Caching.Abstractions\Muonroi.Caching.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.RuleEngine.Core\Muonroi.RuleEngine.Core.csproj" />
     <ProjectReference Include="..\Muonroi.Tenancy.Abstractions\Muonroi.Tenancy.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Logging\Muonroi.Logging.csproj" />
