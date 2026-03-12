@@ -1,5 +1,8 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.Caching.Redis.Routing;
 using Muonroi.Core.Abstractions.Configuration;
 using Muonroi.Governance.Abstractions.License;
+using StackExchange.Redis;
 
 namespace Muonroi.Caching.Redis.Redis;
 
@@ -86,23 +89,23 @@ public static class RedisExtensions
                 $"Invalid {RedisConfigs.DefaultSectionName}: Host and Port are required");
         }
 
+        ConfigurationOptions configurationOptions = new()
+        {
+            EndPoints = { { redisConfigs.Host, int.Parse(redisConfigs.Port) } },
+            AllowAdmin = redisConfigs.AllowAdmin,
+            AbortOnConnectFail = redisConfigs.AbortOnConnectFail
+        };
+        if (!string.IsNullOrEmpty(redisConfigs.Password))
+        {
+            configurationOptions.Password = redisConfigs.Password;
+        }
+
         services.AddStackExchangeRedisCache(option =>
         {
             option.InstanceName = redisConfigs.KeyPrefix;
-            ConfigurationOptions configOptions = new()
-            {
-                EndPoints = { { redisConfigs.Host, int.Parse(redisConfigs.Port) } },
-                AllowAdmin = redisConfigs.AllowAdmin,
-                AbortOnConnectFail = redisConfigs.AbortOnConnectFail
-            };
-            // Only set password if provided
-            if (!string.IsNullOrEmpty(redisConfigs.Password))
-            {
-                configOptions.Password = redisConfigs.Password;
-            }
-
-            option.ConfigurationOptions = configOptions;
+            option.ConfigurationOptions = configurationOptions;
         });
+        services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(configurationOptions));
 
         // Build connection string - only include password if provided
         string connectionString = string.IsNullOrEmpty(redisConfigs.Password)
@@ -110,6 +113,28 @@ public static class RedisExtensions
             : $"{redisConfigs.Host}:{redisConfigs.Port},password={redisConfigs.Password}";
         services.AddSingleton(_ => new RedisClient(connectionString));
 
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the Redis-backed routing table store used by Track 8 message routing.
+    /// </summary>
+    /// <param name="services">The service collection to update.</param>
+    /// <param name="configure">Optional routing table configuration.</param>
+    /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
+    public static IServiceCollection AddRedisRoutingTable(
+        this IServiceCollection services,
+        Action<RedisRoutingTableOptions>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddOptions<RedisRoutingTableOptions>();
+        if (configure != null)
+        {
+            services.Configure(configure);
+        }
+
+        services.TryAddSingleton<IRedisRoutingTableStore, RedisRoutingTableStore>();
         return services;
     }
 

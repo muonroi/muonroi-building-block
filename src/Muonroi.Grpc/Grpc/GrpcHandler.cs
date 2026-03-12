@@ -1,15 +1,24 @@
 using Grpc.Net.Client;
 using Grpc.Net.Client.Configuration;
+using Grpc.Net.ClientFactory;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.License;
-using Muonroi.Grpc.Grpc;
+
 namespace Muonroi.Grpc.Grpc;
 
+/// <summary>
+/// Provides registration helpers for Muonroi gRPC server and client infrastructure.
+/// </summary>
 public static class GrpcHandler
 {
+    /// <summary>
+    /// Registers Muonroi gRPC server services and server interceptors.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The optional configuration source.</param>
     public static void AddGrpcServer(this IServiceCollection services, IConfiguration? configuration = null)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -18,13 +27,12 @@ public static class GrpcHandler
         GrpcServicesConfig grpcConfig = configuration is null ? new GrpcServicesConfig() : GrpcServicesConfigBinding.Bind(configuration);
 
         services.TryAddSingleton(_ => Options.Create(grpcConfig));
-        services.TryAddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
+        EnsureGrpcClientInfrastructure(services);
         services.TryAddSingleton<IContextResolver, NullContextResolver>();
         services.TryAddSingleton<ITenantContextPolicy, DefaultTenantContextPolicy>();
         services.TryAddSingleton<MTokenInfo>();
         services.TryAddSingleton<GrpcRateLimiter>();
-        services.AddSingleton<GrpcServerInterceptor>();
-        services.AddSingleton<GrpcClientTelemetryInterceptor>();
+        services.TryAddSingleton<GrpcServerInterceptor>();
 
         global::Grpc.AspNetCore.Server.IGrpcServerBuilder grpcBuilder = services.AddGrpc(options =>
         {
@@ -44,6 +52,13 @@ public static class GrpcHandler
         services.AddHealthChecks().AddCheck("grpc-runtime", () => HealthCheckResult.Healthy("gRPC runtime is configured."));
     }
 
+    /// <summary>
+    /// Registers a typed gRPC client using the supplied service URI.
+    /// </summary>
+    /// <typeparam name="TClient">The typed gRPC client type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="serviceUri">The service URI.</param>
+    /// <returns>The configured HTTP client builder.</returns>
     public static IHttpClientBuilder AddGrpcClient<TClient>(this IServiceCollection services, string serviceUri)
         where TClient : class
     {
@@ -55,6 +70,13 @@ public static class GrpcHandler
         return AddConfiguredGrpcClient<TClient>(services, config, new GrpcClientDefaultsConfig());
     }
 
+    /// <summary>
+    /// Registers multiple typed gRPC clients from configuration.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration source.</param>
+    /// <param name="clients">The map of configuration key to typed client type.</param>
+    /// <returns>The original service collection.</returns>
     public static IServiceCollection AddGrpcClients(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -65,6 +87,7 @@ public static class GrpcHandler
         _ = clients ?? throw new NullReferenceException(nameof(clients));
 
         GrpcServicesConfig grpcServicesConfig = GrpcServicesConfigBinding.Bind(configuration);
+        services.TryAddSingleton(_ => Options.Create(grpcServicesConfig));
 
         foreach (KeyValuePair<string, Type> client in clients)
         {
@@ -81,6 +104,12 @@ public static class GrpcHandler
         return services;
     }
 
+    /// <summary>
+    /// Enables transport-level gRPC middleware such as gRPC-Web.
+    /// </summary>
+    /// <param name="app">The application builder.</param>
+    /// <param name="configuration">The optional configuration source.</param>
+    /// <returns>The application builder.</returns>
     public static IApplicationBuilder UseGrpcTransport(this IApplicationBuilder app, IConfiguration? configuration = null)
     {
         ArgumentNullException.ThrowIfNull(app);
@@ -103,21 +132,25 @@ public static class GrpcHandler
     }
 
     private static IHttpClientBuilder AddConfiguredGrpcClient<TClient>(
-    IServiceCollection services,
-    GrpcServiceConfig serviceConfig,
-    GrpcClientDefaultsConfig defaults)
-    where TClient : class
+        IServiceCollection services,
+        GrpcServiceConfig serviceConfig,
+        GrpcClientDefaultsConfig defaults)
+        where TClient : class
     {
         _ = new Uri(serviceConfig.Uri);
+        EnsureGrpcClientInfrastructure(services);
+        services.Replace(ServiceDescriptor.Singleton(CreateForwardingOptions<TClient>(serviceConfig, defaults)));
+        services.TryAddTransient<GrpcClientAuthInterceptor<TClient>>();
 
         return services
             .AddGrpcClient<TClient>(o => o.Address = new Uri(serviceConfig.Uri))
             .ConfigureChannel(options => ApplyClientChannelOptions(options, serviceConfig, defaults))
-            .AddInterceptor<GrpcClientTelemetryInterceptor>();
+            .AddInterceptor<GrpcClientTelemetryInterceptor>(InterceptorScope.Client)
+            .AddInterceptor<GrpcClientAuthInterceptor<TClient>>(InterceptorScope.Client);
     }
 
     private static IHttpClientBuilder AddGrpcClient(this IServiceCollection services, Type clientType,
-     string serviceUri)
+        string serviceUri)
     {
         _ = services ?? throw new ArgumentNullException(nameof(services));
         _ = new Uri(serviceUri);
@@ -161,6 +194,24 @@ public static class GrpcHandler
     {
         GrpcServiceConfig resolved = serviceConfig ?? new GrpcServiceConfig { Uri = serviceUri };
         return AddConfiguredGrpcClient<TClient>(services, resolved, defaults);
+    }
+
+    private static void EnsureGrpcClientInfrastructure(IServiceCollection services)
+    {
+        services.TryAddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
+        services.TryAddSingleton<GrpcClientTelemetryInterceptor>();
+    }
+
+    private static GrpcClientAuthForwardingOptions<TClient> CreateForwardingOptions<TClient>(
+        GrpcServiceConfig serviceConfig,
+        GrpcClientDefaultsConfig defaults)
+        where TClient : class
+    {
+        return new GrpcClientAuthForwardingOptions<TClient>
+        {
+            ForwardAuthToken = serviceConfig.ForwardAuthToken ?? defaults.ForwardAuthToken,
+            ForwardTenantId = serviceConfig.ForwardTenantId ?? defaults.ForwardTenantId
+        };
     }
 
     private static void ApplyClientChannelOptions(

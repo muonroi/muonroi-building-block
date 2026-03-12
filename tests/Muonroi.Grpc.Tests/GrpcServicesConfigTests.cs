@@ -54,4 +54,26 @@ public class GrpcServicesConfigTests
         configs.Uri = null!;
         Assert.Null(configs.Uri);
     }
+
+    [Fact]
+    public void ClientDefaults_ForwardTenantId_Defaults_To_True()
+    {
+        GrpcClientDefaultsConfig configs = new();
+
+        Assert.True(configs.ForwardTenantId);
+        Assert.False(configs.ForwardAuthToken);
+    }
+
+    [Fact]
+    public void ServiceConfig_Forwarding_Flags_Can_Be_Overridden()
+    {
+        GrpcServiceConfig configs = new()
+        {
+            ForwardAuthToken = true,
+            ForwardTenantId = false
+        };
+
+        Assert.True(configs.ForwardAuthToken);
+        Assert.False(configs.ForwardTenantId);
+    }
 }

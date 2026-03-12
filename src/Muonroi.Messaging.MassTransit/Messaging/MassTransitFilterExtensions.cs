@@ -1,7 +1,27 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.Messaging.Abstractions.Contracts;
+
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 public static class MassTransitFilterExtensions
 {
+    /// <summary>
+    /// Registers a message router in the service collection for rule-based routing.
+    /// </summary>
+    /// <typeparam name="TMessage">The message type handled by the router.</typeparam>
+    /// <typeparam name="TRouter">The router implementation type.</typeparam>
+    /// <param name="services">The service collection to update.</param>
+    /// <returns>The updated service collection.</returns>
+    public static IServiceCollection AddMessageRouter<TMessage, TRouter>(this IServiceCollection services)
+        where TMessage : class
+        where TRouter : class, IMessageRouter<TMessage>
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.TryAddScoped<TRouter>();
+        services.TryAddScoped<IMessageRouter<TMessage>>(sp => sp.GetRequiredService<TRouter>());
+        return services;
+    }
+
     public static void AddConsumeFilter(this IBusRegistrationConfigurator configurator, Type filterType)
     {
         ArgumentNullException.ThrowIfNull(configurator);
