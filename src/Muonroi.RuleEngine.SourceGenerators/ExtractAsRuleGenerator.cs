@@ -104,6 +104,7 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
             string hookPoint = "BeforeRule";
             List<string> dependsOn = [];
             string? feelExpression = null;
+            bool useFactBagAware = false;
 
             foreach (KeyValuePair<string, TypedConstant> argument in attribute.NamedArguments)
             {
@@ -122,6 +123,10 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
                 else if (string.Equals(argument.Key, "Expression", StringComparison.Ordinal))
                 {
                     feelExpression = argument.Value.Value?.ToString();
+                }
+                else if (string.Equals(argument.Key, "UseFactBagAware", StringComparison.Ordinal))
+                {
+                    useFactBagAware = (bool)(argument.Value.Value ?? false);
                 }
             }
 
@@ -180,7 +185,8 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
                 feelExpression,
                 methodSymbol.IsAsync,
                 method.SyntaxTree.FilePath,
-                method.GetLocation().GetLineSpan().StartLinePosition.Line + 1);
+                method.GetLocation().GetLineSpan().StartLinePosition.Line + 1,
+                useFactBagAware);
 
             definitions.Add(definition);
             definitionLocations[definition] = method.GetLocation();
