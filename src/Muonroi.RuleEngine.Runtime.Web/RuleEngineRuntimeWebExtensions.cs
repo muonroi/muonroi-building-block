@@ -1,4 +1,5 @@
 using Muonroi.RuleEngine.Runtime.Web.Contributors;
+using Muonroi.RuleEngine.Runtime.Web.Models;
 using Muonroi.RuleEngine.Runtime.Web.Services;
 using Muonroi.RuleEngine.Runtime.Tracing;
 using Muonroi.Governance.License;
@@ -17,6 +18,7 @@ public static class RuleEngineRuntimeWebExtensions
             configuration.GetSection(RuleTracingOptions.SectionName).Bind(options));
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IUiEngineManifestContributor, RuntimeRuleSetManifestContributor>());
         services.TryAddScoped<IRuleDryRunService, RuleDryRunService>();
+        services.TryAddScoped<IMRuleFlowContractProvider, MDefaultRuleFlowContractProvider>();
         services.AddSignalR();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, RuleSetHubNotifier>());
         services.AddControllers().AddApplicationPart(typeof(RuleEngineRuntimeWebExtensions).Assembly);

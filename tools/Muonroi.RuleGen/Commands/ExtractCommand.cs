@@ -4,6 +4,7 @@ using Muonroi.RuleGen.Services;
 using Muonroi.RuleGen.Writers;
 using Spectre.Console;
 using System.Diagnostics;
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace Muonroi.RuleGen.Commands;
@@ -100,7 +101,70 @@ internal static class ExtractCommand
 
         stopwatch.Stop();
         PrintSummaryTable(definitions, sourceFiles.Count, stopwatch.ElapsedMilliseconds);
+
+        // ── Auto-register: generate registration extension + dispatchers ──
+        if (options.AutoRegister)
+        {
+            await RunAutoRegisterAsync(options, definitions);
+        }
+
         return 0;
+    }
+
+    private static async Task RunAutoRegisterAsync(ExtractOptions options, IReadOnlyList<ExtractedRuleDefinition> definitions)
+    {
+        string registrationNamespace = options.RegistrationNamespace ?? options.Namespace;
+        string dispatcherNamespace = options.DispatcherNamespace ?? registrationNamespace;
+        string dispatcherDir = options.DispatcherOutput ?? options.Output;
+
+        DiscoveredRuleType[] discovered = [.. definitions
+            .Select(d => new DiscoveredRuleType($"{RuleClassWriter.ToIdentifier(d.Code)}Rule", d.ContextType))
+            .DistinctBy(x => $"{x.ClassName}|{x.ContextType}")];
+
+        IReadOnlyList<DiscoveredDispatcherContext> dispatchers = DispatcherWriter.BuildContexts(
+            discovered,
+            options.DispatcherSuffix);
+
+        IReadOnlyList<DiscoveredDispatcherContext> dispatchersForRegistration =
+            options.RegisterDispatchers ? dispatchers : [];
+
+        string rendered = RegistrationWriter.Render(
+            registrationNamespace,
+            discovered,
+            dispatchersForRegistration,
+            options.IncludeRuleEngine,
+            options.RegistrationClassName);
+
+        string registrationFile = Path.Combine(options.Output, options.RegistrationFileName);
+        Directory.CreateDirectory(Path.GetDirectoryName(registrationFile)!);
+        await File.WriteAllTextAsync(registrationFile, rendered);
+
+        int generatedDispatcherCount = 0;
+        int skippedDispatcherCount = 0;
+        if (options.GenerateDispatchers)
+        {
+            Directory.CreateDirectory(dispatcherDir);
+            foreach (DiscoveredDispatcherContext dispatcher in dispatchers)
+            {
+                string dispatcherFile = Path.Combine(dispatcherDir, dispatcher.FileName);
+                if (File.Exists(dispatcherFile) && !options.DispatcherOverwrite)
+                {
+                    skippedDispatcherCount++;
+                    continue;
+                }
+
+                string content = DispatcherWriter.Render(dispatcherNamespace, dispatcher);
+                await File.WriteAllTextAsync(dispatcherFile, content);
+                generatedDispatcherCount++;
+            }
+        }
+
+        AnsiConsole.MarkupLine($"[green]Auto-register:[/] registration '{Path.GetFileName(registrationFile)}' ({discovered.Length} rules).");
+        if (options.GenerateDispatchers)
+        {
+            AnsiConsole.MarkupLine(
+                $"[green]Dispatchers:[/] generated {generatedDispatcherCount}, skipped {skippedDispatcherCount}, output: '{dispatcherDir}'.");
+        }
     }
 
     private static void PrintSummaryTable(IReadOnlyList<ExtractedRuleDefinition> definitions, int fileCount, long elapsedMs)
@@ -142,6 +206,19 @@ internal static class ExtractCommand
         public bool OrganizeByNamespace { get; init; }
         public bool Parallel { get; init; }
 
+        // ── Auto-register options ──
+        public bool AutoRegister { get; init; }
+        public string RegistrationFileName { get; init; } = "MGeneratedRuleRegistrationExtensions.g.cs";
+        public string RegistrationClassName { get; init; } = "MGeneratedRuleRegistrationExtensions";
+        public string? RegistrationNamespace { get; init; }
+        public bool GenerateDispatchers { get; init; }
+        public bool RegisterDispatchers { get; init; }
+        public bool IncludeRuleEngine { get; init; }
+        public string? DispatcherOutput { get; init; }
+        public string? DispatcherNamespace { get; init; }
+        public bool DispatcherOverwrite { get; init; }
+        public string DispatcherSuffix { get; init; } = "GeneratedRuleEngineDispatcher";
+
         public static ExtractOptions FromContext(CommandContext context)
         {
             RuleGenExtractConfig cfg = context.Config.Extract;
@@ -161,6 +238,9 @@ internal static class ExtractCommand
                 project,
                 resolvedOutput);
 
+            bool autoRegister = OptionReader.GetBool(context, "auto-register", cfg.AutoRegister);
+            bool generateDispatchers = OptionReader.GetBool(context, "generate-dispatchers", cfg.GenerateDispatchers);
+
             return new ExtractOptions
             {
                 Source = source,
@@ -175,7 +255,22 @@ internal static class ExtractCommand
                 Validate = OptionReader.GetBool(context, "validate", cfg.Validate),
                 OrganizeByNamespace = OptionReader.GetBool(context, "organize-by-namespace", cfg.OrganizeByNamespace),
                 Parallel = OptionReader.GetBool(context, "parallel", cfg.Parallel),
-                TenantId = OptionReader.GetString(context, "tenant")
+                TenantId = OptionReader.GetString(context, "tenant"),
+                // Auto-register options
+                AutoRegister = autoRegister,
+                RegistrationFileName = OptionReader.GetString(context, "registration-file-name", cfg.RegistrationFileName)
+                    ?? "MGeneratedRuleRegistrationExtensions.g.cs",
+                RegistrationClassName = OptionReader.GetString(context, "registration-class", cfg.RegistrationClassName)
+                    ?? "MGeneratedRuleRegistrationExtensions",
+                RegistrationNamespace = OptionReader.GetString(context, "registration-namespace", cfg.RegistrationNamespace),
+                GenerateDispatchers = generateDispatchers,
+                RegisterDispatchers = OptionReader.GetBool(context, "register-dispatchers", cfg.RegisterDispatchers),
+                IncludeRuleEngine = OptionReader.GetBool(context, "include-rule-engine", cfg.IncludeRuleEngine),
+                DispatcherOutput = OptionReader.GetString(context, "dispatcher-output", cfg.DispatcherOutput),
+                DispatcherNamespace = OptionReader.GetString(context, "dispatcher-namespace", cfg.DispatcherNamespace),
+                DispatcherOverwrite = OptionReader.GetBool(context, "dispatcher-overwrite", cfg.DispatcherOverwrite),
+                DispatcherSuffix = OptionReader.GetString(context, "dispatcher-suffix", cfg.DispatcherSuffix)
+                    ?? "GeneratedRuleEngineDispatcher"
             };
         }
 
