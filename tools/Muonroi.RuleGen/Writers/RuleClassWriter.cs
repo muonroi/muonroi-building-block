@@ -73,7 +73,24 @@ internal static class RuleClassWriter
 
         if (!string.IsNullOrWhiteSpace(definition.DocumentationComment))
         {
-            sb.AppendLine(definition.DocumentationComment);
+            // Ensure XML doc comments have /// prefix on each line
+            foreach (string docLine in definition.DocumentationComment
+                .Split(["\r\n", "\n"], StringSplitOptions.None))
+            {
+                string trimmed = docLine.TrimStart();
+                if (trimmed.StartsWith("<", StringComparison.Ordinal) ||
+                    trimmed.StartsWith("///", StringComparison.Ordinal) ||
+                    string.IsNullOrWhiteSpace(trimmed))
+                {
+                    sb.AppendLine(trimmed.StartsWith("///", StringComparison.Ordinal)
+                        ? docLine
+                        : $"/// {trimmed}");
+                }
+                else
+                {
+                    sb.AppendLine($"/// {trimmed}");
+                }
+            }
         }
         else
         {
@@ -96,7 +113,7 @@ internal static class RuleClassWriter
         sb.AppendLine($"    public string Code => \"{Escape(definition.Code)}\";");
         sb.AppendLine($"    public int Order => {definition.Order};");
         sb.AppendLine($"    public IReadOnlyList<string> DependsOn => {dependsOn};");
-        sb.AppendLine($"    public HookPoint HookPoint => HookPoint.{definition.HookPoint};");
+        sb.AppendLine($"    public Muonroi.RuleEngine.Abstractions.HookPoint HookPoint => Muonroi.RuleEngine.Abstractions.HookPoint.{definition.HookPoint};");
         sb.AppendLine("    public RuleType Type => RuleType.Validation;");
         sb.AppendLine($"    public string Name => \"{Escape(className)}\";");
         sb.AppendLine("    public IEnumerable<System.Type> Dependencies => Array.Empty<System.Type>();");

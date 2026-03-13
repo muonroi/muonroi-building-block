@@ -95,7 +95,7 @@ public sealed class RuleOrchestrator<TContext>(
                         cancellationToken);
                 }
 
-                logger?.Info("Executing rule {Rule} with context {@Context} and facts {@Facts}", rule.Name, facts);
+                logger?.Info("Executing rule {Rule} with facts {@Facts}", rule.Name, facts);
 
                 string version = rule.GetType().Assembly.GetName().Version?.ToString() ?? "unknown";
                 string? traceTenantId = Activity.Current?.GetTagItem("tenant.id") as string;
@@ -332,7 +332,7 @@ public sealed class RuleOrchestrator<TContext>(
                         cancellationToken);
                 }
 
-                logger?.Info("Executing rule {Rule} with context {@Context} and facts {@Facts}", rule.Name, facts);
+                logger?.Info("Executing rule {Rule} with facts {@Facts}", rule.Name, facts);
 
                 string version = rule.GetType().Assembly.GetName().Version?.ToString() ?? "unknown";
                 string? traceTenantId = Activity.Current?.GetTagItem("tenant.id") as string;

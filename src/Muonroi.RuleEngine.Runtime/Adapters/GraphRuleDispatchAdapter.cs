@@ -138,6 +138,7 @@ internal sealed class GraphRuleDispatchAdapter<TContext> : IRule<TContext>
             ["message"] = message,
             ["errorCode"] = isError ? "runtime.error" : null
         };
+        facts.Set($"__graph.node.{_entry.NodeId}.result", resultPayload);
         facts.Set("result", resultPayload);
     }
 

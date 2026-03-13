@@ -117,6 +117,7 @@ public sealed class FeelRuleAdapter<TContext> : IRule<TContext>
             {
                 object? value = FeelEvaluator.EvaluateValue(outputField.ValueExpression, feelVars);
                 facts.Set(outputField.Path, value);
+                facts.Set($"__node.{_code}.{outputField.Path}", value);
                 if (value is not null)
                 {
                     feelVars[outputField.Path] = value;
