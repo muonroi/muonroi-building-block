@@ -43,4 +43,5 @@ internal sealed record ExtractedRuleDefinition(
     string? FeelExpression,
     bool IsAsync,
     string SourceFile,
-    int SourceLine);
+    int SourceLine,
+    bool UseFactBagAware = false);

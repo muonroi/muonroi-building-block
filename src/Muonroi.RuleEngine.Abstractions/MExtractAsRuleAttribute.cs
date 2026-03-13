@@ -30,4 +30,12 @@ public class MExtractAsRuleAttribute(string code) : Attribute
     /// Gets or sets an inline FEEL expression used to generate the rule body.
     /// </summary>
     public string? Expression { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the generated rule should inherit from
+    /// <see cref="MFactBagAwareRule{TContext}"/> instead of implementing
+    /// <see cref="IRule{TContext}"/> directly. When <c>true</c>, the generated rule
+    /// uses <c>ReadFact</c>/<c>WriteFact</c> helpers and overrides <c>EvaluateCoreAsync</c>.
+    /// </summary>
+    public bool UseFactBagAware { get; set; }
 }

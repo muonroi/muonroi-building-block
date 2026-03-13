@@ -41,7 +41,8 @@ internal sealed record ExtractedRuleDefinition(
     string? ExpressionBody,
     bool IsAsync,
     string SourceFile,
-    int SourceLine);
+    int SourceLine,
+    bool UseFactBagAware = false);
 
 internal sealed class ValidationReport
 {

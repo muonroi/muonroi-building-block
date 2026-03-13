@@ -18,7 +18,7 @@ internal static class RuleClassWriter
             : $"new[] {{ {string.Join(", ", definition.DependsOn.Select(v => $"\"{Escape(v)}\""))} }}";
 
         string[] localFunction = RenderLocalFunction(definition);
-        string[] helperMethods = RenderHelperMethods(definition.HelperMethods);
+        string[] helperMethods = RenderHelperMethods(definition.HelperMethods, definition.UseFactBagAware);
         string[] invokeLogic = RenderInvokeLogic(definition);
         bool evaluateNeedsAsync = invokeLogic.Any(line =>
             line.Contains("await ", StringComparison.Ordinal));
@@ -99,7 +99,10 @@ internal static class RuleClassWriter
             sb.AppendLine("/// </summary>");
         }
 
-        sb.AppendLine($"public sealed class {className} : IRule<{definition.ContextType}>");
+        string baseType = definition.UseFactBagAware
+            ? $"MFactBagAwareRule<{definition.ContextType}>"
+            : $"IRule<{definition.ContextType}>";
+        sb.AppendLine($"public sealed class {className} : {baseType}");
         sb.AppendLine("{");
 
         if (!string.IsNullOrWhiteSpace(dependencyFields))
@@ -110,13 +113,14 @@ internal static class RuleClassWriter
             sb.AppendLine();
         }
 
-        sb.AppendLine($"    public string Code => \"{Escape(definition.Code)}\";");
-        sb.AppendLine($"    public int Order => {definition.Order};");
-        sb.AppendLine($"    public IReadOnlyList<string> DependsOn => {dependsOn};");
-        sb.AppendLine($"    public Muonroi.RuleEngine.Abstractions.HookPoint HookPoint => Muonroi.RuleEngine.Abstractions.HookPoint.{definition.HookPoint};");
-        sb.AppendLine("    public RuleType Type => RuleType.Validation;");
-        sb.AppendLine($"    public string Name => \"{Escape(className)}\";");
-        sb.AppendLine("    public IEnumerable<System.Type> Dependencies => Array.Empty<System.Type>();");
+        string propMod = definition.UseFactBagAware ? "override " : "";
+        sb.AppendLine($"    public {propMod}string Code => \"{Escape(definition.Code)}\";");
+        sb.AppendLine($"    public {propMod}int Order => {definition.Order};");
+        sb.AppendLine($"    public {propMod}IReadOnlyList<string> DependsOn => {dependsOn};");
+        sb.AppendLine($"    public {propMod}Muonroi.RuleEngine.Abstractions.HookPoint HookPoint => Muonroi.RuleEngine.Abstractions.HookPoint.{definition.HookPoint};");
+        sb.AppendLine($"    public {propMod}RuleType Type => RuleType.Validation;");
+        sb.AppendLine($"    public {propMod}string Name => \"{Escape(className)}\";");
+        sb.AppendLine($"    public {propMod}IEnumerable<System.Type> Dependencies => Array.Empty<System.Type>();");
         sb.AppendLine();
 
         foreach (string attr in definition.CustomAttributes)
@@ -125,7 +129,14 @@ internal static class RuleClassWriter
         }
 
         string evaluateAsyncModifier = evaluateNeedsAsync ? "async " : string.Empty;
-        sb.AppendLine($"    public {evaluateAsyncModifier}Task<RuleResult> EvaluateAsync({definition.ContextType} ctx, FactBag facts, CancellationToken ct)");
+        if (definition.UseFactBagAware)
+        {
+            sb.AppendLine($"    protected {evaluateAsyncModifier}override Task<RuleResult> EvaluateCoreAsync({definition.ContextType} ctx, CancellationToken ct)");
+        }
+        else
+        {
+            sb.AppendLine($"    public {evaluateAsyncModifier}Task<RuleResult> EvaluateAsync({definition.ContextType} ctx, FactBag facts, CancellationToken ct)");
+        }
         sb.AppendLine("    {");
         sb.AppendLine("        try");
         sb.AppendLine("        {");
@@ -154,11 +165,15 @@ internal static class RuleClassWriter
         }
         sb.AppendLine("        }");
         sb.AppendLine("    }");
-        sb.AppendLine();
-        sb.AppendLine($"    public Task ExecuteAsync({definition.ContextType} context, CancellationToken cancellationToken = default)");
-        sb.AppendLine("    {");
-        sb.AppendLine("        return Task.CompletedTask;");
-        sb.AppendLine("    }");
+
+        if (!definition.UseFactBagAware)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"    public Task ExecuteAsync({definition.ContextType} context, CancellationToken cancellationToken = default)");
+            sb.AppendLine("    {");
+            sb.AppendLine("        return Task.CompletedTask;");
+            sb.AppendLine("    }");
+        }
 
         foreach (string line in helperMethods)
         {
@@ -170,7 +185,7 @@ internal static class RuleClassWriter
         return sb.ToString();
     }
 
-    private static string[] RenderHelperMethods(IReadOnlyList<HelperMethodDefinition> helpers)
+    private static string[] RenderHelperMethods(IReadOnlyList<HelperMethodDefinition> helpers, bool useFactBagAware = false)
     {
         if (helpers.Count == 0) return [];
         List<string> lines = [];
@@ -189,12 +204,17 @@ internal static class RuleClassWriter
                 string[] bodyLines = ExtractBodyLines(helper.MethodBody);
                 foreach (string? line in bodyLines)
                 {
-                    lines.Add($"        {line}");
+                    lines.Add($"        {(useFactBagAware ? TransformBodyForFactBagAware(line) : line)}");
                 }
             }
             else if (!string.IsNullOrWhiteSpace(helper.ExpressionBody))
             {
-                lines.Add($"        return {helper.ExpressionBody};");
+                string expr = helper.ExpressionBody;
+                if (useFactBagAware)
+                {
+                    expr = TransformBodyForFactBagAware(expr);
+                }
+                lines.Add($"        return {expr};");
             }
             else
             {
@@ -259,7 +279,10 @@ internal static class RuleClassWriter
     private static string[] RenderLocalFunction(ExtractedRuleDefinition definition)
     {
         string localName = $"__source_{ToIdentifier(definition.MethodName)}";
-        string parameterList = string.Join(", ", definition.Parameters.Select(RenderParameter));
+        IEnumerable<ParameterModel> parameters = definition.UseFactBagAware
+            ? definition.Parameters.Where(p => !IsFactBagType(p.TypeName))
+            : definition.Parameters;
+        string parameterList = string.Join(", ", parameters.Select(RenderParameter));
         string asyncModifier = NeedsAsyncLocalFunction(definition) ? "async " : string.Empty;
         string returnType = definition.ReturnType;
 
@@ -274,12 +297,17 @@ internal static class RuleClassWriter
             string[] bodyLines = ExtractBodyLines(definition.MethodBody);
             foreach (string? line in bodyLines)
             {
-                lines.Add($"    {line}");
+                lines.Add($"    {(definition.UseFactBagAware ? TransformBodyForFactBagAware(line) : line)}");
             }
         }
         else if (!string.IsNullOrWhiteSpace(definition.ExpressionBody))
         {
-            lines.Add($"    return {definition.ExpressionBody};");
+            string expr = definition.ExpressionBody;
+            if (definition.UseFactBagAware)
+            {
+                expr = TransformBodyForFactBagAware(expr);
+            }
+            lines.Add($"    return {expr};");
         }
         else
         {
@@ -306,7 +334,10 @@ internal static class RuleClassWriter
     private static string[] RenderInvokeLogic(ExtractedRuleDefinition definition)
     {
         string localName = $"__source_{ToIdentifier(definition.MethodName)}";
-        string args = string.Join(", ", definition.Parameters.Select(p => MapInvocationArgument(p, definition.ContextType)));
+        IEnumerable<ParameterModel> parameters = definition.UseFactBagAware
+            ? definition.Parameters.Where(p => !IsFactBagType(p.TypeName))
+            : definition.Parameters;
+        string args = string.Join(", ", parameters.Select(p => MapInvocationArgument(p, definition.ContextType)));
         string returnType = Normalize(definition.ReturnType);
 
         if (returnType == "Task<RuleResult>")
@@ -365,20 +396,28 @@ internal static class RuleClassWriter
 
         if (returnType.StartsWith("Task<", StringComparison.Ordinal))
         {
+            string storeResult = definition.UseFactBagAware
+                ? $"WriteFact(\"{Escape(definition.Code)}:result\", __value);"
+                : $"facts[\"{Escape(definition.Code)}:result\"] = __value;";
             return
             [
                 $"var __value = await {localName}({args});",
-                $"facts[\"{Escape(definition.Code)}:result\"] = __value;",
+                storeResult,
                 "return RuleResult.Passed();"
             ];
         }
 
-        return
-        [
-            $"var __value = {localName}({args});",
-            $"facts[\"{Escape(definition.Code)}:result\"] = __value;",
-            "return Task.FromResult(RuleResult.Passed());"
-        ];
+        {
+            string storeResult = definition.UseFactBagAware
+                ? $"WriteFact(\"{Escape(definition.Code)}:result\", __value);"
+                : $"facts[\"{Escape(definition.Code)}:result\"] = __value;";
+            return
+            [
+                $"var __value = {localName}({args});",
+                storeResult,
+                "return Task.FromResult(RuleResult.Passed());"
+            ];
+        }
     }
 
     private static string MapInvocationArgument(ParameterModel parameter, string contextType)
@@ -500,6 +539,15 @@ internal static class RuleClassWriter
         }
 
         return normalized;
+    }
+
+    private static string TransformBodyForFactBagAware(string line)
+    {
+        return line
+            .Replace("facts.Get<", "ReadFact<", StringComparison.Ordinal)
+            .Replace("facts.Set(", "WriteFact(", StringComparison.Ordinal)
+            .Replace("facts.Set<", "WriteFact<", StringComparison.Ordinal)
+            .Replace("facts.TryGet<", "Facts.TryGet<", StringComparison.Ordinal);
     }
 
     private static string Escape(string text)
