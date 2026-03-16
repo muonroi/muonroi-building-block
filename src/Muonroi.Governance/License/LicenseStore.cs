@@ -18,11 +18,17 @@ public sealed class LicenseStore(
             try
             {
                 string content = File.ReadAllText(path);
-                return jsonSerializeService.Deserialize<LicensePayload>(content);
+                LicensePayload? payload = jsonSerializeService.Deserialize<LicensePayload>(content);
+                // Skip if file is raw key format ({"LicenseKey":"MRR-..."}) — not a signed payload
+                if (payload != null && !string.IsNullOrWhiteSpace(payload.LicenseId))
+                {
+                    return payload;
+                }
             }
             catch { }
         }
 
+        // 2. Fallback to activation proof
         ActivationProof? proof = LoadActivationProof();
         return proof?.SignedLicensePayload;
     }
