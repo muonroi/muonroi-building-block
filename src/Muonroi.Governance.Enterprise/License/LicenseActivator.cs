@@ -122,6 +122,9 @@ public sealed class LicenseActivator(
             await SaveActivationJwtAsync(activationResponse.ActivationJwt);
         }
 
+        // 7. Download and save RSA public key for offline signature verification
+        await TryDownloadPublicKeyAsync(activationUrl, cancellationToken);
+
         logger?.Info(
             "[License] Activation successful - Org: {Organization} Tier: {Tier} ValidUntil: {ExpiresAt:yyyy-MM-dd} ProofPath: {ProofPath}",
             proof.OrganizationName,
@@ -181,6 +184,57 @@ public sealed class LicenseActivator(
     private string GetActivationJwtPath()
     {
         string configuredPath = configs.ActivationJwtPath ?? "licenses/activation_jwt.txt";
+
+        return Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.Combine(_basePath, configuredPath);
+    }
+
+    /// <summary>
+    /// Downloads the RSA public key from the License Server for offline signature verification.
+    /// </summary>
+    private async Task TryDownloadPublicKeyAsync(string activationUrl, CancellationToken cancellationToken)
+    {
+        try
+        {
+            string publicKeyUrl = $"{activationUrl.TrimEnd('/')}/api/v1/signing-key/public";
+            HttpClient client = httpClientFactory.CreateClient("LicenseServer");
+            HttpResponseMessage response = await client.GetAsync(publicKeyUrl, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                logger?.Warn("[License] Failed to download public key: {Status}", response.StatusCode);
+                return;
+            }
+
+            string publicKeyPem = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(publicKeyPem))
+            {
+                return;
+            }
+
+            string keyPath = GetPublicKeyPath();
+            string? directory = Path.GetDirectoryName(keyPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            await File.WriteAllTextAsync(keyPath, publicKeyPem, cancellationToken);
+            logger?.Info("[License] Public key saved to: {Path}", keyPath);
+        }
+        catch (Exception ex)
+        {
+            logger?.Warn("[License] Could not download public key (offline verification may fail): {Message}", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Gets the path where the signing public key should be saved.
+    /// </summary>
+    private string GetPublicKeyPath()
+    {
+        string configuredPath = configs.PublicKeyPath ?? "licenses/public_key.pem";
 
         return Path.IsPathRooted(configuredPath)
             ? configuredPath
