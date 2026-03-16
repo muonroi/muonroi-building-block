@@ -79,6 +79,7 @@ public static class EnterpriseGovernanceServiceExtensions
         }));
 
         services.TryAddSingleton<LicenseActivator>();
+        services.AddHostedService<LicenseActivationHostedService>();
         services.TryAddSingleton<AntiTamperDetector>();
         services.TryAddSingleton<CodeIntegrityVerifier>();
 
