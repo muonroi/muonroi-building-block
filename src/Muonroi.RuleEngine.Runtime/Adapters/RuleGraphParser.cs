@@ -11,7 +11,7 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 public sealed class RuleGraphParser(IMJsonSerializeService json)
 {
     private static readonly HashSet<string> ExecutableTypes =
-        new(["condition", "action", "decision-table", "sub-flow", "liquid"],
+        new(["condition", "action", "decision-table", "sub-flow", "liquid", "connector"],
             StringComparer.OrdinalIgnoreCase);
 
     public bool CanParse(string graphJson)
@@ -80,6 +80,32 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
                 ? data.ContractRef?.SourceCode
                 : null);
 
+        // Determine expression language: node-level > expression-level > default "feel"
+        string expressionLanguage = FirstNonEmpty(
+            node.ExpressionLanguage,
+            data.Expression?.ExpressionLanguage) ?? "feel";
+
+        // Determine FEEL vs JavaScript expression based on language
+        string? feelExpression = null;
+        string? jsExpression = null;
+        if (data.Expression is not null && !string.IsNullOrWhiteSpace(data.Expression.Body))
+        {
+            if (string.Equals(expressionLanguage, "javascript", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(data.Expression.Language, "javascript", StringComparison.OrdinalIgnoreCase))
+            {
+                jsExpression = data.Expression.Body;
+                expressionLanguage = "javascript";
+            }
+            else if (string.Equals(data.Expression.Language, "feel", StringComparison.OrdinalIgnoreCase))
+            {
+                feelExpression = data.Expression.Body;
+            }
+            else if (string.Equals(data.Expression.Language, "liquid", StringComparison.OrdinalIgnoreCase))
+            {
+                // Liquid is handled separately below
+            }
+        }
+
         return new RuleGraphEntry
         {
             NodeId   = node.Id,
@@ -88,9 +114,12 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
             Order    = data.Order ?? fallbackOrder,
             DependsOn = data.DependsOn ?? [],
 
-            // Type B-1: FEEL
-            FeelExpression = string.Equals(data.Expression?.Language, "feel", StringComparison.OrdinalIgnoreCase)
-                ? data.Expression!.Body : null,
+            // Expression language
+            ExpressionLanguage = expressionLanguage,
+
+            // Type B-1: FEEL/JavaScript condition
+            FeelExpression = feelExpression,
+            JavaScriptExpression = jsExpression,
             OutputFields = MapOutputFields(data.OutputFields),
 
             // Type B-2: Liquid
@@ -108,6 +137,19 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
             SubFlowCode    = subFlowCode,
             InputMappings  = MapInputMappings(data.SubFlowConfig?.InputMappings),
             OutputMappings = MapOutputMappings(data.SubFlowConfig?.OutputMappings),
+
+            // Type B-5: Connector
+            ConnectorType = data.ConnectorType,
+            ConnectorConfig = data.ConnectorConfig,
+            CredentialId = data.CredentialId,
+            ResilienceOptions = data.ConnectorResilience is not null ? new ConnectorResilienceOptions
+            {
+                RetryCount = data.ConnectorResilience.RetryCount,
+                RetryDelaySeconds = data.ConnectorResilience.RetryDelaySeconds,
+                TimeoutSeconds = data.ConnectorResilience.TimeoutSeconds,
+                CircuitBreakerThreshold = data.ConnectorResilience.CircuitBreakerThreshold,
+            } : null,
+
             IncomingEdges = incomingEdges,
             HasAlwaysEdge = hasAlwaysEdge,
             HasOnFalseEdge = hasOnFalseEdge,

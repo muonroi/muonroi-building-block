@@ -81,6 +81,16 @@ public sealed class TenantQuota
     public int MaxMessagesPerMinute { get; set; } = 500;
 
     /// <summary>
+    /// Gets or sets the maximum number of connectors allowed.
+    /// </summary>
+    public int MaxTotalConnectors { get; set; } = 2;
+
+    /// <summary>
+    /// Gets or sets the maximum number of connector executions per day.
+    /// </summary>
+    public int MaxConnectorExecutionsPerDay { get; set; } = 100;
+
+    /// <summary>
     /// Gets or sets the tenant tier.
     /// </summary>
     public TenantTier Tier { get; set; } = TenantTier.Free;
@@ -140,7 +150,9 @@ public static class TenantQuotaPresets
                 MaxWorkflowSizeKB = 50,
                 MaxExecutionTimeMs = 1000,
                 MaxMessagesPerDay = 1000,
-                MaxMessagesPerMinute = 50
+                MaxMessagesPerMinute = 50,
+                MaxTotalConnectors = 2,
+                MaxConnectorExecutionsPerDay = 100
             };
             return free;
         }
@@ -169,7 +181,9 @@ public static class TenantQuotaPresets
                 MaxWorkflowSizeKB = 200,
                 MaxExecutionTimeMs = 3000,
                 MaxMessagesPerDay = 10_000,
-                MaxMessagesPerMinute = 200
+                MaxMessagesPerMinute = 200,
+                MaxTotalConnectors = 10,
+                MaxConnectorExecutionsPerDay = 1000
             };
             return quota;
         }
@@ -198,7 +212,9 @@ public static class TenantQuotaPresets
                 MaxWorkflowSizeKB = 1000,
                 MaxExecutionTimeMs = 10_000,
                 MaxMessagesPerDay = 100_000,
-                MaxMessagesPerMinute = 1000
+                MaxMessagesPerMinute = 1000,
+                MaxTotalConnectors = 50,
+                MaxConnectorExecutionsPerDay = 10_000
             };
             return quota;
         }
@@ -227,7 +243,9 @@ public static class TenantQuotaPresets
                 MaxWorkflowSizeKB = int.MaxValue,
                 MaxExecutionTimeMs = 60_000,
                 MaxMessagesPerDay = int.MaxValue,
-                MaxMessagesPerMinute = int.MaxValue
+                MaxMessagesPerMinute = int.MaxValue,
+                MaxTotalConnectors = int.MaxValue,
+                MaxConnectorExecutionsPerDay = int.MaxValue
             };
             return quota;
         }

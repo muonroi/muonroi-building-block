@@ -14,8 +14,12 @@ public sealed class RuleGraphEntry
     public int Order { get; init; }
     public string[] DependsOn { get; init; } = [];
 
-    // Type B-1: FEEL condition
+    // Expression language: "feel" (default), "javascript"
+    public string ExpressionLanguage { get; init; } = "feel";
+
+    // Type B-1: FEEL/JavaScript condition
     public string? FeelExpression { get; init; }
+    public string? JavaScriptExpression { get; init; }
     public IReadOnlyList<FeelOutputField> OutputFields { get; init; } = [];
 
     // Type B-2: Liquid action
@@ -32,6 +36,12 @@ public sealed class RuleGraphEntry
     public string? SubFlowCode { get; init; }
     public IReadOnlyList<SubFlowInputMapping> InputMappings { get; init; } = [];
     public IReadOnlyList<SubFlowOutputMapping> OutputMappings { get; init; } = [];
+
+    // Type B-5: Connector
+    public string? ConnectorType { get; init; }
+    public System.Text.Json.JsonElement? ConnectorConfig { get; init; }
+    public string? CredentialId { get; init; }
+    public ConnectorResilienceOptions? ResilienceOptions { get; init; }
 
     // Graph routing metadata
     public IReadOnlyList<RuleGraphIncomingEdge> IncomingEdges { get; init; } = [];
@@ -64,6 +74,15 @@ public sealed class SubFlowOutputMapping
     public string ChildPath { get; init; } = string.Empty;   // child output fact key
     public string ParentPath { get; init; } = string.Empty;  // parent fact key to write
     public bool ExposeToParent { get; init; } = true;
+}
+
+/// <summary>Resilience options for connector execution.</summary>
+public sealed class ConnectorResilienceOptions
+{
+    public int RetryCount { get; init; } = 3;
+    public int RetryDelaySeconds { get; init; } = 1;
+    public int TimeoutSeconds { get; init; } = 30;
+    public double CircuitBreakerThreshold { get; init; } = 0.5;
 }
 
 public sealed class RuleGraphIncomingEdge

@@ -22,4 +22,6 @@ public class MTenantQuota : MEntity
     public int MaxRuleComplexity { get; set; }
     public int MaxWorkflowSizeKB { get; set; }
     public int MaxExecutionTimeMs { get; set; }
+    public int MaxTotalConnectors { get; set; }
+    public int MaxConnectorExecutionsPerDay { get; set; }
 }
