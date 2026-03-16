@@ -116,6 +116,12 @@ public sealed class LicenseActivator(
         ActivationProof proof = activationResponse.Proof;
         await SaveActivationProofAsync(proof);
 
+        // 6. Save activation JWT for frontend license verification
+        if (!string.IsNullOrEmpty(activationResponse.ActivationJwt))
+        {
+            await SaveActivationJwtAsync(activationResponse.ActivationJwt);
+        }
+
         logger?.Info(
             "[License] Activation successful - Org: {Organization} Tier: {Tier} ValidUntil: {ExpiresAt:yyyy-MM-dd} ProofPath: {ProofPath}",
             proof.OrganizationName,
@@ -149,6 +155,36 @@ public sealed class LicenseActivator(
         await File.WriteAllTextAsync(proofPath, json);
 
         logger?.Debug("[License] Activation proof saved to: {Path}", proofPath);
+    }
+
+    /// <summary>
+    /// Saves the activation JWT to disk for frontend license verification.
+    /// </summary>
+    private async Task SaveActivationJwtAsync(string jwt)
+    {
+        string jwtPath = GetActivationJwtPath();
+        string? directory = Path.GetDirectoryName(jwtPath);
+
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        await File.WriteAllTextAsync(jwtPath, jwt);
+
+        logger?.Debug("[License] Activation JWT saved to: {Path}", jwtPath);
+    }
+
+    /// <summary>
+    /// Gets the path where activation JWT should be saved.
+    /// </summary>
+    private string GetActivationJwtPath()
+    {
+        string configuredPath = configs.ActivationJwtPath ?? "licenses/activation_jwt.txt";
+
+        return Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.Combine(_basePath, configuredPath);
     }
 
     /// <summary>

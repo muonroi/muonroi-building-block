@@ -86,5 +86,11 @@ public sealed class ActivationResponse
 
     public string? ActivationProof { get; set; }
 
+    /// <summary>
+    /// RS256 JWT for frontend license verification (MLicenseVerifier).
+    /// Contains claims: tier, features, license_id, organization_name, exp.
+    /// </summary>
+    public string? ActivationJwt { get; set; }
+
     public string? Message { get; set; }
 }

@@ -233,23 +233,26 @@
 | License/ILicenseGuard.cs | `ILicenseGuard` | `Tier`, `EnsureValid()`, `HasFeature()`, `EnsureFeature()` |
 | License/LicensePayload.cs | `LicensePayload` | JWT claims: tier, features, expiry, seats |
 | License/LicenseEnums.cs | `LicenseTier` enum | Free=0, Licensed=1, Enterprise=2 |
-| License/ActivationProof.cs | `ActivationProof` | RSA-signed offline proof |
+| License/ActivationProof.cs | `ActivationProof` | RSA-signed offline proof. `ActivationResponse` includes `ActivationJwt` property |
 | License/ILicenseGuardEnhancer.cs | `ILicenseGuardEnhancer` | Extended guard logic |
+| License/ILicenseStore.cs | `ILicenseStore` | `LoadActivationProof()`, `SaveActivationProof()`, `LoadActivationJwt()`, `SaveActivationJwt(string jwt)` |
 | License/ILicenseFingerprintProvider.cs | `ILicenseFingerprintProvider` | Device fingerprint |
 | License/IFingerprintChainStore.cs | `IFingerprintChainStore` | Chain persistence |
-| License/LicenseConfigs.cs | `LicenseConfigs` | Mode (Offline/Online), FilePath, PublicKeyPath |
+| License/LicenseConfigs.cs | `LicenseConfigs` | Mode (Offline/Online), FilePath, PublicKeyPath, `ActivationJwtPath` (default: "licenses/activation_jwt.txt") |
 
 ### Governance.Enterprise (`src/Muonroi.Governance.Enterprise/`)
 
 | File | Class | Notes |
 |------|-------|-------|
-| License/AntiTamperDetector.cs | `AntiTamperDetector` | **BUG**: 64-bit disables checking |
-| License/EnterpriseLicenseGuardEnhancer.cs | `EnterpriseLicenseGuardEnhancer` | **BUG**: uses static TenantContext |
-| License/LicenseActivator.cs | `LicenseActivator` | **BUG**: 5 IMLog violations |
+| License/AntiTamperDetector.cs | `AntiTamperDetector` | x64 CONTEXT64 support, DR0-DR3 hardware breakpoint detection |
+| License/EnterpriseLicenseGuardEnhancer.cs | `EnterpriseLicenseGuardEnhancer` | Uses `ISystemExecutionContextAccessor` for tenant resolution |
+| License/LicenseActivator.cs | `LicenseActivator` | Saves JWT from activation response via `SaveActivationJwtAsync()`, `GetActivationJwtPath()` |
+| License/LicenseStore.cs | `LicenseStore` | Implements `ILicenseStore` — `LoadActivationJwt()`, `SaveActivationJwt(string jwt)` |
 | License/CodeIntegrityVerifier.cs | `CodeIntegrityVerifier` | Assembly checksum |
 | License/FingerprintProvider.cs | `FingerprintProvider` | Hardware fingerprint |
 | License/LicenseHeartbeatService.cs | `LicenseHeartbeatService` | Heartbeat keep-alive |
 | License/HmacFingerprintSigner.cs | `HmacFingerprintSigner` | HMAC chain signing |
+| Endpoints/LicenseInfoEndpointExtensions.cs | Extension | `app.MapMuonroiLicenseInfoEndpoint()` → `GET /api/v1/license/info` returning tier + JWT for frontend |
 | ControlPlane/EnterpriseControlPlaneService.cs | Service | Approval + canary workflow |
 | Compliance/MComplianceExportService.cs | Service | Compliance export |
 

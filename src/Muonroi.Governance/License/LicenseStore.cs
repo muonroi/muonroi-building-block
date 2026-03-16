@@ -84,6 +84,41 @@ public sealed class LicenseStore(
         File.WriteAllText(path, json);
     }
 
+    public string? LoadActivationJwt()
+    {
+        string? jwtPath = ResolvePath(configs.ActivationJwtPath, environment);
+        if (string.IsNullOrWhiteSpace(jwtPath) || !File.Exists(jwtPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            return File.ReadAllText(jwtPath).Trim();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public void SaveActivationJwt(string jwt)
+    {
+        string? path = ResolvePath(configs.ActivationJwtPath, environment);
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        string? directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        File.WriteAllText(path, jwt);
+    }
+
     private static string? ResolvePath(string? path, IHostEnvironment? environment)
     {
         if (string.IsNullOrWhiteSpace(path))

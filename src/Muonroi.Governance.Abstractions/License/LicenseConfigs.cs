@@ -20,6 +20,13 @@ public sealed class LicenseConfigs
     public string? ActivationProofPath { get; set; } = "licenses/activation_proof.json";
 
     /// <summary>
+    /// Path to the activation JWT file for frontend license verification (MLicenseVerifier).
+    /// Default: "licenses/activation_jwt.txt"
+    /// This file is automatically created during online activation when the server provides a JWT.
+    /// </summary>
+    public string? ActivationJwtPath { get; set; } = "licenses/activation_jwt.txt";
+
+    /// <summary>
     /// If true, attempt online activation when activation proof is not found.
     /// Default: true for better developer experience.
     /// Set to false in production if you want to require pre-activation.
