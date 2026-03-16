@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 
@@ -9,9 +10,11 @@ public sealed class LicenseHeartbeatService(
     LicenseConfigs configs,
     LicenseState state,
     LicenseRuntimeStatus runtimeStatus,
-    ILicenseStore? licenseStore = null,
+    IHostEnvironment? hostEnvironment = null,
     IMLog<LicenseHeartbeatService>? logger = null) : BackgroundService
 {
+    private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (configs.Mode != LicenseMode.Online ||
@@ -24,6 +27,13 @@ public sealed class LicenseHeartbeatService(
         }
 
         runtimeStatus.InitializeFromProof(state.ActivationProof);
+
+        // Load persisted nonce from heartbeat state file (separate from signed proof)
+        string? persistedNonce = LoadHeartbeatNonce();
+        if (!string.IsNullOrWhiteSpace(persistedNonce))
+        {
+            runtimeStatus.UpdateHeartbeatSuccess(persistedNonce, DateTimeOffset.UtcNow);
+        }
 
         TimeSpan interval = TimeSpan.FromMinutes(
             configs.Online.HeartbeatIntervalMinutes > 0
@@ -95,21 +105,51 @@ public sealed class LicenseHeartbeatService(
         }
 
         runtimeStatus.UpdateHeartbeatSuccess(response.NewNonce, response.CheckedAtUtc);
-
-        // Persist new nonce to proof file so restarts use the latest nonce
-        if (!string.IsNullOrWhiteSpace(response.NewNonce) && licenseStore != null)
-        {
-            try
-            {
-                proof.HeartbeatNonce = response.NewNonce;
-                licenseStore.SaveActivationProof(proof);
-            }
-            catch (Exception ex)
-            {
-                logger?.Warn("[License] Failed to persist heartbeat nonce: {Message}", ex.Message);
-            }
-        }
-
+        SaveHeartbeatNonce(response.NewNonce);
         logger?.Info("[License] Heartbeat ok at {CheckedAtUtc}.", response.CheckedAtUtc);
+    }
+
+    private string GetHeartbeatStatePath()
+    {
+        string root = !string.IsNullOrWhiteSpace(hostEnvironment?.ContentRootPath)
+            ? hostEnvironment.ContentRootPath
+            : AppContext.BaseDirectory;
+        return Path.Combine(root, "licenses", "heartbeat_state.json");
+    }
+
+    private string? LoadHeartbeatNonce()
+    {
+        try
+        {
+            string path = GetHeartbeatStatePath();
+            if (!File.Exists(path)) return null;
+            string json = File.ReadAllText(path);
+            using JsonDocument doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("nonce", out JsonElement el) ? el.GetString() : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void SaveHeartbeatNonce(string? nonce)
+    {
+        if (string.IsNullOrWhiteSpace(nonce)) return;
+        try
+        {
+            string path = GetHeartbeatStatePath();
+            string? dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            // MBB002-exempt: heartbeat state is internal runtime data, not domain serialization
+            string json = JsonSerializer.Serialize(new { nonce, updatedAt = DateTimeOffset.UtcNow }, _jsonOptions);
+            File.WriteAllText(path, json);
+        }
+        catch (Exception ex)
+        {
+            logger?.Warn("[License] Failed to persist heartbeat nonce: {Message}", ex.Message);
+        }
     }
 }
