@@ -9,6 +9,7 @@ public sealed class LicenseHeartbeatService(
     LicenseConfigs configs,
     LicenseState state,
     LicenseRuntimeStatus runtimeStatus,
+    ILicenseStore? licenseStore = null,
     IMLog<LicenseHeartbeatService>? logger = null) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -94,6 +95,21 @@ public sealed class LicenseHeartbeatService(
         }
 
         runtimeStatus.UpdateHeartbeatSuccess(response.NewNonce, response.CheckedAtUtc);
+
+        // Persist new nonce to proof file so restarts use the latest nonce
+        if (!string.IsNullOrWhiteSpace(response.NewNonce) && licenseStore != null)
+        {
+            try
+            {
+                proof.HeartbeatNonce = response.NewNonce;
+                licenseStore.SaveActivationProof(proof);
+            }
+            catch (Exception ex)
+            {
+                logger?.Warn("[License] Failed to persist heartbeat nonce: {Message}", ex.Message);
+            }
+        }
+
         logger?.Info("[License] Heartbeat ok at {CheckedAtUtc}.", response.CheckedAtUtc);
     }
 }
