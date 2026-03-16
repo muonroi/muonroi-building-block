@@ -18,6 +18,27 @@ internal sealed class ReflectionContextProjector<TContext>
             return new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         }
 
+        // Special case: if TContext is a dictionary, project entries instead of properties
+        if (context is IDictionary<string, object?> nullableDict)
+        {
+            return new Dictionary<string, object?>(nullableDict, StringComparer.OrdinalIgnoreCase);
+        }
+
+        if (context is IDictionary<string, object> dict)
+        {
+            Dictionary<string, object?> dictResult = new(dict.Count, StringComparer.OrdinalIgnoreCase);
+            foreach (KeyValuePair<string, object> kv in dict)
+            {
+                dictResult[kv.Key] = kv.Value;
+            }
+            return dictResult;
+        }
+
+        if (context is IReadOnlyDictionary<string, object?> roDict)
+        {
+            return new Dictionary<string, object?>(roDict, StringComparer.OrdinalIgnoreCase);
+        }
+
         PropertyInfo[] props = typeof(TContext).GetProperties(
             BindingFlags.Public | BindingFlags.Instance);
 
