@@ -40,6 +40,7 @@ public static class LicenseServiceCollectionExtensions
         services.TryAddSingleton<PolicyVerifier>();
 
         services.TryAddSingleton<LicenseStore>();
+        services.TryAddSingleton<ILicenseStore>(sp => sp.GetRequiredService<LicenseStore>());
         services.TryAddSingleton<LicenseVerifier>();
         services.TryAddSingleton<LicenseRuntimeStatus>();
         services.TryAddSingleton<ProofTierAccessor>();
