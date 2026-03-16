@@ -72,7 +72,7 @@ public sealed class LicenseActivator(
             ProductVersion = GetProductVersion(),
             ActivationTime = DateTimeOffset.UtcNow,
             Environment = GetEnvironmentName(),
-            AssemblyManifest = assemblyHashCollector.Collect()
+            AssemblyManifest = configs.SkipAssemblyWhitelist ? [] : assemblyHashCollector.Collect()
         };
 
         // 3. Send activation request to server

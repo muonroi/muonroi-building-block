@@ -127,6 +127,12 @@ public sealed class LicenseConfigs
     public bool SkipSignatureVerification { get; set; } = false;
 
     /// <summary>
+    /// Skip assembly whitelist verification during activation.
+    /// WARNING: Only set to true for development/testing. Never in production!
+    /// </summary>
+    public bool SkipAssemblyWhitelist { get; set; } = false;
+
+    /// <summary>
     /// TIER 3: Submit action chains to the license server for remote audit.
     /// </summary>
     public bool EnableServerValidation { get; set; } = false;
