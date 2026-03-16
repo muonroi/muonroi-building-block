@@ -349,6 +349,16 @@ public sealed class RuleDryRunService(
                 return new RuleSetMetadata(workflowName, IsLegacyWorkflow: true, RuleCodes: []);
             }
 
+            // Track 8: Flow-graph-only rulesets (no Rules[] array)
+            // Route through RunCodeAsync → RulesEngineService.DryRunAsync → flow graph executor
+            if (workflowElement.ValueKind == JsonValueKind.Object &&
+                (TryGetProperty(workflowElement, "flowGraph", out JsonElement fg) ||
+                 TryGetProperty(workflowElement, "FlowGraph", out fg)) &&
+                fg.ValueKind == JsonValueKind.Object)
+            {
+                return new RuleSetMetadata(workflowName, IsLegacyWorkflow: false, RuleCodes: []);
+            }
+
             return new RuleSetMetadata(workflowName, IsLegacyWorkflow: true, RuleCodes: []);
         }
         catch (JsonException)
