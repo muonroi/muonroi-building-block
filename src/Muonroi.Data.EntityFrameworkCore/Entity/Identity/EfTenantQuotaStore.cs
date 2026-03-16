@@ -50,6 +50,8 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
         entity.MaxRuleComplexity = quota.MaxRuleComplexity;
         entity.MaxWorkflowSizeKB = quota.MaxWorkflowSizeKB;
         entity.MaxExecutionTimeMs = quota.MaxExecutionTimeMs;
+        entity.MaxTotalConnectors = quota.MaxTotalConnectors;
+        entity.MaxConnectorExecutionsPerDay = quota.MaxConnectorExecutionsPerDay;
 
         await context.SaveChangesAsync(ct);
     }
@@ -161,7 +163,9 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
             MaxWorkflowExecutionsPerHour = entity.MaxWorkflowExecutionsPerHour,
             MaxRuleComplexity = entity.MaxRuleComplexity,
             MaxWorkflowSizeKB = entity.MaxWorkflowSizeKB,
-            MaxExecutionTimeMs = entity.MaxExecutionTimeMs
+            MaxExecutionTimeMs = entity.MaxExecutionTimeMs,
+            MaxTotalConnectors = entity.MaxTotalConnectors,
+            MaxConnectorExecutionsPerDay = entity.MaxConnectorExecutionsPerDay
         };
     }
 
@@ -205,7 +209,9 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
             [QuotaType.StorageUsageMB] = quota.MaxStorageMB,
             [QuotaType.TotalRules] = quota.MaxRulesPerTenant,
             [QuotaType.TotalDecisionTables] = quota.MaxDecisionTables,
-            [QuotaType.TotalWorkflows] = quota.MaxJsonWorkflows
+            [QuotaType.TotalWorkflows] = quota.MaxJsonWorkflows,
+            [QuotaType.TotalConnectors] = quota.MaxTotalConnectors,
+            [QuotaType.ConnectorExecutionsPerDay] = quota.MaxConnectorExecutionsPerDay
         };
     }
 }

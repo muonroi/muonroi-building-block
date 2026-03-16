@@ -80,7 +80,9 @@ public sealed class InMemoryTenantQuotaStore(IMDateTimeService dateTimeService, 
             [QuotaType.StorageUsageMB] = quota.MaxStorageMB,
             [QuotaType.TotalRules] = quota.MaxRulesPerTenant,
             [QuotaType.TotalDecisionTables] = quota.MaxDecisionTables,
-            [QuotaType.TotalWorkflows] = quota.MaxJsonWorkflows
+            [QuotaType.TotalWorkflows] = quota.MaxJsonWorkflows,
+            [QuotaType.TotalConnectors] = quota.MaxTotalConnectors,
+            [QuotaType.ConnectorExecutionsPerDay] = quota.MaxConnectorExecutionsPerDay
         };
         return ints;
     }

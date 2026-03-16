@@ -26,5 +26,9 @@ public enum QuotaType
     /// <summary>Maximum number of messages processed per day.</summary>
     MessagesPerDay,
     /// <summary>Maximum number of messages processed per minute.</summary>
-    MessagesPerMinute
+    MessagesPerMinute,
+    /// <summary>Total number of connectors allowed.</summary>
+    TotalConnectors,
+    /// <summary>Maximum number of connector executions per day.</summary>
+    ConnectorExecutionsPerDay
 }

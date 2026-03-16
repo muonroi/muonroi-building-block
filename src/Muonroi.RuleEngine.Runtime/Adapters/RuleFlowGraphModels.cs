@@ -35,6 +35,9 @@ internal sealed class RuleFlowNode
     [JsonPropertyName("ruleCode")]
     public string? RuleCode { get; init; }
 
+    [JsonPropertyName("expressionLanguage")]
+    public string? ExpressionLanguage { get; init; }
+
     [JsonPropertyName("data")]
     public RuleFlowNodeData Data { get; init; } = new();
 }
@@ -76,6 +79,18 @@ internal sealed class RuleFlowNodeData
 
     [JsonPropertyName("outputFields")]
     public List<RuleFlowFeelOutputField> OutputFields { get; init; } = [];
+
+    [JsonPropertyName("connectorType")]
+    public string? ConnectorType { get; init; }
+
+    [JsonPropertyName("connectorConfig")]
+    public System.Text.Json.JsonElement? ConnectorConfig { get; init; }
+
+    [JsonPropertyName("credentialId")]
+    public string? CredentialId { get; init; }
+
+    [JsonPropertyName("connectorResilience")]
+    public RuleFlowConnectorResilience? ConnectorResilience { get; init; }
 }
 
 internal sealed class RuleFlowContractReference
@@ -94,6 +109,24 @@ internal sealed class RuleFlowExpression
 
     [JsonPropertyName("body")]
     public string Body { get; init; } = string.Empty;
+
+    [JsonPropertyName("expressionLanguage")]
+    public string? ExpressionLanguage { get; init; }
+}
+
+internal sealed class RuleFlowConnectorResilience
+{
+    [JsonPropertyName("retryCount")]
+    public int RetryCount { get; init; } = 3;
+
+    [JsonPropertyName("retryDelaySeconds")]
+    public int RetryDelaySeconds { get; init; } = 1;
+
+    [JsonPropertyName("timeoutSeconds")]
+    public int TimeoutSeconds { get; init; } = 30;
+
+    [JsonPropertyName("circuitBreakerThreshold")]
+    public double CircuitBreakerThreshold { get; init; } = 0.5;
 }
 
 internal sealed class RuleFlowLiquidConfig

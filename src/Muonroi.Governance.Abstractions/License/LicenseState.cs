@@ -104,6 +104,8 @@ public static class FreeTierFeatures
         public const string DistributedCache = "distributed-cache";
         public const string AuditTrail = "audit-trail";
         public const string AntiTampering = "anti-tampering";
+        public const string Connectors = "connectors";
+        public const string JavaScriptExpressions = "js-expressions";
     }
 
     public static bool IsAllowed(string featureName)

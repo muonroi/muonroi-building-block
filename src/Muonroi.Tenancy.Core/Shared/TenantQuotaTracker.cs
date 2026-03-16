@@ -96,6 +96,8 @@ public sealed class TenantQuotaTracker(
             QuotaType.TotalRules => quota.MaxRulesPerTenant,
             QuotaType.TotalDecisionTables => quota.MaxDecisionTables,
             QuotaType.TotalWorkflows => quota.MaxJsonWorkflows,
+            QuotaType.TotalConnectors => quota.MaxTotalConnectors,
+            QuotaType.ConnectorExecutionsPerDay => quota.MaxConnectorExecutionsPerDay,
             _ => int.MaxValue
         };
     }

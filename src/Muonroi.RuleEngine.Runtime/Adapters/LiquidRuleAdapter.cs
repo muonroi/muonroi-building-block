@@ -1,18 +1,21 @@
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Adapters;
+using Scriban;
+using Scriban.Runtime;
 
 namespace Muonroi.RuleEngine.Runtime.Adapters;
 
 /// <summary>
-/// Renders a Liquid template as an <see cref="IRule{TContext}"/> action.
+/// Renders a Scriban/Liquid template as an <see cref="IRule{TContext}"/> action.
 /// Always evaluates to <see cref="RuleResult.Passed()"/> on successful render;
 /// <see cref="RuleResult.Failure(string[])"/> if rendering throws.
 /// Rendered output is written to <see cref="FactBag"/> under <c>LiquidOutputKey</c>.
 /// </summary>
 /// <remarks>
-/// Phase A: simple {{ key }} token replacement (no external Liquid engine dependency).
-/// Phase B upgrade path: replace <c>RenderAsync</c> with Fluid engine for full Liquid syntax.
+/// Upgraded from Phase A (simple {{ key }} replacement) to Scriban engine.
+/// Scriban is Liquid-compatible — existing {{ key }} templates continue working.
+/// Supports full control flow (if/else, for), filters, nested access, and async rendering.
 /// </remarks>
 /// <typeparam name="TContext">The rule execution context type.</typeparam>
 public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
@@ -24,6 +27,8 @@ public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
     private readonly IContextProjector<TContext> _projector;
     private readonly IMJsonSerializeService _json;
     private readonly IMLog<LiquidRuleAdapter<TContext>> _log;
+    private readonly IEnumerable<IScribanFunctionProvider>? _functionProviders;
+    private Template? _parsedTemplate;
 
     public string Code => _code;
     public int Order { get; init; }
@@ -40,7 +45,8 @@ public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
         string outputKey,
         IContextProjector<TContext> projector,
         IMJsonSerializeService json,
-        IMLog<LiquidRuleAdapter<TContext>> log)
+        IMLog<LiquidRuleAdapter<TContext>> log,
+        IEnumerable<IScribanFunctionProvider>? functionProviders = null)
     {
         _code         = code;
         _template     = template;
@@ -49,6 +55,7 @@ public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
         _projector    = projector;
         _json         = json;
         _log          = log;
+        _functionProviders = functionProviders;
     }
 
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)
@@ -81,25 +88,39 @@ public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
     public Task ExecuteAsync(TContext context, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
 
-    private static Task<string> RenderAsync(
+    private async Task<string> RenderAsync(
         string template,
         IDictionary<string, object?> variables,
         CancellationToken ct)
     {
-        _ = ct;
-        // Phase A: simple {{ key }} token replacement
-        // Phase B: upgrade to Fluid (Fluid.Core NuGet) for {% if %}, {% for %}, filters
-        string result = template;
-        foreach (KeyValuePair<string, object?> kv in variables)
+        _parsedTemplate ??= Template.Parse(template);
+
+        if (_parsedTemplate.HasErrors)
         {
-            string placeholder1 = "{{ " + kv.Key + " }}";
-            string placeholder2 = "{{" + kv.Key + "}}";
-            string replacement  = kv.Value?.ToString() ?? string.Empty;
-            result = result.Replace(placeholder1, replacement, StringComparison.Ordinal);
-            result = result.Replace(placeholder2, replacement, StringComparison.Ordinal);
+            string errors = string.Join("; ", _parsedTemplate.Messages);
+            throw new InvalidOperationException($"Scriban parse error: {errors}");
         }
 
-        return Task.FromResult(result);
+        ScribanFactBagScriptObject scriptObject = new(variables);
+
+        // Register custom function providers
+        if (_functionProviders is not null)
+        {
+            foreach (IScribanFunctionProvider provider in _functionProviders)
+            {
+                provider.Register(scriptObject);
+            }
+        }
+
+        TemplateContext context = new()
+        {
+            StrictVariables = false,
+            MemberRenamer = member => member.Name,  // Preserve original casing
+        };
+        context.PushGlobal(scriptObject);
+
+        string result = await _parsedTemplate.RenderAsync(context);
+        return result;
     }
 
     private Dictionary<string, object?> BuildVariables(TContext ctx, FactBag facts)

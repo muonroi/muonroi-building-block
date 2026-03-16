@@ -950,7 +950,28 @@ public sealed class RulesEngineService(
 
         IContextProjector<TContext> projector = GetProjector<TContext>();
 
-        // Type B-1: FEEL condition
+        // Type B-1a: JavaScript condition
+        if (!string.IsNullOrEmpty(entry.JavaScriptExpression))
+        {
+            IMLog<JavaScriptRuleAdapter<TContext>>? jsLog =
+                _serviceProvider?.GetService<IMLog<JavaScriptRuleAdapter<TContext>>>();
+            if (jsLog is null)
+            {
+                return null;
+            }
+
+            _log?.Info("Resolved node '{NodeId}' as JavaScript adapter.", entry.NodeId);
+            return WrapRuleEntry(
+                new JavaScriptRuleAdapter<TContext>(
+                    entry.NodeId,
+                    entry.JavaScriptExpression,
+                    entry.OutputFields,
+                    projector,
+                    jsLog),
+                entry);
+        }
+
+        // Type B-1b: FEEL condition
         if (!string.IsNullOrEmpty(entry.FeelExpression))
         {
             IMLog<FeelRuleAdapter<TContext>>? feelLog =
@@ -971,7 +992,7 @@ public sealed class RulesEngineService(
                 entry);
         }
 
-        // Type B-2: Liquid action
+        // Type B-2: Liquid/Scriban action
         if (!string.IsNullOrEmpty(entry.LiquidTemplate))
         {
             IMLog<LiquidRuleAdapter<TContext>>? liquidLog =
@@ -984,7 +1005,10 @@ public sealed class RulesEngineService(
                 return null;
             }
 
-            _log?.Info("Resolved node '{NodeId}' as Liquid adapter.", entry.NodeId);
+            IEnumerable<IScribanFunctionProvider>? functionProviders =
+                _serviceProvider?.GetServices<IScribanFunctionProvider>();
+
+            _log?.Info("Resolved node '{NodeId}' as Liquid/Scriban adapter.", entry.NodeId);
             return WrapRuleEntry(
                 new LiquidRuleAdapter<TContext>(
                     entry.NodeId,
@@ -993,7 +1017,8 @@ public sealed class RulesEngineService(
                     entry.LiquidOutputKey ?? "liquidOutput",
                     projector,
                     jsonSvc,
-                    liquidLog),
+                    liquidLog,
+                    functionProviders),
                 entry);
         }
 
@@ -1047,6 +1072,35 @@ public sealed class RulesEngineService(
                 subLog) is { } subFlowRule
                 ? WrapRuleEntry(subFlowRule, entry)
                 : null;
+        }
+
+        // Type B-5: Connector
+        if (!string.IsNullOrEmpty(entry.ConnectorType) && _serviceProvider is not null)
+        {
+            Muonroi.Integration.Abstractions.IConnectorRegistry? registry =
+                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorRegistry>();
+            Muonroi.Integration.Abstractions.IConnectorCredentialStore? credStore =
+                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorCredentialStore>();
+            IMLog<ConnectorRuleAdapter<TContext>>? connLog =
+                _serviceProvider.GetService<IMLog<ConnectorRuleAdapter<TContext>>>();
+
+            if (registry is not null && connLog is not null)
+            {
+                string? tenantId = _executionContext?.Get()?.TenantId;
+                _log?.Info("Resolved node '{NodeId}' as Connector adapter (type: {ConnectorType}).", entry.NodeId, entry.ConnectorType);
+                return WrapRuleEntry(
+                    new ConnectorRuleAdapter<TContext>(
+                        entry.NodeId,
+                        entry.ConnectorType,
+                        entry.ConnectorConfig,
+                        entry.CredentialId,
+                        registry,
+                        credStore,
+                        projector,
+                        connLog,
+                        tenantId),
+                    entry);
+            }
         }
 
         // Skip trigger/end/unknown nodes
@@ -1144,7 +1198,24 @@ public sealed class RulesEngineService(
 
         IContextProjector<FactBagRuleContext> projector = GetProjector<FactBagRuleContext>();
 
-        // Type B-1: FEEL condition
+        // Type B-1a: JavaScript condition
+        if (!string.IsNullOrEmpty(entry.JavaScriptExpression))
+        {
+            IMLog<JavaScriptRuleAdapter<FactBagRuleContext>>? log =
+                _serviceProvider?.GetService<IMLog<JavaScriptRuleAdapter<FactBagRuleContext>>>();
+            if (log is null) return null;
+            _log?.Info("Resolved node '{NodeId}' as JavaScript adapter inside sub-flow.", entry.NodeId);
+            return WrapRuleEntry(
+                new JavaScriptRuleAdapter<FactBagRuleContext>(
+                    entry.NodeId,
+                    entry.JavaScriptExpression,
+                    entry.OutputFields,
+                    projector,
+                    log),
+                entry);
+        }
+
+        // Type B-1b: FEEL condition
         if (!string.IsNullOrEmpty(entry.FeelExpression))
         {
             IMLog<FeelRuleAdapter<FactBagRuleContext>>? log =
@@ -1161,7 +1232,7 @@ public sealed class RulesEngineService(
                 entry);
         }
 
-        // Type B-2: Liquid action
+        // Type B-2: Liquid/Scriban action
         if (!string.IsNullOrEmpty(entry.LiquidTemplate))
         {
             IMLog<LiquidRuleAdapter<FactBagRuleContext>>? log =
@@ -1170,7 +1241,11 @@ public sealed class RulesEngineService(
                 _serviceProvider?.GetService<IMJsonSerializeService>()
                 ?? new Muonroi.Core.Abstractions.SeedWorks.MJsonSerializeService();
             if (log is null) return null;
-            _log?.Info("Resolved node '{NodeId}' as Liquid adapter inside sub-flow.", entry.NodeId);
+
+            IEnumerable<IScribanFunctionProvider>? functionProviders =
+                _serviceProvider?.GetServices<IScribanFunctionProvider>();
+
+            _log?.Info("Resolved node '{NodeId}' as Liquid/Scriban adapter inside sub-flow.", entry.NodeId);
             return WrapRuleEntry(
                 new LiquidRuleAdapter<FactBagRuleContext>(
                     entry.NodeId,
@@ -1179,7 +1254,8 @@ public sealed class RulesEngineService(
                     entry.LiquidOutputKey ?? "liquidOutput",
                     projector,
                     jsonSvc,
-                    log),
+                    log,
+                    functionProviders),
                 entry);
         }
 
@@ -1224,6 +1300,35 @@ public sealed class RulesEngineService(
                 log) is { } subFlowRule
                 ? WrapRuleEntry(subFlowRule, entry)
                 : null;
+        }
+
+        // Type B-5: Connector
+        if (!string.IsNullOrEmpty(entry.ConnectorType) && _serviceProvider is not null)
+        {
+            Muonroi.Integration.Abstractions.IConnectorRegistry? registry =
+                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorRegistry>();
+            Muonroi.Integration.Abstractions.IConnectorCredentialStore? credStore =
+                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorCredentialStore>();
+            IMLog<ConnectorRuleAdapter<FactBagRuleContext>>? log =
+                _serviceProvider.GetService<IMLog<ConnectorRuleAdapter<FactBagRuleContext>>>();
+
+            if (registry is not null && log is not null)
+            {
+                string? tenantId = _executionContext?.Get()?.TenantId;
+                _log?.Info("Resolved node '{NodeId}' as Connector adapter inside sub-flow.", entry.NodeId);
+                return WrapRuleEntry(
+                    new ConnectorRuleAdapter<FactBagRuleContext>(
+                        entry.NodeId,
+                        entry.ConnectorType,
+                        entry.ConnectorConfig,
+                        entry.CredentialId,
+                        registry,
+                        credStore,
+                        projector,
+                        log,
+                        tenantId),
+                    entry);
+            }
         }
 
         return null;
