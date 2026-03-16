@@ -27,9 +27,12 @@ public sealed class LicenseActivator(
     LicenseConfigs configs,
     IMJsonSerializeService jsonSerializeService,
     IAssemblyHashCollector assemblyHashCollector,
+    IHostEnvironment? hostEnvironment = null,
     IMLog<LicenseActivator>? logger = null)
 {
-    private readonly string _basePath = AppDomain.CurrentDomain.BaseDirectory;
+    private readonly string _basePath = !string.IsNullOrWhiteSpace(hostEnvironment?.ContentRootPath)
+        ? hostEnvironment.ContentRootPath
+        : AppDomain.CurrentDomain.BaseDirectory;
 
     /// <summary>
     /// Attempts to activate the license online and save the activation proof.
