@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Muonroi.UiEngine.Catalog.Controllers;
@@ -7,10 +6,8 @@ namespace Muonroi.UiEngine.Catalog.Controllers;
 /// Exposes connector catalog for the flow designer UI.
 /// Route: /api/v1/ui-engine/connectors/catalog
 /// Separate route base from MRuleCatalogCompatController to avoid {code} template conflict.
-/// AllowAnonymous: connector catalog is discovery metadata, not tenant-scoped data.
 /// </summary>
 [ApiController]
-[AllowAnonymous]
 [Route("api/v1/ui-engine/connectors")]
 public class MConnectorCatalogController : ControllerBase
 {
