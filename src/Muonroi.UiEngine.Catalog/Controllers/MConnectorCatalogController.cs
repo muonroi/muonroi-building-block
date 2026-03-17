@@ -1,49 +1,45 @@
 using Microsoft.AspNetCore.Mvc;
-using Muonroi.Integration.Abstractions;
 
 namespace Muonroi.UiEngine.Catalog.Controllers;
 
 /// <summary>
 /// Exposes connector catalog for the flow designer UI.
-/// Registered alongside <see cref="MRuleCatalogCompatController"/> via AddUiEngineCatalog().
+/// Route: /api/v1/ui-engine/connectors/catalog
+/// Separate route base from MRuleCatalogCompatController to avoid {code} template conflict.
 /// </summary>
 [ApiController]
-[Route("api/v1/ui-engine/catalog")]
+[Route("api/v1/ui-engine/connectors")]
 public class MConnectorCatalogController : ControllerBase
 {
-    private readonly IConnectorRegistry? _registry;
+    private readonly IServiceProvider _serviceProvider;
 
-    /// <summary>
-    /// Constructor. IConnectorRegistry is optional — if not registered, returns empty catalog.
-    /// </summary>
     public MConnectorCatalogController(IServiceProvider serviceProvider)
     {
-        _registry = serviceProvider.GetService(typeof(IConnectorRegistry)) as IConnectorRegistry;
+        _serviceProvider = serviceProvider;
     }
 
     /// <summary>
     /// List available connector types for the flow designer Connector Type dropdown.
     /// </summary>
-    [HttpGet("connectors")]
+    [HttpGet("catalog")]
     public IActionResult ListConnectorCatalog()
     {
-        if (_registry is null)
+        // Resolve IConnectorRegistry optionally — not all consumer apps register connectors
+        Type? registryType = typeof(Muonroi.Integration.Abstractions.IConnectorRegistry);
+        object? registry = _serviceProvider.GetService(registryType);
+
+        if (registry is null)
         {
             return Ok(Array.Empty<object>());
         }
 
-        IReadOnlyList<ConnectorMetadata> available = _registry.ListAvailable();
-
-        var catalog = available.Select(m => new
+        var listMethod = registryType.GetMethod("ListAvailable");
+        if (listMethod is null)
         {
-            m.Type,
-            m.DisplayName,
-            m.Category,
-            m.Description,
-            m.RequiresCredentials,
-            m.IconSvg
-        });
+            return Ok(Array.Empty<object>());
+        }
 
-        return Ok(catalog);
+        object? result = listMethod.Invoke(registry, null);
+        return Ok(result);
     }
 }
