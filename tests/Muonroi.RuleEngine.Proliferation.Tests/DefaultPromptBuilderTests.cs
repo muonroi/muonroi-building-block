@@ -82,4 +82,48 @@ public class DefaultPromptBuilderTests
         prompt.Should().NotContain("Previous FactBag state:");
         prompt.Should().NotContain("Focus areas:");
     }
+
+    [Fact]
+    public void BuildUserPrompt_InjectsSchemaSection()
+    {
+        RuleSetSchema schema = new(
+            RuleSetKind.DecisionTable,
+            InputFields:
+            [
+                new FieldSchema("amount", "number", true, null),
+                new FieldSchema("currency", "string", true, "ISO 4217 code")
+            ],
+            OutputFields:
+            [
+                new FieldSchema("discount", "number", false, null)
+            ]);
+
+        string prompt = _builder.BuildUserPrompt("{}", null, null, 5, null, schema);
+
+        prompt.Should().Contain("## Input Field Schema");
+        prompt.Should().Contain("amount (number, required)");
+        prompt.Should().Contain("currency (string, required)");
+        prompt.Should().Contain("ISO 4217 code");
+        prompt.Should().Contain("MUST use exactly these field names");
+        prompt.Should().Contain("## Output Fields");
+        prompt.Should().Contain("discount (number)");
+    }
+
+    [Fact]
+    public void BuildUserPrompt_NoSchemaSection_WhenSchemaIsNull()
+    {
+        string prompt = _builder.BuildUserPrompt("{}", null, null, 5, null, null);
+
+        prompt.Should().NotContain("## Input Field Schema");
+        prompt.Should().NotContain("MUST use exactly these field names");
+    }
+
+    [Fact]
+    public void BuildUserPrompt_NoSchemaSection_WhenSchemaIsEmpty()
+    {
+        RuleSetSchema emptySchema = new(RuleSetKind.Unknown, [], []);
+        string prompt = _builder.BuildUserPrompt("{}", null, null, 5, null, emptySchema);
+
+        prompt.Should().NotContain("## Input Field Schema");
+    }
 }

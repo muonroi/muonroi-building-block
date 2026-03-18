@@ -42,26 +42,42 @@ public static class ProliferationServiceCollectionExtensions
         // Shared prompt builder
         services.TryAddSingleton<IPromptBuilder, DefaultPromptBuilder>();
 
-        // Brain provider factory — resolved by BrainProvider option
+        // Brain provider factory — single or composite
         services.TryAddSingleton<IRuleProliferationBrain>(sp =>
         {
             var opts = sp.GetRequiredService<ProliferationOptions>();
-            var prompt = sp.GetRequiredService<IPromptBuilder>();
+
+            // Composite brain: chain multiple providers
+            if (!string.IsNullOrWhiteSpace(opts.CompositeBrains))
+            {
+                string[] brainNames = opts.CompositeBrains.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (brainNames.Length > 1)
+                {
+                    List<IRuleProliferationBrain> brains = brainNames
+                        .Select(name => CreateBrain(sp, name))
+                        .ToList();
+
+                    CompositeMode mode = opts.CompositeMode.Equals("sequential", StringComparison.OrdinalIgnoreCase)
+                        ? CompositeMode.Sequential
+                        : CompositeMode.Parallel;
+
+                    var dedup = sp.GetService<IScenarioDeduplicator>();
+                    var logFactory = sp.GetService<IMLogFactory>();
+                    return new CompositeProliferationBrain(brains, mode, dedup,
+                        logFactory?.CreateLogger<CompositeProliferationBrain>());
+                }
+            }
+
+            return CreateBrain(sp, opts.BrainProvider);
+        });
+
+        // Vector embedder for semantic dedup
+        services.TryAddSingleton<IVectorEmbedder>(sp =>
+        {
+            var opts = sp.GetRequiredService<ProliferationOptions>();
             var factory = sp.GetRequiredService<IHttpClientFactory>();
             var logFactory = sp.GetService<IMLogFactory>();
-
-            return opts.BrainProvider?.ToLowerInvariant() switch
-            {
-                "openai" => new OpenAiProliferationBrain(
-                    factory, opts, prompt,
-                    logFactory?.CreateLogger<OpenAiProliferationBrain>()),
-                "claude" => new ClaudeProliferationBrain(
-                    factory, opts, prompt,
-                    logFactory?.CreateLogger<ClaudeProliferationBrain>()),
-                _ => new OllamaProliferationBrain(
-                    factory, opts, prompt,
-                    logFactory?.CreateLogger<OllamaProliferationBrain>())
-            };
+            return new OllamaEmbedder(factory, opts, logFactory?.CreateLogger<OllamaEmbedder>());
         });
 
         // Failure analyzer and deduplicator
@@ -73,12 +89,53 @@ public static class ProliferationServiceCollectionExtensions
             return new DefaultFailureAnalyzer(brainInstance, opts,
                 logFactory?.CreateLogger<DefaultFailureAnalyzer>());
         });
-        services.TryAddSingleton<IScenarioDeduplicator, InputHashDeduplicator>();
+
+        // Deduplicator: semantic (hash+vector) or hash-only
+        services.TryAddSingleton<InputHashDeduplicator>();
+        services.TryAddSingleton<IScenarioDeduplicator>(sp =>
+        {
+            var opts = sp.GetRequiredService<ProliferationOptions>();
+            var hashDedup = sp.GetRequiredService<InputHashDeduplicator>();
+
+            if (opts.EnableSemanticDedup)
+            {
+                var embedder = sp.GetRequiredService<IVectorEmbedder>();
+                var logFactory = sp.GetService<IMLogFactory>();
+                return new VectorSemanticDeduplicator(embedder, opts, hashDedup,
+                    logFactory?.CreateLogger<VectorSemanticDeduplicator>());
+            }
+
+            return hashDedup;
+        });
+
+        // Chaos scenario generator
+        services.TryAddSingleton<IChaosScenarioGenerator, DefaultChaosScenarioGenerator>();
+
+        services.TryAddSingleton<ICoverageTracker, DefaultCoverageTracker>();
+        services.TryAddScoped<IRegressionRunner, DefaultRegressionRunner>();
 
         services.TryAddScoped<IScenarioExecutor, ScenarioExecutor>();
         services.TryAddSingleton<IProliferationStore, InMemoryProliferationStore>();
         services.AddHostedService<ProliferationWorker>();
 
         return services;
+    }
+
+    private static IRuleProliferationBrain CreateBrain(IServiceProvider sp, string? providerName)
+    {
+        var opts = sp.GetRequiredService<ProliferationOptions>();
+        var prompt = sp.GetRequiredService<IPromptBuilder>();
+        var factory = sp.GetRequiredService<IHttpClientFactory>();
+        var logFactory = sp.GetService<IMLogFactory>();
+
+        return providerName?.ToLowerInvariant() switch
+        {
+            "openai" => new OpenAiProliferationBrain(factory, opts, prompt,
+                logFactory?.CreateLogger<OpenAiProliferationBrain>()),
+            "claude" => new ClaudeProliferationBrain(factory, opts, prompt,
+                logFactory?.CreateLogger<ClaudeProliferationBrain>()),
+            _ => new OllamaProliferationBrain(factory, opts, prompt,
+                logFactory?.CreateLogger<OllamaProliferationBrain>())
+        };
     }
 }
