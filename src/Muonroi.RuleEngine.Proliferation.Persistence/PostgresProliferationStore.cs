@@ -84,6 +84,41 @@ public sealed class PostgresProliferationStore(ProliferationDbContext db) : IPro
         return entities.Select(ToModel).ToList();
     }
 
+    public async Task<ScenarioResult?> GetResultAsync(string scenarioId, CancellationToken ct = default)
+    {
+        ScenarioResultEntity? entity = await db.ScenarioResults
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.ScenarioId == scenarioId, ct);
+
+        if (entity is null)
+            return null;
+
+        JsonElement? outputFacts = null;
+        if (!string.IsNullOrWhiteSpace(entity.OutputFactsJson))
+        {
+            using JsonDocument doc = JsonDocument.Parse(entity.OutputFactsJson);
+            outputFacts = doc.RootElement.Clone();
+        }
+
+        string[] errors = [];
+        if (!string.IsNullOrWhiteSpace(entity.ErrorsJson))
+        {
+            errors = JsonSerializer.Deserialize<string[]>(entity.ErrorsJson, JsonOptions) ?? [];
+        }
+
+        return new ScenarioResult
+        {
+            ScenarioId = entity.ScenarioId,
+            IsSuccess = entity.IsSuccess,
+            MatchesExpectation = entity.MatchesExpectation,
+            ActualBehavior = entity.ActualBehavior,
+            OutputFacts = outputFacts,
+            Errors = errors,
+            Duration = TimeSpan.FromMilliseconds(entity.DurationMs),
+            ExecutedAt = entity.ExecutedAt
+        };
+    }
+
     public async Task UpdateStatusAsync(string scenarioId, ScenarioStatus status, CancellationToken ct = default)
     {
         await db.NeuronScenarios

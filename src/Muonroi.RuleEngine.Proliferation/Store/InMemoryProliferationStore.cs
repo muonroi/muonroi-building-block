@@ -42,6 +42,12 @@ public sealed class InMemoryProliferationStore : IProliferationStore
         return Task.FromResult(result);
     }
 
+    public Task<ScenarioResult?> GetResultAsync(string scenarioId, CancellationToken ct = default)
+    {
+        _results.TryGetValue(scenarioId, out ScenarioResult? result);
+        return Task.FromResult(result);
+    }
+
     public Task UpdateStatusAsync(string scenarioId, ScenarioStatus status, CancellationToken ct = default)
     {
         if (_scenarios.TryGetValue(scenarioId, out NeuronScenario? existing))
