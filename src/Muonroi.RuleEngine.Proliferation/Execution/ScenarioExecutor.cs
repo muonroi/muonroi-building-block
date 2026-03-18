@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Proliferation.Models;
 using Muonroi.RuleEngine.Runtime.Rules;
@@ -11,9 +11,10 @@ namespace Muonroi.RuleEngine.Proliferation.Execution;
 
 public sealed class ScenarioExecutor(
     RulesEngineService rulesEngineService,
+    IRuleSetStore ruleSetStore,
     ISystemExecutionContextAccessor executionContextAccessor,
     ProliferationOptions options,
-    ILogger<ScenarioExecutor>? logger = null) : IScenarioExecutor
+    IMLog<ScenarioExecutor>? logger = null) : IScenarioExecutor
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -94,7 +95,7 @@ public sealed class ScenarioExecutor(
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
             sw.Stop();
-            logger?.LogWarning("Scenario {ScenarioId} timed out after {Timeout}s",
+            logger?.Warn("Scenario {ScenarioId} timed out after {Timeout}s",
                 scenario.Id, options.ScenarioExecutionTimeoutSeconds);
             return new ScenarioResult
             {
@@ -110,7 +111,7 @@ public sealed class ScenarioExecutor(
         catch (Exception ex)
         {
             sw.Stop();
-            logger?.LogError(ex, "Scenario {ScenarioId} execution error", scenario.Id);
+            logger?.Error(ex, "Scenario {ScenarioId} execution error", scenario.Id);
             return new ScenarioResult
             {
                 ScenarioId = scenario.Id,
@@ -132,13 +133,14 @@ public sealed class ScenarioExecutor(
 
     private async Task<string> GetRuleSetJsonAsync(string workflowName, CancellationToken ct)
     {
-        // The RulesEngineService loads from store internally, but DryRunAsync needs the JSON.
-        // We use the store directly to get the current active ruleset.
-        // For simplicity, we serialize the inputFacts as context and pass the workflow name.
-        // The actual rule JSON will be loaded by RulesEngineService from its store.
-        _ = ct;
-        await Task.CompletedTask;
-        return "{}"; // DryRunAsync loads the ruleset from store by workflowName
+        string? json = await ruleSetStore.GetAsync(workflowName, version: null, ct);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new InvalidOperationException(
+                $"No active ruleset found for workflow '{workflowName}'. Ensure the workflow exists and has an active version.");
+        }
+
+        return json;
     }
 
     internal static bool EvaluateExpectation(string? expectedBehavior, OrchestratorResult result)
