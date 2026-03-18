@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FluentAssertions;
 using Moq;
+using Muonroi.RuleEngine.Proliferation.Brain;
 using Muonroi.RuleEngine.Proliferation.Models;
 using Muonroi.RuleEngine.Proliferation.Worker;
 
@@ -13,6 +14,8 @@ public class ProliferationWorkerTests
         MaxGenerationDepth = 3,
         MaxTotalScenarios = 50,
         MaxScenariosPerRule = 10,
+        MaxScenariosPerFailure = 2,
+        EnableFailureFeedback = true,
         WorkerIntervalSeconds = 1
     };
 
@@ -20,9 +23,15 @@ public class ProliferationWorkerTests
     private readonly Mock<IScenarioExecutor> _executor = new();
     private readonly Mock<IRuleProliferationBrain> _brain = new();
     private readonly Mock<IProliferationChangeNotifier> _notifier = new();
+    private readonly Mock<IFailureAnalyzer> _failureAnalyzer = new();
+    private readonly Mock<IScenarioDeduplicator> _deduplicator = new();
 
-    private ProliferationWorker CreateWorker(IProliferationChangeNotifier? notifier = null) =>
-        new(_store.Object, _executor.Object, _brain.Object, _options, notifier: notifier);
+    private ProliferationWorker CreateWorker(
+        IProliferationChangeNotifier? notifier = null,
+        IFailureAnalyzer? failureAnalyzer = null,
+        IScenarioDeduplicator? dedup = null) =>
+        new(_store.Object, _executor.Object, _brain.Object, _options,
+            notifier: notifier, failureAnalyzer: failureAnalyzer, deduplicator: dedup);
 
     [Fact]
     public async Task RunCycle_MaxTotalScenarios_SkipsCycle()
@@ -244,5 +253,171 @@ public class ProliferationWorkerTests
         ProliferationWorker worker = CreateWorker(notifier: null);
         Func<Task> act = () => worker.RunCycleAsync(CancellationToken.None);
         await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task RunCycle_FailedScenario_CallsFailureAnalyzer()
+    {
+        NeuronScenario scenario = new()
+        {
+            Id = "s1",
+            SeedRuleCode = "TEST",
+            ScenarioName = "Failing scenario",
+            ProliferationReason = "unit test",
+            Status = ScenarioStatus.Pending,
+            GenerationDepth = 0,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _store.Setup(s => s.GetStatsAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProliferationStats { TotalScenarios = 5 });
+        _store.Setup(s => s.GetPendingScenariosAsync(10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { scenario });
+
+        ScenarioResult failureResult = new()
+        {
+            ScenarioId = "s1",
+            IsSuccess = false,
+            MatchesExpectation = false,
+            ActualBehavior = "Error occurred",
+            Errors = ["NullReferenceException"],
+            Duration = TimeSpan.FromMilliseconds(50),
+            ExecutedAt = DateTimeOffset.UtcNow
+        };
+
+        _executor.Setup(e => e.ExecuteAsync(scenario, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failureResult);
+
+        NeuronScenario feedbackChild = new()
+        {
+            Id = "feedback-1",
+            SeedRuleCode = "TEST",
+            ScenarioName = "Feedback probe",
+            ProliferationReason = "probing failure",
+            ParentScenarioId = "s1",
+            Status = ScenarioStatus.Pending,
+            GenerationDepth = 1,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _failureAnalyzer.Setup(f => f.AnalyzeFailureAsync(
+                scenario, failureResult, It.IsAny<string>(),
+                It.IsAny<ProliferationContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<NeuronScenario> { feedbackChild });
+
+        ProliferationWorker worker = CreateWorker(failureAnalyzer: _failureAnalyzer.Object);
+        await worker.RunCycleAsync(CancellationToken.None);
+
+        _failureAnalyzer.Verify(f => f.AnalyzeFailureAsync(
+            scenario, failureResult, It.IsAny<string>(),
+            It.IsAny<ProliferationContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _store.Verify(s => s.SaveScenariosAsync(
+            It.Is<IReadOnlyList<NeuronScenario>>(list => list.Any(c => c.Id == "feedback-1")),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task RunCycle_FailedAtMaxDepth_DoesNotCallFailureAnalyzer()
+    {
+        NeuronScenario scenario = new()
+        {
+            Id = "s1",
+            SeedRuleCode = "TEST",
+            ScenarioName = "Deep failing scenario",
+            ProliferationReason = "unit test",
+            Status = ScenarioStatus.Pending,
+            GenerationDepth = 3, // MaxGenerationDepth = 3
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _store.Setup(s => s.GetStatsAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProliferationStats { TotalScenarios = 5 });
+        _store.Setup(s => s.GetPendingScenariosAsync(10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { scenario });
+
+        _executor.Setup(e => e.ExecuteAsync(scenario, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ScenarioResult
+            {
+                ScenarioId = "s1",
+                IsSuccess = false,
+                MatchesExpectation = false,
+                Duration = TimeSpan.FromMilliseconds(50),
+                ExecutedAt = DateTimeOffset.UtcNow
+            });
+
+        ProliferationWorker worker = CreateWorker(failureAnalyzer: _failureAnalyzer.Object);
+        await worker.RunCycleAsync(CancellationToken.None);
+
+        _failureAnalyzer.Verify(f => f.AnalyzeFailureAsync(
+            It.IsAny<NeuronScenario>(), It.IsAny<ScenarioResult>(),
+            It.IsAny<string>(), It.IsAny<ProliferationContext>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RunCycle_WithDeduplicator_DeduplicatesChildren()
+    {
+        NeuronScenario scenario = new()
+        {
+            Id = "s1",
+            SeedRuleCode = "TEST",
+            ScenarioName = "Parent scenario",
+            ProliferationReason = "unit test",
+            Status = ScenarioStatus.Pending,
+            GenerationDepth = 0,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _store.Setup(s => s.GetStatsAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProliferationStats { TotalScenarios = 1 });
+        _store.Setup(s => s.GetPendingScenariosAsync(10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { scenario });
+        _store.Setup(s => s.GetScenariosBySeedAsync("TEST", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<NeuronScenario> { scenario });
+
+        _executor.Setup(e => e.ExecuteAsync(scenario, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ScenarioResult
+            {
+                ScenarioId = "s1",
+                IsSuccess = true,
+                MatchesExpectation = true,
+                Duration = TimeSpan.FromMilliseconds(100),
+                ExecutedAt = DateTimeOffset.UtcNow
+            });
+
+        NeuronScenario child = new()
+        {
+            Id = "child-1",
+            SeedRuleCode = "TEST",
+            ScenarioName = "Child",
+            ProliferationReason = "generated",
+            Status = ScenarioStatus.Pending,
+            GenerationDepth = 1,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _brain.Setup(b => b.AnalyzeAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<JsonElement?>(), It.IsAny<JsonElement?>(),
+                It.IsAny<ProliferationContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProliferationPlan
+            {
+                SeedRuleCode = "TEST",
+                AiModelUsed = "test",
+                Scenarios = [child]
+            });
+
+        // Deduplicator returns the child (not filtered)
+        _deduplicator.Setup(d => d.Deduplicate(
+                It.IsAny<IReadOnlyList<NeuronScenario>>(),
+                It.IsAny<IReadOnlyList<NeuronScenario>>()))
+            .Returns<IReadOnlyList<NeuronScenario>, IReadOnlyList<NeuronScenario>>((c, _) => c);
+
+        ProliferationWorker worker = CreateWorker(dedup: _deduplicator.Object);
+        await worker.RunCycleAsync(CancellationToken.None);
+
+        _deduplicator.Verify(d => d.Deduplicate(
+            It.IsAny<IReadOnlyList<NeuronScenario>>(),
+            It.IsAny<IReadOnlyList<NeuronScenario>>()), Times.Once);
     }
 }

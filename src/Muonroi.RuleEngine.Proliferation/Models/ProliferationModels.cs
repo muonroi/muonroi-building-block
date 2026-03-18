@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Muonroi.RuleEngine.Proliferation.Brain;
 
 namespace Muonroi.RuleEngine.Proliferation.Models;
 
@@ -64,6 +65,8 @@ public sealed record ProliferationStats
     public int Failed { get; init; }
     public int Pending { get; init; }
     public int MaxDepthReached { get; init; }
+    public int FeedbackGenerated { get; init; }
+    public int Deduplicated { get; init; }
     public IReadOnlyDictionary<string, int> BySeedRule { get; init; } = new Dictionary<string, int>();
 }
 
@@ -74,4 +77,5 @@ public sealed record ProliferationContext
     public int RemainingBudget { get; init; }
     public IReadOnlyList<string>? FocusAreas { get; init; }
     public string? TenantId { get; init; }
+    public RuleSetKind RuleSetKind { get; init; } = RuleSetKind.Unknown;
 }

@@ -43,10 +43,11 @@ public sealed class OpenAiProliferationBrain(
             };
         }
 
+        string systemPrompt = promptBuilder.BuildSystemPrompt(context.RuleSetKind);
         string userPrompt = promptBuilder.BuildUserPrompt(ruleSetJson, executionResult, factBagSnapshot, budget, context.FocusAreas);
         Stopwatch sw = Stopwatch.StartNew();
 
-        string? aiResponse = await CallOpenAiAsync(userPrompt, ct);
+        string? aiResponse = await CallOpenAiAsync(systemPrompt, userPrompt, ct);
         sw.Stop();
 
         if (aiResponse is null)
@@ -74,7 +75,7 @@ public sealed class OpenAiProliferationBrain(
         };
     }
 
-    private async Task<string?> CallOpenAiAsync(string userPrompt, CancellationToken ct)
+    private async Task<string?> CallOpenAiAsync(string systemPrompt, string userPrompt, CancellationToken ct)
     {
         try
         {
@@ -89,7 +90,7 @@ public sealed class OpenAiProliferationBrain(
                 model = options.OpenAiModel,
                 messages = new object[]
                 {
-                    new { role = "system", content = promptBuilder.BuildSystemPrompt() },
+                    new { role = "system", content = systemPrompt },
                     new { role = "user", content = userPrompt }
                 },
                 temperature = options.Temperature,

@@ -83,6 +83,14 @@ public sealed class InMemoryProliferationStore : IProliferationStore
             query = query.Where(s => s.SeedRuleCode == seedRuleCode);
 
         List<NeuronScenario> all = query.ToList();
+
+        // Count feedback-generated scenarios: children of failed parent scenarios
+        HashSet<string> failedIds = new(all
+            .Where(s => s.Status == ScenarioStatus.Failed)
+            .Select(s => s.Id));
+        int feedbackGenerated = all.Count(s =>
+            s.ParentScenarioId is not null && failedIds.Contains(s.ParentScenarioId));
+
         ProliferationStats stats = new()
         {
             TotalScenarios = all.Count,
@@ -90,6 +98,7 @@ public sealed class InMemoryProliferationStore : IProliferationStore
             Failed = all.Count(s => s.Status == ScenarioStatus.Failed),
             Pending = all.Count(s => s.Status == ScenarioStatus.Pending),
             MaxDepthReached = all.Count > 0 ? all.Max(s => s.GenerationDepth) : 0,
+            FeedbackGenerated = feedbackGenerated,
             BySeedRule = all.GroupBy(s => s.SeedRuleCode)
                 .ToDictionary(g => g.Key, g => g.Count())
         };

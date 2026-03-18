@@ -31,4 +31,8 @@ public sealed class ProliferationOptions
     public int ScenarioExecutionTimeoutSeconds { get; set; } = 30;
     public float Temperature { get; set; } = 0.7f;
     public int MaxTokens { get; set; } = 2000;
+
+    // Failure feedback loop
+    public bool EnableFailureFeedback { get; set; } = true;
+    public int MaxScenariosPerFailure { get; set; } = 2;
 }

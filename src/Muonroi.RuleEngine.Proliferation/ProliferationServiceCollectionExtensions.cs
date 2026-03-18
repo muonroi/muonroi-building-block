@@ -64,6 +64,17 @@ public static class ProliferationServiceCollectionExtensions
             };
         });
 
+        // Failure analyzer and deduplicator
+        services.TryAddSingleton<IFailureAnalyzer>(sp =>
+        {
+            var opts = sp.GetRequiredService<ProliferationOptions>();
+            var brainInstance = sp.GetRequiredService<IRuleProliferationBrain>();
+            var logFactory = sp.GetService<IMLogFactory>();
+            return new DefaultFailureAnalyzer(brainInstance, opts,
+                logFactory?.CreateLogger<DefaultFailureAnalyzer>());
+        });
+        services.TryAddSingleton<IScenarioDeduplicator, InputHashDeduplicator>();
+
         services.TryAddScoped<IScenarioExecutor, ScenarioExecutor>();
         services.TryAddSingleton<IProliferationStore, InMemoryProliferationStore>();
         services.AddHostedService<ProliferationWorker>();
