@@ -22,6 +22,11 @@ public static class ProliferationServiceCollectionExtensions
         configuration.GetSection(ProliferationOptions.SectionName).Bind(options);
         services.TryAddSingleton(options);
 
+        services.AddHttpClient("OllamaProliferation", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(options.AiTimeoutSeconds + 30);
+        });
+
         services.TryAddSingleton<IRuleProliferationBrain, OllamaProliferationBrain>();
         services.TryAddScoped<IScenarioExecutor, ScenarioExecutor>();
         services.TryAddSingleton<IProliferationStore, InMemoryProliferationStore>();
