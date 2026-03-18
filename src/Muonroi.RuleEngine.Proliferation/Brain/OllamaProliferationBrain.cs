@@ -39,18 +39,19 @@ public sealed class OllamaProliferationBrain(
             };
         }
 
+        string systemPrompt = promptBuilder.BuildSystemPrompt(context.RuleSetKind);
         string userPrompt = promptBuilder.BuildUserPrompt(ruleSetJson, executionResult, factBagSnapshot, budget, context.FocusAreas);
         Stopwatch sw = Stopwatch.StartNew();
 
         // Try primary model, fallback on failure
         string model = options.PrimaryModel;
-        string? aiResponse = await CallOllamaAsync(model, userPrompt, ct);
+        string? aiResponse = await CallOllamaAsync(model, systemPrompt, userPrompt, ct);
 
         if (aiResponse is null && !string.IsNullOrWhiteSpace(options.FallbackModel))
         {
             logger?.Warn("Primary model {Model} failed, falling back to {Fallback}", model, options.FallbackModel);
             model = options.FallbackModel;
-            aiResponse = await CallOllamaAsync(model, userPrompt, ct);
+            aiResponse = await CallOllamaAsync(model, systemPrompt, userPrompt, ct);
         }
 
         sw.Stop();
@@ -80,7 +81,7 @@ public sealed class OllamaProliferationBrain(
         };
     }
 
-    private async Task<string?> CallOllamaAsync(string model, string userPrompt, CancellationToken ct)
+    private async Task<string?> CallOllamaAsync(string model, string systemPrompt, string userPrompt, CancellationToken ct)
     {
         try
         {
@@ -94,7 +95,7 @@ public sealed class OllamaProliferationBrain(
             {
                 model,
                 prompt = userPrompt,
-                system = promptBuilder.BuildSystemPrompt(),
+                system = systemPrompt,
                 stream = false,
                 options = new
                 {

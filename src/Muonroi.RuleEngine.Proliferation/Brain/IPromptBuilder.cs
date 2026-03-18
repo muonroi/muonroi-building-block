@@ -10,6 +10,12 @@ public interface IPromptBuilder
 {
     string BuildSystemPrompt();
 
+    /// <summary>
+    /// Builds a system prompt tailored to the specific rule type.
+    /// Falls back to generic prompt for Unknown kind.
+    /// </summary>
+    string BuildSystemPrompt(RuleSetKind kind);
+
     string BuildUserPrompt(
         string ruleSetJson,
         JsonElement? executionResult,

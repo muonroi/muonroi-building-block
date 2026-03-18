@@ -42,10 +42,11 @@ public sealed class ClaudeProliferationBrain(
             };
         }
 
+        string systemPrompt = promptBuilder.BuildSystemPrompt(context.RuleSetKind);
         string userPrompt = promptBuilder.BuildUserPrompt(ruleSetJson, executionResult, factBagSnapshot, budget, context.FocusAreas);
         Stopwatch sw = Stopwatch.StartNew();
 
-        string? aiResponse = await CallClaudeAsync(userPrompt, ct);
+        string? aiResponse = await CallClaudeAsync(systemPrompt, userPrompt, ct);
         sw.Stop();
 
         if (aiResponse is null)
@@ -73,7 +74,7 @@ public sealed class ClaudeProliferationBrain(
         };
     }
 
-    private async Task<string?> CallClaudeAsync(string userPrompt, CancellationToken ct)
+    private async Task<string?> CallClaudeAsync(string systemPrompt, string userPrompt, CancellationToken ct)
     {
         try
         {
@@ -86,7 +87,7 @@ public sealed class ClaudeProliferationBrain(
             var requestBody = new
             {
                 model = options.ClaudeModel,
-                system = promptBuilder.BuildSystemPrompt(),
+                system = systemPrompt,
                 messages = new object[]
                 {
                     new { role = "user", content = userPrompt }

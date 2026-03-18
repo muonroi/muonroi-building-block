@@ -3,6 +3,7 @@ using System.Diagnostics.Metrics;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Logging.Abstractions;
+using Muonroi.RuleEngine.Proliferation.Brain;
 using Muonroi.RuleEngine.Proliferation.Models;
 
 namespace Muonroi.RuleEngine.Proliferation.Worker;
@@ -13,7 +14,9 @@ public sealed class ProliferationWorker(
     IRuleProliferationBrain brain,
     ProliferationOptions options,
     IMLog<ProliferationWorker>? logger = null,
-    IProliferationChangeNotifier? notifier = null) : BackgroundService
+    IProliferationChangeNotifier? notifier = null,
+    IFailureAnalyzer? failureAnalyzer = null,
+    IScenarioDeduplicator? deduplicator = null) : BackgroundService
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.RuleEngine.Proliferation");
     private static readonly Meter Meter = new("Muonroi.RuleEngine.Proliferation");
@@ -21,6 +24,7 @@ public sealed class ProliferationWorker(
     private static readonly Counter<long> ScenariosExecuted = Meter.CreateCounter<long>("proliferation.scenarios_executed");
     private static readonly Counter<long> ScenariosPassed = Meter.CreateCounter<long>("proliferation.scenarios_passed");
     private static readonly Counter<long> ScenariosFailed = Meter.CreateCounter<long>("proliferation.scenarios_failed");
+    private static readonly Counter<long> FeedbackGenerated = Meter.CreateCounter<long>("proliferation.feedback_generated");
 
     private int _consecutiveErrors;
 
@@ -126,6 +130,15 @@ public sealed class ProliferationWorker(
                 {
                     await GenerateNextGenerationAsync(scenario, result, stats, ct);
                 }
+
+                // Feedback loop: analyze failed scenarios to generate follow-up probes
+                if (!result.IsSuccess
+                    && scenario.GenerationDepth < options.MaxGenerationDepth
+                    && stats.TotalScenarios < options.MaxTotalScenarios
+                    && failureAnalyzer is not null)
+                {
+                    await AnalyzeFailureAndSaveAsync(scenario, result, stats, ct);
+                }
             }
             catch (Exception ex)
             {
@@ -172,23 +185,33 @@ public sealed class ProliferationWorker(
                     GenerationDepth = parentScenario.GenerationDepth + 1
                 }).ToList();
 
-                await store.SaveScenariosAsync(children, ct);
-                ScenariosGenerated.Add(children.Count);
-
-                logger?.Info("[Proliferation] Generated {Count} children from scenario {ParentId} (depth {Depth})",
-                    children.Count, parentScenario.Id, parentScenario.GenerationDepth + 1);
-
-                // Notify trigger
-                if (notifier is not null)
+                // Deduplicate against existing scenarios
+                if (deduplicator is not null)
                 {
-                    try
+                    IReadOnlyList<NeuronScenario> existing = await store.GetScenariosBySeedAsync(parentScenario.SeedRuleCode, ct);
+                    children = deduplicator.Deduplicate(children, existing).ToList();
+                }
+
+                if (children.Count > 0)
+                {
+                    await store.SaveScenariosAsync(children, ct);
+                    ScenariosGenerated.Add(children.Count);
+
+                    logger?.Info("[Proliferation] Generated {Count} children from scenario {ParentId} (depth {Depth})",
+                        children.Count, parentScenario.Id, parentScenario.GenerationDepth + 1);
+
+                    // Notify trigger
+                    if (notifier is not null)
                     {
-                        await notifier.NotifyProliferationTriggeredAsync(
-                            parentScenario.SeedRuleCode, children.Count, ct);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger?.Warn("[Proliferation] Notifier error on trigger: {Error}", ex.Message);
+                        try
+                        {
+                            await notifier.NotifyProliferationTriggeredAsync(
+                                parentScenario.SeedRuleCode, children.Count, ct);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger?.Warn("[Proliferation] Notifier error on trigger: {Error}", ex.Message);
+                        }
                     }
                 }
             }
@@ -197,6 +220,56 @@ public sealed class ProliferationWorker(
         {
             logger?.Warn("[Proliferation] Failed to generate next generation from {ParentId}: {Error}",
                 parentScenario.Id, ex.Message);
+        }
+    }
+
+    private async Task AnalyzeFailureAndSaveAsync(
+        NeuronScenario failedScenario,
+        ScenarioResult failureResult,
+        ProliferationStats currentStats,
+        CancellationToken ct)
+    {
+        int remainingBudget = options.MaxTotalScenarios - currentStats.TotalScenarios;
+        if (remainingBudget <= 0) return;
+
+        try
+        {
+            string ruleSetJson = failedScenario.GeneratedRuleFlowGraph ?? "{}";
+            ProliferationContext context = new()
+            {
+                Scope = failedScenario.Scope,
+                CurrentDepth = failedScenario.GenerationDepth + 1,
+                RemainingBudget = Math.Min(remainingBudget, options.MaxScenariosPerFailure),
+                TenantId = failedScenario.TenantId
+            };
+
+            IReadOnlyList<NeuronScenario> children = await failureAnalyzer!.AnalyzeFailureAsync(
+                failedScenario, failureResult, ruleSetJson, context, ct);
+
+            if (children.Count == 0) return;
+
+            // Deduplicate against existing scenarios
+            List<NeuronScenario> toSave = children.ToList();
+            if (deduplicator is not null)
+            {
+                IReadOnlyList<NeuronScenario> existing = await store.GetScenariosBySeedAsync(failedScenario.SeedRuleCode, ct);
+                toSave = deduplicator.Deduplicate(toSave, existing).ToList();
+            }
+
+            if (toSave.Count > 0)
+            {
+                await store.SaveScenariosAsync(toSave, ct);
+                FeedbackGenerated.Add(toSave.Count);
+                ScenariosGenerated.Add(toSave.Count);
+
+                logger?.Info("[Proliferation] Failure feedback generated {Count} scenarios from failed scenario {ParentId}",
+                    toSave.Count, failedScenario.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger?.Warn("[Proliferation] Failure analysis error for scenario {Id}: {Error}",
+                failedScenario.Id, ex.Message);
         }
     }
 }
