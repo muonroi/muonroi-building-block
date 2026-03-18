@@ -17,7 +17,8 @@ public sealed class ProliferationWorker(
     IProliferationChangeNotifier? notifier = null,
     IFailureAnalyzer? failureAnalyzer = null,
     IScenarioDeduplicator? deduplicator = null,
-    ICoverageTracker? coverageTracker = null) : BackgroundService
+    ICoverageTracker? coverageTracker = null,
+    IBudgetAllocator? budgetAllocator = null) : BackgroundService
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.RuleEngine.Proliferation");
     private static readonly Meter Meter = new("Muonroi.RuleEngine.Proliferation");
@@ -178,6 +179,35 @@ public sealed class ProliferationWorker(
         int remainingBudget = options.MaxTotalScenarios - currentStats.TotalScenarios;
         if (remainingBudget <= 0) return;
 
+        // Smart budget: allocate more budget for under-covered / high-failure rules
+        int perRuleBudget = options.MaxScenariosPerRule;
+        if (options.EnableSmartBudget && budgetAllocator is not null)
+        {
+            // Estimate coverage for this seed rule
+            double coveragePct = 0;
+            double failureRate = 0;
+            try
+            {
+                string nextRuleSetJsonForBudget = parentScenario.GeneratedRuleFlowGraph ?? "{}";
+                RuleSetKind kindForBudget = RuleSetKindDetector.Detect(nextRuleSetJsonForBudget);
+                RuleSetSchema schemaForBudget = RuleSetSchemaExtractor.Extract(nextRuleSetJsonForBudget, kindForBudget);
+                if (coverageTracker is not null && schemaForBudget.InputFields.Count > 0)
+                {
+                    IReadOnlyList<NeuronScenario> siblingsForBudget = await store.GetScenariosBySeedAsync(parentScenario.SeedRuleCode, ct);
+                    CoverageReport coverageForBudget = coverageTracker.GetCoverage(parentScenario.SeedRuleCode, siblingsForBudget, schemaForBudget);
+                    coveragePct = coverageForBudget.CoveragePercentage;
+                    int totalForBudget = siblingsForBudget.Count;
+                    int failedForBudget = siblingsForBudget.Count(s => s.Status == ScenarioStatus.Failed);
+                    failureRate = totalForBudget > 0 ? (double)failedForBudget / totalForBudget * 100 : 0;
+                }
+            }
+            catch
+            {
+                // Ignore budget calculation errors — fall back to base budget
+            }
+            perRuleBudget = budgetAllocator.AllocateBudget(parentScenario.SeedRuleCode, coveragePct, failureRate, perRuleBudget);
+        }
+
         try
         {
             // Coverage-guided focus: inject uncovered fields as focus areas
@@ -209,7 +239,7 @@ public sealed class ProliferationWorker(
                 {
                     Scope = parentScenario.Scope,
                     CurrentDepth = parentScenario.GenerationDepth + 1,
-                    RemainingBudget = Math.Min(remainingBudget, options.MaxScenariosPerRule),
+                    RemainingBudget = Math.Min(remainingBudget, perRuleBudget),
                     TenantId = parentScenario.TenantId,
                     FocusAreas = coverageFocus
                 },

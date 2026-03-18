@@ -68,6 +68,7 @@ public sealed record ProliferationStats
     public int FeedbackGenerated { get; init; }
     public int Deduplicated { get; init; }
     public IReadOnlyDictionary<string, int> BySeedRule { get; init; } = new Dictionary<string, int>();
+    public IReadOnlyDictionary<string, TenantSimulationStats> ByTenant { get; init; } = new Dictionary<string, TenantSimulationStats>();
 }
 
 public sealed record ProliferationContext
@@ -78,4 +79,34 @@ public sealed record ProliferationContext
     public IReadOnlyList<string>? FocusAreas { get; init; }
     public string? TenantId { get; init; }
     public RuleSetKind RuleSetKind { get; init; } = RuleSetKind.Unknown;
+}
+
+/// <summary>
+/// Actionable recommendation for a workflow's coverage and quality gaps.
+/// </summary>
+public sealed record ProliferationSuggestion
+{
+    public required string WorkflowName { get; init; }
+    public double FieldCoveragePercent { get; init; }
+    public double? FlowNodeCoveragePercent { get; init; }
+    public double? FlowEdgeCoveragePercent { get; init; }
+    public IReadOnlyList<string> UncoveredFields { get; init; } = [];
+    public IReadOnlyList<string> UncoveredNodes { get; init; } = [];
+    public IReadOnlyList<string> SuggestedFocusAreas { get; init; } = [];
+    public int TotalScenarios { get; init; }
+    public int PassedScenarios { get; init; }
+    public int FailedScenarios { get; init; }
+    public required string Recommendation { get; init; }
+}
+
+/// <summary>
+/// Per-tenant simulation statistics for multi-tenant traffic simulation.
+/// </summary>
+public sealed record TenantSimulationStats
+{
+    public required string TenantId { get; init; }
+    public int TotalScenarios { get; init; }
+    public int Passed { get; init; }
+    public int Failed { get; init; }
+    public double PassRate => TotalScenarios > 0 ? Math.Round((double)Passed / TotalScenarios * 100, 1) : 0;
 }

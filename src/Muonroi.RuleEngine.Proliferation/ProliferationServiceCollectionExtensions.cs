@@ -111,6 +111,9 @@ public static class ProliferationServiceCollectionExtensions
         // Chaos scenario generator
         services.TryAddSingleton<IChaosScenarioGenerator, DefaultChaosScenarioGenerator>();
 
+        // Smart budget allocator
+        services.TryAddSingleton<IBudgetAllocator, CoverageWeightedBudgetAllocator>();
+
         services.TryAddSingleton<ICoverageTracker, DefaultCoverageTracker>();
         services.TryAddScoped<IRegressionRunner, DefaultRegressionRunner>();
 
