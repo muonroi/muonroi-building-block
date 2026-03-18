@@ -21,5 +21,6 @@ public interface IPromptBuilder
         JsonElement? executionResult,
         JsonElement? factBagSnapshot,
         int budget,
-        IReadOnlyList<string>? focusAreas);
+        IReadOnlyList<string>? focusAreas,
+        RuleSetSchema? schema = null);
 }

@@ -39,8 +39,9 @@ public sealed class OllamaProliferationBrain(
             };
         }
 
+        RuleSetSchema schema = RuleSetSchemaExtractor.Extract(ruleSetJson, context.RuleSetKind);
         string systemPrompt = promptBuilder.BuildSystemPrompt(context.RuleSetKind);
-        string userPrompt = promptBuilder.BuildUserPrompt(ruleSetJson, executionResult, factBagSnapshot, budget, context.FocusAreas);
+        string userPrompt = promptBuilder.BuildUserPrompt(ruleSetJson, executionResult, factBagSnapshot, budget, context.FocusAreas, schema);
         Stopwatch sw = Stopwatch.StartNew();
 
         // Try primary model, fallback on failure
@@ -83,6 +84,13 @@ public sealed class OllamaProliferationBrain(
 
     private async Task<string?> CallOllamaAsync(string model, string systemPrompt, string userPrompt, CancellationToken ct)
     {
+        // Try streaming first (better for slow CPU inference), fall back to non-streaming
+        string? result = await CallOllamaStreamingAsync(model, systemPrompt, userPrompt, ct);
+        return result;
+    }
+
+    private async Task<string?> CallOllamaStreamingAsync(string model, string systemPrompt, string userPrompt, CancellationToken ct)
+    {
         try
         {
             using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -96,7 +104,7 @@ public sealed class OllamaProliferationBrain(
                 model,
                 prompt = userPrompt,
                 system = systemPrompt,
-                stream = false,
+                stream = true,
                 options = new
                 {
                     temperature = options.Temperature,
@@ -109,26 +117,56 @@ public sealed class OllamaProliferationBrain(
                 Encoding.UTF8,
                 "application/json");
 
-            HttpResponseMessage response = await client.PostAsync(endpoint, content, timeoutCts.Token);
+            using HttpRequestMessage request = new(HttpMethod.Post, endpoint) { Content = content };
+            HttpResponseMessage response = await client.SendAsync(
+                request, HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
             response.EnsureSuccessStatusCode();
 
-            using JsonDocument doc = await JsonDocument.ParseAsync(
-                await response.Content.ReadAsStreamAsync(timeoutCts.Token),
-                cancellationToken: timeoutCts.Token);
+            // Read NDJSON stream line-by-line, accumulate response field
+            StringBuilder accumulated = new();
+            using Stream stream = await response.Content.ReadAsStreamAsync(timeoutCts.Token);
+            using StreamReader reader = new(stream);
 
-            return doc.RootElement.TryGetProperty("response", out JsonElement respEl)
-                ? respEl.GetString()
-                : null;
+            while (!reader.EndOfStream && !timeoutCts.Token.IsCancellationRequested)
+            {
+                string? line = await reader.ReadLineAsync(timeoutCts.Token);
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                try
+                {
+                    using JsonDocument chunk = JsonDocument.Parse(line);
+                    if (chunk.RootElement.TryGetProperty("response", out JsonElement respEl))
+                    {
+                        string? token = respEl.GetString();
+                        if (token is not null)
+                            accumulated.Append(token);
+                    }
+
+                    // Check if this is the final chunk
+                    if (chunk.RootElement.TryGetProperty("done", out JsonElement doneEl)
+                        && doneEl.ValueKind == JsonValueKind.True)
+                    {
+                        break;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Skip malformed chunks
+                }
+            }
+
+            string result = accumulated.ToString();
+            return string.IsNullOrWhiteSpace(result) ? null : result;
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            logger?.Warn("Ollama request timed out after {Timeout}s for model {Model}",
+            logger?.Warn("Ollama streaming request timed out after {Timeout}s for model {Model}",
                 options.AiTimeoutSeconds, model);
             return null;
         }
         catch (Exception ex)
         {
-            logger?.Warn("Ollama request failed for model {Model}: {Error}", model, ex.Message);
+            logger?.Warn("Ollama streaming request failed for model {Model}: {Error}", model, ex.Message);
             return null;
         }
     }

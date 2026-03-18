@@ -1,22 +1,37 @@
-using System.Reflection;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using Muonroi.RuleEngine.Abstractions.Authoring;
+using Muonroi.RuleEngine.Runtime.Rules;
 using Muonroi.RuleEngine.Runtime.Web.Models;
 
 namespace Muonroi.RuleEngine.Runtime.Web.Services;
 
 /// <summary>
-/// Default implementation that uses reflection to discover rule context properties
-/// and build contract schemas. Consumers can replace this with a custom provider.
+/// Default implementation that uses <see cref="MRuleAuthoringManifestRegistry"/> to resolve
+/// rule contract schemas. Falls back to reflection-based schema building when the registry
+/// does not contain a pre-built context schema.
 /// </summary>
 public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
 {
+    private readonly MRuleAuthoringManifestRegistry _registry;
+    private readonly RulesEngineService? _rulesEngine;
     private readonly ILogger<MDefaultRuleFlowContractProvider>? _log;
+
+    /// <summary>
+    /// Lazy-built index: rule code → authoring entry (case-insensitive).
+    /// </summary>
+    private Dictionary<string, MRuleAuthoringEntry>? _ruleIndex;
 
     /// <summary>
     /// Initializes a new instance of <see cref="MDefaultRuleFlowContractProvider"/>.
     /// </summary>
-    public MDefaultRuleFlowContractProvider(ILogger<MDefaultRuleFlowContractProvider>? log = null)
+    public MDefaultRuleFlowContractProvider(
+        MRuleAuthoringManifestRegistry registry,
+        RulesEngineService? rulesEngine = null,
+        ILogger<MDefaultRuleFlowContractProvider>? log = null)
     {
+        _registry = registry;
+        _rulesEngine = rulesEngine;
         _log = log;
     }
 
@@ -24,37 +39,65 @@ public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
     public Task<MRuleFlowContractLookupResponse?> MGetContractAsync(
         string sourceType, string sourceCode, CancellationToken ct = default)
     {
-        var ruleType = MFindRuleTypeByCode(sourceCode);
-        if (ruleType is null)
+        MRuleAuthoringEntry? entry = FindEntryByCode(sourceCode);
+        if (entry is null)
         {
-            _log?.LogDebug("No rule type found for code {Code}", sourceCode);
+            _log?.LogDebug("No rule entry found in manifest registry for code {Code}", sourceCode);
             return Task.FromResult<MRuleFlowContractLookupResponse?>(null);
         }
 
-        var contextType = MExtractContextType(ruleType);
-        var schema = contextType is not null ? MBuildSchemaFromType(contextType) : null;
+        MRuleContractSchema? requestSchema = MapContextSchema(entry, $"{sourceCode}.Request");
+        MRuleContractSchema? responseSchema = BuildOutputSchema(entry, $"{sourceCode}.Response");
 
         return Task.FromResult<MRuleFlowContractLookupResponse?>(
-            new MRuleFlowContractLookupResponse(
-                sourceType, sourceCode,
-                schema is not null ? new MRuleContractSchema($"{sourceCode}.Request", schema) : null,
-                null));
+            new MRuleFlowContractLookupResponse(sourceType, sourceCode, requestSchema, responseSchema));
     }
 
     /// <inheritdoc />
-    public Task<MRuleFlowContractLookupResponse?> MGetFlowContractAsync(
+    public async Task<MRuleFlowContractLookupResponse?> MGetFlowContractAsync(
         string flowCode, CancellationToken ct = default)
     {
-        return Task.FromResult<MRuleFlowContractLookupResponse?>(
-            new MRuleFlowContractLookupResponse("flow", flowCode, null, null));
+        string? firstRuleCode = await FindFirstRuleCodeInFlow(flowCode, ct);
+        if (firstRuleCode is null)
+        {
+            return new MRuleFlowContractLookupResponse("flow", flowCode, null, null);
+        }
+
+        MRuleAuthoringEntry? entry = FindEntryByCode(firstRuleCode);
+        if (entry is null)
+        {
+            return new MRuleFlowContractLookupResponse("flow", flowCode, null, null);
+        }
+
+        MRuleContractSchema? requestSchema = MapContextSchema(entry, $"{flowCode}.Request");
+        MRuleContractSchema? responseSchema = BuildOutputSchema(entry, $"{flowCode}.Response");
+
+        return new MRuleFlowContractLookupResponse("flow", flowCode, requestSchema, responseSchema);
     }
 
     /// <inheritdoc />
-    public Task<MRuleFlowNodeContractResponse?> MGetNodeAuthoringContractAsync(
+    public async Task<MRuleFlowNodeContractResponse?> MGetNodeAuthoringContractAsync(
         string flowCode, string nodeId, CancellationToken ct = default)
     {
-        return Task.FromResult<MRuleFlowNodeContractResponse?>(
-            new MRuleFlowNodeContractResponse(nodeId, flowCode, null, null));
+        string? ruleCode = await FindRuleCodeForNode(flowCode, nodeId, ct);
+        if (ruleCode is null)
+        {
+            return new MRuleFlowNodeContractResponse(nodeId, flowCode, null, null);
+        }
+
+        MRuleAuthoringEntry? entry = FindEntryByCode(ruleCode);
+        if (entry is null)
+        {
+            return new MRuleFlowNodeContractResponse(nodeId, flowCode, null, null);
+        }
+
+        MRuleContractSchema? requestSchema = MapContextSchema(entry, $"{ruleCode}.Request");
+        MRuleContractSchema? responseSchema = BuildOutputSchema(entry, $"{ruleCode}.Response");
+        List<string>? availableInputKeys = entry.ConsumedFacts.Count > 0
+            ? entry.ConsumedFacts.Select(f => f.Key).ToList()
+            : null;
+
+        return new MRuleFlowNodeContractResponse(nodeId, flowCode, requestSchema, responseSchema, availableInputKeys);
     }
 
     /// <inheritdoc />
@@ -63,127 +106,203 @@ public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
         return Task.FromResult<IReadOnlyList<MRuleFlowSummary>>(Array.Empty<MRuleFlowSummary>());
     }
 
-    /// <summary>
-    /// Find a registered IRule type by its code (static Code field or attribute).
-    /// </summary>
-    protected virtual Type? MFindRuleTypeByCode(string code)
+    private MRuleAuthoringEntry? FindEntryByCode(string code)
     {
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        _ruleIndex ??= BuildRuleIndex();
+        _ruleIndex.TryGetValue(code, out MRuleAuthoringEntry? entry);
+        return entry;
+    }
+
+    private Dictionary<string, MRuleAuthoringEntry> BuildRuleIndex()
+    {
+        Dictionary<string, MRuleAuthoringEntry> index = new(StringComparer.OrdinalIgnoreCase);
+        foreach (MRuleAuthoringManifest manifest in _registry.GetManifests())
         {
-            try
+            foreach (MRuleAuthoringEntry rule in manifest.Rules)
             {
-                foreach (var type in assembly.GetTypes())
-                {
-                    if (!type.IsClass || type.IsAbstract) continue;
-
-                    var ruleInterface = type.GetInterfaces()
-                        .FirstOrDefault(i => i.IsGenericType &&
-                            (i.GetGenericTypeDefinition().FullName?.Contains("IRule") == true));
-                    if (ruleInterface is null) continue;
-
-                    var codeField = type.GetField("Code",
-                        BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-                    if (codeField is not null && string.Equals(
-                        codeField.GetValue(null)?.ToString(), code, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return type;
-                    }
-                }
-            }
-            catch
-            {
-                // Skip assemblies that can't be scanned
+                index.TryAdd(rule.Code, rule);
             }
         }
 
-        return null;
+        return index;
     }
 
     /// <summary>
-    /// Extract the context type T from IRule&lt;T&gt;.
+    /// Maps <see cref="MRuleAuthoringEntry.ContextSchema"/> fields to <see cref="MRuleContractSchema"/>.
     /// </summary>
-    protected static Type? MExtractContextType(Type ruleType)
+    private static MRuleContractSchema? MapContextSchema(MRuleAuthoringEntry entry, string contractName)
     {
-        var ruleInterface = ruleType.GetInterfaces()
-            .FirstOrDefault(i => i.IsGenericType &&
-                (i.GetGenericTypeDefinition().FullName?.Contains("IRule") == true));
-        return ruleInterface?.GetGenericArguments().FirstOrDefault();
-    }
-
-    /// <summary>
-    /// Build a flat schema from a type's public properties.
-    /// </summary>
-    protected static IReadOnlyList<MRuleContractField> MBuildSchemaFromType(Type type, int depth = 0)
-    {
-        if (depth > 3) return Array.Empty<MRuleContractField>();
-
-        var fields = new List<MRuleContractField>();
-        foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        if (entry.ContextSchema is null || entry.ContextSchema.Fields.Count == 0)
         {
-            var propType = prop.PropertyType;
-            var typeName = MMapClrTypeToSchemaType(propType);
-            IReadOnlyList<MRuleContractField>? children = null;
+            return null;
+        }
 
-            if (typeName == "object" && !propType.IsPrimitive && propType != typeof(string))
-            {
-                var elementType = MGetCollectionElementType(propType);
-                if (elementType is not null)
-                {
-                    typeName = "array";
-                    children = MBuildSchemaFromType(elementType, depth + 1);
-                }
-                else
-                {
-                    children = MBuildSchemaFromType(propType, depth + 1);
-                }
-            }
+        List<MRuleContractField> fields = MapSchemaFields(entry.ContextSchema.Fields);
+        return fields.Count > 0 ? new MRuleContractSchema(contractName, fields) : null;
+    }
+
+    /// <summary>
+    /// Builds an output schema from <see cref="MRuleAuthoringEntry.ProducedFacts"/>.
+    /// </summary>
+    private static MRuleContractSchema? BuildOutputSchema(MRuleAuthoringEntry entry, string contractName)
+    {
+        if (entry.ProducedFacts.Count == 0)
+        {
+            return null;
+        }
+
+        List<MRuleContractField> fields = [];
+        foreach (MFactEntry fact in entry.ProducedFacts)
+        {
+            IReadOnlyList<MRuleContractField>? children = fact.Schema is not null
+                ? MapSchemaFields(fact.Schema.Fields)
+                : null;
 
             fields.Add(new MRuleContractField(
-                prop.Name,
-                typeName,
-                IsRequired: !MIsNullable(propType),
-                Children: children?.Count > 0 ? children : null));
+                fact.Key,
+                fact.ClrTypeName ?? "object",
+                IsRequired: false,
+                Description: fact.Description,
+                Children: children is { Count: > 0 } ? children : null));
         }
 
-        return fields;
+        return fields.Count > 0 ? new MRuleContractSchema(contractName, fields) : null;
     }
 
-    private static string MMapClrTypeToSchemaType(Type type)
+    private static List<MRuleContractField> MapSchemaFields(IReadOnlyList<MFactSchemaField> source)
     {
-        var underlying = Nullable.GetUnderlyingType(type) ?? type;
-        if (underlying == typeof(string)) return "string";
-        if (underlying == typeof(int) || underlying == typeof(long) || underlying == typeof(short))
-            return "integer";
-        if (underlying == typeof(decimal) || underlying == typeof(double) || underlying == typeof(float))
-            return "number";
-        if (underlying == typeof(bool)) return "boolean";
-        if (underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset))
-            return "datetime";
-        if (underlying == typeof(Guid)) return "string";
-        if (underlying.IsEnum) return "string";
-        if (MGetCollectionElementType(underlying) is not null) return "array";
-        return "object";
-    }
-
-    private static Type? MGetCollectionElementType(Type type)
-    {
-        if (type.IsArray) return type.GetElementType();
-        if (type.IsGenericType)
+        List<MRuleContractField> result = new(source.Count);
+        foreach (MFactSchemaField field in source)
         {
-            var genDef = type.GetGenericTypeDefinition();
-            if (genDef == typeof(List<>) || genDef == typeof(IList<>) ||
-                genDef == typeof(IEnumerable<>) || genDef == typeof(IReadOnlyList<>) ||
-                genDef == typeof(ICollection<>) || genDef == typeof(IReadOnlyCollection<>))
+            IReadOnlyList<MRuleContractField>? children = field.Children.Count > 0
+                ? MapSchemaFields(field.Children)
+                : null;
+
+            result.Add(new MRuleContractField(
+                field.Label,
+                field.DataType,
+                IsRequired: field.Required,
+                Description: field.Description,
+                Children: children is { Count: > 0 } ? children : null));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Loads a flow definition JSON and returns the ruleCode of the first RuleTask node.
+    /// </summary>
+    private async Task<string?> FindFirstRuleCodeInFlow(string flowCode, CancellationToken ct)
+    {
+        JsonElement? flowGraph = await LoadFlowGraph(flowCode, ct);
+        if (flowGraph is null)
+        {
+            return null;
+        }
+
+        if (!flowGraph.Value.TryGetProperty("nodes", out JsonElement nodes))
+        {
+            return null;
+        }
+
+        foreach (JsonElement node in nodes.EnumerateArray())
+        {
+            string? ruleCode = ExtractRuleCode(node);
+            if (ruleCode is not null)
             {
-                return type.GetGenericArguments()[0];
+                return ruleCode;
             }
         }
 
         return null;
     }
 
-    private static bool MIsNullable(Type type)
+    /// <summary>
+    /// Loads a flow definition JSON and finds the ruleCode for a specific node by ID.
+    /// </summary>
+    private async Task<string?> FindRuleCodeForNode(string flowCode, string nodeId, CancellationToken ct)
     {
-        return !type.IsValueType || Nullable.GetUnderlyingType(type) is not null;
+        JsonElement? flowGraph = await LoadFlowGraph(flowCode, ct);
+        if (flowGraph is null)
+        {
+            return null;
+        }
+
+        if (!flowGraph.Value.TryGetProperty("nodes", out JsonElement nodes))
+        {
+            return null;
+        }
+
+        foreach (JsonElement node in nodes.EnumerateArray())
+        {
+            if (node.TryGetProperty("id", out JsonElement idEl) &&
+                string.Equals(idEl.GetString(), nodeId, StringComparison.OrdinalIgnoreCase))
+            {
+                return ExtractRuleCode(node);
+            }
+        }
+
+        return null;
+    }
+
+    private async Task<JsonElement?> LoadFlowGraph(string flowCode, CancellationToken ct)
+    {
+        if (_rulesEngine is null)
+        {
+            _log?.LogDebug("RulesEngineService not available, cannot resolve flow {FlowCode}", flowCode);
+            return null;
+        }
+
+        string? json = await _rulesEngine.GetRuleSetAsync(flowCode, cancellationToken: ct);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            using JsonDocument doc = JsonDocument.Parse(json);
+            // The flow graph is nested under "flowGraph" in the ruleset envelope
+            if (doc.RootElement.TryGetProperty("flowGraph", out JsonElement flowGraph))
+            {
+                // Clone so we can dispose the document
+                return flowGraph.Clone();
+            }
+
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            _log?.LogDebug(ex, "Failed to parse flow definition for {FlowCode}", flowCode);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Extracts a ruleCode from a flow node JSON element.
+    /// Checks both top-level "ruleCode" and nested "data.ruleCode".
+    /// </summary>
+    private static string? ExtractRuleCode(JsonElement node)
+    {
+        if (node.TryGetProperty("ruleCode", out JsonElement topCode))
+        {
+            string? val = topCode.GetString();
+            if (!string.IsNullOrWhiteSpace(val))
+            {
+                return val;
+            }
+        }
+
+        if (node.TryGetProperty("data", out JsonElement data) &&
+            data.TryGetProperty("ruleCode", out JsonElement dataCode))
+        {
+            string? val = dataCode.GetString();
+            if (!string.IsNullOrWhiteSpace(val))
+            {
+                return val;
+            }
+        }
+
+        return null;
     }
 }

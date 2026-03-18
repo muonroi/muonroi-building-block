@@ -33,10 +33,39 @@ public sealed class DefaultPromptBuilder : IPromptBuilder
         JsonElement? executionResult,
         JsonElement? factBagSnapshot,
         int budget,
-        IReadOnlyList<string>? focusAreas)
+        IReadOnlyList<string>? focusAreas,
+        RuleSetSchema? schema = null)
     {
         StringBuilder sb = new();
         sb.AppendLine($"Generate {budget} test scenarios.");
+
+        // Inject schema section FIRST so AI knows field names before reading the rule definition
+        if (schema is { InputFields.Count: > 0 })
+        {
+            sb.AppendLine();
+            sb.AppendLine("## Input Field Schema");
+            sb.AppendLine("The rule expects these exact input fields:");
+            foreach (FieldSchema field in schema.InputFields)
+            {
+                string required = field.IsRequired ? ", required" : "";
+                string desc = field.Description is not null ? $" — {field.Description}" : "";
+                sb.AppendLine($"- {field.Name} ({field.DataType}{required}){desc}");
+            }
+            sb.AppendLine();
+            sb.AppendLine("You MUST use exactly these field names in inputFacts. Do NOT invent field names.");
+        }
+
+        if (schema is { OutputFields.Count: > 0 })
+        {
+            sb.AppendLine();
+            sb.AppendLine("## Output Fields");
+            sb.AppendLine("The rule produces these output fields:");
+            foreach (FieldSchema field in schema.OutputFields)
+            {
+                sb.AppendLine($"- {field.Name} ({field.DataType})");
+            }
+        }
+
         sb.AppendLine();
         sb.AppendLine("Rule definition:");
         sb.AppendLine(ruleSetJson);

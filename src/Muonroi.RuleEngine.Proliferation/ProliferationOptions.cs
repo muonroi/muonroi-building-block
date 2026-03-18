@@ -35,4 +35,17 @@ public sealed class ProliferationOptions
     // Failure feedback loop
     public bool EnableFailureFeedback { get; set; } = true;
     public int MaxScenariosPerFailure { get; set; } = 2;
+
+    // Semantic deduplication (vector-based)
+    public bool EnableSemanticDedup { get; set; } = false;
+    public double SemanticDedupThreshold { get; set; } = 0.85;
+    public string EmbeddingModel { get; set; } = "nomic-embed-text";
+
+    // Chaos engineering mode
+    public bool EnableChaosMode { get; set; } = false;
+    public int MaxChaosScenarios { get; set; } = 10;
+
+    // Composite brain (chain multiple providers)
+    public string? CompositeBrains { get; set; } // "ollama,claude" or "openai,ollama"
+    public string CompositeMode { get; set; } = "parallel"; // "parallel" | "sequential"
 }

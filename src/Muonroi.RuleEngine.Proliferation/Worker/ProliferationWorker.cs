@@ -16,7 +16,8 @@ public sealed class ProliferationWorker(
     IMLog<ProliferationWorker>? logger = null,
     IProliferationChangeNotifier? notifier = null,
     IFailureAnalyzer? failureAnalyzer = null,
-    IScenarioDeduplicator? deduplicator = null) : BackgroundService
+    IScenarioDeduplicator? deduplicator = null,
+    ICoverageTracker? coverageTracker = null) : BackgroundService
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.RuleEngine.Proliferation");
     private static readonly Meter Meter = new("Muonroi.RuleEngine.Proliferation");
@@ -90,6 +91,23 @@ public sealed class ProliferationWorker(
         {
             if (ct.IsCancellationRequested) break;
 
+            // Schema-aware input validation before execution
+            string ruleSetJson = scenario.GeneratedRuleFlowGraph ?? "{}";
+            RuleSetKind kind = RuleSetKindDetector.Detect(ruleSetJson);
+            RuleSetSchema ruleSchema = RuleSetSchemaExtractor.Extract(ruleSetJson, kind);
+
+            if (ruleSchema.InputFields.Count > 0)
+            {
+                ValidationResult validation = ScenarioInputValidator.Validate(scenario, ruleSchema);
+                if (!validation.IsValid)
+                {
+                    logger?.Info("[Proliferation] Scenario {Id} skipped: {Errors}",
+                        scenario.Id, string.Join("; ", validation.Errors));
+                    await store.UpdateStatusAsync(scenario.Id, ScenarioStatus.Skipped, ct);
+                    continue;
+                }
+            }
+
             await store.UpdateStatusAsync(scenario.Id, ScenarioStatus.Running, ct);
 
             try
@@ -162,9 +180,29 @@ public sealed class ProliferationWorker(
 
         try
         {
+            // Coverage-guided focus: inject uncovered fields as focus areas
+            IReadOnlyList<string>? coverageFocus = null;
+            string nextRuleSetJson = parentScenario.GeneratedRuleFlowGraph ?? "{}";
+            if (coverageTracker is not null)
+            {
+                RuleSetKind nextKind = RuleSetKindDetector.Detect(nextRuleSetJson);
+                RuleSetSchema nextSchema = RuleSetSchemaExtractor.Extract(nextRuleSetJson, nextKind);
+                if (nextSchema.InputFields.Count > 0)
+                {
+                    IReadOnlyList<NeuronScenario> siblings = await store.GetScenariosBySeedAsync(parentScenario.SeedRuleCode, ct);
+                    CoverageReport coverage = coverageTracker.GetCoverage(parentScenario.SeedRuleCode, siblings, nextSchema);
+                    if (coverage.UncoveredFields.Count > 0)
+                    {
+                        coverageFocus = coverage.UncoveredFields;
+                        logger?.Info("[Proliferation] Coverage {Pct}% — focusing on uncovered fields: {Fields}",
+                            coverage.CoveragePercentage, string.Join(", ", coverage.UncoveredFields));
+                    }
+                }
+            }
+
             ProliferationPlan plan = await brain.AnalyzeAsync(
                 parentScenario.SeedRuleCode,
-                ruleSetJson: parentScenario.GeneratedRuleFlowGraph ?? "{}",
+                ruleSetJson: nextRuleSetJson,
                 executionResult: result.OutputFacts,
                 factBagSnapshot: result.OutputFacts,
                 new ProliferationContext
@@ -172,7 +210,8 @@ public sealed class ProliferationWorker(
                     Scope = parentScenario.Scope,
                     CurrentDepth = parentScenario.GenerationDepth + 1,
                     RemainingBudget = Math.Min(remainingBudget, options.MaxScenariosPerRule),
-                    TenantId = parentScenario.TenantId
+                    TenantId = parentScenario.TenantId,
+                    FocusAreas = coverageFocus
                 },
                 ct);
 
