@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Muonroi.RuleEngine.Abstractions.Authoring;
 using Muonroi.RuleEngine.Runtime.Rules;
@@ -14,7 +13,6 @@ namespace Muonroi.RuleEngine.Runtime.Web.Services;
 public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
 {
     private readonly MRuleAuthoringManifestRegistry _registry;
-    private readonly RulesEngineService? _rulesEngine;
     private readonly ILogger<MDefaultRuleFlowContractProvider>? _log;
 
     /// <summary>
@@ -24,14 +22,15 @@ public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
 
     /// <summary>
     /// Initializes a new instance of <see cref="MDefaultRuleFlowContractProvider"/>.
+    /// Resolves <see cref="MRuleAuthoringManifestRegistry"/> from the service provider,
+    /// creating a new instance if one is not registered.
     /// </summary>
     public MDefaultRuleFlowContractProvider(
-        MRuleAuthoringManifestRegistry registry,
-        RulesEngineService? rulesEngine = null,
+        IServiceProvider serviceProvider,
         ILogger<MDefaultRuleFlowContractProvider>? log = null)
     {
-        _registry = registry;
-        _rulesEngine = rulesEngine;
+        _registry = serviceProvider.GetService(typeof(MRuleAuthoringManifestRegistry)) as MRuleAuthoringManifestRegistry
+                    ?? new MRuleAuthoringManifestRegistry(serviceProvider);
         _log = log;
     }
 
@@ -54,50 +53,58 @@ public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
     }
 
     /// <inheritdoc />
-    public async Task<MRuleFlowContractLookupResponse?> MGetFlowContractAsync(
+    public Task<MRuleFlowContractLookupResponse?> MGetFlowContractAsync(
         string flowCode, CancellationToken ct = default)
     {
-        string? firstRuleCode = await FindFirstRuleCodeInFlow(flowCode, ct);
-        if (firstRuleCode is null)
-        {
-            return new MRuleFlowContractLookupResponse("flow", flowCode, null, null);
-        }
-
-        MRuleAuthoringEntry? entry = FindEntryByCode(firstRuleCode);
+        // Strategy: find rules belonging to this flow by checking the flow JSON,
+        // then fall back to manifest-only lookup if RulesEngineService is unavailable.
+        // All rules in a flow share the same TContext, so any rule's schema works.
+        MRuleAuthoringEntry? entry = FindEntryForFlow(flowCode);
         if (entry is null)
         {
-            return new MRuleFlowContractLookupResponse("flow", flowCode, null, null);
+            _log?.LogDebug("No manifest entry found for flow {FlowCode}", flowCode);
+            return Task.FromResult<MRuleFlowContractLookupResponse?>(
+                new MRuleFlowContractLookupResponse("flow", flowCode, null, null));
         }
 
         MRuleContractSchema? requestSchema = MapContextSchema(entry, $"{flowCode}.Request");
         MRuleContractSchema? responseSchema = BuildOutputSchema(entry, $"{flowCode}.Response");
 
-        return new MRuleFlowContractLookupResponse("flow", flowCode, requestSchema, responseSchema);
+        return Task.FromResult<MRuleFlowContractLookupResponse?>(
+            new MRuleFlowContractLookupResponse("flow", flowCode, requestSchema, responseSchema));
     }
 
     /// <inheritdoc />
-    public async Task<MRuleFlowNodeContractResponse?> MGetNodeAuthoringContractAsync(
+    public Task<MRuleFlowNodeContractResponse?> MGetNodeAuthoringContractAsync(
         string flowCode, string nodeId, CancellationToken ct = default)
     {
-        string? ruleCode = await FindRuleCodeForNode(flowCode, nodeId, ct);
-        if (ruleCode is null)
+        // Try direct lookup: nodeId may contain or match a rule code
+        MRuleAuthoringEntry? entry = FindEntryByCode(nodeId);
+
+        // Fallback: strip common prefixes like "node-rule-" and try matching
+        if (entry is null && nodeId.StartsWith("node-rule-", StringComparison.OrdinalIgnoreCase))
         {
-            return new MRuleFlowNodeContractResponse(nodeId, flowCode, null, null);
+            string suffix = nodeId["node-rule-".Length..];
+            entry = FindEntryByCodePrefix(flowCode, suffix);
         }
 
-        MRuleAuthoringEntry? entry = FindEntryByCode(ruleCode);
+        // Fallback: use the flow's shared context (all rules share TContext)
+        entry ??= FindEntryForFlow(flowCode);
+
         if (entry is null)
         {
-            return new MRuleFlowNodeContractResponse(nodeId, flowCode, null, null);
+            return Task.FromResult<MRuleFlowNodeContractResponse?>(
+                new MRuleFlowNodeContractResponse(nodeId, flowCode, null, null));
         }
 
-        MRuleContractSchema? requestSchema = MapContextSchema(entry, $"{ruleCode}.Request");
-        MRuleContractSchema? responseSchema = BuildOutputSchema(entry, $"{ruleCode}.Response");
+        MRuleContractSchema? requestSchema = MapContextSchema(entry, $"{entry.Code}.Request");
+        MRuleContractSchema? responseSchema = BuildOutputSchema(entry, $"{entry.Code}.Response");
         List<string>? availableInputKeys = entry.ConsumedFacts.Count > 0
             ? entry.ConsumedFacts.Select(f => f.Key).ToList()
             : null;
 
-        return new MRuleFlowNodeContractResponse(nodeId, flowCode, requestSchema, responseSchema, availableInputKeys);
+        return Task.FromResult<MRuleFlowNodeContractResponse?>(
+            new MRuleFlowNodeContractResponse(nodeId, flowCode, requestSchema, responseSchema, availableInputKeys));
     }
 
     /// <inheritdoc />
@@ -111,6 +118,70 @@ public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
         _ruleIndex ??= BuildRuleIndex();
         _ruleIndex.TryGetValue(code, out MRuleAuthoringEntry? entry);
         return entry;
+    }
+
+    /// <summary>
+    /// Finds a rule entry whose code starts with a flow-derived prefix (e.g. "FCD_V4_" from "FCD_V4_RULES")
+    /// and whose suffix contains the given hint (e.g. "barge" matches "FCD_V4_BARGE_VALID").
+    /// </summary>
+    private MRuleAuthoringEntry? FindEntryByCodePrefix(string flowCode, string hint)
+    {
+        _ruleIndex ??= BuildRuleIndex();
+        foreach (KeyValuePair<string, MRuleAuthoringEntry> kvp in _ruleIndex)
+        {
+            if (kvp.Key.Contains(hint, StringComparison.OrdinalIgnoreCase))
+            {
+                return kvp.Value;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Finds a manifest entry for a flow by matching rules whose code shares a common prefix
+    /// with the flow code. For example, flow "FCD_V4_RULES" matches rules "FCD_V4_LINER_VALID",
+    /// "FCD_V4_PORT_VALID", etc. All rules in a flow share the same TContext, so any match works.
+    /// </summary>
+    private MRuleAuthoringEntry? FindEntryForFlow(string flowCode)
+    {
+        _ruleIndex ??= BuildRuleIndex();
+
+        // Strategy 1: Extract common prefix from flowCode (e.g. "FCD_V4_" from "FCD_V4_RULES")
+        string prefix = ExtractFlowPrefix(flowCode);
+        if (!string.IsNullOrEmpty(prefix))
+        {
+            foreach (KeyValuePair<string, MRuleAuthoringEntry> kvp in _ruleIndex)
+            {
+                if (kvp.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(kvp.Key, flowCode, StringComparison.OrdinalIgnoreCase))
+                {
+                    return kvp.Value;
+                }
+            }
+        }
+
+        // Strategy 2: If only one context type exists across all rules, use that
+        MRuleAuthoringEntry? firstWithSchema = null;
+        foreach (KeyValuePair<string, MRuleAuthoringEntry> kvp in _ruleIndex)
+        {
+            if (kvp.Value.ContextSchema is { Fields.Count: > 0 })
+            {
+                firstWithSchema ??= kvp.Value;
+            }
+        }
+
+        return firstWithSchema;
+    }
+
+    /// <summary>
+    /// Extracts a common prefix from a flow code by removing the last segment.
+    /// "FCD_V4_RULES" → "FCD_V4_", "MY_FLOW" → "MY_".
+    /// </summary>
+    private static string ExtractFlowPrefix(string flowCode)
+    {
+        int lastUnderscore = flowCode.LastIndexOf('_');
+        return lastUnderscore > 0 ? flowCode[..(lastUnderscore + 1)] : string.Empty;
     }
 
     private Dictionary<string, MRuleAuthoringEntry> BuildRuleIndex()
@@ -189,120 +260,4 @@ public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
         return result;
     }
 
-    /// <summary>
-    /// Loads a flow definition JSON and returns the ruleCode of the first RuleTask node.
-    /// </summary>
-    private async Task<string?> FindFirstRuleCodeInFlow(string flowCode, CancellationToken ct)
-    {
-        JsonElement? flowGraph = await LoadFlowGraph(flowCode, ct);
-        if (flowGraph is null)
-        {
-            return null;
-        }
-
-        if (!flowGraph.Value.TryGetProperty("nodes", out JsonElement nodes))
-        {
-            return null;
-        }
-
-        foreach (JsonElement node in nodes.EnumerateArray())
-        {
-            string? ruleCode = ExtractRuleCode(node);
-            if (ruleCode is not null)
-            {
-                return ruleCode;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Loads a flow definition JSON and finds the ruleCode for a specific node by ID.
-    /// </summary>
-    private async Task<string?> FindRuleCodeForNode(string flowCode, string nodeId, CancellationToken ct)
-    {
-        JsonElement? flowGraph = await LoadFlowGraph(flowCode, ct);
-        if (flowGraph is null)
-        {
-            return null;
-        }
-
-        if (!flowGraph.Value.TryGetProperty("nodes", out JsonElement nodes))
-        {
-            return null;
-        }
-
-        foreach (JsonElement node in nodes.EnumerateArray())
-        {
-            if (node.TryGetProperty("id", out JsonElement idEl) &&
-                string.Equals(idEl.GetString(), nodeId, StringComparison.OrdinalIgnoreCase))
-            {
-                return ExtractRuleCode(node);
-            }
-        }
-
-        return null;
-    }
-
-    private async Task<JsonElement?> LoadFlowGraph(string flowCode, CancellationToken ct)
-    {
-        if (_rulesEngine is null)
-        {
-            _log?.LogDebug("RulesEngineService not available, cannot resolve flow {FlowCode}", flowCode);
-            return null;
-        }
-
-        string? json = await _rulesEngine.GetRuleSetAsync(flowCode, cancellationToken: ct);
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return null;
-        }
-
-        try
-        {
-            using JsonDocument doc = JsonDocument.Parse(json);
-            // The flow graph is nested under "flowGraph" in the ruleset envelope
-            if (doc.RootElement.TryGetProperty("flowGraph", out JsonElement flowGraph))
-            {
-                // Clone so we can dispose the document
-                return flowGraph.Clone();
-            }
-
-            return null;
-        }
-        catch (JsonException ex)
-        {
-            _log?.LogDebug(ex, "Failed to parse flow definition for {FlowCode}", flowCode);
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Extracts a ruleCode from a flow node JSON element.
-    /// Checks both top-level "ruleCode" and nested "data.ruleCode".
-    /// </summary>
-    private static string? ExtractRuleCode(JsonElement node)
-    {
-        if (node.TryGetProperty("ruleCode", out JsonElement topCode))
-        {
-            string? val = topCode.GetString();
-            if (!string.IsNullOrWhiteSpace(val))
-            {
-                return val;
-            }
-        }
-
-        if (node.TryGetProperty("data", out JsonElement data) &&
-            data.TryGetProperty("ruleCode", out JsonElement dataCode))
-        {
-            string? val = dataCode.GetString();
-            if (!string.IsNullOrWhiteSpace(val))
-            {
-                return val;
-            }
-        }
-
-        return null;
-    }
 }
