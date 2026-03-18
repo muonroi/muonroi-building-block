@@ -230,9 +230,10 @@ public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
                 : null;
 
             fields.Add(new MRuleContractField(
-                fact.Key,
-                fact.ClrTypeName ?? "object",
-                IsRequired: false,
+                Path: fact.Key,
+                Label: fact.Label ?? fact.Key,
+                DataType: fact.ClrTypeName ?? "object",
+                Required: false,
                 Description: fact.Description,
                 Children: children is { Count: > 0 } ? children : null));
         }
@@ -250,9 +251,10 @@ public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
                 : null;
 
             result.Add(new MRuleContractField(
-                field.Label,
-                field.DataType,
-                IsRequired: field.Required,
+                Path: field.Path,
+                Label: field.Label,
+                DataType: field.DataType,
+                Required: field.Required,
                 Description: field.Description,
                 Children: children is { Count: > 0 } ? children : null));
         }

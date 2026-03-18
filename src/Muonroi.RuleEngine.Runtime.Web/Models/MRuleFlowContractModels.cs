@@ -2,11 +2,13 @@ namespace Muonroi.RuleEngine.Runtime.Web.Models;
 
 /// <summary>
 /// Represents a single field in a rule contract schema.
+/// Field names match the frontend <c>MRuleFlowContractField</c> interface.
 /// </summary>
 public sealed record MRuleContractField(
-    string Name,
-    string Type,
-    bool IsRequired = false,
+    string Path,
+    string Label,
+    string DataType,
+    bool Required = false,
     string? Description = null,
     IReadOnlyList<MRuleContractField>? Children = null
 );
