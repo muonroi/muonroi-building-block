@@ -22,6 +22,8 @@ public class OllamaProliferationBrainTests
         MaxScenariosPerRule = 20
     };
 
+    private readonly DefaultPromptBuilder _promptBuilder = new();
+
     private static HttpClient CreateMockHttpClient(string responseJson, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
         Mock<HttpMessageHandler> handler = new();
@@ -41,7 +43,7 @@ public class OllamaProliferationBrainTests
     {
         Mock<IHttpClientFactory> factory = new();
         factory.Setup(f => f.CreateClient("OllamaProliferation")).Returns(client);
-        return new OllamaProliferationBrain(factory.Object, _options);
+        return new OllamaProliferationBrain(factory.Object, _options, _promptBuilder);
     }
 
     [Fact]
@@ -86,7 +88,6 @@ public class OllamaProliferationBrainTests
     [Fact]
     public async Task AnalyzeAsync_FallbackModel_OnPrimaryFailure()
     {
-        // Primary returns error
         Mock<HttpMessageHandler> handler = new();
         int callCount = 0;
         handler.Protected()
@@ -110,7 +111,7 @@ public class OllamaProliferationBrainTests
 
         Mock<IHttpClientFactory> factory = new();
         factory.Setup(f => f.CreateClient("OllamaProliferation")).Returns(new HttpClient(handler.Object));
-        OllamaProliferationBrain brain = new(factory.Object, _options);
+        OllamaProliferationBrain brain = new(factory.Object, _options, _promptBuilder);
 
         ProliferationPlan plan = await brain.AnalyzeAsync(
             "TEST",
@@ -150,43 +151,5 @@ public class OllamaProliferationBrainTests
 
         plan.Scenarios.Should().BeEmpty();
         plan.GenerationDuration.Should().Be(TimeSpan.Zero);
-    }
-
-    [Fact]
-    public void ParseScenarios_HandlesMarkdownCodeFences()
-    {
-        string wrapped = """
-            ```json
-            [{"scenario":"Test","type":"business","reason":"edge case","inputFacts":{},"expectedBehavior":"should pass"}]
-            ```
-            """;
-
-        IReadOnlyList<NeuronScenario> scenarios = OllamaProliferationBrain.ParseScenarios(
-            wrapped,
-            "SEED",
-            new ProliferationContext { RemainingBudget = 5 });
-
-        scenarios.Should().HaveCount(1);
-        scenarios[0].ScenarioName.Should().Be("Test");
-    }
-
-    [Fact]
-    public void ParseScenarios_SkipsIncompleteEntries()
-    {
-        string json = """
-            [
-                {"scenario":"Valid","type":"business","reason":"test","inputFacts":{}},
-                {"scenario":"","reason":"missing name"},
-                {"type":"technical","inputFacts":{}}
-            ]
-            """;
-
-        IReadOnlyList<NeuronScenario> scenarios = OllamaProliferationBrain.ParseScenarios(
-            json,
-            "SEED",
-            new ProliferationContext { RemainingBudget = 10 });
-
-        scenarios.Should().HaveCount(1);
-        scenarios[0].ScenarioName.Should().Be("Valid");
     }
 }

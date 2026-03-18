@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Proliferation.Brain;
 using Muonroi.RuleEngine.Proliferation.Execution;
 using Muonroi.RuleEngine.Proliferation.Store;
@@ -22,12 +23,47 @@ public static class ProliferationServiceCollectionExtensions
         configuration.GetSection(ProliferationOptions.SectionName).Bind(options);
         services.TryAddSingleton(options);
 
+        // HTTP clients per provider
         services.AddHttpClient("OllamaProliferation", client =>
         {
             client.Timeout = TimeSpan.FromSeconds(options.AiTimeoutSeconds + 30);
         });
 
-        services.TryAddSingleton<IRuleProliferationBrain, OllamaProliferationBrain>();
+        services.AddHttpClient("OpenAiProliferation", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(options.AiTimeoutSeconds + 30);
+        });
+
+        services.AddHttpClient("ClaudeProliferation", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(options.AiTimeoutSeconds + 30);
+        });
+
+        // Shared prompt builder
+        services.TryAddSingleton<IPromptBuilder, DefaultPromptBuilder>();
+
+        // Brain provider factory — resolved by BrainProvider option
+        services.TryAddSingleton<IRuleProliferationBrain>(sp =>
+        {
+            var opts = sp.GetRequiredService<ProliferationOptions>();
+            var prompt = sp.GetRequiredService<IPromptBuilder>();
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var logFactory = sp.GetService<IMLogFactory>();
+
+            return opts.BrainProvider?.ToLowerInvariant() switch
+            {
+                "openai" => new OpenAiProliferationBrain(
+                    factory, opts, prompt,
+                    logFactory?.CreateLogger<OpenAiProliferationBrain>()),
+                "claude" => new ClaudeProliferationBrain(
+                    factory, opts, prompt,
+                    logFactory?.CreateLogger<ClaudeProliferationBrain>()),
+                _ => new OllamaProliferationBrain(
+                    factory, opts, prompt,
+                    logFactory?.CreateLogger<OllamaProliferationBrain>())
+            };
+        });
+
         services.TryAddScoped<IScenarioExecutor, ScenarioExecutor>();
         services.TryAddSingleton<IProliferationStore, InMemoryProliferationStore>();
         services.AddHostedService<ProliferationWorker>();
