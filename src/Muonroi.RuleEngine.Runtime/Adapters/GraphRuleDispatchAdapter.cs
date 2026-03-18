@@ -29,9 +29,9 @@ internal sealed class GraphRuleDispatchAdapter<TContext> : IRule<TContext>
     {
         if (!MShouldExecute(facts))
         {
-            MWriteExecutionState(facts, executed: false, passed: false, isError: false, message: null);
+            MWriteExecutionState(facts, executed: false, passed: false, isError: false, message: "SKIPPED");
             _pendingExecution.Value = PendingExecutionState.Skip;
-            return RuleResult.Passed();
+            return new RuleResult(true, ["SKIPPED: edge condition not met"]);
         }
 
         try

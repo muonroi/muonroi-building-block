@@ -100,9 +100,10 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
             {
                 feelExpression = data.Expression.Body;
             }
-            else if (string.Equals(data.Expression.Language, "liquid", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(data.Expression.Language, "liquid", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(data.Expression.Language, "scriban", StringComparison.OrdinalIgnoreCase))
             {
-                // Liquid is handled separately below
+                // Liquid/Scriban is handled separately below (LiquidRuleAdapter supports both)
             }
         }
 
@@ -123,7 +124,8 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
             OutputFields = MapOutputFields(data.OutputFields),
 
             // Type B-2: Liquid
-            LiquidTemplate = string.Equals(data.Expression?.Language, "liquid", StringComparison.OrdinalIgnoreCase)
+            LiquidTemplate = (string.Equals(data.Expression?.Language, "liquid", StringComparison.OrdinalIgnoreCase) ||
+                              string.Equals(data.Expression?.Language, "scriban", StringComparison.OrdinalIgnoreCase))
                 ? data.Expression!.Body : null,
             LiquidOutputFormat = data.LiquidConfig?.OutputFormat ?? "text",
             LiquidOutputKey    = data.LiquidConfig?.OutputFactKey,

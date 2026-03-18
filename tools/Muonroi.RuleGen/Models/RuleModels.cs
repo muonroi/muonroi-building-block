@@ -57,4 +57,5 @@ internal sealed record DiscoveredDispatcherContext(
     string ContextType,
     string InterfaceName,
     string ClassName,
-    string FileName);
+    string FileName,
+    string? WorkflowName = null);
