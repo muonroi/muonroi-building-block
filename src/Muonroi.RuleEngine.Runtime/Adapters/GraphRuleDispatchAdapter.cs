@@ -51,6 +51,9 @@ internal sealed class GraphRuleDispatchAdapter<TContext> : IRule<TContext>
 
             if (handledFailure)
             {
+                // Preserve original failure in FactBag so callers can inspect
+                // which nodes actually failed even though the flow continues.
+                MAppendRoutedFailure(facts, _entry.NodeId, result);
                 return RuleResult.Passed();
             }
 
@@ -140,6 +143,24 @@ internal sealed class GraphRuleDispatchAdapter<TContext> : IRule<TContext>
         };
         facts.Set($"__graph.node.{_entry.NodeId}.result", resultPayload);
         facts.Set("result", resultPayload);
+    }
+
+    /// <summary>
+    /// Appends a routed failure to <c>__graph.routedFailures</c> in the FactBag so that
+    /// callers can detect nodes that failed but were routed through (always/on-false edges).
+    /// </summary>
+    private static void MAppendRoutedFailure(FactBag facts, string nodeId, RuleResult result)
+    {
+        const string key = "__graph.routedFailures";
+        List<Dictionary<string, object?>> failures =
+            facts.Get<List<Dictionary<string, object?>>>(key) ?? [];
+        failures.Add(new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["nodeId"] = nodeId,
+            ["errors"] = result.Errors.ToList(),
+            ["isPass"] = false
+        });
+        facts.Set(key, failures);
     }
 
     private static string MExecutionKey(string nodeId) => $"__graph.node.{nodeId}.executed";
