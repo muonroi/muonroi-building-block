@@ -119,6 +119,11 @@ internal sealed class RuleGenExtractConfig
 
     /// <summary>Dispatcher class name suffix.</summary>
     public string DispatcherSuffix { get; set; } = "GeneratedRuleEngineDispatcher";
+
+    /// <summary>Workflow name for version-aware dispatch via RulesEngineService.
+    /// When set, the generated dispatcher delegates to RulesEngineService (flow graph + version selection).
+    /// When null, the dispatcher delegates directly to RuleOrchestrator (code-first only).</summary>
+    public string? WorkflowName { get; set; }
 }
 
 internal sealed class RuleGenConventionsConfig

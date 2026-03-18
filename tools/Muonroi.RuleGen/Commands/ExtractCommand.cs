@@ -123,7 +123,8 @@ internal static class ExtractCommand
 
         IReadOnlyList<DiscoveredDispatcherContext> dispatchers = DispatcherWriter.BuildContexts(
             discovered,
-            options.DispatcherSuffix);
+            options.DispatcherSuffix,
+            options.WorkflowName);
 
         IReadOnlyList<DiscoveredDispatcherContext> dispatchersForRegistration =
             options.RegisterDispatchers ? dispatchers : [];
@@ -218,6 +219,7 @@ internal static class ExtractCommand
         public string? DispatcherNamespace { get; init; }
         public bool DispatcherOverwrite { get; init; }
         public string DispatcherSuffix { get; init; } = "GeneratedRuleEngineDispatcher";
+        public string? WorkflowName { get; init; }
 
         public static ExtractOptions FromContext(CommandContext context)
         {
@@ -270,7 +272,8 @@ internal static class ExtractCommand
                 DispatcherNamespace = OptionReader.GetString(context, "dispatcher-namespace", cfg.DispatcherNamespace),
                 DispatcherOverwrite = OptionReader.GetBool(context, "dispatcher-overwrite", cfg.DispatcherOverwrite),
                 DispatcherSuffix = OptionReader.GetString(context, "dispatcher-suffix", cfg.DispatcherSuffix)
-                    ?? "GeneratedRuleEngineDispatcher"
+                    ?? "GeneratedRuleEngineDispatcher",
+                WorkflowName = OptionReader.GetString(context, "workflow-name", cfg.WorkflowName)
             };
         }
 

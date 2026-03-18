@@ -7,7 +7,8 @@ internal static class DispatcherWriter
 {
     public static IReadOnlyList<DiscoveredDispatcherContext> BuildContexts(
         IReadOnlyCollection<DiscoveredRuleType> discovered,
-        string dispatcherSuffix)
+        string dispatcherSuffix,
+        string? workflowName = null)
     {
         if (string.IsNullOrWhiteSpace(dispatcherSuffix))
         {
@@ -42,7 +43,8 @@ internal static class DispatcherWriter
                 contextType,
                 interfaceName,
                 className,
-                $"{className}.g.cs"));
+                $"{className}.g.cs",
+                workflowName));
         }
 
         return contexts;
@@ -57,9 +59,18 @@ internal static class DispatcherWriter
         sb.AppendLine("using System.Threading.Tasks;");
         sb.AppendLine("using Muonroi.RuleEngine.Abstractions;");
         sb.AppendLine("using Muonroi.RuleEngine.Core;");
+
+        bool versionAware = !string.IsNullOrWhiteSpace(context.WorkflowName);
+        if (versionAware)
+        {
+            sb.AppendLine("using Muonroi.RuleEngine.Runtime.Rules;");
+        }
+
         sb.AppendLine();
         sb.AppendLine($"namespace {outputNamespace};");
         sb.AppendLine();
+
+        // Interface (unchanged)
         sb.AppendLine($"public interface {context.InterfaceName}");
         sb.AppendLine("{");
         sb.AppendLine($"    Task<FactBag> ExecuteAsync({context.ContextType} context, CancellationToken cancellationToken = default);");
@@ -69,6 +80,21 @@ internal static class DispatcherWriter
         sb.AppendLine("        CancellationToken cancellationToken = default);");
         sb.AppendLine("}");
         sb.AppendLine();
+
+        if (versionAware)
+        {
+            RenderVersionAwareDispatcher(sb, context);
+        }
+        else
+        {
+            RenderCodeFirstDispatcher(sb, context);
+        }
+
+        return sb.ToString();
+    }
+
+    private static void RenderCodeFirstDispatcher(StringBuilder sb, DiscoveredDispatcherContext context)
+    {
         sb.AppendLine($"public class {context.ClassName}(RuleOrchestrator<{context.ContextType}> orchestrator) : {context.InterfaceName}");
         sb.AppendLine("{");
         sb.AppendLine($"    public virtual Task<FactBag> ExecuteAsync(");
@@ -89,8 +115,47 @@ internal static class DispatcherWriter
         sb.AppendLine("            cancellationToken: cancellationToken);");
         sb.AppendLine("    }");
         sb.AppendLine("}");
+    }
 
-        return sb.ToString();
+    private static void RenderVersionAwareDispatcher(StringBuilder sb, DiscoveredDispatcherContext context)
+    {
+        sb.AppendLine($"public class {context.ClassName}(");
+        sb.AppendLine($"    RuleOrchestrator<{context.ContextType}> orchestrator,");
+        sb.AppendLine($"    RulesEngineService? rulesEngineService = null) : {context.InterfaceName}");
+        sb.AppendLine("{");
+        sb.AppendLine($"    private const string MWorkflowName = \"{context.WorkflowName}\";");
+        sb.AppendLine();
+        sb.AppendLine($"    public virtual async Task<FactBag> ExecuteAsync(");
+        sb.AppendLine($"        {context.ContextType} context,");
+        sb.AppendLine("        CancellationToken cancellationToken = default)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        if (rulesEngineService is not null)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            OrchestratorResult result = await rulesEngineService");
+        sb.AppendLine("                .ExecuteWithResultAsync(MWorkflowName, context, cancellationToken);");
+        sb.AppendLine("            return result.Facts;");
+        sb.AppendLine("        }");
+        sb.AppendLine();
+        sb.AppendLine("        return await orchestrator.ExecuteAsync(context, cancellationToken: cancellationToken);");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+        sb.AppendLine("    public virtual async Task<OrchestratorResult> ExecuteWithResultAsync(");
+        sb.AppendLine($"        {context.ContextType} context,");
+        sb.AppendLine("        ExecutionMode executionMode = ExecutionMode.AllOrNothing,");
+        sb.AppendLine("        CancellationToken cancellationToken = default)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        if (rulesEngineService is not null)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            return await rulesEngineService");
+        sb.AppendLine("                .ExecuteWithResultAsync(MWorkflowName, context, cancellationToken);");
+        sb.AppendLine("        }");
+        sb.AppendLine();
+        sb.AppendLine("        return await orchestrator.ExecuteWithResultAsync(");
+        sb.AppendLine("            context,");
+        sb.AppendLine("            executionMode,");
+        sb.AppendLine("            cancellationToken: cancellationToken);");
+        sb.AppendLine("    }");
+        sb.AppendLine("}");
     }
 
     private static string BuildDispatcherStem(string contextType)
