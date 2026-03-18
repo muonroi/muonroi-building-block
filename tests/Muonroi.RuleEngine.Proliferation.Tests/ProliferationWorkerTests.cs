@@ -19,9 +19,10 @@ public class ProliferationWorkerTests
     private readonly Mock<IProliferationStore> _store = new();
     private readonly Mock<IScenarioExecutor> _executor = new();
     private readonly Mock<IRuleProliferationBrain> _brain = new();
+    private readonly Mock<IProliferationChangeNotifier> _notifier = new();
 
-    private ProliferationWorker CreateWorker() =>
-        new(_store.Object, _executor.Object, _brain.Object, _options);
+    private ProliferationWorker CreateWorker(IProliferationChangeNotifier? notifier = null) =>
+        new(_store.Object, _executor.Object, _brain.Object, _options, notifier: notifier);
 
     [Fact]
     public async Task RunCycle_MaxTotalScenarios_SkipsCycle()
@@ -129,7 +130,6 @@ public class ProliferationWorkerTests
         ProliferationWorker worker = CreateWorker();
         await worker.RunCycleAsync(CancellationToken.None);
 
-        // Brain should NOT be called because depth limit is reached
         _brain.Verify(b => b.AnalyzeAsync(
             It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<JsonElement?>(), It.IsAny<JsonElement?>(),
@@ -171,10 +171,78 @@ public class ProliferationWorkerTests
         await worker.RunCycleAsync(CancellationToken.None);
 
         _store.Verify(s => s.UpdateStatusAsync("s1", ScenarioStatus.Failed, It.IsAny<CancellationToken>()), Times.Once);
-        // Brain should NOT be called for failed scenarios
         _brain.Verify(b => b.AnalyzeAsync(
             It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<JsonElement?>(), It.IsAny<JsonElement?>(),
             It.IsAny<ProliferationContext>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RunCycle_NotifiesOnScenarioCompletion()
+    {
+        NeuronScenario scenario = new()
+        {
+            Id = "s1",
+            SeedRuleCode = "TEST",
+            ScenarioName = "Notified scenario",
+            ProliferationReason = "unit test",
+            Status = ScenarioStatus.Pending,
+            GenerationDepth = 3, // At max depth, no children generated
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _store.Setup(s => s.GetStatsAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProliferationStats { TotalScenarios = 1 });
+        _store.Setup(s => s.GetPendingScenariosAsync(10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { scenario });
+
+        _executor.Setup(e => e.ExecuteAsync(scenario, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ScenarioResult
+            {
+                ScenarioId = "s1",
+                IsSuccess = true,
+                MatchesExpectation = true,
+                Duration = TimeSpan.FromMilliseconds(50),
+                ExecutedAt = DateTimeOffset.UtcNow
+            });
+
+        ProliferationWorker worker = CreateWorker(_notifier.Object);
+        await worker.RunCycleAsync(CancellationToken.None);
+
+        _notifier.Verify(n => n.NotifyScenarioCompletedAsync("s1", true, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RunCycle_WithoutNotifier_DoesNotThrow()
+    {
+        NeuronScenario scenario = new()
+        {
+            Id = "s1",
+            SeedRuleCode = "TEST",
+            ScenarioName = "No notifier",
+            ProliferationReason = "unit test",
+            Status = ScenarioStatus.Pending,
+            GenerationDepth = 3,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _store.Setup(s => s.GetStatsAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProliferationStats { TotalScenarios = 1 });
+        _store.Setup(s => s.GetPendingScenariosAsync(10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { scenario });
+
+        _executor.Setup(e => e.ExecuteAsync(scenario, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ScenarioResult
+            {
+                ScenarioId = "s1",
+                IsSuccess = true,
+                MatchesExpectation = true,
+                Duration = TimeSpan.FromMilliseconds(50),
+                ExecutedAt = DateTimeOffset.UtcNow
+            });
+
+        ProliferationWorker worker = CreateWorker(notifier: null);
+        Func<Task> act = () => worker.RunCycleAsync(CancellationToken.None);
+        await act.Should().NotThrowAsync();
     }
 }

@@ -6,11 +6,14 @@ using Muonroi.RuleEngine.Proliferation.Models;
 
 namespace Muonroi.RuleEngine.Proliferation.Brain;
 
-public sealed class OllamaProliferationBrain(
+/// <summary>
+/// Brain implementation using Anthropic Messages API.
+/// </summary>
+public sealed class ClaudeProliferationBrain(
     IHttpClientFactory httpClientFactory,
     ProliferationOptions options,
     IPromptBuilder promptBuilder,
-    IMLog<OllamaProliferationBrain>? logger = null) : IRuleProliferationBrain
+    IMLog<ClaudeProliferationBrain>? logger = null) : IRuleProliferationBrain
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -33,7 +36,7 @@ public sealed class OllamaProliferationBrain(
             {
                 SeedRuleCode = seedRuleCode,
                 Scope = context.Scope,
-                AiModelUsed = options.PrimaryModel,
+                AiModelUsed = options.ClaudeModel,
                 Scenarios = [],
                 GenerationDuration = TimeSpan.Zero
             };
@@ -42,27 +45,17 @@ public sealed class OllamaProliferationBrain(
         string userPrompt = promptBuilder.BuildUserPrompt(ruleSetJson, executionResult, factBagSnapshot, budget, context.FocusAreas);
         Stopwatch sw = Stopwatch.StartNew();
 
-        // Try primary model, fallback on failure
-        string model = options.PrimaryModel;
-        string? aiResponse = await CallOllamaAsync(model, userPrompt, ct);
-
-        if (aiResponse is null && !string.IsNullOrWhiteSpace(options.FallbackModel))
-        {
-            logger?.Warn("Primary model {Model} failed, falling back to {Fallback}", model, options.FallbackModel);
-            model = options.FallbackModel;
-            aiResponse = await CallOllamaAsync(model, userPrompt, ct);
-        }
-
+        string? aiResponse = await CallClaudeAsync(userPrompt, ct);
         sw.Stop();
 
         if (aiResponse is null)
         {
-            logger?.Error(null, "Both primary and fallback models failed for seed rule {SeedRule}", seedRuleCode);
+            logger?.Error(null, "Claude request failed for seed rule {SeedRule}", seedRuleCode);
             return new ProliferationPlan
             {
                 SeedRuleCode = seedRuleCode,
                 Scope = context.Scope,
-                AiModelUsed = model,
+                AiModelUsed = options.ClaudeModel,
                 Scenarios = [],
                 GenerationDuration = sw.Elapsed
             };
@@ -74,60 +67,74 @@ public sealed class OllamaProliferationBrain(
         {
             SeedRuleCode = seedRuleCode,
             Scope = context.Scope,
-            AiModelUsed = model,
+            AiModelUsed = options.ClaudeModel,
             Scenarios = scenarios,
             GenerationDuration = sw.Elapsed
         };
     }
 
-    private async Task<string?> CallOllamaAsync(string model, string userPrompt, CancellationToken ct)
+    private async Task<string?> CallClaudeAsync(string userPrompt, CancellationToken ct)
     {
         try
         {
             using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(options.AiTimeoutSeconds));
 
-            HttpClient client = httpClientFactory.CreateClient("OllamaProliferation");
-            string endpoint = $"{options.OllamaEndpoint.TrimEnd('/')}/api/generate";
+            HttpClient client = httpClientFactory.CreateClient("ClaudeProliferation");
+            string endpoint = $"{options.ClaudeEndpoint.TrimEnd('/')}/v1/messages";
 
             var requestBody = new
             {
-                model,
-                prompt = userPrompt,
+                model = options.ClaudeModel,
                 system = promptBuilder.BuildSystemPrompt(),
-                stream = false,
-                options = new
+                messages = new object[]
                 {
-                    temperature = options.Temperature,
-                    num_predict = options.MaxTokens
-                }
+                    new { role = "user", content = userPrompt }
+                },
+                max_tokens = options.MaxTokens,
+                temperature = options.Temperature
             };
 
-            using StringContent content = new(
+            using HttpRequestMessage request = new(HttpMethod.Post, endpoint);
+            request.Content = new StringContent(
                 JsonSerializer.Serialize(requestBody, JsonOptions),
                 Encoding.UTF8,
                 "application/json");
 
-            HttpResponseMessage response = await client.PostAsync(endpoint, content, timeoutCts.Token);
+            if (!string.IsNullOrWhiteSpace(options.ClaudeApiKey))
+            {
+                request.Headers.Add("x-api-key", options.ClaudeApiKey);
+            }
+            request.Headers.Add("anthropic-version", "2023-06-01");
+
+            HttpResponseMessage response = await client.SendAsync(request, timeoutCts.Token);
             response.EnsureSuccessStatusCode();
 
             using JsonDocument doc = await JsonDocument.ParseAsync(
                 await response.Content.ReadAsStreamAsync(timeoutCts.Token),
                 cancellationToken: timeoutCts.Token);
 
-            return doc.RootElement.TryGetProperty("response", out JsonElement respEl)
-                ? respEl.GetString()
-                : null;
+            // Extract content[0].text
+            if (doc.RootElement.TryGetProperty("content", out JsonElement contentArr)
+                && contentArr.GetArrayLength() > 0)
+            {
+                JsonElement firstBlock = contentArr[0];
+                if (firstBlock.TryGetProperty("text", out JsonElement text))
+                {
+                    return text.GetString();
+                }
+            }
+
+            return null;
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            logger?.Warn("Ollama request timed out after {Timeout}s for model {Model}",
-                options.AiTimeoutSeconds, model);
+            logger?.Warn("Claude request timed out after {Timeout}s", options.AiTimeoutSeconds);
             return null;
         }
         catch (Exception ex)
         {
-            logger?.Warn("Ollama request failed for model {Model}: {Error}", model, ex.Message);
+            logger?.Warn("Claude request failed: {Error}", ex.Message);
             return null;
         }
     }

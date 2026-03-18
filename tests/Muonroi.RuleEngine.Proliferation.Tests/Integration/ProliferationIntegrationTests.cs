@@ -45,7 +45,8 @@ public class ProliferationIntegrationTests
         };
 
         IHttpClientFactory factory = new SimpleHttpClientFactory();
-        OllamaProliferationBrain brain = new(factory, options);
+        DefaultPromptBuilder promptBuilder = new();
+        OllamaProliferationBrain brain = new(factory, options, promptBuilder);
 
         string seedRuleJson = """
             {
