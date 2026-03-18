@@ -21,6 +21,9 @@ public sealed class ScenarioExecutor(
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+    // Default context type for DryRunAsync — matches RuleDryRunService behavior
+    private static readonly string DefaultContextType = typeof(Dictionary<string, object?>).AssemblyQualifiedName!;
+
     public async Task<ScenarioResult> ExecuteAsync(NeuronScenario scenario, CancellationToken ct = default)
     {
         Stopwatch sw = Stopwatch.StartNew();
@@ -47,7 +50,7 @@ public sealed class ScenarioExecutor(
                     scenario.SeedRuleCode,
                     scenario.GeneratedRuleFlowGraph,
                     scenario.InputFacts,
-                    contextType: null,
+                    contextType: DefaultContextType,
                     cancellationToken: timeoutCts.Token);
 
                 // Wrap FactBag into a synthetic OrchestratorResult
@@ -63,7 +66,7 @@ public sealed class ScenarioExecutor(
                     scenario.SeedRuleCode,
                     await GetRuleSetJsonAsync(scenario.SeedRuleCode, timeoutCts.Token),
                     scenario.InputFacts,
-                    contextType: null,
+                    contextType: DefaultContextType,
                     cancellationToken: timeoutCts.Token);
 
                 result = OrchestratorResult.Success(
