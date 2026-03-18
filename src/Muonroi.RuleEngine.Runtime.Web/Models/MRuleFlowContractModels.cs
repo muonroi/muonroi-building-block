@@ -35,8 +35,8 @@ public sealed record MRuleFlowContractLookupResponse(
 public sealed record MRuleFlowNodeContractResponse(
     string NodeId,
     string FlowCode,
-    MRuleContractSchema? RequestContract,
-    MRuleContractSchema? ResponseContract,
+    MRuleContractSchema? RequestScope,
+    MRuleContractSchema? ResponseDelta,
     IReadOnlyList<string>? AvailableInputKeys = null
 );
 
