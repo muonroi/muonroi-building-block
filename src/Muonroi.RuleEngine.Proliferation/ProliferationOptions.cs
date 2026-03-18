@@ -48,4 +48,22 @@ public sealed class ProliferationOptions
     // Composite brain (chain multiple providers)
     public string? CompositeBrains { get; set; } // "ollama,claude" or "openai,ollama"
     public string CompositeMode { get; set; } = "parallel"; // "parallel" | "sequential"
+
+    // Auto-trigger on ruleset save/activate
+    public bool EnableAutoTrigger { get; set; } = false;
+    public int AutoTriggerDebounceSeconds { get; set; } = 30;
+    public int AutoTriggerMaxScenarios { get; set; } = 10;
+
+    // Continuous simulation mode
+    public bool EnableContinuousMode { get; set; } = false;
+    public int ContinuousIntervalSeconds { get; set; } = 300;
+    public int ContinuousBatchSize { get; set; } = 5;
+    public string ContinuousStrategy { get; set; } = "coverage-gap"; // "random" | "coverage-gap" | "round-robin"
+
+    // Smart budget allocation
+    public bool EnableSmartBudget { get; set; } = false;
+
+    // Multi-tenant traffic simulation
+    public bool EnableMultiTenantSimulation { get; set; } = false;
+    public string[] SimulatedTenantIds { get; set; } = [];
 }
