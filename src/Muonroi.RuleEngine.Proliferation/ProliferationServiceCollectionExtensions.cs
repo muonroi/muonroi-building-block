@@ -135,9 +135,23 @@ public static class ProliferationServiceCollectionExtensions
         services.TryAddSingleton<ICoverageTracker, DefaultCoverageTracker>();
         services.TryAddScoped<IRegressionRunner, DefaultRegressionRunner>();
 
-        services.TryAddScoped<ScenarioExecutor>(); // Register concrete type for injection into RoutingScenarioExecutor
-        services.TryAddScoped<ExternalScenarioExecutor>(); // Register concrete type for injection into RoutingScenarioExecutor
-        services.TryAddScoped<IScenarioExecutor, RoutingScenarioExecutor>(); // Decorator wraps both executors
+        services.TryAddScoped<ScenarioExecutor>(); // Concrete internal executor
+        services.TryAddScoped<ExternalScenarioExecutor>(); // Concrete external executor
+        services.TryAddScoped<IScenarioExecutor>(sp =>
+        {
+            // Factory resolves concrete ScenarioExecutor as IScenarioExecutor to break circular dependency
+            var internalExecutor = sp.GetRequiredService<ScenarioExecutor>();
+            var externalExecutor = sp.GetRequiredService<ExternalScenarioExecutor>();
+            var configProvider = sp.GetRequiredService<IExternalProjectConfigProvider>();
+            var webhookService = sp.GetService<IWebhookNotificationService>();
+            var logFactory = sp.GetService<IMLogFactory>();
+            return new RoutingScenarioExecutor(
+                internalExecutor,
+                externalExecutor,
+                configProvider,
+                webhookService,
+                logFactory?.CreateLogger<RoutingScenarioExecutor>());
+        });
         services.TryAddSingleton<IProliferationStore, InMemoryProliferationStore>();
         services.AddHostedService<ProliferationWorker>();
 
