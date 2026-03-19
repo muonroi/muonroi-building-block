@@ -34,7 +34,9 @@ public sealed class DefaultPromptBuilder : IPromptBuilder
         JsonElement? factBagSnapshot,
         int budget,
         IReadOnlyList<string>? focusAreas,
-        RuleSetSchema? schema = null)
+        RuleSetSchema? schema = null,
+        FlowGraphAnalysis? flowAnalysis = null,
+        CrossRuleAnalysis? crossRuleAnalysis = null)
     {
         StringBuilder sb = new();
         sb.AppendLine($"Generate {budget} test scenarios.");
@@ -63,6 +65,58 @@ public sealed class DefaultPromptBuilder : IPromptBuilder
             foreach (FieldSchema field in schema.OutputFields)
             {
                 sb.AppendLine($"- {field.Name} ({field.DataType})");
+            }
+        }
+
+        // Inject flow graph path analysis for workflow-level scope
+        if (flowAnalysis is { Paths.Count: > 0 })
+        {
+            sb.AppendLine();
+            sb.AppendLine("## Flow Graph Paths");
+            sb.AppendLine("The workflow has the following execution paths (source → sink):");
+            foreach (FlowPath path in flowAnalysis.Paths)
+            {
+                sb.AppendLine($"- [{path.PathId}] {path.Description}");
+            }
+            sb.AppendLine();
+            sb.AppendLine("Focus on generating scenarios that exercise DIFFERENT paths, especially on-false and on-error edges.");
+        }
+
+        if (flowAnalysis is { Nodes.Count: > 0 })
+        {
+            sb.AppendLine();
+            sb.AppendLine("## Flow Graph Nodes");
+            sb.AppendLine("Node details with input/output fields:");
+            foreach (FlowNodeSummary node in flowAnalysis.Nodes)
+            {
+                string inputs = node.InputFields.Count > 0 ? string.Join(", ", node.InputFields) : "(none)";
+                string outputs = node.OutputFields.Count > 0 ? string.Join(", ", node.OutputFields) : "(none)";
+                sb.AppendLine($"- [{node.NodeType}] {node.Label}: inputs=[{inputs}], outputs=[{outputs}]");
+            }
+        }
+
+        // Inject cross-rule dependency analysis
+        if (crossRuleAnalysis is { Dependencies.Count: > 0 })
+        {
+            sb.AppendLine();
+            sb.AppendLine("## Cross-Rule Dependencies");
+            sb.AppendLine("These fact keys flow between nodes (producer → consumer):");
+            foreach (FactKeyDependency dep in crossRuleAnalysis.Dependencies)
+            {
+                sb.AppendLine($"- '{dep.FactKey}' ({dep.ProducerDataType}): produced by [{dep.ProducerLabel}], consumed by [{dep.ConsumerLabel}]");
+            }
+            sb.AppendLine();
+            sb.AppendLine("Generate scenarios that test these cross-rule data flows — e.g., when the producer outputs an unexpected value, does the consumer handle it correctly?");
+        }
+
+        if (crossRuleAnalysis is { Conflicts.Count: > 0 })
+        {
+            sb.AppendLine();
+            sb.AppendLine("## Fact Key Conflicts");
+            sb.AppendLine("Warning: these fact keys have conflicts that may cause ordering issues:");
+            foreach (FactKeyConflict conflict in crossRuleAnalysis.Conflicts)
+            {
+                sb.AppendLine($"- '{conflict.FactKey}': {conflict.ConflictType} between [{conflict.NodeAId}] and [{conflict.NodeBId}]");
             }
         }
 
