@@ -1,6 +1,7 @@
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.Enterprise.Policy;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Tenancy.Core;
 
 namespace Muonroi.Governance.License;
 
@@ -92,7 +93,7 @@ public sealed class EnterpriseLicenseGuardEnhancer(
             return;
         }
 
-        string? startupTenantId = _executionContextAccessor?.Get()?.TenantId;
+        string? startupTenantId = ResolveTenantId();
         RunAntiTamperingCheck("startup", startupTenantId, "license.guard.startup", force: true);
     }
 
@@ -108,7 +109,7 @@ public sealed class EnterpriseLicenseGuardEnhancer(
             return;
         }
 
-        string? tenantId = _executionContextAccessor?.Get()?.TenantId;
+        string? tenantId = ResolveTenantId();
         string tenantPartition = AntiTamperingTenantPartition.Normalize(tenantId);
         DateTimeOffset now = DateTimeOffset.UtcNow;
         TimeSpan interval = TimeSpan.FromSeconds(Math.Max(0, configs.AntiTamperingCheckIntervalSeconds));
@@ -204,6 +205,17 @@ public sealed class EnterpriseLicenseGuardEnhancer(
             sw.Stop();
             AntiTamperingRuntimeTelemetry.TrackCheck(scope, status, tenantId, tamperDetected, sw.Elapsed);
         }
+    }
+
+    private string? ResolveTenantId()
+    {
+        string? tenantId = _executionContextAccessor?.Get()?.TenantId;
+        if (string.IsNullOrWhiteSpace(tenantId))
+        {
+            tenantId = TenantContext.CurrentTenantId;
+        }
+
+        return tenantId;
     }
 
     private void EnforceEnterpriseFailClosedPolicy(string requestedFeature, LicenseState state)
