@@ -135,7 +135,9 @@ public static class ProliferationServiceCollectionExtensions
         services.TryAddSingleton<ICoverageTracker, DefaultCoverageTracker>();
         services.TryAddScoped<IRegressionRunner, DefaultRegressionRunner>();
 
-        services.TryAddScoped<IScenarioExecutor, ScenarioExecutor>();
+        services.TryAddScoped<ScenarioExecutor>(); // Register concrete type for injection into RoutingScenarioExecutor
+        services.TryAddScoped<ExternalScenarioExecutor>(); // Register concrete type for injection into RoutingScenarioExecutor
+        services.TryAddScoped<IScenarioExecutor, RoutingScenarioExecutor>(); // Decorator wraps both executors
         services.TryAddSingleton<IProliferationStore, InMemoryProliferationStore>();
         services.AddHostedService<ProliferationWorker>();
 
