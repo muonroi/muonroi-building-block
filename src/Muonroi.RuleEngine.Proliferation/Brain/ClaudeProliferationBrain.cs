@@ -13,7 +13,8 @@ public sealed class ClaudeProliferationBrain(
     IHttpClientFactory httpClientFactory,
     ProliferationOptions options,
     IPromptBuilder promptBuilder,
-    IMLog<ClaudeProliferationBrain>? logger = null) : IRuleProliferationBrain
+    IMLog<ClaudeProliferationBrain>? logger = null,
+    ISyntheticScenarioGenerator? syntheticGen = null) : IRuleProliferationBrain
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -50,20 +51,28 @@ public sealed class ClaudeProliferationBrain(
         string? aiResponse = await CallClaudeAsync(systemPrompt, userPrompt, ct);
         sw.Stop();
 
+        ISyntheticScenarioGenerator effectiveSyntheticGen = syntheticGen ?? new SyntheticScenarioGenerator();
+
+        IReadOnlyList<NeuronScenario> scenarios;
         if (aiResponse is null)
         {
             logger?.Error(null, "Claude request failed for seed rule {SeedRule}", seedRuleCode);
-            return new ProliferationPlan
-            {
-                SeedRuleCode = seedRuleCode,
-                Scope = context.Scope,
-                AiModelUsed = options.ClaudeModel,
-                Scenarios = [],
-                GenerationDuration = sw.Elapsed
-            };
+            scenarios = effectiveSyntheticGen.Generate(seedRuleCode, schema, context);
         }
-
-        IReadOnlyList<NeuronScenario> scenarios = ScenarioParser.Parse(aiResponse, seedRuleCode, context);
+        else
+        {
+            IReadOnlyList<NeuronScenario> initial = ScenarioParser.Parse(aiResponse, seedRuleCode, context);
+            if (initial.Count > 0)
+            {
+                scenarios = initial;
+            }
+            else
+            {
+                scenarios = await ScenarioParser.ParseWithRetry(
+                    async (suffix) => await CallClaudeAsync(systemPrompt, userPrompt + suffix, ct),
+                    seedRuleCode, context, effectiveSyntheticGen, schema);
+            }
+        }
 
         return new ProliferationPlan
         {
