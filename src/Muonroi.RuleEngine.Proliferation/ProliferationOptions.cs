@@ -66,4 +66,10 @@ public sealed class ProliferationOptions
     // Multi-tenant traffic simulation
     public bool EnableMultiTenantSimulation { get; set; } = false;
     public string[] SimulatedTenantIds { get; set; } = [];
+
+    // Infrastructure-aware dynamic scaling
+    public bool EnableInfraAwareBudget { get; set; } = false;
+    public int InfraHealthCheckIntervalSeconds { get; set; } = 60;
+    public int InfraSlowThresholdMs { get; set; } = 30000;
+    public int InfraFastThresholdMs { get; set; } = 5000;
 }
