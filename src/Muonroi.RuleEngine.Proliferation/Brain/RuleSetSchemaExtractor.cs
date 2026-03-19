@@ -27,7 +27,7 @@ public sealed record FieldSchema(
 public static class RuleSetSchemaExtractor
 {
     private static readonly Regex InputFieldPattern = new(
-        @"input\.(\w+)",
+        @"input\.(\w+(?:\.\w+)*)",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     /// <summary>
