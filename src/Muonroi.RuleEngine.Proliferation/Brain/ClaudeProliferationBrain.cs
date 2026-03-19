@@ -44,7 +44,7 @@ public sealed class ClaudeProliferationBrain(
 
         RuleSetSchema schema = RuleSetSchemaExtractor.Extract(ruleSetJson, context.RuleSetKind);
         string systemPrompt = promptBuilder.BuildSystemPrompt(context.RuleSetKind);
-        string userPrompt = promptBuilder.BuildUserPrompt(ruleSetJson, executionResult, factBagSnapshot, budget, context.FocusAreas, schema);
+        string userPrompt = promptBuilder.BuildUserPrompt(ruleSetJson, executionResult, factBagSnapshot, budget, context.FocusAreas, schema, context.FlowAnalysis, context.CrossRuleAnalysis);
         Stopwatch sw = Stopwatch.StartNew();
 
         string? aiResponse = await CallClaudeAsync(systemPrompt, userPrompt, ct);

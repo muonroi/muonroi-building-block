@@ -22,5 +22,7 @@ public interface IPromptBuilder
         JsonElement? factBagSnapshot,
         int budget,
         IReadOnlyList<string>? focusAreas,
-        RuleSetSchema? schema = null);
+        RuleSetSchema? schema = null,
+        FlowGraphAnalysis? flowAnalysis = null,
+        CrossRuleAnalysis? crossRuleAnalysis = null);
 }

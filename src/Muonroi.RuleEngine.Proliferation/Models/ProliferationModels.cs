@@ -79,6 +79,12 @@ public sealed record ProliferationContext
     public IReadOnlyList<string>? FocusAreas { get; init; }
     public string? TenantId { get; init; }
     public RuleSetKind RuleSetKind { get; init; } = RuleSetKind.Unknown;
+
+    /// <summary>Flow graph path analysis — populated for FlowGraph rulesets (Task 3).</summary>
+    public FlowGraphAnalysis? FlowAnalysis { get; init; }
+
+    /// <summary>Cross-rule interaction analysis — populated for FlowGraph rulesets (Task 4).</summary>
+    public CrossRuleAnalysis? CrossRuleAnalysis { get; init; }
 }
 
 /// <summary>
