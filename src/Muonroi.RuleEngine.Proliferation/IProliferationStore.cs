@@ -10,6 +10,7 @@ public interface IProliferationStore
     Task<IReadOnlyList<NeuronScenario>> GetScenariosBySeedAsync(string seedRuleCode, CancellationToken ct = default);
     Task UpdateStatusAsync(string scenarioId, ScenarioStatus status, CancellationToken ct = default);
     Task<ScenarioResult?> GetResultAsync(string scenarioId, CancellationToken ct = default);
+    Task<IReadOnlyList<ScenarioResult>> GetResultsByWorkflowAsync(string seedRuleCode, CancellationToken ct = default);
     Task<IReadOnlyList<RuleLineage>> GetLineageAsync(string seedRuleCode, CancellationToken ct = default);
     Task<ProliferationStats> GetStatsAsync(string? seedRuleCode = null, CancellationToken ct = default);
 }

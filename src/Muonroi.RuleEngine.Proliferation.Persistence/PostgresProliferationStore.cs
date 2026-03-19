@@ -84,39 +84,25 @@ public sealed class PostgresProliferationStore(ProliferationDbContext db) : IPro
         return entities.Select(ToModel).ToList();
     }
 
+    public async Task<IReadOnlyList<ScenarioResult>> GetResultsByWorkflowAsync(string seedRuleCode, CancellationToken ct = default)
+    {
+        // Single query: join scenarios → results filtered by workflow
+        List<ScenarioResultEntity> entities = await db.ScenarioResults
+            .AsNoTracking()
+            .Where(r => db.NeuronScenarios
+                .Any(s => s.Id == r.ScenarioId && s.SeedRuleCode == seedRuleCode))
+            .ToListAsync(ct);
+
+        return entities.Select(ToResultModel).ToList();
+    }
+
     public async Task<ScenarioResult?> GetResultAsync(string scenarioId, CancellationToken ct = default)
     {
         ScenarioResultEntity? entity = await db.ScenarioResults
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.ScenarioId == scenarioId, ct);
 
-        if (entity is null)
-            return null;
-
-        JsonElement? outputFacts = null;
-        if (!string.IsNullOrWhiteSpace(entity.OutputFactsJson))
-        {
-            using JsonDocument doc = JsonDocument.Parse(entity.OutputFactsJson);
-            outputFacts = doc.RootElement.Clone();
-        }
-
-        string[] errors = [];
-        if (!string.IsNullOrWhiteSpace(entity.ErrorsJson))
-        {
-            errors = JsonSerializer.Deserialize<string[]>(entity.ErrorsJson, JsonOptions) ?? [];
-        }
-
-        return new ScenarioResult
-        {
-            ScenarioId = entity.ScenarioId,
-            IsSuccess = entity.IsSuccess,
-            MatchesExpectation = entity.MatchesExpectation,
-            ActualBehavior = entity.ActualBehavior,
-            OutputFacts = outputFacts,
-            Errors = errors,
-            Duration = TimeSpan.FromMilliseconds(entity.DurationMs),
-            ExecutedAt = entity.ExecutedAt
-        };
+        return entity is null ? null : ToResultModel(entity);
     }
 
     public async Task UpdateStatusAsync(string scenarioId, ScenarioStatus status, CancellationToken ct = default)
@@ -193,6 +179,34 @@ public sealed class PostgresProliferationStore(ProliferationDbContext db) : IPro
         CreatedAt = scenario.CreatedAt,
         TenantId = scenario.TenantId
     };
+
+    private static ScenarioResult ToResultModel(ScenarioResultEntity entity)
+    {
+        JsonElement? outputFacts = null;
+        if (!string.IsNullOrWhiteSpace(entity.OutputFactsJson))
+        {
+            using JsonDocument doc = JsonDocument.Parse(entity.OutputFactsJson);
+            outputFacts = doc.RootElement.Clone();
+        }
+
+        string[] errors = [];
+        if (!string.IsNullOrWhiteSpace(entity.ErrorsJson))
+        {
+            errors = JsonSerializer.Deserialize<string[]>(entity.ErrorsJson, JsonOptions) ?? [];
+        }
+
+        return new ScenarioResult
+        {
+            ScenarioId = entity.ScenarioId,
+            IsSuccess = entity.IsSuccess,
+            MatchesExpectation = entity.MatchesExpectation,
+            ActualBehavior = entity.ActualBehavior,
+            OutputFacts = outputFacts,
+            Errors = errors,
+            Duration = TimeSpan.FromMilliseconds(entity.DurationMs),
+            ExecutedAt = entity.ExecutedAt
+        };
+    }
 
     private static NeuronScenario ToModel(NeuronScenarioEntity entity)
     {
