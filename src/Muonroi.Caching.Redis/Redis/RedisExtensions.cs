@@ -2,7 +2,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.Caching.Redis.Routing;
 using Muonroi.Core.Abstractions.Configuration;
 using Muonroi.Governance.Abstractions.License;
-using StackExchange.Redis;
 
 namespace Muonroi.Caching.Redis.Redis;
 
