@@ -48,6 +48,20 @@ public sealed class InMemoryProliferationStore : IProliferationStore
         return Task.FromResult(result);
     }
 
+    public Task<IReadOnlyList<ScenarioResult>> GetResultsByWorkflowAsync(string seedRuleCode, CancellationToken ct = default)
+    {
+        // Collect scenario IDs for this workflow, then return all matching results
+        HashSet<string> scenarioIds = new(_scenarios.Values
+            .Where(s => s.SeedRuleCode == seedRuleCode)
+            .Select(s => s.Id));
+
+        IReadOnlyList<ScenarioResult> results = _results.Values
+            .Where(r => scenarioIds.Contains(r.ScenarioId))
+            .ToList();
+
+        return Task.FromResult(results);
+    }
+
     public Task UpdateStatusAsync(string scenarioId, ScenarioStatus status, CancellationToken ct = default)
     {
         if (_scenarios.TryGetValue(scenarioId, out NeuronScenario? existing))
