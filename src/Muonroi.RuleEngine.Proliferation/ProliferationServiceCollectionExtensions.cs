@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.Logging.Abstractions;
+using Muonroi.RuleEngine.Proliferation.Auth;
 using Muonroi.RuleEngine.Proliferation.Brain;
 using Muonroi.RuleEngine.Proliferation.Execution;
 using Muonroi.RuleEngine.Proliferation.Store;
@@ -135,8 +136,27 @@ public static class ProliferationServiceCollectionExtensions
         services.TryAddSingleton<ICoverageTracker, DefaultCoverageTracker>();
         services.TryAddScoped<IRegressionRunner, DefaultRegressionRunner>();
 
+        // Auth services for external project execution
+        services.AddHttpClient("OAuth2Auth"); // Named client for OAuth2 token fetching
+        services.AddHttpClient(nameof(ApiKeyRotationService)); // Named client for API key rotation
+        services.TryAddSingleton<IOAuth2TokenProvider, CachingOAuth2TokenProvider>();
+        services.TryAddSingleton<IMtlsHttpClientFactory, MtlsHttpClientFactory>();
+        services.TryAddSingleton<IApiKeyRotationService, ApiKeyRotationService>();
+        services.TryAddScoped<IAuthStrategyResolver, AuthStrategyResolver>();
+
         services.TryAddScoped<ScenarioExecutor>(); // Concrete internal executor
-        services.TryAddScoped<ExternalScenarioExecutor>(); // Concrete external executor
+        services.TryAddScoped<ExternalScenarioExecutor>(sp =>
+        {
+            var connector = sp.GetRequiredService<Muonroi.Integration.Abstractions.IServiceTaskConnector>();
+            var authResolver = sp.GetRequiredService<IAuthStrategyResolver>();
+            var oauth2Provider = sp.GetRequiredService<IOAuth2TokenProvider>();
+            var logFactory = sp.GetService<IMLogFactory>();
+            return new ExternalScenarioExecutor(
+                connector,
+                authResolver,
+                oauth2Provider,
+                logFactory?.CreateLogger<ExternalScenarioExecutor>());
+        });
         services.TryAddScoped<IScenarioExecutor>(sp =>
         {
             // Factory resolves concrete ScenarioExecutor as IScenarioExecutor to break circular dependency
