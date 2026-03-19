@@ -1,14 +1,18 @@
-namespace Muonroi.Governance.Compliance;
+using Muonroi.Governance.Abstractions.License;
+using Muonroi.Governance.Compliance;
+using Muonroi.Logging.Abstractions;
+
+namespace Muonroi.Governance.Enterprise.Compliance;
 
 public sealed class MComplianceExportHostedService(
     IMComplianceExportService exportService,
     LicenseConfigs configs,
-    ILogger<MComplianceExportHostedService>? logger = null) : BackgroundService
+    IMLog<MComplianceExportHostedService>? logger = null) : BackgroundService
 {
     private readonly IMComplianceExportService _exportService =
         exportService ?? throw new ArgumentNullException(nameof(exportService));
     private readonly LicenseConfigs _configs = configs ?? throw new ArgumentNullException(nameof(configs));
-    private readonly ILogger<MComplianceExportHostedService>? _logger = logger;
+    private readonly IMLog<MComplianceExportHostedService>? _logger = logger;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -26,7 +30,7 @@ public sealed class MComplianceExportHostedService(
             }
             catch (Exception ex)
             {
-                _logger?.LogWarning(ex, "Compliance export background run failed.");
+                _logger?.Error(ex, "Compliance export background run failed.");
             }
 
             int intervalMinutes = _configs.Compliance.ExportIntervalMinutes;

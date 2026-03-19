@@ -1,6 +1,6 @@
 using FluentAssertions;
+using Muonroi.Core.Abstractions.Context;
 using Muonroi.RuleEngine.Runtime.Rules;
-using Muonroi.Tenancy.Core;
 using Xunit;
 
 namespace Muonroi.RuleEngine.Runtime.Tests;
@@ -11,9 +11,10 @@ public sealed class FileRuleSetStoreMetadataTests
     public async Task GetActiveVersionAsync_ShouldReturnCurrentActive()
     {
         string root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        FileRuleSetStore store = new(root);
+        SystemExecutionContextAccessor accessor = new();
+        FileRuleSetStore store = new(root, executionContextAccessor: accessor);
 
-        TenantContext.CurrentTenantId = "tenant-a";
+        SetTenant(accessor, "tenant-a");
         await store.SaveAsync("workflow-a", "{\"workflowName\":\"workflow-a\",\"rules\":[\"A\"]}");
         await store.SaveAsync("workflow-a", "{\"workflowName\":\"workflow-a\",\"rules\":[\"A\",\"B\"]}");
         await store.SetActiveVersionAsync("workflow-a", 1);
@@ -23,30 +24,45 @@ public sealed class FileRuleSetStoreMetadataTests
 
         activeVersion.Should().Be(1);
         versions.Should().Equal([1, 2]);
-        TenantContext.CurrentTenantId = null;
+        accessor.Clear();
     }
 
     [Fact]
     public async Task GetWorkflowsAsync_ShouldReturnCurrentTenantOnly()
     {
         string root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        FileRuleSetStore store = new(root);
+        SystemExecutionContextAccessor accessor = new();
+        FileRuleSetStore store = new(root, executionContextAccessor: accessor);
 
-        TenantContext.CurrentTenantId = "tenant-a";
+        SetTenant(accessor, "tenant-a");
         await store.SaveAsync("workflow-a", "{\"workflowName\":\"workflow-a\",\"rules\":[\"A\"]}");
         await store.SaveAsync("workflow-b", "{\"workflowName\":\"workflow-b\",\"rules\":[\"B\"]}");
 
-        TenantContext.CurrentTenantId = "tenant-b";
+        SetTenant(accessor, "tenant-b");
         await store.SaveAsync("workflow-c", "{\"workflowName\":\"workflow-c\",\"rules\":[\"C\"]}");
 
-        TenantContext.CurrentTenantId = "tenant-a";
+        SetTenant(accessor, "tenant-a");
         IReadOnlyList<string> workflowsA = await store.GetWorkflowsAsync();
 
-        TenantContext.CurrentTenantId = "tenant-b";
+        SetTenant(accessor, "tenant-b");
         IReadOnlyList<string> workflowsB = await store.GetWorkflowsAsync();
 
         workflowsA.Should().BeEquivalentTo(["workflow-a", "workflow-b"]);
         workflowsB.Should().BeEquivalentTo(["workflow-c"]);
-        TenantContext.CurrentTenantId = null;
+        accessor.Clear();
+    }
+
+    private static void SetTenant(ISystemExecutionContextAccessor accessor, string tenantId)
+    {
+        accessor.Set(new SystemExecutionContext(
+            tenantId,
+            userId: null,
+            username: null,
+            correlationId: Guid.NewGuid().ToString("N"),
+            accessToken: null,
+            apiKey: null,
+            isAuthenticated: false,
+            permissions: [],
+            sourceType: "tests"));
     }
 }

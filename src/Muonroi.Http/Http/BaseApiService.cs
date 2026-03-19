@@ -1,23 +1,15 @@
-using Microsoft.Extensions.Logging;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models.Common;
-using Muonroi.Http.Http;
-using Polly;
-using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Http.Http;
 
 public abstract class BaseApiService(
     IHttpClientFactory httpClientFactory,
     IAuthenticateInfoContext authContext,
-    ILogger<BaseApiService> logger)
+    IMLog<BaseApiService> logger)
 {
     protected readonly IHttpClientFactory HttpClientFactory = httpClientFactory;
     protected readonly IAuthenticateInfoContext AuthContext = authContext;
-    protected readonly ILogger<BaseApiService> Logger = logger;
+    protected readonly IMLog<BaseApiService> Logger = logger;
 
     protected async Task<TResponse> SendAsync<TResponse>(
         string clientName,

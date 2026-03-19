@@ -5,7 +5,7 @@ namespace Muonroi.AspNetCore.Middleware;
 public sealed class QuotaEnforcementMiddleware(
     RequestDelegate next,
     ITenantQuotaTracker quotaTracker,
-    ILogger<QuotaEnforcementMiddleware> logger,
+    IMLog<QuotaEnforcementMiddleware> logger,
     ISystemExecutionContextAccessor contextAccessor)
 {
     public async Task InvokeAsync(HttpContext context)
@@ -25,7 +25,7 @@ public sealed class QuotaEnforcementMiddleware(
 
         if (!allowed)
         {
-            logger.LogWarning("Tenant {TenantId} exceeded API quota.", tenantId);
+            logger.Warn("Tenant {TenantId} exceeded API quota.", tenantId);
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
             context.Response.Headers.RetryAfter = "60";
             await context.Response.WriteAsJsonAsync(new

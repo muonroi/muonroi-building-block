@@ -1,0 +1,26 @@
+title: "[Idea] "
+labels:
+  - idea
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this category for product or API ideas. Keep the problem statement concrete and explain the developer workflow you want to improve.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is not working well today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Direction
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Ecosystem Boundary
+      description: Does this belong in building-block, ui-engine, control-plane, or license-server?

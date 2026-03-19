@@ -1,5 +1,8 @@
 namespace Muonroi.Core.Abstractions.Enums;
 
+/// <summary>
+/// Defines standard system-level enumeration values, typically used for error codes or status messages.
+/// </summary>
 public enum SystemEnum
 {
     /// <summary>
@@ -36,26 +39,32 @@ public enum SystemEnum
     /// User has no permissions.
     /// </summary>
     UserHasNoPermissions = 6,
+
     /// <summary>
     /// Account is locked. Try again in {0} minutes.
     /// </summary>
     AccountIsLocked = 7,
+
     /// <summary>
     /// Invalid login information.
     /// </summary>
     InvalidLoginInfo = 8,
+
     /// <summary>
     /// User already exists.
     /// </summary>
     UserAlreadyExists = 9,
+
     /// <summary>
     /// User already has role.
     /// </summary>
     UserAlreadyHasRole = 10,
+
     /// <summary>
     /// User does not have role.
     /// </summary>
     RoleAlreadyHasPermission = 11,
+
     /// <summary>
     /// Role does not have permission.
     /// </summary>

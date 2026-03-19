@@ -6,7 +6,7 @@ public class DefaultRefreshTokenValidator<TDbContext, TPermission>(
     ResourceSetting resourceSetting,
     IConfiguration configuration,
     MTokenInfo tokenInfo,
-    ILogger<DefaultRefreshTokenValidator<TDbContext, TPermission>>? logger = null) : IRefreshTokenValidator
+    IMLog<MDbContext>? logger = null) : IRefreshTokenValidator
     where TDbContext : MDbContext
     where TPermission : Enum
 {

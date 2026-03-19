@@ -9,7 +9,7 @@ public static class MigrationManager
     {
         using IServiceScope scope = app.Services.CreateScope();
         TContext context = scope.ServiceProvider.GetRequiredService<TContext>();
-        Microsoft.Extensions.Logging.ILogger? logger = scope.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger(typeof(MigrationManager));
+        IMLog<MDbContext>? logger = scope.ServiceProvider.GetService<IMLog<MDbContext>>();
 
         // 1. Ensure Schema Exists FIRST
         try
@@ -17,7 +17,7 @@ public static class MigrationManager
             DatabaseConfigs? dbConfigs = scope.ServiceProvider.GetService<DatabaseConfigs>();
             bool isSqlite = string.Equals(dbConfigs?.DbType, "Sqlite", StringComparison.OrdinalIgnoreCase);
 
-            Console.WriteLine($"[MigrationManager] Ensuring database schema (DbType: {dbConfigs?.DbType ?? "Unknown"})...");
+            logger?.Info("[MigrationManager] Ensuring database schema (DbType: {DbType})", dbConfigs?.DbType ?? "Unknown");
 
             if (isSqlite)
             {
@@ -30,15 +30,15 @@ public static class MigrationManager
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[MigrationManager] Schema creation failed: {ex.Message}. Attempting fallback...");
+            logger?.Warn("[MigrationManager] Schema creation failed: {Message}. Attempting fallback...", ex.Message);
             try
             {
                 context.Database.EnsureCreated();
-                Console.WriteLine("[MigrationManager] Fallback EnsureCreated completed.");
+                logger?.Info("[MigrationManager] Fallback EnsureCreated completed");
             }
             catch (Exception fallbackEx)
             {
-                Console.WriteLine($"[MigrationManager] Fallback also failed: {fallbackEx.Message}");
+                logger?.Error(fallbackEx, "[MigrationManager] Fallback also failed: {Message}", fallbackEx.Message);
             }
         }
 
@@ -54,32 +54,32 @@ public static class MigrationManager
         }
         catch (Exception ex)
         {
-            logger?.LogWarning("Data synchronization failed: {Message}. The application will continue without initial data.", ex.Message);
+            logger?.Warn("Data synchronization failed: {Message}. The application will continue without initial data.", ex.Message);
         }
 
         return app;
     }
 
-    private static void EnsureSqliteSchema<TContext>(TContext context, Microsoft.Extensions.Logging.ILogger? logger)
+    private static void EnsureSqliteSchema<TContext>(TContext context, IMLog<MDbContext>? logger)
         where TContext : MDbContext
     {
         // First, try to apply any pending migrations
         List<string> pendingMigrations = [.. context.Database.GetPendingMigrations()];
         if (pendingMigrations.Count > 0)
         {
-            Console.WriteLine($"[MigrationManager] Found {pendingMigrations.Count} pending migration(s). Applying...");
+            logger?.Info("[MigrationManager] Found {Count} pending migration(s). Applying...", pendingMigrations.Count);
             try
             {
                 context.Database.Migrate();
-                Console.WriteLine("[MigrationManager] Migrations applied successfully.");
+                logger?.Info("[MigrationManager] Migrations applied successfully");
             }
             catch (Exception ex)
             {
                 // Migrate may fail but tables could be created - check before falling back
-                Console.WriteLine($"[MigrationManager] Migration error: {ex.Message}");
+                logger?.Warn("[MigrationManager] Migration error: {Message}", ex.Message);
                 if (HasRequiredTables(context))
                 {
-                    Console.WriteLine("[MigrationManager] Tables exist despite error. Continuing...");
+                    logger?.Info("[MigrationManager] Tables exist despite error. Continuing...");
                 }
                 else
                 {
@@ -94,14 +94,14 @@ public static class MigrationManager
         if (allMigrations.Count > 0)
         {
             // We have migrations but none pending - database should be up to date
-            Console.WriteLine($"[MigrationManager] Database has {allMigrations.Count} migration(s), all applied.");
+            logger?.Info("[MigrationManager] Database has {Count} migration(s), all applied", allMigrations.Count);
             return;
         }
 
         // No migrations exist - fall back to EnsureCreated for development
-        Console.WriteLine("[MigrationManager] No migrations found. Using EnsureCreated for development...");
+        logger?.Info("[MigrationManager] No migrations found. Using EnsureCreated for development...");
         context.Database.EnsureCreated();
-        Console.WriteLine("[MigrationManager] EnsureCreated completed.");
+        logger?.Info("[MigrationManager] EnsureCreated completed");
     }
 
     private static bool HasRequiredTables<TContext>(TContext context) where TContext : MDbContext
@@ -118,19 +118,19 @@ public static class MigrationManager
         }
     }
 
-    private static void EnsureRelationalSchema<TContext>(TContext context, Microsoft.Extensions.Logging.ILogger? logger)
+    private static void EnsureRelationalSchema<TContext>(TContext context, IMLog<MDbContext>? logger)
         where TContext : MDbContext
     {
         IRelationalDatabaseCreator databaseCreator = context.GetService<IRelationalDatabaseCreator>();
 
         if (context.Database.GetPendingMigrations().Any())
         {
-            Console.WriteLine("[MigrationManager] Applying migrations...");
+            logger?.Info("[MigrationManager] Applying migrations...");
             context.Database.Migrate();
         }
         else if (databaseCreator != null && !databaseCreator.HasTables())
         {
-            Console.WriteLine("[MigrationManager] Creating tables via EnsureCreated...");
+            logger?.Info("[MigrationManager] Creating tables via EnsureCreated...");
             context.Database.EnsureCreated();
         }
     }

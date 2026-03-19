@@ -2,8 +2,17 @@ using System.Text;
 
 namespace Muonroi.Core.Extensions;
 
+/// <summary>
+/// Provides extension methods for cryptographic operations.
+/// </summary>
 public static class MCryptographyExtension
 {
+    /// <summary>
+    /// Encrypts the specified plain text using the provided key.
+    /// </summary>
+    /// <param name="key">The encryption key.</param>
+    /// <param name="plainText">The plain text to encrypt.</param>
+    /// <returns>The encrypted text as a base64-encoded string.</returns>
     public static string Encrypt(string key, string plainText)
     {
         if (string.IsNullOrEmpty(plainText))
@@ -29,11 +38,24 @@ public static class MCryptographyExtension
         return Convert.ToBase64String(msEncrypt.ToArray());
     }
 
+    /// <summary>
+    /// Decrypts the specified cipher text using the provided key.
+    /// </summary>
+    /// <param name="key">The decryption key.</param>
+    /// <param name="cipherText">The base64-encoded cipher text to decrypt.</param>
+    /// <returns>The decrypted plain text.</returns>
     public static string Decrypt(string key, string cipherText)
     {
         return Decrypt(key, cipherText, string.Empty);
     }
 
+    /// <summary>
+    /// Decrypts the specified cipher text using the provided key and fingerprint salt.
+    /// </summary>
+    /// <param name="key">The decryption key.</param>
+    /// <param name="cipherText">The base64-encoded cipher text to decrypt.</param>
+    /// <param name="fingerprintSalt">The fingerprint salt to use for key generation.</param>
+    /// <returns>The decrypted plain text.</returns>
     public static string Decrypt(string key, string cipherText, string fingerprintSalt)
     {
         if (string.IsNullOrEmpty(cipherText))
@@ -73,12 +95,22 @@ public static class MCryptographyExtension
         return validKey;
     }
 
+    /// <summary>
+    /// Generates a SHA256 hash string for the specified input string.
+    /// </summary>
+    /// <param name="inputString">The input string to hash.</param>
+    /// <returns>A lowercase hexadecimal string representation of the SHA256 hash.</returns>
     public static string GenerateSha256String(string inputString)
     {
         byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(inputString));
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 
+    /// <summary>
+    /// Gets a hash representing the integrity of the specified method body.
+    /// </summary>
+    /// <param name="method">The method to check for integrity.</param>
+    /// <returns>A hexadecimal string representation of the IL body hash, or a status message if the check fails.</returns>
     public static string GetMethodIntegrityHash(MethodBase method)
     {
         try

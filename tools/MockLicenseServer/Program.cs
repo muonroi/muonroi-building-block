@@ -331,6 +331,32 @@ app.MapPost("/api/v1/activate", ([FromBody] LicenseActivationRequest request) =>
 
         proof.Signature = SignProofResponse(rsa, proof.GetSigningData());
 
+        // Generate a SignedLicensePayload in LicenseVerifier-compatible format.
+        // LicenseVerifier.VerifySignature signs: { LicenseId, ProjectId, TenantId, AllowedFeatures,
+        // Fingerprint, HardwareId, ServerNonce, NotBefore, ExpiresAt } as JSON (default System.Text.Json).
+        var licensePayload = new LicensePayloadForSigning
+        {
+            LicenseId = childKey.LicenseId,
+            AllowedFeatures = proof.Features,
+            ExpiresAt = proof.ExpiresAt,
+            ServerNonce = proof.ProofId
+        };
+        var signingObj = new
+        {
+            licensePayload.LicenseId,
+            ProjectId = (string?)null,
+            TenantId = (string?)null,
+            licensePayload.AllowedFeatures,
+            Fingerprint = (string?)null,
+            HardwareId = (string?)null,
+            licensePayload.ServerNonce,
+            NotBefore = (DateTimeOffset?)null,
+            licensePayload.ExpiresAt
+        };
+        string payloadSigningJson = JsonSerializer.Serialize(signingObj);
+        licensePayload.Signature = SignProofResponse(rsa, payloadSigningJson);
+        proof.SignedLicensePayload = licensePayload;
+
         return Results.Ok(new LicenseActivationResponse(
             Success: true,
             Error: null,
@@ -828,9 +854,28 @@ record LicenseActivationProof
     public string? MachineFingerprint { get; set; }
     public string? ProductVersion { get; set; }
     public string Signature { get; set; } = "";
+    /// <summary>
+    /// LicensePayload in the format expected by LicenseVerifier.VerifySignature.
+    /// Allows LicenseStore to load a verifiable payload from the activation proof file.
+    /// </summary>
+    public LicensePayloadForSigning? SignedLicensePayload { get; set; }
 
     public string GetSigningData()
     {
         return $"{ProofId}|{LicenseId}|{OrganizationName}|{Tier}|{ActivatedAt:O}|{ExpiresAt:O}|{ActivatedEnvironment}|{MaxSeats}|{string.Join(",", Features ?? Array.Empty<string>())}";
     }
+}
+
+class LicensePayloadForSigning
+{
+    public string? LicenseId { get; set; }
+    public string? ProjectId { get; set; }
+    public string? TenantId { get; set; }
+    public string[]? AllowedFeatures { get; set; }
+    public string? Fingerprint { get; set; }
+    public string? HardwareId { get; set; }
+    public string? ServerNonce { get; set; }
+    public DateTimeOffset? NotBefore { get; set; }
+    public DateTimeOffset? ExpiresAt { get; set; }
+    public string? Signature { get; set; }
 }

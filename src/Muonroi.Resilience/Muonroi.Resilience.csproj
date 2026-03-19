@@ -12,4 +12,7 @@
     <PackageReference Include="Polly" Version="8.5.2" />
     <PackageReference Include="Polly.Extensions" Version="8.5.2" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
+  </ItemGroup>
 </Project>

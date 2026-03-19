@@ -16,6 +16,8 @@ public static class LicenseCapabilityResolver
         public const string AuditTrail = "audit.trail";
         public const string RuntimeAntiTampering = "runtime.anti_tampering";
         public const string AuditRemote = "audit.remote";
+        public const string Connectors = "connectors";
+        public const string JavaScriptExpressions = "js_expressions";
     }
 
     private static readonly Dictionary<string, string> FeatureToCapability =
@@ -29,7 +31,9 @@ public static class LicenseCapabilityResolver
             [FreeTierFeatures.Premium.DistributedCache] = Capabilities.CacheDistributed,
             [FreeTierFeatures.Premium.AuditTrail] = Capabilities.AuditTrail,
             [FreeTierFeatures.Premium.AntiTampering] = Capabilities.RuntimeAntiTampering,
-            ["server-validation"] = Capabilities.AuditRemote
+            ["server-validation"] = Capabilities.AuditRemote,
+            [FreeTierFeatures.Premium.Connectors] = Capabilities.Connectors,
+            [FreeTierFeatures.Premium.JavaScriptExpressions] = Capabilities.JavaScriptExpressions
         };
 
     private static readonly HashSet<string> CapabilityKeys =
@@ -43,7 +47,9 @@ public static class LicenseCapabilityResolver
         Capabilities.CacheDistributed,
         Capabilities.AuditTrail,
         Capabilities.RuntimeAntiTampering,
-        Capabilities.AuditRemote
+        Capabilities.AuditRemote,
+        Capabilities.Connectors,
+        Capabilities.JavaScriptExpressions
     ];
 
     public static bool HasAccess(LicenseState state, string requestedFeature)

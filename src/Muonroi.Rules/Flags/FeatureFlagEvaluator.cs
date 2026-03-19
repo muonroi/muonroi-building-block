@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.Rules.Flags;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace Muonroi.Rules.Flags;
 /// When a flag is disabled the evaluator runs the new rule-set in "shadow" mode
 /// and logs any differences in the output without affecting production.
 /// </summary>
-public sealed class FeatureFlagEvaluator(IFeatureFlagClient client, ILogger<FeatureFlagEvaluator> logger)
+public sealed class FeatureFlagEvaluator(IFeatureFlagClient client, IMLog<FeatureFlagEvaluator> logger)
 {
     /// <summary>
     /// Executes the provided rule sets based on the feature flag.
@@ -19,17 +21,23 @@ public sealed class FeatureFlagEvaluator(IFeatureFlagClient client, ILogger<Feat
     public T Evaluate<T>(string flag, FeatureContext context, Func<T> currentRules, Func<T> newRules)
     {
         if (client.IsEnabled(flag, context))
+        {
             // Feature enabled: execute new rule-set.
             return newRules();
+        }
 
         // Feature disabled: run new rule-set in shadow mode.
         T? currentResult = currentRules();
         T? shadowResult = newRules();
 
         if (!EqualityComparer<T>.Default.Equals(currentResult, shadowResult))
-            logger.LogInformation(
+        {
+            object currentValue = currentResult is null ? "<null>" : currentResult;
+            object shadowValue = shadowResult is null ? "<null>" : shadowResult;
+            logger?.Info(
                 "Shadow diff for {Flag} tenant {Tenant} segment {Segment}: {Current} vs {Shadow}",
-                flag, context.TenantId, context.Segment, currentResult, shadowResult);
+                flag, context.TenantId, context.Segment ?? string.Empty, currentValue, shadowValue);
+        }
 
         return currentResult;
     }

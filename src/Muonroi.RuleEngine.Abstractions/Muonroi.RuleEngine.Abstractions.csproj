@@ -4,6 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>Muonroi.RuleEngine.Abstractions</PackageId>
     <Version>1.0.0-alpha.1</Version>
     <Authors>Muon Roi</Authors>

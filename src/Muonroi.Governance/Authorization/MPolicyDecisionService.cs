@@ -1,20 +1,19 @@
+using Muonroi.Logging.Abstractions;
 using System.Net.Http.Json;
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace Muonroi.Governance.Authorization;
 
 public sealed class MPolicyDecisionService(
     MPolicyDecisionConfigs configs,
     IHttpClientFactory httpClientFactory,
-    ILogger<MPolicyDecisionService>? logger = null) : IMPolicyDecisionService
+    IMLog<MPolicyDecisionService>? logger = null) : IMPolicyDecisionService
 {
     private const string ClientName = "MuonroiPolicyDecision";
 
     private readonly MPolicyDecisionConfigs _configs = configs ?? throw new ArgumentNullException(nameof(configs));
     private readonly IHttpClientFactory _httpClientFactory =
         httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-    private readonly ILogger<MPolicyDecisionService>? _logger = logger;
+    private readonly IMLog<MPolicyDecisionService>? _logger = logger;
 
     public bool IsEnabled => _configs.Enabled;
 
@@ -108,12 +107,19 @@ public sealed class MPolicyDecisionService(
     {
         if (provider == MPolicyDecisionProvider.OpenFga)
         {
+            // OpenFGA /check endpoint expects { tuple_key: { user, relation, object } }
             return new
             {
-                input = request
+                tuple_key = new
+                {
+                    user = request.UserId ?? string.Empty,
+                    relation = request.Action ?? string.Empty,
+                    @object = request.Resource ?? string.Empty
+                }
             };
         }
 
+        // OPA /v1/data/authz/allow endpoint expects { input: <request> }
         return new
         {
             input = request

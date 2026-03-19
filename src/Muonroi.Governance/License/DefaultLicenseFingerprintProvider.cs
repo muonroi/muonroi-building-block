@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Hosting;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.License;
 

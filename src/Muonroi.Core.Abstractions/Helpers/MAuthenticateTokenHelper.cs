@@ -1,19 +1,36 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.Core.Abstractions.Helpers;
 
+/// <summary>
+/// Helper for generating authentication tokens.
+/// </summary>
+/// <typeparam name="TPermission">The type of the permission.</typeparam>
+/// <param name="tokenConfig">The token configuration.</param>
+/// <param name="signer">The token signer.</param>
+/// <param name="dateTimeService">The date time service.</param>
+/// <param name="logger">The logger.</param>
 public class MAuthenticateTokenHelper<TPermission>(
     MTokenInfo tokenConfig,
     ITokenSigner signer,
     IMDateTimeService dateTimeService,
-    ILogger<MAuthenticateTokenHelper<TPermission>>? logger = null)
+    IMLog<MAuthenticateTokenHelper<TPermission>>? logger = null)
     where TPermission : Enum
 {
     private readonly MTokenInfo _tokenConfig = tokenConfig ?? throw new ArgumentNullException(nameof(tokenConfig));
     private readonly ITokenSigner _signer = signer ?? throw new ArgumentNullException(nameof(signer));
 
+    /// <summary>
+    /// Generates an authentication token for the specified user and permissions.
+    /// </summary>
+    /// <param name="user">The user model.</param>
+    /// <param name="permissions">The list of permissions.</param>
+    /// <param name="claims">Optional additional claims.</param>
+    /// <returns>A string representing the generated token.</returns>
     public string GenerateAuthenticateToken(MUserModel user, List<TPermission> permissions, List<Claim>? claims = null)
     {
         ArgumentNullException.ThrowIfNull(permissions);
-        logger?.LogInformation("Generating token for {User}", user.UserGuid);
+        logger?.Info("Generating token for {User}", user.UserGuid);
         List<Claim> privateClaims =
         [
             new(ClaimConstants.Username, user.Username),
@@ -65,7 +82,7 @@ public class MAuthenticateTokenHelper<TPermission>(
         JwtSecurityTokenHandler tokenHandler = new();
         SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
         string result = tokenHandler.WriteToken(token);
-        logger?.LogInformation("Generated token for {User}", user.UserGuid);
+        logger?.Info("Generated token for {User}", user.UserGuid);
         return result;
     }
 }

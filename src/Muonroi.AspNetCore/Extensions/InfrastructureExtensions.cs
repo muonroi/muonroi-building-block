@@ -12,9 +12,7 @@ using Muonroi.AspNetCore.Controllers.Conventions;
 using Muonroi.AspNetCore.DI.Autofac;
 using Muonroi.AspNetCore.Filters;
 using Muonroi.AspNetCore.Middleware;
-using Muonroi.AspNetCore.Services;
 using Muonroi.Auth.BearerToken.Signers;
-using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Extensions;
 using Muonroi.RuleEngine.Runtime.Rules;
 using Muonroi.Tenancy.Core.Legacy;
@@ -26,6 +24,8 @@ namespace Muonroi.AspNetCore.Extensions;
 
 public static class InfrastructureExtensions
 {
+    private sealed class InfrastructureExtensionsLogger { }
+
     public static readonly Assembly? EntryAssembly = Assembly.GetEntryAssembly();
 
     public static IServiceCollection AddInfrastructure(
@@ -53,16 +53,15 @@ public static class InfrastructureExtensions
                                                 "A unique 16+ char seed is required for security chaining.");
         }
 
-        ConsoleColor originalColor = Console.ForegroundColor;
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine($"[INFO] Muonroi Framework is scanning {assemblies.Length} assembly(ies):");
+        // Scanning info + validation diagnostics are deferred and logged via IMLog<T>
+        // on ApplicationStarted by ArchitectureDiagnosticsStartupService.
+        string[] scannedAssemblyNames = [.. assemblies.Select(a => a.GetName().Name ?? "unknown")];
+        ArchitectureValidationExtensions.AddStartupDiagnostic("Info",
+            $"Framework scanning {assemblies.Length} assembly(ies): {string.Join(", ", scannedAssemblyNames)}");
         foreach (Assembly assembly in assemblies)
         {
-            Console.WriteLine($"       -> {assembly.GetName().Name}");
             services.EnforceArchitecture(assembly);
         }
-
-        Console.ForegroundColor = originalColor;
         _ = services.AddControllerConfiguration(assemblies)
             .AddLicenseProtection(configuration)
             .AddCoreServices(configuration, isSecretDefault, secreteKey, paginationConfigs, tokenConfig)
@@ -210,24 +209,15 @@ public static class InfrastructureExtensions
             return Task.CompletedTask;
         });
 
-        // Print startup info
+        // Startup banner logged via IMLog<T> (maps to IMLog) after DI container is built.
         ICollection<string> serverAddresses = app.Urls;
         app.Lifetime.ApplicationStarted.Register(() =>
         {
-            Console.WriteLine();
-            ConsoleColor originalColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("ROCKET MUONROI BUILDING BLOCK HAS STARTED SUCCESSFULLY!");
-            Console.ForegroundColor = ConsoleColor.White;
-            foreach (string address in serverAddresses)
-            {
-                Console.WriteLine($"   -> Listening on: {address}");
-            }
-
-            Console.WriteLine(
-                $"   -> Documentation: {(serverAddresses.Count > 0 ? serverAddresses.First() : "http://localhost:5000")}/swagger");
-            Console.ForegroundColor = originalColor;
-            Console.WriteLine();
+            IMLog<InfrastructureExtensionsLogger> startupLog =
+                app.Services.GetRequiredService<IMLog<InfrastructureExtensionsLogger>>();
+            string swagger = $"{(serverAddresses.Count > 0 ? serverAddresses.First() : "http://localhost:5000")}/swagger";
+            startupLog.Info("Muonroi Building Block started. Addresses: {Addresses} | Swagger: {Swagger}",
+                string.Join(", ", serverAddresses), swagger);
         });
 
         _ = app.UseExceptionHandler(exceptionHandlerApp =>
@@ -369,11 +359,9 @@ public static class InfrastructureExtensions
 
         if (!isPaidLicense)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine();
-            Console.WriteLine("SECURITY WARNING: Running FREE mode in Production");
-            Console.WriteLine();
-            Console.ResetColor();
+            // Deferred to structured log on ApplicationStarted — avoids Console pollution.
+            ArchitectureValidationExtensions.AddStartupDiagnostic("Warning",
+                "Running FREE mode in Production — security enforcement is disabled.");
             return;
         }
 

@@ -1,4 +1,6 @@
-namespace Muonroi.Governance.License;
+using Muonroi.Governance.License;
+
+namespace Muonroi.Governance.Abstractions.License;
 
 public sealed class LicenseConfigs
 {
@@ -18,6 +20,13 @@ public sealed class LicenseConfigs
     public string? ActivationProofPath { get; set; } = "licenses/activation_proof.json";
 
     /// <summary>
+    /// Path to the activation JWT file for frontend license verification (MLicenseVerifier).
+    /// Default: "licenses/activation_jwt.txt"
+    /// This file is automatically created during online activation when the server provides a JWT.
+    /// </summary>
+    public string? ActivationJwtPath { get; set; } = "licenses/activation_jwt.txt";
+
+    /// <summary>
     /// If true, attempt online activation when activation proof is not found.
     /// Default: true for better developer experience.
     /// Set to false in production if you want to require pre-activation.
@@ -25,10 +34,10 @@ public sealed class LicenseConfigs
     public bool FallbackToOnlineActivation { get; set; } = true;
     public string? FingerprintSalt { get; set; }
     private string? _projectSeed;
-    public string? ProjectSeed 
-    { 
-        get => Obfuscate(_projectSeed); 
-        set => _projectSeed = Obfuscate(value); 
+    public string? ProjectSeed
+    {
+        get => Obfuscate(_projectSeed);
+        set => _projectSeed = Obfuscate(value);
     }
 
     /// <summary>
@@ -56,12 +65,15 @@ public sealed class LicenseConfigs
 
     private static string? Obfuscate(string? input)
     {
-        if (string.IsNullOrEmpty(input)) return input;
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
         // Simple XOR with a fixed internal key to hide it from plain memory scanners
         char[] chars = input.ToCharArray();
         for (int i = 0; i < chars.Length; i++)
         {
-            chars[i] = (char)(chars[i] ^ (0x57 + i));
+            chars[i] = (char)(chars[i] ^ 0x57 + i);
         }
         return new string(chars);
     }
@@ -115,6 +127,12 @@ public sealed class LicenseConfigs
     public bool SkipSignatureVerification { get; set; } = false;
 
     /// <summary>
+    /// Skip assembly whitelist verification during activation.
+    /// WARNING: Only set to true for development/testing. Never in production!
+    /// </summary>
+    public bool SkipAssemblyWhitelist { get; set; } = false;
+
+    /// <summary>
     /// TIER 3: Submit action chains to the license server for remote audit.
     /// </summary>
     public bool EnableServerValidation { get; set; } = false;
@@ -153,9 +171,15 @@ public sealed class LicenseConfigs
     /// </summary>
     public LicenseEnforcementMode GetEffectiveEnforcementMode(LicenseTier tier)
     {
-        if (EnforcementMode.HasValue) return EnforcementMode.Value;
+        if (EnforcementMode.HasValue)
+        {
+            return EnforcementMode.Value;
+        }
 
-        if (tier == LicenseTier.Free) return LicenseEnforcementMode.Free;
+        if (tier == LicenseTier.Free)
+        {
+            return LicenseEnforcementMode.Free;
+        }
 
         string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
         if (env.Equals("Development", StringComparison.OrdinalIgnoreCase))
@@ -177,6 +201,9 @@ public sealed class OnlineLicenseConfigs
     public string? ChainSubmissionEndpoint { get; set; } = "/api/v1/chain/submit";
     public int TimeoutSeconds { get; set; } = 10;
     public int RefreshMinutes { get; set; } = 1440;
+    public bool EnableHeartbeat { get; set; } = false;
+    public int HeartbeatIntervalMinutes { get; set; } = 240;
+    public int RevocationGraceHours { get; set; } = 24;
 
     /// <summary>
     /// TIER 3+: Enable certificate pinning to prevent fake server and MITM attacks.

@@ -1,3 +1,5 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.AspNetCore.Middleware;
 
 public sealed class LicenseMiddleware(RequestDelegate next)

@@ -4,7 +4,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Core.Helpers;
 using Muonroi.RuleEngine.DecisionTable.Converters;
+using Muonroi.RuleEngine.DecisionTable.Feel;
 using Muonroi.RuleEngine.DecisionTable.Serializers;
 using Muonroi.RuleEngine.DecisionTable.Stores;
 using Muonroi.RuleEngine.DecisionTable.Stores.Persistence;
@@ -23,6 +25,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton(Options.Create(options));
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
+        services.TryAddSingleton<IMDateTimeService, MDateTimeService>();
 
         if (!string.IsNullOrWhiteSpace(options.PostgresConnectionString))
         {
@@ -47,9 +50,15 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IDecisionTableStore, InMemoryDecisionTableStore>();
         }
 
+        services.AddSingleton<SimplifiedFeelCellEvaluator>();
+        services.AddSingleton<IFeelCellEvaluator, FullFeelCellEvaluator>();
         services.AddSingleton<DecisionTableValidator>();
         services.AddSingleton<OverlapDetector>();
+        services.AddSingleton<MultiColumnOverlapDetector>();
+        services.AddSingleton<RedundancyDetector>();
         services.AddSingleton<GapDetector>();
+        services.AddSingleton<IDecisionTableExecutor, DecisionTableExecutor>();
+        services.AddSingleton<DecisionTableDiffer>();
         services.AddSingleton<IDecisionTableConverter, DecisionTableToJsonConverter>();
         services.AddSingleton<DecisionTableToRuleConverter>();
         services.AddSingleton<ExcelToDecisionTableConverter>();

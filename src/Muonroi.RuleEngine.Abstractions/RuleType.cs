@@ -1,7 +1,7 @@
 namespace Muonroi.RuleEngine.Abstractions
 {
     /// <summary>
-    /// Specifies the type of a rule in the <see cref="RuleEngine{T}"/>.
+    /// Specifies the type of a rule.
     /// </summary>
     public enum RuleType
     {

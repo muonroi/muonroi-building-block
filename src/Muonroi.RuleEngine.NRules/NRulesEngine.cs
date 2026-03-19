@@ -1,3 +1,4 @@
+
 namespace Muonroi.RuleEngine.NRules;
 
 /// <summary>
@@ -22,7 +23,11 @@ public sealed class NRulesEngine
     public void Fire(params object[] facts)
     {
         ISession session = _sessionFactory.CreateSession();
-        foreach (object fact in facts) session.Insert(fact);
+        foreach (object fact in facts)
+        {
+            session.Insert(fact);
+        }
+
         session.Fire();
     }
 
@@ -33,9 +38,16 @@ public sealed class NRulesEngine
         string name = attr?.Name ?? rule.Name;
         if (options.Rules.TryGetValue(name, out RuleConfig? cfg))
         {
-            if (!cfg.Enabled) return false;
+            if (!cfg.Enabled)
+            {
+                return false;
+            }
+
             if (!string.IsNullOrEmpty(cfg.Version) && attr != null &&
-                !string.Equals(cfg.Version, attr.Version, StringComparison.OrdinalIgnoreCase)) return false;
+                !string.Equals(cfg.Version, attr.Version, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
         }
 
         return true;
@@ -60,7 +72,11 @@ public sealed class NRulesEngine
 
     private static Type? GetRuleType(IRuleDefinition rule)
     {
-        if (rule.Properties.TryGetProperty(RuleProperties.ClrType, out RuleProperty? property)) return property.Value as Type;
+        if (rule.Properties.TryGetProperty(RuleProperties.ClrType, out RuleProperty? property))
+        {
+            return property.Value as Type;
+        }
+
         return null;
     }
 }

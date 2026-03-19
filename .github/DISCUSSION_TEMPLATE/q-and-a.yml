@@ -1,0 +1,19 @@
+title: "[Q&A] "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask implementation or integration questions here. Include enough context that someone else can reproduce your setup.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Include package versions, target framework, and any relevant docs you already checked.

@@ -2,6 +2,9 @@ using Microsoft.Extensions.Caching.Distributed;
 
 namespace Muonroi.Auth.Jwt;
 
+/// <summary>
+/// A Redis-backed implementation of the IRsaKeyStore.
+/// </summary>
 public sealed class RedisRsaKeyStore : IRsaKeyStore
 {
     private const string CurrentKidKey = "rsakey:current";
@@ -13,6 +16,12 @@ public sealed class RedisRsaKeyStore : IRsaKeyStore
     private readonly byte[] _masterKey;
     private readonly SemaphoreSlim _rotationLock = new(1, 1);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RedisRsaKeyStore"/> class.
+    /// </summary>
+    /// <param name="cache">The distributed cache for storage.</param>
+    /// <param name="configuration">The application configuration.</param>
+    /// <param name="jsonService">The JSON serialization service.</param>
     public RedisRsaKeyStore(IDistributedCache cache, IConfiguration configuration, IMJsonSerializeService jsonService)
     {
         _cache = cache;
@@ -21,6 +30,11 @@ public sealed class RedisRsaKeyStore : IRsaKeyStore
         EnsureInitialized();
     }
 
+    /// <summary>
+    /// Gets the current signing credentials from Redis.
+    /// </summary>
+    /// <returns>The current signing credentials.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if the key cannot be resolved.</exception>
     public SigningCredentials GetCurrentSigningCredentials()
     {
         string? kid = _cache.GetString(CurrentKidKey);
@@ -51,6 +65,9 @@ public sealed class RedisRsaKeyStore : IRsaKeyStore
         return new SigningCredentials(rsaKey, SecurityAlgorithms.RsaSha256);
     }
 
+    /// <summary>
+    /// Rotates the RSA keys by creating a new key and updating the index in Redis.
+    /// </summary>
     public void RotateKeys()
     {
         _rotationLock.Wait();
@@ -84,6 +101,11 @@ public sealed class RedisRsaKeyStore : IRsaKeyStore
         }
     }
 
+    /// <summary>
+    /// Retrieves a specific security key by its key identifier from Redis.
+    /// </summary>
+    /// <param name="kid">The unique key identifier.</param>
+    /// <returns>The security key if found; otherwise, null.</returns>
     public SecurityKey? GetKey(string kid)
     {
         if (string.IsNullOrWhiteSpace(kid))
@@ -106,6 +128,10 @@ public sealed class RedisRsaKeyStore : IRsaKeyStore
         };
     }
 
+    /// <summary>
+    /// Gets the current JSON Web Key Set (JWKS) from the public keys stored in Redis.
+    /// </summary>
+    /// <returns>The set of JSON Web Keys.</returns>
     public JsonWebKeySet GetJsonWebKeySet()
     {
         List<string> kids = LoadKeyOrder();

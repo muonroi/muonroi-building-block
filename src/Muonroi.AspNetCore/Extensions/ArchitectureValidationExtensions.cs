@@ -15,9 +15,22 @@ namespace Muonroi.AspNetCore.Extensions;
 public static class ArchitectureValidationExtensions
 {
     private const string DocsBaseUrl = "https://github.com/muonroi/Muonroi.Docs";
-    private static readonly object _consoleLock = new();
     private static int _warningCount;
     private static int _infoCount;
+
+    // Diagnostics are accumulated during DI-registration time (before the container is built,
+    // IMLog<T> is not yet resolvable). They are flushed via ArchitectureDiagnosticsStartupService
+    // on ApplicationStarted using proper IMLog<T> — maps to IMLog<T> in the ecosystem.
+    private static readonly List<(string Level, string Message, string Supplemental, string Guide)> _pendingDiagnostics = [];
+
+    /// <summary>
+    /// Adds a startup diagnostic entry to be logged when the application starts.
+    /// Allows other framework code to contribute diagnostics before the DI container is built.
+    /// </summary>
+    internal static void AddStartupDiagnostic(string level, string message, string supplemental = "", string guide = "")
+    {
+        _pendingDiagnostics.Add((level, message, supplemental, guide));
+    }
 
     /// <summary>
     /// Validates architecture compliance for the given assembly.
@@ -72,6 +85,9 @@ public static class ArchitectureValidationExtensions
         PrintFrameworkUtilitiesInfo();
 
         PrintSummary(throwOnViolation);
+
+        // Register the deferred diagnostic logger once — logged via IMLog<T> on ApplicationStarted.
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, ArchitectureDiagnosticsStartupService>());
 
         return services;
     }
@@ -414,7 +430,7 @@ public static class ArchitectureValidationExtensions
 
     private static void ValidateDependencyInjection(List<Type> types)
     {
-        // Find handlers and services that should inject ILogger
+        // Find handlers and services that should inject IMLog
         List<Type> handlersAndServices = [.. types.Where(t =>
             (t.Name.EndsWith("Handler") || t.Name.EndsWith("Service")) &&
             t is { IsClass: true, IsAbstract: false } &&
@@ -438,14 +454,14 @@ public static class ArchitectureValidationExtensions
 
             ParameterInfo[] parameters = mainConstructor.GetParameters();
 
-            // Check for ILogger injection
+            // Check for IMLog injection
             bool hasLogger = parameters.Any(p =>
-                p.ParameterType.Name.Contains("ILogger"));
+                p.ParameterType.Name.Contains("IMLog"));
 
             if (!hasLogger)
             {
                 PrintInfo(
-                    $"'{type.Name}' should inject 'ILogger<{type.Name}>' for structured logging",
+                    $"'{type.Name}' should inject 'IMLog<{type.Name}>' for structured logging",
                     "Framework provides automatic correlation ID, tenant context, and request tracking in logs.",
                     $"{DocsBaseUrl}/extensions-log.md"
                 );
@@ -550,60 +566,9 @@ public static class ArchitectureValidationExtensions
 
     #region Utilities Reminder
 
-    private static void PrintFrameworkUtilitiesInfo()
-    {
-        lock (_consoleLock)
-        {
-            ConsoleColor originalColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine("==================================================================");
-            Console.WriteLine("   FRAMEWORK UTILITIES - Don't Reinvent The Wheel!            ");
-            Console.WriteLine("==================================================================");
-            Console.ForegroundColor = ConsoleColor.DarkMagenta;
-
-            Console.WriteLine("\n[DATA & SERIALIZATION]:");
-            Console.WriteLine("   - DON'T: JsonSerializer.Serialize() or JsonConvert.SerializeObject()");
-            Console.WriteLine("   - DO: Inject 'IMJsonSerializeService' - consistent settings, error handling");
-
-            Console.WriteLine("\n[DATE & TIME]:");
-            Console.WriteLine("   - DON'T: DateTime.Now or DateTime.UtcNow (not testable!)");
-            Console.WriteLine("   - DO: Use 'Clock.Now' / 'Clock.UtcNow'");
-
-            Console.WriteLine("\n[STRING OPERATIONS]:");
-            Console.WriteLine("   - DON'T: Manual string.Replace(), regex for accents, custom Base64");
-            Console.WriteLine("   - DO: Use 'MStringExtension' methods");
-
-            Console.WriteLine("\n[OBJECT MAPPING]:");
-            Console.WriteLine("   - DON'T: Manual property copying or AutoMapper.Map() directly");
-            Console.WriteLine("   - DO: Inject 'IMapper' (framework wrapper) + implement 'IMapFrom<T>'");
-
-            Console.WriteLine("\n[CACHING]:");
-            Console.WriteLine("   - DON'T: IMemoryCache or IDistributedCache alone");
-            Console.WriteLine("   - DO: Use 'IMultiLevelCacheService' for L1(Memory) + L2(Redis)");
-
-            Console.WriteLine("\n[DATABASE OPERATIONS]:");
-            Console.WriteLine("   - DON'T: Manual foreach + AddAsync for bulk inserts");
-            Console.WriteLine("   - DO: Use 'DbContextExtensions.BulkInsert()' / 'BulkUpdate()'");
-
-            Console.WriteLine("\n[CRYPTOGRAPHY & SECURITY]:");
-            Console.WriteLine("   - DON'T: MD5, SHA1, or custom password hashing");
-            Console.WriteLine("   - DO: Use 'MPasswordHelper.HashPassword()' (BCrypt)");
-
-            Console.WriteLine("\n[CONCURRENCY CONTROL]:");
-            Console.WriteLine("   - DON'T: Manual lock statements with string keys");
-            Console.WriteLine("   - DO: Use 'MLockExtension' for distributed locks");
-
-            Console.WriteLine("\n[AUTH & TENANT CONTEXT]:");
-            Console.WriteLine("   - DON'T: HttpContext.User or IHttpContextAccessor everywhere");
-            Console.WriteLine("   - DO: Use 'MAuthenticateInfoContext' (injected in handlers)");
-
-            Console.WriteLine("\n[LOGGING]:");
-            Console.WriteLine("   - DON'T: Console.WriteLine() or custom logging");
-            Console.WriteLine("   - DO: Inject 'ILogger<T>' - structured logging with correlation ID");
-
-            Console.ForegroundColor = originalColor;
-        }
-    }
+    // Framework utilities reminder has been moved to Muonroi.Docs.
+    // See: https://github.com/muonroi/Muonroi.Docs/docs/03-guides/
+    private static void PrintFrameworkUtilitiesInfo() { }
 
     #endregion
 
@@ -647,110 +612,80 @@ public static class ArchitectureValidationExtensions
         return false;
     }
 
-    private static void PrintHeader()
-    {
-        lock (_consoleLock)
-        {
-            Console.WriteLine();
-            ConsoleColor originalColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("==================================================================");
-            Console.WriteLine("          MUONROI BUILDING BLOCK - Architecture Validator        ");
-            Console.WriteLine("==================================================================");
-            Console.ForegroundColor = originalColor;
-            Console.WriteLine();
-        }
-    }
+    // Header is suppressed — the deferred startup service logs scan results via IMLog<T>.
+    private static void PrintHeader() { }
 
     private static void PrintWarning(string violation, string benefit, string guide)
     {
         _warningCount++;
-        lock (_consoleLock)
-        {
-            ConsoleColor originalColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"[WARNING #{_warningCount}] {violation}");
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine($"   - Benefit: {benefit}");
-            Console.WriteLine($"   - Guide: {guide}");
-            Console.ForegroundColor = originalColor;
-            Console.WriteLine();
-        }
+        _pendingDiagnostics.Add(("Warning", violation, benefit, guide));
     }
 
     private static void PrintInfo(string message, string suggestion, string guide)
     {
         _infoCount++;
-        lock (_consoleLock)
-        {
-            ConsoleColor originalColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine($"[INFO] {message}");
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
-            Console.WriteLine($"   - Suggestion: {suggestion}");
-            Console.WriteLine($"   - Guide: {guide}");
-            Console.ForegroundColor = originalColor;
-            Console.WriteLine();
-        }
+        _pendingDiagnostics.Add(("Info", message, suggestion, guide));
     }
 
     private static void PrintSummary(bool throwOnViolation)
     {
-        lock (_consoleLock)
+        // Summary is emitted by ArchitectureDiagnosticsStartupService on ApplicationStarted.
+        if (throwOnViolation && _warningCount > 0)
         {
-            Console.WriteLine();
-            ConsoleColor originalColor = Console.ForegroundColor;
-
-            if (_warningCount == 0 && _infoCount == 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("==================================================================");
-                Console.WriteLine("   All architecture checks passed! Your code follows best      ");
-                Console.WriteLine("      practices of Muonroi Building Block framework.              ");
-                Console.WriteLine("==================================================================");
-            }
-            else
-            {
-                Console.ForegroundColor = _warningCount > 0 ? ConsoleColor.Yellow : ConsoleColor.Blue;
-                Console.WriteLine("==================================================================");
-
-                if (_warningCount > 0)
-                {
-                    Console.WriteLine($"   Architecture validation found {_warningCount} warning(s).");
-                    Console.WriteLine("      Please review the warnings above to improve code quality.   ");
-                }
-
-                if (_infoCount > 0)
-                {
-                    Console.ForegroundColor = ConsoleColor.Blue;
-                    Console.WriteLine($"   Found {_infoCount} suggestion(s) for best practices.");
-                    Console.WriteLine("      These are optional - consider them for better code.         ");
-                }
-
-                Console.ForegroundColor = _warningCount > 0 ? ConsoleColor.Yellow : ConsoleColor.Blue;
-                if (_warningCount == 0)
-                {
-                    Console.WriteLine("   All critical patterns followed successfully!        ");
-                }
-                else
-                {
-                    Console.WriteLine("   These are recommendations - your app will still run.          ");
-                }
-                Console.WriteLine("==================================================================");
-            }
-
-            Console.ForegroundColor = originalColor;
-            Console.WriteLine();
-
-            if (throwOnViolation && _warningCount > 0)
-            {
-                throw new InvalidOperationException(
-                    $"Architecture validation failed with {_warningCount} warning(s). " +
-                    "Set throwOnViolation=false to run anyway.");
-            }
+            throw new InvalidOperationException(
+                $"Architecture validation failed with {_warningCount} warning(s). " +
+                "Set throwOnViolation=false to run anyway.");
         }
     }
 
     #endregion
+
+    /// <summary>
+    /// Flushes architecture validation diagnostics accumulated during DI registration
+    /// to structured logging (IMLog → IMLog) on application startup.
+    /// </summary>
+    // Marker class used as IMLog<T> category — ArchitectureValidationExtensions is static and
+    // cannot be used directly as a type argument.
+    private sealed class ArchitectureDiagnosticsCategory { }
+
+    private sealed class ArchitectureDiagnosticsStartupService(IMLog<ArchitectureDiagnosticsCategory> log) : IHostedService
+    {
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            if (_pendingDiagnostics.Count == 0)
+            {
+                log.Info("[Architecture] All checks passed for scanned assemblies");
+                return Task.CompletedTask;
+            }
+
+            foreach ((string level, string message, string supplemental, string guide) in _pendingDiagnostics)
+            {
+                if (string.Equals(level, "Warning", StringComparison.Ordinal))
+                {
+                    log.Warn("[Architecture] {Message} | Benefit: {Supplemental} | Guide: {Guide}",
+                        message, supplemental, guide);
+                }
+                else
+                {
+                    log.Info("[Architecture] {Message} | Suggestion: {Supplemental} | Guide: {Guide}",
+                        message, supplemental, guide);
+                }
+            }
+
+            if (_warningCount > 0)
+            {
+                log.Warn("[Architecture] Scan complete — {Warnings} warning(s), {Infos} suggestion(s). Review above entries to improve code quality",
+                    _warningCount, _infoCount);
+            }
+            else
+            {
+                log.Info("[Architecture] Scan complete — {Infos} suggestion(s)", _infoCount);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
 
 }

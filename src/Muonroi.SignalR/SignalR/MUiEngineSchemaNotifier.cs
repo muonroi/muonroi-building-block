@@ -1,8 +1,10 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.SignalR.SignalR;
 
 public sealed class MUiEngineSchemaNotifier(
     IServiceProvider serviceProvider,
-    ILogger<MUiEngineSchemaNotifier> logger) : IUiEngineSchemaNotifier
+    IMLog<MUiEngineSchemaNotifier> logger) : IUiEngineSchemaNotifier
 {
     public async Task NotifySchemaChangedAsync(
         MUiEngineSchemaVersion schemaVersion,

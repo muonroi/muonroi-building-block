@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
+using Muonroi.Governance.Abstractions.License;
+using Muonroi.Logging.Abstractions;
 
-namespace Muonroi.Governance.ServerValidation;
+namespace Muonroi.Governance.Enterprise.ServerValidation;
 
 /// <summary>
 /// Rotates the server nonce after successful chain submission to prevent replay attacks.
@@ -10,7 +10,7 @@ public sealed class NonceRotator(
     LicenseConfigs configs,
     ChainSubmitter submitter,
     LicenseStore store,
-    ILogger<NonceRotator>? logger = null)
+    IMLog<NonceRotator>? logger = null)
 {
     public async Task RotateAsync(IEnumerable<FingerprintChainEntry> entries, string? tenantId = null,
         CancellationToken cancellationToken = default)
@@ -41,7 +41,8 @@ public sealed class NonceRotator(
             {
                 status = "error";
                 activity?.SetStatus(ActivityStatusCode.Error, response.Error ?? "nonce-rotation-rejected");
-                logger?.LogWarning("[License] Nonce rotation failed: {Error}", response.Error);
+                object errorValue = response.Error ?? "<unknown>";
+                logger?.Warn("[License] Nonce rotation failed: {Error}", errorValue);
             }
         }
         catch (Exception ex)
@@ -67,7 +68,10 @@ public sealed class NonceRotator(
     private void UpdateLocalNonce(string newNonce)
     {
         LicensePayload? payload = store.Load();
-        if (payload == null) return;
+        if (payload == null)
+        {
+            return;
+        }
 
         payload.ServerNonce = newNonce;
         store.Save(payload);

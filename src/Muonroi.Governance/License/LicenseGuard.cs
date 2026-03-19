@@ -1,3 +1,5 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.Governance.License;
 
 public sealed class LicenseGuard : ILicenseGuard
@@ -6,6 +8,7 @@ public sealed class LicenseGuard : ILicenseGuard
     private readonly IFingerprintChainStore _chainStore;
     private readonly IFingerprintSigner _signer;
     private readonly ILicenseGuardEnhancer _enhancer;
+    private readonly LicenseRuntimeStatus _runtimeStatus;
 
     private static readonly ConcurrentDictionary<string, string> RollingTokens = new(StringComparer.OrdinalIgnoreCase);
 
@@ -14,44 +17,49 @@ public sealed class LicenseGuard : ILicenseGuard
         LicenseState state,
         IFingerprintChainStore chainStore,
         IFingerprintSigner signer,
+        LicenseRuntimeStatus? runtimeStatus = null,
         ILicenseGuardEnhancer? enhancer = null)
     {
         _configs = configs;
         Current = state;
         _chainStore = chainStore;
         _signer = signer;
+        _runtimeStatus = runtimeStatus ?? new LicenseRuntimeStatus();
         _enhancer = enhancer ?? new NoopLicenseGuardEnhancer();
 
-        _ = configs.GetEffectiveEnforcementMode(state.Tier);
+        _runtimeStatus.InitializeFromProof(state.ActivationProof);
+        _ = configs.GetEffectiveEnforcementMode(Tier);
         _enhancer.OnStartup(configs, state);
     }
 
     public LicenseState Current { get; }
 
-    public LicenseTier Tier => Current.Tier;
+    public LicenseTier Tier => _runtimeStatus.GetEffectiveTier(Current);
 
-    public bool IsFreeMode => Current.Tier == LicenseTier.Free;
+    public bool IsFreeMode => Tier == LicenseTier.Free;
 
     public void EnsureValid(string actionType, string? actionName = null, string? payloadHash = null,
         string? correlationId = null)
     {
+        _runtimeStatus.EvaluateGracePeriod(DateTimeOffset.UtcNow);
+
+        if (!Current.IsValid)
+        {
+            HandleInvalidLicense();
+        }
+
+        if (!HasFeature(actionType))
+        {
+            throw new InvalidOperationException(
+                $"[LICENSE] Feature '{actionType}' is not included in your license. Tier: {Tier}.");
+        }
+
         if (IsFreeMode)
         {
             return;
         }
 
         _enhancer.OnEnsureValid(actionType, Current);
-
-        if (!Current.HasFeature(actionType))
-        {
-            throw new InvalidOperationException(
-                $"[LICENSE] Feature '{actionType}' is not included in your license. Tier: {Tier}.");
-        }
-
-        if (!Current.IsValid)
-        {
-            HandleInvalidLicense();
-        }
 
         if (_configs.EnableChain)
         {
@@ -67,7 +75,7 @@ public sealed class LicenseGuard : ILicenseGuard
 
     public bool HasFeature(string featureName)
     {
-        return Current.HasFeature(featureName);
+        return _runtimeStatus.HasFeature(Current, featureName);
     }
 
     public void EnsureFeature(string featureName)

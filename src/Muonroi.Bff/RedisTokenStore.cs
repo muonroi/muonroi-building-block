@@ -6,10 +6,13 @@ namespace Muonroi.Bff;
 /// <summary>
 /// Distributed refresh token store backed by IDistributedCache (Redis recommended).
 /// </summary>
+/// <param name="cache">The distributed cache to store tokens in.</param>
+/// <param name="configuration">Optional configuration to resolve TTL.</param>
 public sealed class RedisTokenStore(IDistributedCache cache, IConfiguration? configuration = null) : ITokenStore
 {
     private readonly TimeSpan _ttl = ResolveTtl(configuration);
 
+    /// <inheritdoc />
     public Task StoreRefreshTokenAsync(string subject, string refreshToken)
     {
         if (string.IsNullOrWhiteSpace(subject))
@@ -24,6 +27,7 @@ public sealed class RedisTokenStore(IDistributedCache cache, IConfiguration? con
         });
     }
 
+    /// <inheritdoc />
     public Task<string?> GetRefreshTokenAsync(string subject)
     {
         if (string.IsNullOrWhiteSpace(subject))
@@ -35,6 +39,7 @@ public sealed class RedisTokenStore(IDistributedCache cache, IConfiguration? con
         return cache.GetStringAsync(key);
     }
 
+    /// <inheritdoc />
     public Task RemoveRefreshTokenAsync(string subject)
     {
         if (string.IsNullOrWhiteSpace(subject))

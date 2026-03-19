@@ -1,9 +1,12 @@
+using Muonroi.Core.Abstractions.Diagnostics;
+
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
 public sealed class RuleExecutionTracer(
     IRuleTraceStore store,
     IRuleDebuggerModeService debuggerModeService,
-    IOptions<RuleTracingOptions> options) : IRuleExecutionTracer
+    IOptions<RuleTracingOptions> options,
+    IMTraceContext? traceContext = null) : IRuleExecutionTracer
 {
     private readonly IRuleTraceStore _store = store ?? throw new ArgumentNullException(nameof(store));
     private readonly IRuleDebuggerModeService _debuggerModeService =
@@ -13,6 +16,12 @@ public sealed class RuleExecutionTracer(
 
     public bool IsEnabled(string? tenantId)
     {
+        // ── Per-request override ───────────────────────────────────────────────
+        if (traceContext?.Current?.IsActive == true)
+        {
+            return true;
+        }
+
         if (string.IsNullOrWhiteSpace(tenantId))
         {
             return false;

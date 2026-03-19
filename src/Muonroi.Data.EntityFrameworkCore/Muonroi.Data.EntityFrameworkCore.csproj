@@ -7,6 +7,7 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Description>Entity Framework Core infrastructure for Muonroi: MDbContext with audit, soft-delete, multi-tenant filters, and repository base.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -20,6 +21,7 @@
     <ProjectReference Include="..\Muonroi.Tenancy.Core\Muonroi.Tenancy.Core.csproj" />
     <ProjectReference Include="..\Muonroi.Mediator\Muonroi.Mediator.csproj" />
     <ProjectReference Include="..\Muonroi.Messaging.Abstractions\Muonroi.Messaging.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Rules\Muonroi.Rules.csproj" />
   </ItemGroup>
   <ItemGroup>

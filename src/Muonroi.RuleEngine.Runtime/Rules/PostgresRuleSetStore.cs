@@ -4,9 +4,12 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 
 public sealed class PostgresRuleSetStore(
     RuleEngineDbContext dbContext,
-    RuleControlPlaneOptions? controlPlaneOptions = null) : IRuleSetStore
+    RuleControlPlaneOptions? controlPlaneOptions = null,
+    ISystemExecutionContextAccessor? executionContextAccessor = null) : IRuleSetStore
 {
     private readonly RuleControlPlaneOptions _options = controlPlaneOptions ?? new RuleControlPlaneOptions();
+    private readonly ISystemExecutionContextAccessor _executionContext =
+        executionContextAccessor ?? new SystemExecutionContextAccessor();
 
     public async Task SaveAsync(string workflowName, string json, CancellationToken cancellationToken = default)
     {
@@ -213,11 +216,12 @@ public sealed class PostgresRuleSetStore(
         return workflows;
     }
 
-    private static string ResolveTenantId()
+    private string ResolveTenantId()
     {
-        return string.IsNullOrWhiteSpace(TenantContext.CurrentTenantId)
+        string? tenantId = _executionContext.Get().TenantId;
+        return string.IsNullOrWhiteSpace(tenantId)
             ? "default"
-            : TenantContext.CurrentTenantId!;
+            : tenantId;
     }
 
     private async Task<IDbContextTransaction?> TryBeginTransactionAsync(CancellationToken cancellationToken)

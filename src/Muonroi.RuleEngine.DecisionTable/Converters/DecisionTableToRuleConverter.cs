@@ -1,10 +1,14 @@
+using Muonroi.RuleEngine.DecisionTable.Feel;
 using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Converters;
 
-public sealed class DecisionTableToRuleConverter
+public sealed class DecisionTableToRuleConverter(IFeelCellEvaluator? feelEvaluator = null)
 {
-    public static IReadOnlyList<IRule<TContext>> Convert<TContext>(
+    private readonly IFeelCellEvaluator _feelEvaluator =
+        feelEvaluator ?? new FullFeelCellEvaluator(new SimplifiedFeelCellEvaluator());
+
+    public IReadOnlyList<IRule<TContext>> ConvertWithEvaluator<TContext>(
         DecisionTableModel table,
         Func<TContext, IDictionary<string, object?>>? contextProjector = null)
     {
@@ -13,14 +17,22 @@ public sealed class DecisionTableToRuleConverter
             .OrderBy(x => x.Order)];
 
         return rows
-            .Select(row => (IRule<TContext>)new DecisionTableRowRule<TContext>(table, row, contextProjector))
+            .Select(row => (IRule<TContext>)new DecisionTableRowRule<TContext>(table, row, contextProjector, _feelEvaluator))
             .ToArray();
+    }
+
+    public static IReadOnlyList<IRule<TContext>> Convert<TContext>(
+        DecisionTableModel table,
+        Func<TContext, IDictionary<string, object?>>? contextProjector = null)
+    {
+        return new DecisionTableToRuleConverter().ConvertWithEvaluator(table, contextProjector);
     }
 
     private sealed class DecisionTableRowRule<TContext>(
         DecisionTableModel table,
         DecisionTableRow row,
-        Func<TContext, IDictionary<string, object?>>? projector) : IRule<TContext>
+        Func<TContext, IDictionary<string, object?>>? projector,
+        IFeelCellEvaluator feelEvaluator) : IRule<TContext>
     {
         public string Code => row.Id;
         public int Order => row.Order;
@@ -35,7 +47,7 @@ public sealed class DecisionTableToRuleConverter
             IReadOnlyDictionary<string, object?> values = projector?.Invoke(ctx) is { } projected
                 ? new Dictionary<string, object?>(projected, StringComparer.OrdinalIgnoreCase)
                 : ObjectToDictionary(ctx);
-            bool pass = MatchesRow(values, table, row);
+            bool pass = MatchesRow(values, table, row, feelEvaluator);
             return Task.FromResult(pass ? RuleResult.Passed() : RuleResult.Failure($"DecisionTable row '{row.Id}' mismatch."));
         }
 
@@ -43,11 +55,13 @@ public sealed class DecisionTableToRuleConverter
         {
             IDictionary<string, object?> values = projector?.Invoke(context) ?? ObjectToDictionary(context);
 
-            // Writes outputs to context dictionary when projector is used.
             for (int i = 0; i < row.OutputCells.Count && i < table.OutputColumns.Count; i++)
             {
                 DecisionTableColumn column = table.OutputColumns[i];
-                values[column.Name] = row.OutputCells[i].Expression;
+                values[column.Name] = DecisionTableExpressionEvaluator.EvaluateOutput(
+                    row.OutputCells[i].Expression,
+                    values as IReadOnlyDictionary<string, object?> ?? new Dictionary<string, object?>(values),
+                    column.DataType);
             }
 
             return Task.CompletedTask;
@@ -56,14 +70,15 @@ public sealed class DecisionTableToRuleConverter
         private static bool MatchesRow(
             IReadOnlyDictionary<string, object?> values,
             DecisionTableModel dt,
-            DecisionTableRow ruleRow)
+            DecisionTableRow ruleRow,
+            IFeelCellEvaluator cellEvaluator)
         {
             for (int i = 0; i < ruleRow.InputCells.Count && i < dt.InputColumns.Count; i++)
             {
                 DecisionTableColumn column = dt.InputColumns[i];
                 values.TryGetValue(column.Name, out object? actual);
                 DecisionTableCell cell = ruleRow.InputCells[i];
-                if (!DecisionTableExpressionEvaluator.Evaluate(actual, cell.Expression))
+                if (!cellEvaluator.Evaluate(cell.Expression, actual, column.DataType))
                 {
                     return false;
                 }

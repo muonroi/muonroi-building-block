@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
@@ -16,7 +17,8 @@ public static class RuleEngineServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
-        services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.RuleEngine);
+        // File-backed store is available in all tiers (Free, Licensed, Enterprise).
+        // EnsureFeatureOrThrow is reserved for Postgres/Redis-backed stores (AddMRuleEngineWithPostgres).
 
         RuleStoreConfigs storeConfigs = new();
         configuration.GetSection(RuleStoreConfigs.SectionName).Bind(storeConfigs);
@@ -35,9 +37,15 @@ public static class RuleEngineServiceCollectionExtensions
 
         ReplaceSingleton(services, storeConfigs);
         ReplaceSingleton(services, controlPlaneOptions);
+        services.TryAddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
         services.TryAddSingleton<IRuleSetDefinitionValidator, RuleSetDefinitionValidator>();
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
+
+        // Graph parser and context adapters for flow graph execution
+        services.TryAddSingleton<RuleGraphParser>();
+        services.TryAddSingleton(typeof(IContextProjector<>), typeof(ReflectionContextProjector<>));
+        services.TryAddSingleton(typeof(IContextFactory<>), typeof(ReflectionContextFactory<>));
 
         services.TryAddSingleton<IRuleSetChangeNotifier>(sp =>
         {
@@ -62,14 +70,16 @@ public static class RuleEngineServiceCollectionExtensions
             IHostEnvironment? env = sp.GetService<IHostEnvironment>();
             string rootPath = ResolveRootPath(storeConfigs, env);
             IRuleSetSigner? signer = sp.GetService<IRuleSetSigner>();
-            return new FileRuleSetStore(rootPath, signer, storeConfigs);
+            ISystemExecutionContextAccessor executionContextAccessor = sp.GetRequiredService<ISystemExecutionContextAccessor>();
+            return new FileRuleSetStore(rootPath, signer, storeConfigs, executionContextAccessor);
         });
         services.TryAddSingleton<IRuleSetAuditStore>(sp =>
         {
             IHostEnvironment? env = sp.GetService<IHostEnvironment>();
             string rootPath = ResolveRootPath(storeConfigs, env);
             IMJsonSerializeService serializer = sp.GetRequiredService<IMJsonSerializeService>();
-            return new FileRuleSetAuditStore(rootPath, serializer);
+            ISystemExecutionContextAccessor executionContextAccessor = sp.GetRequiredService<ISystemExecutionContextAccessor>();
+            return new FileRuleSetAuditStore(rootPath, serializer, executionContextAccessor);
         });
         services.TryAddScoped<RulesEngineService>();
 
@@ -94,10 +104,16 @@ public static class RuleEngineServiceCollectionExtensions
         ReplaceSingleton(services, storeConfigs);
         ReplaceSingleton(services, controlPlaneOptions);
 
+        services.TryAddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
         services.TryAddSingleton<IRuleSetDefinitionValidator, RuleSetDefinitionValidator>();
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
         services.TryAddSingleton<IRuleSetAuditSigner>(_ => CreateAuditSigner(controlPlaneOptions));
+
+        // Graph parser and context adapters for flow graph execution
+        services.TryAddSingleton<RuleGraphParser>();
+        services.TryAddSingleton(typeof(IContextProjector<>), typeof(ReflectionContextProjector<>));
+        services.TryAddSingleton(typeof(IContextFactory<>), typeof(ReflectionContextFactory<>));
         services.TryAddSingleton<IRuleSetChangeNotifier, InMemoryRuleSetChangeNotifier>();
 
         services.AddDbContext<RuleEngineDbContext>(options => options.UseNpgsql(connectionString));

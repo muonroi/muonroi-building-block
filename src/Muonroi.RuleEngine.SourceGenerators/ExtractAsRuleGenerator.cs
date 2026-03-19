@@ -1,15 +1,14 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Muonroi.RuleEngine.SourceGenerators.Authoring;
+using Muonroi.RuleEngine.SourceGenerators.Diagnostics;
 using Muonroi.RuleEngine.SourceGenerators.Models;
 using Muonroi.RuleEngine.SourceGenerators.SourceWriters;
-using Muonroi.RuleEngine.SourceGenerators.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
-using System.Threading;
 
 namespace Muonroi.RuleEngine.SourceGenerators;
 
@@ -18,18 +17,15 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // 1. Filter: chá»‰ láº¥y methods cÃ³ [MExtractAsRule] attribute
         IncrementalValuesProvider<MethodDeclarationSyntax> methodDeclarations = context.SyntaxProvider
             .CreateSyntaxProvider(
-                predicate: static (s, _) => IsSyntaxTargetForGeneration(s),
-                transform: static (ctx, _) => GetSemanticTargetForGeneration(ctx))
-            .Where(static m => m is not null)!;
+                predicate: static (syntaxNode, _) => IsSyntaxTargetForGeneration(syntaxNode),
+                transform: static (generatorContext, _) => GetSemanticTargetForGeneration(generatorContext))
+            .Where(static method => method is not null)!;
 
-        // 2. Combine vá»›i Compilation
         IncrementalValueProvider<(Compilation, ImmutableArray<MethodDeclarationSyntax>)> compilationAndMethods =
             context.CompilationProvider.Combine(methodDeclarations.Collect());
 
-        // 3. Register source output
         IncrementalValueProvider<bool> diagnosticsOnlyProvider = context.AnalyzerConfigOptionsProvider
             .Select(static (provider, _) =>
             {
@@ -42,112 +38,137 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
                 return false;
             });
 
-        // 3. Register source output
         context.RegisterSourceOutput(
             compilationAndMethods.Combine(diagnosticsOnlyProvider),
-            static (spc, source) => Execute(source.Left.Item1, source.Left.Item2, source.Right, spc));
+            static (sourceProductionContext, source) => Execute(source.Left.Item1, source.Left.Item2, source.Right, sourceProductionContext));
     }
 
     private static bool IsSyntaxTargetForGeneration(SyntaxNode node)
     {
-        return node is MethodDeclarationSyntax m && m.AttributeLists.Count > 0;
+        return node is MethodDeclarationSyntax methodDeclaration && methodDeclaration.AttributeLists.Count > 0;
     }
 
     private static MethodDeclarationSyntax? GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
     {
-        var methodDeclaration = (MethodDeclarationSyntax)context.Node;
-        foreach (AttributeListSyntax attributeListSyntax in methodDeclaration.AttributeLists)
+        MethodDeclarationSyntax methodDeclaration = (MethodDeclarationSyntax)context.Node;
+        foreach (AttributeListSyntax attributeList in methodDeclaration.AttributeLists)
         {
-            foreach (AttributeSyntax attributeSyntax in attributeListSyntax.Attributes)
+            foreach (AttributeSyntax attributeSyntax in attributeList.Attributes)
             {
                 if (context.SemanticModel.GetSymbolInfo(attributeSyntax).Symbol is IMethodSymbol attributeSymbol)
                 {
                     string name = attributeSymbol.ContainingType.ToDisplayString();
-                    if (name.Contains("MExtractAsRule") || name.Contains("ExtractAsRule"))
+                    if (name.IndexOf("MExtractAsRule", StringComparison.Ordinal) >= 0 || name.IndexOf("ExtractAsRule", StringComparison.Ordinal) >= 0)
                     {
                         return methodDeclaration;
                     }
                 }
             }
         }
+
         return null;
     }
 
     private static void Execute(Compilation compilation, ImmutableArray<MethodDeclarationSyntax> methods, bool diagnosticsOnly, SourceProductionContext context)
     {
-        if (methods.IsDefaultOrEmpty) return;
+        if (methods.IsDefaultOrEmpty)
+        {
+            return;
+        }
 
         IEnumerable<MethodDeclarationSyntax> distinctMethods = methods.Distinct();
-        List<ExtractedRuleDefinition> definitions = new List<ExtractedRuleDefinition>();
-        Dictionary<ExtractedRuleDefinition, Location> definitionLocations = new Dictionary<ExtractedRuleDefinition, Location>();
+        List<ExtractedRuleDefinition> definitions = [];
+        Dictionary<ExtractedRuleDefinition, Location> definitionLocations = [];
 
         foreach (MethodDeclarationSyntax method in distinctMethods)
         {
             context.CancellationToken.ThrowIfCancellationRequested();
             SemanticModel model = compilation.GetSemanticModel(method.SyntaxTree);
             IMethodSymbol? methodSymbol = model.GetDeclaredSymbol(method);
-            if (methodSymbol == null) continue;
-
-            AttributeData? attribute = methodSymbol.GetAttributes()
-                .FirstOrDefault(a => a.AttributeClass?.Name.Contains("ExtractAsRule") == true);
-
-            if (attribute == null) continue;
-
-            // Extract Rule Code
-            string ruleCode = attribute.ConstructorArguments.Length > 0 
-                ? attribute.ConstructorArguments[0].Value?.ToString() ?? methodSymbol.Name
-                : methodSymbol.Name;
-
-            // Extract named arguments
-            int order = 0;
-            string hookPoint = "BeforeRule";
-            List<string> dependsOn = new List<string>();
-
-            foreach (KeyValuePair<string, TypedConstant> arg in attribute.NamedArguments)
+            if (methodSymbol is null)
             {
-                if (arg.Key == "Order") order = (int)(arg.Value.Value ?? 0);
-                else if (arg.Key == "HookPoint") hookPoint = GetHookPointName(arg.Value);
-                else if (arg.Key == "DependsOn") dependsOn.AddRange(GetArrayValues(arg.Value));
+                continue;
             }
 
-            // Extract Class Info
+            AttributeData? attribute = methodSymbol.GetAttributes()
+                .FirstOrDefault(candidate => candidate.AttributeClass?.Name?.IndexOf("ExtractAsRule", StringComparison.Ordinal) >= 0);
+            if (attribute is null)
+            {
+                continue;
+            }
+
+            string ruleCode = attribute.ConstructorArguments.Length > 0
+                ? attribute.ConstructorArguments[0].Value?.ToString() ?? methodSymbol.Name
+                : methodSymbol.Name;
+            int order = 0;
+            string hookPoint = "BeforeRule";
+            List<string> dependsOn = [];
+            string? feelExpression = null;
+            bool useFactBagAware = false;
+
+            foreach (KeyValuePair<string, TypedConstant> argument in attribute.NamedArguments)
+            {
+                if (string.Equals(argument.Key, "Order", StringComparison.Ordinal))
+                {
+                    order = (int)(argument.Value.Value ?? 0);
+                }
+                else if (string.Equals(argument.Key, "HookPoint", StringComparison.Ordinal))
+                {
+                    hookPoint = GetHookPointName(argument.Value);
+                }
+                else if (string.Equals(argument.Key, "DependsOn", StringComparison.Ordinal))
+                {
+                    dependsOn.AddRange(GetArrayValues(argument.Value));
+                }
+                else if (string.Equals(argument.Key, "Expression", StringComparison.Ordinal))
+                {
+                    feelExpression = argument.Value.Value?.ToString();
+                }
+                else if (string.Equals(argument.Key, "UseFactBagAware", StringComparison.Ordinal))
+                {
+                    useFactBagAware = (bool)(argument.Value.Value ?? false);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(feelExpression) && !FeelExpressionSyntaxValidator.TryValidate(feelExpression!, out string error))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    RuleGenDiagnostics.InvalidFeelExpression,
+                    method.GetLocation(),
+                    ruleCode,
+                    feelExpression,
+                    error));
+                continue;
+            }
+
             INamedTypeSymbol classSymbol = methodSymbol.ContainingType;
-            string className = classSymbol.Name;
-            string? ns = classSymbol.ContainingNamespace.IsGlobalNamespace ? null : classSymbol.ContainingNamespace.ToDisplayString();
-
-            // Extract Parameters
-            List<ParameterModel> parameters = methodSymbol.Parameters.Select(p => new ParameterModel(
-                p.Name,
-                p.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
-                p.HasExplicitDefaultValue,
-                p.HasExplicitDefaultValue ? (p.ExplicitDefaultValue?.ToString() ?? "null") : null)).ToList();
-
-            // Resolve Context Type
-            string contextType = parameters.FirstOrDefault(p => !IsFactBag(p.TypeName) && !IsCancellationToken(p.TypeName))?.TypeName ?? "object";
-
-            // Dependencies
+            string? sourceNamespace = classSymbol.ContainingNamespace.IsGlobalNamespace ? null : classSymbol.ContainingNamespace.ToDisplayString();
+            List<ParameterModel> parameters = methodSymbol.Parameters.Select(parameter => new ParameterModel(
+                parameter.Name,
+                parameter.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+                parameter.HasExplicitDefaultValue,
+                parameter.HasExplicitDefaultValue ? (parameter.ExplicitDefaultValue?.ToString() ?? "null") : null)).ToList();
+            string contextType = parameters.FirstOrDefault(parameter => !IsFactBag(parameter.TypeName) && !IsCancellationToken(parameter.TypeName))?.TypeName ?? "object";
             List<ServiceDependency> dependencies = ExtractDependencies(method, classSymbol, model, context);
-
-            // Helper Methods
-            List<HelperMethodDefinition> helpers = ExtractHelperMethods(method, classSymbol, model);
-
-            // Metadata
+            List<HelperMethodDefinition> helpers = ExtractHelperMethods(method, classSymbol, compilation, context);
             string[] customAttributes = methodSymbol.GetAttributes()
-                .Where(a => !a.AttributeClass?.Name.Contains("ExtractAsRule") == true)
-                .Select(a => $"[{a.AttributeClass?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)}]")
+                .Where(candidate => !(candidate.AttributeClass?.Name?.IndexOf("ExtractAsRule", StringComparison.Ordinal) >= 0))
+                .Where(candidate => !string.Equals(candidate.AttributeClass?.ToDisplayString(), "Muonroi.RuleEngine.Abstractions.Authoring.MRuleContextDescriptionAttribute", StringComparison.Ordinal))
+                .Where(candidate => !string.Equals(candidate.AttributeClass?.ToDisplayString(), "Muonroi.RuleEngine.Abstractions.Authoring.MRuleFactDescriptionAttribute", StringComparison.Ordinal))
+                .Where(candidate => !string.Equals(candidate.AttributeClass?.Name, "MRuleCatalogEntryAttribute", StringComparison.Ordinal))
+                .Select(candidate => $"[{candidate.AttributeClass?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)}]")
                 .ToArray();
-
             string[] usings = method.SyntaxTree.GetCompilationUnitRoot().Usings
-                .Where(u => u.Name != null)
-                .Select(u => u.Name!.ToString())
+                .Where(usingDirective => usingDirective.Name is not null)
+                .Select(usingDirective => usingDirective.Name!.ToString())
                 .ToArray();
 
-            var definition = new ExtractedRuleDefinition(
+            ExtractedRuleDefinition definition = new(
                 ruleCode,
                 methodSymbol.Name,
-                className,
-                ns,
-                ns ?? "Generated.Rules", // Default output namespace for SG
+                classSymbol.Name,
+                sourceNamespace,
+                sourceNamespace ?? "Generated.Rules",
                 contextType,
                 methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
                 order,
@@ -158,154 +179,191 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
                 parameters,
                 dependencies,
                 helpers,
-                null, // Doc comment extraction is expensive in SG, skipping or simple regex
+                null,
                 method.Body?.ToFullString().Trim(),
                 method.ExpressionBody?.Expression.ToString(),
+                feelExpression,
                 methodSymbol.IsAsync,
                 method.SyntaxTree.FilePath,
-                method.GetLocation().GetLineSpan().StartLinePosition.Line + 1
-            );
+                method.GetLocation().GetLineSpan().StartLinePosition.Line + 1,
+                useFactBagAware);
 
             definitions.Add(definition);
             definitionLocations[definition] = method.GetLocation();
         }
 
-        // Authoring diagnostics for large source classes
         RuleAuthoringAnalyzer.Analyze(compilation, distinctMethods, context);
 
-        // Check for duplicates
-        HashSet<string> duplicateCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var groups = definitions.GroupBy(d => d.Code);
-        foreach (var group in groups)
+        HashSet<string> duplicateCodes = new(StringComparer.OrdinalIgnoreCase);
+        foreach (IGrouping<string, ExtractedRuleDefinition> group in definitions.GroupBy(definition => definition.Code))
         {
-            if (group.Count() > 1)
-            {
-                duplicateCodes.Add(group.Key);
-                foreach (var item in group)
-                {
-                    Location diagnosticLocation = definitionLocations.TryGetValue(item, out Location? loc)
-                        ? loc
-                        : Location.None;
-                    context.ReportDiagnostic(Diagnostic.Create(RuleGenDiagnostics.DuplicateRuleCode, diagnosticLocation, item.Code, item.ClassName));
-                }
-            }
-        }
-
-        // Generate Files
-        if (diagnosticsOnly)
-        {
-            return;
-        }
-
-        foreach (var def in definitions)
-        {
-            // Skip generation for duplicate codes to avoid duplicate hintName/source conflicts.
-            if (duplicateCodes.Contains(def.Code))
+            if (group.Count() <= 1)
             {
                 continue;
             }
-            string source = GeneratedRuleSourceWriter.Render(def);
-            context.AddSource($"{ToIdentifier(def.Code)}Rule.g.cs", source);
+
+            duplicateCodes.Add(group.Key);
+            foreach (ExtractedRuleDefinition item in group)
+            {
+                Location diagnosticLocation = definitionLocations.TryGetValue(item, out Location? location)
+                    ? location
+                    : Location.None;
+                context.ReportDiagnostic(Diagnostic.Create(RuleGenDiagnostics.DuplicateRuleCode, diagnosticLocation, item.Code, item.ClassName));
+            }
         }
+
+        if (!diagnosticsOnly)
+        {
+            foreach (ExtractedRuleDefinition definition in definitions)
+            {
+                if (duplicateCodes.Contains(definition.Code))
+                {
+                    continue;
+                }
+
+                string source = GeneratedRuleSourceWriter.Render(definition);
+                context.AddSource($"{ToIdentifier(definition.Code)}Rule.g.cs", source);
+            }
+        }
+
     }
 
     private static string GetHookPointName(TypedConstant constant)
     {
-        if (constant.Value is int val)
-        {
-            // Simple mapping or assuming enum value string
-            return "BeforeRule"; // Fallback
-        }
         return constant.Value?.ToString() ?? "BeforeRule";
     }
 
     private static IEnumerable<string> GetArrayValues(TypedConstant constant)
     {
-        if (constant.Kind == TypedConstantKind.Array)
+        if (constant.Kind != TypedConstantKind.Array)
         {
-            return constant.Values.Select(v => v.Value?.ToString() ?? string.Empty).Where(s => !string.IsNullOrEmpty(s));
+            return Enumerable.Empty<string>();
         }
-        return Enumerable.Empty<string>();
+
+        return constant.Values.Select(value => value.Value?.ToString() ?? string.Empty).Where(value => !string.IsNullOrEmpty(value));
     }
 
     private static List<ServiceDependency> ExtractDependencies(MethodDeclarationSyntax method, INamedTypeSymbol classSymbol, SemanticModel model, SourceProductionContext context)
     {
-        HashSet<string> usedIdentifiers = new HashSet<string>(method.DescendantNodes()
-            .OfType<IdentifierNameSyntax>()
-            .Select(x => x.Identifier.ValueText));
-
-        List<ServiceDependency> deps = new List<ServiceDependency>();
+        HashSet<string> usedIdentifiers = new(method.DescendantNodes().OfType<IdentifierNameSyntax>().Select(identifier => identifier.Identifier.ValueText));
+        List<ServiceDependency> dependencies = [];
         foreach (ISymbol member in classSymbol.GetMembers())
         {
-            if (member is IFieldSymbol field && usedIdentifiers.Contains(field.Name))
+            if (member is not IFieldSymbol field || !usedIdentifiers.Contains(field.Name))
             {
-                if (field.Type.TypeKind != TypeKind.Interface)
-                {
-                    Location diagnosticLocation = field.Locations.FirstOrDefault() ?? Location.None;
-                    context.ReportDiagnostic(Diagnostic.Create(
-                        RuleGenDiagnostics.NonInterfaceDependency,
-                        diagnosticLocation,
-                        field.Name,
-                        field.Type.Name));
-                }
-
-                string typeName = field.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-                string paramName = field.Name.TrimStart('_');
-                if (paramName.Length > 0) paramName = char.ToLower(paramName[0]) + paramName.Substring(1);
-                else paramName = "dependency";
-
-                deps.Add(new ServiceDependency(typeName, field.Name, paramName));
+                continue;
             }
+
+            if (field.Type.TypeKind != TypeKind.Interface)
+            {
+                Location diagnosticLocation = field.Locations.FirstOrDefault() ?? Location.None;
+                context.ReportDiagnostic(Diagnostic.Create(
+                    RuleGenDiagnostics.NonInterfaceDependency,
+                    diagnosticLocation,
+                    field.Name,
+                    field.Type.Name));
+            }
+
+            string typeName = field.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            string parameterName = field.Name.TrimStart('_');
+            if (parameterName.Length > 0)
+            {
+                parameterName = char.ToLowerInvariant(parameterName[0]) + parameterName.Substring(1);
+            }
+            else
+            {
+                parameterName = "dependency";
+            }
+
+            dependencies.Add(new ServiceDependency(typeName, field.Name, parameterName));
         }
-        return deps;
+
+        return dependencies;
     }
 
-    private static List<HelperMethodDefinition> ExtractHelperMethods(MethodDeclarationSyntax mainMethod, INamedTypeSymbol classSymbol, SemanticModel model)
+    private static List<HelperMethodDefinition> ExtractHelperMethods(MethodDeclarationSyntax mainMethod, INamedTypeSymbol classSymbol, Compilation compilation, SourceProductionContext context)
     {
-        HashSet<string> invokedPrivateMethods = new HashSet<string>(mainMethod.DescendantNodes()
-            .OfType<InvocationExpressionSyntax>()
-            .Select(i => model.GetSymbolInfo(i).Symbol as IMethodSymbol)
-            .Where(s => s != null && SymbolEqualityComparer.Default.Equals(s.ContainingType, classSymbol) && s.DeclaredAccessibility == Accessibility.Private)
-            .Select(s => s!.Name));
+        HashSet<string> invokedPrivateMethods = [];
+        foreach (InvocationExpressionSyntax invocation in mainMethod.DescendantNodes().OfType<InvocationExpressionSyntax>())
+        {
+            if (modelFor(mainMethod, compilation).GetSymbolInfo(invocation).Symbol is IMethodSymbol symbol &&
+                SymbolEqualityComparer.Default.Equals(symbol.ContainingType, classSymbol) &&
+                symbol.DeclaredAccessibility == Accessibility.Private)
+            {
+                invokedPrivateMethods.Add(symbol.Name);
+            }
+        }
 
-        if (invokedPrivateMethods.Count == 0) return new List<HelperMethodDefinition>();
+        if (invokedPrivateMethods.Count == 0)
+        {
+            return [];
+        }
 
-        List<HelperMethodDefinition> helpers = new List<HelperMethodDefinition>();
-        // Note: Finding the syntax for private methods in the same compilation
+        List<HelperMethodDefinition> helpers = [];
         foreach (SyntaxReference reference in classSymbol.DeclaringSyntaxReferences)
         {
-            SyntaxNode classNode = reference.GetSyntax();
-            foreach (MethodDeclarationSyntax method in classNode.DescendantNodes().OfType<MethodDeclarationSyntax>())
+            if (reference.GetSyntax() is not ClassDeclarationSyntax classNode)
             {
-                if (invokedPrivateMethods.Contains(method.Identifier.ValueText))
-                {
-                    IMethodSymbol? helperSymbol = model.GetDeclaredSymbol(method);
-                    if (helperSymbol == null) continue;
+                continue;
+            }
 
-                    helpers.Add(new HelperMethodDefinition(
-                        method.Identifier.ValueText,
-                        helperSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
-                        helperSymbol.Parameters.Select(p => new ParameterModel(p.Name, p.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat), p.HasExplicitDefaultValue, null)).ToList(),
-                        method.Body?.ToFullString().Trim(),
-                        method.ExpressionBody?.Expression.ToString(),
-                        helperSymbol.IsAsync));
+            SemanticModel classModel = compilation.GetSemanticModel(classNode.SyntaxTree);
+            foreach (MethodDeclarationSyntax helperMethod in classNode.Members.OfType<MethodDeclarationSyntax>())
+            {
+                if (!invokedPrivateMethods.Contains(helperMethod.Identifier.ValueText))
+                {
+                    continue;
                 }
+
+                if (classModel.GetDeclaredSymbol(helperMethod) is not IMethodSymbol helperSymbol)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        RuleGenDiagnostics.HelperMethodExtractionFailed,
+                        helperMethod.GetLocation(),
+                        helperMethod.Identifier.ValueText));
+                    continue;
+                }
+
+                helpers.Add(new HelperMethodDefinition(
+                    helperMethod.Identifier.ValueText,
+                    helperSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+                    helperSymbol.Parameters.Select(parameter => new ParameterModel(
+                        parameter.Name,
+                        parameter.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+                        parameter.HasExplicitDefaultValue,
+                        parameter.HasExplicitDefaultValue ? (parameter.ExplicitDefaultValue?.ToString() ?? "null") : null)).ToList(),
+                    helperMethod.Body?.ToFullString().Trim(),
+                    helperMethod.ExpressionBody?.Expression.ToString(),
+                    helperSymbol.IsAsync));
             }
         }
 
         return helpers;
+
+        static SemanticModel modelFor(MethodDeclarationSyntax method, Compilation currentCompilation)
+        {
+            return currentCompilation.GetSemanticModel(method.SyntaxTree);
+        }
     }
 
-    private static bool IsFactBag(string typeName) => typeName.Contains("FactBag");
-    private static bool IsCancellationToken(string typeName) => typeName.Contains("CancellationToken");
+    private static bool IsFactBag(string typeName) => typeName.IndexOf("FactBag", StringComparison.Ordinal) >= 0;
+
+    private static bool IsCancellationToken(string typeName) => typeName.IndexOf("CancellationToken", StringComparison.Ordinal) >= 0;
 
     private static string ToIdentifier(string value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return "GeneratedRule";
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "GeneratedRule";
+        }
+
         char[] chars = value.Select(ch => char.IsLetterOrDigit(ch) || ch == '_' ? ch : '_').ToArray();
-        string normalized = new string(chars);
-        if (!char.IsLetter(normalized[0]) && normalized[0] != '_') normalized = $"R_{normalized}";
+        string normalized = new(chars);
+        if (!char.IsLetter(normalized[0]) && normalized[0] != '_')
+        {
+            normalized = "R_" + normalized;
+        }
+
         return normalized;
     }
 }
-

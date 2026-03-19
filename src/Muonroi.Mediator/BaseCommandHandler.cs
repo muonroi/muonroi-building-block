@@ -1,9 +1,6 @@
-using Microsoft.Extensions.Logging;
 using Muonroi.Core.Abstractions.Models.Common;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Response;
 using Muonroi.Core.Extensions;
-using Muonroi.Mapper.Interfaces;
+using Muonroi.Logging.Abstractions;
 using Muonroi.Mediator.Mediator.Interfaces;
 
 namespace Muonroi.Mediator;
@@ -11,7 +8,7 @@ namespace Muonroi.Mediator;
 public abstract class BaseCommandHandler(
     IMapper mapper,
     IAuthenticateInfoContext tokenInfo,
-    ILogger logger,
+    IMLog<BaseCommandHandler> logger,
     IMediator mediator,
     MPaginationConfig? paginationConfig)
 {
@@ -21,7 +18,7 @@ public abstract class BaseCommandHandler(
     protected int DefaultPageSize => paginationConfig?.DefaultPageSize ?? 0;
     protected int MaxPageSize => paginationConfig?.MaxPageSize ?? 0;
     protected IMapper Mapper => mapper;
-    protected ILogger Logger => logger;
+    protected IMLog<BaseCommandHandler> Logger => logger;
     protected IMediator Mediator => mediator;
     protected string CurrentUserId => tokenInfo.CurrentUserGuid;
     protected string CurrentUsername => tokenInfo.CurrentUsername;
@@ -44,13 +41,21 @@ public abstract class BaseCommandHandler(
 
     protected void LogInfo(string? message)
     {
-        if (string.IsNullOrEmpty(message)) return;
-        logger.LogInformation(message);
+        if (string.IsNullOrEmpty(message))
+        {
+            return;
+        }
+
+        logger?.Info(message);
     }
 
     protected void LogError(string? message)
     {
-        if (string.IsNullOrEmpty(message)) return;
+        if (string.IsNullOrEmpty(message))
+        {
+            return;
+        }
+
         logger.LogError(message);
     }
 

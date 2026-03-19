@@ -5,7 +5,10 @@ using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.RuleEngine.DecisionTable.Stores;
 
-internal sealed class EfCoreDecisionTableStore(DecisionTableDbContext dbContext, IMJsonSerializeService jsonSerializeService) : IDecisionTableStore
+internal sealed class EfCoreDecisionTableStore(
+    DecisionTableDbContext dbContext,
+    IMJsonSerializeService jsonSerializeService,
+    IMDateTimeService dateTimeService) : IDecisionTableStore
 {
     public async Task<DecisionTablePageResult> QueryAsync(DecisionTableQuery query, CancellationToken cancellationToken = default)
     {
@@ -84,7 +87,7 @@ internal sealed class EfCoreDecisionTableStore(DecisionTableDbContext dbContext,
         string? reason = null,
         CancellationToken cancellationToken = default)
     {
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        DateTimeOffset now = dateTimeService.UtcNow();
         await UpsertCoreAsync(table, actor, reason, now, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
@@ -95,7 +98,7 @@ internal sealed class EfCoreDecisionTableStore(DecisionTableDbContext dbContext,
         string? reason = null,
         CancellationToken cancellationToken = default)
     {
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        DateTimeOffset now = dateTimeService.UtcNow();
         List<string> ids = new(tables.Count);
 
         foreach (DecisionTableModel table in tables)
@@ -136,7 +139,7 @@ internal sealed class EfCoreDecisionTableStore(DecisionTableDbContext dbContext,
             return new DecisionTableBulkResult();
         }
 
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        DateTimeOffset now = dateTimeService.UtcNow();
         List<DecisionTableRecordEntity> entities = await dbContext.Tables
             .Where(x => normalizedIds.Contains(x.Id) && !x.IsDeleted)
             .ToListAsync(cancellationToken);
@@ -210,7 +213,7 @@ internal sealed class EfCoreDecisionTableStore(DecisionTableDbContext dbContext,
             rowLookup[orderedRowIds[index]].Order = index + 1;
         }
 
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        DateTimeOffset now = dateTimeService.UtcNow();
         snapshot.Rows = [.. rowLookup.Values.OrderBy(x => x.Order)];
         snapshot.Version = entity.Version + 1;
         snapshot.ModifiedAt = now;

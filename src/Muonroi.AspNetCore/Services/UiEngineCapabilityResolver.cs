@@ -2,10 +2,19 @@ using Muonroi.Tenancy.Abstractions.Models;
 
 namespace Muonroi.AspNetCore.Services;
 
+/// <summary>
+/// Resolves UI engine capabilities based on tenant tiers and module contributors.
+/// </summary>
+/// <param name="contributors">The collection of UI engine manifest contributors.</param>
 public sealed class UiEngineCapabilityResolver(IEnumerable<IUiEngineManifestContributor> contributors)
 {
     private readonly IReadOnlyList<IUiEngineManifestContributor> _contributors = [.. contributors];
 
+    /// <summary>
+    /// Builds the list of capabilities for a specific tenant tier.
+    /// </summary>
+    /// <param name="tenantTier">The tenant tier to evaluate capabilities for.</param>
+    /// <returns>A list of <see cref="MUiEngineCapability"/> objects.</returns>
     public List<MUiEngineCapability> BuildCapabilities(TenantTier tenantTier)
     {
         List<MUiEngineCapability> capabilities = [];
@@ -25,7 +34,9 @@ public sealed class UiEngineCapabilityResolver(IEnumerable<IUiEngineManifestCont
             }
         }
 
-        foreach ((string moduleId, TenantTier requiredTier) in moduleTiers.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+        foreach ((string moduleId, TenantTier requiredTier) in moduleTiers
+            .Where(x => !string.Equals(x.Key, "rule-engine", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
         {
             capabilities.Add(new MUiEngineCapability
             {
@@ -38,19 +49,24 @@ public sealed class UiEngineCapabilityResolver(IEnumerable<IUiEngineManifestCont
 
         if (moduleTiers.Count > 0)
         {
-            TenantTier minTier = moduleTiers.Values.Min();
+            TenantTier ruleEngineTier = moduleTiers.TryGetValue("rule-engine", out TenantTier t) ? t : moduleTiers.Values.Min();
             capabilities.Insert(0, new MUiEngineCapability
             {
                 CapabilityKey = "rule-engine",
                 DisplayName = "Rule Engine",
-                RequiredTier = minTier.ToString(),
-                IsEnabled = tenantTier >= minTier
+                RequiredTier = ruleEngineTier.ToString(),
+                IsEnabled = tenantTier >= ruleEngineTier
             });
         }
 
         return capabilities;
     }
 
+    /// <summary>
+    /// Parses a string representation of a tenant tier.
+    /// </summary>
+    /// <param name="value">The string value to parse.</param>
+    /// <returns>The parsed <see cref="TenantTier"/>, or <see cref="TenantTier.Free"/> if parsing fails.</returns>
     public static TenantTier ParseTier(string? value)
     {
         if (Enum.TryParse(value, true, out TenantTier tier))

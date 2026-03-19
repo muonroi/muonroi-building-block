@@ -1,8 +1,5 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
+using Muonroi.Governance.Abstractions.License;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.Policy;
 
@@ -10,19 +7,26 @@ public sealed class PolicyVerifier(
     LicenseConfigs configs,
     IHostEnvironment? environment,
     IMJsonSerializeService jsonSerializeService,
-    ILogger<PolicyVerifier>? logger = null)
+    IMLog<PolicyVerifier>? logger = null)
 {
     public bool Verify(LicensePolicy policy)
     {
-        if (policy == null) return false;
-        if (string.IsNullOrWhiteSpace(policy.Signature)) return false;
+        if (policy == null)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(policy.Signature))
+        {
+            return false;
+        }
 
         try
         {
             string? keyPath = ResolvePath(configs.PublicKeyPath, environment);
             if (string.IsNullOrWhiteSpace(keyPath) || !File.Exists(keyPath))
             {
-                logger?.LogWarning("[Policy] Public key not found for policy verification.");
+                logger?.Warn("[Policy] Public key not found for policy verification.");
                 return false;
             }
 
@@ -47,10 +51,10 @@ public sealed class PolicyVerifier(
             byte[] signature = Convert.FromBase64String(policy.Signature);
 
             bool isValid = rsa.VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-            
+
             if (isValid && policy.ExpiresAt.HasValue && policy.ExpiresAt.Value < DateTimeOffset.UtcNow)
             {
-                logger?.LogWarning("[Policy] Policy '{PolicyId}' has expired.", policy.PolicyId);
+                logger?.Warn("[Policy] Policy '{PolicyId}' has expired.", policy.PolicyId);
                 return false;
             }
 
@@ -65,8 +69,16 @@ public sealed class PolicyVerifier(
 
     private static string? ResolvePath(string? path, IHostEnvironment? environment)
     {
-        if (string.IsNullOrWhiteSpace(path)) return null;
-        if (Path.IsPathRooted(path)) return path;
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        if (Path.IsPathRooted(path))
+        {
+            return path;
+        }
+
         string root = !string.IsNullOrWhiteSpace(environment?.ContentRootPath)
             ? environment.ContentRootPath
             : AppContext.BaseDirectory;

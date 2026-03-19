@@ -1,18 +1,16 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Http.Http;
 
 public class AuthenticateHeaderHandler : DelegatingHandler
 {
-    private readonly ILogger _logger;
+    private readonly IMLog<AuthenticateHeaderHandler> _logger;
 
     private readonly IAuthenticateInfoContext _authContext;
 
     public IConfiguration Configuration;
 
-    public AuthenticateHeaderHandler(ILogger<AuthenticateHeaderHandler> logger, IAuthenticateInfoContext authContext,
+    public AuthenticateHeaderHandler(IMLog<AuthenticateHeaderHandler> logger, IAuthenticateInfoContext authContext,
         IConfiguration configuration)
     {
         _logger = logger;

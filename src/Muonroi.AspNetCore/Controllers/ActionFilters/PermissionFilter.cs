@@ -1,6 +1,6 @@
 namespace Muonroi.AspNetCore.Controllers.ActionFilters;
 
-public class PermissionFilter<TPermission>(ILogger<PermissionFilter<TPermission>> logger)
+public class PermissionFilter<TPermission>(IMLog<PermissionFilter<TPermission>> logger)
     : IAsyncActionFilter where TPermission : Enum
 {
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -38,12 +38,9 @@ public class PermissionFilter<TPermission>(ILogger<PermissionFilter<TPermission>
         if (shouldEnforceTenant &&
             !TenantSecurityValidator.TryValidate(tenantId, claimTenantId, null, requireTenantClaim, out string? tenantError))
         {
-            logger.LogWarning(
+            logger.Warn(
                 "Tenant validation failed ({ErrorCode}) while checking bitmask permission for user {User}. ClaimTenant={ClaimTenant}, ContextTenant={ContextTenant}",
-                tenantError,
-                userId,
-                claimTenantId,
-                tenantId);
+                tenantError);
             throw new PermissionDeniedException("Tenant validation failed");
         }
 
@@ -61,12 +58,9 @@ public class PermissionFilter<TPermission>(ILogger<PermissionFilter<TPermission>
             {
                 if (!pdpDecision.IsAllowed)
                 {
-                    logger.LogWarning(
+                    logger.Warn(
                         "PDP denied permission for user {User} in tenant {Tenant}. Source={Source}, Correlation={Correlation}",
-                        userId,
-                        tenantId,
-                        pdpDecision.DecisionSource,
-                        pdpRequest.CorrelationId);
+                        pdpDecision.DecisionSource);
                     throw new PermissionDeniedException("Permission denied");
                 }
 
@@ -77,19 +71,15 @@ public class PermissionFilter<TPermission>(ILogger<PermissionFilter<TPermission>
 
         if (userPermissionsBitmask == null)
         {
-            logger.LogWarning(
-                "User permissions missing for {User} in tenant {Tenant}",
-                userId,
-                tenantId);
+            logger.Warn(
+                "User permissions missing for {User} in tenant {Tenant}");
             throw new PermissionDeniedException("User permissions missing");
         }
 
         if (!IsAuthorized(permissionAttributes, userPermissionsBitmask.Value))
         {
-            logger.LogWarning(
-                "Permission denied for user {User} in tenant {Tenant}",
-                userId,
-                tenantId);
+            logger.Warn(
+                "Permission denied for user {User} in tenant {Tenant}");
             throw new PermissionDeniedException("Permission denied");
         }
 

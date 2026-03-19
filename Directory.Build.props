@@ -21,6 +21,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <IsMuonroiTestProject Condition="'$(IsTestProject)' == 'true'">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectName)').Contains('.Tests'))">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectName)').Contains('.Test'))">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('\\tests\\'))">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('/tests/'))">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == ''">false</IsMuonroiTestProject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsMuonroiTestProject)' == 'true'">
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(IsCommercialPackage)' != 'true'">
     <None Include="$(MSBuildThisFileDirectory)LICENSE-APACHE"
           Pack="true" PackagePath="\"

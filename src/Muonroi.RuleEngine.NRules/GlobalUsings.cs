@@ -1,9 +1,9 @@
 global using System.Reflection;
 global using System;
-global using NRules.RuleModel;
 global using System.Linq;
 global using Microsoft.Extensions.Options;
 global using NRules.Fluent;
 global using NRules;
 global using Microsoft.Extensions.DependencyInjection;
 global using System.Collections.Generic;
+global using NRules.RuleModel;

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://docs.muonroi.com
+    about: Read the Muonroi docs before opening a question or support issue.
+  - name: Security Policy
+    url: https://docs.muonroi.com/docs/resources/SECURITY
+    about: Report vulnerabilities using the documented security process.

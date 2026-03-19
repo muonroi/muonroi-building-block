@@ -3,6 +3,10 @@ using Muonroi.UiEngine.Catalog.Services;
 
 namespace Muonroi.AspNetCore.Services;
 
+/// <summary>
+/// Orchestrates the building of the UI engine manifest by coordinating various contributors and services.
+/// </summary>
+/// <typeparam name="TDbContext">The type of the database context.</typeparam>
 public sealed class UiEngineManifestOrchestrator<TDbContext>(
     PermissionQueryService<TDbContext> permissionQueryService,
     UiEngineCapabilityResolver capabilityResolver,
@@ -13,6 +17,12 @@ public sealed class UiEngineManifestOrchestrator<TDbContext>(
 {
     private readonly IReadOnlyList<IUiEngineManifestContributor> _contributors = [.. contributors.OrderBy(x => x.Order)];
 
+    /// <summary>
+    /// Builds the UI engine manifest for the specified user asynchronously.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="Task{MUiEngineManifest}"/> representing the built engine manifest.</returns>
     public async Task<MUiEngineManifest> BuildAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         List<Guid> grantedIds = await permissionQueryService.GetGrantedPermissionIdsAsync(userId, cancellationToken);

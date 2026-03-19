@@ -2,18 +2,40 @@ using System.Data;
 
 namespace Muonroi.Data.EntityFrameworkCore.Repositories;
 
+/// <summary>
+/// Provides a base implementation for a repository of entities of type <typeparamref name="T"/>.
+/// </summary>
+/// <typeparam name="T">The type of the entity. Must inherit from <see cref="MEntity"/>.</typeparam>
 public class MRepository<T> : IMRepository<T> where T : MEntity
 {
     private readonly IAuthenticateInfoContext _authContext;
     private readonly ILicenseGuard _licenseGuard;
     private readonly IMDateTimeService _dateTimeService;
+    /// <summary>
+    /// The base database context.
+    /// </summary>
     protected readonly MDbContext DbBaseContext;
+    /// <summary>
+    /// The database set for the entity type.
+    /// </summary>
     protected readonly DbSet<T> DbSet;
 
+    /// <summary>
+    /// Gets the current user ID.
+    /// </summary>
     public string? CurrentUserId => _authContext?.CurrentUserGuid;
+    /// <summary>
+    /// Gets the current username.
+    /// </summary>
     public string? CurrentUsername => _authContext?.CurrentUsername;
+    /// <summary>
+    /// Gets the unit of work.
+    /// </summary>
     public IMUnitOfWork UnitOfWork => DbBaseContext;
 
+    /// <summary>
+    /// Gets a queryable for the entity type, filtering out deleted entities and checking license.
+    /// </summary>
     protected IQueryable<T> Queryable
     {
         get
@@ -23,12 +45,23 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         }
     }
 
+    /// <summary>
+    /// Gets the current tenant ID.
+    /// </summary>
     protected static string? TenantId => TenantContext.CurrentTenantId;
 
     private Guid CurrentUserGuid => string.IsNullOrEmpty(_authContext?.CurrentUserGuid)
         ? Guid.Empty
         : Guid.Parse(_authContext.CurrentUserGuid);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MRepository{T}"/> class.
+    /// </summary>
+    /// <param name="dbContext">The database context.</param>
+    /// <param name="authContext">The authentication information context.</param>
+    /// <param name="licenseGuard">The license guard.</param>
+    /// <param name="dateTimeService">The date time service.</param>
+    /// <exception cref="ArgumentNullException">Thrown when any of the parameters are null.</exception>
     public MRepository(MDbContext dbContext, IAuthenticateInfoContext authContext, ILicenseGuard licenseGuard, IMDateTimeService dateTimeService)
     {
         _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
@@ -62,6 +95,11 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
 
     #endregion
 
+    /// <summary>
+    /// Adds a batch of entities asynchronously.
+    /// </summary>
+    /// <param name="newEntities">The entities to add.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of state entries written to the database.</returns>
     public virtual async Task<int> AddBatchAsync(IEnumerable<T>? newEntities)
     {
         Protect("add_batch");
@@ -91,7 +129,11 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         return await DbBaseContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
-
+    /// <summary>
+    /// Adds or updates a batch of entities asynchronously.
+    /// </summary>
+    /// <param name="newEntities">The entities to add or update.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of state entries written to the database.</returns>
     public virtual async Task<int> AddOrUpdateBatchAsync(IEnumerable<T>? newEntities)
     {
         if (newEntities == null || !newEntities.Any())
@@ -162,7 +204,12 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         return await DbBaseContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
-
+    /// <summary>
+    /// Updates a batch of entities based on a predicate and an update action.
+    /// </summary>
+    /// <param name="predicate">The predicate to filter entities.</param>
+    /// <param name="updateAction">The action to update each entity.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of state entries written to the database.</returns>
     public virtual async Task<int> UpdateBatchAsync(Expression<Func<T, bool>> predicate, Action<T> updateAction)
     {
         List<T> entities = await Queryable.Where(predicate)
@@ -196,7 +243,11 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         return await DbBaseContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
-
+    /// <summary>
+    /// Deletes a batch of entities based on a predicate (soft-delete).
+    /// </summary>
+    /// <param name="predicate">The predicate to filter entities.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of state entries written to the database.</returns>
     public virtual async Task<int> DeleteBatchAsync(Expression<Func<T, bool>> predicate)
     {
         List<T> entities = await Queryable.Where(predicate)
@@ -233,7 +284,11 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         return await DbBaseContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
-
+    /// <summary>
+    /// Deletes a batch of entities (soft-delete).
+    /// </summary>
+    /// <param name="deleteEntities">The entities to delete.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of state entries written to the database.</returns>
     public virtual async Task<int> DeleteBatchAsync(IEnumerable<T>? deleteEntities)
     {
         if (deleteEntities == null || !deleteEntities.Any())
@@ -286,7 +341,12 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         return await DbBaseContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
-
+    /// <summary>
+    /// Adds a new entity.
+    /// </summary>
+    /// <param name="newEntity">The entity to add.</param>
+    /// <returns>The added entity.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the entity already exists in the context.</exception>
     public virtual T Add(T newEntity)
     {
         Protect("add");
@@ -306,6 +366,11 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         return DbSet.Add(newEntity).Entity;
     }
 
+    /// <summary>
+    /// Deletes an entity asynchronously (soft-delete).
+    /// </summary>
+    /// <param name="deleteEntity">The entity to delete.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result is always true.</returns>
     public virtual Task<bool> DeleteAsync(T deleteEntity)
     {
         T? existingEntity = DbBaseContext.Set<T>().Local
@@ -333,6 +398,11 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         return Task.FromResult(true);
     }
 
+    /// <summary>
+    /// Updates an entity asynchronously.
+    /// </summary>
+    /// <param name="updateEntity">The entity to update.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of state entries written to the database.</returns>
     public virtual async Task<int> UpdateAsync(T? updateEntity)
     {
         if (updateEntity == null)
@@ -361,6 +431,11 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         return await DbBaseContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Executes an action within a transaction asynchronously.
+    /// </summary>
+    /// <param name="action">The action to execute.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async Task ExecuteTransactionAsync(Func<Task<Muonroi.Core.Abstractions.Response.MVoidMethodResult>> action)
     {
         if (DbBaseContext.Database.IsInMemory() || DbBaseContext.HasActiveTransaction)
@@ -394,7 +469,10 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         }).ConfigureAwait(false);
     }
 
-
+    /// <summary>
+    /// Rolls back the current transaction asynchronously.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task RollbackTransactionAsync()
     {
         IDbContextTransaction? transaction = DbBaseContext.Database.CurrentTransaction;
@@ -404,6 +482,11 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         }
     }
 
+    /// <summary>
+    /// Restores a soft-deleted entity asynchronously.
+    /// </summary>
+    /// <param name="entity">The entity to restore.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a value indicating whether the restoration was successful.</returns>
     public async Task<bool> SoftRestoreAsync(T entity)
     {
         if (!entity.IsDeleted)
@@ -427,6 +510,13 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         return await DbBaseContext.SaveChangesAsync().ConfigureAwait(false) > 0;
     }
 
+    /// <summary>
+    /// Performs a bulk insert of entities asynchronously.
+    /// </summary>
+    /// <param name="entities">The entities to insert.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="entities"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when bulk insert fails.</exception>
     public async Task BulkInsertAsync(IEnumerable<T> entities)
     {
         Protect("bulk_insert");
@@ -454,6 +544,13 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         }
     }
 
+    /// <summary>
+    /// Executes a stored procedure asynchronously.
+    /// </summary>
+    /// <param name="storedProcedureName">The name of the stored procedure.</param>
+    /// <param name="parameters">The parameters for the stored procedure.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of rows affected.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="storedProcedureName"/> is null or empty.</exception>
     public virtual async Task<int> ExecuteStoredProcedureAsync(string storedProcedureName, params object[] parameters)
     {
         if (string.IsNullOrWhiteSpace(storedProcedureName))
@@ -467,6 +564,14 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
             .ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Executes a stored procedure and returns a scalar value asynchronously.
+    /// </summary>
+    /// <typeparam name="TResult">The type of the result.</typeparam>
+    /// <param name="storedProcedureName">The name of the stored procedure.</param>
+    /// <param name="parameters">The parameters for the stored procedure.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the scalar value returned by the stored procedure.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="storedProcedureName"/> is null or empty.</exception>
     public virtual async Task<TResult> ExecuteStoredProcedureScalarAsync<TResult>(string storedProcedureName,
         params object[]? parameters)
     {

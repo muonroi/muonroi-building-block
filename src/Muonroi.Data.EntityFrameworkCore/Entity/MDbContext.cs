@@ -1,33 +1,103 @@
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
 
+/// <summary>
+/// Represents the base database context for the Muonroi application, providing audit, soft-delete, and multi-tenancy support.
+/// </summary>
 public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnitOfWork, IMDataContext, ITransactionalRuleContext, IIdentityAuth
 {
     private readonly IMediator _mediator;
-    private readonly ILogger<MDbContext>? _logger;
+    private readonly IMLog<MDbContext>? _logger;
     private readonly ILicenseGuard? _licenseGuard;
     private readonly IMDateTimeService? _dateTimeService;
 
     private IDbContextTransaction? _currentTransaction;
 
     private readonly List<MEntity> _trackEntities = [];
+
+    /// <summary>
+    /// Gets a value indicating whether there is an active transaction.
+    /// </summary>
     public bool HasActiveTransaction => _currentTransaction != null;
 
+    /// <summary>
+    /// Gets or sets the role permissions.
+    /// </summary>
     public virtual DbSet<MRolePermission> RolePermissions { get; set; }
+
+    /// <summary>
+    /// Gets or sets the refresh tokens.
+    /// </summary>
     public virtual DbSet<MRefreshToken> RefreshTokens { get; set; }
+
+    /// <summary>
+    /// Gets or sets the users.
+    /// </summary>
     public virtual DbSet<MUser> Users { get; set; }
+
+    /// <summary>
+    /// Gets or sets the roles.
+    /// </summary>
     public virtual DbSet<MRole> Roles { get; set; }
+
+    /// <summary>
+    /// Gets or sets the permissions.
+    /// </summary>
     public virtual DbSet<MPermission> Permissions { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user roles.
+    /// </summary>
     public virtual DbSet<MUserRole> UserRoles { get; set; }
+
+    /// <summary>
+    /// Gets or sets the languages.
+    /// </summary>
     public virtual DbSet<MLanguage> Languages { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user tokens.
+    /// </summary>
     public virtual DbSet<MUserToken> UserTokens { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user login attempts.
+    /// </summary>
     public virtual DbSet<MUserLoginAttempt> MUserLoginAttempts { get; set; }
+
+    /// <summary>
+    /// Gets or sets the permission groups.
+    /// </summary>
     public virtual DbSet<MPermissionGroup> PermissionGroups { get; set; }
+
+    /// <summary>
+    /// Gets or sets the permission audit logs.
+    /// </summary>
     public virtual DbSet<MPermissionAuditLog> PermissionAuditLogs { get; set; }
+
+    /// <summary>
+    /// Gets or sets the tenant quotas.
+    /// </summary>
     public virtual DbSet<MTenantQuota> TenantQuotas { get; set; }
+
+    /// <summary>
+    /// Gets or sets the tenant quota usages.
+    /// </summary>
     public virtual DbSet<MTenantQuotaUsage> TenantQuotaUsages { get; set; }
+
+    /// <summary>
+    /// Gets or sets the WebAuthn credentials.
+    /// </summary>
     public virtual DbSet<MWebAuthnCredential> WebAuthnCredentials { get; set; }
 
-    public MDbContext(DbContextOptions options, IMediator mediator, ILicenseGuard? licenseGuard = null, ILogger<MDbContext>? logger = null, IMDateTimeService? dateTimeService = null)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MDbContext"/> class.
+    /// </summary>
+    /// <param name="options">The options to be used by a <see cref="DbContext"/>.</param>
+    /// <param name="mediator">The mediator for dispatching events.</param>
+    /// <param name="licenseGuard">The license guard.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="dateTimeService">The date time service.</param>
+    public MDbContext(DbContextOptions options, IMediator mediator, ILicenseGuard? licenseGuard = null, IMLog<MDbContext>? logger = null, IMDateTimeService? dateTimeService = null)
         : base(options)
     {
         _mediator = mediator;
@@ -37,16 +107,29 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         Debug.WriteLine("BaseDbContext::ctor ->" + GetHashCode());
     }
 
+    /// <summary>
+    /// Returns the hash code for this instance.
+    /// </summary>
+    /// <returns>A hash code for this instance.</returns>
     public sealed override int GetHashCode()
     {
         return base.GetHashCode();
     }
 
+    /// <summary>
+    /// Gets the current transaction.
+    /// </summary>
+    /// <returns>The current transaction, or null if there is no active transaction.</returns>
     public IDbContextTransaction? GetCurrentTransaction()
     {
         return _currentTransaction;
     }
 
+    /// <summary>
+    /// Saves all changes made in this context to the database.
+    /// </summary>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+    /// <returns>A task that represents the asynchronous save operation. The task result contains the number of state entries written to the database.</returns>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         if (!LicenseExecutionContext.IsInLicenseCheck)
@@ -60,6 +143,11 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         return await base.SaveChangesAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Saves entities and dispatches domain events asynchronously within a transaction.
+    /// </summary>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the transaction ID.</returns>
     public async Task<Guid> SaveEntitiesAsync(CancellationToken cancellationToken = default)
     {
         UpdateTimestamps();
@@ -156,16 +244,20 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
 
         IEnumerable<Task> tasks = domainEvents.Select(async domainEvent =>
         {
-            Console.WriteLine($"Dispatching InternalEvent: {domainEvent.GetType()}");
+            _logger?.Debug("Dispatching InternalEvent: {EventType}", domainEvent.GetType().Name);
             await _mediator.Publish((Mediator.Mediator.Interfaces.INotification)domainEvent);
-            Console.WriteLine($"Dispatched InternalEvent: {domainEvent.GetType()}");
+            _logger?.Debug("Dispatched InternalEvent: {EventType}", domainEvent.GetType().Name);
         });
 
         await Task.WhenAll(tasks);
-        _logger?.LogInformation("Dispatched {Count} domain events successfully", domainEvents.Count);
+        _logger?.Info("Dispatched {Count} domain events successfully", domainEvents.Count);
         _trackEntities.Clear();
     }
 
+    /// <summary>
+    /// Begins a new database transaction asynchronously.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="IDbContextTransaction"/>, or null if a transaction is already active.</returns>
     public async Task<IDbContextTransaction?> BeginTransactionAsync()
     {
         if (_currentTransaction != null)
@@ -177,6 +269,13 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         return _currentTransaction;
     }
 
+    /// <summary>
+    /// Commits the current database transaction asynchronously.
+    /// </summary>
+    /// <param name="transaction">The transaction to commit.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="transaction"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when <paramref name="transaction"/> is not the current transaction.</exception>
     public async Task CommitTransactionAsync(IDbContextTransaction transaction)
     {
         ArgumentNullException.ThrowIfNull(transaction);
@@ -203,6 +302,9 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         }
     }
 
+    /// <summary>
+    /// Rolls back the current database transaction.
+    /// </summary>
     public void RollbackTransaction()
     {
         try
@@ -275,15 +377,10 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         {
             if (!typeof(MEntity).IsAssignableFrom(entityType.ClrType) && !entityType.IsOwned())
             {
-                ConsoleColor originalColor = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine(
-                    $"[WARNING] Architecture Violation: Entity '{entityType.ClrType.Name}' SHOULD inherit from '{nameof(MEntity)}'.");
-                Console.WriteLine(
-                    $"          - Benefit: Auto Audit, Soft-Delete, Snowflake ID, Multi-Tenant Security.");
-                Console.WriteLine(
-                    $"          - Guide: https://github.com/muonroi/MuonroiBuildingBlock/blob/main/docs/backend-guide.md#1-entity");
-                Console.ForegroundColor = originalColor;
+                _logger?.Warn(
+                    "[Architecture] Entity '{EntityName}' SHOULD inherit from '{BaseType}' — Benefit: Auto Audit, Soft-Delete, Snowflake ID, Multi-Tenant Security | Guide: {Guide}",
+                    entityType.ClrType.Name, nameof(MEntity),
+                    "https://github.com/muonroi/MuonroiBuildingBlock/blob/main/docs/backend-guide.md#1-entity");
             }
 
             LambdaExpression? combinedFilter = entityType.GetQueryFilter();

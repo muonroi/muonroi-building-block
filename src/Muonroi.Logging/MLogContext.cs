@@ -1,9 +1,14 @@
 namespace Muonroi.Logging;
 
+/// <summary>
+/// Implements <see cref="IMLogContext"/> using an <see cref="ILoggerFactory"/> to create logging scopes.
+/// </summary>
+/// <param name="factory">The <see cref="ILoggerFactory"/> used to create the internal logger.</param>
 public sealed class MLogContext(ILoggerFactory factory) : IMLogContext
 {
     private readonly ILoggerFactory _factory = factory ?? throw new ArgumentNullException(nameof(factory));
 
+    /// <inheritdoc />
     public IMLogContextScope PushProperty(string key, object? value)
     {
         return PushProperties(new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
@@ -12,6 +17,7 @@ public sealed class MLogContext(ILoggerFactory factory) : IMLogContext
         });
     }
 
+    /// <inheritdoc />
     public IMLogContextScope PushProperties(IReadOnlyDictionary<string, object?> properties)
     {
         ILogger logger = _factory.CreateLogger("Muonroi.LogContext");

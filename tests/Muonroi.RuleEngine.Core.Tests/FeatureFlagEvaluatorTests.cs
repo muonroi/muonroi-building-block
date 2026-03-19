@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.RuleEngine.Core.Tests;
 
 public class FeatureFlagEvaluatorTests
@@ -10,7 +12,7 @@ public class FeatureFlagEvaluatorTests
         }
     }
 
-    private sealed class ListLogger<T> : ILogger<T>
+    private sealed class ListLogger<T> : IMLog<T>
     {
         public List<string> Logs { get; } = [];
 
@@ -31,9 +33,48 @@ public class FeatureFlagEvaluatorTests
             Logs.Add(formatter(state, exception));
         }
 
+        public IMLogContextScope BeginProperty(string key, object? value)
+        {
+            return NullLogScope.Instance;
+        }
+
+        public void Info(string messageTemplate, params object?[] args)
+        {
+            Logs.Add(messageTemplate);
+        }
+
+        public void Warn(string messageTemplate, params object?[] args)
+        {
+            Logs.Add(messageTemplate);
+        }
+
+        public void Error(Exception? ex, string messageTemplate, params object?[] args)
+        {
+            Logs.Add(messageTemplate);
+        }
+
+        public void Debug(string messageTemplate, params object?[] args)
+        {
+            Logs.Add(messageTemplate);
+        }
+
+        public void InfoTrace(string messageTemplate, params object?[] args)
+        {
+            Logs.Add(messageTemplate);
+        }
+
         private sealed class NullDisposable : IDisposable
         {
             public static readonly NullDisposable Instance = new();
+
+            public void Dispose()
+            {
+            }
+        }
+
+        private sealed class NullLogScope : IMLogContextScope
+        {
+            public static readonly NullLogScope Instance = new();
 
             public void Dispose()
             {

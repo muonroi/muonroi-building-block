@@ -6,5 +6,8 @@ namespace Muonroi.RuleEngine.Abstractions;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public sealed class RuleGroupAttribute(string key) : Attribute
 {
+    /// <summary>
+    /// Gets the registration key for the rule group.
+    /// </summary>
     public string Key { get; } = key;
 }

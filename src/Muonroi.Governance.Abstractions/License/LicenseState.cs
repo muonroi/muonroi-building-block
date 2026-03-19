@@ -8,6 +8,7 @@ public sealed class LicenseState
     public bool IsExpired { get; init; }
     public string? Error { get; init; }
     public LicensePayload? Payload { get; init; }
+    public ActivationProof? ActivationProof { get; init; }
 
     /// <summary>
     /// The license tier determines available features.
@@ -34,6 +35,8 @@ public sealed class LicenseState
     /// Enabled features (when using activation proof).
     /// </summary>
     public string[]? Features { get; init; }
+
+    public LicenseTier TrustedTier => ActivationProof?.Tier ?? Tier;
 
     /// <summary>
     /// Checks if a specific feature is allowed under the current license.
@@ -101,6 +104,8 @@ public static class FreeTierFeatures
         public const string DistributedCache = "distributed-cache";
         public const string AuditTrail = "audit-trail";
         public const string AntiTampering = "anti-tampering";
+        public const string Connectors = "connectors";
+        public const string JavaScriptExpressions = "js-expressions";
     }
 
     public static bool IsAllowed(string featureName)

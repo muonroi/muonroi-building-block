@@ -1,5 +1,8 @@
 namespace Muonroi.Auth.Jwt;
 
+/// <summary>
+/// Service for generating and validating JSON Web Tokens (JWTs).
+/// </summary>
 public class JwtService
 {
     private readonly IRsaKeyStore _keyStore;
@@ -9,6 +12,14 @@ public class JwtService
     private readonly string _audience;
     private readonly JwtSecurityTokenHandler _handler = new();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JwtService"/> class.
+    /// </summary>
+    /// <param name="keyStore">The RSA key store for signing.</param>
+    /// <param name="revocation">The token revocation store.</param>
+    /// <param name="issuer">The token issuer.</param>
+    /// <param name="audience">The token audience.</param>
+    /// <param name="dateTimeService">Service to retrieve the current date and time.</param>
     public JwtService(IRsaKeyStore keyStore, ITokenRevocationStore revocation, string issuer, string audience, IMDateTimeService dateTimeService)
     {
         _keyStore = keyStore;
@@ -20,11 +31,25 @@ public class JwtService
         _handler.OutboundClaimTypeMap.Clear();
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JwtService"/> class using token information.
+    /// </summary>
+    /// <param name="keyStore">The RSA key store for signing.</param>
+    /// <param name="revocation">The token revocation store.</param>
+    /// <param name="tokenInfo">The token configuration info.</param>
+    /// <param name="dateTimeService">Service to retrieve the current date and time.</param>
     public JwtService(IRsaKeyStore keyStore, ITokenRevocationStore revocation, MTokenInfo tokenInfo, IMDateTimeService dateTimeService)
         : this(keyStore, revocation, tokenInfo.Issuer, tokenInfo.Audience, dateTimeService)
     {
     }
 
+    /// <summary>
+    /// Generates a signed JWT for a specific subject.
+    /// </summary>
+    /// <param name="subject">The subject (sub) claim for the token.</param>
+    /// <param name="lifetime">The duration for which the token remains valid.</param>
+    /// <param name="notBefore">Optional date and time before which the token is not valid.</param>
+    /// <returns>A serialized JWT string.</returns>
     public string GenerateToken(string subject, TimeSpan lifetime, DateTime? notBefore = null)
     {
         DateTime now = _dateTimeService.UtcNow();
@@ -50,6 +75,12 @@ public class JwtService
         return _handler.WriteToken(token);
     }
 
+    /// <summary>
+    /// Validates a JWT string and returns the claims principal if successful.
+    /// </summary>
+    /// <param name="token">The JWT string to validate.</param>
+    /// <returns>The <see cref="ClaimsPrincipal"/> derived from the token.</returns>
+    /// <exception cref="SecurityTokenException">Thrown if the token is invalid or revoked.</exception>
     public ClaimsPrincipal ValidateToken(string token)
     {
         TokenValidationParameters parameters = new()
@@ -84,17 +115,28 @@ public class JwtService
         return _revocation.IsRevoked(jwt.Id) ? throw new SecurityTokenException("Token revoked") : principal;
     }
 
+    /// <summary>
+    /// Forces a rotation of the RSA signing keys.
+    /// </summary>
     public void RotateKeys()
     {
         _keyStore.RotateKeys();
     }
 
+    /// <summary>
+    /// Revokes a specific JWT.
+    /// </summary>
+    /// <param name="token">The JWT string to revoke.</param>
     public void RevokeToken(string token)
     {
         JwtSecurityToken jwt = _handler.ReadJwtToken(token);
         _revocation.Revoke(jwt.Id, jwt.ValidTo);
     }
 
+    /// <summary>
+    /// Gets the current JSON Web Key Set (JWKS) containing the public keys.
+    /// </summary>
+    /// <returns>The set of JSON Web Keys.</returns>
     public JsonWebKeySet GetJsonWebKeySet()
     {
         return _keyStore.GetJsonWebKeySet();

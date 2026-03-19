@@ -1,0 +1,17 @@
+global using FluentAssertions;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
+global using Muonroi.Core.Abstractions.Constants;
+global using Muonroi.Logging.Abstractions;
+global using Muonroi.Tenancy;
+global using Muonroi.Tenancy.Abstractions;
+global using Muonroi.Tenancy.Abstractions.Licensing;
+global using Muonroi.Tenancy.Core.Legacy;
+global using System;
+global using System.Collections.Generic;
+global using System.Security.Claims;
+global using System.Threading.Tasks;
+global using Xunit;

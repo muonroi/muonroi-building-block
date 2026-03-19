@@ -41,7 +41,8 @@ internal sealed record ExtractedRuleDefinition(
     string? ExpressionBody,
     bool IsAsync,
     string SourceFile,
-    int SourceLine);
+    int SourceLine,
+    bool UseFactBagAware = false);
 
 internal sealed class ValidationReport
 {
@@ -56,4 +57,5 @@ internal sealed record DiscoveredDispatcherContext(
     string ContextType,
     string InterfaceName,
     string ClassName,
-    string FileName);
+    string FileName,
+    string? WorkflowName = null);

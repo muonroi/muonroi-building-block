@@ -5,7 +5,7 @@ namespace Muonroi.RuleEngine.DecisionTable.Validators;
 
 public sealed class OverlapDetector
 {
-    public static IReadOnlyList<string> Detect(DecisionTableModel table)
+    public IReadOnlyList<string> Detect(DecisionTableModel table)
     {
         List<string> overlaps = [];
         DecisionTableRow[] rows = [.. table.Rows

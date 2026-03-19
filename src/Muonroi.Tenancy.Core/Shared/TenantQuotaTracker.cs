@@ -5,7 +5,7 @@ namespace Muonroi.Tenancy.Core.Shared;
 public sealed class TenantQuotaTracker(
     IDistributedCache cache,
     ITenantQuotaStore quotaStore,
-    ILogger<TenantQuotaTracker> logger,
+    IMLog<TenantQuotaTracker> logger,
     IMDateTimeService dateTimeService) : ITenantQuotaTracker
 {
     public async Task<bool> CheckQuotaAsync(string tenantId, QuotaType type, int amount = 1, CancellationToken ct = default)
@@ -96,6 +96,8 @@ public sealed class TenantQuotaTracker(
             QuotaType.TotalRules => quota.MaxRulesPerTenant,
             QuotaType.TotalDecisionTables => quota.MaxDecisionTables,
             QuotaType.TotalWorkflows => quota.MaxJsonWorkflows,
+            QuotaType.TotalConnectors => quota.MaxTotalConnectors,
+            QuotaType.ConnectorExecutionsPerDay => quota.MaxConnectorExecutionsPerDay,
             _ => int.MaxValue
         };
     }
