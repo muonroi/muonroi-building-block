@@ -110,3 +110,37 @@ public sealed record TenantSimulationStats
     public int Failed { get; init; }
     public double PassRate => TotalScenarios > 0 ? Math.Round((double)Passed / TotalScenarios * 100, 1) : 0;
 }
+
+/// <summary>
+/// Result of a CI/CD synchronous proliferation run for pipeline gate integration.
+/// Returns pass/fail based on coverage threshold and failure tolerance.
+/// </summary>
+public sealed record CiRunResult
+{
+    /// <summary>True if coverage >= minCoverage AND failedCount <= maxFailures.</summary>
+    public bool Passed { get; init; }
+
+    /// <summary>Field coverage percentage (0–100).</summary>
+    public double FieldCoveragePercent { get; init; }
+
+    /// <summary>Flow node coverage percentage. Null for non-flow rulesets.</summary>
+    public double? FlowNodeCoveragePercent { get; init; }
+
+    /// <summary>Total number of scenarios evaluated.</summary>
+    public int TotalScenarios { get; init; }
+
+    /// <summary>Number of scenarios that passed.</summary>
+    public int PassedScenarios { get; init; }
+
+    /// <summary>Number of scenarios that failed.</summary>
+    public int FailedScenarios { get; init; }
+
+    /// <summary>Total wall-clock duration of the CI run.</summary>
+    public TimeSpan Duration { get; init; }
+
+    /// <summary>Failure messages from failed scenarios. Empty when all pass.</summary>
+    public IReadOnlyList<string> FailureMessages { get; init; } = [];
+
+    /// <summary>Optional URL to the full test report in the dashboard.</summary>
+    public string? ReportUrl { get; init; }
+}
