@@ -16,7 +16,6 @@
     <ProjectReference Include="..\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Core\Muonroi.RuleEngine.Core.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.DecisionTable\Muonroi.RuleEngine.DecisionTable.csproj" />
-    <ProjectReference Include="..\Muonroi.RuleEngine.NRules\Muonroi.RuleEngine.NRules.csproj" />
     <ProjectReference Include="..\Muonroi.Caching.Memory\Muonroi.Caching.Memory.csproj" />
     <ProjectReference Include="..\Muonroi.Governance.Abstractions\Muonroi.Governance.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Integration.Abstractions\Muonroi.Integration.Abstractions.csproj" />

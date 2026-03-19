@@ -1,9 +1,5 @@
-using System.Diagnostics;
-using System.Text.Json;
 using Muonroi.Integration.Abstractions;
 using Muonroi.Logging.Abstractions;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Abstractions.Adapters;
 
 namespace Muonroi.RuleEngine.Runtime.Adapters;
 
@@ -15,8 +11,6 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.Integration");
-
-    private readonly string _code;
     private readonly string _connectorType;
     private readonly JsonElement? _connectorConfig;
     private readonly string? _credentialId;
@@ -26,14 +20,22 @@ public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
     private readonly IMLog<ConnectorRuleAdapter<TContext>> _log;
     private readonly string? _tenantId;
 
-    public string Code => _code;
+    /// <inheritdoc/>
+    public string Code { get; }
+    /// <inheritdoc/>
     public int Order { get; init; }
+    /// <inheritdoc/>
     public string[] DependsOn { get; init; } = [];
+    /// <inheritdoc/>
     public HookPoint HookPoint => HookPoint.BeforeRule;
+    /// <inheritdoc/>
     public RuleType Type => RuleType.Business;
-    public string Name => $"Connector:{_connectorType}:{_code}";
+    /// <inheritdoc/>
+    public string Name => $"Connector:{_connectorType}:{Code}";
+    /// <inheritdoc/>
     public IEnumerable<Type> Dependencies => [];
 
+    /// <inheritdoc/>
     public ConnectorRuleAdapter(
         string code,
         string connectorType,
@@ -45,7 +47,7 @@ public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
         IMLog<ConnectorRuleAdapter<TContext>> log,
         string? tenantId = null)
     {
-        _code = code;
+        Code = code;
         _connectorType = connectorType;
         _connectorConfig = connectorConfig;
         _credentialId = credentialId;
@@ -56,6 +58,7 @@ public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
         _tenantId = tenantId;
     }
 
+    /// <inheritdoc/>
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)
     {
         IServiceTaskConnector? connector = _registry.Resolve(_connectorType);
@@ -67,7 +70,7 @@ public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
 
         using Activity? activity = ActivitySource.StartActivity($"connector.execute.{_connectorType}", ActivityKind.Client);
         activity?.SetTag("connector.type", _connectorType);
-        activity?.SetTag("connector.node", _code);
+        activity?.SetTag("connector.node", Code);
         activity?.SetTag("tenant.id", _tenantId);
 
         // Load credentials
@@ -81,7 +84,7 @@ public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
             catch (Exception ex)
             {
                 _log.Warn("Failed to load credentials '{CredentialId}': {Message}", _credentialId, ex.Message);
-                return RuleResult.Failure($"Failed to load credentials for connector '{_code}': {ex.Message}");
+                return RuleResult.Failure($"Failed to load credentials for connector '{Code}': {ex.Message}");
             }
         }
 
@@ -111,7 +114,7 @@ public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
             sw.Stop();
             _log.Error(ex, "Connector '{ConnectorType}' threw: {Message}", _connectorType, ex.Message);
             activity?.SetTag("connector.status", "error");
-            return RuleResult.Failure($"Connector '{_connectorType}' error in '{_code}': {ex.Message}");
+            return RuleResult.Failure($"Connector '{_connectorType}' error in '{Code}': {ex.Message}");
         }
 
         activity?.SetTag("connector.status", result.Success ? "success" : "failure");
@@ -121,16 +124,16 @@ public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
         foreach (KeyValuePair<string, object?> kv in result.OutputFacts)
         {
             facts.Set(kv.Key, kv.Value);
-            facts.Set($"__node.{_code}.{kv.Key}", kv.Value);
+            facts.Set($"__node.{Code}.{kv.Key}", kv.Value);
         }
 
         // Write connector metadata to FactBag
-        facts.Set($"__connector.{_code}.success", result.Success);
-        facts.Set($"__connector.{_code}.statusCode", result.StatusCode);
-        facts.Set($"__connector.{_code}.duration", result.Duration.TotalMilliseconds);
+        facts.Set($"__connector.{Code}.success", result.Success);
+        facts.Set($"__connector.{Code}.statusCode", result.StatusCode);
+        facts.Set($"__connector.{Code}.duration", result.Duration.TotalMilliseconds);
         if (result.ErrorMessage is not null)
         {
-            facts.Set($"__connector.{_code}.error", result.ErrorMessage);
+            facts.Set($"__connector.{Code}.error", result.ErrorMessage);
         }
 
         if (!result.Success)
@@ -142,6 +145,9 @@ public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
         return RuleResult.Passed();
     }
 
+    /// <inheritdoc/>
     public Task ExecuteAsync(TContext context, CancellationToken cancellationToken = default)
-        => Task.CompletedTask;
+    {
+        return Task.CompletedTask;
+    }
 }
