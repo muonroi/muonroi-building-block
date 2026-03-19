@@ -147,6 +147,53 @@ public sealed class DefaultPromptBuilder : IPromptBuilder
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Builds the user prompt for natural language to ruleset conversion.
+    /// </summary>
+    /// <param name="description">Plain-text business rule description from the user.</param>
+    /// <param name="outputFormat">"flowgraph" or "decisiontable"</param>
+    public string BuildNlConversionPrompt(string description, string outputFormat)
+    {
+        StringBuilder sb = new();
+        sb.AppendLine($"Convert the following business rule description to a {outputFormat} JSON definition:");
+        sb.AppendLine();
+        sb.AppendLine($"Description: {description}");
+        sb.AppendLine();
+
+        if (string.Equals(outputFormat, "decisiontable", StringComparison.OrdinalIgnoreCase))
+        {
+            sb.AppendLine("Output a JSON object with this structure:");
+            sb.AppendLine("""
+                {
+                  "inputColumns": [{ "name": "fieldName", "dataType": "number|string|boolean", "isRequired": true }],
+                  "outputColumns": [{ "name": "resultField", "dataType": "number|string|boolean" }],
+                  "rules": [{ "conditions": ["condition expression"], "actions": ["output value"] }]
+                }
+                """);
+        }
+        else
+        {
+            sb.AppendLine("Output a JSON object with this structure:");
+            sb.AppendLine("""
+                {
+                  "nodes": [
+                    { "id": "start", "type": "Start", "data": { "triggerData": { "inputSchema": { "fieldName": "dataType" } } } },
+                    { "id": "rule1", "type": "RuleTask", "data": { "condition": "input.fieldName > value", "outputFields": [{ "path": "outputField", "dataType": "number" }] } },
+                    { "id": "end", "type": "End", "data": {} }
+                  ],
+                  "edges": [
+                    { "source": "start", "target": "rule1", "type": "always" },
+                    { "source": "rule1", "target": "end", "type": "always" }
+                  ]
+                }
+                """);
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("Use field names derived from the description (camelCase, no spaces). Output ONLY the JSON, nothing else.");
+        return sb.ToString();
+    }
+
     private const string GenericSystemPrompt = """
         You are a rule proliferation analyzer for a business rule engine.
         Given a business rule definition (flow graph JSON) and optionally its previous execution result,

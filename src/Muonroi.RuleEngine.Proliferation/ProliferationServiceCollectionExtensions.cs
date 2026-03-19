@@ -123,6 +123,9 @@ public static class ProliferationServiceCollectionExtensions
             return hashDedup;
         });
 
+        // Natural language rule converter
+        services.TryAddSingleton<INaturalLanguageRuleConverter, NaturalLanguageRuleConverter>();
+
         // Chaos scenario generator
         services.TryAddSingleton<IChaosScenarioGenerator, DefaultChaosScenarioGenerator>();
 
