@@ -36,7 +36,9 @@ public sealed class DefaultPromptBuilder : IPromptBuilder
         IReadOnlyList<string>? focusAreas,
         RuleSetSchema? schema = null,
         FlowGraphAnalysis? flowAnalysis = null,
-        CrossRuleAnalysis? crossRuleAnalysis = null)
+        CrossRuleAnalysis? crossRuleAnalysis = null,
+        BoundaryExtractionResult? boundaries = null,
+        HitPolicyAnalysis? hitPolicyAnalysis = null)
     {
         StringBuilder sb = new();
         sb.AppendLine($"Generate {budget} test scenarios.");
@@ -118,6 +120,47 @@ public sealed class DefaultPromptBuilder : IPromptBuilder
             {
                 sb.AppendLine($"- '{conflict.FactKey}': {conflict.ConflictType} between [{conflict.NodeAId}] and [{conflict.NodeBId}]");
             }
+        }
+
+        // Inject FEEL boundary values for type-aware scenario generation
+        if (boundaries is { Boundaries.Count: > 0 } || boundaries is { Branches.Count: > 0 })
+        {
+            sb.AppendLine();
+            sb.AppendLine("## Boundary Values");
+            sb.AppendLine("Generate scenarios that exercise these extracted boundary test values:");
+
+            if (boundaries.Boundaries.Count > 0)
+            {
+                foreach (FieldBoundary b in boundaries.Boundaries)
+                {
+                    string vals = string.Join(", ", b.BoundaryValues);
+                    sb.AppendLine($"- {b.Field} ({b.Operator} {b.ThresholdValue}): test with [{vals}]");
+                }
+            }
+
+            if (boundaries.Branches.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Branch paths to cover:");
+                foreach (BranchHint branch in boundaries.Branches)
+                {
+                    sb.AppendLine($"- {branch.Field}: {branch.TruePath}");
+                    sb.AppendLine($"  {branch.Field}: {branch.FalsePath}");
+                }
+            }
+        }
+
+        // Inject decision table hit-policy analysis
+        if (hitPolicyAnalysis is { PolicyHints.Count: > 0 })
+        {
+            sb.AppendLine();
+            sb.AppendLine("## Hit Policy Analysis");
+            sb.AppendLine($"Hit policy: {hitPolicyAnalysis.HitPolicy} | Rows: {hitPolicyAnalysis.RowCount}");
+            if (hitPolicyAnalysis.InputColumns.Count > 0)
+                sb.AppendLine($"Input columns: {string.Join(", ", hitPolicyAnalysis.InputColumns)}");
+            sb.AppendLine("Policy-specific hints:");
+            foreach (string hint in hitPolicyAnalysis.PolicyHints)
+                sb.AppendLine($"- {hint}");
         }
 
         sb.AppendLine();
