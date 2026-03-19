@@ -84,8 +84,9 @@ public class ClaudeProliferationBrainTests
     }
 
     [Fact]
-    public async Task AnalyzeAsync_ServerError_ReturnsEmptyPlan()
+    public async Task AnalyzeAsync_ServerError_ReturnsSyntheticFallbackScenarios()
     {
+        // When server returns error, synthetic fallback guarantees at least 1 scenario
         ClaudeProliferationBrain brain = CreateBrain(
             CreateMockHttpClient("error", HttpStatusCode.InternalServerError));
 
@@ -93,7 +94,10 @@ public class ClaudeProliferationBrainTests
             "TEST", "{}", null, null,
             new ProliferationContext { RemainingBudget = 5 });
 
-        plan.Scenarios.Should().BeEmpty();
+        // Synthetic fallback guarantees >= 1 scenario
+        plan.Scenarios.Should().NotBeEmpty();
+        plan.Scenarios.Should().AllSatisfy(s =>
+            s.ProliferationReason.Should().Contain("Synthetic boundary case"));
     }
 
     [Fact]

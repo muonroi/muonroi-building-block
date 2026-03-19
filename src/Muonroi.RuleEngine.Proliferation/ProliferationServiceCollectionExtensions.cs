@@ -45,6 +45,18 @@ public static class ProliferationServiceCollectionExtensions
         // Synthetic scenario generator (AI fallback)
         services.TryAddSingleton<ISyntheticScenarioGenerator, SyntheticScenarioGenerator>();
 
+        // Infrastructure health monitor (optional, gated by EnableInfraAwareBudget)
+        if (options.EnableInfraAwareBudget)
+        {
+            services.TryAddSingleton<IInfraHealthMonitor>(sp =>
+            {
+                var opts = sp.GetRequiredService<ProliferationOptions>();
+                var factory = sp.GetRequiredService<IHttpClientFactory>();
+                var logFactory = sp.GetService<IMLogFactory>();
+                return new InfraHealthMonitor(factory, opts, logFactory?.CreateLogger<InfraHealthMonitor>());
+            });
+        }
+
         // Brain provider factory — single or composite
         services.TryAddSingleton<IRuleProliferationBrain>(sp =>
         {
@@ -134,6 +146,7 @@ public static class ProliferationServiceCollectionExtensions
         var factory = sp.GetRequiredService<IHttpClientFactory>();
         var logFactory = sp.GetService<IMLogFactory>();
         var syntheticGen = sp.GetService<ISyntheticScenarioGenerator>();
+        var infraMonitor = sp.GetService<IInfraHealthMonitor>();
 
         return providerName?.ToLowerInvariant() switch
         {
@@ -142,7 +155,7 @@ public static class ProliferationServiceCollectionExtensions
             "claude" => new ClaudeProliferationBrain(factory, opts, prompt,
                 logFactory?.CreateLogger<ClaudeProliferationBrain>(), syntheticGen),
             _ => new OllamaProliferationBrain(factory, opts, prompt,
-                logFactory?.CreateLogger<OllamaProliferationBrain>(), syntheticGen)
+                logFactory?.CreateLogger<OllamaProliferationBrain>(), syntheticGen, infraMonitor)
         };
     }
 }

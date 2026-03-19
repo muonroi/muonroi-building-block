@@ -124,8 +124,9 @@ public class OllamaProliferationBrainTests
     }
 
     [Fact]
-    public async Task AnalyzeAsync_InvalidJson_ReturnsEmptyPlan()
+    public async Task AnalyzeAsync_InvalidJson_ReturnsSyntheticFallbackScenarios()
     {
+        // When AI returns unparseable JSON, synthetic fallback guarantees at least 1 scenario
         string ollamaResponse = JsonSerializer.Serialize(new { response = "This is not valid JSON at all" });
         OllamaProliferationBrain brain = CreateBrain(CreateMockHttpClient(ollamaResponse));
 
@@ -135,7 +136,10 @@ public class OllamaProliferationBrainTests
             null, null,
             new ProliferationContext { RemainingBudget = 5 });
 
-        plan.Scenarios.Should().BeEmpty();
+        // Synthetic fallback guarantees >= 1 scenario
+        plan.Scenarios.Should().NotBeEmpty();
+        plan.Scenarios.Should().AllSatisfy(s =>
+            s.ProliferationReason.Should().Contain("Synthetic boundary case"));
     }
 
     [Fact]

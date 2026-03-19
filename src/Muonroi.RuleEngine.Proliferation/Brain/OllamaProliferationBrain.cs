@@ -11,7 +11,8 @@ public sealed class OllamaProliferationBrain(
     ProliferationOptions options,
     IPromptBuilder promptBuilder,
     IMLog<OllamaProliferationBrain>? logger = null,
-    ISyntheticScenarioGenerator? syntheticGen = null) : IRuleProliferationBrain
+    ISyntheticScenarioGenerator? syntheticGen = null,
+    IInfraHealthMonitor? infraMonitor = null) : IRuleProliferationBrain
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -41,12 +42,21 @@ public sealed class OllamaProliferationBrain(
         }
 
         RuleSetSchema schema = RuleSetSchemaExtractor.Extract(ruleSetJson, context.RuleSetKind);
+
+        // Infra-aware: adjust budget and select model based on Ollama health
+        string model = options.PrimaryModel;
+        if (infraMonitor is not null)
+        {
+            InfraHealthStatus infraStatus = await infraMonitor.CheckHealthAsync(ct);
+            budget = (int)Math.Max(1, budget * infraStatus.BudgetMultiplier);
+            model = infraStatus.RecommendedModel;
+            logger?.Debug("InfraHealth: {Level} | BudgetMultiplier: {Multiplier} → budget={Budget} | Model: {Model}",
+                infraStatus.Level, infraStatus.BudgetMultiplier, budget, model);
+        }
+
         string systemPrompt = promptBuilder.BuildSystemPrompt(context.RuleSetKind);
         string userPrompt = promptBuilder.BuildUserPrompt(ruleSetJson, executionResult, factBagSnapshot, budget, context.FocusAreas, schema, context.FlowAnalysis, context.CrossRuleAnalysis);
         Stopwatch sw = Stopwatch.StartNew();
-
-        // Try primary model, fallback on failure
-        string model = options.PrimaryModel;
         string? firstResponse = await CallOllamaAsync(model, systemPrompt, userPrompt, ct);
 
         if (firstResponse is null && !string.IsNullOrWhiteSpace(options.FallbackModel))
