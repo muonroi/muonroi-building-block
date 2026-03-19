@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.AuthZ.Authorization;
 using Muonroi.AuthZ.HotReload;
 
@@ -27,6 +28,10 @@ public static class AuthZServiceExtensions
         services.AddSingleton<IAuthorizationPolicyEvaluator, RuleEngineAuthorizationPolicyEvaluator>();
         services.AddScoped<IAuthorizationHandler, MuonroiAuthorizationHandler>();
         services.AddScoped(typeof(Muonroi.AuthZ.RowSecurity.IRuleRowFilter<>), typeof(Muonroi.AuthZ.RowSecurity.RuleRowFilter<>));
+
+        // Register the default hot-reload change handler. Consumer apps can override by
+        // registering their own IAuthRuleChangeHandler before calling this method.
+        services.TryAddSingleton<IAuthRuleChangeHandler, DefaultAuthRuleChangeHandler>();
 
         return services;
     }

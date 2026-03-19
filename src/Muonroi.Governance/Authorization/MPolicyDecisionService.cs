@@ -107,12 +107,19 @@ public sealed class MPolicyDecisionService(
     {
         if (provider == MPolicyDecisionProvider.OpenFga)
         {
+            // OpenFGA /check endpoint expects { tuple_key: { user, relation, object } }
             return new
             {
-                input = request
+                tuple_key = new
+                {
+                    user = request.UserId ?? string.Empty,
+                    relation = request.Action ?? string.Empty,
+                    @object = request.Resource ?? string.Empty
+                }
             };
         }
 
+        // OPA /v1/data/authz/allow endpoint expects { input: <request> }
         return new
         {
             input = request
