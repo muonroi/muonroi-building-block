@@ -108,7 +108,57 @@ internal static class ExtractCommand
             await RunAutoRegisterAsync(options, definitions);
         }
 
+        // ── Proliferate: generate scenarios + inline coverage report ──
+        if (options.Proliferate)
+        {
+            if (string.IsNullOrWhiteSpace(options.WorkflowName))
+            {
+                CommandLineWriter.WriteWarning("--proliferate requires --workflow-name to be specified. Skipping proliferation.");
+            }
+            else
+            {
+                // Build a synthetic ruleset JSON from extracted definitions for the named workflow
+                string ruleSetJson = BuildSyntheticRuleSetJson(options.WorkflowName, definitions);
+                try
+                {
+                    await ProliferateCommand.RunInlineAsync(options.WorkflowName, ruleSetJson, context.WorkingDirectory);
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.MarkupLine($"[yellow]Warning:[/] Proliferation failed: {ex.Message}");
+                }
+            }
+        }
+
         return 0;
+    }
+
+    /// <summary>
+    /// Builds a minimal ruleset JSON from extracted rule definitions so that the
+    /// proliferation engine can analyze the workflow's input fields.
+    /// </summary>
+    private static string BuildSyntheticRuleSetJson(string workflowName, IReadOnlyList<ExtractedRuleDefinition> definitions)
+    {
+        // Collect distinct parameter names across all definitions as input fields
+        var inputFields = definitions
+            .SelectMany(d => d.Parameters.Select(p => new { name = p.Name, type = p.TypeName ?? "string" }))
+            .DistinctBy(p => p.name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        // Build a simple JSON structure that RuleSetSchemaExtractor can parse
+        var fieldsJson = string.Join(",\n    ", inputFields.Select(f =>
+            $"{{\"name\":\"{f.name}\",\"dataType\":\"{f.type}\",\"isRequired\":true}}"));
+
+        return $$"""
+            {
+              "workflowName": "{{workflowName}}",
+              "kind": "CodeBased",
+              "inputFields": [
+                {{fieldsJson}}
+              ],
+              "outputFields": []
+            }
+            """;
     }
 
     private static async Task RunAutoRegisterAsync(ExtractOptions options, IReadOnlyList<ExtractedRuleDefinition> definitions)
@@ -221,6 +271,9 @@ internal static class ExtractCommand
         public string DispatcherSuffix { get; init; } = "GeneratedRuleEngineDispatcher";
         public string? WorkflowName { get; init; }
 
+        // ── Proliferate flag (CLI-only, no config fallback) ──
+        public bool Proliferate { get; init; }
+
         public static ExtractOptions FromContext(CommandContext context)
         {
             RuleGenExtractConfig cfg = context.Config.Extract;
@@ -273,7 +326,9 @@ internal static class ExtractCommand
                 DispatcherOverwrite = OptionReader.GetBool(context, "dispatcher-overwrite", cfg.DispatcherOverwrite),
                 DispatcherSuffix = OptionReader.GetString(context, "dispatcher-suffix", cfg.DispatcherSuffix)
                     ?? "GeneratedRuleEngineDispatcher",
-                WorkflowName = OptionReader.GetString(context, "workflow-name", cfg.WorkflowName)
+                WorkflowName = OptionReader.GetString(context, "workflow-name", cfg.WorkflowName),
+                // CLI-only flag: no config fallback
+                Proliferate = OptionReader.GetBool(context, "proliferate", false)
             };
         }
 
