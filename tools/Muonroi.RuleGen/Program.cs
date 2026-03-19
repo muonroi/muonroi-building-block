@@ -28,6 +28,7 @@ internal static class Program
                 "merge" => await MergeCommand.RunAsync(context),
                 "split" => await SplitCommand.RunAsync(context),
                 "watch" => await WatchCommand.RunAsync(context),
+                "proliferate" => await ProliferateCommand.RunAsync(context),
                 "help" or "--help" or "-h" => PrintHelp(),
                 _ => Fail($"Unknown command '{command}'.")
             };
