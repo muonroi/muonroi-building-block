@@ -182,9 +182,8 @@ public class TestReplacementAdvisorTests
 
             report.Recommendation.Should().Be(ReplacementRecommendation.Keep,
                 because: $"coverage < 30% should always be Keep for {kind}");
-            report.RecommendationMessage.Should().Contain("insufficient",
-                because: $"message should mention insufficient coverage for {kind}",
-                StringComparison.OrdinalIgnoreCase);
+            report.RecommendationMessage.ToLowerInvariant().Should().Contain("insufficient",
+                because: $"message should mention insufficient coverage for {kind}");
         }
     }
 

@@ -24,5 +24,7 @@ public interface IPromptBuilder
         IReadOnlyList<string>? focusAreas,
         RuleSetSchema? schema = null,
         FlowGraphAnalysis? flowAnalysis = null,
-        CrossRuleAnalysis? crossRuleAnalysis = null);
+        CrossRuleAnalysis? crossRuleAnalysis = null,
+        BoundaryExtractionResult? boundaries = null,
+        HitPolicyAnalysis? hitPolicyAnalysis = null);
 }
