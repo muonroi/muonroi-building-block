@@ -10,6 +10,55 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 public static class ScenarioParser
 {
     /// <summary>
+    /// Retry prompts appended on each retry to escalate instructions to the AI.
+    /// Index 0 = retry 1, Index 1 = retry 2, Index 2 = retry 3.
+    /// </summary>
+    private static readonly string[] RetryPromptSuffixes =
+    [
+        "\n\nIMPORTANT: You MUST return at least 1 scenario as a JSON array. Do not return an empty array.",
+        "\n\nReturn EXACTLY this JSON structure: [{\"scenario\":\"...\",\"type\":\"technical\",\"reason\":\"...\",\"inputFacts\":{},\"expectedBehavior\":\"...\"}]. Do NOT return empty.",
+        "\n\nGenerate simple boundary test cases. Return a JSON array with at least one item covering a basic input value."
+    ];
+
+    /// <summary>
+    /// Parse with retry: calls <paramref name="aiCall"/> up to <paramref name="maxRetries"/> times.
+    /// If all retries produce 0 scenarios, falls back to <paramref name="syntheticGen"/>.
+    /// Guarantees at least 1 scenario is returned.
+    /// </summary>
+    public static async Task<IReadOnlyList<NeuronScenario>> ParseWithRetry(
+        Func<string, Task<string?>> aiCall,
+        string seedRuleCode,
+        ProliferationContext context,
+        ISyntheticScenarioGenerator syntheticGen,
+        RuleSetSchema schema,
+        int maxRetries = 3)
+    {
+        // Initial call with original prompt (empty suffix = no modification)
+        string? response = await aiCall(string.Empty);
+        if (response is not null)
+        {
+            IReadOnlyList<NeuronScenario> parsed = Parse(response, seedRuleCode, context);
+            if (parsed.Count > 0) return parsed;
+        }
+
+        // Retry with escalating prompt variations
+        for (int i = 0; i < maxRetries && i < RetryPromptSuffixes.Length; i++)
+        {
+            string retrySuffix = RetryPromptSuffixes[i];
+            string? retryResponse = await aiCall(retrySuffix);
+            if (retryResponse is not null)
+            {
+                IReadOnlyList<NeuronScenario> retryParsed = Parse(retryResponse, seedRuleCode, context);
+                if (retryParsed.Count > 0) return retryParsed;
+            }
+        }
+
+        // All retries exhausted — use synthetic fallback
+        IReadOnlyList<NeuronScenario> synthetic = syntheticGen.Generate(seedRuleCode, schema, context);
+        return synthetic;
+    }
+
+    /// <summary>
     /// Parse an AI response string (JSON array) into a list of scenarios.
     /// Handles markdown code fences, skips incomplete entries.
     /// </summary>

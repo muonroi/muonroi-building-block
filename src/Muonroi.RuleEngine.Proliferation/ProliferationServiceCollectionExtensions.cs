@@ -42,6 +42,9 @@ public static class ProliferationServiceCollectionExtensions
         // Shared prompt builder
         services.TryAddSingleton<IPromptBuilder, DefaultPromptBuilder>();
 
+        // Synthetic scenario generator (AI fallback)
+        services.TryAddSingleton<ISyntheticScenarioGenerator, SyntheticScenarioGenerator>();
+
         // Brain provider factory — single or composite
         services.TryAddSingleton<IRuleProliferationBrain>(sp =>
         {
@@ -130,15 +133,16 @@ public static class ProliferationServiceCollectionExtensions
         var prompt = sp.GetRequiredService<IPromptBuilder>();
         var factory = sp.GetRequiredService<IHttpClientFactory>();
         var logFactory = sp.GetService<IMLogFactory>();
+        var syntheticGen = sp.GetService<ISyntheticScenarioGenerator>();
 
         return providerName?.ToLowerInvariant() switch
         {
             "openai" => new OpenAiProliferationBrain(factory, opts, prompt,
-                logFactory?.CreateLogger<OpenAiProliferationBrain>()),
+                logFactory?.CreateLogger<OpenAiProliferationBrain>(), syntheticGen),
             "claude" => new ClaudeProliferationBrain(factory, opts, prompt,
-                logFactory?.CreateLogger<ClaudeProliferationBrain>()),
+                logFactory?.CreateLogger<ClaudeProliferationBrain>(), syntheticGen),
             _ => new OllamaProliferationBrain(factory, opts, prompt,
-                logFactory?.CreateLogger<OllamaProliferationBrain>())
+                logFactory?.CreateLogger<OllamaProliferationBrain>(), syntheticGen)
         };
     }
 }

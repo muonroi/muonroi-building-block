@@ -10,7 +10,8 @@ public sealed class OllamaProliferationBrain(
     IHttpClientFactory httpClientFactory,
     ProliferationOptions options,
     IPromptBuilder promptBuilder,
-    IMLog<OllamaProliferationBrain>? logger = null) : IRuleProliferationBrain
+    IMLog<OllamaProliferationBrain>? logger = null,
+    ISyntheticScenarioGenerator? syntheticGen = null) : IRuleProliferationBrain
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -46,31 +47,44 @@ public sealed class OllamaProliferationBrain(
 
         // Try primary model, fallback on failure
         string model = options.PrimaryModel;
-        string? aiResponse = await CallOllamaAsync(model, systemPrompt, userPrompt, ct);
+        string? firstResponse = await CallOllamaAsync(model, systemPrompt, userPrompt, ct);
 
-        if (aiResponse is null && !string.IsNullOrWhiteSpace(options.FallbackModel))
+        if (firstResponse is null && !string.IsNullOrWhiteSpace(options.FallbackModel))
         {
             logger?.Warn("Primary model {Model} failed, falling back to {Fallback}", model, options.FallbackModel);
             model = options.FallbackModel;
-            aiResponse = await CallOllamaAsync(model, systemPrompt, userPrompt, ct);
+            firstResponse = await CallOllamaAsync(model, systemPrompt, userPrompt, ct);
         }
 
         sw.Stop();
 
-        if (aiResponse is null)
+        // Use ParseWithRetry: if initial response parses to 0 scenarios, retry with varied prompts,
+        // then fall back to synthetic generator if all retries fail.
+        ISyntheticScenarioGenerator effectiveSyntheticGen = syntheticGen ?? new SyntheticScenarioGenerator();
+
+        IReadOnlyList<NeuronScenario> scenarios;
+        if (firstResponse is null)
         {
             logger?.Error(null, "Both primary and fallback models failed for seed rule {SeedRule}", seedRuleCode);
-            return new ProliferationPlan
-            {
-                SeedRuleCode = seedRuleCode,
-                Scope = context.Scope,
-                AiModelUsed = model,
-                Scenarios = [],
-                GenerationDuration = sw.Elapsed
-            };
+            // Try synthetic fallback directly
+            scenarios = effectiveSyntheticGen.Generate(seedRuleCode, schema, context);
         }
-
-        IReadOnlyList<NeuronScenario> scenarios = ScenarioParser.Parse(aiResponse, seedRuleCode, context);
+        else
+        {
+            // Parse initial response; if empty, retry via ParseWithRetry
+            IReadOnlyList<NeuronScenario> initial = ScenarioParser.Parse(firstResponse, seedRuleCode, context);
+            if (initial.Count > 0)
+            {
+                scenarios = initial;
+            }
+            else
+            {
+                // Retry with escalating prompts
+                scenarios = await ScenarioParser.ParseWithRetry(
+                    async (suffix) => await CallOllamaAsync(model, systemPrompt, userPrompt + suffix, ct),
+                    seedRuleCode, context, effectiveSyntheticGen, schema);
+            }
+        }
 
         return new ProliferationPlan
         {
