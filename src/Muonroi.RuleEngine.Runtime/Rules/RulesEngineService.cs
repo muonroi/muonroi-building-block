@@ -1103,6 +1103,28 @@ public sealed class RulesEngineService(
             }
         }
 
+        // Type B-6: Action with output fields only (no expression)
+        // These nodes only compute FEEL output fields without a boolean gate.
+        // We create a FeelRuleAdapter with a "true" expression so it always passes
+        // and the output fields are evaluated.
+        if (entry.OutputFields is { Count: > 0 })
+        {
+            IMLog<FeelRuleAdapter<TContext>>? feelLog =
+                _serviceProvider?.GetService<IMLog<FeelRuleAdapter<TContext>>>();
+            if (feelLog is not null)
+            {
+                _log?.Info("Resolved node '{NodeId}' as action-only FEEL adapter (output fields only).", entry.NodeId);
+                return WrapRuleEntry(
+                    new FeelRuleAdapter<TContext>(
+                        entry.NodeId,
+                        "true",
+                        entry.OutputFields,
+                        projector,
+                        feelLog),
+                    entry);
+            }
+        }
+
         // Skip trigger/end/unknown nodes
         return null;
     }
