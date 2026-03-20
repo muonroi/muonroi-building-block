@@ -30,12 +30,14 @@ public static class LicenseInfoEndpointExtensions
             ILicenseStore? store = context.RequestServices.GetService<ILicenseStore>();
 
             string? activationJwt = store?.LoadActivationJwt();
+            string? publicKeyPem = store?.LoadPublicKeyPem();
 
             return Results.Ok(new LicenseInfoResponse
             {
                 Tier = state?.TrustedTier.ToString() ?? "Free",
                 IsValid = state?.IsValid ?? false,
-                ActivationProof = activationJwt
+                ActivationProof = activationJwt,
+                PublicKeyPem = publicKeyPem
             });
         })
         .WithTags("License")
@@ -55,4 +57,10 @@ internal sealed class LicenseInfoResponse
     /// Null if no activation JWT is available.
     /// </summary>
     public string? ActivationProof { get; init; }
+
+    /// <summary>
+    /// RSA public key PEM for frontend JWT signature verification.
+    /// Allows self-hosted deployments with custom signing keys.
+    /// </summary>
+    public string? PublicKeyPem { get; init; }
 }

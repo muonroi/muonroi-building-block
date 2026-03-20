@@ -17,4 +17,10 @@ public interface ILicenseStore
     /// Saves the activation JWT string to disk for frontend consumption.
     /// </summary>
     void SaveActivationJwt(string jwt);
+
+    /// <summary>
+    /// Loads the RSA public key PEM used to verify the activation JWT.
+    /// Returns null if no public key file exists.
+    /// </summary>
+    string? LoadPublicKeyPem() => null;
 }
