@@ -85,7 +85,7 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
         foreach (ConstructorInfo ctor in contextType.GetConstructors())
         {
             ParameterInfo[] parameters = ctor.GetParameters();
-            if (parameters.Length >= 1 && parameters[0].ParameterType.IsAssignableFrom(typeof(DbContextOptions)))
+            if (parameters.Length >= 1 && parameters[0].ParameterType.IsAssignableFrom(typeof(DbContextOptions<TContext>)))
             {
                 object?[] ctorArgs = new object?[parameters.Length];
                 ctorArgs[0] = builder.Options;
