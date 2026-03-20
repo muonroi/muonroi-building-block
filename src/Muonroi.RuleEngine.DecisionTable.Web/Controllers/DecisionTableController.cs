@@ -3,13 +3,28 @@ using System.Xml.Linq;
 
 namespace Muonroi.RuleEngine.DecisionTable.Web.Controllers;
 
+/// <summary>
+/// API endpoints for managing decision tables.
+/// </summary>
 [ApiController]
 [Route("api/v1/decision-tables")]
+[Route("api/v1/rule-engine/decision-tables")]
 public sealed class DecisionTableController(
     IDecisionTableStore store,
     DecisionTableValidator validator,
     IDecisionTableExecutor executor) : ControllerBase
 {
+    /// <summary>
+    /// Lists decision tables with filters and pagination.
+    /// </summary>
+    /// <param name="page">Page number.</param>
+    /// <param name="pageSize">Page size.</param>
+    /// <param name="search">Optional search term.</param>
+    /// <param name="tenantId">Optional tenant id filter.</param>
+    /// <param name="hitPolicy">Optional hit policy filter.</param>
+    /// <param name="includeDeleted">Include soft-deleted tables.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The decision table page.</returns>
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] int page = 1,
@@ -34,6 +49,12 @@ public sealed class DecisionTableController(
         return Ok(result);
     }
 
+    /// <summary>
+    /// Gets a decision table by identifier.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The decision table.</returns>
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(string id, CancellationToken cancellationToken = default)
     {
@@ -41,6 +62,12 @@ public sealed class DecisionTableController(
         return table is null ? NotFound() : Ok(table);
     }
 
+    /// <summary>
+    /// Creates a decision table.
+    /// </summary>
+    /// <param name="table">Decision table payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The created decision table.</returns>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] DecisionTableModel table, CancellationToken cancellationToken = default)
     {
@@ -59,6 +86,13 @@ public sealed class DecisionTableController(
         return CreatedAtAction(nameof(Get), new { id = table.Id }, table);
     }
 
+    /// <summary>
+    /// Updates an existing decision table.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="table">Decision table payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The updated decision table.</returns>
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(string id, [FromBody] DecisionTableModel table, CancellationToken cancellationToken = default)
     {
@@ -82,6 +116,12 @@ public sealed class DecisionTableController(
         return Ok(persisted ?? table);
     }
 
+    /// <summary>
+    /// Bulk creates or updates decision tables.
+    /// </summary>
+    /// <param name="request">Bulk upsert request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The bulk upsert result.</returns>
     [HttpPost("bulk/upsert")]
     public async Task<IActionResult> BulkUpsert(
         [FromBody] DecisionTableBulkUpsertRequest request,
@@ -110,6 +150,12 @@ public sealed class DecisionTableController(
         return Ok(result);
     }
 
+    /// <summary>
+    /// Bulk deletes decision tables by id.
+    /// </summary>
+    /// <param name="request">Bulk delete request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The bulk delete result.</returns>
     [HttpPost("bulk/delete")]
     public async Task<IActionResult> BulkDelete(
         [FromBody] DecisionTableBulkDeleteRequest request,
@@ -124,6 +170,14 @@ public sealed class DecisionTableController(
         return Ok(result);
     }
 
+    /// <summary>
+    /// Imports a decision table from a file.
+    /// </summary>
+    /// <param name="file">Input file.</param>
+    /// <param name="format">Optional format override.</param>
+    /// <param name="tenantId">Optional tenant id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The imported decision table.</returns>
     [HttpPost("import")]
     [RequestSizeLimit(25 * 1024 * 1024)]
     public async Task<IActionResult> Import(
@@ -173,6 +227,13 @@ public sealed class DecisionTableController(
         return CreatedAtAction(nameof(Get), new { id = table.Id }, table);
     }
 
+    /// <summary>
+    /// Reorders rows for a decision table.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="request">Reorder request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The updated decision table.</returns>
     [HttpPost("{id}/rows/reorder")]
     public async Task<IActionResult> ReorderRows(
         string id,
@@ -200,6 +261,13 @@ public sealed class DecisionTableController(
         return Ok(table);
     }
 
+    /// <summary>
+    /// Executes a decision table with provided inputs.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="request">Execution request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The execution result.</returns>
     [HttpPost("{id}/execute")]
     public async Task<IActionResult> Execute(
         string id,
@@ -242,6 +310,14 @@ public sealed class DecisionTableController(
         });
     }
 
+    /// <summary>
+    /// Returns version history for a decision table.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="page">Page number.</param>
+    /// <param name="pageSize">Page size.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The version history.</returns>
     [HttpGet("{id}/versions")]
     public async Task<IActionResult> GetVersionHistory(
         string id,
@@ -253,6 +329,13 @@ public sealed class DecisionTableController(
         return Ok(versions);
     }
 
+    /// <summary>
+    /// Gets a decision table version snapshot.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="version">Version number.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The version snapshot.</returns>
     [HttpGet("{id}/versions/{version:int}")]
     public async Task<IActionResult> GetVersion(string id, int version, CancellationToken cancellationToken = default)
     {
@@ -260,6 +343,14 @@ public sealed class DecisionTableController(
         return snapshot is null ? NotFound() : Ok(snapshot);
     }
 
+    /// <summary>
+    /// Returns audit trail entries for a decision table.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="page">Page number.</param>
+    /// <param name="pageSize">Page size.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The audit trail entries.</returns>
     [HttpGet("{id}/audit")]
     public async Task<IActionResult> GetAuditTrail(
         string id,
@@ -271,6 +362,13 @@ public sealed class DecisionTableController(
         return Ok(entries);
     }
 
+    /// <summary>
+    /// Returns a global audit trail across decision tables.
+    /// </summary>
+    /// <param name="page">Page number.</param>
+    /// <param name="pageSize">Page size.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The audit trail entries.</returns>
     [HttpGet("audit")]
     public async Task<IActionResult> GetAuditTrailGlobal(
         [FromQuery] int page = 1,
@@ -281,6 +379,12 @@ public sealed class DecisionTableController(
         return Ok(entries);
     }
 
+    /// <summary>
+    /// Deletes a decision table by id.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No content on success.</returns>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken = default)
     {

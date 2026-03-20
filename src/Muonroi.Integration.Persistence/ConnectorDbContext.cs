@@ -9,12 +9,17 @@ namespace Muonroi.Integration.Persistence;
 /// </summary>
 public class ConnectorDbContext : DbContext
 {
+    /// <summary>Connector configurations.</summary>
     public DbSet<ConnectorConfigEntity> ConnectorConfigs => Set<ConnectorConfigEntity>();
+    /// <summary>Connector credentials.</summary>
     public DbSet<ConnectorCredentialEntity> ConnectorCredentials => Set<ConnectorCredentialEntity>();
 
+    /// <summary>Creates a new connector persistence context.</summary>
+    /// <param name="options">DbContext options.</param>
     public ConnectorDbContext(DbContextOptions<ConnectorDbContext> options)
         : base(options) { }
 
+    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

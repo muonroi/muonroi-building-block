@@ -16,6 +16,9 @@ public sealed class ChainSubmitter(
 {
     private readonly LicenseState _licenseState = licenseState ?? LicenseState.CreateFree();
 
+    /// <summary>
+    /// Executes the Submit Async operation.
+    /// </summary>
     public async Task<ChainSubmissionResponse> SubmitAsync(IEnumerable<FingerprintChainEntry> entries, string? tenantId,
         CancellationToken cancellationToken = default)
     {
@@ -478,18 +481,45 @@ public sealed class ChainSubmitter(
     }
 }
 
+/// <summary>
+/// Represents the Chain Submission Request.
+/// </summary>
 public sealed class ChainSubmissionRequest
 {
+    /// <summary>
+    /// Gets or sets the License Id.
+    /// </summary>
     public string LicenseId { get; set; } = string.Empty;
+    /// <summary>
+    /// Gets or sets the Tenant Id.
+    /// </summary>
     public string? TenantId { get; set; }
+    /// <summary>
+    /// Gets or sets the Entries.
+    /// </summary>
     public List<FingerprintChainEntry> Entries { get; set; } = [];
+    /// <summary>
+    /// Gets or sets the Submitted At.
+    /// </summary>
     public DateTimeOffset SubmittedAt { get; set; }
 }
 
+/// <summary>
+/// Represents the Chain Submission Response.
+/// </summary>
 public sealed class ChainSubmissionResponse
 {
+    /// <summary>
+    /// Gets or sets the Accepted.
+    /// </summary>
     public bool Accepted { get; set; }
+    /// <summary>
+    /// Gets or sets the New Nonce.
+    /// </summary>
     public string? NewNonce { get; set; }
+    /// <summary>
+    /// Gets or sets the Error.
+    /// </summary>
     public string? Error { get; set; }
 
     /// <summary>

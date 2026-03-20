@@ -3,8 +3,16 @@ using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Validators;
 
+/// <summary>
+/// Detects overlapping rows across multiple input columns.
+/// </summary>
 public sealed class MultiColumnOverlapDetector
 {
+    /// <summary>
+    /// Detects conflicts when the hit policy requires uniqueness.
+    /// </summary>
+    /// <param name="table">Decision table to inspect.</param>
+    /// <returns>List of conflict reports.</returns>
     public IReadOnlyList<ConflictReport> Detect(DecisionTableModel table)
     {
         if (table.HitPolicy != HitPolicy.Unique)
@@ -117,9 +125,15 @@ public sealed class MultiColumnOverlapDetector
     }
 }
 
+/// <summary>
+/// Describes an overlap conflict between two rows.
+/// </summary>
 public sealed class ConflictReport
 {
+    /// <summary>Order index of the first row.</summary>
     public int Row1Index { get; init; }
+    /// <summary>Order index of the second row.</summary>
     public int Row2Index { get; init; }
+    /// <summary>Human-readable conflict description.</summary>
     public string Description { get; init; } = string.Empty;
 }

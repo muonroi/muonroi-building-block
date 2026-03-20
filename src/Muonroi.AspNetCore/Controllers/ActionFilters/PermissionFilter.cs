@@ -1,8 +1,10 @@
 namespace Muonroi.AspNetCore.Controllers.ActionFilters;
 
+/// <inheritdoc />
 public class PermissionFilter<TPermission>(IMLog<PermissionFilter<TPermission>> logger)
     : IAsyncActionFilter where TPermission : Enum
 {
+/// <inheritdoc />
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         Endpoint? endpoint = context.HttpContext.GetEndpoint();

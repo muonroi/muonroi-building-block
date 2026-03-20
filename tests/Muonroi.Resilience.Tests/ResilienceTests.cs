@@ -1,42 +1,35 @@
-namespace Muonroi.Resilience.Tests;
-
-using System;
-using System.Threading.Tasks;
-using Muonroi.Resilience.Policies;
-using Muonroi.Logging.Abstractions;
 using Moq;
-using Xunit;
+using Muonroi.Logging.Abstractions;
+using Muonroi.Resilience.Policies;
 using Polly;
+using Xunit;
 
+namespace Muonroi.Resilience.Tests;
 public class ResilienceTests
 {
     [Fact]
     public async Task CreateDefaultPipeline_Retry_ShouldExecuteMultipleTimes()
     {
         // Arrange
-        var loggerMock = new Mock<IMLog<PolicyHandler>>();
-        var handler = new PolicyHandler(loggerMock.Object);
-        var pipeline = handler.CreateDefaultPipeline<string>("TestService");
-        
+        Mock<IMLog<PolicyHandler>> loggerMock = new();
+        PolicyHandler handler = new(loggerMock.Object);
+        ResiliencePipeline<string> pipeline = handler.CreateDefaultPipeline<string>("TestService");
+
         int executions = 0;
 
         // Act
-        try
+        await Assert.ThrowsAsync<Exception>(async () =>
         {
-            await pipeline.ExecuteAsync(async ct =>
+            await pipeline.ExecuteAsync(ct =>
             {
                 executions++;
-                throw new Exception("Failure");
-                return await Task.FromResult("Success");
+
+                return ValueTask.FromException<string>(
+                    new Exception("Failure"));
             });
-        }
-        catch
-        {
-            // Expected
-        }
+        });
 
         // Assert
-        // Initial try + 3 retries = 4
         Assert.Equal(4, executions);
     }
 }

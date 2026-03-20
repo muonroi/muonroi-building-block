@@ -14,11 +14,17 @@ public class EcsPublishLoggingFilter<T>(
 {
     private readonly LicenseState _licenseState = licenseState ?? licenseGuard?.Current ?? LicenseState.CreateFree();
 
+    /// <summary>
+    /// Executes the Ecs Publish Logging Filter operation.
+    /// </summary>
     public EcsPublishLoggingFilter(LicenseState? licenseState)
         : this(null, licenseState, null, null)
     {
     }
 
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(PublishContext<T> context, IPipe<PublishContext<T>> next)
     {
         EnsureMessageBusLicensed();
@@ -72,6 +78,9 @@ public class EcsPublishLoggingFilter<T>(
         }
     }
 
+    /// <summary>
+    /// Executes the Probe operation.
+    /// </summary>
     public void Probe(ProbeContext context)
     {
     }

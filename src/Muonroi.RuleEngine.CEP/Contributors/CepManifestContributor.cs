@@ -4,12 +4,19 @@ using Muonroi.Core.Abstractions.Models;
 
 namespace Muonroi.RuleEngine.CEP.Contributors;
 
+/// <summary>
+/// Contributes CEP entries to the UI engine manifest.
+/// </summary>
 public sealed class CepManifestContributor : IUiEngineManifestContributor
 {
+    /// <inheritdoc/>
     public int Order => 120;
+    /// <inheritdoc/>
     public string ModuleId => "cep";
+    /// <inheritdoc/>
     public string RequiredTier => "Professional";
 
+    /// <inheritdoc/>
     public Task ContributeAsync(UiEngineManifestContext context, CancellationToken ct = default)
     {
         _ = ct;

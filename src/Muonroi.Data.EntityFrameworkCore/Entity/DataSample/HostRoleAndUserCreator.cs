@@ -1,7 +1,16 @@
 namespace Muonroi.Data.EntityFrameworkCore.Entity.DataSample;
 
+/// <summary>
+/// Seeds the host admin role, user, and default permissions.
+/// </summary>
+/// <typeparam name="TContext">The EF Core context type.</typeparam>
+/// <param name="context">The database context.</param>
+/// <param name="dateTimeService">The date/time service.</param>
 public class HostRoleAndUserCreator<TContext>(TContext context, IMDateTimeService dateTimeService) where TContext : MDbContext
 {
+    /// <summary>
+    /// Creates the host admin role and user, plus default permissions when missing.
+    /// </summary>
     public void Create()
     {
         List<string> permissionName =

@@ -3,8 +3,16 @@ using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Validators;
 
+/// <summary>
+/// Detects redundant rows that are shadowed by earlier rows.
+/// </summary>
 public sealed class RedundancyDetector
 {
+    /// <summary>
+    /// Detects redundant rows when hit policy is First.
+    /// </summary>
+    /// <param name="table">Decision table to inspect.</param>
+    /// <returns>List of redundancy reports.</returns>
     public IReadOnlyList<RedundancyReport> Detect(DecisionTableModel table)
     {
         if (table.HitPolicy != HitPolicy.First)
@@ -115,8 +123,13 @@ public sealed class RedundancyDetector
     }
 }
 
+/// <summary>
+/// Describes a redundant row in a decision table.
+/// </summary>
 public sealed class RedundancyReport
 {
+    /// <summary>Order index of the redundant row.</summary>
     public int RowIndex { get; init; }
+    /// <summary>Human-readable description of the redundancy.</summary>
     public string Description { get; init; } = string.Empty;
 }

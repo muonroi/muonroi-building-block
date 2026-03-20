@@ -29,11 +29,10 @@ public sealed class InMemoryRuleChangeProposalStore(IMDateTimeService dateTimeSe
         {
             TenantId = NormalizeTenantId(request.TenantId),
             EndpointRoute = NormalizeRoute(request.EndpointRoute),
-            OrderedRuleCodes = request.OrderedRuleCodes
+            OrderedRuleCodes = [.. request.OrderedRuleCodes
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(x => x.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList(),
+                .Distinct(StringComparer.OrdinalIgnoreCase)],
             ProposedBy = string.IsNullOrWhiteSpace(proposedBy) ? "system" : proposedBy,
             ProposedAtUtc = dateTimeService.UtcNow(),
             ReviewNote = request.Note,

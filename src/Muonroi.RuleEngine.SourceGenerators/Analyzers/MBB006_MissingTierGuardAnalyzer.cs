@@ -9,8 +9,11 @@ using System.Linq;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Analyzers;
 
+/// <summary>
+/// Analyzer for the MBB006 diagnostic.
+/// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class MBB006_MissingTierGuardAnalyzer : DiagnosticAnalyzer
+public sealed class Mbb006_MissingTierGuardAnalyzer : DiagnosticAnalyzer
 {
     private static readonly HashSet<string> GuardedRegistrationCalls =
     [
@@ -22,9 +25,11 @@ public sealed class MBB006_MissingTierGuardAnalyzer : DiagnosticAnalyzer
         "AddObservability"
     ];
 
+    /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(MBBDiagnosticDescriptors.MBB006MissingTierGuard);
+        [MBBDiagnosticDescriptors.MBB006MissingTierGuard];
 
+    /// <inheritdoc/>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -39,7 +44,7 @@ public sealed class MBB006_MissingTierGuardAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        string methodName = MBBAnalyzerHelpers.GetInvokedMethodName(invocation);
+        string methodName = MbbAnalyzerHelpers.GetInvokedMethodName(invocation);
         if (!GuardedRegistrationCalls.Contains(methodName))
         {
             return;

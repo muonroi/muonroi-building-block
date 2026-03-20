@@ -3,11 +3,22 @@ using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Converters;
 
+/// <summary>
+/// Converts decision tables into executable rule instances.
+/// </summary>
+/// <param name="feelEvaluator">Optional FEEL evaluator for input expressions.</param>
 public sealed class DecisionTableToRuleConverter(IFeelCellEvaluator? feelEvaluator = null)
 {
     private readonly IFeelCellEvaluator _feelEvaluator =
         feelEvaluator ?? new FullFeelCellEvaluator(new SimplifiedFeelCellEvaluator());
 
+    /// <summary>
+    /// Converts the table into rules using the provided evaluator and context projector.
+    /// </summary>
+    /// <typeparam name="TContext">Rule context type.</typeparam>
+    /// <param name="table">Decision table to convert.</param>
+    /// <param name="contextProjector">Optional projector from context to fact dictionary.</param>
+    /// <returns>Rule list derived from the table.</returns>
     public IReadOnlyList<IRule<TContext>> ConvertWithEvaluator<TContext>(
         DecisionTableModel table,
         Func<TContext, IDictionary<string, object?>>? contextProjector = null)
@@ -21,6 +32,13 @@ public sealed class DecisionTableToRuleConverter(IFeelCellEvaluator? feelEvaluat
             .ToArray();
     }
 
+    /// <summary>
+    /// Converts the table into rules using the default evaluator.
+    /// </summary>
+    /// <typeparam name="TContext">Rule context type.</typeparam>
+    /// <param name="table">Decision table to convert.</param>
+    /// <param name="contextProjector">Optional projector from context to fact dictionary.</param>
+    /// <returns>Rule list derived from the table.</returns>
     public static IReadOnlyList<IRule<TContext>> Convert<TContext>(
         DecisionTableModel table,
         Func<TContext, IDictionary<string, object?>>? contextProjector = null)

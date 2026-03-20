@@ -1,7 +1,16 @@
 namespace Muonroi.Tenancy.Core.Legacy;
 
+/// <summary>
+/// Service registration helpers for legacy tenant context components.
+/// </summary>
 public static class TenantServiceCollectionExtensions
 {
+    /// <summary>
+    /// Registers the tenant context services and middleware.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">Optional configuration for multi-tenant settings.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddTenantContext(
         this IServiceCollection services,
         IConfiguration? configuration = null)
@@ -62,6 +71,12 @@ public static class TenantServiceCollectionExtensions
         }
     }
 
+    /// <summary>
+    /// Registers a custom tenant identifier resolver.
+    /// </summary>
+    /// <typeparam name="Tr">The resolver type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddTenantIdResolver<Tr>(this IServiceCollection services)
         where Tr : class, ITenantIdResolver
     {

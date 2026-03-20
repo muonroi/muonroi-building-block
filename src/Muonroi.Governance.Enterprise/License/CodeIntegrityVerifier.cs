@@ -13,6 +13,9 @@ public sealed class CodeIntegrityVerifier(
     private readonly IAssemblyHashCollector _assemblyHashCollector =
         assemblyHashCollector ?? throw new ArgumentNullException(nameof(assemblyHashCollector));
 
+    /// <summary>
+    /// Executes the Verify Integrity operation.
+    /// </summary>
     public bool VerifyIntegrity(LicenseState state, bool throwOnFailure = false)
     {
         ArgumentNullException.ThrowIfNull(state);

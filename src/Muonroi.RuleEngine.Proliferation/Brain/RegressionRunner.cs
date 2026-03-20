@@ -27,6 +27,7 @@ public sealed record RegressionReport(
 /// </summary>
 public interface IRegressionRunner
 {
+    /// <summary>Runs regression checks for the given workflow version.</summary>
     Task<RegressionReport> RunRegressionAsync(
         string workflowName,
         int newVersion,
@@ -42,6 +43,7 @@ public sealed class DefaultRegressionRunner(
     IProliferationStore store,
     IScenarioExecutor executor) : IRegressionRunner
 {
+    /// <summary>Re-runs passed scenarios to detect new failures.</summary>
     public async Task<RegressionReport> RunRegressionAsync(
         string workflowName,
         int newVersion,
@@ -51,9 +53,7 @@ public sealed class DefaultRegressionRunner(
         IReadOnlyList<NeuronScenario> allScenarios = await store.GetScenariosBySeedAsync(workflowName, ct);
 
         // Filter only previously passed scenarios
-        List<NeuronScenario> passedScenarios = allScenarios
-            .Where(s => s.Status == ScenarioStatus.Passed)
-            .ToList();
+        List<NeuronScenario> passedScenarios = [.. allScenarios.Where(s => s.Status == ScenarioStatus.Passed)];
 
         if (passedScenarios.Count == 0)
         {

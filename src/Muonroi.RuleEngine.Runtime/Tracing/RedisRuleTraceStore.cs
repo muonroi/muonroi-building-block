@@ -2,6 +2,9 @@ using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
+/// <summary>
+/// Redis-backed store for rule execution traces.
+/// </summary>
 public sealed class RedisRuleTraceStore(
     IConnectionMultiplexer connectionMultiplexer,
     IOptions<RuleTracingOptions> options,
@@ -11,6 +14,7 @@ public sealed class RedisRuleTraceStore(
         connectionMultiplexer ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
     private readonly RuleTracingOptions _options = options?.Value ?? new RuleTracingOptions();
 
+    /// <summary>Saves a trace entry with the specified TTL.</summary>
     public async ValueTask SaveAsync(RuleTraceEntry entry, TimeSpan ttl, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -27,6 +31,7 @@ public sealed class RedisRuleTraceStore(
         await db.StringSetAsync(key, payload, ttl);
     }
 
+    /// <summary>Queries trace entries for a tenant and optional correlation.</summary>
     public async ValueTask<IReadOnlyList<RuleTraceEntry>> QueryAsync(
         string tenantId,
         string? correlationId,

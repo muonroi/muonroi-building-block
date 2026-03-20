@@ -22,12 +22,15 @@ using System.Text.Json.Serialization;
 
 namespace Muonroi.AspNetCore.Extensions;
 
+/// <inheritdoc />
 public static class InfrastructureExtensions
 {
     private sealed class InfrastructureExtensionsLogger { }
 
+/// <inheritdoc />
     public static readonly Assembly? EntryAssembly = Assembly.GetEntryAssembly();
 
+/// <inheritdoc />
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -144,6 +147,7 @@ public static class InfrastructureExtensions
         return services;
     }
 
+/// <inheritdoc />
     public static IServiceCollection AddPermissionFilter<TPermission>(this IServiceCollection services)
         where TPermission : Enum
     {
@@ -153,6 +157,7 @@ public static class InfrastructureExtensions
         return services;
     }
 
+/// <inheritdoc />
     public static IApplicationBuilder UseDefaultMiddleware(this IApplicationBuilder app)
     {
         ArgumentNullException.ThrowIfNull(app);
@@ -169,6 +174,7 @@ public static class InfrastructureExtensions
         return app;
     }
 
+/// <inheritdoc />
     public static void AddAutofacConfiguration(this WebApplicationBuilder builder)
     {
         _ = builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
@@ -183,6 +189,7 @@ public static class InfrastructureExtensions
         builder.RegisterModule(new AuthContextModule());
         return builder;
     }
+/// <inheritdoc />
     public static IApplicationBuilder ConfigureEndpoints(this WebApplication app, bool mapHealthChecks = true)
     {
         ArgumentNullException.ThrowIfNull(app);
@@ -256,6 +263,7 @@ public static class InfrastructureExtensions
         return app;
     }
 
+/// <inheritdoc />
     public static IServiceCollection AddValidateBearerToken<TDbContext, TPermission>(
         this IServiceCollection services,
         IConfiguration configuration)

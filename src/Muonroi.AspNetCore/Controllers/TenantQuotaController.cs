@@ -1,5 +1,6 @@
 namespace Muonroi.AspNetCore.Controllers;
 
+/// <inheritdoc />
 [ApiController]
 [Route("api/v1/tenants/{tenantId}/quotas")]
 [Authorize]
@@ -7,6 +8,7 @@ public sealed class TenantQuotaController(
     ITenantQuotaTracker quotaTracker,
     ITenantQuotaStore quotaStore) : ControllerBase
 {
+/// <inheritdoc />
     [HttpGet("usage")]
     public async Task<IActionResult> GetUsage(string tenantId, CancellationToken ct = default)
     {
@@ -19,6 +21,7 @@ public sealed class TenantQuotaController(
         return Ok(usage);
     }
 
+/// <inheritdoc />
     [HttpGet("limits")]
     public async Task<IActionResult> GetLimits(string tenantId, CancellationToken ct = default)
     {
@@ -32,6 +35,7 @@ public sealed class TenantQuotaController(
         return Ok(quota);
     }
 
+/// <inheritdoc />
     [HttpPut("limits")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateLimits(string tenantId, [FromBody] TenantQuota quota, CancellationToken ct = default)
@@ -41,6 +45,7 @@ public sealed class TenantQuotaController(
         return Ok(quota);
     }
 
+/// <inheritdoc />
     [HttpPost("upgrade")]
     public async Task<IActionResult> UpgradeTier(string tenantId, [FromBody] UpgradeRequest request, CancellationToken ct = default)
     {
@@ -72,4 +77,5 @@ public sealed class TenantQuotaController(
     }
 }
 
+/// <inheritdoc />
 public sealed record UpgradeRequest(TenantTier Tier);

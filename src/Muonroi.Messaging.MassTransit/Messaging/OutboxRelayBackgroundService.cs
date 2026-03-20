@@ -8,6 +8,9 @@ using Muonroi.Messaging.Abstractions.Events;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Outbox Relay Background Service.
+/// </summary>
 public class OutboxRelayBackgroundService(
     IServiceProvider serviceProvider,
     IOptions<MessageBusConfigs> options,
@@ -17,6 +20,9 @@ public class OutboxRelayBackgroundService(
 {
     private readonly OutboxRelayConfigs _configs = options.Value.OutboxRelay;
 
+    /// <summary>
+    /// Executes the Execute Async operation.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (!_configs.Enabled)
@@ -42,6 +48,9 @@ public class OutboxRelayBackgroundService(
         }
     }
 
+    /// <summary>
+    /// Executes the Relay Pending Async operation.
+    /// </summary>
     public async Task RelayPendingAsync(CancellationToken cancellationToken = default)
     {
         using IServiceScope scope = serviceProvider.CreateScope();
@@ -56,11 +65,10 @@ public class OutboxRelayBackgroundService(
         IMJsonSerializeService jsonService = scope.ServiceProvider.GetRequiredService<IMJsonSerializeService>();
         IPublishEndpoint publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
-        List<EventOutbox> pendingEvents = store.EventOutboxes
+        List<EventOutbox> pendingEvents = [.. store.EventOutboxes
             .Where(x => x.Status == EventOutboxStatus.Pending)
             .OrderBy(x => x.CreationTime)
-            .Take(_configs.BatchSize)
-            .ToList();
+            .Take(_configs.BatchSize)];
 
         if (pendingEvents.Count == 0)
         {

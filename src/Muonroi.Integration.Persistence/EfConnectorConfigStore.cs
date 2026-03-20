@@ -11,11 +11,14 @@ public sealed class EfConnectorConfigStore : IConnectorConfigStore
 {
     private readonly ConnectorDbContext _db;
 
+    /// <summary>Creates a new EF-backed connector config store.</summary>
+    /// <param name="db">Connector database context.</param>
     public EfConnectorConfigStore(ConnectorDbContext db)
     {
         _db = db;
     }
 
+    /// <inheritdoc />
     public async Task<ConnectorConfigDto?> GetByIdAsync(string id, string? tenantId, CancellationToken ct)
     {
         ConnectorConfigEntity? entity = await _db.ConnectorConfigs
@@ -23,6 +26,7 @@ public sealed class EfConnectorConfigStore : IConnectorConfigStore
         return entity is null ? null : ToDto(entity);
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<ConnectorConfigDto>> ListAsync(string? tenantId, CancellationToken ct)
     {
         List<ConnectorConfigEntity> entities = await _db.ConnectorConfigs
@@ -31,6 +35,7 @@ public sealed class EfConnectorConfigStore : IConnectorConfigStore
         return entities.Select(ToDto).ToList();
     }
 
+    /// <inheritdoc />
     public async Task<ConnectorConfigDto> SaveAsync(ConnectorConfigDto config, CancellationToken ct)
     {
         ConnectorConfigEntity? existing = string.IsNullOrEmpty(config.Id)
@@ -65,6 +70,7 @@ public sealed class EfConnectorConfigStore : IConnectorConfigStore
         return ToDto(existing);
     }
 
+    /// <inheritdoc />
     public async Task DeleteAsync(string id, string? tenantId, CancellationToken ct)
     {
         ConnectorConfigEntity? entity = await _db.ConnectorConfigs

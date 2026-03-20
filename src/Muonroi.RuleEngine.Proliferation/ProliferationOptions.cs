@@ -1,75 +1,106 @@
 namespace Muonroi.RuleEngine.Proliferation;
 
+/// <summary>
+/// Configuration options for the proliferation engine.
+/// </summary>
 public sealed class ProliferationOptions
 {
+    /// <summary>Configuration section name used to bind these options.</summary>
     public const string SectionName = "Proliferation";
 
-    // Brain provider selection: "ollama" | "openai" | "claude"
+    /// <summary>Selected AI provider for brain orchestration.</summary>
     public string BrainProvider { get; set; } = "ollama";
 
-    // Ollama settings
+    /// <summary>Base endpoint for Ollama-compatible requests.</summary>
     public string OllamaEndpoint { get; set; } = "http://127.0.0.1:11434";
+    /// <summary>Primary Ollama model to use.</summary>
     public string PrimaryModel { get; set; } = "qwen2.5-coder:14b-instruct-q5_K_M";
+    /// <summary>Fallback Ollama model to use when the primary model fails.</summary>
     public string FallbackModel { get; set; } = "qwen2.5-coder:7b-instruct-q5_K_M";
 
-    // OpenAI-compatible settings
+    /// <summary>Base endpoint for OpenAI-compatible requests.</summary>
     public string OpenAiEndpoint { get; set; } = "https://api.openai.com";
+    /// <summary>API key used for OpenAI-compatible requests.</summary>
     public string OpenAiApiKey { get; set; } = "";
+    /// <summary>Model name used for OpenAI-compatible requests.</summary>
     public string OpenAiModel { get; set; } = "gpt-4o-mini";
 
-    // Anthropic Claude settings
+    /// <summary>Base endpoint for Claude-compatible requests.</summary>
     public string ClaudeEndpoint { get; set; } = "https://api.anthropic.com";
+    /// <summary>API key used for Claude-compatible requests.</summary>
     public string ClaudeApiKey { get; set; } = "";
+    /// <summary>Model name used for Claude-compatible requests.</summary>
     public string ClaudeModel { get; set; } = "claude-haiku-4-5-20251001";
 
-    // Shared settings
+    /// <summary>Maximum recursion depth when generating scenarios.</summary>
     public int MaxGenerationDepth { get; set; } = 5;
+    /// <summary>Maximum number of scenarios generated per rule.</summary>
     public int MaxScenariosPerRule { get; set; } = 20;
+    /// <summary>Maximum number of scenarios generated in total.</summary>
     public int MaxTotalScenarios { get; set; } = 500;
+    /// <summary>Worker loop interval in seconds.</summary>
     public int WorkerIntervalSeconds { get; set; } = 300;
+    /// <summary>Timeout in seconds for AI calls.</summary>
     public int AiTimeoutSeconds { get; set; } = 120;
+    /// <summary>Timeout in seconds for scenario execution.</summary>
     public int ScenarioExecutionTimeoutSeconds { get; set; } = 30;
+    /// <summary>Sampling temperature for generative requests.</summary>
     public float Temperature { get; set; } = 0.7f;
+    /// <summary>Maximum number of tokens requested from the model.</summary>
     public int MaxTokens { get; set; } = 2000;
 
-    // Failure feedback loop
+    /// <summary>Enables feedback-driven scenario generation from failures.</summary>
     public bool EnableFailureFeedback { get; set; } = true;
+    /// <summary>Maximum number of scenarios created from a single failure.</summary>
     public int MaxScenariosPerFailure { get; set; } = 2;
 
-    // Semantic deduplication (vector-based)
+    /// <summary>Enables vector-based semantic deduplication.</summary>
     public bool EnableSemanticDedup { get; set; } = false;
+    /// <summary>Similarity threshold for semantic deduplication.</summary>
     public double SemanticDedupThreshold { get; set; } = 0.85;
+    /// <summary>Embedding model used for semantic deduplication.</summary>
     public string EmbeddingModel { get; set; } = "nomic-embed-text";
 
-    // Chaos engineering mode
+    /// <summary>Enables chaos-engineering scenario generation.</summary>
     public bool EnableChaosMode { get; set; } = false;
+    /// <summary>Maximum number of chaos scenarios to generate.</summary>
     public int MaxChaosScenarios { get; set; } = 10;
 
-    // Composite brain (chain multiple providers)
-    public string? CompositeBrains { get; set; } // "ollama,claude" or "openai,ollama"
-    public string CompositeMode { get; set; } = "parallel"; // "parallel" | "sequential"
+    /// <summary>Comma-separated list of brains to combine in composite mode.</summary>
+    public string? CompositeBrains { get; set; }
+    /// <summary>Composite execution mode, either <c>parallel</c> or <c>sequential</c>.</summary>
+    public string CompositeMode { get; set; } = "parallel";
 
-    // Auto-trigger on ruleset save/activate
+    /// <summary>Enables automatic proliferation after rule-set changes.</summary>
     public bool EnableAutoTrigger { get; set; } = false;
+    /// <summary>Debounce interval in seconds for automatic triggering.</summary>
     public int AutoTriggerDebounceSeconds { get; set; } = 30;
+    /// <summary>Maximum number of scenarios generated by auto-trigger.</summary>
     public int AutoTriggerMaxScenarios { get; set; } = 10;
 
-    // Continuous simulation mode
+    /// <summary>Enables continuous simulation mode.</summary>
     public bool EnableContinuousMode { get; set; } = false;
+    /// <summary>Interval in seconds between continuous runs.</summary>
     public int ContinuousIntervalSeconds { get; set; } = 300;
+    /// <summary>Batch size used for continuous simulations.</summary>
     public int ContinuousBatchSize { get; set; } = 5;
-    public string ContinuousStrategy { get; set; } = "coverage-gap"; // "random" | "coverage-gap" | "round-robin"
+    /// <summary>Scenario selection strategy for continuous mode.</summary>
+    public string ContinuousStrategy { get; set; } = "coverage-gap";
 
-    // Smart budget allocation
+    /// <summary>Enables smart budget allocation.</summary>
     public bool EnableSmartBudget { get; set; } = false;
 
-    // Multi-tenant traffic simulation
+    /// <summary>Enables multi-tenant traffic simulation.</summary>
     public bool EnableMultiTenantSimulation { get; set; } = false;
+    /// <summary>Tenant identifiers to include in the simulation set.</summary>
     public string[] SimulatedTenantIds { get; set; } = [];
 
-    // Infrastructure-aware dynamic scaling
+    /// <summary>Enables infrastructure-aware dynamic budget scaling.</summary>
     public bool EnableInfraAwareBudget { get; set; } = false;
+    /// <summary>Interval in seconds between infrastructure health checks.</summary>
     public int InfraHealthCheckIntervalSeconds { get; set; } = 60;
+    /// <summary>Threshold in milliseconds considered to be slow.</summary>
     public int InfraSlowThresholdMs { get; set; } = 30000;
+    /// <summary>Threshold in milliseconds considered to be fast.</summary>
     public int InfraFastThresholdMs { get; set; } = 5000;
 }

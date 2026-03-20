@@ -42,13 +42,12 @@ public static class RuleAuthoringManifestEndpoints
             return null;
         }
 
-        List<MRuleAuthoringEntry> rules = manifests
+        List<MRuleAuthoringEntry> rules = [.. manifests
             .SelectMany(manifest => manifest.Rules)
             .GroupBy(rule => rule.Code, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.First())
             .OrderBy(rule => rule.Order)
-            .ThenBy(rule => rule.Code, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+            .ThenBy(rule => rule.Code, StringComparer.OrdinalIgnoreCase)];
         if (rules.Count == 0)
         {
             return null;

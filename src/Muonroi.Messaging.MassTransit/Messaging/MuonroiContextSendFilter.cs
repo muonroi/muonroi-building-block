@@ -1,9 +1,12 @@
+using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.Options;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Muonroi Context Send Filter T.
+/// </summary>
 public class MuonroiContextSendFilter<T>(
     ISystemExecutionContextAccessor contextAccessor,
     ITenantContextPolicy tenantContextPolicy,
@@ -12,6 +15,9 @@ public class MuonroiContextSendFilter<T>(
 {
     private readonly MessageBusConfigs _configs = configs.Value;
 
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(SendContext<T> context, IPipe<SendContext<T>> next)
     {
         ISystemExecutionContext current = contextAccessor.Get();
@@ -24,11 +30,19 @@ public class MuonroiContextSendFilter<T>(
             context.Headers.Set(CustomHeader.SourceType, resolved.SourceType);
 
             if (!string.IsNullOrWhiteSpace(resolved.UserId))
+            {
                 context.Headers.Set(ClaimConstants.UserIdentifier, resolved.UserId);
+            }
+
             if (!string.IsNullOrWhiteSpace(resolved.Username))
+            {
                 context.Headers.Set(ClaimConstants.Username, resolved.Username);
+            }
+
             if (!string.IsNullOrWhiteSpace(resolved.TenantId))
+            {
                 context.Headers.Set(CustomHeader.TenantId, resolved.TenantId);
+            }
 
             if (!string.IsNullOrWhiteSpace(resolved.AccessToken))
             {
@@ -55,6 +69,9 @@ public class MuonroiContextSendFilter<T>(
         return Convert.ToBase64String(hash);
     }
 
+    /// <summary>
+    /// Executes the Probe operation.
+    /// </summary>
     public void Probe(ProbeContext context)
     {
     }

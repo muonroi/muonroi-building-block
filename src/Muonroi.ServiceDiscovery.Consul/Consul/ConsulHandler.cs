@@ -2,9 +2,20 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.ServiceDiscovery.Consul.Consul;
 
+/// <summary>
+/// Service discovery registration and application lifecycle hooks for Consul.
+/// </summary>
 public static class ConsulHandler
 {
     private sealed class ConsulHandlerLogger { }
+
+    /// <summary>
+    /// Registers Consul service discovery components.
+    /// </summary>
+    /// <param name="services">Service collection to update.</param>
+    /// <param name="configuration">Configuration source.</param>
+    /// <param name="environment">Hosting environment.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddServiceDiscovery(this IServiceCollection services, IConfiguration configuration,
         IWebHostEnvironment environment)
     {
@@ -37,11 +48,23 @@ public static class ConsulHandler
         }));
     }
 
+    /// <summary>
+    /// Registers the service instance with Consul synchronously.
+    /// </summary>
+    /// <param name="app">Application builder.</param>
+    /// <param name="environment">Hosting environment.</param>
+    /// <returns>The application builder.</returns>
     public static IApplicationBuilder UseServiceDiscovery(this IApplicationBuilder app, IWebHostEnvironment environment)
     {
         return app.UseServiceDiscoveryAsync(environment).GetAwaiter().GetResult();
     }
 
+    /// <summary>
+    /// Registers the service instance with Consul asynchronously.
+    /// </summary>
+    /// <param name="app">Application builder.</param>
+    /// <param name="environment">Hosting environment.</param>
+    /// <returns>The application builder.</returns>
     public static async Task<IApplicationBuilder> UseServiceDiscoveryAsync(this IApplicationBuilder app,
         IWebHostEnvironment environment)
     {

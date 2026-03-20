@@ -12,8 +12,14 @@ using Muonroi.RuleEngine.CEP.Repositories;
 
 namespace Muonroi.RuleEngine.CEP;
 
+/// <summary>
+/// Service registration helpers for CEP web hosting.
+/// </summary>
 public static class CepWebExtensions
 {
+    /// <summary>
+    /// Registers CEP services, repositories, and controllers for web applications.
+    /// </summary>
     public static IServiceCollection AddCepWeb(
         this IServiceCollection services,
         Action<CepOptions>? configure = null)

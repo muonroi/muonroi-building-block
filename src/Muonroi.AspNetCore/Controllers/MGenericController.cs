@@ -1,5 +1,6 @@
 namespace Muonroi.AspNetCore.Controllers;
 
+/// <inheritdoc />
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
 [Authorize]
@@ -21,6 +22,7 @@ public class MGenericController<TEntity, TDbContext>(
 
     private RuleOrchestrator<CrudContext<TEntity>>? _ruleOrchestrator;
 
+/// <inheritdoc />
     [HttpGet]
     public virtual async Task<IActionResult> Get([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
@@ -54,6 +56,7 @@ public class MGenericController<TEntity, TDbContext>(
         return Ok(value);
     }
 
+/// <inheritdoc />
     [HttpGet("{id:guid}")]
     public virtual async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
@@ -81,6 +84,7 @@ public class MGenericController<TEntity, TDbContext>(
         return Ok(value);
     }
 
+/// <inheritdoc />
     [HttpPost]
     public virtual async Task<IActionResult> Create([FromBody] TEntity entity, CancellationToken cancellationToken)
     {
@@ -137,6 +141,7 @@ public class MGenericController<TEntity, TDbContext>(
         return Ok(value);
     }
 
+/// <inheritdoc />
     [HttpPut("{id:guid}")]
     public virtual async Task<IActionResult> Update(Guid id, [FromBody] TEntity entity,
         CancellationToken cancellationToken)
@@ -225,6 +230,7 @@ public class MGenericController<TEntity, TDbContext>(
         return Ok(value);
     }
 
+/// <inheritdoc />
     [HttpDelete("{id:guid}")]
     public virtual async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {

@@ -6,17 +6,27 @@ using Xunit;
 
 namespace Muonroi.BuildingBlock.IntegrationTests;
 
+/// <summary>
+/// Integration tests for permission filter behavior.
+/// </summary>
 public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>
+    /// Initializes a new test instance with a factory and client.
+    /// </summary>
+    /// <param name="factory">Test application factory.</param>
     public PermissionFilter_IntegrationTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();
     }
 
+    /// <summary>
+    /// Verifies authorized users are allowed.
+    /// </summary>
     [Fact]
     public async Task AuthorizedUser_WithRequiredPermission_ShouldReturn200()
     {
@@ -34,6 +44,9 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Verifies unauthorized users are forbidden.
+    /// </summary>
     [Fact]
     public async Task UnauthorizedUser_WithoutRequiredPermission_ShouldReturn403()
     {
@@ -51,6 +64,9 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    /// <summary>
+    /// Verifies users with all required permissions are allowed.
+    /// </summary>
     [Fact]
     public async Task User_WithAllRequiredPermissions_ShouldReturn200()
     {
@@ -68,6 +84,9 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Verifies missing permissions are denied.
+    /// </summary>
     [Fact]
     public async Task User_MissingOneRequiredPermission_ShouldReturn403()
     {
@@ -85,6 +104,9 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    /// <summary>
+    /// Verifies endpoints without permission requirements allow authenticated users.
+    /// </summary>
     [Fact]
     public async Task Endpoint_WithNoPermissionRequirement_ShouldAllowAllAuthenticatedUsers()
     {
@@ -102,6 +124,9 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Verifies permission checks return expected status codes.
+    /// </summary>
     [Theory]
     [InlineData(0b0001, "/api/protected/read", HttpStatusCode.OK)]
     [InlineData(0b0010, "/api/protected/write", HttpStatusCode.OK)]
@@ -128,6 +153,9 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         response.StatusCode.Should().Be(expectedStatus);
     }
 
+    /// <summary>
+    /// Verifies permission checks with database lookup.
+    /// </summary>
     [Fact]
     public async Task PermissionCheck_WithDatabaseLookup_ShouldValidateCorrectly()
     {
@@ -159,6 +187,9 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
     }
 
+    /// <summary>
+    /// Verifies permission caching improves or maintains performance.
+    /// </summary>
     [Fact]
     public async Task PermissionCaching_ShouldImprovePerformance()
     {
@@ -186,6 +217,9 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         secondRequestDuration.Should().BeLessThanOrEqualTo(firstRequestDuration * 2);
     }
 
+    /// <summary>
+    /// Verifies dynamic permission changes are respected.
+    /// </summary>
     [Theory]
     [InlineData(0b0001)]
     [InlineData(0b0011)]
@@ -214,6 +248,9 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         }
     }
 
+    /// <summary>
+    /// Verifies role-based permissions inherit access.
+    /// </summary>
     [Fact]
     public async Task RoleBasedPermission_ShouldInheritFromRole()
     {
@@ -237,6 +274,9 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         adminResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Verifies edge-case permission values are handled safely.
+    /// </summary>
     [Theory]
     [InlineData(long.MinValue)]
     [InlineData(-1)]

@@ -4,6 +4,9 @@ using Microsoft.Extensions.Options;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Muonroi Context Publish Filter{T}.
+/// </summary>
 public class MuonroiContextPublishFilter<T>(
     ISystemExecutionContextAccessor contextAccessor,
     ITenantContextPolicy tenantContextPolicy,
@@ -12,6 +15,9 @@ public class MuonroiContextPublishFilter<T>(
 {
     private readonly MessageBusConfigs _configs = configs.Value;
 
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(PublishContext<T> context, IPipe<PublishContext<T>> next)
     {
         ISystemExecutionContext current = contextAccessor.Get();
@@ -55,6 +61,9 @@ public class MuonroiContextPublishFilter<T>(
         return Convert.ToBase64String(hash);
     }
 
+    /// <summary>
+    /// Executes the Probe operation.
+    /// </summary>
     public void Probe(ProbeContext context)
     {
     }

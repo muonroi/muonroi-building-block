@@ -40,6 +40,9 @@ public sealed class MMediatorOptions
     }
 }
 
+/// <summary>
+/// Represents the Service Collection Extensions.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>

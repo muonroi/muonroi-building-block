@@ -5,17 +5,27 @@ using Xunit;
 
 namespace Muonroi.BuildingBlock.IntegrationTests;
 
+/// <summary>
+/// Integration tests for JWT middleware behavior.
+/// </summary>
 public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>
+    /// Initializes a new test instance with a factory and client.
+    /// </summary>
+    /// <param name="factory">Test application factory.</param>
     public JwtMiddleware_IntegrationTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();
     }
 
+    /// <summary>
+    /// Verifies valid JWTs are accepted.
+    /// </summary>
     [Fact]
     public async Task ValidJwtToken_ShouldBeAccepted()
     {
@@ -33,6 +43,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies expired JWTs are rejected.
+    /// </summary>
     [Fact]
     public async Task ExpiredToken_ShouldBeRejected()
     {
@@ -51,6 +64,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies missing JWTs return 401.
+    /// </summary>
     [Fact]
     public async Task MissingToken_ShouldReturn401()
     {
@@ -63,6 +79,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies malformed JWTs return 401.
+    /// </summary>
     [Fact]
     public async Task MalformedToken_ShouldReturn401()
     {
@@ -76,6 +95,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies tokens with invalid signatures are rejected.
+    /// </summary>
     [Fact]
     public async Task TokenWithInvalidSignature_ShouldBeRejected()
     {
@@ -97,6 +119,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies valid claims can be extracted.
+    /// </summary>
     [Theory]
     [InlineData("UserIdentifier")]
     [InlineData("Username")]
@@ -119,6 +144,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         content.Should().NotBeNullOrEmpty();
     }
 
+    /// <summary>
+    /// Verifies missing required claims are handled safely.
+    /// </summary>
     [Fact]
     public async Task TokenWithMissingRequiredClaim_ShouldBeHandled()
     {
@@ -137,6 +165,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Forbidden);
     }
 
+    /// <summary>
+    /// Verifies tokens with various lifetimes are accepted.
+    /// </summary>
     [Theory]
     [InlineData(5)]
     [InlineData(60)]
@@ -158,6 +189,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies concurrent requests with different tokens are handled.
+    /// </summary>
     [Fact]
     public async Task MultipleConcurrentRequests_WithDifferentTokens_ShouldBeHandledCorrectly()
     {
@@ -181,6 +215,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         task2.Result.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies tenant claims propagate tenant context.
+    /// </summary>
     [Theory]
     [InlineData("test-tenant-001")]
     [InlineData("test-tenant-002")]
@@ -206,6 +243,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies token refresh scenario with expired and valid tokens.
+    /// </summary>
     [Fact]
     public async Task TokenRefresh_Scenario_OldTokenExpired_NewTokenValid()
     {
@@ -235,6 +275,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         newResponse.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies invalid authorization headers return 401.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -256,6 +299,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies special characters in claims are handled.
+    /// </summary>
     [Fact]
     public async Task TokenWithSpecialCharactersInClaims_ShouldBeHandled()
     {
@@ -273,6 +319,9 @@ public class JwtMiddleware_IntegrationTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Verifies token validation enforces zero clock skew.
+    /// </summary>
     [Fact]
     public async Task TokenValidation_ShouldEnforceClockSkewZero()
     {

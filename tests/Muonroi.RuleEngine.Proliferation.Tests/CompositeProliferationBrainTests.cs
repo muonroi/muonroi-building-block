@@ -86,7 +86,7 @@ public class CompositeProliferationBrainTests
             ProliferationContext context, CancellationToken ct = default)
         {
             using JsonDocument doc = JsonDocument.Parse("""{"test": true}""");
-            List<NeuronScenario> scenarios = Enumerable.Range(0, scenarioCount)
+            List<NeuronScenario> scenarios = [.. Enumerable.Range(0, scenarioCount)
                 .Select(i => new NeuronScenario
                 {
                     Id = Guid.NewGuid().ToString("N"),
@@ -96,8 +96,7 @@ public class CompositeProliferationBrainTests
                     InputFacts = doc.RootElement.Clone(),
                     Status = ScenarioStatus.Pending,
                     CreatedAt = DateTimeOffset.UtcNow
-                })
-                .ToList();
+                })];
 
             return Task.FromResult(new ProliferationPlan
             {

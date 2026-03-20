@@ -16,6 +16,9 @@ public class MConnectorCatalogController : ControllerBase
 {
     private readonly IServiceProvider _serviceProvider;
 
+    /// <summary>
+    /// Initializes the controller with a service provider.
+    /// </summary>
     public MConnectorCatalogController(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;

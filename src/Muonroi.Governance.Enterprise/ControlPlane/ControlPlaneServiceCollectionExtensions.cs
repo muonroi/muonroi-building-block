@@ -1,7 +1,13 @@
 namespace Muonroi.Governance.ControlPlane;
 
+/// <summary>
+/// Represents the MControl Plane Service Collection Extensions.
+/// </summary>
 public static class MControlPlaneServiceCollectionExtensions
 {
+    /// <summary>
+    /// Executes the Add MEnterprise Control Plane operation.
+    /// </summary>
     public static IServiceCollection AddMEnterpriseControlPlane(
         this IServiceCollection services,
         string registryPath,

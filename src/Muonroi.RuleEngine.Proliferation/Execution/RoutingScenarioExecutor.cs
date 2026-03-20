@@ -23,6 +23,7 @@ public sealed class RoutingScenarioExecutor : IScenarioExecutor
     private readonly IWebhookNotificationService? _webhookService;
     private readonly IMLog<RoutingScenarioExecutor>? _logger;
 
+    /// <summary>Creates a routing executor.</summary>
     public RoutingScenarioExecutor(
         IScenarioExecutor internalExecutor,
         IExternalScenarioExecutor externalExecutor,

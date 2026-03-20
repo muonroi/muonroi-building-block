@@ -8,8 +8,10 @@ using System.Text.Json.Serialization;
 
 namespace Muonroi.AspNetCore.Extensions;
 
+/// <inheritdoc />
 public static class ApplicationExtensions
 {
+/// <inheritdoc />
     public static IServiceCollection AddApplication(this IServiceCollection services, params Assembly[]? assemblies)
     {
         _ = services.AddHttpContextAccessor();
@@ -39,6 +41,7 @@ public static class ApplicationExtensions
         return services;
     }
 
+/// <inheritdoc />
     public static IServiceCollection AddConfigureHttpJson(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -59,6 +62,7 @@ public static class ApplicationExtensions
         return services;
     }
 
+/// <inheritdoc />
     public static IServiceCollection AddMediator(this IServiceCollection services, params Assembly[]? assemblies)
     {
         services.AddSingleton<IMediator, MMediator>();
@@ -101,6 +105,7 @@ public static class ApplicationExtensions
         return services;
         }
 
+/// <inheritdoc />
         public static WebApplication AddLocalization(this WebApplication app, Assembly assembly)
         {
         ResourceSetting resourceSetting = app.Services.GetRequiredService<ResourceSetting>();
@@ -109,6 +114,7 @@ public static class ApplicationExtensions
         return app;
         }
 
+/// <inheritdoc />
         public static IServiceCollection SwaggerConfig(this IServiceCollection services, string serviceName)
     {
         _ = services.AddSwaggerGen(config =>
@@ -144,6 +150,7 @@ public static class ApplicationExtensions
         return services;
     }
 
+/// <inheritdoc />
     public static WebApplicationBuilder AddAppConfiguration(this WebApplicationBuilder builder)
     {
         _ = builder.Configuration

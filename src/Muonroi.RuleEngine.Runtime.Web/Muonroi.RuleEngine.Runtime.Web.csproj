@@ -10,7 +10,6 @@
     <Version>1.0.0-alpha.1</Version>
     <Authors>Muon Roi</Authors>
     <Description>Runtime ruleset governance Web API and UI-engine manifest integration for Muonroi RuleEngine.</Description>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <IsCommercialPackage>true</IsCommercialPackage>
@@ -18,14 +17,7 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\..\README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
+    <PackageReference Include="Scriban" Version="6.6.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />

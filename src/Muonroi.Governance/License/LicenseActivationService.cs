@@ -18,6 +18,9 @@ public sealed class LicenseActivationService : ILicenseActivationService
     private readonly IMJsonSerializeService _jsonSerializeService;
     private readonly IAssemblyHashCollector _hashCollector;
 
+    /// <summary>
+    /// Initializes a new instance of LicenseActivationService.
+    /// </summary>
     public LicenseActivationService(
         LicenseConfigs configs,
         ILicenseFingerprintProvider fingerprintProvider,
@@ -258,25 +261,55 @@ public sealed class LicenseActivationService : ILicenseActivationService
     }
 }
 
+/// <summary>
+/// Represents the ILicense Activation Service.
+/// </summary>
 public interface ILicenseActivationService
 {
+    /// <summary>
+    /// Executes the Activate Async operation.
+    /// </summary>
     Task<LicenseActivationResult> ActivateAsync(string licenseKey, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Executes the Refresh Async operation.
+    /// </summary>
     Task<LicenseActivationResult> RefreshAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Executes the Deactivate Async operation.
+    /// </summary>
     Task<bool> DeactivateAsync(CancellationToken cancellationToken = default);
 }
 
+/// <summary>
+/// Represents the License Activation Result.
+/// </summary>
 public sealed class LicenseActivationResult
 {
+    /// <summary>
+    /// Gets or sets the Is Success.
+    /// </summary>
     public bool IsSuccess { get; init; }
+    /// <summary>
+    /// Gets or sets the Error.
+    /// </summary>
     public string? Error { get; init; }
+    /// <summary>
+    /// Gets or sets the Payload.
+    /// </summary>
     public LicensePayload? Payload { get; init; }
 
+    /// <summary>
+    /// Executes the Success operation.
+    /// </summary>
     public static LicenseActivationResult Success(LicensePayload payload) => new()
     {
         IsSuccess = true,
         Payload = payload
     };
 
+    /// <summary>
+    /// Executes the Failed operation.
+    /// </summary>
     public static LicenseActivationResult Failed(string error) => new()
     {
         IsSuccess = false,
@@ -284,18 +317,48 @@ public sealed class LicenseActivationResult
     };
 }
 
+/// <summary>
+/// Represents the License Activation Request.
+/// </summary>
 public sealed class LicenseActivationRequest
 {
+    /// <summary>
+    /// Gets or sets the License Key.
+    /// </summary>
     public string? LicenseKey { get; set; }
+    /// <summary>
+    /// Gets or sets the Fingerprint.
+    /// </summary>
     public string? Fingerprint { get; set; }
+    /// <summary>
+    /// Gets or sets the Project Seed.
+    /// </summary>
     public string? ProjectSeed { get; set; }
+    /// <summary>
+    /// Gets or sets the Machine Name.
+    /// </summary>
     public string? MachineName { get; set; }
+    /// <summary>
+    /// Gets or sets the Application Name.
+    /// </summary>
     public string? ApplicationName { get; set; }
 }
 
+/// <summary>
+/// Represents the License Refresh Request.
+/// </summary>
 public sealed class LicenseRefreshRequest
 {
+    /// <summary>
+    /// Gets or sets the License Id.
+    /// </summary>
     public string? LicenseId { get; set; }
+    /// <summary>
+    /// Gets or sets the Fingerprint.
+    /// </summary>
     public string? Fingerprint { get; set; }
+    /// <summary>
+    /// Gets or sets the Server Nonce.
+    /// </summary>
     public string? ServerNonce { get; set; }
 }

@@ -1,7 +1,7 @@
-using System.Data;
-using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Integration.Abstractions;
+using System.Data;
+using System.Text.Json;
 
 namespace Muonroi.Integration.Connectors.Database;
 
@@ -9,15 +9,17 @@ namespace Muonroi.Integration.Connectors.Database;
 /// Parameterized SQL query connector (read-only by default).
 /// Uses ADO.NET IDbConnection from DI.
 /// </summary>
-public sealed class SqlQueryConnector : IServiceTaskConnector
+/// <remarks>
+/// Creates a SQL connector using the provided service provider.
+/// </remarks>
+/// <param name="serviceProvider">Service provider for resolving <see cref="IDbConnection"/>.</param>
+public sealed class SqlQueryConnector(IServiceProvider serviceProvider) : IServiceTaskConnector
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
 
-    public SqlQueryConnector(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
-
+    /// <summary>
+    /// Connector metadata describing capabilities and configuration.
+    /// </summary>
     public ConnectorMetadata Metadata => new()
     {
         Type = "sql",
@@ -28,93 +30,81 @@ public sealed class SqlQueryConnector : IServiceTaskConnector
         RequiresCredentials = true
     };
 
-    public async Task<ConnectorResult> ExecuteAsync(ConnectorContext context, CancellationToken ct)
+    /// <summary>
+    /// Executes the configured SQL query.
+    /// </summary>
+    /// <param name="context">Connector execution context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The connector result.</returns>
+    public Task<ConnectorResult> ExecuteAsync(ConnectorContext context, CancellationToken ct)
     {
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        JsonElement root = context.Config.RootElement;
-
-        string query = root.GetProperty("query").GetString() ?? throw new InvalidOperationException("query is required");
-        bool readOnly = !root.TryGetProperty("readOnly", out var ro) || ro.GetBoolean();
-
-        // Safety check: block write operations if readOnly
-        if (readOnly)
-        {
-            string upper = query.TrimStart().ToUpperInvariant();
-            if (upper.StartsWith("INSERT") || upper.StartsWith("UPDATE") || upper.StartsWith("DELETE") || upper.StartsWith("DROP") || upper.StartsWith("ALTER") || upper.StartsWith("CREATE"))
-            {
-                return ConnectorResult.Fail("Write operations are blocked in read-only mode.");
-            }
-        }
-
-        IDbConnection? connection = _serviceProvider.GetService<IDbConnection>();
-        if (connection is null)
-        {
-            return ConnectorResult.Fail("No IDbConnection registered in DI.");
-        }
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
 
         try
         {
-            if (connection.State != ConnectionState.Open)
+            JsonElement root = context.Config.RootElement;
+            string query = GetRequiredQuery(root);
+            bool readOnly = IsReadOnly(root);
+
+            if (IsBlockedWriteOperation(query, readOnly))
             {
-                connection.Open();
+                return Task.FromResult(
+                    ConnectorResult.Fail("Write operations are blocked in read-only mode."));
             }
 
-            using IDbCommand cmd = connection.CreateCommand();
-            cmd.CommandText = query;
-            cmd.CommandType = CommandType.Text;
-
-            // Bind parameters from FactBag
-            if (root.TryGetProperty("parameters", out JsonElement parameters))
+            IDbConnection? connection = _serviceProvider.GetService<IDbConnection>();
+            if (connection is null)
             {
-                foreach (JsonProperty param in parameters.EnumerateObject())
-                {
-                    IDbDataParameter dbParam = cmd.CreateParameter();
-                    dbParam.ParameterName = param.Name;
-                    dbParam.Value = param.Value.ValueKind switch
-                    {
-                        JsonValueKind.String => param.Value.GetString(),
-                        JsonValueKind.Number => param.Value.GetDouble(),
-                        JsonValueKind.True => true,
-                        JsonValueKind.False => false,
-                        _ => DBNull.Value
-                    };
-                    cmd.Parameters.Add(dbParam);
-                }
+                return Task.FromResult(
+                    ConnectorResult.Fail("No IDbConnection registered in DI."));
             }
 
+            EnsureConnectionOpen(connection);
+
+            using IDbCommand cmd = CreateCommand(connection, query, root);
             using IDataReader reader = cmd.ExecuteReader();
-            List<Dictionary<string, object?>> rows = [];
-            while (reader.Read())
-            {
-                Dictionary<string, object?> row = new();
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-                }
-                rows.Add(row);
-            }
+
+            List<Dictionary<string, object?>> rows = ReadRows(reader);
 
             sw.Stop();
-            return ConnectorResult.Ok(new()
-            {
-                ["sqlRows"] = rows,
-                ["sqlRowCount"] = rows.Count
-            }, duration: sw.Elapsed);
+            return Task.FromResult(
+                ConnectorResult.Ok(
+                    new()
+                    {
+                        ["sqlRows"] = rows,
+                        ["sqlRowCount"] = rows.Count
+                    },
+                    duration: sw.Elapsed));
         }
         catch (Exception ex)
         {
             sw.Stop();
-            return ConnectorResult.Fail($"SQL error: {ex.Message}", duration: sw.Elapsed);
+            return Task.FromResult(
+                ConnectorResult.Fail($"SQL error: {ex.Message}", duration: sw.Elapsed));
         }
     }
 
+    /// <summary>
+    /// Tests whether the database connection can be opened.
+    /// </summary>
+    /// <param name="context">Connector execution context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True when the connection succeeds.</returns>
     public Task<bool> TestConnectionAsync(ConnectorContext context, CancellationToken ct)
     {
         try
         {
             IDbConnection? connection = _serviceProvider.GetService<IDbConnection>();
-            if (connection is null) return Task.FromResult(false);
-            if (connection.State != ConnectionState.Open) connection.Open();
+            if (connection is null)
+            {
+                return Task.FromResult(false);
+            }
+
+            if (connection.State != ConnectionState.Open)
+            {
+                connection.Open();
+            }
+
             return Task.FromResult(connection.State == ConnectionState.Open);
         }
         catch
@@ -123,6 +113,10 @@ public sealed class SqlQueryConnector : IServiceTaskConnector
         }
     }
 
+    /// <summary>
+    /// Returns the JSON schema used to configure this connector.
+    /// </summary>
+    /// <returns>Configuration schema.</returns>
     public JsonElement GetConfigSchema()
     {
         string schema = """
@@ -137,5 +131,105 @@ public sealed class SqlQueryConnector : IServiceTaskConnector
         }
         """;
         return JsonDocument.Parse(schema).RootElement.Clone();
+    }
+    private static string GetRequiredQuery(JsonElement root)
+    {
+        return root.GetProperty("query").GetString()
+            ?? throw new InvalidOperationException("query is required");
+    }
+
+    private static bool IsReadOnly(JsonElement root)
+    {
+        return !root.TryGetProperty("readOnly", out JsonElement ro) || ro.GetBoolean();
+    }
+
+    private static bool IsBlockedWriteOperation(string query, bool readOnly)
+    {
+        if (!readOnly)
+        {
+            return false;
+        }
+
+        string upper = query.TrimStart().ToUpperInvariant();
+
+        return upper.StartsWith("INSERT")
+            || upper.StartsWith("UPDATE")
+            || upper.StartsWith("DELETE")
+            || upper.StartsWith("DROP")
+            || upper.StartsWith("ALTER")
+            || upper.StartsWith("CREATE");
+    }
+
+    private static void EnsureConnectionOpen(IDbConnection connection)
+    {
+        if (connection.State != ConnectionState.Open)
+        {
+            connection.Open();
+        }
+    }
+
+    private static IDbCommand CreateCommand(
+        IDbConnection connection,
+        string query,
+        JsonElement root)
+    {
+        IDbCommand cmd = connection.CreateCommand();
+        cmd.CommandText = query;
+        cmd.CommandType = CommandType.Text;
+
+        BindParameters(cmd, root);
+        return cmd;
+    }
+
+    private static void BindParameters(IDbCommand cmd, JsonElement root)
+    {
+        if (!root.TryGetProperty("parameters", out JsonElement parameters))
+        {
+            return;
+        }
+
+        foreach (JsonProperty param in parameters.EnumerateObject())
+        {
+            IDbDataParameter dbParam = cmd.CreateParameter();
+            dbParam.ParameterName = param.Name;
+            dbParam.Value = ConvertJsonValue(param.Value);
+            cmd.Parameters.Add(dbParam);
+        }
+    }
+
+    private static object ConvertJsonValue(JsonElement value)
+    {
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() ?? (object)DBNull.Value,
+            JsonValueKind.Number => value.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => DBNull.Value
+        };
+    }
+
+    private static List<Dictionary<string, object?>> ReadRows(IDataReader reader)
+    {
+        List<Dictionary<string, object?>> rows = [];
+
+        while (reader.Read())
+        {
+            rows.Add(ReadRow(reader));
+        }
+
+        return rows;
+    }
+
+    private static Dictionary<string, object?> ReadRow(IDataReader reader)
+    {
+        Dictionary<string, object?> row = [];
+
+        for (int i = 0; i < reader.FieldCount; i++)
+        {
+            row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+        }
+
+        return row;
     }
 }

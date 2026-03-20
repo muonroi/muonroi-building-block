@@ -1,5 +1,6 @@
 namespace Muonroi.AspNetCore.Controllers.ActionFilters;
 
+/// <inheritdoc />
 public class RequireAuthenticatedTokenFilter<TDbContext, TPermission>(
     TDbContext dbContext,
     IMultiLevelCacheService cacheService,
@@ -8,6 +9,7 @@ public class RequireAuthenticatedTokenFilter<TDbContext, TPermission>(
     where TDbContext : MDbContext
     where TPermission : Enum
 {
+/// <inheritdoc />
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         Endpoint? endpoint = context.HttpContext.GetEndpoint();

@@ -3,8 +3,18 @@ using Serilog.Sinks.Elasticsearch;
 
 namespace Muonroi.Observability.Logging;
 
+/// <summary>
+/// Configures Serilog sinks and enrichers for the host.
+/// </summary>
 public static class MSerilogAction
 {
+    /// <summary>
+    /// Applies Serilog configuration and optional console logging.
+    /// </summary>
+    /// <param name="context">Host builder context.</param>
+    /// <param name="services">Service provider for enrichers.</param>
+    /// <param name="loggerConfiguration">Logger configuration to update.</param>
+    /// <param name="useConsole">Whether to enable console logging.</param>
     public static void Configure(
         HostBuilderContext context,
         IServiceProvider services,

@@ -14,6 +14,12 @@ public sealed class RedisRuleSetChangeNotifier : IRuleSetChangeNotifier, IDispos
     private readonly IMJsonSerializeService _jsonSerializeService;
     private int _disposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RedisRuleSetChangeNotifier"/> class.
+    /// </summary>
+    /// <param name="connection">The Redis connection multiplexer.</param>
+    /// <param name="channelName">The name of the Redis channel to use for pub/sub.</param>
+    /// <param name="jsonSerializeService">The JSON serialization service.</param>
     public RedisRuleSetChangeNotifier(IConnectionMultiplexer connection, string channelName, IMJsonSerializeService jsonSerializeService)
     {
         _jsonSerializeService = jsonSerializeService;
@@ -25,6 +31,12 @@ public sealed class RedisRuleSetChangeNotifier : IRuleSetChangeNotifier, IDispos
         });
     }
 
+    /// <summary>
+    /// Publishes a ruleset change event to the Redis channel.
+    /// </summary>
+    /// <param name="changeEvent">The ruleset change event to publish.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task PublishAsync(RuleSetChangeEvent changeEvent, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -32,6 +44,11 @@ public sealed class RedisRuleSetChangeNotifier : IRuleSetChangeNotifier, IDispos
         await _subscriber.PublishAsync(RedisChannel.Literal(_channelName), payload);
     }
 
+    /// <summary>
+    /// Subscribes to ruleset change events.
+    /// </summary>
+    /// <param name="handler">The handler function to invoke when a change event is received.</param>
+    /// <returns>An <see cref="IDisposable"/> instance that can be used to unsubscribe.</returns>
     public IDisposable Subscribe(Func<RuleSetChangeEvent, Task> handler)
     {
         Guid id = Guid.NewGuid();
@@ -74,6 +91,9 @@ public sealed class RedisRuleSetChangeNotifier : IRuleSetChangeNotifier, IDispos
         }
     }
 
+    /// <summary>
+    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+    /// </summary>
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 1)

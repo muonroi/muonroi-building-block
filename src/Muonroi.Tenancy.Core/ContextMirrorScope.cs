@@ -3,6 +3,9 @@ using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.Tenancy.Core;
 
+/// <summary>
+/// Mirrors an execution context into ambient tenant and user contexts for the scope lifetime.
+/// </summary>
 public sealed class ContextMirrorScope : IDisposable
 {
     private readonly string? _previousTenantId = TenantContext.CurrentTenantId;
@@ -26,12 +29,21 @@ public sealed class ContextMirrorScope : IDisposable
         });
     }
 
+    /// <summary>
+    /// Applies the supplied execution context and returns a scope that restores previous values on dispose.
+    /// </summary>
+    /// <param name="context">The execution context to apply.</param>
+    /// <param name="logScopeFactory">Optional log scope factory.</param>
+    /// <returns>The created scope.</returns>
     public static ContextMirrorScope Apply(ISystemExecutionContext context, ILogScopeFactory? logScopeFactory = null)
     {
         ArgumentNullException.ThrowIfNull(context);
         return new ContextMirrorScope(context, logScopeFactory);
     }
 
+    /// <summary>
+    /// Restores previous ambient context values and disposes the log scope.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)

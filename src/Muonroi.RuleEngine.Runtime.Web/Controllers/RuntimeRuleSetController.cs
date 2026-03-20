@@ -3,6 +3,12 @@ using Muonroi.RuleEngine.Runtime.Web.ViewModels;
 
 namespace Muonroi.RuleEngine.Runtime.Web.Controllers;
 
+/// <summary>
+/// API endpoints for listing, exporting, validating, activating, and auditing runtime rulesets.
+/// </summary>
+/// <param name="service">Rules engine service for ruleset operations.</param>
+/// <param name="auditStore">Audit store for ruleset change history.</param>
+/// <param name="executionContextAccessor">Execution context accessor for tenant resolution.</param>
 [ApiController]
 [Authorize]
 [Route("api/v1/rule-engine/rulesets")]
@@ -11,6 +17,9 @@ public sealed class RuntimeRuleSetController(
     IRuleSetAuditStore auditStore,
     ISystemExecutionContextAccessor executionContextAccessor) : ControllerBase
 {
+    /// <summary>Lists all workflows with version summaries.</summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of workflow summaries.</returns>
     [HttpGet]
     public async Task<IActionResult> ListWorkflows(CancellationToken cancellationToken = default)
     {
@@ -31,6 +40,10 @@ public sealed class RuntimeRuleSetController(
         return Ok(items);
     }
 
+    /// <summary>Gets versions and active version for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Workflow version summary.</returns>
     [HttpGet("{workflow}/versions")]
     public async Task<IActionResult> GetVersions(string workflow, CancellationToken cancellationToken = default)
     {
@@ -45,6 +58,11 @@ public sealed class RuntimeRuleSetController(
         return Ok(response);
     }
 
+    /// <summary>Exports a ruleset JSON payload for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="version">Optional ruleset version.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Ruleset export payload.</returns>
     [HttpGet("{workflow}/export")]
     public async Task<IActionResult> Export(
         string workflow,
@@ -68,6 +86,11 @@ public sealed class RuntimeRuleSetController(
         return Ok(response);
     }
 
+    /// <summary>Saves a ruleset definition for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="request">Ruleset save request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Save result payload.</returns>
     [HttpPost("{workflow}")]
     public async Task<IActionResult> Save(
         string workflow,
@@ -112,6 +135,12 @@ public sealed class RuntimeRuleSetController(
         return Ok(response);
     }
 
+    /// <summary>Activates a specific ruleset version for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="version">Ruleset version to activate.</param>
+    /// <param name="request">Optional activation request payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Workflow summary after activation.</returns>
     [HttpPost("{workflow}/activate/{version:int}")]
     public async Task<IActionResult> Activate(
         string workflow,
@@ -138,6 +167,11 @@ public sealed class RuntimeRuleSetController(
         return Ok(response);
     }
 
+    /// <summary>Validates a ruleset definition without saving it.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="request">Validation request payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Validation result.</returns>
     [HttpPost("{workflow}/validate")]
     public async Task<IActionResult> Validate(
         string workflow,
@@ -149,6 +183,11 @@ public sealed class RuntimeRuleSetController(
         return Ok(result);
     }
 
+    /// <summary>Runs a ruleset in dry-run mode for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="request">Dry-run request payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Dry-run result payload.</returns>
     [HttpPost("{workflow}/dry-run")]
     public async Task<IActionResult> DryRun(
         string workflow,
@@ -186,6 +225,12 @@ public sealed class RuntimeRuleSetController(
         }
     }
 
+    /// <summary>Returns audit history for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="page">Page number (1-based).</param>
+    /// <param name="pageSize">Page size.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Audit page payload.</returns>
     [HttpGet("{workflow}/audit")]
     public async Task<IActionResult> Audit(
         string workflow,

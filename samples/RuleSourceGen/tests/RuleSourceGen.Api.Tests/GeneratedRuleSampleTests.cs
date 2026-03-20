@@ -34,8 +34,8 @@ public class GeneratedRuleSampleTests
 
         Assert.Equal(0.25m, totalRate);
         Assert.Equal(
-            new[] { "DISCOUNT_VALIDATE", "DISCOUNT_PREMIUM", "DISCOUNT_LOYALTY", "DISCOUNT_SEASONAL" },
-            spy.ExecutionRecords.Select(x => x.RuleCode).ToArray());
+            ["DISCOUNT_VALIDATE", "DISCOUNT_PREMIUM", "DISCOUNT_LOYALTY", "DISCOUNT_SEASONAL"],
+            (IEnumerable<string>)[.. spy.ExecutionRecords.Select(x => x.RuleCode)]);
     }
 
     [Fact]

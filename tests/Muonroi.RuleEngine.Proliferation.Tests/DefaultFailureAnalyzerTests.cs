@@ -106,7 +106,7 @@ public class DefaultFailureAnalyzerTests
     [Fact]
     public async Task AnalyzeFailure_RespectsBudgetCap()
     {
-        List<NeuronScenario> children = Enumerable.Range(0, 5).Select(i => new NeuronScenario
+        List<NeuronScenario> children = [.. Enumerable.Range(0, 5).Select(i => new NeuronScenario
         {
             Id = $"child-{i}",
             SeedRuleCode = "TEST",
@@ -115,7 +115,7 @@ public class DefaultFailureAnalyzerTests
             Status = ScenarioStatus.Pending,
             GenerationDepth = 0,
             CreatedAt = DateTimeOffset.UtcNow
-        }).ToList();
+        })];
 
         _brain.Setup(b => b.AnalyzeAsync(
                 It.IsAny<string>(), It.IsAny<string>(),

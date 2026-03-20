@@ -328,6 +328,10 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         _trackEntities.Add(entity);
     }
 
+    /// <summary>
+    /// Configures the EF Core model and query filters.
+    /// </summary>
+    /// <param name="modelBuilder">The model builder.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

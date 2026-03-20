@@ -14,11 +14,17 @@ public class EcsConsumeLoggingFilter<T>(
 {
     private readonly LicenseState _licenseState = licenseState ?? licenseGuard?.Current ?? LicenseState.CreateFree();
 
+    /// <summary>
+    /// Executes the Ecs Consume Logging Filter operation.
+    /// </summary>
     public EcsConsumeLoggingFilter(LicenseState? licenseState)
         : this(null, licenseState, null, null)
     {
     }
 
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(ConsumeContext<T> context, IPipe<ConsumeContext<T>> next)
     {
         EnsureMessageBusLicensed();
@@ -72,6 +78,9 @@ public class EcsConsumeLoggingFilter<T>(
         }
     }
 
+    /// <summary>
+    /// Executes the Probe operation.
+    /// </summary>
     public void Probe(ProbeContext context)
     {
     }

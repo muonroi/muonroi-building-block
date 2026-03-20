@@ -1,17 +1,21 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Muonroi.RuleEngine.SourceGenerators.Diagnostics;
-using System;
 using System.Collections.Immutable;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Analyzers;
 
+/// <summary>
+/// Analyzer for the MBB003 diagnostic.
+/// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class MBB003_ForbiddenDbContextAnalyzer : DiagnosticAnalyzer
+public sealed class Mbb003_ForbiddenDbContextAnalyzer : DiagnosticAnalyzer
 {
+    /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(MBBDiagnosticDescriptors.MBB003ForbiddenDbContextInheritance);
+        [MBBDiagnosticDescriptors.MBB003ForbiddenDbContextInheritance];
 
+    /// <inheritdoc/>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -42,7 +46,7 @@ public sealed class MBB003_ForbiddenDbContextAnalyzer : DiagnosticAnalyzer
         }
 
         string ns = typeSymbol.ContainingNamespace?.ToDisplayString() ?? string.Empty;
-        if (MBBAnalyzerHelpers.IsInfrastructureNamespace(ns))
+        if (MbbAnalyzerHelpers.IsInfrastructureNamespace(ns))
         {
             return;
         }

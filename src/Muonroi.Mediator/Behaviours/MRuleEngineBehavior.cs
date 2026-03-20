@@ -51,7 +51,7 @@ public sealed class MRuleEngineBehavior<TRequest, TResponse>(
             return await next();
         }
 
-        List<object> ruleList = rules.ToList();
+        List<object> ruleList = [.. rules];
         if (ruleList.Count == 0)
         {
             return await next();
@@ -166,7 +166,7 @@ public sealed class MRuleEngineBehavior<TRequest, TResponse>(
             return;
         }
 
-        MEmitOnPassAttribute[] attributes = rule.GetType().GetCustomAttributes<MEmitOnPassAttribute>(inherit: false).ToArray();
+        MEmitOnPassAttribute[] attributes = [.. rule.GetType().GetCustomAttributes<MEmitOnPassAttribute>(inherit: false)];
         if (attributes.Length == 0)
         {
             return;

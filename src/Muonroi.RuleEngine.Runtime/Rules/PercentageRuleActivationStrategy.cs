@@ -15,6 +15,7 @@ public sealed class PercentageRuleActivationStrategy<T>(
 
     private readonly Random _random = random ?? Random.Shared;
 
+    /// <inheritdoc />
     public bool IsActive(IRule<T> rule, T context)
     {
         double percentage = _percentageProvider(rule, context);

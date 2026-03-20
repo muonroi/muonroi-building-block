@@ -12,7 +12,7 @@ public class TestReplacementAdvisorTests
     private static CoverageReport Coverage(double pct, params string[] uncovered)
     {
         List<string> all = ["field1", "field2", "field3"];
-        List<string> coveredFields = all.Except(uncovered).ToList();
+        List<string> coveredFields = [.. all.Except(uncovered)];
         return new CoverageReport(coveredFields, uncovered.ToList(), pct);
     }
 

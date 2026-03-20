@@ -1,15 +1,52 @@
 namespace Muonroi.Caching.Memory.MultiLevel;
 
+/// <summary>
+/// Abstraction for a multi-level cache service.
+/// </summary>
 public interface IMultiLevelCacheService
 {
+    /// <summary>
+    /// Gets a cached value or computes and stores it.
+    /// </summary>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="key">Cache key.</param>
+    /// <param name="factory">Factory to create the value when missing.</param>
+    /// <param name="absoluteExpirationInMinutes">Absolute expiration in minutes.</param>
+    /// <param name="token">Cancellation token.</param>
+    /// <returns>The cached or computed value.</returns>
     Task<T?> GetOrSetAsync<T>(string key, Func<Task<T?>> factory, int? absoluteExpirationInMinutes = 1440,
         CancellationToken token = default);
 
+    /// <summary>
+    /// Stores a value in the cache.
+    /// </summary>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="key">Cache key.</param>
+    /// <param name="value">Value to store.</param>
+    /// <param name="absoluteExpirationInMinutes">Absolute expiration in minutes.</param>
+    /// <param name="token">Cancellation token.</param>
     Task SetAsync<T>(string key, T value, int? absoluteExpirationInMinutes = 1440, CancellationToken token = default);
+
+    /// <summary>
+    /// Gets a cached value.
+    /// </summary>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="key">Cache key.</param>
+    /// <param name="token">Cancellation token.</param>
+    /// <returns>The cached value or default.</returns>
     Task<T?> GetAsync<T>(string key, CancellationToken token = default);
+
+    /// <summary>
+    /// Removes a cached value.
+    /// </summary>
+    /// <param name="key">Cache key.</param>
+    /// <param name="token">Cancellation token.</param>
     Task RemoveAsync(string key, CancellationToken token = default);
 }
 
+/// <summary>
+/// Implements multi-level caching using memory and distributed cache.
+/// </summary>
 public class MultiLevelCacheService : IMultiLevelCacheService
 {
     private const string cacheOperation = "cache.operation";
@@ -29,6 +66,15 @@ public class MultiLevelCacheService : IMultiLevelCacheService
     private readonly int _ttlJitterPercent;
     private readonly ISystemExecutionContextAccessor? _executionContextAccessor;
 
+    /// <summary>
+    /// Creates a multi-level cache service.
+    /// </summary>
+    /// <param name="memoryCache">Memory cache instance.</param>
+    /// <param name="distributedCache">Distributed cache instance.</param>
+    /// <param name="licenseState">Optional license state.</param>
+    /// <param name="cacheConfigs">Optional cache configuration.</param>
+    /// <param name="scopeFactory">Optional service scope factory.</param>
+    /// <param name="executionContextAccessor">Optional execution context accessor.</param>
     public MultiLevelCacheService(
         IMemoryCache memoryCache,
         IDistributedCache distributedCache,
@@ -52,6 +98,15 @@ public class MultiLevelCacheService : IMultiLevelCacheService
         _executionContextAccessor = executionContextAccessor;
     }
 
+    /// <summary>
+    /// Gets a cached value or computes and stores it.
+    /// </summary>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="key">Cache key.</param>
+    /// <param name="factory">Factory to create the value when missing.</param>
+    /// <param name="absoluteExpirationInMinutes">Absolute expiration in minutes.</param>
+    /// <param name="token">Cancellation token.</param>
+    /// <returns>The cached or computed value.</returns>
     public async Task<T?> GetOrSetAsync<T>(string key, Func<Task<T?>> factory, int? absoluteExpirationInMinutes = 1440,
         CancellationToken token = default)
     {
@@ -151,6 +206,14 @@ public class MultiLevelCacheService : IMultiLevelCacheService
         }
     }
 
+    /// <summary>
+    /// Stores a value in the cache.
+    /// </summary>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="key">Cache key.</param>
+    /// <param name="value">Value to store.</param>
+    /// <param name="absoluteExpirationInMinutes">Absolute expiration in minutes.</param>
+    /// <param name="token">Cancellation token.</param>
     public async Task SetAsync<T>(string key, T value, int? absoluteExpirationInMinutes = 1440,
         CancellationToken token = default)
     {
@@ -193,6 +256,13 @@ public class MultiLevelCacheService : IMultiLevelCacheService
         }
     }
 
+    /// <summary>
+    /// Gets a cached value.
+    /// </summary>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="key">Cache key.</param>
+    /// <param name="token">Cancellation token.</param>
+    /// <returns>The cached value or default.</returns>
     public async Task<T?> GetAsync<T>(string key, CancellationToken token = default)
     {
         EnsureDistributedCacheLicensed();
@@ -244,6 +314,11 @@ public class MultiLevelCacheService : IMultiLevelCacheService
         }
     }
 
+    /// <summary>
+    /// Removes a cached value.
+    /// </summary>
+    /// <param name="key">Cache key.</param>
+    /// <param name="token">Cancellation token.</param>
     public async Task RemoveAsync(string key, CancellationToken token = default)
     {
         EnsureDistributedCacheLicensed();

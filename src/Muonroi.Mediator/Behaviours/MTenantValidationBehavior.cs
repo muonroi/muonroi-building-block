@@ -15,9 +15,18 @@ public sealed class MTenantValidationBehavior<TRequest, TResponse>(
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
+    /// <summary>
+    /// The Tenant Id Key.
+    /// </summary>
     public const string TenantIdKey = "Muonroi:TenantId";
+    /// <summary>
+    /// The User Id Key.
+    /// </summary>
     public const string UserIdKey = "Muonroi:UserId";
 
+    /// <summary>
+    /// Executes the Handle operation.
+    /// </summary>
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,

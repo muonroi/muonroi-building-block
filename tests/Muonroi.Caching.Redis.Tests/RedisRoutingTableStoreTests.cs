@@ -117,7 +117,7 @@ public class RedisRoutingTableStoreTests
             Values = [];
 
             Database.HashValuesAsync(Arg.Any<RedisKey>(), Arg.Any<CommandFlags>())
-                .Returns(_ => Values.ToArray());
+                .Returns(_ => [.. Values]);
             Subscriber.When(x => x.Subscribe(Arg.Any<RedisChannel>(), Arg.Any<Action<RedisChannel, RedisValue>>(), Arg.Any<CommandFlags>()))
                 .Do(callInfo => _subscriptionHandler = callInfo.Arg<Action<RedisChannel, RedisValue>>());
 

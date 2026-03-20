@@ -2,12 +2,27 @@ using Muonroi.Governance.License;
 
 namespace Muonroi.Governance.Abstractions.License;
 
+/// <summary>
+/// Represents the License Configs.
+/// </summary>
 public sealed class LicenseConfigs
 {
+    /// <summary>
+    /// The Section Name.
+    /// </summary>
     public const string SectionName = "LicenseConfigs";
 
+    /// <summary>
+    /// Gets or sets the Mode.
+    /// </summary>
     public LicenseMode Mode { get; set; } = LicenseMode.Offline;
+    /// <summary>
+    /// Gets or sets the License File Path.
+    /// </summary>
     public string? LicenseFilePath { get; set; }
+    /// <summary>
+    /// Gets or sets the Public Key Path.
+    /// </summary>
     public string? PublicKeyPath { get; set; }
 
     /// <summary>
@@ -32,8 +47,14 @@ public sealed class LicenseConfigs
     /// Set to false in production if you want to require pre-activation.
     /// </summary>
     public bool FallbackToOnlineActivation { get; set; } = true;
+    /// <summary>
+    /// Gets or sets the Fingerprint Salt.
+    /// </summary>
     public string? FingerprintSalt { get; set; }
     private string? _projectSeed;
+    /// <summary>
+    /// The Project Seed.
+    /// </summary>
     public string? ProjectSeed
     {
         get => Obfuscate(_projectSeed);
@@ -83,7 +104,13 @@ public sealed class LicenseConfigs
     /// </summary>
     public bool EnableChain { get; set; } = false;
 
+    /// <summary>
+    /// Gets or sets the Chain Storage.
+    /// </summary>
     public LicenseChainStorage ChainStorage { get; set; } = LicenseChainStorage.None;
+    /// <summary>
+    /// Gets or sets the Chain File Path.
+    /// </summary>
     public string? ChainFilePath { get; set; }
 
     /// <summary>
@@ -153,6 +180,9 @@ public sealed class LicenseConfigs
     /// </summary>
     public bool EnableTpmAnchoring { get; set; } = false;
 
+    /// <summary>
+    /// Executes the Online operation.
+    /// </summary>
     public OnlineLicenseConfigs Online { get; set; } = new();
 
     /// <summary>
@@ -191,18 +221,39 @@ public sealed class LicenseConfigs
     }
 }
 
+/// <summary>
+/// Represents the Online License Configs.
+/// </summary>
 public sealed class OnlineLicenseConfigs
 {
+    /// <summary>
+    /// Gets or sets the Endpoint.
+    /// </summary>
     public string? Endpoint { get; set; }
 
     /// <summary>
     /// TIER 3: Endpoint for submitting action chains (e.g., "/api/v1/chain/submit").
     /// </summary>
     public string? ChainSubmissionEndpoint { get; set; } = "/api/v1/chain/submit";
+    /// <summary>
+    /// Gets or sets the Timeout Seconds.
+    /// </summary>
     public int TimeoutSeconds { get; set; } = 10;
+    /// <summary>
+    /// Gets or sets the Refresh Minutes.
+    /// </summary>
     public int RefreshMinutes { get; set; } = 1440;
+    /// <summary>
+    /// Gets or sets the Enable Heartbeat.
+    /// </summary>
     public bool EnableHeartbeat { get; set; } = false;
+    /// <summary>
+    /// Gets or sets the Heartbeat Interval Minutes.
+    /// </summary>
     public int HeartbeatIntervalMinutes { get; set; } = 240;
+    /// <summary>
+    /// Gets or sets the Revocation Grace Hours.
+    /// </summary>
     public int RevocationGraceHours { get; set; } = 24;
 
     /// <summary>
@@ -227,6 +278,9 @@ public sealed class OnlineLicenseConfigs
     public List<string>? TrustedCertificateThumbprints { get; set; }
 }
 
+/// <summary>
+/// Represents the MEnterprise Security Configs.
+/// </summary>
 public sealed class MEnterpriseSecurityConfigs
 {
     /// <summary>
@@ -272,6 +326,9 @@ public sealed class MEnterpriseSecurityConfigs
     ];
 }
 
+/// <summary>
+/// Represents the MCompliance Configs.
+/// </summary>
 public sealed class MComplianceConfigs
 {
     /// <summary>

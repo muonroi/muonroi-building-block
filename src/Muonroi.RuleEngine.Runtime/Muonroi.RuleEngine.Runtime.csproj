@@ -30,7 +30,7 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.*" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
     <PackageReference Include="RulesEngine" Version="6.0.0" />
-    <PackageReference Include="Scriban" Version="6.5.7" />
+    <PackageReference Include="Scriban" Version="6.6.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.8.37" />
   </ItemGroup>
 </Project>

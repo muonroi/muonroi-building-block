@@ -8,6 +8,7 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 /// </summary>
 public interface IPromptBuilder
 {
+    /// <summary>Builds the default system prompt.</summary>
     string BuildSystemPrompt();
 
     /// <summary>
@@ -16,6 +17,7 @@ public interface IPromptBuilder
     /// </summary>
     string BuildSystemPrompt(RuleSetKind kind);
 
+    /// <summary>Builds the user prompt for proliferation analysis.</summary>
     string BuildUserPrompt(
         string ruleSetJson,
         JsonElement? executionResult,

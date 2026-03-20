@@ -22,14 +22,37 @@ public sealed class DecisionTableRuleAdapter<TContext> : IRule<TContext>
     private readonly IMLog<DecisionTableRuleAdapter<TContext>> _log;
     private readonly bool _failOnNoMatch;
 
+    /// <inheritdoc />
     public string Code => _code;
+
+    /// <inheritdoc />
     public int Order { get; init; }
+
+    /// <inheritdoc />
     public string[] DependsOn { get; init; } = [];
+
+    /// <inheritdoc />
     public HookPoint HookPoint => HookPoint.BeforeRule;
+
+    /// <inheritdoc />
     public RuleType Type => RuleType.Business;
+
+    /// <inheritdoc />
     public string Name => $"DT:{_code}";
+
+    /// <inheritdoc />
     public IEnumerable<Type> Dependencies => [];
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DecisionTableRuleAdapter{TContext}"/> class.
+    /// </summary>
+    /// <param name="code">Rule code for this node.</param>
+    /// <param name="tableId">Decision table identifier.</param>
+    /// <param name="store">Decision table store.</param>
+    /// <param name="executor">Decision table executor.</param>
+    /// <param name="projector">Context projector for inputs.</param>
+    /// <param name="log">Logger instance.</param>
+    /// <param name="failOnNoMatch">Whether to fail when no row matches.</param>
     public DecisionTableRuleAdapter(
         string code,
         string tableId,
@@ -48,6 +71,7 @@ public sealed class DecisionTableRuleAdapter<TContext> : IRule<TContext>
         _failOnNoMatch = failOnNoMatch;
     }
 
+    /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)
     {
         // Load decision table
@@ -86,6 +110,7 @@ public sealed class DecisionTableRuleAdapter<TContext> : IRule<TContext>
         return RuleResult.Passed();
     }
 
+    /// <inheritdoc />
     public Task ExecuteAsync(TContext context, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
 

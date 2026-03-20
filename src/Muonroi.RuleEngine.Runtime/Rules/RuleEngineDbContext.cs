@@ -1,17 +1,26 @@
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
+/// <summary>
+/// Entity Framework DbContext for runtime ruleset storage.
+/// </summary>
 public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> options) : DbContext(options)
 {
+    /// <summary>Gets the rule set entities.</summary>
     public DbSet<RuleSetRecord> RuleSets => Set<RuleSetRecord>();
 
+    /// <summary>Gets the canary rollout entities.</summary>
     public DbSet<CanaryRolloutRecord> CanaryRollouts => Set<CanaryRolloutRecord>();
 
+    /// <summary>Gets the ruleset audit entities.</summary>
     public DbSet<RuleSetAuditRecord> RuleSetAudits => Set<RuleSetAuditRecord>();
 
+    /// <summary>Gets the tenant rule assignment entities.</summary>
     public DbSet<TenantRuleAssignmentRecord> TenantRuleAssignments => Set<TenantRuleAssignmentRecord>();
 
+    /// <summary>Gets the tenant quota override entities.</summary>
     public DbSet<TenantQuotaOverrideRecord> TenantQuotaOverrides => Set<TenantQuotaOverrideRecord>();
 
+    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<RuleSetRecord>(entity =>

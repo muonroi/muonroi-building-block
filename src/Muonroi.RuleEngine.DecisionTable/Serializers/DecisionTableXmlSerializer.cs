@@ -2,8 +2,16 @@ using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Serializers;
 
+/// <summary>
+/// Provides XML serialization for decision tables, specifically for DMN format.
+/// </summary>
 public sealed class DecisionTableXmlSerializer
 {
+    /// <summary>
+    /// Serializes a decision table to a DMN-compliant XML string.
+    /// </summary>
+    /// <param name="table">The decision table to serialize.</param>
+    /// <returns>A DMN XML string representation of the decision table.</returns>
     public static string SerializeToDmnXml(DecisionTableModel table)
     {
         XNamespace dmn = "https://www.omg.org/spec/DMN/20191111/MODEL/";

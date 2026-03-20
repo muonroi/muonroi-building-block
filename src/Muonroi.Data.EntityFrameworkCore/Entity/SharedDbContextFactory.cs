@@ -2,9 +2,18 @@ using Muonroi.Mediator.Mediator;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
 
+/// <summary>
+/// Creates a design-time DbContext for EF Core tooling.
+/// </summary>
+/// <typeparam name="TContext">The EF Core context type.</typeparam>
 public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TContext>
     where TContext : MDbContext
 {
+    /// <summary>
+    /// Creates a DbContext instance for design-time operations.
+    /// </summary>
+    /// <param name="args">Command line arguments.</param>
+    /// <returns>A configured DbContext instance.</returns>
     public TContext CreateDbContext(string[] args)
     {
         string? environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");

@@ -2,8 +2,17 @@ using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity.DataSample;
 
+/// <summary>
+/// Provides database migration and seed helpers.
+/// </summary>
 public static class MigrationManager
 {
+    /// <summary>
+    /// Ensures schema is created/migrated and seeds core data for the context.
+    /// </summary>
+    /// <typeparam name="TContext">The EF Core context type.</typeparam>
+    /// <param name="app">The web application.</param>
+    /// <returns>The same application instance for chaining.</returns>
     public static WebApplication MigrateDatabase<TContext>(this WebApplication app)
         where TContext : MDbContext
     {

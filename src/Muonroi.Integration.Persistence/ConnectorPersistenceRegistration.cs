@@ -9,6 +9,9 @@ namespace Muonroi.Integration.Persistence;
 /// </summary>
 public static class ConnectorPersistenceRegistration
 {
+    /// <summary>Registers EF-based connector persistence services.</summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="connectionString">PostgreSQL connection string.</param>
     public static IServiceCollection AddMConnectorPersistence(
         this IServiceCollection services,
         string connectionString)

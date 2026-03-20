@@ -7,8 +7,17 @@ using Muonroi.RuleEngine.DecisionTable;
 
 namespace Muonroi.RuleEngine.DecisionTable.Web;
 
+/// <summary>
+/// DI helpers for decision table web features.
+/// </summary>
 public static class DecisionTableWebExtensions
 {
+    /// <summary>
+    /// Registers decision table web services and controllers.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configure">Optional engine configuration.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddDecisionTableWeb(
         this IServiceCollection services,
         Action<DecisionTableEngineOptions>? configure = null)

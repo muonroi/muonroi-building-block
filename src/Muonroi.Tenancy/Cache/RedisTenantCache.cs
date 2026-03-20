@@ -12,6 +12,11 @@ public class RedisTenantCache
     private readonly IServer _server;
     private readonly string _tenantPrefix;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RedisTenantCache"/> class.
+    /// </summary>
+    /// <param name="connection">The Redis connection.</param>
+    /// <param name="tenantId">The tenant identifier.</param>
     public RedisTenantCache(IConnectionMultiplexer connection, string tenantId)
     {
         ArgumentNullException.ThrowIfNull(connection);
@@ -28,16 +33,33 @@ public class RedisTenantCache
         return _tenantPrefix + key;
     }
 
+    /// <summary>
+    /// Sets a value for the specified tenant-scoped key.
+    /// </summary>
+    /// <param name="key">The key to set.</param>
+    /// <param name="value">The value to store.</param>
+    /// <param name="expiry">Optional expiration.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public Task<bool> SetAsync(string key, string value, TimeSpan? expiry = null)
     {
         return _database.StringSetAsync(Namespaced(key), value, expiry);
     }
 
+    /// <summary>
+    /// Gets a value for the specified tenant-scoped key.
+    /// </summary>
+    /// <param name="key">The key to retrieve.</param>
+    /// <returns>A task that represents the asynchronous operation with the value.</returns>
     public Task<RedisValue> GetAsync(string key)
     {
         return _database.StringGetAsync(Namespaced(key));
     }
 
+    /// <summary>
+    /// Removes the specified tenant-scoped key.
+    /// </summary>
+    /// <param name="key">The key to remove.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public Task<bool> RemoveAsync(string key)
     {
         return _database.KeyDeleteAsync(Namespaced(key));

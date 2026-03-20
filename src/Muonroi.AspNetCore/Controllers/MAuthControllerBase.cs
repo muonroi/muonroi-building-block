@@ -1,5 +1,6 @@
 namespace Muonroi.AspNetCore.Controllers;
 
+/// <inheritdoc />
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
 [Authorize]
@@ -9,6 +10,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
     where TPermission : Enum
     where TDbContext : MDbContext
 {
+/// <inheritdoc />
     [HttpPost("create-role")]
     public virtual async Task<IActionResult> CreateRole([FromBody] CreateRoleRequestModel request,
         CancellationToken cancellationToken)
@@ -18,6 +20,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpPost("assign-permission")]
     public virtual async Task<IActionResult> AssignPermissionToRole([FromBody] AssignPermissionRequestModel request,
         CancellationToken cancellationToken)
@@ -27,6 +30,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpDelete("remove-permission/{roleId:guid}/{permissionId:guid}")]
     public virtual async Task<IActionResult> RemovePermissionFromRole(Guid roleId, Guid permissionId,
         CancellationToken cancellationToken)
@@ -36,6 +40,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpPost("assign-role")]
     public virtual async Task<IActionResult> AssignRoleToUser([FromBody] AssignRoleRequestModel request,
         CancellationToken cancellationToken)
@@ -45,6 +50,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("user-permissions/{userId:guid}")]
     public virtual async Task<IActionResult> GetUserPermissions(Guid userId, CancellationToken cancellationToken)
     {
@@ -53,6 +59,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpPost("update-role")]
     public virtual async Task<IActionResult> UpdateRole([FromBody] UpdateRoleRequestModel request,
         CancellationToken cancellationToken)
@@ -62,6 +69,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpDelete("delete-role/{roleId:guid}")]
     public virtual async Task<IActionResult> DeleteRole(Guid roleId, CancellationToken cancellationToken)
     {
@@ -70,6 +78,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("roles")]
     public virtual async Task<IActionResult> GetRoles(CancellationToken cancellationToken)
     {
@@ -78,6 +87,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("permissions")]
     public virtual async Task<IActionResult> GetPermission(CancellationToken cancellationToken)
     {
@@ -86,6 +96,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("role-permissions/{roleId:guid}")]
     public virtual async Task<IActionResult> GetRolePermissions(Guid roleId, CancellationToken cancellationToken)
     {
@@ -94,6 +105,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("role-users/{roleId:guid}")]
     public virtual async Task<IActionResult> GetRoleUsers(Guid roleId, CancellationToken cancellationToken)
     {
@@ -102,6 +114,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("permission-definitions")]
     public virtual async Task<IActionResult> GetPermissionDefinitions(CancellationToken cancellationToken)
     {
@@ -110,6 +123,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpPost("logout")]
     public virtual async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
@@ -117,6 +131,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpPost("logout-all")]
     public virtual async Task<IActionResult> LogoutAll(CancellationToken cancellationToken)
     {
@@ -124,6 +139,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [AllowAnonymous]
     [HttpPost("login")]
     public virtual async Task<IActionResult> Login([FromBody] LoginRequestModel request,
@@ -136,6 +152,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [AllowAnonymous]
     [HttpPost("refresh-token")]
     public virtual async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestModel request,
@@ -149,6 +166,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [AllowAnonymous]
     [HttpPost("register")]
     public virtual async Task<IActionResult> Register([FromBody] RegisterRequestModel request,
@@ -158,6 +176,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("menu-metadata/{userId:guid}")]
     public virtual async Task<IActionResult> GetMenuMetadata(Guid userId, CancellationToken cancellationToken)
     {
@@ -166,6 +185,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("ui-manifest/{userId:guid}")]
     public virtual async Task<IActionResult> GetUiManifest(Guid userId, CancellationToken cancellationToken)
     {
@@ -174,6 +194,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("ui-manifest/current")]
     public virtual async Task<IActionResult> GetCurrentUserUiManifest(CancellationToken cancellationToken)
     {
@@ -194,6 +215,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("ui-engine/{userId:guid}")]
     public virtual async Task<IActionResult> GetUiEngineManifest(
         Guid userId,
@@ -206,6 +228,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return BuildUiEngineManifestResult(result, minimalFor);
     }
 
+/// <inheritdoc />
     [HttpGet("ui-engine/current")]
     public virtual async Task<IActionResult> GetCurrentUserUiEngineManifest(
         [FromQuery] string? minimalFor,
@@ -229,6 +252,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return BuildUiEngineManifestResult(result, minimalFor);
     }
 
+/// <inheritdoc />
     [AllowAnonymous]
     [HttpGet("ui-engine/contract-info")]
     public virtual async Task<IActionResult> GetUiEngineContractInfo(CancellationToken cancellationToken)
@@ -237,6 +261,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [AllowAnonymous]
     [HttpGet("ui-engine/schema-hash")]
     public virtual async Task<IActionResult> GetUiEngineSchemaHash(CancellationToken cancellationToken)
@@ -245,6 +270,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [AllowAnonymous]
     [HttpPost("ui-engine/notify-change")]
     public virtual async Task<IActionResult> NotifyUiEngineSchemaChange(
@@ -255,6 +281,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("permission-tree/{userId:guid}")]
     public virtual async Task<IActionResult> GetPermissionTree(Guid userId, CancellationToken cancellationToken)
     {
@@ -263,6 +290,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("users")]
     public virtual async Task<IActionResult> GetUsers([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
     {
@@ -271,6 +299,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpGet("users/{userId:guid}")]
     public virtual async Task<IActionResult> GetUser(Guid userId, CancellationToken cancellationToken)
     {
@@ -279,6 +308,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpPut("users")]
     public virtual async Task<IActionResult> UpdateUser([FromBody] MUserModel request, CancellationToken cancellationToken)
     {
@@ -287,6 +317,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+/// <inheritdoc />
     [HttpDelete("users/{userId:guid}")]
     public virtual async Task<IActionResult> DeleteUser(Guid userId, CancellationToken cancellationToken)
     {
@@ -295,6 +326,9 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
         return result.GetActionResult();
     }
 
+    /// <summary>
+    /// Ensures the AdvancedAuth feature is licensed for the current tenant.
+    /// </summary>
     protected virtual void EnsureAdvancedAuthLicensed()
     {
         ILicenseGuard? guard = HttpContext?.RequestServices.GetRequiredService<ILicenseGuard>();

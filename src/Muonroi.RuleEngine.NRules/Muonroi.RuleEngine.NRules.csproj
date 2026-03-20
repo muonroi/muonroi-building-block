@@ -6,28 +6,12 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Muonroi.RuleEngine.NRules</PackageId>
     <Version>1.0.0-alpha.1</Version>
-    <Version>1.0.0-alpha.1</Version>
-    <Version>1.0.0-alpha.1</Version>
     <Authors>Muon Roi</Authors>
     <Description>NRules integration for Muonroi.BuildingBlock Rule Engine</Description>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReleaseNotes>v1.7.0: Updated to use new Abstractions v1.7.0 with Saga Pattern support. Compatible with ExecutionMode enum for flexible execution strategies.</PackageReleaseNotes>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
-  <PropertyGroup>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Include="..\..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\..\README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="NRules" Version="1.0.3" />

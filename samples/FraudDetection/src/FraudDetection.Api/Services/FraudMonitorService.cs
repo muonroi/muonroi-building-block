@@ -6,12 +6,21 @@ using FraudDetection.Api.Models;
 
 namespace FraudDetection.Api.Services;
 
+/// <summary>
+/// Represents the Fraud Monitor Service.
+/// </summary>
 public sealed class FraudMonitorService(ICepConfigRepository repository)
 {
+    /// <summary>
+    /// The Default Config Id.
+    /// </summary>
     public const string DefaultConfigId = "high-velocity-cards";
 
     private readonly ConcurrentDictionary<string, WindowRegistration> _windows = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Executes the Evaluate Async operation.
+    /// </summary>
     public async Task<FraudEvaluationResult> EvaluateAsync(
         TransactionEvaluationRequest request,
         CancellationToken cancellationToken = default)
@@ -65,13 +74,37 @@ public sealed class FraudMonitorService(ICepConfigRepository repository)
     private sealed record WindowRegistration(long Version, CepWindow<TransactionEvaluationRequest> Window);
 }
 
+/// <summary>
+/// Represents the Fraud Evaluation Result.
+/// </summary>
 public sealed record FraudEvaluationResult
 {
+    /// <summary>
+    /// Gets or sets the Tenant Id.
+    /// </summary>
     public string TenantId { get; init; } = "_global";
+    /// <summary>
+    /// Gets or sets the Card Id.
+    /// </summary>
     public string CardId { get; init; } = string.Empty;
+    /// <summary>
+    /// Gets or sets the Alert Triggered.
+    /// </summary>
     public bool AlertTriggered { get; init; }
+    /// <summary>
+    /// Gets or sets the Event Count.
+    /// </summary>
     public int EventCount { get; init; }
+    /// <summary>
+    /// Gets or sets the Threshold.
+    /// </summary>
     public int Threshold { get; init; }
+    /// <summary>
+    /// Gets or sets the Window Size Seconds.
+    /// </summary>
     public int WindowSizeSeconds { get; init; }
+    /// <summary>
+    /// Gets or sets the Total Amount.
+    /// </summary>
     public decimal TotalAmount { get; init; }
 }

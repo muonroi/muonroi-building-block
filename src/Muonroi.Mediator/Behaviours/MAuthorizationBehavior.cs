@@ -21,6 +21,9 @@ public sealed class MAuthorizationBehavior<TRequest, TResponse>(
     // Cache attribute lookups per request type to avoid repeated reflection
     private static readonly ConcurrentDictionary<Type, MAuthorizeAttribute[]> _attributeCache = new();
 
+    /// <summary>
+    /// Executes the Handle operation.
+    /// </summary>
     public Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,

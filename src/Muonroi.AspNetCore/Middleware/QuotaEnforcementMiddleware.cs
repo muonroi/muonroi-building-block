@@ -2,12 +2,14 @@ using Muonroi.Core.Abstractions.Context;
 
 namespace Muonroi.AspNetCore.Middleware;
 
+/// <inheritdoc />
 public sealed class QuotaEnforcementMiddleware(
     RequestDelegate next,
     ITenantQuotaTracker quotaTracker,
     IMLog<QuotaEnforcementMiddleware> logger,
     ISystemExecutionContextAccessor contextAccessor)
 {
+/// <inheritdoc />
     public async Task InvokeAsync(HttpContext context)
     {
         string? tenantId = contextAccessor.Get().TenantId;
@@ -47,8 +49,10 @@ public sealed class QuotaEnforcementMiddleware(
     }
 }
 
+/// <inheritdoc />
 public static class QuotaEnforcementMiddlewareExtensions
 {
+/// <inheritdoc />
     public static IApplicationBuilder UseQuotaEnforcement(this IApplicationBuilder app)
     {
         return app.UseMiddleware<QuotaEnforcementMiddleware>();

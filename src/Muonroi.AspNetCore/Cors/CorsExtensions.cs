@@ -1,7 +1,9 @@
 namespace Muonroi.AspNetCore.Cors;
 
+/// <inheritdoc />
 public static class CorsExtensions
 {
+/// <inheritdoc />
     public static IServiceCollection AddCors(this IServiceCollection services, IConfiguration configuration,
         string domainName = "MAllowDomains")
     {

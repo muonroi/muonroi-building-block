@@ -8,6 +8,9 @@ using FraudDetection.Api.Services;
 
 namespace FraudDetection.Api.Controllers;
 
+/// <summary>
+/// Represents the Fraud Transactions Controller.
+/// </summary>
 [ApiController]
 [Route("api/transactions")]
 public sealed class FraudTransactionsController(
@@ -15,6 +18,9 @@ public sealed class FraudTransactionsController(
     FraudMonitorService fraudMonitorService,
     IMDateTimeService dateTimeService) : ControllerBase
 {
+    /// <summary>
+    /// Executes the Evaluate operation.
+    /// </summary>
     [HttpPost("evaluate")]
     public async Task<ActionResult<TransactionEvaluationResponse>> Evaluate(
         [FromBody] TransactionEvaluationRequest request,

@@ -12,6 +12,9 @@ public sealed class NonceRotator(
     LicenseStore store,
     IMLog<NonceRotator>? logger = null)
 {
+    /// <summary>
+    /// Executes the Rotate Async operation.
+    /// </summary>
     public async Task RotateAsync(IEnumerable<FingerprintChainEntry> entries, string? tenantId = null,
         CancellationToken cancellationToken = default)
     {

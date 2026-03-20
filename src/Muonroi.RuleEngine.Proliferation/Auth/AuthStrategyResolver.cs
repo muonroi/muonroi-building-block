@@ -20,6 +20,7 @@ public sealed class AuthStrategyResolver : IAuthStrategyResolver
     private readonly IMtlsHttpClientFactory _mtlsFactory;
     private readonly IApiKeyRotationService _apiKeyRotation;
 
+    /// <summary>Creates a resolver for external project auth strategies.</summary>
     public AuthStrategyResolver(
         IOAuth2TokenProvider oauth2Provider,
         IMtlsHttpClientFactory mtlsFactory,

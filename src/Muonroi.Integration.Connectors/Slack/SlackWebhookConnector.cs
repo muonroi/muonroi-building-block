@@ -11,11 +11,18 @@ public sealed class SlackWebhookConnector : IServiceTaskConnector
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
+    /// <summary>
+    /// Creates a Slack webhook connector.
+    /// </summary>
+    /// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
     public SlackWebhookConnector(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory;
     }
 
+    /// <summary>
+    /// Connector metadata describing capabilities and configuration.
+    /// </summary>
     public ConnectorMetadata Metadata => new()
     {
         Type = "slack",
@@ -26,6 +33,12 @@ public sealed class SlackWebhookConnector : IServiceTaskConnector
         RequiresCredentials = true
     };
 
+    /// <summary>
+    /// Sends a message to Slack via webhook.
+    /// </summary>
+    /// <param name="context">Connector execution context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The connector result.</returns>
     public async Task<ConnectorResult> ExecuteAsync(ConnectorContext context, CancellationToken ct)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -72,6 +85,12 @@ public sealed class SlackWebhookConnector : IServiceTaskConnector
         }
     }
 
+    /// <summary>
+    /// Validates the webhook URL format.
+    /// </summary>
+    /// <param name="context">Connector execution context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the webhook URL looks valid.</returns>
     public async Task<bool> TestConnectionAsync(ConnectorContext context, CancellationToken ct)
     {
         // Slack doesn't have a test endpoint; we just validate the URL format
@@ -81,6 +100,10 @@ public sealed class SlackWebhookConnector : IServiceTaskConnector
             uri.Host.Contains("slack", StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>
+    /// Returns the JSON schema used to configure this connector.
+    /// </summary>
+    /// <returns>Configuration schema.</returns>
     public JsonElement GetConfigSchema()
     {
         string schema = """

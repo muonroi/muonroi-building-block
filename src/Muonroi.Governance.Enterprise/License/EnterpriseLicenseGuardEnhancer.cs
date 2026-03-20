@@ -23,6 +23,9 @@ public sealed class EnterpriseLicenseGuardEnhancer(
     private static readonly ConcurrentDictionary<string, DateTimeOffset> LastAntiTamperChecks =
         new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Executes the On Startup operation.
+    /// </summary>
     public void OnStartup(LicenseConfigs startupConfigs, LicenseState state)
     {
         LicenseEnforcementMode mode = startupConfigs.GetEffectiveEnforcementMode(state.Tier);
@@ -37,6 +40,9 @@ public sealed class EnterpriseLicenseGuardEnhancer(
         }
     }
 
+    /// <summary>
+    /// Executes the On Ensure Valid operation.
+    /// </summary>
     public void OnEnsureValid(string actionType, LicenseState state)
     {
         EnforceEnterpriseFailClosedPolicy(actionType, state);
@@ -59,6 +65,9 @@ public sealed class EnterpriseLicenseGuardEnhancer(
         }
     }
 
+    /// <summary>
+    /// Executes the On Record Action operation.
+    /// </summary>
     public void OnRecordAction(LicenseActionContext context, LicenseState state)
     {
         // Hook for enterprise-specific audit side effects.

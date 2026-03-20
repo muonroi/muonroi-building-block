@@ -1,7 +1,11 @@
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
+/// <summary>
+/// Endpoint mappings for rule debugger controls and trace queries.
+/// </summary>
 public static class RuleTracingEndpoints
 {
+    /// <summary>Maps rule tracing endpoints onto the route builder.</summary>
     public static IEndpointRouteBuilder MapRuleTracingEndpoints(this IEndpointRouteBuilder endpoints)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
@@ -55,8 +59,10 @@ public static class RuleTracingEndpoints
         return endpoints;
     }
 
+    /// <summary>Request payload used to enable rule debugging.</summary>
     public sealed class EnableRuleDebuggerRequest
     {
+        /// <summary>Duration in minutes to keep debugging enabled.</summary>
         public int DurationMinutes { get; init; } = 30;
     }
 }

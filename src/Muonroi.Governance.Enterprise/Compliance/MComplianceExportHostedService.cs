@@ -4,6 +4,9 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.Enterprise.Compliance;
 
+/// <summary>
+/// Represents the MCompliance Export Hosted Service.
+/// </summary>
 public sealed class MComplianceExportHostedService(
     IMComplianceExportService exportService,
     LicenseConfigs configs,
@@ -14,6 +17,9 @@ public sealed class MComplianceExportHostedService(
     private readonly LicenseConfigs _configs = configs ?? throw new ArgumentNullException(nameof(configs));
     private readonly IMLog<MComplianceExportHostedService>? _logger = logger;
 
+    /// <summary>
+    /// Executes the Execute Async operation.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)

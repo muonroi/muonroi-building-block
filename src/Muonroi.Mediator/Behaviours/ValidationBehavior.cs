@@ -2,10 +2,16 @@ using Muonroi.Mediator.Mediator.Interfaces;
 
 namespace Muonroi.Mediator.Behaviours;
 
+/// <summary>
+/// Represents the Validation Behavior.
+/// </summary>
 public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
+    /// <summary>
+    /// Executes the Handle operation.
+    /// </summary>
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {

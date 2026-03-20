@@ -5,21 +5,36 @@ using Muonroi.RuleEngine.Proliferation.Persistence.Entities;
 
 namespace Muonroi.RuleEngine.Proliferation.Persistence;
 
-public sealed class PostgresProliferationStore(ProliferationDbContext db) : IProliferationStore
+/// <summary>
+/// PostgreSQL-backed persistence for proliferation scenarios and results.
+/// </summary>
+public sealed class PostgresProliferationStore : IProliferationStore
 {
+    private readonly ProliferationDbContext _db;
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+    /// <summary>
+    /// Creates a PostgreSQL-backed proliferation store.
+    /// </summary>
+    /// <param name="db">The proliferation DbContext.</param>
+    public PostgresProliferationStore(ProliferationDbContext db)
+    {
+        _db = db;
+    }
+
+    /// <inheritdoc/>
     public async Task SaveScenariosAsync(IReadOnlyList<NeuronScenario> scenarios, CancellationToken ct = default)
     {
         foreach (NeuronScenario scenario in scenarios)
         {
             NeuronScenarioEntity entity = ToEntity(scenario);
-            db.NeuronScenarios.Add(entity);
+            _db.NeuronScenarios.Add(entity);
 
-            db.RuleLineages.Add(new RuleLineageEntity
+            _db.RuleLineages.Add(new RuleLineageEntity
             {
                 ScenarioId = scenario.Id,
                 SeedRuleCode = scenario.SeedRuleCode,
@@ -29,9 +44,11 @@ public sealed class PostgresProliferationStore(ProliferationDbContext db) : IPro
                 CreatedAt = scenario.CreatedAt
             });
         }
-        await db.SaveChangesAsync(ct);
+
+        await _db.SaveChangesAsync(ct);
     }
 
+    /// <inheritdoc/>
     public async Task SaveResultAsync(ScenarioResult result, CancellationToken ct = default)
     {
         ScenarioResultEntity entity = new()
@@ -48,22 +65,23 @@ public sealed class PostgresProliferationStore(ProliferationDbContext db) : IPro
             ExecutedAt = result.ExecutedAt
         };
 
-        ScenarioResultEntity? existing = await db.ScenarioResults.FindAsync([result.ScenarioId], ct);
+        ScenarioResultEntity? existing = await _db.ScenarioResults.FindAsync([result.ScenarioId], ct);
         if (existing is not null)
         {
-            db.Entry(existing).CurrentValues.SetValues(entity);
+            _db.Entry(existing).CurrentValues.SetValues(entity);
         }
         else
         {
-            db.ScenarioResults.Add(entity);
+            _db.ScenarioResults.Add(entity);
         }
 
-        await db.SaveChangesAsync(ct);
+        await _db.SaveChangesAsync(ct);
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<NeuronScenario>> GetPendingScenariosAsync(int limit = 10, CancellationToken ct = default)
     {
-        List<NeuronScenarioEntity> entities = await db.NeuronScenarios
+        List<NeuronScenarioEntity> entities = await _db.NeuronScenarios
             .Where(e => e.Status == ScenarioStatus.Pending)
             .OrderBy(e => e.CreatedAt)
             .Take(limit)
@@ -73,9 +91,10 @@ public sealed class PostgresProliferationStore(ProliferationDbContext db) : IPro
         return entities.Select(ToModel).ToList();
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<NeuronScenario>> GetScenariosBySeedAsync(string seedRuleCode, CancellationToken ct = default)
     {
-        List<NeuronScenarioEntity> entities = await db.NeuronScenarios
+        List<NeuronScenarioEntity> entities = await _db.NeuronScenarios
             .Where(e => e.SeedRuleCode == seedRuleCode)
             .OrderBy(e => e.CreatedAt)
             .AsNoTracking()
@@ -84,37 +103,41 @@ public sealed class PostgresProliferationStore(ProliferationDbContext db) : IPro
         return entities.Select(ToModel).ToList();
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<ScenarioResult>> GetResultsByWorkflowAsync(string seedRuleCode, CancellationToken ct = default)
     {
-        // Single query: join scenarios → results filtered by workflow
-        List<ScenarioResultEntity> entities = await db.ScenarioResults
+        // Single query: join scenarios -> results filtered by workflow
+        List<ScenarioResultEntity> entities = await _db.ScenarioResults
             .AsNoTracking()
-            .Where(r => db.NeuronScenarios
+            .Where(r => _db.NeuronScenarios
                 .Any(s => s.Id == r.ScenarioId && s.SeedRuleCode == seedRuleCode))
             .ToListAsync(ct);
 
         return entities.Select(ToResultModel).ToList();
     }
 
+    /// <inheritdoc/>
     public async Task<ScenarioResult?> GetResultAsync(string scenarioId, CancellationToken ct = default)
     {
-        ScenarioResultEntity? entity = await db.ScenarioResults
+        ScenarioResultEntity? entity = await _db.ScenarioResults
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.ScenarioId == scenarioId, ct);
 
         return entity is null ? null : ToResultModel(entity);
     }
 
+    /// <inheritdoc/>
     public async Task UpdateStatusAsync(string scenarioId, ScenarioStatus status, CancellationToken ct = default)
     {
-        await db.NeuronScenarios
+        await _db.NeuronScenarios
             .Where(e => e.Id == scenarioId)
             .ExecuteUpdateAsync(s => s.SetProperty(e => e.Status, status), ct);
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<RuleLineage>> GetLineageAsync(string seedRuleCode, CancellationToken ct = default)
     {
-        List<RuleLineageEntity> entities = await db.RuleLineages
+        List<RuleLineageEntity> entities = await _db.RuleLineages
             .Where(e => e.SeedRuleCode == seedRuleCode)
             .OrderBy(e => e.Depth)
             .ThenBy(e => e.CreatedAt)
@@ -132,11 +155,14 @@ public sealed class PostgresProliferationStore(ProliferationDbContext db) : IPro
         }).ToList();
     }
 
+    /// <inheritdoc/>
     public async Task<ProliferationStats> GetStatsAsync(string? seedRuleCode = null, CancellationToken ct = default)
     {
-        IQueryable<NeuronScenarioEntity> query = db.NeuronScenarios.AsNoTracking();
+        IQueryable<NeuronScenarioEntity> query = _db.NeuronScenarios.AsNoTracking();
         if (seedRuleCode is not null)
+        {
             query = query.Where(e => e.SeedRuleCode == seedRuleCode);
+        }
 
         int total = await query.CountAsync(ct);
         int passed = await query.CountAsync(e => e.Status == ScenarioStatus.Passed, ct);
@@ -170,7 +196,7 @@ public sealed class PostgresProliferationStore(ProliferationDbContext db) : IPro
         ParentScenarioId = scenario.ParentScenarioId,
         GenerationDepth = scenario.GenerationDepth,
         ProliferationReason = scenario.ProliferationReason,
-        InputFactsJson = scenario.InputFacts.ValueKind != System.Text.Json.JsonValueKind.Undefined
+        InputFactsJson = scenario.InputFacts.ValueKind != JsonValueKind.Undefined
             ? scenario.InputFacts.GetRawText()
             : "{}",
         ExpectedBehavior = scenario.ExpectedBehavior,

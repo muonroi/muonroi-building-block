@@ -76,10 +76,9 @@ public sealed class RedisRoutingTableStore : IRedisRoutingTableStore, IDisposabl
             }
         }
 
-        List<RoutingTableEntry> orderedEntries = entries
+        List<RoutingTableEntry> orderedEntries = [.. entries
             .OrderBy(entry => entry.Order)
-            .ThenBy(entry => entry.RuleCode, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+            .ThenBy(entry => entry.RuleCode, StringComparer.OrdinalIgnoreCase)];
 
         _localCache[cacheKey] = new CacheEntry(now.Add(_options.LocalCacheTtl), orderedEntries);
         return orderedEntries;

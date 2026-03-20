@@ -19,6 +19,7 @@ public sealed class CachingOAuth2TokenProvider : IOAuth2TokenProvider
     // Key: "{clientId}:{tokenEndpoint}", Value: (access_token, expiresAt with 60s buffer)
     private readonly ConcurrentDictionary<string, (string Token, DateTimeOffset ExpiresAt)> _cache = new();
 
+    /// <summary>Creates a caching OAuth2 token provider.</summary>
     public CachingOAuth2TokenProvider(
         IHttpClientFactory httpClientFactory,
         IMLog<CachingOAuth2TokenProvider>? logger = null)

@@ -6,5 +6,8 @@ namespace Muonroi.Mediator.Mediator.Interfaces;
 /// </summary>
 public interface IRequestPostProcessor<in TRequest, in TResponse>
 {
+    /// <summary>
+    /// Executes the Process Async operation.
+    /// </summary>
     Task ProcessAsync(TRequest request, TResponse response, CancellationToken cancellationToken = default);
 }

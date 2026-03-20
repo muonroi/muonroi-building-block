@@ -1,8 +1,14 @@
 namespace Muonroi.UiEngine.Catalog.Attributes;
 
+/// <summary>
+/// Binds a rule context type to an endpoint.
+/// </summary>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public sealed class BindRuleContextAttribute(Type contextType) : Attribute
 {
+    /// <summary>
+    /// The bound rule context type.
+    /// </summary>
     public Type ContextType { get; } = contextType ?? throw new ArgumentNullException(nameof(contextType));
 
     /// <summary>

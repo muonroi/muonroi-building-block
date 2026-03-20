@@ -1,8 +1,17 @@
 namespace Muonroi.Data.EntityFrameworkCore.Entity.DataSample;
 
+/// <summary>
+/// Seeds default languages into the database.
+/// </summary>
+/// <typeparam name="TContext">The EF Core context type.</typeparam>
+/// <param name="context">The database context.</param>
+/// <param name="dateTimeService">The date/time service.</param>
 public class DefaultLanguagesCreator<TContext>(TContext context, IMDateTimeService dateTimeService)
     where TContext : MDbContext
 {
+    /// <summary>
+    /// Gets the initial language list used for seeding.
+    /// </summary>
     public static List<MLanguage> InitialLanguages => GetInitialLanguages();
 
     private static List<MLanguage> GetInitialLanguages()
@@ -14,6 +23,9 @@ public class DefaultLanguagesCreator<TContext>(TContext context, IMDateTimeServi
         ];
     }
 
+    /// <summary>
+    /// Creates default languages if they do not already exist.
+    /// </summary>
     public void Create()
     {
         CreateLanguages();

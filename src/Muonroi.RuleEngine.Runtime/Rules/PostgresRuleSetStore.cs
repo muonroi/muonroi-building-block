@@ -2,6 +2,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
+/// <summary>
+/// Database-backed ruleset store with versioning and activation support.
+/// </summary>
 public sealed class PostgresRuleSetStore(
     RuleEngineDbContext dbContext,
     RuleControlPlaneOptions? controlPlaneOptions = null,
@@ -11,6 +14,7 @@ public sealed class PostgresRuleSetStore(
     private readonly ISystemExecutionContextAccessor _executionContext =
         executionContextAccessor ?? new SystemExecutionContextAccessor();
 
+    /// <inheritdoc />
     public async Task SaveAsync(string workflowName, string json, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
@@ -69,6 +73,7 @@ public sealed class PostgresRuleSetStore(
         }
     }
 
+    /// <inheritdoc />
     public async Task<string?> GetAsync(
         string workflowName,
         int? version = null,
@@ -99,6 +104,7 @@ public sealed class PostgresRuleSetStore(
         return record?.Json;
     }
 
+    /// <inheritdoc />
     public async Task SetActiveVersionAsync(
         string workflowName,
         int version,
@@ -163,6 +169,7 @@ public sealed class PostgresRuleSetStore(
         }
     }
 
+    /// <inheritdoc />
     public async Task<int[]> GetVersionsAsync(string workflowName, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
@@ -178,6 +185,7 @@ public sealed class PostgresRuleSetStore(
         return versions;
     }
 
+    /// <inheritdoc />
     public async Task<int?> GetActiveVersionAsync(string workflowName, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
@@ -203,6 +211,7 @@ public sealed class PostgresRuleSetStore(
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<string>> GetWorkflowsAsync(CancellationToken cancellationToken = default)
     {
         string tenantId = ResolveTenantId();

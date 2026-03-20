@@ -12,9 +12,13 @@ using System.Linq;
 
 namespace Muonroi.RuleEngine.SourceGenerators;
 
+/// <summary>
+/// Incremental generator that extracts annotated methods into rules.
+/// </summary>
 [Generator]
 public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
 {
+    /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         IncrementalValuesProvider<MethodDeclarationSyntax> methodDeclarations = context.SyntaxProvider
@@ -143,25 +147,23 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
 
             INamedTypeSymbol classSymbol = methodSymbol.ContainingType;
             string? sourceNamespace = classSymbol.ContainingNamespace.IsGlobalNamespace ? null : classSymbol.ContainingNamespace.ToDisplayString();
-            List<ParameterModel> parameters = methodSymbol.Parameters.Select(parameter => new ParameterModel(
+            List<ParameterModel> parameters = [.. methodSymbol.Parameters.Select(parameter => new ParameterModel(
                 parameter.Name,
                 parameter.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
                 parameter.HasExplicitDefaultValue,
-                parameter.HasExplicitDefaultValue ? (parameter.ExplicitDefaultValue?.ToString() ?? "null") : null)).ToList();
+                parameter.HasExplicitDefaultValue ? (parameter.ExplicitDefaultValue?.ToString() ?? "null") : null))];
             string contextType = parameters.FirstOrDefault(parameter => !IsFactBag(parameter.TypeName) && !IsCancellationToken(parameter.TypeName))?.TypeName ?? "object";
             List<ServiceDependency> dependencies = ExtractDependencies(method, classSymbol, model, context);
             List<HelperMethodDefinition> helpers = ExtractHelperMethods(method, classSymbol, compilation, context);
-            string[] customAttributes = methodSymbol.GetAttributes()
+            string[] customAttributes = [.. methodSymbol.GetAttributes()
                 .Where(candidate => !(candidate.AttributeClass?.Name?.IndexOf("ExtractAsRule", StringComparison.Ordinal) >= 0))
                 .Where(candidate => !string.Equals(candidate.AttributeClass?.ToDisplayString(), "Muonroi.RuleEngine.Abstractions.Authoring.MRuleContextDescriptionAttribute", StringComparison.Ordinal))
                 .Where(candidate => !string.Equals(candidate.AttributeClass?.ToDisplayString(), "Muonroi.RuleEngine.Abstractions.Authoring.MRuleFactDescriptionAttribute", StringComparison.Ordinal))
                 .Where(candidate => !string.Equals(candidate.AttributeClass?.Name, "MRuleCatalogEntryAttribute", StringComparison.Ordinal))
-                .Select(candidate => $"[{candidate.AttributeClass?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)}]")
-                .ToArray();
-            string[] usings = method.SyntaxTree.GetCompilationUnitRoot().Usings
+                .Select(candidate => $"[{candidate.AttributeClass?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)}]")];
+            string[] usings = [.. method.SyntaxTree.GetCompilationUnitRoot().Usings
                 .Where(usingDirective => usingDirective.Name is not null)
-                .Select(usingDirective => usingDirective.Name!.ToString())
-                .ToArray();
+                .Select(usingDirective => usingDirective.Name!.ToString())];
 
             ExtractedRuleDefinition definition = new(
                 ruleCode,
@@ -357,7 +359,7 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
             return "GeneratedRule";
         }
 
-        char[] chars = value.Select(ch => char.IsLetterOrDigit(ch) || ch == '_' ? ch : '_').ToArray();
+        char[] chars = [.. value.Select(ch => char.IsLetterOrDigit(ch) || ch == '_' ? ch : '_')];
         string normalized = new(chars);
         if (!char.IsLetter(normalized[0]) && normalized[0] != '_')
         {

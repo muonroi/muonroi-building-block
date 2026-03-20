@@ -8,6 +8,9 @@ namespace Muonroi.RuleEngine.Runtime.Web.Controllers;
 /// Consumer projects inherit this controller to expose the endpoint automatically.
 /// Override <see cref="ExecuteAsync"/> to customize execution behavior.
 /// </summary>
+/// <param name="rulesEngineService">Rules engine service used to load rulesets.</param>
+/// <param name="dryRunService">Dry-run executor for rule evaluation.</param>
+/// <param name="executionContextAccessor">Execution context accessor for tenant resolution.</param>
 [ApiController]
 [Authorize]
 [Route("api/v1/rule-engine")]
@@ -16,6 +19,12 @@ public class MRuleFlowExecuteController(
     IRuleDryRunService dryRunService,
     ISystemExecutionContextAccessor executionContextAccessor) : ControllerBase
 {
+    /// <summary>Executes a ruleset dry-run with the provided input facts.</summary>
+    /// <param name="workflowCode">Workflow identifier to execute.</param>
+    /// <param name="version">Optional ruleset version.</param>
+    /// <param name="inputFacts">Input facts for the ruleset.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An action result containing dry-run output.</returns>
     [HttpPost("execute/{workflowCode}")]
     public virtual async Task<IActionResult> ExecuteAsync(
         string workflowCode,

@@ -5,6 +5,7 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 /// </summary>
 public sealed class RuleStoreConfigs
 {
+    /// <summary>Configuration section name used to bind these options.</summary>
     public const string SectionName = "RuleStore";
 
     /// <summary>

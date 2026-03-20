@@ -1,7 +1,13 @@
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Publish Endpoint Auth Extensions.
+/// </summary>
 public static class PublishEndpointAuthExtensions
 {
+    /// <summary>
+    /// Executes the Publish With Auth Context{T} operation.
+    /// </summary>
     public static Task PublishWithAuthContext<T>(
         this IPublishEndpoint endpoint,
         T message,
@@ -15,6 +21,9 @@ public static class PublishEndpointAuthExtensions
         return endpoint.PublishWithContext(message, context, tenantContextPolicy, cancellationToken);
     }
 
+    /// <summary>
+    /// Executes the Publish With Context{T} operation.
+    /// </summary>
     public static Task PublishWithContext<T>(
         this IPublishEndpoint endpoint,
         T message,

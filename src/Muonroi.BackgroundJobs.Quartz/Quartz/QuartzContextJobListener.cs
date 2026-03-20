@@ -3,6 +3,12 @@ using Muonroi.Tenancy.Core;
 
 namespace Muonroi.BackgroundJobs.Quartz.Quartz;
 
+/// <summary>
+/// Quartz job listener that restores Muonroi execution context for job runs.
+/// </summary>
+/// <param name="accessor">Optional execution context accessor.</param>
+/// <param name="policy">Optional tenant context policy.</param>
+/// <param name="logScopeFactory">Optional log scope factory.</param>
 public sealed class QuartzContextJobListener(
     ISystemExecutionContextAccessor? accessor = null,
     ITenantContextPolicy? policy = null,
@@ -15,8 +21,10 @@ public sealed class QuartzContextJobListener(
     private readonly ITenantContextPolicy _policy = policy ?? new DefaultTenantContextPolicy(new NullContextResolver());
     private readonly ILogScopeFactory _logScopeFactory = logScopeFactory ?? NullLogScopeFactory.Instance;
 
+    /// <inheritdoc />
     public string Name => nameof(QuartzContextJobListener);
 
+    /// <inheritdoc />
     public Task JobToBeExecuted(IJobExecutionContext context, CancellationToken cancellationToken = default)
     {
         IMuonroiJobExecutionContext? executionContext = context.MergedJobDataMap[ContextKey] as IMuonroiJobExecutionContext;
@@ -49,12 +57,14 @@ public sealed class QuartzContextJobListener(
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public Task JobExecutionVetoed(IJobExecutionContext context, CancellationToken cancellationToken = default)
     {
         Cleanup(context);
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public Task JobWasExecuted(
         IJobExecutionContext context,
         JobExecutionException? jobException,

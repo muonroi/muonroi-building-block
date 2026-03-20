@@ -10,6 +10,9 @@ using Muonroi.RuleEngine.Proliferation.Worker;
 
 namespace Muonroi.RuleEngine.Proliferation;
 
+/// <summary>
+/// Service registration helpers for the proliferation engine.
+/// </summary>
 public static class ProliferationServiceCollectionExtensions
 {
     /// <summary>
@@ -69,9 +72,7 @@ public static class ProliferationServiceCollectionExtensions
                 string[] brainNames = opts.CompositeBrains.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 if (brainNames.Length > 1)
                 {
-                    List<IRuleProliferationBrain> brains = brainNames
-                        .Select(name => CreateBrain(sp, name))
-                        .ToList();
+                    List<IRuleProliferationBrain> brains = [.. brainNames.Select(name => CreateBrain(sp, name))];
 
                     CompositeMode mode = opts.CompositeMode.Equals("sequential", StringComparison.OrdinalIgnoreCase)
                         ? CompositeMode.Sequential
@@ -178,6 +179,9 @@ public static class ProliferationServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Creates the configured proliferation brain implementation.
+    /// </summary>
     private static IRuleProliferationBrain CreateBrain(IServiceProvider sp, string? providerName)
     {
         var opts = sp.GetRequiredService<ProliferationOptions>();

@@ -14,6 +14,9 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Scriban" Version="6.6.0" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Core\Muonroi.Core.csproj" />
     <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />

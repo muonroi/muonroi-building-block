@@ -10,6 +10,9 @@ namespace Muonroi.Integration.Connectors.Email;
 /// </summary>
 public sealed class SmtpConnector : IServiceTaskConnector
 {
+    /// <summary>
+    /// Connector metadata describing capabilities and configuration.
+    /// </summary>
     public ConnectorMetadata Metadata => new()
     {
         Type = "email",
@@ -20,6 +23,12 @@ public sealed class SmtpConnector : IServiceTaskConnector
         RequiresCredentials = true
     };
 
+    /// <summary>
+    /// Sends an email using the configured SMTP settings.
+    /// </summary>
+    /// <param name="context">Connector execution context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The connector result.</returns>
     public async Task<ConnectorResult> ExecuteAsync(ConnectorContext context, CancellationToken ct)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -64,6 +73,12 @@ public sealed class SmtpConnector : IServiceTaskConnector
         }
     }
 
+    /// <summary>
+    /// Tests connectivity to the SMTP server.
+    /// </summary>
+    /// <param name="context">Connector execution context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the connection succeeds.</returns>
     public async Task<bool> TestConnectionAsync(ConnectorContext context, CancellationToken ct)
     {
         try
@@ -81,6 +96,10 @@ public sealed class SmtpConnector : IServiceTaskConnector
         }
     }
 
+    /// <summary>
+    /// Returns the JSON schema used to configure this connector.
+    /// </summary>
+    /// <returns>Configuration schema.</returns>
     public JsonElement GetConfigSchema()
     {
         string schema = """

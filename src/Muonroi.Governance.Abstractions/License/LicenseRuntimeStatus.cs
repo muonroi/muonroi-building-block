@@ -12,6 +12,9 @@ public sealed class LicenseRuntimeStatus
     private DateTimeOffset? _lastHeartbeatAtUtc;
     private DateTimeOffset? _revocationGraceUntilUtc;
 
+    /// <summary>
+    /// The Is Degraded To Free.
+    /// </summary>
     public bool IsDegradedToFree
     {
         get
@@ -23,6 +26,9 @@ public sealed class LicenseRuntimeStatus
         }
     }
 
+    /// <summary>
+    /// The Degrade Reason.
+    /// </summary>
     public string? DegradeReason
     {
         get
@@ -34,6 +40,9 @@ public sealed class LicenseRuntimeStatus
         }
     }
 
+    /// <summary>
+    /// The Current Heartbeat Nonce.
+    /// </summary>
     public string? CurrentHeartbeatNonce
     {
         get
@@ -45,6 +54,9 @@ public sealed class LicenseRuntimeStatus
         }
     }
 
+    /// <summary>
+    /// The Last Heartbeat At Utc.
+    /// </summary>
     public DateTimeOffset? LastHeartbeatAtUtc
     {
         get
@@ -56,6 +68,9 @@ public sealed class LicenseRuntimeStatus
         }
     }
 
+    /// <summary>
+    /// The Revocation Grace Until Utc.
+    /// </summary>
     public DateTimeOffset? RevocationGraceUntilUtc
     {
         get
@@ -67,6 +82,9 @@ public sealed class LicenseRuntimeStatus
         }
     }
 
+    /// <summary>
+    /// Executes the Initialize From Proof operation.
+    /// </summary>
     public void InitializeFromProof(ActivationProof? proof)
     {
         if (proof == null)
@@ -80,6 +98,9 @@ public sealed class LicenseRuntimeStatus
         }
     }
 
+    /// <summary>
+    /// Executes the Update Heartbeat Success operation.
+    /// </summary>
     public void UpdateHeartbeatSuccess(string? newNonce, DateTimeOffset checkedAtUtc)
     {
         lock (_sync)
@@ -96,6 +117,9 @@ public sealed class LicenseRuntimeStatus
         }
     }
 
+    /// <summary>
+    /// Executes the Start Revocation Grace operation.
+    /// </summary>
     public void StartRevocationGrace(DateTimeOffset graceUntilUtc)
     {
         lock (_sync)
@@ -109,6 +133,9 @@ public sealed class LicenseRuntimeStatus
         }
     }
 
+    /// <summary>
+    /// Executes the Evaluate Grace Period operation.
+    /// </summary>
     public bool EvaluateGracePeriod(DateTimeOffset nowUtc)
     {
         lock (_sync)
@@ -129,6 +156,9 @@ public sealed class LicenseRuntimeStatus
         }
     }
 
+    /// <summary>
+    /// Executes the Downgrade To Free operation.
+    /// </summary>
     public void DowngradeToFree(string reason)
     {
         lock (_sync)
@@ -138,6 +168,9 @@ public sealed class LicenseRuntimeStatus
         }
     }
 
+    /// <summary>
+    /// Executes the Get Effective Tier operation.
+    /// </summary>
     public LicenseTier GetEffectiveTier(LicenseState state)
     {
         ArgumentNullException.ThrowIfNull(state);
@@ -152,6 +185,9 @@ public sealed class LicenseRuntimeStatus
         return state.ActivationProof?.Tier ?? state.Tier;
     }
 
+    /// <summary>
+    /// Executes the Has Feature operation.
+    /// </summary>
     public bool HasFeature(LicenseState state, string featureName)
     {
         ArgumentNullException.ThrowIfNull(state);

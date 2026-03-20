@@ -11,6 +11,12 @@ public sealed class ExternalJsonRule<TContext> : IBusinessRule<TContext>
     private readonly RulesEngine.RulesEngine _engine;
     private readonly string _workflowName;
 
+    /// <summary>
+    /// Evaluates JSON defined rules using the Microsoft RulesEngine library.
+    /// </summary>
+    /// <param name="json"></param>
+    /// <param name="workflowName"></param>
+    /// <param name="settings"></param>
     public ExternalJsonRule(string json, string workflowName, ReSettings? settings = null)
     {
         Workflow[] workflows = JsonSerializer.Deserialize<Workflow[]>(json) ?? []; // MBB002-exempt: constructor-injected string — Workflow type requires direct JsonSerializer
@@ -19,8 +25,17 @@ public sealed class ExternalJsonRule<TContext> : IBusinessRule<TContext>
         Code = workflowName;
     }
 
+    /// <summary>
+    /// Code of the rule, which is the workflow name in this case.
+    /// </summary>
     public string Code { get; }
 
+    /// <summary>
+    /// is satisfied if all rules in the specified workflow evaluate to true for the given context.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async Task<bool> IsSatisfiedAsync(TContext context, CancellationToken cancellationToken = default)
     {
         dynamic[] inputs = [new { value = context }];

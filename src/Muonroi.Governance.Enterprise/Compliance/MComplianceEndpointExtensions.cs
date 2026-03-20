@@ -1,7 +1,13 @@
 namespace Muonroi.Governance.Compliance;
 
+/// <summary>
+/// Represents the MCompliance Endpoint Extensions.
+/// </summary>
 public static class MComplianceEndpointExtensions
 {
+    /// <summary>
+    /// Executes the Map MCompliance Endpoints operation.
+    /// </summary>
     public static IEndpointRouteBuilder MapMComplianceEndpoints(
         this IEndpointRouteBuilder endpoints,
         string basePath = "/api/v1/compliance")

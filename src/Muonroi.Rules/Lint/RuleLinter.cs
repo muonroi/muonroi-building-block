@@ -1,20 +1,44 @@
 namespace Muonroi.Rules.Lint;
 
+/// <summary>
+/// Defines the severity levels for linting messages.
+/// </summary>
 public enum LintSeverity
 {
+    /// <summary>Indicates a potential issue that does not prevent execution.</summary>
     Warning,
+    /// <summary>Indicates a critical issue that must be resolved.</summary>
     Error
 }
 
+/// <summary>
+/// Represents a message generated during the linting process.
+/// </summary>
+/// <param name="Code">The unique error or warning code.</param>
+/// <param name="Message">The descriptive message.</param>
+/// <param name="Severity">The severity level of the message.</param>
 public record LintMessage(string Code, string Message, LintSeverity Severity);
 
+/// <summary>
+/// Provides methods for linting rule engine definitions.
+/// </summary>
 public static class RuleLinter
 {
+    /// <summary>
+    /// Lints a rule definition file.
+    /// </summary>
+    /// <param name="path">The path to the JSON rule file.</param>
+    /// <returns>A collection of linting messages.</returns>
     public static IEnumerable<LintMessage> LintFile(string path)
     {
         return Lint(File.ReadAllText(path));
     }
 
+    /// <summary>
+    /// Lints a JSON string representing a rule definition.
+    /// </summary>
+    /// <param name="json">The JSON string to lint.</param>
+    /// <returns>A collection of linting messages.</returns>
     public static IEnumerable<LintMessage> Lint(string json)
     {
         List<LintMessage> messages = [];

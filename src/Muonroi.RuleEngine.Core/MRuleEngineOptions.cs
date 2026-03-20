@@ -5,9 +5,24 @@ namespace Muonroi.RuleEngine.Core;
 /// </summary>
 public sealed class MRuleEngineOptions
 {
+    /// <summary>
+    /// Gets or sets the execution mode.
+    /// </summary>
     public RuleExecutionMode ExecutionMode { get; set; } = RuleExecutionMode.Rules;
+
+    /// <summary>
+    /// Gets or sets the weight for traditional execution in A/B testing.
+    /// </summary>
     public double TraditionalWeight { get; set; } = 0.5d;
+
+    /// <summary>
+    /// Gets or sets the weight for rule engine execution in A/B testing.
+    /// </summary>
     public double RulesWeight { get; set; } = 0.5d;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to log differences between traditional and rule engine execution.
+    /// </summary>
     public bool LogDifferences { get; set; } = true;
 
     internal double NormalizedTraditionalWeight

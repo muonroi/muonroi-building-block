@@ -2,8 +2,14 @@ using Confluent.Kafka;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Kafka Bus Configurator.
+/// </summary>
 public class KafkaBusConfigurator : IBusConfigurator
 {
+    /// <summary>
+    /// Executes the Configure operation.
+    /// </summary>
     public void Configure(IBusRegistrationConfigurator configurator, MessageBusConfigs configs)
     {
         KafkaConfigs kafka = configs.Kafka ?? throw new InvalidDataException("Kafka configuration missing");

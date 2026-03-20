@@ -5,11 +5,17 @@ namespace Muonroi.Core.Abstractions.Diagnostics;
 /// </summary>
 public enum MTraceNodeType
 {
+    /// <summary>Request handled through mediator pipeline.</summary>
     MediatorRequest,
+    /// <summary>Pipeline behavior step.</summary>
     PipelineBehavior,
+    /// <summary>Rule set execution node.</summary>
     RuleSet,
+    /// <summary>Single rule execution node.</summary>
     Rule,
+    /// <summary>Handler execution node.</summary>
     Handler,
+    /// <summary>Custom or user-defined node.</summary>
     Custom
 }
 
@@ -18,10 +24,15 @@ public enum MTraceNodeType
 /// </summary>
 public interface ITraceSession
 {
+    /// <summary>Unique identifier for the trace session.</summary>
     string SessionId { get; }
+    /// <summary>Tenant identifier associated with the session.</summary>
     string? TenantId { get; }
+    /// <summary>User identifier associated with the session.</summary>
     string? UserId { get; }
+    /// <summary>Whether the session is active.</summary>
     bool IsActive { get; }
+    /// <summary>Whether line-level tracing is enabled.</summary>
     bool IsLineTraceEnabled { get; }
 
     /// <summary>Opens a new child node scope under the current context node.</summary>

@@ -7,6 +7,16 @@ using System.Dynamic;
 
 namespace Muonroi.RuleEngine.Runtime.Web.Services;
 
+/// <summary>
+/// Executes rule engine dry-runs for JSON rulesets with tracing support.
+/// </summary>
+/// <param name="store">Ruleset store.</param>
+/// <param name="validator">Ruleset validator.</param>
+/// <param name="serviceProvider">Service provider for rule execution.</param>
+/// <param name="executionContextAccessor">Execution context accessor.</param>
+/// <param name="settings">Rules engine settings override.</param>
+/// <param name="licenseGuard">License guard for premium features.</param>
+/// <param name="proofTierAccessor">Proof tier accessor for license checks.</param>
 public sealed class RuleDryRunService(
     IRuleSetStore store,
     IRuleSetDefinitionValidator validator,
@@ -28,6 +38,13 @@ public sealed class RuleDryRunService(
     private readonly ILicenseGuard? _licenseGuard = licenseGuard;
     private readonly ProofTierAccessor? _proofTierAccessor = proofTierAccessor;
 
+    /// <summary>Runs a ruleset dry-run with the provided inputs.</summary>
+    /// <param name="ruleSetContent">Ruleset payload.</param>
+    /// <param name="format">Ruleset format.</param>
+    /// <param name="inputFacts">Input facts for evaluation.</param>
+    /// <param name="tenantId">Optional tenant identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Dry-run result.</returns>
     public async Task<RuleDryRunResult> RunAsync(
         string ruleSetContent,
         RuleSetFormat format,
@@ -387,7 +404,7 @@ public sealed class RuleDryRunService(
         IReadOnlyList<RuleTraceEntry> entries,
         IReadOnlyList<string> errors)
     {
-        List<RuleExecutionTrace> traces = entries
+        List<RuleExecutionTrace> traces = [.. entries
             .GroupBy(x => x.RuleName, StringComparer.OrdinalIgnoreCase)
             .Select(group =>
             {
@@ -411,8 +428,7 @@ public sealed class RuleDryRunService(
                         : latest.FailureReason ?? latest.ExceptionMessage
                 };
             })
-            .OrderBy(x => x.RuleName, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+            .OrderBy(x => x.RuleName, StringComparer.OrdinalIgnoreCase)];
 
         if (traces.Count > 0 || declaredCodes.Count == 0)
         {

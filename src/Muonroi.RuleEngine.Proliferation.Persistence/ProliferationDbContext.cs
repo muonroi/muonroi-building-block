@@ -5,12 +5,30 @@ using Muonroi.Tenancy.Core;
 
 namespace Muonroi.RuleEngine.Proliferation.Persistence;
 
-public class ProliferationDbContext(DbContextOptions<ProliferationDbContext> options) : DbContext(options)
+/// <summary>
+/// Entity Framework DbContext for proliferation persistence.
+/// </summary>
+public class ProliferationDbContext : DbContext
 {
+    /// <summary>
+    /// Creates a proliferation DbContext.
+    /// </summary>
+    /// <param name="options">DbContext options.</param>
+    public ProliferationDbContext(DbContextOptions<ProliferationDbContext> options)
+        : base(options)
+    {
+    }
+
+    /// <summary>Gets the neuron scenario entities.</summary>
     public DbSet<NeuronScenarioEntity> NeuronScenarios => Set<NeuronScenarioEntity>();
+
+    /// <summary>Gets the scenario result entities.</summary>
     public DbSet<ScenarioResultEntity> ScenarioResults => Set<ScenarioResultEntity>();
+
+    /// <summary>Gets the rule lineage entities.</summary>
     public DbSet<RuleLineageEntity> RuleLineages => Set<RuleLineageEntity>();
 
+    /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("proliferation");

@@ -18,6 +18,7 @@ public sealed class MtlsHttpClientFactory : IMtlsHttpClientFactory
     // Cache: projectId -> HttpClient with configured mTLS handler
     private readonly ConcurrentDictionary<string, HttpClient> _clientCache = new();
 
+    /// <summary>Creates a factory that builds mTLS HttpClient instances.</summary>
     public MtlsHttpClientFactory(IMLog<MtlsHttpClientFactory>? logger = null)
     {
         _logger = logger;

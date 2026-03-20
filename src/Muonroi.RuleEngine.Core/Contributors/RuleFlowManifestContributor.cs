@@ -4,12 +4,19 @@ using Muonroi.Core.Abstractions.Models;
 
 namespace Muonroi.RuleEngine.Core.Contributors;
 
+/// <summary>
+/// Contributes rule flow related metadata to the UI engine manifest.
+/// </summary>
 public sealed class RuleFlowManifestContributor : IUiEngineManifestContributor
 {
+    /// <inheritdoc />
     public int Order => 140;
+    /// <inheritdoc />
     public string ModuleId => "rule-flow";
+    /// <inheritdoc />
     public string RequiredTier => "Enterprise";
 
+    /// <inheritdoc />
     public Task ContributeAsync(UiEngineManifestContext context, CancellationToken ct = default)
     {
         _ = ct;

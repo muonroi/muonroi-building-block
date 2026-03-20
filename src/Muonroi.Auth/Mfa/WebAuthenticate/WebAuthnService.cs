@@ -6,6 +6,9 @@ using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 
 namespace Muonroi.Auth.Mfa.WebAuthenticate;
 
+/// <summary>
+/// WebAuthn registration and authentication workflow service.
+/// </summary>
 public class WebAuthenticateService(
     IFido2 fido2,
     IDistributedCache challengeCache,
@@ -18,6 +21,9 @@ public class WebAuthenticateService(
         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
     };
 
+    /// <summary>
+    /// Starts a WebAuthn registration ceremony and returns the options.
+    /// </summary>
     public async Task<CredentialCreateOptions> BeginRegistrationAsync(
         Guid userId,
         string userName,
@@ -63,6 +69,9 @@ public class WebAuthenticateService(
         return options;
     }
 
+    /// <summary>
+    /// Completes the WebAuthn registration ceremony.
+    /// </summary>
     public async Task<RegistrationResult> CompleteRegistrationAsync(
         Guid userId,
         AuthenticatorAttestationRawResponse response,
@@ -105,6 +114,9 @@ public class WebAuthenticateService(
         };
     }
 
+    /// <summary>
+    /// Starts a WebAuthn authentication ceremony and returns the options.
+    /// </summary>
     public async Task<AssertionOptions> BeginAuthenticationAsync(Guid userId, CancellationToken ct = default)
     {
         List<PublicKeyCredentialDescriptor> allowedCredentials = await context.WebAuthnCredentials
@@ -129,6 +141,9 @@ public class WebAuthenticateService(
         return options;
     }
 
+    /// <summary>
+    /// Completes the WebAuthn authentication ceremony.
+    /// </summary>
     public async Task<AuthenticationResult> CompleteAuthenticationAsync(
         Guid userId,
         AuthenticatorAssertionRawResponse response,
@@ -265,16 +280,40 @@ public class WebAuthenticateService(
     }
 }
 
+/// <summary>
+/// Result of a successful WebAuthn registration.
+/// </summary>
 public sealed record RegistrationResult
 {
+    /// <summary>
+    /// Registered user identifier.
+    /// </summary>
     public Guid UserId { get; init; }
+    /// <summary>
+    /// Registered credential id (base64url).
+    /// </summary>
     public string CredentialId { get; init; } = string.Empty;
+    /// <summary>
+    /// Indicates whether the credential is syncable.
+    /// </summary>
     public bool Syncable { get; init; }
+    /// <summary>
+    /// Authentication assurance level derived from the credential.
+    /// </summary>
     public int Aal => Syncable ? 3 : 2;
 }
 
+/// <summary>
+/// Result of a successful WebAuthn authentication.
+/// </summary>
 public sealed record AuthenticationResult
 {
+    /// <summary>
+    /// Verification result from the WebAuthn assertion.
+    /// </summary>
     public VerifyAssertionResult Verification { get; init; } = null!;
+    /// <summary>
+    /// Authentication assurance level.
+    /// </summary>
     public int Aal { get; init; }
 }

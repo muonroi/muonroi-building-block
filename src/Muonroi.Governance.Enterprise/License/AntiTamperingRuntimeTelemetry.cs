@@ -1,10 +1,22 @@
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the Anti Tampering Runtime Telemetry.
+/// </summary>
 public static class AntiTamperingRuntimeTelemetry
 {
+    /// <summary>
+    /// The Activity Source Name.
+    /// </summary>
     public const string ActivitySourceName = "Muonroi.BuildingBlock.AntiTampering";
+    /// <summary>
+    /// The Meter Name.
+    /// </summary>
     public const string MeterName = "Muonroi.BuildingBlock.AntiTampering";
 
+    /// <summary>
+    /// Executes the Activity Source operation.
+    /// </summary>
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
 
     private static readonly Meter Meter = new(MeterName);
@@ -18,6 +30,9 @@ public static class AntiTamperingRuntimeTelemetry
         Meter.CreateHistogram<double>("antitamper_check_duration_ms", unit: "ms",
             description: "Anti-tampering check latency.");
 
+    /// <summary>
+    /// Executes the Track Check operation.
+    /// </summary>
     public static void TrackCheck(
         string scope,
         string status,

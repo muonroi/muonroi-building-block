@@ -2,6 +2,9 @@ using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the License Store.
+/// </summary>
 public sealed class LicenseStore(
     IHostEnvironment? environment,
     LicenseConfigs configs,
@@ -9,6 +12,9 @@ public sealed class LicenseStore(
 {
     private static readonly JsonSerializerOptions _cachedJsonOptions = new() { WriteIndented = true };
 
+    /// <summary>
+    /// Executes the Load operation.
+    /// </summary>
     public LicensePayload? Load()
     {
         // 1. Try primary LicenseFilePath
@@ -33,6 +39,9 @@ public sealed class LicenseStore(
         return proof?.SignedLicensePayload;
     }
 
+    /// <summary>
+    /// Executes the Load Activation Proof operation.
+    /// </summary>
     public ActivationProof? LoadActivationProof()
     {
         string? proofPath = ResolvePath(configs.ActivationProofPath, environment);
@@ -53,6 +62,9 @@ public sealed class LicenseStore(
         return null;
     }
 
+    /// <summary>
+    /// Executes the Save operation.
+    /// </summary>
     public void Save(LicensePayload payload)
     {
         string? path = ResolvePath(configs.LicenseFilePath, environment);
@@ -72,6 +84,9 @@ public sealed class LicenseStore(
         File.WriteAllText(path, json);
     }
 
+    /// <summary>
+    /// Executes the Save Activation Proof operation.
+    /// </summary>
     public void SaveActivationProof(ActivationProof proof)
     {
         string? path = ResolvePath(configs.ActivationProofPath, environment);
@@ -90,6 +105,9 @@ public sealed class LicenseStore(
         File.WriteAllText(path, json);
     }
 
+    /// <summary>
+    /// Executes the Load Activation Jwt operation.
+    /// </summary>
     public string? LoadActivationJwt()
     {
         string? jwtPath = ResolvePath(configs.ActivationJwtPath, environment);
@@ -108,6 +126,9 @@ public sealed class LicenseStore(
         }
     }
 
+    /// <summary>
+    /// Executes the Save Activation Jwt operation.
+    /// </summary>
     public void SaveActivationJwt(string jwt)
     {
         string? path = ResolvePath(configs.ActivationJwtPath, environment);
@@ -125,6 +146,9 @@ public sealed class LicenseStore(
         File.WriteAllText(path, jwt);
     }
 
+    /// <summary>
+    /// Executes the Load Public Key Pem operation.
+    /// </summary>
     public string? LoadPublicKeyPem()
     {
         // Look for public key alongside the JWT file: licenses/dev_license_public.pem or public_key.pem

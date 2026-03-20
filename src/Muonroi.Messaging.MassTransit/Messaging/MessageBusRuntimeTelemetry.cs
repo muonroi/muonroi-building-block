@@ -1,10 +1,22 @@
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Message Bus Runtime Telemetry.
+/// </summary>
 public static class MessageBusRuntimeTelemetry
 {
+    /// <summary>
+    /// The Activity Source Name.
+    /// </summary>
     public const string ActivitySourceName = "Muonroi.BuildingBlock.MessageBus";
+    /// <summary>
+    /// The Meter Name.
+    /// </summary>
     public const string MeterName = "Muonroi.BuildingBlock.MessageBus";
 
+    /// <summary>
+    /// Executes the Activity Source operation.
+    /// </summary>
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
 
     private static readonly Meter Meter = new(MeterName);
@@ -16,6 +28,9 @@ public static class MessageBusRuntimeTelemetry
         Meter.CreateHistogram<double>("messagebus_operation_duration_ms", unit: "ms",
             description: "Message bus operation latency.");
 
+    /// <summary>
+    /// Executes the Track Operation operation.
+    /// </summary>
     public static void TrackOperation(
         string operation,
         string messageType,
@@ -44,6 +59,9 @@ public static class MessageBusRuntimeTelemetry
         }
     }
 
+    /// <summary>
+    /// Executes the Resolve Transport operation.
+    /// </summary>
     public static string ResolveTransport(Uri? destinationAddress)
     {
         if (destinationAddress is null)

@@ -8,6 +8,7 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 /// </summary>
 public interface IFailureAnalyzer
 {
+    /// <summary>Analyzes a failed scenario and proposes follow-up scenarios.</summary>
     Task<IReadOnlyList<NeuronScenario>> AnalyzeFailureAsync(
         NeuronScenario failedScenario,
         ScenarioResult failureResult,

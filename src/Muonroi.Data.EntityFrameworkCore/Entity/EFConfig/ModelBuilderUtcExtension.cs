@@ -1,5 +1,8 @@
 namespace Muonroi.Data.EntityFrameworkCore.Entity.EFConfig;
 
+/// <summary>
+/// Provides model builder extensions for UTC date/time handling.
+/// </summary>
 public static class ModelBuilderUtcExtension
 {
     private static readonly ValueConverter<DateTime, DateTime> _utcConverter = new(
@@ -10,6 +13,8 @@ public static class ModelBuilderUtcExtension
         v => v.HasValue ? v.Value.ToUniversalTime() : v,
         v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
 
+    /// <summary>Configures all <see cref="DateTime"/> properties to use UTC.</summary>
+    /// <param name="modelBuilder">The model builder.</param>
     public static void UseUtcDateTime(this ModelBuilder modelBuilder)
     {
         foreach (IMutableEntityType entityType in modelBuilder.Model.GetEntityTypes())

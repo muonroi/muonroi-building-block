@@ -6,5 +6,6 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 /// </summary>
 public interface IVectorEmbedder
 {
+    /// <summary>Embeds the supplied text into a numeric vector.</summary>
     Task<float[]> EmbedAsync(string text, CancellationToken ct = default);
 }

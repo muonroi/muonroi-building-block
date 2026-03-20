@@ -20,14 +20,35 @@ public sealed class JavaScriptRuleAdapter<TContext> : IRule<TContext>
     private readonly IMLog<JavaScriptRuleAdapter<TContext>> _log;
     private Func<IDictionary<string, object?>, object?>? _compiledDelegate;
 
+    /// <inheritdoc />
     public string Code => _code;
+
+    /// <inheritdoc />
     public int Order { get; init; }
+
+    /// <inheritdoc />
     public string[] DependsOn { get; init; } = [];
+
+    /// <inheritdoc />
     public HookPoint HookPoint => HookPoint.BeforeRule;
+
+    /// <inheritdoc />
     public RuleType Type => RuleType.Validation;
+
+    /// <inheritdoc />
     public string Name => $"JS:{_code}";
+
+    /// <inheritdoc />
     public IEnumerable<Type> Dependencies => [];
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JavaScriptRuleAdapter{TContext}"/> class.
+    /// </summary>
+    /// <param name="code">Rule code for this node.</param>
+    /// <param name="expression">JavaScript expression to evaluate.</param>
+    /// <param name="outputFields">Optional output fields written on pass.</param>
+    /// <param name="projector">Context projector for variables.</param>
+    /// <param name="log">Logger instance.</param>
     public JavaScriptRuleAdapter(
         string code,
         string expression,
@@ -42,6 +63,7 @@ public sealed class JavaScriptRuleAdapter<TContext> : IRule<TContext>
         _log = log;
     }
 
+    /// <inheritdoc />
     public Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(_expression))
@@ -78,6 +100,7 @@ public sealed class JavaScriptRuleAdapter<TContext> : IRule<TContext>
         return Task.FromResult(ruleResult);
     }
 
+    /// <inheritdoc />
     public Task ExecuteAsync(TContext context, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
 

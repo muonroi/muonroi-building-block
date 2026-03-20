@@ -97,6 +97,7 @@ internal static class GeneratedRuleSourceWriter
         builder.AppendLine("    {");
         builder.AppendLine("        try");
         builder.AppendLine("        {");
+        builder.AppendLine("            await Task.CompletedTask;");
 
         foreach (string line in localFunction)
         {
@@ -203,7 +204,7 @@ internal static class GeneratedRuleSourceWriter
             lines.Add("    }");
         }
 
-        return lines.ToArray();
+        return [.. lines];
     }
 
     private static string[] RenderLocalFunction(ExtractedRuleDefinition definition)
@@ -248,7 +249,7 @@ internal static class GeneratedRuleSourceWriter
         }
 
         lines.Add("}");
-        return lines.ToArray();
+        return [.. lines];
     }
 
     private static bool IsFactBag(string typeName)
@@ -439,7 +440,7 @@ internal static class GeneratedRuleSourceWriter
             return "GeneratedRule";
         }
 
-        char[] chars = value.Select(ch => char.IsLetterOrDigit(ch) || ch == '_' ? ch : '_').ToArray();
+        char[] chars = [.. value.Select(ch => char.IsLetterOrDigit(ch) || ch == '_' ? ch : '_')];
         string normalized = new(chars);
         if (!char.IsLetter(normalized[0]) && normalized[0] != '_')
         {
@@ -472,10 +473,9 @@ internal static class GeneratedRuleSourceWriter
             normalized = normalized.Substring(0, normalized.Length - 1);
         }
 
-        return normalized
+        return [.. normalized
             .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
             .Select(line => line.TrimEnd())
-            .Where(line => line.Length > 0)
-            .ToArray();
+            .Where(line => line.Length > 0)];
     }
 }

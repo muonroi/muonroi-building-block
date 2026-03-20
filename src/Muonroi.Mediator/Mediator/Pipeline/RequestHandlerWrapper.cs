@@ -93,7 +93,7 @@ internal sealed class NotificationHandlerWrapperImpl<TNotification> : Notificati
 
         if (handlers == null) return;
 
-        INotificationHandler<TNotification>[] handlerArray = handlers.ToArray();
+        INotificationHandler<TNotification>[] handlerArray = [.. handlers];
         TNotification typedNotification = (TNotification)notification;
 
         switch (strategy)

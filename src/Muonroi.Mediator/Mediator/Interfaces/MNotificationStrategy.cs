@@ -28,5 +28,8 @@ public enum MNotificationStrategy
 /// </summary>
 public interface IMStrategyNotification : INotification
 {
+    /// <summary>
+    /// Gets the Strategy.
+    /// </summary>
     MNotificationStrategy Strategy { get; }
 }

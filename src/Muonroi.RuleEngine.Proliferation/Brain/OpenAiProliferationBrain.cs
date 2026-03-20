@@ -23,6 +23,7 @@ public sealed class OpenAiProliferationBrain(
         PropertyNameCaseInsensitive = true
     };
 
+    /// <summary>Analyzes a rule set and produces proliferation scenarios.</summary>
     public async Task<ProliferationPlan> AnalyzeAsync(
         string seedRuleCode,
         string ruleSetJson,

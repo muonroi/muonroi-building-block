@@ -2,8 +2,18 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Resilience.Policies;
 
+/// <summary>
+/// Builds resilience pipelines with retry, circuit breaker, and timeout policies.
+/// </summary>
+/// <param name="logger">Logger used for policy events.</param>
 public class PolicyHandler(IMLog<PolicyHandler> logger)
 {
+    /// <summary>
+    /// Creates a default resilience pipeline for the specified service.
+    /// </summary>
+    /// <typeparam name="T">Result type handled by the pipeline.</typeparam>
+    /// <param name="serviceName">Service name for log messages.</param>
+    /// <returns>The configured resilience pipeline.</returns>
     public ResiliencePipeline<T> CreateDefaultPipeline<T>(string serviceName)
     {
         return new ResiliencePipelineBuilder<T>()

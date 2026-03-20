@@ -85,7 +85,7 @@ public sealed class RuleCatalogRegistrationGenerator : IIncrementalGenerator
             return "GeneratedRule";
         }
 
-        char[] chars = value.Select(ch => char.IsLetterOrDigit(ch) || ch == '_' ? ch : '_').ToArray();
+        char[] chars = [.. value.Select(ch => char.IsLetterOrDigit(ch) || ch == '_' ? ch : '_')];
         string normalized = new(chars);
         if (!char.IsLetter(normalized[0]) && normalized[0] != '_')
         {

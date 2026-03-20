@@ -8,6 +8,7 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 /// </summary>
 public interface IChaosScenarioGenerator
 {
+    /// <summary>Generates chaos scenarios for a ruleset.</summary>
     IReadOnlyList<NeuronScenario> GenerateChaosScenarios(
         string seedRuleCode,
         string ruleSetJson,
@@ -21,6 +22,7 @@ public interface IChaosScenarioGenerator
 /// </summary>
 public sealed class DefaultChaosScenarioGenerator : IChaosScenarioGenerator
 {
+    /// <summary>Generates chaos scenarios for a ruleset.</summary>
     public IReadOnlyList<NeuronScenario> GenerateChaosScenarios(
         string seedRuleCode,
         string ruleSetJson,

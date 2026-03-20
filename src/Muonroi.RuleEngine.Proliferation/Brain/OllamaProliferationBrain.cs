@@ -6,6 +6,9 @@ using Muonroi.RuleEngine.Proliferation.Models;
 
 namespace Muonroi.RuleEngine.Proliferation.Brain;
 
+/// <summary>
+/// Brain implementation using the Ollama API.
+/// </summary>
 public sealed class OllamaProliferationBrain(
     IHttpClientFactory httpClientFactory,
     ProliferationOptions options,
@@ -20,6 +23,7 @@ public sealed class OllamaProliferationBrain(
         PropertyNameCaseInsensitive = true
     };
 
+    /// <summary>Analyzes a rule set and produces proliferation scenarios.</summary>
     public async Task<ProliferationPlan> AnalyzeAsync(
         string seedRuleCode,
         string ruleSetJson,

@@ -16,6 +16,9 @@ public sealed class MExceptionHandlerBehavior<TRequest, TResponse>(
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
+    /// <summary>
+    /// Executes the Handle operation.
+    /// </summary>
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,

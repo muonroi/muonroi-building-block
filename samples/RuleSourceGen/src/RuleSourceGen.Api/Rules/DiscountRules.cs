@@ -3,8 +3,13 @@ using RuleSourceGen.Api.Models;
 
 namespace RuleSourceGen.Api.Rules;
 
+/// <summary>
+/// Discount calculation rules for the sample API.
+/// </summary>
 public sealed class DiscountRules
 {
+    /// <summary>Computes the premium customer discount rate.</summary>
+    /// <param name="context">Discount evaluation input.</param>
     [MExtractAsRule("DISCOUNT_PREMIUM", Order = 1, DependsOn = ["DISCOUNT_VALIDATE"])]
     public decimal ApplyPremiumDiscount(DiscountRequest context)
     {
@@ -16,12 +21,16 @@ public sealed class DiscountRules
         return ResolvePremiumRate(context);
     }
 
+    /// <summary>Computes the loyalty-based discount rate.</summary>
+    /// <param name="context">Discount evaluation input.</param>
     [MExtractAsRule("DISCOUNT_LOYALTY", Order = 2, DependsOn = ["DISCOUNT_VALIDATE"])]
     public decimal ApplyLoyaltyDiscount(DiscountRequest context)
     {
         return context.LoyaltyYears >= 5 ? 0.05m : 0m;
     }
 
+    /// <summary>Computes the seasonal discount rate.</summary>
+    /// <param name="context">Discount evaluation input.</param>
     [MExtractAsRule("DISCOUNT_SEASONAL", Order = 3, DependsOn = ["DISCOUNT_VALIDATE"])]
     public decimal ApplySeasonalDiscount(DiscountRequest context)
     {

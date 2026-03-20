@@ -5,6 +5,9 @@ using Muonroi.Tenancy.Abstractions.Interfaces;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Tenant Quota Messaging Filter{T}.
+/// </summary>
 public class TenantQuotaMessagingFilter<T>(
     ITenantQuotaTracker quotaTracker,
     ISystemExecutionContextAccessor contextAccessor,
@@ -13,6 +16,9 @@ public class TenantQuotaMessagingFilter<T>(
 {
     private readonly MessageBusConfigs _configs = configs.Value;
 
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(PublishContext<T> context, IPipe<PublishContext<T>> next)
     {
         if (_configs.EnableQuotaEnforcement)
@@ -22,6 +28,9 @@ public class TenantQuotaMessagingFilter<T>(
         await next.Send(context);
     }
 
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(SendContext<T> context, IPipe<SendContext<T>> next)
     {
         if (_configs.EnableQuotaEnforcement)
@@ -65,6 +74,9 @@ public class TenantQuotaMessagingFilter<T>(
         await quotaTracker.IncrementUsageAsync(tenantId, QuotaType.MessagesPerDay, 1);
     }
 
+    /// <summary>
+    /// Executes the Probe operation.
+    /// </summary>
     public void Probe(ProbeContext context)
     {
     }

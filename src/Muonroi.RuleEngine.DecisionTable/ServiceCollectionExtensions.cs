@@ -14,8 +14,17 @@ using Muonroi.RuleEngine.DecisionTable.Validators;
 
 namespace Muonroi.RuleEngine.DecisionTable;
 
+/// <summary>
+/// Dependency injection helpers for the decision table engine.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Registers decision table services and storage.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="configure">Optional configuration action for engine options.</param>
+    /// <returns>The same service collection for chaining.</returns>
     public static IServiceCollection AddDecisionTableEngine(
         this IServiceCollection services,
         Action<DecisionTableEngineOptions>? configure = null)

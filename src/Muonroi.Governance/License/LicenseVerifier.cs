@@ -3,12 +3,18 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the License Verifier.
+/// </summary>
 public sealed class LicenseVerifier(
     LicenseConfigs configs,
     IHostEnvironment? environment,
     IMJsonSerializeService jsonSerializeService,
     IMLog<LicenseVerifier>? logger = null)
 {
+    /// <summary>
+    /// Executes the Verify Async operation.
+    /// </summary>
     public async Task<LicenseState> VerifyAsync(
         LicensePayload? payload,
         ActivationProof? activationProof,
@@ -26,6 +32,9 @@ public sealed class LicenseVerifier(
         return Verify(payload, null, runtimeFingerprint);
     }
 
+    /// <summary>
+    /// Executes the Verify operation.
+    /// </summary>
     public LicenseState Verify(
         LicensePayload? payload,
         ActivationProof? activationProof,

@@ -1,5 +1,13 @@
 namespace Muonroi.Tenancy.Core.Legacy;
 
+/// <summary>
+/// Middleware that resolves and applies tenant context for incoming requests.
+/// </summary>
+/// <param name="next">The next middleware in the pipeline.</param>
+/// <param name="resolver">Tenant identifier resolver.</param>
+/// <param name="logContext">Logging context for scoped properties.</param>
+/// <param name="licenseGuard">Optional license feature guard.</param>
+/// <param name="options">Optional multi-tenant configuration.</param>
 public class TenantContextMiddleware(
     RequestDelegate next,
     ITenantIdResolver resolver,
@@ -11,6 +19,11 @@ public class TenantContextMiddleware(
     private readonly bool _requireTenantClaimForAuthenticatedUser =
         options?.Value.RequireTenantClaimForAuthenticatedUser ?? true;
 
+    /// <summary>
+    /// Executes the middleware.
+    /// </summary>
+    /// <param name="context">The current HTTP context.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task Invoke(HttpContext context)
     {
         string? tenantId = (await resolver.ResolveTenantIdAsync(context))?.Trim();

@@ -15,6 +15,7 @@ public sealed class ApiKeyRotationService : IApiKeyRotationService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IMLog<ApiKeyRotationService>? _logger;
 
+    /// <summary>Creates an API key rotation service.</summary>
     public ApiKeyRotationService(
         IHttpClientFactory httpClientFactory,
         IMLog<ApiKeyRotationService>? logger = null)

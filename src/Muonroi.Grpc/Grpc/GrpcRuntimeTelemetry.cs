@@ -2,11 +2,23 @@ using System.Diagnostics.Metrics;
 
 namespace Muonroi.Grpc.Grpc;
 
+/// <summary>
+/// Telemetry helpers for gRPC runtime metrics and tracing.
+/// </summary>
 public static class GrpcRuntimeTelemetry
 {
+    /// <summary>
+    /// Activity source name for gRPC spans.
+    /// </summary>
     public const string ActivitySourceName = "Muonroi.BuildingBlock.Grpc";
+    /// <summary>
+    /// Meter name for gRPC metrics.
+    /// </summary>
     public const string MeterName = "Muonroi.BuildingBlock.Grpc";
 
+    /// <summary>
+    /// Activity source used for gRPC client spans.
+    /// </summary>
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
 
     private static readonly Meter _meter = new(MeterName);
@@ -17,6 +29,9 @@ public static class GrpcRuntimeTelemetry
     private static readonly Histogram<double> _durationHistogram =
         _meter.CreateHistogram<double>("grpc_request_duration_ms", unit: "ms", description: "gRPC request duration");
 
+    /// <summary>
+    /// Records a gRPC request metric with tags.
+    /// </summary>
     public static void TrackRequest(string method, string callType, string statusCode, string? tenantId, TimeSpan elapsed)
     {
         TagList tags = new()

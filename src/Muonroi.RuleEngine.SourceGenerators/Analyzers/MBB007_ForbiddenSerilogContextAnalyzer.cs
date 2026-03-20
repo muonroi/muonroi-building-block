@@ -2,17 +2,21 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Muonroi.RuleEngine.SourceGenerators.Diagnostics;
-using System;
 using System.Collections.Immutable;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Analyzers;
 
+/// <summary>
+/// Analyzer for the MBB007 diagnostic.
+/// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class MBB007_ForbiddenSerilogContextAnalyzer : DiagnosticAnalyzer
+public sealed class Mbb007_ForbiddenSerilogContextAnalyzer : DiagnosticAnalyzer
 {
+    /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(MBBDiagnosticDescriptors.MBB007ForbiddenSerilogContext);
+        [MBBDiagnosticDescriptors.MBB007ForbiddenSerilogContext];
 
+    /// <inheritdoc/>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -49,8 +53,8 @@ public sealed class MBB007_ForbiddenSerilogContextAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        string ns = MBBAnalyzerHelpers.GetNamespace(invocation);
-        if (MBBAnalyzerHelpers.IsSerilogContextAllowedNamespace(ns))
+        string ns = MbbAnalyzerHelpers.GetNamespace(invocation);
+        if (MbbAnalyzerHelpers.IsSerilogContextAllowedNamespace(ns))
         {
             return;
         }

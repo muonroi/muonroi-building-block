@@ -4,6 +4,9 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.Enterprise.Operations;
 
+/// <summary>
+/// Represents the MUpgrade Compatibility Service.
+/// </summary>
 public sealed class MUpgradeCompatibilityService(
     IMLog<MUpgradeCompatibilityService>? logger = null) : IMUpgradeCompatibilityService
 {
@@ -14,6 +17,9 @@ public sealed class MUpgradeCompatibilityService(
 
     private readonly IMLog<MUpgradeCompatibilityService>? _logger = logger;
 
+    /// <summary>
+    /// Executes the Evaluate operation.
+    /// </summary>
     public MUpgradeCompatibilityResult Evaluate(MUpgradeCompatibilityRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -40,6 +46,9 @@ public sealed class MUpgradeCompatibilityService(
         };
     }
 
+    /// <summary>
+    /// Executes the Evaluate From Files operation.
+    /// </summary>
     public MUpgradeCompatibilityResult EvaluateFromFiles(MUpgradeCompatibilityFileRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);

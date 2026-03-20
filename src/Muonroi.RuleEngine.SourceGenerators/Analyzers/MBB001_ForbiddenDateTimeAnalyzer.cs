@@ -7,12 +7,17 @@ using System.Collections.Immutable;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Analyzers;
 
+/// <summary>
+/// Analyzer for the MBB001 diagnostic.
+/// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class MBB001_ForbiddenDateTimeAnalyzer : DiagnosticAnalyzer
+public sealed class Mbb001_ForbiddenDateTimeAnalyzer : DiagnosticAnalyzer
 {
+    /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(MBBDiagnosticDescriptors.MBB001ForbiddenDateTimeNow);
+        [MBBDiagnosticDescriptors.MBB001ForbiddenDateTimeNow];
 
+    /// <inheritdoc/>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -40,8 +45,8 @@ public sealed class MBB001_ForbiddenDateTimeAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        string ns = MBBAnalyzerHelpers.GetNamespace(memberAccess);
-        if (MBBAnalyzerHelpers.IsWrapperOrInfrastructureNamespace(ns))
+        string ns = MbbAnalyzerHelpers.GetNamespace(memberAccess);
+        if (MbbAnalyzerHelpers.IsWrapperOrInfrastructureNamespace(ns))
         {
             return;
         }

@@ -5,9 +5,18 @@ namespace Muonroi.Mediator.Exceptions;
 /// </summary>
 public sealed class MForbiddenException : Exception
 {
+    /// <summary>
+    /// Gets the Required Roles.
+    /// </summary>
     public IReadOnlyList<string> RequiredRoles { get; }
+    /// <summary>
+    /// Gets the Required Permissions.
+    /// </summary>
     public IReadOnlyList<string> RequiredPermissions { get; }
 
+    /// <summary>
+    /// Initializes a new instance of MForbiddenException.
+    /// </summary>
     public MForbiddenException(IReadOnlyList<string> requiredRoles, IReadOnlyList<string> requiredPermissions)
         : base(BuildMessage(requiredRoles, requiredPermissions))
     {

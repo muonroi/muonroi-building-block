@@ -19,6 +19,7 @@ public sealed class OllamaEmbedder(
         PropertyNameCaseInsensitive = true
     };
 
+    /// <summary>Embeds text into a vector using Ollama.</summary>
     public async Task<float[]> EmbedAsync(string text, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(text))

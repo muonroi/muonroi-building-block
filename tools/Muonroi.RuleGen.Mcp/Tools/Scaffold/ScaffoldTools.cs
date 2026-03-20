@@ -123,7 +123,7 @@ public sealed class {{serviceName}}{{ctor}} : {{contract}}
 
     private static string ToIdentifier(string value)
     {
-        char[] buffer = value.Select(ch => char.IsLetterOrDigit(ch) ? ch : '_').ToArray();
+        char[] buffer = [.. value.Select(ch => char.IsLetterOrDigit(ch) ? ch : '_')];
         string normalized = new string(buffer).Trim('_');
         if (string.IsNullOrWhiteSpace(normalized))
         {

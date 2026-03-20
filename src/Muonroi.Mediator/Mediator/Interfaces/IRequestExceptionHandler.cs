@@ -28,6 +28,9 @@ public sealed class RequestExceptionHandlerState<TResponse>
 public interface IRequestExceptionHandler<in TRequest, TResponse, in TException>
     where TException : Exception
 {
+    /// <summary>
+    /// Executes the Handle Async operation.
+    /// </summary>
     Task HandleAsync(
         TRequest request,
         TException exception,

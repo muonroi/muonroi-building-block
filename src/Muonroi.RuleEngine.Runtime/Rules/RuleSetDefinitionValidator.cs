@@ -1,7 +1,11 @@
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
+/// <summary>
+/// Validates the structure of ruleset payloads.
+/// </summary>
 public sealed class RuleSetDefinitionValidator : IRuleSetDefinitionValidator
 {
+    /// <inheritdoc />
     public RuleSetValidationResult Validate(string workflowName, string json)
     {
         RuleSetValidationResult result = new()

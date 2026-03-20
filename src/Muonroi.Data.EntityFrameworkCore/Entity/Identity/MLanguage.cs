@@ -1,5 +1,8 @@
 namespace Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 
+/// <summary>
+/// Represents a supported UI language.
+/// </summary>
 [Table("MLanguages")]
 public sealed class MLanguage : MEntity
 {
@@ -39,17 +42,22 @@ public sealed class MLanguage : MEntity
     public string? Icon { get; set; } = string.Empty;
 
     /// <summary>
-    /// Is this language active. Inactive languages are not get by <see cref="IMlicationLanguageManager"/>.
+    /// Gets or sets a value indicating whether the language is disabled.
     /// </summary>
     public bool IsDisabled { get; set; }
 
     /// <summary>
-    /// Creates a new <see cref="MlicationLanguage"/> object.
+    /// Initializes a new instance of the <see cref="MLanguage"/> class.
     /// </summary>
     public MLanguage()
     {
     }
 
+    /// <summary>Initializes a new instance of the <see cref="MLanguage"/> class.</summary>
+    /// <param name="name">The culture name.</param>
+    /// <param name="displayName">The display name.</param>
+    /// <param name="icon">The optional icon.</param>
+    /// <param name="isDisabled">Whether the language is disabled.</param>
     public MLanguage(string name, string displayName, string? icon = null, bool isDisabled = false)
     {
         Name = name;
@@ -58,6 +66,8 @@ public sealed class MLanguage : MEntity
         IsDisabled = isDisabled;
     }
 
+    /// <summary>Converts this entity to a language info model.</summary>
+    /// <returns>The language info model.</returns>
     public MLanguageInfo ToLanguageInfo()
     {
         return new MLanguageInfo(Name, DisplayName, Icon, isDisabled: IsDisabled);

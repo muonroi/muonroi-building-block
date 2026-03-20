@@ -45,5 +45,7 @@ internal static class SubFlowCallStack
 /// <summary>Thrown when a sub-flow execution would create a circular dependency.</summary>
 public sealed class SubFlowCycleException : InvalidOperationException
 {
+    /// <summary>Initializes a new instance of the <see cref="SubFlowCycleException"/> class.</summary>
+    /// <param name="message">Error message describing the cycle.</param>
     public SubFlowCycleException(string message) : base(message) { }
 }
