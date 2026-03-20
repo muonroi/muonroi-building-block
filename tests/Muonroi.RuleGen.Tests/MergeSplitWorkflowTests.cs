@@ -60,7 +60,7 @@ public sealed class OrderContext
         string currentTarget = File.ReadAllText(project.HandlerPath);
         Assert.Equal(originalTarget, currentTarget);
 
-        string generated = project.PathInRoot("src\\OrderHandler.Generated.cs");
+        string generated = project.PathInRoot(Path.Combine("src", "OrderHandler.Generated.cs"));
         Assert.False(File.Exists(generated));
     }
 
@@ -117,8 +117,8 @@ public sealed class OrderContext
 
         Assert.Equal(0, result.ExitCode);
 
-        string invoiceGenerated = project.PathInRoot("src\\InvoiceHandler.Generated.cs");
-        string orderGenerated = project.PathInRoot("src\\OrderHandler.Generated.cs");
+        string invoiceGenerated = project.PathInRoot(Path.Combine("src", "InvoiceHandler.Generated.cs"));
+        string orderGenerated = project.PathInRoot(Path.Combine("src", "OrderHandler.Generated.cs"));
 
         Assert.True(File.Exists(invoiceGenerated));
         Assert.False(File.Exists(orderGenerated));
@@ -259,7 +259,7 @@ public sealed class CustomerInfo
 
         Assert.Equal(0, result.ExitCode);
 
-        string generated = project.PathInRoot("src\\OrderHandler.Generated.cs");
+        string generated = project.PathInRoot(Path.Combine("src", "OrderHandler.Generated.cs"));
         Assert.True(File.Exists(generated));
 
         string targetText = File.ReadAllText(project.HandlerPath);
