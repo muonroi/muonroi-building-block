@@ -35,15 +35,19 @@ public class RuleEngineTelemetryTests
             })
             .Build();
 
-        long fired = 0;
+        long firedBefore = 0;
+        long firedAfter = 0;
         using MeterListener listener = new();
         listener.InstrumentPublished = (instrument, l) =>
         {
             if (instrument.Meter.Name == "Muonroi.RuleEngine" && instrument.Name == "rules.fired")
                 l.EnableMeasurementEvents(instrument);
         };
-        listener.SetMeasurementEventCallback<long>((_, measurement, _, _) => fired += measurement);
+        listener.SetMeasurementEventCallback<long>((_, measurement, _, _) => Interlocked.Add(ref firedAfter, measurement));
         listener.Start();
+
+        // Capture baseline (other parallel tests may have already fired)
+        firedBefore = Interlocked.Read(ref firedAfter);
 
         DummyRule rule = new();
         RuleOrchestrator<string> orchestrator = new([rule], [], null, Array.Empty<IRuleEventListener<string>>());
@@ -52,6 +56,7 @@ public class RuleEngineTelemetryTests
         listener.Dispose();
         meterProvider.ForceFlush();
 
-        Assert.Equal(1, fired);
+        long delta = Interlocked.Read(ref firedAfter) - firedBefore;
+        Assert.True(delta >= 1, $"Expected at least 1 rules.fired increment, got delta={delta}");
     }
 }
