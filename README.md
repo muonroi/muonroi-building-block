@@ -3,6 +3,7 @@
 Muonroi Building Block is the .NET foundation of the Muonroi open-core ecosystem: rule engine, decision tables, governance, tenancy, observability, and the commercial extensions that sit on top of the OSS base.
 
 [![CI](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml/badge.svg)](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/muonroi/muonroi-building-block/branch/develop/graph/badge.svg)](https://codecov.io/gh/muonroi/muonroi-building-block)
 [![OSS License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](./LICENSE-APACHE)
 [![Commercial License](https://img.shields.io/badge/commercial-available-blue.svg)](./LICENSE-COMMERCIAL)
 

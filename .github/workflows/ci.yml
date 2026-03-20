@@ -72,8 +72,26 @@ jobs:
       - name: Build
         run: dotnet build Muonroi.BuildingBlock.sln --configuration Release --no-restore
 
-      - name: Test BuildingBlock Unit Suite
-        run: dotnet test tests/Muonroi.BuildingBlock.Test/Muonroi.BuildingBlock.Test.csproj --configuration Release --no-build --verbosity minimal
+      - name: Test with Coverage
+        run: >
+          dotnet test Muonroi.BuildingBlock.sln
+          --configuration Release
+          --no-build
+          --verbosity minimal
+          --collect:"XPlat Code Coverage"
+          --results-directory ./coverage
 
-      - name: Test Tenancy Suite
-        run: dotnet test tests/Tenancy/Muonroi.Tenancy.Tests.csproj --configuration Release --no-build --verbosity minimal
+      - name: Merge Coverage Reports
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool || true
+          reportgenerator \
+            -reports:"coverage/**/coverage.cobertura.xml" \
+            -targetdir:"coverage/merged" \
+            -reporttypes:"Cobertura"
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/merged/Cobertura.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
