@@ -2,11 +2,17 @@ using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the Hmac Fingerprint Signer.
+/// </summary>
 public sealed class HmacFingerprintSigner(LicensePayload? payload, LicenseConfigs configs)
     : IFingerprintSigner
 {
     private readonly LicenseConfigs _configs = configs ?? throw new ArgumentNullException(nameof(configs));
 
+    /// <summary>
+    /// Executes the Compute Signature operation.
+    /// </summary>
     public string ComputeSignature(string previousSignature, LicenseActionContext context, long sequence)
     {
         byte[] key = BuildKey(payload);

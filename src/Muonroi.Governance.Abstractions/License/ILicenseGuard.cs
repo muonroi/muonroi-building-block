@@ -1,5 +1,8 @@
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the ILicense Guard.
+/// </summary>
 public interface ILicenseGuard
 {
     /// <summary>

@@ -8,6 +8,9 @@ using Muonroi.RuleEngine.Proliferation.Models;
 
 namespace Muonroi.RuleEngine.Proliferation.Worker;
 
+/// <summary>
+/// Background worker that generates and executes proliferation scenarios.
+/// </summary>
 public sealed class ProliferationWorker(
     IProliferationStore store,
     IScenarioExecutor executor,
@@ -30,12 +33,12 @@ public sealed class ProliferationWorker(
 
     private int _consecutiveErrors;
 
+    /// <summary>Runs the worker loop until cancellation.</summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger?.Info("[Proliferation] Worker started. Interval={Interval}s, MaxDepth={MaxDepth}, MaxTotal={MaxTotal}",
             options.WorkerIntervalSeconds, options.MaxGenerationDepth, options.MaxTotalScenarios);
 
-        // Initial delay to let the app warm up
         await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -67,11 +70,11 @@ public sealed class ProliferationWorker(
         logger?.Info("[Proliferation] Worker stopped.");
     }
 
+    /// <summary>Runs a single proliferation cycle.</summary>
     internal async Task RunCycleAsync(CancellationToken ct)
     {
         using Activity? activity = ActivitySource.StartActivity("ProliferationCycle");
 
-        // Circuit breaker: check total scenarios
         ProliferationStats stats = await store.GetStatsAsync(ct: ct);
         if (stats.TotalScenarios >= options.MaxTotalScenarios)
         {
@@ -92,7 +95,6 @@ public sealed class ProliferationWorker(
         {
             if (ct.IsCancellationRequested) break;
 
-            // Schema-aware input validation before execution
             string ruleSetJson = scenario.GeneratedRuleFlowGraph ?? "{}";
             RuleSetKind kind = RuleSetKindDetector.Detect(ruleSetJson);
             RuleSetSchema ruleSchema = RuleSetSchemaExtractor.Extract(ruleSetJson, kind);
@@ -129,7 +131,6 @@ public sealed class ProliferationWorker(
                 logger?.Debug("[Proliferation] Scenario {Id} -> {Status} (matches: {Matches})",
                     scenario.Id, finalStatus, result.MatchesExpectation);
 
-                // Notify scenario completion
                 if (notifier is not null)
                 {
                     try
@@ -142,7 +143,6 @@ public sealed class ProliferationWorker(
                     }
                 }
 
-                // Generate next-generation neurons if passed and within depth/budget
                 if (result.IsSuccess
                     && scenario.GenerationDepth < options.MaxGenerationDepth
                     && stats.TotalScenarios < options.MaxTotalScenarios)
@@ -150,7 +150,6 @@ public sealed class ProliferationWorker(
                     await GenerateNextGenerationAsync(scenario, result, stats, ct);
                 }
 
-                // Feedback loop: analyze failed scenarios to generate follow-up probes
                 if (!result.IsSuccess
                     && scenario.GenerationDepth < options.MaxGenerationDepth
                     && stats.TotalScenarios < options.MaxTotalScenarios
@@ -170,6 +169,7 @@ public sealed class ProliferationWorker(
         }
     }
 
+    /// <summary>Generates follow-up scenarios after a successful run.</summary>
     private async Task GenerateNextGenerationAsync(
         NeuronScenario parentScenario,
         ScenarioResult result,
@@ -179,11 +179,9 @@ public sealed class ProliferationWorker(
         int remainingBudget = options.MaxTotalScenarios - currentStats.TotalScenarios;
         if (remainingBudget <= 0) return;
 
-        // Smart budget: allocate more budget for under-covered / high-failure rules
         int perRuleBudget = options.MaxScenariosPerRule;
         if (options.EnableSmartBudget && budgetAllocator is not null)
         {
-            // Estimate coverage for this seed rule
             double coveragePct = 0;
             double failureRate = 0;
             try
@@ -203,14 +201,13 @@ public sealed class ProliferationWorker(
             }
             catch
             {
-                // Ignore budget calculation errors — fall back to base budget
             }
+
             perRuleBudget = budgetAllocator.AllocateBudget(parentScenario.SeedRuleCode, coveragePct, failureRate, perRuleBudget);
         }
 
         try
         {
-            // Coverage-guided focus: inject uncovered fields as focus areas
             IReadOnlyList<string>? coverageFocus = null;
             string nextRuleSetJson = parentScenario.GeneratedRuleFlowGraph ?? "{}";
             if (coverageTracker is not null)
@@ -224,7 +221,7 @@ public sealed class ProliferationWorker(
                     if (coverage.UncoveredFields.Count > 0)
                     {
                         coverageFocus = coverage.UncoveredFields;
-                        logger?.Info("[Proliferation] Coverage {Pct}% — focusing on uncovered fields: {Fields}",
+                        logger?.Info("[Proliferation] Coverage {Pct}% - focusing on uncovered fields: {Fields}",
                             coverage.CoveragePercentage, string.Join(", ", coverage.UncoveredFields));
                     }
                 }
@@ -247,18 +244,16 @@ public sealed class ProliferationWorker(
 
             if (plan.Scenarios.Count > 0)
             {
-                // Set parent-child relationship
-                List<NeuronScenario> children = plan.Scenarios.Select(s => s with
+                List<NeuronScenario> children = [.. plan.Scenarios.Select(s => s with
                 {
                     ParentScenarioId = parentScenario.Id,
                     GenerationDepth = parentScenario.GenerationDepth + 1
-                }).ToList();
+                })];
 
-                // Deduplicate against existing scenarios
                 if (deduplicator is not null)
                 {
                     IReadOnlyList<NeuronScenario> existing = await store.GetScenariosBySeedAsync(parentScenario.SeedRuleCode, ct);
-                    children = deduplicator.Deduplicate(children, existing).ToList();
+                    children = [.. deduplicator.Deduplicate(children, existing)];
                 }
 
                 if (children.Count > 0)
@@ -269,7 +264,6 @@ public sealed class ProliferationWorker(
                     logger?.Info("[Proliferation] Generated {Count} children from scenario {ParentId} (depth {Depth})",
                         children.Count, parentScenario.Id, parentScenario.GenerationDepth + 1);
 
-                    // Notify trigger
                     if (notifier is not null)
                     {
                         try
@@ -292,6 +286,7 @@ public sealed class ProliferationWorker(
         }
     }
 
+    /// <summary>Analyzes a failed scenario and persists follow-up scenarios.</summary>
     private async Task AnalyzeFailureAndSaveAsync(
         NeuronScenario failedScenario,
         ScenarioResult failureResult,
@@ -317,12 +312,11 @@ public sealed class ProliferationWorker(
 
             if (children.Count == 0) return;
 
-            // Deduplicate against existing scenarios
-            List<NeuronScenario> toSave = children.ToList();
+            List<NeuronScenario> toSave = [.. children];
             if (deduplicator is not null)
             {
                 IReadOnlyList<NeuronScenario> existing = await store.GetScenariosBySeedAsync(failedScenario.SeedRuleCode, ct);
-                toSave = deduplicator.Deduplicate(toSave, existing).ToList();
+                toSave = [.. deduplicator.Deduplicate(toSave, existing)];
             }
 
             if (toSave.Count > 0)

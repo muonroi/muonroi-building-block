@@ -2,6 +2,9 @@ using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the License Guard.
+/// </summary>
 public sealed class LicenseGuard : ILicenseGuard
 {
     private readonly LicenseConfigs _configs;
@@ -12,6 +15,9 @@ public sealed class LicenseGuard : ILicenseGuard
 
     private static readonly ConcurrentDictionary<string, string> RollingTokens = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Initializes a new instance of LicenseGuard.
+    /// </summary>
     public LicenseGuard(
         LicenseConfigs configs,
         LicenseState state,
@@ -32,12 +38,24 @@ public sealed class LicenseGuard : ILicenseGuard
         _enhancer.OnStartup(configs, state);
     }
 
+    /// <summary>
+    /// Gets the Current.
+    /// </summary>
     public LicenseState Current { get; }
 
+    /// <summary>
+    /// Executes the Tier operation.
+    /// </summary>
     public LicenseTier Tier => _runtimeStatus.GetEffectiveTier(Current);
 
+    /// <summary>
+    /// Gets the Is Free Mode.
+    /// </summary>
     public bool IsFreeMode => Tier == LicenseTier.Free;
 
+    /// <summary>
+    /// Executes the Ensure Valid operation.
+    /// </summary>
     public void EnsureValid(string actionType, string? actionName = null, string? payloadHash = null,
         string? correlationId = null)
     {
@@ -73,11 +91,17 @@ public sealed class LicenseGuard : ILicenseGuard
         }
     }
 
+    /// <summary>
+    /// Executes the Has Feature operation.
+    /// </summary>
     public bool HasFeature(string featureName)
     {
         return _runtimeStatus.HasFeature(Current, featureName);
     }
 
+    /// <summary>
+    /// Executes the Ensure Feature operation.
+    /// </summary>
     public void EnsureFeature(string featureName)
     {
         if (!HasFeature(featureName))
@@ -87,6 +111,9 @@ public sealed class LicenseGuard : ILicenseGuard
         }
     }
 
+    /// <summary>
+    /// Executes the Record Action operation.
+    /// </summary>
     public void RecordAction(LicenseActionContext context)
     {
         if (!_configs.EnableChain)
@@ -133,11 +160,17 @@ public sealed class LicenseGuard : ILicenseGuard
         }
     }
 
+    /// <summary>
+    /// Executes the Get Chain Token operation.
+    /// </summary>
     public string GetChainToken()
     {
         return GetRollingToken(ResolveTenantPartition());
     }
 
+    /// <summary>
+    /// Executes the Decrypt Securely operation.
+    /// </summary>
     public string DecryptSecurely(string purpose, string encryptedData, Func<string, string, string> decryptor)
     {
         string projectSeed = _configs.ProjectSeed ?? "DEFAULT";
@@ -147,6 +180,9 @@ public sealed class LicenseGuard : ILicenseGuard
         return decryptor(key, encryptedData);
     }
 
+    /// <summary>
+    /// Executes the Get Functional Key operation.
+    /// </summary>
     [Obsolete("Use DecryptSecurely")]
     public string GetFunctionalKey(string purpose)
     {

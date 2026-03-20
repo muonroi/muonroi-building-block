@@ -1,11 +1,22 @@
 namespace Muonroi.RuleEngine.DecisionTable.Web.Controllers;
 
+/// <summary>
+/// API endpoints for exporting decision tables.
+/// </summary>
 [ApiController]
 [Route("api/v1/decision-tables/{id}/export")]
+[Route("api/v1/rule-engine/decision-tables/{id}/export")]
 public sealed class DecisionTableExportController(
     IDecisionTableStore store,
     IDecisionTableConverter converter) : ControllerBase
 {
+    /// <summary>
+    /// Exports a decision table to the requested format.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="format">Export format.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The exported file payload.</returns>
     [HttpGet("{format}")]
     public async Task<IActionResult> Export(string id, string format, CancellationToken cancellationToken = default)
     {
@@ -38,12 +49,24 @@ public sealed class DecisionTableExportController(
         };
     }
 
+    /// <summary>
+    /// Exports a decision table as JSON.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The exported JSON file.</returns>
     [HttpPost("json")]
     public async Task<IActionResult> ExportJson(string id, CancellationToken cancellationToken = default)
     {
         return await Export(id, "json", cancellationToken);
     }
 
+    /// <summary>
+    /// Exports a decision table as DMN XML.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The exported DMN file.</returns>
     [HttpPost("dmn")]
     public async Task<IActionResult> ExportDmn(string id, CancellationToken cancellationToken = default)
     {

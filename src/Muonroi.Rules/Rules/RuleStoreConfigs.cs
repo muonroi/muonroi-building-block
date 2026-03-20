@@ -5,6 +5,9 @@ namespace Muonroi.Rules.Rules;
 /// </summary>
 public sealed class RuleStoreConfigs
 {
+    /// <summary>
+    /// The name of the configuration section for the rule store.
+    /// </summary>
     public const string SectionName = "RuleStore";
 
     /// <summary>

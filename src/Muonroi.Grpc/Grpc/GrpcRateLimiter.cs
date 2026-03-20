@@ -2,11 +2,17 @@ using System.Collections.Concurrent;
 
 namespace Muonroi.Grpc.Grpc;
 
+/// <summary>
+/// In-memory rate limiter for gRPC calls.
+/// </summary>
 public sealed class GrpcRateLimiter
 {
     private readonly ConcurrentDictionary<string, WindowCounter> _apiKeyCounters = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, WindowCounter> _tenantCounters = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// Attempts to consume a request for the provided key scopes.
+    /// </summary>
     public bool TryConsume(string? apiKey, string? tenantId, GrpcRateLimitConfig config, out string? exceededScope)
     {
         ArgumentNullException.ThrowIfNull(config);

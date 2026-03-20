@@ -6,6 +6,9 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Grpc.Grpc;
 
+/// <summary>
+/// Server-side gRPC interceptor with tenancy, licensing, and telemetry handling.
+/// </summary>
 public class GrpcServerInterceptor(
     ISystemExecutionContextAccessor executionContextAccessor,
     ITenantContextPolicy tenantContextPolicy,
@@ -29,6 +32,7 @@ public class GrpcServerInterceptor(
         multiTenantOptions?.Value.RequireTenantClaimForAuthenticatedUser ?? true;
     private readonly ILicenseGuard? _licenseGuard = licenseGuard;
 
+    /// <inheritdoc/>
     public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(
         TRequest request,
         ServerCallContext context,
@@ -74,6 +78,7 @@ public class GrpcServerInterceptor(
         }
     }
 
+    /// <inheritdoc/>
     public override async Task<TResponse> ClientStreamingServerHandler<TRequest, TResponse>(
         IAsyncStreamReader<TRequest> requestStream,
         ServerCallContext context,
@@ -113,6 +118,7 @@ public class GrpcServerInterceptor(
         }
     }
 
+    /// <inheritdoc/>
     public override async Task ServerStreamingServerHandler<TRequest, TResponse>(
         TRequest request,
         IServerStreamWriter<TResponse> responseStream,
@@ -152,6 +158,7 @@ public class GrpcServerInterceptor(
         }
     }
 
+    /// <inheritdoc/>
     public override async Task DuplexStreamingServerHandler<TRequest, TResponse>(
         IAsyncStreamReader<TRequest> requestStream,
         IServerStreamWriter<TResponse> responseStream,
@@ -357,8 +364,14 @@ public class GrpcServerInterceptor(
 
 }
 
+/// <summary>
+/// Helpers for reading gRPC metadata values.
+/// </summary>
 public static class MetadataExtensions
 {
+    /// <summary>
+    /// Gets the first metadata value for the provided key.
+    /// </summary>
     public static string? GetValue(this Metadata metadata, string key)
     {
         Metadata.Entry? entry = metadata.FirstOrDefault(m => m.Key.Equals(key, StringComparison.OrdinalIgnoreCase));

@@ -1,5 +1,8 @@
 namespace Muonroi.Tenancy.Core.Legacy;
 
+/// <summary>
+/// Provides access to the current tenant context.
+/// </summary>
 public interface ITenantContext
 {
     /// <summary>

@@ -14,11 +14,17 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
         new(["condition", "action", "decision-table", "sub-flow", "liquid", "connector"],
             StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Returns true when the payload contains a flow graph.</summary>
+    /// <param name="graphJson">Flow graph JSON payload.</param>
+    /// <returns><c>true</c> when a graph can be extracted.</returns>
     public bool CanParse(string graphJson)
     {
         return TryExtractGraph(graphJson, out _);
     }
 
+    /// <summary>Parses a flow graph JSON payload into ordered rule graph entries.</summary>
+    /// <param name="graphJson">Flow graph JSON payload.</param>
+    /// <returns>The ordered rule graph entries.</returns>
     public IReadOnlyList<RuleGraphEntry> Parse(string graphJson)
     {
         if (!TryExtractGraph(graphJson, out RuleFlowGraph? graph) || graph is null)
@@ -26,9 +32,7 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
             throw new InvalidOperationException("Invalid or empty graph JSON.");
         }
 
-        List<RuleFlowNode> executableNodes = graph.Nodes
-            .Where(n => ExecutableTypes.Contains(n.Type))
-            .ToList();
+        List<RuleFlowNode> executableNodes = [.. graph.Nodes.Where(n => ExecutableTypes.Contains(n.Type))];
         HashSet<string> executableNodeIds = [.. executableNodes.Select(node => node.Id)];
 
         List<RuleFlowNode> ordered = TopologicalSort(executableNodes, graph.Edges);

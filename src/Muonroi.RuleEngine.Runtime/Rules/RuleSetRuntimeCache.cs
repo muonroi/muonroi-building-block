@@ -9,6 +9,10 @@ public sealed class RuleSetRuntimeCache : IRuleSetRuntimeCache, IDisposable
     private readonly RuleStoreConfigs _configs;
     private readonly IDisposable? _subscription;
 
+    /// <summary>Creates a runtime cache for ruleset content.</summary>
+    /// <param name="cache">Memory cache.</param>
+    /// <param name="configs">Ruleset store configuration.</param>
+    /// <param name="notifier">Optional change notifier for invalidation.</param>
     public RuleSetRuntimeCache(IMemoryCache cache, RuleStoreConfigs configs, IRuleSetChangeNotifier? notifier = null)
     {
         _cache = cache;
@@ -21,6 +25,7 @@ public sealed class RuleSetRuntimeCache : IRuleSetRuntimeCache, IDisposable
         }
     }
 
+    /// <inheritdoc />
     public async Task<string?> GetOrCreateAsync(
         string tenantId,
         string workflowName,
@@ -49,6 +54,7 @@ public sealed class RuleSetRuntimeCache : IRuleSetRuntimeCache, IDisposable
         return value;
     }
 
+    /// <inheritdoc />
     public Task InvalidateAsync(string tenantId, string workflowName, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -61,6 +67,7 @@ public sealed class RuleSetRuntimeCache : IRuleSetRuntimeCache, IDisposable
         return $"ruleset:runtime:{tenantId}:{workflowName}".ToLowerInvariant();
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _subscription?.Dispose();

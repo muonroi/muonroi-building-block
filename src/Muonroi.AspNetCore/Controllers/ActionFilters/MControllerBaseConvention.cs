@@ -1,7 +1,9 @@
 namespace Muonroi.AspNetCore.Controllers.ActionFilters;
 
+/// <inheritdoc />
 public class MControllerBaseConvention : IApplicationModelConvention
 {
+/// <inheritdoc />
     public void Apply(ApplicationModel application)
     {
         foreach ((ActionModel action, Type returnType) in from ControllerModel controller in application.Controllers

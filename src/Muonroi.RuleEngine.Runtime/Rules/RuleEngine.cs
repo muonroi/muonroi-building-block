@@ -31,6 +31,10 @@ public sealed class RuleEngine<T>(
     private readonly ISystemExecutionContextAccessor _executionContext =
         executionContextAccessor ?? new SystemExecutionContextAccessor();
 
+    /// <summary>Adds a rule with an explicit descriptor.</summary>
+    /// <param name="rule">The rule instance to register.</param>
+    /// <param name="descriptor">The rule descriptor metadata.</param>
+    /// <returns>The current engine instance.</returns>
     public RuleEngine<T> AddRule(IRule<T> rule, RuleDescriptor descriptor)
     {
         _rules.Add((rule, descriptor));
@@ -38,12 +42,18 @@ public sealed class RuleEngine<T>(
         return this;
     }
 
+    /// <summary>Adds a rule and generates a descriptor automatically.</summary>
+    /// <param name="rule">The rule instance to register.</param>
+    /// <returns>The current engine instance.</returns>
     public RuleEngine<T> AddRule(IRule<T> rule)
     {
         string code = GenerateRuleCode(rule);
         return AddRule(rule, new RuleDescriptor(code, rule.GetType().Name, string.Empty, rule.Type));
     }
 
+    /// <summary>Removes a registered rule by code.</summary>
+    /// <param name="ruleCode">The rule code to remove.</param>
+    /// <returns><c>true</c> when a rule was removed.</returns>
     public bool RemoveRule(string ruleCode)
     {
         if (string.IsNullOrWhiteSpace(ruleCode))
@@ -88,6 +98,8 @@ public sealed class RuleEngine<T>(
         return code;
     }
 
+    /// <summary>Returns the registered rule descriptors.</summary>
+    /// <returns>The rule catalog.</returns>
     public IEnumerable<RuleDescriptor> GetCatalog()
     {
         return _rules.Select(r => r.Descriptor);
@@ -143,22 +155,38 @@ public sealed class RuleEngine<T>(
         return result;
     }
 
+    /// <summary>Executes rules for the provided context.</summary>
+    /// <param name="context">The rule execution context.</param>
+    /// <param name="ruleTypes">Optional hook points to filter by.</param>
     public Task ExecuteAsync(T context, params RuleType[] ruleTypes)
     {
         return ExecuteAsync(context, null, CancellationToken.None, ruleTypes);
     }
 
+    /// <summary>Executes rules for the provided context with cancellation support.</summary>
+    /// <param name="context">The rule execution context.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="ruleTypes">Optional hook points to filter by.</param>
     public Task ExecuteAsync(T context, CancellationToken cancellationToken, params RuleType[] ruleTypes)
     {
         return ExecuteAsync(context, null, cancellationToken, ruleTypes);
     }
 
+    /// <summary>Executes rules for the provided context and selected rule codes.</summary>
+    /// <param name="context">The rule execution context.</param>
+    /// <param name="selectedRuleCodes">Optional explicit rule codes to execute.</param>
+    /// <param name="ruleTypes">Optional hook points to filter by.</param>
     public Task ExecuteAsync(T context, IEnumerable<string>? selectedRuleCodes, params RuleType[] ruleTypes)
     {
         return ExecuteAsync(context, selectedRuleCodes, CancellationToken.None, ruleTypes);
     }
 
     // Update all calls to ExecuteRulesAsync to pass the cancellationToken parameter
+    /// <summary>Executes rules for the provided context and selection criteria.</summary>
+    /// <param name="context">The rule execution context.</param>
+    /// <param name="selectedRuleCodes">Optional explicit rule codes to execute.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="ruleTypes">Optional hook points to filter by.</param>
     public async Task ExecuteAsync(
         T context,
         IEnumerable<string>? selectedRuleCodes,

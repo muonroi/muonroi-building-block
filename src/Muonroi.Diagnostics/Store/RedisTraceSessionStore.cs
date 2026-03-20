@@ -5,10 +5,14 @@ using StackExchange.Redis;
 
 namespace Muonroi.Diagnostics.Store;
 
+/// <summary>
+/// Redis-backed trace session store.
+/// </summary>
 public sealed class RedisTraceSessionStore(IConnectionMultiplexer redis, IMJsonSerializeService json) : ITraceSessionStore
 {
     private readonly IDatabase _db = redis.GetDatabase();
 
+    /// <inheritdoc/>
     public async Task SaveAsync(MTraceSessionRecord session, TimeSpan? ttl = null, CancellationToken ct = default)
     {
         var tenantId = session.TenantId ?? "global";
@@ -27,6 +31,7 @@ public sealed class RedisTraceSessionStore(IConnectionMultiplexer redis, IMJsonS
         await Task.CompletedTask;
     }
 
+    /// <inheritdoc/>
     public async Task<MTraceSessionRecord?> GetAsync(string sessionId, string? tenantId, CancellationToken ct = default)
     {
         var key = $"trace:session:{tenantId ?? "global"}:{sessionId}";
@@ -34,6 +39,7 @@ public sealed class RedisTraceSessionStore(IConnectionMultiplexer redis, IMJsonS
         return data.HasValue ? json.Deserialize<MTraceSessionRecord>(data!) : null;
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<MTraceSessionRecord>> QueryByTenantAsync(string tenantId, DateTime from, DateTime to, int maxResults = 100, CancellationToken ct = default)
     {
         var dateKey = $"trace:sessions:{tenantId}:{from:yyyyMMdd}";

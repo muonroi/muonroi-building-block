@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace Muonroi.AspNetCore.Controllers;
 
+/// <inheritdoc />
 public class DefaultAuthContextFactory(
     IHttpContextAccessor httpContextAccessor,
     ResourceSetting resourceSetting,
@@ -15,6 +16,7 @@ public class DefaultAuthContextFactory(
     private readonly MDbContext _dbContext = dbContext;
     private readonly IAmqpContext? _amqpContext = amqpContext;
 
+/// <inheritdoc />
     public IAuthenticateInfoContext Create()
     {
         IAuthenticateInfoContext authContext;

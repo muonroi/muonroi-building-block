@@ -4,6 +4,9 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Auth.BearerToken;
 
+/// <summary>
+/// Default refresh token validator that resolves tokens from the HTTP context.
+/// </summary>
 public class DefaultRefreshTokenValidator<TDbContext, TPermission>(
     TDbContext dbContext,
     IMultiLevelCacheService cacheService,
@@ -14,6 +17,7 @@ public class DefaultRefreshTokenValidator<TDbContext, TPermission>(
     where TDbContext : MDbContext
     where TPermission : Enum
 {
+    /// <inheritdoc/>
     public async Task<MAuthenticateInfoContext?> ValidateAsync(HttpContext httpContext)
     {
         MRefreshToken? refresh = await dbContext.ResolveTokenFromHttpContext(

@@ -527,9 +527,7 @@ internal static class ExtractCommand
                 return string.Empty;
             }
 
-            List<string> namespaceParts = sourceNamespace
-                .Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries)
-                .ToList();
+            List<string> namespaceParts = [.. sourceNamespace.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries)];
             string sourceFullPath = Path.GetFullPath(sourceAnchorDirectory);
             string targetFullPath = Path.GetFullPath(targetDirectory);
             string relative = Path.GetRelativePath(sourceFullPath, targetFullPath);

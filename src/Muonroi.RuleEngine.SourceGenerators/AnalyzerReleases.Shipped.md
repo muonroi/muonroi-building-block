@@ -1,8 +1,9 @@
 ## Release 0.1.1
 
 ### New Rules
+
 Rule ID | Category | Severity | Notes
---------|----------|----------|-----
+--------|----------|----------|--------------------
 MRG001 | RuleGen | Error | Duplicate rule code
 MRG002 | RuleGen | Error | Invalid hook point
 MRG003 | RuleGen | Warning | Non-interface dependency

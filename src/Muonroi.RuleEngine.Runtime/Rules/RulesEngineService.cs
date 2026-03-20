@@ -44,6 +44,10 @@ public sealed class RulesEngineService(
     private static readonly object ReflectionRuleCacheLock = new();
     private static int _knownAssemblyCount = AppDomain.CurrentDomain.GetAssemblies().Length;
 
+    /// <summary>Saves a ruleset definition for a workflow.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="json">Ruleset JSON payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SaveRuleSetAsync(string workflowName, string json, CancellationToken cancellationToken = default)
     {
         EnsureRuleEngineFeature();
@@ -52,6 +56,10 @@ public sealed class RulesEngineService(
         await NotifyRuleChangedAsync(workflowName, RuleSetChangeTypes.Saved, null, cancellationToken);
     }
 
+    /// <summary>Sets the active ruleset version for a workflow.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="version">Version number to activate.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SetActiveVersionAsync(string workflowName, int version, CancellationToken cancellationToken = default)
     {
         EnsureRuleEngineFeature();
@@ -59,6 +67,11 @@ public sealed class RulesEngineService(
         await NotifyRuleChangedAsync(workflowName, RuleSetChangeTypes.Activated, version, cancellationToken);
     }
 
+    /// <summary>Validates a ruleset definition without saving it.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="json">Ruleset JSON payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The validation result.</returns>
     public Task<RuleSetValidationResult> ValidateRuleSetAsync(string workflowName, string json,
         CancellationToken cancellationToken = default)
     {
@@ -68,6 +81,11 @@ public sealed class RulesEngineService(
         return Task.FromResult(result);
     }
 
+    /// <summary>Gets a ruleset definition by workflow and optional version.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="version">Optional version; when null, uses the active version.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The ruleset JSON or <c>null</c> if missing.</returns>
     public async Task<string?> GetRuleSetAsync(string workflowName, int? version = null,
         CancellationToken cancellationToken = default)
     {
@@ -75,24 +93,41 @@ public sealed class RulesEngineService(
         return await store.GetAsync(workflowName, version, cancellationToken);
     }
 
+    /// <summary>Lists available versions for a workflow.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Array of versions.</returns>
     public async Task<int[]> GetVersionsAsync(string workflowName, CancellationToken cancellationToken = default)
     {
         EnsureRuleEngineFeature();
         return await store.GetVersionsAsync(workflowName, cancellationToken);
     }
 
+    /// <summary>Gets the active version for a workflow.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The active version or <c>null</c> if unknown.</returns>
     public async Task<int?> GetActiveVersionAsync(string workflowName, CancellationToken cancellationToken = default)
     {
         EnsureRuleEngineFeature();
         return await store.GetActiveVersionAsync(workflowName, cancellationToken);
     }
 
+    /// <summary>Lists workflows visible to the current tenant scope.</summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Workflow names.</returns>
     public async Task<IReadOnlyList<string>> GetWorkflowsAsync(CancellationToken cancellationToken = default)
     {
         EnsureRuleEngineFeature();
         return await store.GetWorkflowsAsync(cancellationToken);
     }
 
+    /// <summary>Executes a workflow and returns the full orchestration result.</summary>
+    /// <typeparam name="TContext">Type of the execution context.</typeparam>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="context">Execution context.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The orchestrator result with facts and errors.</returns>
     public async Task<OrchestratorResult> ExecuteWithResultAsync<TContext>(
         string workflowName,
         TContext context,
@@ -141,6 +176,12 @@ public sealed class RulesEngineService(
             new Dictionary<string, RuleResult>(StringComparer.OrdinalIgnoreCase));
     }
 
+    /// <summary>Executes a workflow and returns the output facts.</summary>
+    /// <typeparam name="TContext">Type of the execution context.</typeparam>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="context">Execution context.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The output fact bag.</returns>
     public async Task<FactBag> ExecuteAsync<TContext>(string workflowName, TContext context,
         CancellationToken cancellationToken = default)
     {
@@ -161,6 +202,16 @@ public sealed class RulesEngineService(
         throw new InvalidOperationException(message);
     }
 
+    /// <summary>
+    /// Executes a ruleset payload in memory without persisting it.
+    /// Supports legacy, code-based, and flow-graph ruleset shapes.
+    /// </summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="json">Ruleset JSON payload.</param>
+    /// <param name="context">Context payload as JSON.</param>
+    /// <param name="contextType">Optional context type name for code/graph rulesets.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The output fact bag.</returns>
     public async Task<FactBag> DryRunAsync(
         string workflowName,
         string json,

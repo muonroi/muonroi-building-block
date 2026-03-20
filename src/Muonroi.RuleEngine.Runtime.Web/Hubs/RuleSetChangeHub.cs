@@ -1,7 +1,13 @@
 namespace Muonroi.RuleEngine.Runtime.Web.Hubs;
 
+/// <summary>
+/// SignalR hub that broadcasts runtime ruleset change events per tenant.
+/// </summary>
 public sealed class RuleSetChangeHub : Hub
 {
+    /// <summary>Joins the caller to a tenant-scoped ruleset change group.</summary>
+    /// <param name="tenantId">Tenant identifier.</param>
+    /// <returns>A task representing the operation.</returns>
     public Task JoinTenantGroup(string tenantId)
     {
         string normalizedTenantId = NormalizeTenantId(tenantId);
@@ -13,6 +19,9 @@ public sealed class RuleSetChangeHub : Hub
         return Groups.AddToGroupAsync(Context.ConnectionId, BuildTenantGroup(normalizedTenantId));
     }
 
+    /// <summary>Removes the caller from a tenant-scoped ruleset change group.</summary>
+    /// <param name="tenantId">Tenant identifier.</param>
+    /// <returns>A task representing the operation.</returns>
     public Task LeaveTenantGroup(string tenantId)
     {
         string normalizedTenantId = NormalizeTenantId(tenantId);
@@ -24,6 +33,9 @@ public sealed class RuleSetChangeHub : Hub
         return Groups.RemoveFromGroupAsync(Context.ConnectionId, BuildTenantGroup(normalizedTenantId));
     }
 
+    /// <summary>Builds the SignalR group name for a tenant.</summary>
+    /// <param name="tenantId">Tenant identifier.</param>
+    /// <returns>Normalized group name.</returns>
     public static string BuildTenantGroup(string tenantId)
     {
         return $"tenant:{tenantId.Trim().ToLowerInvariant()}";

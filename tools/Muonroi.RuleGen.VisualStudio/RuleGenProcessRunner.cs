@@ -235,13 +235,12 @@ internal static class RuleGenProcessFactory
             return new[] { ".exe", ".cmd", ".bat", ".com" };
         }
 
-        return pathext
+        return [.. pathext
             .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(s => s.Trim())
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .Select(s => s.StartsWith(".") ? s : "." + s)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+            .Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 
     private static bool HasLocalToolManifestWithMuonroiRule(string fromDirectory)

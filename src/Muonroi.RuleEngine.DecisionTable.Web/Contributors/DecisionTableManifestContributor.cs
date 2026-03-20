@@ -4,12 +4,30 @@ using Muonroi.Core.Abstractions.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Web.Contributors;
 
+/// <summary>
+/// Adds decision table UI metadata to the UiEngine manifest.
+/// </summary>
 public sealed class DecisionTableManifestContributor : IUiEngineManifestContributor
 {
+    /// <summary>
+    /// Ordering for manifest contributions.
+    /// </summary>
     public int Order => 100;
+    /// <summary>
+    /// Module identifier for decision table UI features.
+    /// </summary>
     public string ModuleId => "decision-table";
+    /// <summary>
+    /// Minimum license tier required for the module.
+    /// </summary>
     public string RequiredTier => "Professional";
 
+    /// <summary>
+    /// Populates the manifest with decision table screens, actions, and data sources.
+    /// </summary>
+    /// <param name="context">The manifest context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A completed task.</returns>
     public Task ContributeAsync(UiEngineManifestContext context, CancellationToken ct = default)
     {
         _ = ct;

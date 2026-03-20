@@ -4,10 +4,17 @@ using Muonroi.RuleEngine.CEP.Builder;
 
 namespace Muonroi.RuleEngine.CEP.Controllers;
 
+/// <summary>
+/// CEP configuration API endpoints.
+/// </summary>
+/// <param name="repository">CEP configuration repository.</param>
 [ApiController]
 [Route("api/v1/rule-engine/cep")]
 public sealed class CepController(ICepConfigRepository repository) : ControllerBase
 {
+    /// <summary>
+    /// Lists CEP configurations.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CepConfigDto>>> List(CancellationToken cancellationToken)
     {
@@ -15,6 +22,9 @@ public sealed class CepController(ICepConfigRepository repository) : ControllerB
         return Ok(configs.Select(Map).ToArray());
     }
 
+    /// <summary>
+    /// Gets a CEP configuration by id.
+    /// </summary>
     [HttpGet("{id}")]
     public async Task<ActionResult<CepConfigDto>> Get(string id, CancellationToken cancellationToken)
     {
@@ -27,6 +37,9 @@ public sealed class CepController(ICepConfigRepository repository) : ControllerB
         return Ok(Map(config));
     }
 
+    /// <summary>
+    /// Creates or updates a CEP configuration.
+    /// </summary>
     [HttpPut("{id}")]
     public async Task<ActionResult<CepConfigDto>> Save(
         string id,
@@ -78,6 +91,9 @@ public sealed class CepController(ICepConfigRepository repository) : ControllerB
         return Ok(Map(persisted));
     }
 
+    /// <summary>
+    /// Deletes a CEP configuration.
+    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
     {
@@ -85,6 +101,9 @@ public sealed class CepController(ICepConfigRepository repository) : ControllerB
         return removed ? NoContent() : NotFound();
     }
 
+    /// <summary>
+    /// Simulates CEP window processing for a configuration.
+    /// </summary>
     [HttpPost("{id}/simulate")]
     public async Task<ActionResult<CepSimulationResponse>> Simulate(
         string id,

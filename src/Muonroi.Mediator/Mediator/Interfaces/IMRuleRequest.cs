@@ -4,7 +4,6 @@ namespace Muonroi.Mediator.Mediator.Interfaces;
 
 /// <summary>
 /// Marker interface for requests that participate in the rule engine pipeline.
-/// <see cref="Muonroi.Mediator.Behaviours.MRuleEngineBehavior{TRequest,TResponse,TRuleContext}"/>
 /// runs rules with <see cref="HookPoint.BeforeRule"/> before the handler
 /// and <see cref="HookPoint.AfterRule"/> after the handler.
 /// </summary>

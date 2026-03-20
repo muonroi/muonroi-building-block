@@ -5,6 +5,9 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.Enterprise.Compliance;
 
+/// <summary>
+/// Represents the MCompliance Export Service.
+/// </summary>
 public sealed class MComplianceExportService(
     LicenseConfigs licenseConfigs,
     IFingerprintChainStore chainStore,
@@ -28,8 +31,14 @@ public sealed class MComplianceExportService(
     private readonly IMLog<MComplianceExportService>? _logger = logger;
     private readonly object _lock = new();
 
+    /// <summary>
+    /// Gets the Is Enabled.
+    /// </summary>
     public bool IsEnabled => _licenseConfigs.Compliance.Enabled;
 
+    /// <summary>
+    /// Executes the Export Async operation.
+    /// </summary>
     public async Task<MComplianceExportRunResult> ExportAsync(CancellationToken cancellationToken = default)
     {
         MCompliancePaths paths = ResolvePaths();
@@ -191,6 +200,9 @@ public sealed class MComplianceExportService(
         };
     }
 
+    /// <summary>
+    /// Executes the Get Export Records Async operation.
+    /// </summary>
     public async Task<IReadOnlyList<MComplianceExportRecord>> GetExportRecordsAsync(
         MComplianceExportQuery query,
         CancellationToken cancellationToken = default)
@@ -265,6 +277,9 @@ public sealed class MComplianceExportService(
         return records;
     }
 
+    /// <summary>
+    /// Executes the Verify Async operation.
+    /// </summary>
     public async Task<MComplianceVerificationResult> VerifyAsync(
         MComplianceVerificationRequest? request = null,
         CancellationToken cancellationToken = default)
@@ -345,6 +360,9 @@ public sealed class MComplianceExportService(
         };
     }
 
+    /// <summary>
+    /// Executes the Prune Evidence Packs Async operation.
+    /// </summary>
     public Task<int> PruneEvidencePacksAsync(CancellationToken cancellationToken = default)
     {
         if (!IsEnabled || !_licenseConfigs.Compliance.EnableAutoPruneEvidencePacks)

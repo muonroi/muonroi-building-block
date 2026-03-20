@@ -6,5 +6,8 @@ namespace Muonroi.Mediator.Mediator.Interfaces;
 /// </summary>
 public interface IRequestPreProcessor<in TRequest>
 {
+    /// <summary>
+    /// Executes the pre-processing step.
+    /// </summary>
     Task ProcessAsync(TRequest request, CancellationToken cancellationToken = default);
 }

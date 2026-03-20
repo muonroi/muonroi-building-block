@@ -1,7 +1,11 @@
 namespace Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig;
 
+/// <summary>
+/// Configures MySQL database options for a <see cref="MDbContext"/>.
+/// </summary>
 public class MySqlDbContextConfigurator<T> : IDbContextConfigurator<T> where T : MDbContext
 {
+    /// <inheritdoc />
     public void Configure(DbContextOptionsBuilder<T> options, string connectionString)
     {
         options.UseMySql(

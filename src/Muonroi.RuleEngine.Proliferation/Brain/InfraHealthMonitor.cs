@@ -52,6 +52,7 @@ public sealed class InfraHealthMonitor : IInfraHealthMonitor
     private DateTimeOffset _cacheExpiry = DateTimeOffset.MinValue;
     private readonly SemaphoreSlim _lock = new(1, 1);
 
+    /// <summary>Creates an infrastructure health monitor.</summary>
     public InfraHealthMonitor(
         IHttpClientFactory httpClientFactory,
         ProliferationOptions options,

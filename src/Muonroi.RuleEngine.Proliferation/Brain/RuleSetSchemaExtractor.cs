@@ -157,9 +157,7 @@ public static class RuleSetSchemaExtractor
             }
         }
 
-        List<FieldSchema> inputs = inputFieldNames
-            .Select(name => new FieldSchema(name, "unknown", false, null))
-            .ToList();
+        List<FieldSchema> inputs = [.. inputFieldNames.Select(name => new FieldSchema(name, "unknown", false, null))];
 
         return new RuleSetSchema(kind, inputs, outputs);
     }
@@ -259,9 +257,7 @@ public static class RuleSetSchemaExtractor
             }
         }
 
-        List<FieldSchema> inputs = inputFieldNames
-            .Select(name => new FieldSchema(name, "unknown", false, null))
-            .ToList();
+        List<FieldSchema> inputs = [.. inputFieldNames.Select(name => new FieldSchema(name, "unknown", false, null))];
 
         return new RuleSetSchema(kind, inputs, []);
     }

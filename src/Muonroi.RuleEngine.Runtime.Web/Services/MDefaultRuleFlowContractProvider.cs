@@ -100,7 +100,7 @@ public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
         MRuleContractSchema? requestSchema = MapContextSchema(entry, $"{entry.Code}.Request");
         MRuleContractSchema? responseSchema = BuildOutputSchema(entry, $"{entry.Code}.Response");
         List<string>? availableInputKeys = entry.ConsumedFacts.Count > 0
-            ? entry.ConsumedFacts.Select(f => f.Key).ToList()
+            ? [.. entry.ConsumedFacts.Select(f => f.Key)]
             : null;
 
         return Task.FromResult<MRuleFlowNodeContractResponse?>(

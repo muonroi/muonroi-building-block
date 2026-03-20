@@ -2,6 +2,9 @@ using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the File Fingerprint Chain Store.
+/// </summary>
 public sealed class FileFingerprintChainStore(IHostEnvironment? environment, LicenseConfigs configs, IMJsonSerializeService jsonSerializeService)
     : IFingerprintChainStore
 {
@@ -10,6 +13,9 @@ public sealed class FileFingerprintChainStore(IHostEnvironment? environment, Lic
         new(StringComparer.OrdinalIgnoreCase);
     private bool _loaded;
 
+    /// <summary>
+    /// Executes the Get Last Signature operation.
+    /// </summary>
     public string? GetLastSignature(string? tenantId = null)
     {
         EnsureLoaded();
@@ -17,6 +23,9 @@ public sealed class FileFingerprintChainStore(IHostEnvironment? environment, Lic
         return _stateByTenant.TryGetValue(partition, out (long Sequence, string Signature) state) ? state.Signature : "GENESIS";
     }
 
+    /// <summary>
+    /// Executes the Get Last Sequence operation.
+    /// </summary>
     public long GetLastSequence(string? tenantId = null)
     {
         EnsureLoaded();
@@ -24,6 +33,9 @@ public sealed class FileFingerprintChainStore(IHostEnvironment? environment, Lic
         return _stateByTenant.TryGetValue(partition, out (long Sequence, string Signature) state) ? state.Sequence : 0;
     }
 
+    /// <summary>
+    /// Executes the Append operation.
+    /// </summary>
     public void Append(FingerprintChainEntry entry)
     {
         string? path = ResolvePath(configs.ChainFilePath, environment);
@@ -65,6 +77,9 @@ public sealed class FileFingerprintChainStore(IHostEnvironment? environment, Lic
         }
     }
 
+    /// <summary>
+    /// Executes the Get Recent Entries operation.
+    /// </summary>
     public IEnumerable<FingerprintChainEntry> GetRecentEntries(int count, long? afterSequence = null, string? tenantId = null)
     {
         string? path = ResolvePath(configs.ChainFilePath, environment);
@@ -137,6 +152,9 @@ public sealed class FileFingerprintChainStore(IHostEnvironment? environment, Lic
         }
     }
 
+    /// <summary>
+    /// Executes the Get Tenant Partitions operation.
+    /// </summary>
     public IEnumerable<string> GetTenantPartitions()
     {
         EnsureLoaded();

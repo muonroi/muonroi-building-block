@@ -6,10 +6,14 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace Muonroi.Data.EntityFrameworkCore.Auth;
 
+/// <summary>
+/// Internal helpers for authentication and token validation using EF Core.
+/// </summary>
 public static class AuthorizeInternal
 {
     private const string BearerPrefix = "Bearer ";
     private sealed class AuthorizeInternalLogger { }
+    /// <summary>Resolves a refresh token from the current HTTP context.</summary>
     public static async Task<MRefreshToken?> ResolveTokenFromHttpContext<TDbContext>(
         this TDbContext dbContext,
         HttpContext context,
@@ -186,6 +190,7 @@ public static class AuthorizeInternal
         return Convert.ChangeType(claim.Value, typeof(T));
     }
 
+    /// <summary>Validates login credentials and issues access/refresh tokens.</summary>
     public static async Task<MResponse<LoginResponseModel>> ResolveLoginAsync<TDbContext, TPermission>(
         this TDbContext dbContext, LoginRequestModel request,
         MResponse<LoginResponseModel> result,
@@ -273,6 +278,7 @@ public static class AuthorizeInternal
         return result;
     }
 
+    /// <summary>Validates a refresh token and issues new access/refresh tokens.</summary>
     public static async Task<MResponse<RefreshTokenResponseModel>> ResolveRefreshToken<TDbContext, TPermission>(
         this TDbContext dbContext,
         RefreshTokenRequestModel request,
@@ -441,6 +447,7 @@ public static class AuthorizeInternal
     }
 
 
+    /// <summary>Updates login attempt counters and lockout state after a failed login.</summary>
     public static async Task HandleFailedLoginAttempt<TDbContext>(MUser existedUser,
         MUserLoginAttempt? loginAttemptHistory, TDbContext dbContext,
         CancellationToken cancellationToken)

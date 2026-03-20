@@ -3,6 +3,9 @@ using Muonroi.Messaging.Abstractions.Contracts;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Mass Transit Filter Extensions.
+/// </summary>
 public static class MassTransitFilterExtensions
 {
     /// <summary>
@@ -22,6 +25,9 @@ public static class MassTransitFilterExtensions
         return services;
     }
 
+    /// <summary>
+    /// Executes the Add Consume Filter operation.
+    /// </summary>
     public static void AddConsumeFilter(this IBusRegistrationConfigurator configurator, Type filterType)
     {
         ArgumentNullException.ThrowIfNull(configurator);
@@ -30,6 +36,9 @@ public static class MassTransitFilterExtensions
         configurator.AddConfigureEndpointsCallback((context, _, cfg) => { cfg.UseConsumeFilter(filterType, context); });
     }
 
+    /// <summary>
+    /// Executes the Add Publish Filter operation.
+    /// </summary>
     public static void AddPublishFilter(this IBusRegistrationConfigurator configurator, Type filterType)
     {
         ArgumentNullException.ThrowIfNull(configurator);
@@ -38,6 +47,9 @@ public static class MassTransitFilterExtensions
         configurator.AddConfigureEndpointsCallback((context, _, cfg) => { cfg.UsePublishFilter(filterType, context); });
     }
 
+    /// <summary>
+    /// Executes the Add Send Filter operation.
+    /// </summary>
     public static void AddSendFilter(this IBusRegistrationConfigurator configurator, Type filterType)
     {
         ArgumentNullException.ThrowIfNull(configurator);
@@ -46,6 +58,9 @@ public static class MassTransitFilterExtensions
         configurator.AddConfigureEndpointsCallback((context, _, cfg) => { cfg.UseSendFilter(filterType, context); });
     }
 
+    /// <summary>
+    /// Executes the Apply Runtime Policies operation.
+    /// </summary>
     public static void ApplyRuntimePolicies(this IBusRegistrationConfigurator configurator, MessageBusRuntimeConfigs runtime)
     {
         ArgumentNullException.ThrowIfNull(configurator);

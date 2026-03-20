@@ -5,8 +5,14 @@ namespace Muonroi.Tenancy;
 /// propagates it through the <see cref="TenantContext"/> as well as
 /// OpenTelemetry traces.
 /// </summary>
+/// <param name="next">The next middleware in the pipeline.</param>
 public class TenantResolutionMiddleware(RequestDelegate next)
 {
+    /// <summary>
+    /// Resolves the tenant identifier and applies it to the current request scope.
+    /// </summary>
+    /// <param name="context">The current HTTP context.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task Invoke(HttpContext context)
     {
         string? resolved = ResolveTenantId(context);

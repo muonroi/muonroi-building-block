@@ -3,6 +3,9 @@ using System.Text;
 
 namespace Muonroi.Rules.Feel;
 
+/// <summary>
+/// Provides methods to evaluate FEEL (Friendly Enough Expression Language) expressions.
+/// </summary>
 public static partial class FeelEvaluator
 {
     private const double NumericTolerance = 1e-9;
@@ -23,11 +26,23 @@ public static partial class FeelEvaluator
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex MatchesRegex();
 
+    /// <summary>
+    /// Evaluates a FEEL expression and returns a boolean result.
+    /// </summary>
+    /// <param name="expression">The FEEL expression to evaluate.</param>
+    /// <param name="variables">The context variables for the expression.</param>
+    /// <returns>True if the expression evaluates to true; otherwise, false.</returns>
     public static bool Evaluate(string expression, IDictionary<string, object> variables)
     {
         return ToBoolean(EvaluateValue(expression, variables));
     }
 
+    /// <summary>
+    /// Evaluates a FEEL expression and returns the resulting value.
+    /// </summary>
+    /// <param name="expression">The FEEL expression to evaluate.</param>
+    /// <param name="variables">The context variables for the expression.</param>
+    /// <returns>The result of the evaluation, or null if evaluation fails.</returns>
     public static object? EvaluateValue(string expression, IDictionary<string, object> variables)
     {
         if (string.IsNullOrWhiteSpace(expression))

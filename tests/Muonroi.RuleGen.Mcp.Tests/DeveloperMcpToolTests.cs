@@ -65,12 +65,11 @@ public sealed class DeveloperMcpToolTests
             .ExecuteAsync([workspace.RootPath], ct: CancellationToken.None);
 
         JsonElement root = JsonSerializer.Deserialize<JsonElement>(payload);
-        string[] codes = root.GetProperty("Violations")
+        string[] codes = [.. root.GetProperty("Violations")
             .EnumerateArray()
             .Select(x => x.GetProperty("Code").GetString())
             .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Cast<string>()
-            .ToArray();
+            .Cast<string>()];
 
         Assert.Contains("MBB001", codes);
         Assert.Contains("MBB005", codes);
@@ -386,11 +385,10 @@ public sealed class DeveloperMcpToolTests
         JsonElement rulesPayload = JsonSerializer.Deserialize<JsonElement>(resourceHandler.GetRules());
         JsonElement patternsPayload = JsonSerializer.Deserialize<JsonElement>(resourceHandler.GetPatterns());
 
-        string[] codes = rulesPayload.EnumerateArray()
+        string[] codes = [.. rulesPayload.EnumerateArray()
             .Select(item => item.GetProperty("Code").GetString())
             .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Cast<string>()
-            .ToArray();
+            .Cast<string>()];
 
         Assert.Contains("MBB001", codes);
         Assert.Contains("MBB007", codes);
@@ -406,16 +404,14 @@ public sealed class DeveloperMcpToolTests
         JsonElement ossBoundaryPayload = JsonSerializer.Deserialize<JsonElement>(resourceHandler.GetOssBoundary());
         JsonElement toolingPayload = JsonSerializer.Deserialize<JsonElement>(resourceHandler.GetToolingReference());
 
-        string[] ossPackages = ossBoundaryPayload.GetProperty("oss").EnumerateArray()
+        string[] ossPackages = [.. ossBoundaryPayload.GetProperty("oss").EnumerateArray()
             .Select(item => item.GetString())
             .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Cast<string>()
-            .ToArray();
-        string[] ruleGenTools = toolingPayload.GetProperty("ruleGen").EnumerateArray()
+            .Cast<string>()];
+        string[] ruleGenTools = [.. toolingPayload.GetProperty("ruleGen").EnumerateArray()
             .Select(item => item.GetString())
             .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Cast<string>()
-            .ToArray();
+            .Cast<string>()];
 
         Assert.Contains("Muonroi.RuleEngine.Abstractions", ossPackages);
         Assert.Contains("watch", ruleGenTools);

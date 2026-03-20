@@ -3,8 +3,16 @@ using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Validators;
 
+/// <summary>
+/// Detects overlapping rows in a decision table.
+/// </summary>
 public sealed class OverlapDetector
 {
+    /// <summary>
+    /// Detects overlapping rows in the table.
+    /// </summary>
+    /// <param name="table">Decision table to inspect.</param>
+    /// <returns>List of overlap descriptions.</returns>
     public IReadOnlyList<string> Detect(DecisionTableModel table)
     {
         List<string> overlaps = [];

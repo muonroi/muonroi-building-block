@@ -10,6 +10,15 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Executes rules defined by Microsoft RulesEngine and maps action outputs into a <see cref="FactBag"/>.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="RulesEngineService"/> class.
+/// </remarks>
+/// <param name="store">The ruleset store.</param>
+/// <param name="settings">The RulesEngine settings.</param>
+/// <param name="licenseGuard">The license guard.</param>
+/// <param name="runtimeCache">The ruleset runtime cache.</param>
+/// <param name="notifier">The ruleset change notifier.</param>
+/// <param name="serviceProvider">The service provider for resolving rule dependencies.</param>
 public sealed class RulesEngineService(
     IRuleSetStore store,
     ReSettings? settings = null,
@@ -34,6 +43,13 @@ public sealed class RulesEngineService(
     private static readonly object ReflectionRuleCacheLock = new();
     private static int _knownAssemblyCount = AppDomain.CurrentDomain.GetAssemblies().Length;
 
+    /// <summary>
+    /// Saves a ruleset definition to the store and notifies of the change.
+    /// </summary>
+    /// <param name="workflowName">The name of the workflow/ruleset.</param>
+    /// <param name="json">The JSON representation of the ruleset.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task SaveRuleSetAsync(string workflowName, string json, CancellationToken cancellationToken = default)
     {
         EnsureRuleEngineFeature();
@@ -42,6 +58,13 @@ public sealed class RulesEngineService(
         await NotifyRuleChangedAsync(workflowName, RuleSetChangeTypes.Saved, null, cancellationToken);
     }
 
+    /// <summary>
+    /// Sets the active version of a ruleset.
+    /// </summary>
+    /// <param name="workflowName">The name of the workflow/ruleset.</param>
+    /// <param name="version">The version number to activate.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task SetActiveVersionAsync(string workflowName, int version, CancellationToken cancellationToken = default)
     {
         EnsureRuleEngineFeature();
@@ -49,6 +72,14 @@ public sealed class RulesEngineService(
         await NotifyRuleChangedAsync(workflowName, RuleSetChangeTypes.Activated, version, cancellationToken);
     }
 
+    /// <summary>
+    /// Executes the rules in a ruleset against the specified context.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context object.</typeparam>
+    /// <param name="workflowName">The name of the workflow/ruleset.</param>
+    /// <param name="context">The context object to evaluate rules against.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="FactBag"/> containing the results of rule execution.</returns>
     public async Task<FactBag> ExecuteAsync<TContext>(string workflowName, TContext context,
         CancellationToken cancellationToken = default)
     {

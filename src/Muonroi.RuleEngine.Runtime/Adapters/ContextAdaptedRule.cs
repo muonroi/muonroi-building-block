@@ -16,20 +16,39 @@ public sealed class ContextAdaptedRule<TChild> : IRule<FactBagRuleContext>
     private readonly IRule<TChild> _inner;
     private readonly IContextFactory<TChild> _factory;
 
+    /// <inheritdoc />
     public string Code => _inner.Code;
+
+    /// <inheritdoc />
     public int Order => _inner.Order;
+
+    /// <inheritdoc />
     public string[] DependsOn => [.. _inner.DependsOn];
+
+    /// <inheritdoc />
     public HookPoint HookPoint => _inner.HookPoint;
+
+    /// <inheritdoc />
     public RuleType Type => _inner.Type;
+
+    /// <inheritdoc />
     public string Name => _inner.Name;
+
+    /// <inheritdoc />
     public IEnumerable<Type> Dependencies => _inner.Dependencies;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ContextAdaptedRule{TChild}"/> class.
+    /// </summary>
+    /// <param name="inner">The inner rule to execute.</param>
+    /// <param name="factory">Factory used to build the child context.</param>
     public ContextAdaptedRule(IRule<TChild> inner, IContextFactory<TChild> factory)
     {
         _inner   = inner;
         _factory = factory;
     }
 
+    /// <inheritdoc />
     public Task<RuleResult> EvaluateAsync(
         FactBagRuleContext context, FactBag facts, CancellationToken ct)
     {
@@ -48,6 +67,7 @@ public sealed class ContextAdaptedRule<TChild> : IRule<FactBagRuleContext>
         return _inner.EvaluateAsync(childCtx, facts, ct);
     }
 
+    /// <inheritdoc />
     public Task ExecuteAsync(FactBagRuleContext ctx, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
 }

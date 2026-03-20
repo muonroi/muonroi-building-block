@@ -2,21 +2,63 @@ using Muonroi.Governance.License;
 
 namespace Muonroi.Governance.Abstractions.License;
 
+/// <summary>
+/// Represents the License Capability Resolver.
+/// </summary>
 public static class LicenseCapabilityResolver
 {
+    /// <summary>
+    /// Represents the Capabilities.
+    /// </summary>
     public static class Capabilities
     {
+        /// <summary>
+        /// The Core Runtime.
+        /// </summary>
         public const string CoreRuntime = "core.runtime";
+        /// <summary>
+        /// The Auth Rbac Plus.
+        /// </summary>
         public const string AuthRbacPlus = "auth.rbac_plus";
+        /// <summary>
+        /// The Tenancy Strict.
+        /// </summary>
         public const string TenancyStrict = "tenancy.strict";
+        /// <summary>
+        /// The Rules Runtime.
+        /// </summary>
         public const string RulesRuntime = "rules.runtime";
+        /// <summary>
+        /// The Transport Grpc.
+        /// </summary>
         public const string TransportGrpc = "transport.grpc";
+        /// <summary>
+        /// The Transport Message Bus.
+        /// </summary>
         public const string TransportMessageBus = "transport.message_bus";
+        /// <summary>
+        /// The Cache Distributed.
+        /// </summary>
         public const string CacheDistributed = "cache.distributed";
+        /// <summary>
+        /// The Audit Trail.
+        /// </summary>
         public const string AuditTrail = "audit.trail";
+        /// <summary>
+        /// The Runtime Anti Tampering.
+        /// </summary>
         public const string RuntimeAntiTampering = "runtime.anti_tampering";
+        /// <summary>
+        /// The Audit Remote.
+        /// </summary>
         public const string AuditRemote = "audit.remote";
+        /// <summary>
+        /// The Connectors.
+        /// </summary>
         public const string Connectors = "connectors";
+        /// <summary>
+        /// The Java Script Expressions.
+        /// </summary>
         public const string JavaScriptExpressions = "js_expressions";
     }
 
@@ -52,6 +94,9 @@ public static class LicenseCapabilityResolver
         Capabilities.JavaScriptExpressions
     ];
 
+    /// <summary>
+    /// Executes the Has Access operation.
+    /// </summary>
     public static bool HasAccess(LicenseState state, string requestedFeature)
     {
         if (string.IsNullOrWhiteSpace(requestedFeature))
@@ -108,6 +153,9 @@ public static class LicenseCapabilityResolver
                HasCapability(state.Payload?.AllowedFeatures, requestedCapability);
     }
 
+    /// <summary>
+    /// Executes the Resolve Capability For Request operation.
+    /// </summary>
     public static string? ResolveCapabilityForRequest(string requestedFeature)
     {
         if (string.IsNullOrWhiteSpace(requestedFeature))

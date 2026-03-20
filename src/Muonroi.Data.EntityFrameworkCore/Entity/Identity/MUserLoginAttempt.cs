@@ -1,8 +1,14 @@
 namespace Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 
+/// <summary>
+/// Records a user's login attempt and lockout state.
+/// </summary>
 [Table("MUserLoginAttempts")]
 public sealed class MUserLoginAttempt : MEntity
 {
+    /// <summary>
+    /// Maximum length of <see cref="UserNameOrEmailAddress"/>.
+    /// </summary>
     public const int MaxUserNameOrEmailAddressLength = MaxEmailAddressLength;
 
     /// <summary>

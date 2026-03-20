@@ -1,9 +1,13 @@
 namespace Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig;
 
+/// <summary>
+/// Synchronizes permission definitions from providers and enums into the database.
+/// </summary>
 public class PermissionSyncService<TDbContext>(TDbContext context, IEnumerable<IPermissionProvider> providers)
     : IPermissionSyncService
     where TDbContext : MDbContext
 {
+    /// <summary>Synchronizes the current permission set.</summary>
     public async Task SyncPermissionsAsync()
     {
         Assembly assembly = typeof(TDbContext).Assembly;

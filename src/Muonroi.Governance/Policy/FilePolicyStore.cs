@@ -4,8 +4,14 @@ using System.Text.Json;
 
 namespace Muonroi.Governance.Policy;
 
+/// <summary>
+/// Represents the File Policy Store.
+/// </summary>
 public sealed class FilePolicyStore(LicenseConfigs configs, IHostEnvironment? environment, IMJsonSerializeService jsonSerializeService) : IPolicyStore
 {
+    /// <summary>
+    /// Executes the Load operation.
+    /// </summary>
     public LicensePolicy? Load()
     {
         string? path = ResolvePath();
@@ -22,6 +28,9 @@ public sealed class FilePolicyStore(LicenseConfigs configs, IHostEnvironment? en
         }
     }
 
+    /// <summary>
+    /// Executes the Save operation.
+    /// </summary>
     public void Save(LicensePolicy policy)
     {
         string? path = ResolvePath();

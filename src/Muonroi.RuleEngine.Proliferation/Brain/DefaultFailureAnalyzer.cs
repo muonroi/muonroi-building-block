@@ -14,6 +14,7 @@ public sealed class DefaultFailureAnalyzer(
     ProliferationOptions options,
     IMLog<DefaultFailureAnalyzer>? logger = null) : IFailureAnalyzer
 {
+    /// <summary>Analyzes a failed scenario and generates follow-up scenarios.</summary>
     public async Task<IReadOnlyList<NeuronScenario>> AnalyzeFailureAsync(
         NeuronScenario failedScenario,
         ScenarioResult failureResult,
@@ -54,14 +55,13 @@ public sealed class DefaultFailureAnalyzer(
                 return [];
 
             // Set parent-child relationship and cap to budget
-            List<NeuronScenario> children = plan.Scenarios
+            List<NeuronScenario> children = [.. plan.Scenarios
                 .Take(budget)
                 .Select(s => s with
                 {
                     ParentScenarioId = failedScenario.Id,
                     GenerationDepth = failedScenario.GenerationDepth + 1
-                })
-                .ToList();
+                })];
 
             logger?.Info("[Proliferation] Failure analysis generated {Count} follow-up scenarios from failed scenario {ParentId}",
                 children.Count, failedScenario.Id);

@@ -2,8 +2,17 @@ using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable;
 
+/// <summary>
+/// Computes differences between two decision table versions.
+/// </summary>
 public sealed class DecisionTableDiffer
 {
+    /// <summary>
+    /// Computes column and row diffs between two tables.
+    /// </summary>
+    /// <param name="from">Source table version.</param>
+    /// <param name="to">Target table version.</param>
+    /// <returns>Diff result.</returns>
     public DecisionTableDiff Compute(DecisionTableModel from, DecisionTableModel to)
     {
         ArgumentNullException.ThrowIfNull(from);

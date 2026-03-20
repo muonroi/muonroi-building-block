@@ -12,6 +12,9 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.Enterprise;
 
+/// <summary>
+/// Represents the Enterprise Governance Service Extensions.
+/// </summary>
 public static class EnterpriseGovernanceServiceExtensions
 {
     /// <summary>

@@ -11,13 +11,19 @@ using System.Threading.Tasks;
 
 namespace Muonroi.RuleEngine.SourceGenerators.CodeFixes;
 
+/// <summary>
+/// Code fix provider for MBB001 diagnostics.
+/// </summary>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MBB001_DateTimeCodeFix)), Shared]
 public sealed class MBB001_DateTimeCodeFix : CodeFixProvider
 {
-    public override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create("MBB001");
+    /// <inheritdoc/>
+    public override ImmutableArray<string> FixableDiagnosticIds => ["MBB001"];
 
+    /// <inheritdoc/>
     public override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 
+    /// <inheritdoc/>
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
         SyntaxNode? root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);

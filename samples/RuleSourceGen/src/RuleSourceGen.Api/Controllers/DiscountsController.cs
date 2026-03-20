@@ -5,10 +5,18 @@ using RuleSourceGen.Api.Models;
 
 namespace RuleSourceGen.Api.Controllers;
 
+/// <summary>
+/// Endpoints for discount rule evaluation.
+/// </summary>
 [ApiController]
 [Route("api/discounts")]
 public sealed class DiscountsController(RuleOrchestrator<DiscountRequest> orchestrator) : ControllerBase
 {
+    /// <summary>
+    /// Evaluates discount rules and returns the computed rates.
+    /// </summary>
+    /// <param name="request">Discount input payload.</param>
+    /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpPost("evaluate")]
     public async Task<ActionResult<DiscountResponse>> Evaluate(
         [FromBody] DiscountRequest request,

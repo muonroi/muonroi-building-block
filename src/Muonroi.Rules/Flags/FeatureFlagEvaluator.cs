@@ -55,5 +55,11 @@ public readonly record struct FeatureContext(string TenantId, string? Segment = 
 /// </summary>
 public interface IFeatureFlagClient
 {
+    /// <summary>
+    /// Determines whether the specified feature flag is enabled for the given context.
+    /// </summary>
+    /// <param name="flag">The feature flag name.</param>
+    /// <param name="context">The evaluation context.</param>
+    /// <returns><c>true</c> if the feature flag is enabled; otherwise, <c>false</c>.</returns>
     bool IsEnabled(string flag, FeatureContext context);
 }

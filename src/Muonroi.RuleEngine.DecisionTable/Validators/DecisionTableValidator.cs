@@ -3,6 +3,14 @@ using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Validators;
 
+/// <summary>
+/// Validates decision table structure and expressions.
+/// </summary>
+/// <param name="feelEvaluator">Optional FEEL evaluator for expression validation.</param>
+/// <param name="overlapDetector">Optional detector for overlapping rows.</param>
+/// <param name="gapDetector">Optional detector for range gaps.</param>
+/// <param name="multiColumnOverlapDetector">Optional detector for multi-column overlaps.</param>
+/// <param name="redundancyDetector">Optional detector for redundant rows.</param>
 public sealed class DecisionTableValidator(
     IFeelCellEvaluator? feelEvaluator = null,
     OverlapDetector? overlapDetector = null,
@@ -18,6 +26,11 @@ public sealed class DecisionTableValidator(
         multiColumnOverlapDetector ?? new MultiColumnOverlapDetector();
     private readonly RedundancyDetector _redundancyDetector = redundancyDetector ?? new RedundancyDetector();
 
+    /// <summary>
+    /// Validates the specified table and returns errors and warnings.
+    /// </summary>
+    /// <param name="table">Decision table to validate.</param>
+    /// <returns>Validation result.</returns>
     public ValidationResult Validate(DecisionTableModel table)
     {
         List<string> errors = [];

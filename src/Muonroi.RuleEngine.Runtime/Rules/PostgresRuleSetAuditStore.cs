@@ -1,5 +1,8 @@
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
+/// <summary>
+/// Database-backed audit store for ruleset governance actions.
+/// </summary>
 public sealed class PostgresRuleSetAuditStore(
     RuleEngineDbContext dbContext,
     IRuleSetAuditSigner signer,
@@ -9,6 +12,7 @@ public sealed class PostgresRuleSetAuditStore(
     private readonly ISystemExecutionContextAccessor _executionContext =
         executionContextAccessor ?? new SystemExecutionContextAccessor();
 
+    /// <inheritdoc />
     public async Task AppendAsync(RuleSetAuditEntry entry, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -64,6 +68,7 @@ public sealed class PostgresRuleSetAuditStore(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task<RuleSetAuditPage> QueryAsync(
         string? workflowName = null,
         int page = 1,

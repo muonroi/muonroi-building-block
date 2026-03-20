@@ -16,6 +16,7 @@ public sealed class VectorSemanticDeduplicator(
 {
     private readonly ConcurrentDictionary<string, float[]> _embeddingCache = new();
 
+    /// <summary>Removes duplicate scenarios using hash and semantic similarity checks.</summary>
     public IReadOnlyList<NeuronScenario> Deduplicate(
         IReadOnlyList<NeuronScenario> candidates,
         IReadOnlyList<NeuronScenario> existingScenarios)

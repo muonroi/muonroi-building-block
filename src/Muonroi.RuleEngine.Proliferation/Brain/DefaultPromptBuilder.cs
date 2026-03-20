@@ -10,8 +10,10 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 /// </summary>
 public sealed class DefaultPromptBuilder : IPromptBuilder
 {
+    /// <summary>Builds the generic system prompt.</summary>
     public string BuildSystemPrompt() => GenericSystemPrompt;
 
+    /// <summary>Builds the system prompt for a specific ruleset kind.</summary>
     public string BuildSystemPrompt(RuleSetKind kind)
     {
         string kindSection = kind switch
@@ -28,6 +30,7 @@ public sealed class DefaultPromptBuilder : IPromptBuilder
         return $"{GenericSystemPrompt}\n\n{kindSection}";
     }
 
+    /// <summary>Builds the user prompt for proliferation analysis.</summary>
     public string BuildUserPrompt(
         string ruleSetJson,
         JsonElement? executionResult,
@@ -195,6 +198,7 @@ public sealed class DefaultPromptBuilder : IPromptBuilder
     /// </summary>
     /// <param name="description">Plain-text business rule description from the user.</param>
     /// <param name="outputFormat">"flowgraph" or "decisiontable"</param>
+    /// <summary>Builds the user prompt for natural language conversion.</summary>
     public string BuildNlConversionPrompt(string description, string outputFormat)
     {
         StringBuilder sb = new();

@@ -11,12 +11,15 @@ namespace Muonroi.RuleEngine.CEP.Repositories;
 /// <summary>
 /// In-memory CEP configuration store intended for development and local testing.
 /// </summary>
+/// <param name="dateTimeService">Date/time service.</param>
+/// <param name="contextAccessor">Execution context accessor.</param>
 public sealed class InMemoryCepConfigRepository(
     IMDateTimeService dateTimeService,
     ISystemExecutionContextAccessor contextAccessor) : ICepConfigRepository
 {
     private readonly ConcurrentDictionary<string, CepConfig> _configs = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <inheritdoc/>
     public Task<IReadOnlyList<CepConfig>> ListAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -33,6 +36,7 @@ public sealed class InMemoryCepConfigRepository(
         return Task.FromResult(items);
     }
 
+    /// <inheritdoc/>
     public Task<CepConfig?> GetAsync(string id, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -44,6 +48,7 @@ public sealed class InMemoryCepConfigRepository(
         return Task.FromResult(config is null ? null : Clone(config));
     }
 
+    /// <inheritdoc/>
     public Task<CepConfig> SaveAsync(CepConfig config, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -67,6 +72,7 @@ public sealed class InMemoryCepConfigRepository(
         return Task.FromResult(Clone(saved));
     }
 
+    /// <inheritdoc/>
     public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

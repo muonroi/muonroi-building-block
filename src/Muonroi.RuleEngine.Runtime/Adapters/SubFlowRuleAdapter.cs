@@ -21,14 +21,37 @@ public sealed class SubFlowRuleAdapter<TContext> : IRule<TContext>
     private readonly IContextProjector<TContext> _projector;
     private readonly IMLog<SubFlowRuleAdapter<TContext>> _log;
 
+    /// <inheritdoc />
     public string Code => _code;
+
+    /// <inheritdoc />
     public int Order { get; init; }
+
+    /// <inheritdoc />
     public string[] DependsOn { get; init; } = [];
+
+    /// <inheritdoc />
     public HookPoint HookPoint => HookPoint.BeforeRule;
+
+    /// <inheritdoc />
     public RuleType Type => RuleType.Business;
+
+    /// <inheritdoc />
     public string Name => $"SubFlow:{_childFlowCode}";
+
+    /// <inheritdoc />
     public IEnumerable<Type> Dependencies => [];
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubFlowRuleAdapter{TContext}"/> class.
+    /// </summary>
+    /// <param name="code">Rule code for this node.</param>
+    /// <param name="childFlowCode">Child workflow code.</param>
+    /// <param name="inputMappings">Input mappings from parent to child.</param>
+    /// <param name="outputMappings">Output mappings from child to parent.</param>
+    /// <param name="engine">Rules engine service used to execute the sub-flow.</param>
+    /// <param name="projector">Context projector for variables.</param>
+    /// <param name="log">Logger instance.</param>
     public SubFlowRuleAdapter(
         string code,
         string childFlowCode,
@@ -47,6 +70,7 @@ public sealed class SubFlowRuleAdapter<TContext> : IRule<TContext>
         _log            = log;
     }
 
+    /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)
     {
         FactBag childFacts = BuildChildFacts(ctx, facts);
@@ -93,6 +117,7 @@ public sealed class SubFlowRuleAdapter<TContext> : IRule<TContext>
         return RuleResult.Passed();
     }
 
+    /// <inheritdoc />
     public Task ExecuteAsync(TContext context, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
 

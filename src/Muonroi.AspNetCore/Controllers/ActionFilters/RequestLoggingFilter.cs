@@ -1,5 +1,6 @@
 namespace Muonroi.AspNetCore.Controllers.ActionFilters;
 
+/// <inheritdoc />
 public class RequestLoggingFilter(
     IMLog<RequestLoggingFilter>? logger,
     IMJsonSerializeService jsonSerialize,
@@ -8,6 +9,7 @@ public class RequestLoggingFilter(
     IHostEnvironment hostEnvironment,
     ILogSanitizer? logSanitizer = null) : IAsyncActionFilter
 {
+/// <inheritdoc />
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         HttpRequest request = context.HttpContext.Request;

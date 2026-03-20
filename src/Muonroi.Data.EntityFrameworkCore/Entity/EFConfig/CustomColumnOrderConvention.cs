@@ -1,7 +1,13 @@
 namespace Muonroi.Data.EntityFrameworkCore.Entity.EFConfig;
 
+/// <summary>
+/// Configures column ordering for entities derived from <see cref="MEntity"/>.
+/// </summary>
 public class CustomColumnOrderConvention : IModelCustomizer
 {
+    /// <summary>Applies column order configuration to the model.</summary>
+    /// <param name="modelBuilder">The model builder.</param>
+    /// <param name="context">The current <see cref="DbContext"/>.</param>
     public void Customize(ModelBuilder modelBuilder, DbContext context)
     {
         foreach ((IMutableEntityType entityType, IMutableProperty idProperty) in from IMutableEntityType entityType in

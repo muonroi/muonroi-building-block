@@ -1,19 +1,43 @@
 namespace Muonroi.Governance.Authorization;
 
+/// <summary>
+/// Represents the MPolicy Decision Provider.
+/// </summary>
 public enum MPolicyDecisionProvider
 {
+    /// <summary>
+    /// Represents the Opa value.
+    /// </summary>
     Opa = 0,
+    /// <summary>
+    /// Represents the Open Fga value.
+    /// </summary>
     OpenFga = 1
 }
 
+/// <summary>
+/// Represents the MPolicy Decision Failure Mode.
+/// </summary>
 public enum MPolicyDecisionFailureMode
 {
+    /// <summary>
+    /// Represents the Fallback To Local value.
+    /// </summary>
     FallbackToLocal = 0,
+    /// <summary>
+    /// Represents the Deny value.
+    /// </summary>
     Deny = 1
 }
 
+/// <summary>
+/// Represents the MPolicy Decision Configs.
+/// </summary>
 public sealed class MPolicyDecisionConfigs
 {
+    /// <summary>
+    /// The Section Name.
+    /// </summary>
     public const string SectionName = "MPolicyDecision";
 
     /// <summary>

@@ -1,5 +1,15 @@
 namespace Muonroi.Data.EntityFrameworkCore.Repositories;
 
+/// <summary>
+/// Provides authentication-related data access for users and tokens.
+/// </summary>
+/// <typeparam name="TDbContext">The EF Core context type.</typeparam>
+/// <typeparam name="TPermission">The permission enum type.</typeparam>
+/// <param name="tokenHelper">Token helper for creating and validating tokens.</param>
+/// <param name="dbContext">The database context.</param>
+/// <param name="authContext">Authentication context for the current request.</param>
+/// <param name="mTokenInfo">Token configuration information.</param>
+/// <param name="cacheService">Cache service for token/session state.</param>
 public class AuthenticateRepository<TDbContext, TPermission>(
     MAuthenticateTokenHelper<TPermission> tokenHelper,
     TDbContext dbContext,
@@ -11,6 +21,12 @@ public class AuthenticateRepository<TDbContext, TPermission>(
 {
     private readonly MAuthenticateInfoContext _authContext = authContext;
 
+    /// <summary>
+    /// Authenticates a user and issues tokens.
+    /// </summary>
+    /// <param name="model">The login request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The login response result.</returns>
     public async Task<MResponse<LoginResponseModel>> Login(LoginRequestModel model, CancellationToken cancellationToken)
     {
         MResponse<LoginResponseModel> result = new();
@@ -35,6 +51,12 @@ public class AuthenticateRepository<TDbContext, TPermission>(
     }
 
 
+    /// <summary>
+    /// Refreshes tokens using the provided refresh token request.
+    /// </summary>
+    /// <param name="request">The refresh token request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The refresh token response result.</returns>
     public async Task<MResponse<RefreshTokenResponseModel>> RefreshToken(RefreshTokenRequestModel request,
         CancellationToken cancellationToken)
     {
@@ -56,6 +78,12 @@ public class AuthenticateRepository<TDbContext, TPermission>(
         return result;
     }
 
+    /// <summary>
+    /// Validates whether a token validity key is active.
+    /// </summary>
+    /// <param name="tokenValidity">The token validity key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The validation result.</returns>
     public async Task<MResponse<string>> ValidateTokenValidity(string tokenValidity,
         CancellationToken cancellationToken)
     {

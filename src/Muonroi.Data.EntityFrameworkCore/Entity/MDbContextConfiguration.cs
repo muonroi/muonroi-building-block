@@ -4,8 +4,21 @@ using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
 
+/// <summary>
+/// Registers EF Core configuration for Muonroi DbContexts.
+/// </summary>
 public static class MDbContextConfiguration
 {
+    /// <summary>
+    /// Adds and configures the DbContext, permission sync, and auth services.
+    /// </summary>
+    /// <typeparam name="TDbContext">The EF Core context type.</typeparam>
+    /// <typeparam name="TPermission">The permission enum type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">Application configuration.</param>
+    /// <param name="isSecretDefault">Whether to use default secret behavior.</param>
+    /// <param name="secretKey">Optional secret key override.</param>
+    /// <returns>The same service collection for chaining.</returns>
     public static IServiceCollection AddDbContextConfigure<TDbContext, TPermission>(
         this IServiceCollection services,
         IConfiguration configuration,

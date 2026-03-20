@@ -1,22 +1,19 @@
-using System.Text;
-using System.Text.Json;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Models;
 using Muonroi.UiEngine.Catalog.Models;
 using Muonroi.UiEngine.Catalog.Services;
 
 namespace Muonroi.AspNetCore.Controllers;
 
+/// <inheritdoc />
 [ApiController]
 [Authorize]
 [Route("api/v1/ui-engine/manifest")]
-public sealed class UiEngineManifestController(ICatalogScanService catalogScanService, IMJsonSerializeService jsonSerializeService) : ControllerBase
+public sealed class UiEngineManifestController(ICatalogScanService catalogScanService) : ControllerBase
 {
     private static readonly HashSet<string> AllowedMethods = ["GET", "POST", "PUT", "PATCH", "DELETE"];
     private static readonly HashSet<string> AllowedTokenSources = ["header", "cookie", "localStorage"];
     private static readonly HashSet<string> AllowedFailurePolicies = ["redirect", "401", "retry"];
 
+    /// <inheritdoc />
     [HttpPost("validate")]
     public ActionResult<MUiEngineManifestValidationResponse> Validate([FromBody] MUiEngineManifest manifest)
     {
@@ -30,6 +27,7 @@ public sealed class UiEngineManifestController(ICatalogScanService catalogScanSe
         });
     }
 
+    /// <inheritdoc />
     [HttpPost("generate-prompt")]
     public async Task<ActionResult<MUiEngineManifestPromptResponse>> GeneratePrompt(
         [FromBody] MUiEngineGeneratePromptRequest request,
@@ -97,8 +95,8 @@ public sealed class UiEngineManifestController(ICatalogScanService catalogScanSe
     {
         List<string> errors = [];
 
-        if (manifest.SchemaVersion != MUiEngineManifest.MSchemaVersionV1 &&
-            manifest.SchemaVersion != MUiEngineManifest.MSchemaVersionV2)
+        if (manifest.SchemaVersion is not MUiEngineManifest.MSchemaVersionV1 and
+            not MUiEngineManifest.MSchemaVersionV2)
         {
             errors.Add($"schemaVersion must be '{MUiEngineManifest.MSchemaVersionV1}' or '{MUiEngineManifest.MSchemaVersionV2}'.");
         }
@@ -291,24 +289,37 @@ public sealed class UiEngineManifestController(ICatalogScanService catalogScanSe
     }
 }
 
+/// <inheritdoc />
 public sealed class MUiEngineManifestValidationResponse
 {
+    /// <inheritdoc />
     public bool IsValid { get; set; }
+    /// <inheritdoc />
     public List<string> Errors { get; set; } = [];
+    /// <inheritdoc />
     public List<string> Warnings { get; set; } = [];
 }
 
+/// <inheritdoc />
 public sealed class MUiEngineGeneratePromptRequest
 {
+    /// <inheritdoc />
     public MUiEngineManifest? Manifest { get; set; }
+    /// <inheritdoc />
     public List<MUiEngineCatalogApiDescriptor>? CatalogApis { get; set; }
+    /// <inheritdoc />
     public List<MUiEngineCatalogRuleDescriptor>? CatalogRules { get; set; }
 }
 
+/// <inheritdoc />
 public sealed class MUiEngineManifestPromptResponse
 {
+    /// <inheritdoc />
     public string Prompt { get; set; } = string.Empty;
+    /// <inheritdoc />
     public List<string> MissingFields { get; set; } = [];
+    /// <inheritdoc />
     public int ApiCount { get; set; }
+    /// <inheritdoc />
     public int RuleCount { get; set; }
 }

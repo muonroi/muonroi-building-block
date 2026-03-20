@@ -7,6 +7,7 @@ namespace Muonroi.RuleEngine.Core;
 /// </summary>
 public sealed class DefaultRuleFactory<TContext>(IServiceProvider provider) : IRuleFactory<TContext>
 {
+    /// <inheritdoc />
     public IRule<TContext> Create(Type ruleType)
     {
         return (IRule<TContext>)provider.GetRequiredService(ruleType);

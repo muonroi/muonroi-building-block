@@ -9,6 +9,9 @@ using Muonroi.Tenancy.Core;
 
 namespace Muonroi.RuleEngine.Proliferation.Execution;
 
+/// <summary>
+/// Executes a proliferation scenario against the rules engine.
+/// </summary>
 public sealed class ScenarioExecutor(
     RulesEngineService rulesEngineService,
     IRuleSetStore ruleSetStore,
@@ -21,9 +24,9 @@ public sealed class ScenarioExecutor(
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    // Default context type for DryRunAsync — matches RuleDryRunService behavior
     private static readonly string DefaultContextType = typeof(Dictionary<string, object?>).AssemblyQualifiedName!;
 
+    /// <summary>Executes the scenario and records the outcome.</summary>
     public async Task<ScenarioResult> ExecuteAsync(NeuronScenario scenario, CancellationToken ct = default)
     {
         Stopwatch sw = Stopwatch.StartNew();
@@ -35,7 +38,6 @@ public sealed class ScenarioExecutor(
 
         try
         {
-            // Set tenant context if scenario specifies one
             if (!string.IsNullOrWhiteSpace(scenario.TenantId))
             {
                 TenantContext.CurrentTenantId = scenario.TenantId;
@@ -45,7 +47,6 @@ public sealed class ScenarioExecutor(
 
             if (!string.IsNullOrWhiteSpace(scenario.GeneratedRuleFlowGraph))
             {
-                // Dry-run with modified rule flow graph
                 FactBag factBag = await rulesEngineService.DryRunAsync(
                     scenario.SeedRuleCode,
                     scenario.GeneratedRuleFlowGraph,
@@ -53,7 +54,6 @@ public sealed class ScenarioExecutor(
                     contextType: DefaultContextType,
                     cancellationToken: timeoutCts.Token);
 
-                // Wrap FactBag into a synthetic OrchestratorResult
                 result = OrchestratorResult.Success(
                     ExecutionMode.BestEffort,
                     factBag,
@@ -61,7 +61,6 @@ public sealed class ScenarioExecutor(
             }
             else
             {
-                // Execute existing rule with provided input facts
                 FactBag factBag = await rulesEngineService.DryRunAsync(
                     scenario.SeedRuleCode,
                     await GetRuleSetJsonAsync(scenario.SeedRuleCode, timeoutCts.Token),
@@ -128,12 +127,12 @@ public sealed class ScenarioExecutor(
         }
         finally
         {
-            // Restore previous context
             executionContextAccessor.Set(previousContext);
             TenantContext.CurrentTenantId = previousTenantId;
         }
     }
 
+    /// <summary>Loads the active ruleset JSON for a workflow.</summary>
     private async Task<string> GetRuleSetJsonAsync(string workflowName, CancellationToken ct)
     {
         string? json = await ruleSetStore.GetAsync(workflowName, version: null, ct);
@@ -146,9 +145,10 @@ public sealed class ScenarioExecutor(
         return json;
     }
 
+    /// <summary>Evaluates whether the result matched the expected behavior.</summary>
     internal static bool EvaluateExpectation(string? expectedBehavior, OrchestratorResult result)
     {
-        if (string.IsNullOrWhiteSpace(expectedBehavior)) return true; // No expectation = always matches
+        if (string.IsNullOrWhiteSpace(expectedBehavior)) return true;
 
         string expected = expectedBehavior.ToLowerInvariant().Trim();
 
@@ -158,7 +158,6 @@ public sealed class ScenarioExecutor(
         if (expected.StartsWith("should fail"))
             return !result.IsSuccess;
 
-        // Default: if there's any expectation text and the result has errors, mismatch
         return result.IsSuccess;
     }
 }

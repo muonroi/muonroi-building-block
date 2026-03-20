@@ -7,8 +7,15 @@ using Muonroi.Governance.License;
 
 namespace Muonroi.RuleEngine.Runtime.Web;
 
+/// <summary>
+/// Service registration helpers for rule engine runtime web endpoints.
+/// </summary>
 public static class RuleEngineRuntimeWebExtensions
 {
+    /// <summary>Registers runtime web services, endpoints, and SignalR hub support.</summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Configuration root.</param>
+    /// <returns>The same service collection.</returns>
     public static IServiceCollection AddRuleEngineRuntimeWeb(
         this IServiceCollection services,
         IConfiguration configuration)

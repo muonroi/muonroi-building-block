@@ -4,6 +4,9 @@ using System.Reflection;
 
 namespace Muonroi.Mapper.Mapper;
 
+/// <summary>
+/// Stores mapping actions between source and destination types.
+/// </summary>
 public sealed class MappingConfiguration
 {
     private readonly ConcurrentDictionary<(Type Source, Type Destination), Action<object, object>> _maps = new();

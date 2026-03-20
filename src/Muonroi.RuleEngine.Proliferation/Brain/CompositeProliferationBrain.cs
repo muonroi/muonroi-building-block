@@ -5,6 +5,7 @@ using Muonroi.RuleEngine.Proliferation.Models;
 
 namespace Muonroi.RuleEngine.Proliferation.Brain;
 
+/// <summary>Execution mode for composite brains.</summary>
 public enum CompositeMode
 {
     /// <summary>Run all brains in parallel, merge + deduplicate results.</summary>
@@ -23,6 +24,7 @@ public sealed class CompositeProliferationBrain(
     IScenarioDeduplicator? deduplicator = null,
     IMLog<CompositeProliferationBrain>? logger = null) : IRuleProliferationBrain
 {
+    /// <summary>Analyzes the ruleset by delegating to the configured brains.</summary>
     public async Task<ProliferationPlan> AnalyzeAsync(
         string seedRuleCode,
         string ruleSetJson,
@@ -62,7 +64,7 @@ public sealed class CompositeProliferationBrain(
         if (deduplicator is not null && allScenarios.Count > 0)
         {
             int beforeDedup = allScenarios.Count;
-            allScenarios = deduplicator.Deduplicate(allScenarios, []).ToList();
+            allScenarios = [.. deduplicator.Deduplicate(allScenarios, [])];
             if (allScenarios.Count < beforeDedup)
             {
                 logger?.Info("[CompositeBrain] Deduped {Before} → {After} scenarios",
@@ -82,6 +84,7 @@ public sealed class CompositeProliferationBrain(
         };
     }
 
+    /// <summary>Runs all brains in parallel and merges their scenarios.</summary>
     private async Task<List<NeuronScenario>> RunParallelAsync(
         string seedRuleCode, string ruleSetJson,
         JsonElement? executionResult, JsonElement? factBagSnapshot,
@@ -90,20 +93,21 @@ public sealed class CompositeProliferationBrain(
         // Split budget evenly
         int budgetPerBrain = Math.Max(1, context.RemainingBudget / brains.Count);
 
-        Task<ProliferationPlan>[] tasks = brains.Select(brain =>
+        Task<ProliferationPlan>[] tasks = [.. brains.Select(brain =>
         {
             ProliferationContext brainContext = context with { RemainingBudget = budgetPerBrain };
             return brain.AnalyzeAsync(seedRuleCode, ruleSetJson, executionResult, factBagSnapshot, brainContext, ct);
-        }).ToArray();
+        })];
 
         ProliferationPlan[] results = await Task.WhenAll(tasks);
 
         logger?.Info("[CompositeBrain] Parallel: {Count} brains returned {Total} scenarios total",
             brains.Count, results.Sum(r => r.Scenarios.Count));
 
-        return results.SelectMany(r => r.Scenarios).ToList();
+        return [.. results.SelectMany(r => r.Scenarios)];
     }
 
+    /// <summary>Runs brains sequentially, passing each output to the next brain.</summary>
     private async Task<List<NeuronScenario>> RunSequentialAsync(
         string seedRuleCode, string ruleSetJson,
         JsonElement? executionResult, JsonElement? factBagSnapshot,

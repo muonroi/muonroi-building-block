@@ -2,8 +2,14 @@ using Microsoft.Extensions.Hosting;
 
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the Commercial License Startup Guards.
+/// </summary>
 public static class CommercialLicenseStartupGuards
 {
+    /// <summary>
+    /// Executes the Require Minimum Tier From Proof operation.
+    /// </summary>
     public static IServiceCollection RequireMinimumTierFromProof(
         this IServiceCollection services,
         LicenseTier minimumTier,

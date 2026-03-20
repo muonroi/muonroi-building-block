@@ -16,6 +16,9 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
 {
     // ───────────────────────────── Send ─────────────────────────────
 
+    /// <summary>
+    /// Executes the Send{MResponse} operation.
+    /// </summary>
     public async Task<MResponse> Send<MResponse>(IRequest<MResponse> request,
         CancellationToken cancellationToken = default)
     {
@@ -27,12 +30,18 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
         return (MResponse)result!;
     }
 
+    /// <summary>
+    /// Executes the Send{TRequest} operation.
+    /// </summary>
     public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
         where TRequest : IRequest
     {
         return Send((IRequest<Unit>)request, cancellationToken);
     }
 
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public Task<object?> Send(object request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -51,6 +60,9 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
 
     // ───────────────────────────── Publish ─────────────────────────────
 
+    /// <summary>
+    /// Executes the Publish{TNotification} operation.
+    /// </summary>
     public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
         where TNotification : INotification
     {
@@ -61,6 +73,9 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
         return PublishInternal(notification, strategy, cancellationToken);
     }
 
+    /// <summary>
+    /// Executes the Publish{TNotification} operation.
+    /// </summary>
     public Task Publish<TNotification>(TNotification notification, MNotificationStrategy strategy,
         CancellationToken cancellationToken = default)
         where TNotification : INotification
@@ -69,6 +84,9 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
         return PublishInternal(notification, strategy, cancellationToken);
     }
 
+    /// <summary>
+    /// Executes the Publish operation.
+    /// </summary>
     public Task Publish(object notification, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(notification);
@@ -90,6 +108,9 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
 
     // ───────────────────────────── CreateStream ─────────────────────────────
 
+    /// <summary>
+    /// Executes the Create Stream{MResponse} operation.
+    /// </summary>
     public IAsyncEnumerable<MResponse> CreateStream<MResponse>(
         IStreamRequest<MResponse> request,
         CancellationToken cancellationToken = default)
@@ -101,6 +122,9 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
         return YieldStream<MResponse>(wrapper.CreateStream(request, serviceFactory, cancellationToken), cancellationToken);
     }
 
+    /// <summary>
+    /// Executes the Create Stream operation.
+    /// </summary>
     public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);

@@ -2,8 +2,14 @@ using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Mass Transit Handler.
+/// </summary>
 public static class MassTransitHandler
 {
+    /// <summary>
+    /// Executes the Add Message Bus operation.
+    /// </summary>
     public static IServiceCollection AddMessageBus(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -91,6 +97,9 @@ public static class MassTransitHandler
         return services;
     }
 
+    /// <summary>
+    /// Executes the Add Outbox Relay operation.
+    /// </summary>
     public static IServiceCollection AddOutboxRelay(this IServiceCollection services)
     {
         // Register as singleton first so it can be resolved by concrete type for IOutboxRelayService.

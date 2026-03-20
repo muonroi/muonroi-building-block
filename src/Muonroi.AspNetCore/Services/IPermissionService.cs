@@ -45,7 +45,7 @@ public interface IPermissionService<TPermission>
     /// </summary>
     /// <param name="userId">The unique identifier of the user.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{TPermission}}"/> containing the user's permissions.</returns>
+    /// <returns>A response containing the user's permissions.</returns>
     Task<MResponse<List<TPermission>>> GetUserPermissionsAsync(Guid userId, CancellationToken cancellationToken);
 
     /// <summary>
@@ -68,14 +68,14 @@ public interface IPermissionService<TPermission>
     /// Gets all roles asynchronously.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{MRole}}"/> containing all roles.</returns>
+    /// <returns>A response containing all roles.</returns>
     Task<MResponse<List<MRole>>> GetRolesAsync(CancellationToken cancellationToken);
 
     /// <summary>
     /// Gets all permissions asynchronously.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{MPermission}}"/> containing all permissions.</returns>
+    /// <returns>A response containing all permissions.</returns>
     Task<MResponse<List<MPermission>>> GetPermissionsAsync(CancellationToken cancellationToken);
 
     /// <summary>
@@ -83,7 +83,7 @@ public interface IPermissionService<TPermission>
     /// </summary>
     /// <param name="roleId">The unique identifier of the role.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{MPermission}}"/> containing the role's permissions.</returns>
+    /// <returns>A response containing the role's permissions.</returns>
     Task<MResponse<List<MPermission>>> GetRolePermissionsAsync(Guid roleId, CancellationToken cancellationToken);
 
     /// <summary>
@@ -91,14 +91,14 @@ public interface IPermissionService<TPermission>
     /// </summary>
     /// <param name="roleId">The unique identifier of the role.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{MUser}}"/> containing the role's users.</returns>
+    /// <returns>A response containing the role's users.</returns>
     Task<MResponse<List<MUser>>> GetRoleUsersAsync(Guid roleId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Gets definitions for all available permissions asynchronously.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{PermissionDefinition}}"/> containing permission definitions.</returns>
+    /// <returns>A response containing permission definitions.</returns>
     Task<MResponse<List<PermissionDefinition>>> GetPermissionDefinitionsAsync(CancellationToken cancellationToken);
 
     /// <summary>
@@ -106,7 +106,7 @@ public interface IPermissionService<TPermission>
     /// </summary>
     /// <param name="userId">The unique identifier of the user.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{MenuMetadata}}"/> containing menu metadata.</returns>
+    /// <returns>A response containing menu metadata.</returns>
     Task<MResponse<List<MenuMetadata>>> GetMenuMetadataAsync(Guid userId, CancellationToken cancellationToken);
 
     /// <summary>
@@ -161,7 +161,7 @@ public interface IPermissionService<TPermission>
     /// <param name="pageIndex">The page index (1-based).</param>
     /// <param name="pageSize">The number of users per page.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{MPagedResult{MUser}}"/> containing the paged list of users.</returns>
+    /// <returns>A response containing a paged list of users.</returns>
     Task<MResponse<MPagedResult<MUser>>> GetUsersAsync(int pageIndex, int pageSize, CancellationToken cancellationToken);
 
     /// <summary>

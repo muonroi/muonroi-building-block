@@ -11,6 +11,7 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 /// </summary>
 public sealed class InputHashDeduplicator : IScenarioDeduplicator
 {
+    /// <summary>Removes duplicate scenarios based on input hash and normalized name.</summary>
     public IReadOnlyList<NeuronScenario> Deduplicate(
         IReadOnlyList<NeuronScenario> candidates,
         IReadOnlyList<NeuronScenario> existingScenarios)
@@ -56,6 +57,7 @@ public sealed class InputHashDeduplicator : IScenarioDeduplicator
         return unique;
     }
 
+    /// <summary>Computes a stable hash for the supplied input facts.</summary>
     internal static string ComputeInputHash(JsonElement inputFacts)
     {
         if (inputFacts.ValueKind == JsonValueKind.Undefined)
@@ -74,6 +76,7 @@ public sealed class InputHashDeduplicator : IScenarioDeduplicator
         }
     }
 
+    /// <summary>Normalizes a scenario name for duplicate detection.</summary>
     internal static string NormalizeName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return string.Empty;

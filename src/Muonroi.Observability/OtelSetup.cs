@@ -23,6 +23,11 @@ public static class OtelSetup
     private const string GrpcActivitySourceName = "Muonroi.BuildingBlock.Grpc";
     private const string GrpcMeterName = "Muonroi.BuildingBlock.Grpc";
 
+    /// <summary>
+    /// Registers OpenTelemetry tracing and metrics for the host.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Configuration source.</param>
     public static IServiceCollection AddObservability(this IServiceCollection services, IConfiguration configuration)
     {
         services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.AuditTrail);
@@ -77,6 +82,9 @@ public static class OtelSetup
 
     private sealed class TenantActivityEnricher : BaseProcessor<Activity>
     {
+        /// <summary>
+        /// Executes the On Start operation.
+        /// </summary>
         public override void OnStart(Activity activity)
         {
             string? tenantId = TenantContext.CurrentTenantId;

@@ -156,7 +156,7 @@ public class MSequentialGuidGenerator : IGuidGenerator
 
         /// <summary>
         /// The GUID should be sequential when formatted using the
-        /// <see cref="Guid.ToByteArray" /> method.
+        /// <see cref="Guid.ToByteArray()" /> method.
         /// </summary>
         SequentialAsBinary,
 

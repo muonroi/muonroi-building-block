@@ -3,17 +3,21 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Muonroi.RuleEngine.SourceGenerators.Diagnostics;
-using System;
 using System.Collections.Immutable;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Analyzers;
 
+/// <summary>
+/// Analyzer for the MBB002 diagnostic.
+/// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class MBB002_ForbiddenJsonSerializerAnalyzer : DiagnosticAnalyzer
+public sealed class Mbb002_ForbiddenJsonSerializerAnalyzer : DiagnosticAnalyzer
 {
+    /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(MBBDiagnosticDescriptors.MBB002ForbiddenJsonSerializer);
+        [MBBDiagnosticDescriptors.MBB002ForbiddenJsonSerializer];
 
+    /// <inheritdoc/>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -37,9 +41,9 @@ public sealed class MBB002_ForbiddenJsonSerializerAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        string ns = MBBAnalyzerHelpers.GetNamespace(invocation);
+        string ns = MbbAnalyzerHelpers.GetNamespace(invocation);
         if (ns.IndexOf(".Adapters.", StringComparison.Ordinal) >= 0 ||
-            MBBAnalyzerHelpers.IsWrapperOrInfrastructureNamespace(ns))
+            MbbAnalyzerHelpers.IsWrapperOrInfrastructureNamespace(ns))
         {
             return;
         }
@@ -63,9 +67,9 @@ public sealed class MBB002_ForbiddenJsonSerializerAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        string ns = MBBAnalyzerHelpers.GetNamespace(memberAccess);
+        string ns = MbbAnalyzerHelpers.GetNamespace(memberAccess);
         if (ns.IndexOf(".Adapters.", StringComparison.Ordinal) >= 0 ||
-            MBBAnalyzerHelpers.IsWrapperOrInfrastructureNamespace(ns))
+            MbbAnalyzerHelpers.IsWrapperOrInfrastructureNamespace(ns))
         {
             return;
         }

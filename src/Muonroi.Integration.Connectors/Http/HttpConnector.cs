@@ -15,11 +15,18 @@ public sealed class HttpConnector : IServiceTaskConnector
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
+    /// <summary>
+    /// Creates an HTTP connector with the provided client factory.
+    /// </summary>
+    /// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
     public HttpConnector(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory;
     }
 
+    /// <summary>
+    /// Connector metadata describing capabilities and configuration.
+    /// </summary>
     public ConnectorMetadata Metadata => new()
     {
         Type = "http",
@@ -30,6 +37,12 @@ public sealed class HttpConnector : IServiceTaskConnector
         RequiresCredentials = false
     };
 
+    /// <summary>
+    /// Executes an HTTP request based on the connector configuration.
+    /// </summary>
+    /// <param name="context">Connector execution context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The connector result.</returns>
     public async Task<ConnectorResult> ExecuteAsync(ConnectorContext context, CancellationToken ct)
     {
         Stopwatch sw = Stopwatch.StartNew();
@@ -128,6 +141,12 @@ public sealed class HttpConnector : IServiceTaskConnector
         return ConnectorResult.Ok(outputFacts, statusCode, sw.Elapsed);
     }
 
+    /// <summary>
+    /// Executes the request as a connectivity test.
+    /// </summary>
+    /// <param name="context">Connector execution context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the request succeeds.</returns>
     public async Task<bool> TestConnectionAsync(ConnectorContext context, CancellationToken ct)
     {
         try
@@ -141,6 +160,10 @@ public sealed class HttpConnector : IServiceTaskConnector
         }
     }
 
+    /// <summary>
+    /// Returns the JSON schema used to configure this connector.
+    /// </summary>
+    /// <returns>Configuration schema.</returns>
     public JsonElement GetConfigSchema()
     {
         string schema = """

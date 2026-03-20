@@ -8,10 +8,15 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 /// </summary>
 public sealed record NlConversionResult
 {
+    /// <summary>Indicates whether the conversion succeeded.</summary>
     public bool Success { get; init; }
+    /// <summary>Generated ruleset JSON, when conversion succeeds.</summary>
     public string? RuleSetJson { get; init; }
+    /// <summary>Detected ruleset kind.</summary>
     public RuleSetKind DetectedKind { get; init; }
+    /// <summary>Error message when conversion fails.</summary>
     public string? ErrorMessage { get; init; }
+    /// <summary>Schema extracted from the generated ruleset.</summary>
     public RuleSetSchema? ExtractedSchema { get; init; }
 }
 
@@ -20,6 +25,7 @@ public sealed record NlConversionResult
 /// </summary>
 public sealed record NlConversionRequest
 {
+    /// <summary>Natural language description of the desired business rule.</summary>
     public string Description { get; init; } = string.Empty;
 
     /// <summary>
@@ -39,6 +45,7 @@ public sealed record NlConversionRequest
 /// </summary>
 public interface INaturalLanguageRuleConverter
 {
+    /// <summary>Converts a natural language request into structured ruleset JSON.</summary>
     Task<NlConversionResult> ConvertAsync(NlConversionRequest request, CancellationToken ct = default);
 }
 
@@ -59,6 +66,7 @@ public sealed class NaturalLanguageRuleConverter(
         PropertyNameCaseInsensitive = true
     };
 
+    /// <summary>Converts a natural language request into structured ruleset JSON.</summary>
     public async Task<NlConversionResult> ConvertAsync(NlConversionRequest request, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.Description))
@@ -131,7 +139,7 @@ public sealed class NaturalLanguageRuleConverter(
     private static string BuildSystemPrompt() =>
         "You are a business rule converter. " +
         "Convert natural language descriptions into structured rule definitions. " +
-        "Output ONLY valid JSON — no markdown, no explanation, no code fences.";
+        "Output ONLY valid JSON - no markdown, no explanation, no code fences.";
 
     private static string BuildUserPrompt(string description, string outputFormat)
     {

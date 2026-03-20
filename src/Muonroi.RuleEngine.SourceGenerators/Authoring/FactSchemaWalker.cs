@@ -1,7 +1,4 @@
 using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Authoring;
 
@@ -181,22 +178,23 @@ internal static class FactSchemaWalker
 
         if (typeSymbol.SpecialType != SpecialType.None)
         {
+            const string numberStringType = "number";
             return typeSymbol.SpecialType switch
             {
                 SpecialType.System_Boolean => "boolean",
-                SpecialType.System_Byte => "number",
+                SpecialType.System_Byte => numberStringType,
                 SpecialType.System_Char => "string",
-                SpecialType.System_Decimal => "number",
-                SpecialType.System_Double => "number",
-                SpecialType.System_Int16 => "number",
-                SpecialType.System_Int32 => "number",
-                SpecialType.System_Int64 => "number",
-                SpecialType.System_SByte => "number",
-                SpecialType.System_Single => "number",
+                SpecialType.System_Decimal => numberStringType,
+                SpecialType.System_Double => numberStringType,
+                SpecialType.System_Int16 => numberStringType,
+                SpecialType.System_Int32 => numberStringType,
+                SpecialType.System_Int64 => numberStringType,
+                SpecialType.System_SByte => numberStringType,
+                SpecialType.System_Single => numberStringType,
                 SpecialType.System_String => "string",
-                SpecialType.System_UInt16 => "number",
-                SpecialType.System_UInt32 => "number",
-                SpecialType.System_UInt64 => "number",
+                SpecialType.System_UInt16 => numberStringType,
+                SpecialType.System_UInt32 => numberStringType,
+                SpecialType.System_UInt64 => numberStringType,
                 _ => "object"
             };
         }
@@ -245,6 +243,6 @@ internal static class FactSchemaWalker
             chars.Add(current);
         }
 
-        return new string(chars.ToArray());
+        return new string([.. chars]);
     }
 }

@@ -6,9 +6,13 @@ namespace Muonroi.RuleEngine.Proliferation.Models;
 /// </summary>
 public enum AuthStrategy
 {
+    /// <summary>No authentication is applied.</summary>
     None = 0,
+    /// <summary>Static request headers are used for authentication.</summary>
     StaticHeaders = 1,
+    /// <summary>OAuth2 client credentials are used for authentication.</summary>
     OAuth2ClientCredentials = 2,
+    /// <summary>Mutual TLS is used for authentication.</summary>
     MutualTls = 3
 }
 

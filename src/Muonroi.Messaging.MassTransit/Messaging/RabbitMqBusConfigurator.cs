@@ -1,7 +1,13 @@
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Rabbit Mq Bus Configurator.
+/// </summary>
 public class RabbitMqBusConfigurator : IBusConfigurator
 {
+    /// <summary>
+    /// Executes the Configure operation.
+    /// </summary>
     public void Configure(IBusRegistrationConfigurator configurator, MessageBusConfigs configs)
     {
         RabbitMqConfigs rabbit = configs.RabbitMq ?? throw new InvalidDataException("RabbitMQ configuration missing");

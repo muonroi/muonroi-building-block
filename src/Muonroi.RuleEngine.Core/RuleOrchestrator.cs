@@ -20,6 +20,17 @@ public sealed class RuleOrchestrator<TContext>(
     ISystemExecutionContextAccessor? contextAccessor = null,
     IMTraceContext? traceContext = null)
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RuleOrchestrator{TContext}"/> class.
+    /// </summary>
+    /// <param name="rules">The rules to orchestrate.</param>
+    /// <param name="hooks">The hook handlers.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="listeners">The rule event listeners.</param>
+    /// <param name="quotaTracker">The tenant quota tracker.</param>
+    /// <param name="tracer">The rule execution tracer.</param>
+    /// <param name="contextAccessor">The system execution context accessor.</param>
+    /// <param name="traceContext">The trace context.</param>
     public RuleOrchestrator(
         IEnumerable<IRule<TContext>> rules,
         IEnumerable<IHookHandler<TContext>> hooks,
@@ -43,6 +54,13 @@ public sealed class RuleOrchestrator<TContext>(
     private readonly ISystemExecutionContextAccessor? _contextAccessor = contextAccessor;
     private readonly IMTraceContext? _traceContext = traceContext;
 
+    /// <summary>
+    /// Executes the orchestration pipeline.
+    /// </summary>
+    /// <param name="context">The execution context.</param>
+    /// <param name="filterPoint">Optional hook point filter.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="Task{FactBag}"/> representing the asynchronous operation.</returns>
     public async Task<FactBag> ExecuteAsync(TContext context, HookPoint? filterPoint = null, CancellationToken cancellationToken = default)
     {
         FactBag facts = new();

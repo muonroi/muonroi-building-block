@@ -5,5 +5,8 @@ namespace Muonroi.Governance.Abstractions.Integrity;
 /// </summary>
 public interface IAssemblyHashCollector
 {
+    /// <summary>
+    /// Executes the Collect operation.
+    /// </summary>
     IReadOnlyList<AssemblyManifestEntry> Collect();
 }

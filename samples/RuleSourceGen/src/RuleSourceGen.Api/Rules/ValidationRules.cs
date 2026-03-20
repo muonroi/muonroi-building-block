@@ -3,8 +3,13 @@ using RuleSourceGen.Api.Models;
 
 namespace RuleSourceGen.Api.Rules;
 
+/// <summary>
+/// Input validation rules for discount evaluation.
+/// </summary>
 public sealed class ValidationRules
 {
+    /// <summary>Validates the discount request and returns rule status.</summary>
+    /// <param name="context">Discount evaluation input.</param>
     [MExtractAsRule("DISCOUNT_VALIDATE", Order = 0)]
     public RuleResult Validate(DiscountRequest context)
     {

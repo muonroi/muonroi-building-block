@@ -17,6 +17,10 @@ public sealed class EfConnectorCredentialStore : IConnectorCredentialStore
     private readonly IDataProtectionProvider _protectionProvider;
     private readonly IMLog<EfConnectorCredentialStore>? _log;
 
+    /// <summary>Creates a new EF-backed credential store.</summary>
+    /// <param name="db">Connector database context.</param>
+    /// <param name="protectionProvider">Data protection provider.</param>
+    /// <param name="log">Optional logger.</param>
     public EfConnectorCredentialStore(
         ConnectorDbContext db,
         IDataProtectionProvider protectionProvider,
@@ -27,6 +31,7 @@ public sealed class EfConnectorCredentialStore : IConnectorCredentialStore
         _log = log;
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyDictionary<string, string>> GetAsync(string credentialId, string? tenantId, CancellationToken ct)
     {
         ConnectorCredentialEntity? entity = await _db.ConnectorCredentials
@@ -42,6 +47,7 @@ public sealed class EfConnectorCredentialStore : IConnectorCredentialStore
         return JsonSerializer.Deserialize<Dictionary<string, string>>(decrypted) ?? new Dictionary<string, string>();
     }
 
+    /// <inheritdoc />
     public async Task SaveAsync(string credentialId, string? tenantId, Dictionary<string, string> values, CancellationToken ct)
     {
         IDataProtector protector = _protectionProvider.CreateProtector($"connector-creds:{tenantId ?? "global"}");
@@ -70,6 +76,7 @@ public sealed class EfConnectorCredentialStore : IConnectorCredentialStore
         _log?.Info("Saved credentials '{CredentialId}' for tenant '{TenantId}'.", credentialId, tenantId);
     }
 
+    /// <inheritdoc />
     public async Task DeleteAsync(string credentialId, string? tenantId, CancellationToken ct)
     {
         ConnectorCredentialEntity? entity = await _db.ConnectorCredentials

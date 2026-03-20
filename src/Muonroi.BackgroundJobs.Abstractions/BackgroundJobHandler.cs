@@ -3,8 +3,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Muonroi.BackgroundJobs.Abstractions;
 
+/// <summary>
+/// Resolves and registers the configured background job provider.
+/// </summary>
 public static class BackgroundJobHandler
 {
+    /// <summary>
+    /// Adds background job services based on configuration.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration root.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddBackgroundJobs(
         this IServiceCollection services,
         IConfiguration configuration)

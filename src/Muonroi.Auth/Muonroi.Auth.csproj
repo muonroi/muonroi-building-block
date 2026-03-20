@@ -23,6 +23,7 @@
     <PackageReference Include="Fido2.AspNet" Version="4.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.*" />
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.14" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
   </ItemGroup>
 </Project>

@@ -20,6 +20,9 @@ public sealed class FileRuleSetAuditStore(
     private readonly ISystemExecutionContextAccessor _executionContext =
         executionContextAccessor ?? new SystemExecutionContextAccessor();
 
+    /// <summary>Appends an audit entry to the store.</summary>
+    /// <param name="entry">Audit entry to append.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task AppendAsync(RuleSetAuditEntry entry, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -39,6 +42,12 @@ public sealed class FileRuleSetAuditStore(
         }
     }
 
+    /// <summary>Queries audit entries for the current tenant.</summary>
+    /// <param name="workflowName">Optional workflow filter.</param>
+    /// <param name="page">Page number starting at 1.</param>
+    /// <param name="pageSize">Page size (1-500).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged audit entries.</returns>
     public async Task<RuleSetAuditPage> QueryAsync(
         string? workflowName = null,
         int page = 1,

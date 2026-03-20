@@ -8,6 +8,12 @@ namespace Muonroi.RuleEngine.DecisionTable.Converters;
 /// </summary>
 public sealed class ExcelToDecisionTableConverter
 {
+    /// <summary>
+    /// Loads a decision table from an Excel file path.
+    /// </summary>
+    /// <param name="filePath">Path to the Excel file.</param>
+    /// <param name="tenantId">Optional tenant identifier to attach to the table.</param>
+    /// <returns>Parsed decision table.</returns>
     public DecisionTableModel Convert(string filePath, string? tenantId = null)
     {
         using FileStream stream = File.OpenRead(filePath);
@@ -15,6 +21,13 @@ public sealed class ExcelToDecisionTableConverter
         return Convert(stream, name, tenantId);
     }
 
+    /// <summary>
+    /// Loads a decision table from an Excel stream.
+    /// </summary>
+    /// <param name="stream">Excel stream to read.</param>
+    /// <param name="tableName">Name assigned to the table.</param>
+    /// <param name="tenantId">Optional tenant identifier to attach to the table.</param>
+    /// <returns>Parsed decision table.</returns>
     public static DecisionTableModel Convert(Stream stream, string tableName, string? tenantId = null)
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);

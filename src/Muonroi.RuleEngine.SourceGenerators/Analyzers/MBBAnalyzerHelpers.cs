@@ -1,11 +1,9 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
-using System.Linq;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Analyzers;
 
-internal static class MBBAnalyzerHelpers
+internal static class MbbAnalyzerHelpers
 {
     public static string GetNamespace(SyntaxNode node)
     {

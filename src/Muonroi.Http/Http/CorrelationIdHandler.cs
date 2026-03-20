@@ -3,10 +3,14 @@ using Muonroi.Core.Abstractions.Constants;
 
 namespace Muonroi.Http.Http;
 
+/// <summary>
+/// Adds correlation and API key headers to outgoing HTTP requests.
+/// </summary>
 public class CorrelationIdHandler(IAuthenticateInfoContext authContext) : DelegatingHandler
 {
     private readonly IAuthenticateInfoContext _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
 
+    /// <inheritdoc/>
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(_authContext.CorrelationId))

@@ -11,11 +11,18 @@ public sealed class RedisConnector : IServiceTaskConnector
 {
     private readonly IConnectionMultiplexer? _redis;
 
+    /// <summary>
+    /// Creates a Redis connector.
+    /// </summary>
+    /// <param name="redis">Optional Redis connection multiplexer.</param>
     public RedisConnector(IConnectionMultiplexer? redis = null)
     {
         _redis = redis;
     }
 
+    /// <summary>
+    /// Connector metadata describing capabilities and configuration.
+    /// </summary>
     public ConnectorMetadata Metadata => new()
     {
         Type = "redis",
@@ -26,6 +33,12 @@ public sealed class RedisConnector : IServiceTaskConnector
         RequiresCredentials = false
     };
 
+    /// <summary>
+    /// Executes a Redis command based on the connector configuration.
+    /// </summary>
+    /// <param name="context">Connector execution context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The connector result.</returns>
     public async Task<ConnectorResult> ExecuteAsync(ConnectorContext context, CancellationToken ct)
     {
         if (_redis is null)
@@ -85,6 +98,12 @@ public sealed class RedisConnector : IServiceTaskConnector
         }
     }
 
+    /// <summary>
+    /// Tests connectivity to Redis.
+    /// </summary>
+    /// <param name="context">Connector execution context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the ping succeeds.</returns>
     public async Task<bool> TestConnectionAsync(ConnectorContext context, CancellationToken ct)
     {
         try
@@ -100,6 +119,10 @@ public sealed class RedisConnector : IServiceTaskConnector
         }
     }
 
+    /// <summary>
+    /// Returns the JSON schema used to configure this connector.
+    /// </summary>
+    /// <returns>Configuration schema.</returns>
     public JsonElement GetConfigSchema()
     {
         string schema = """

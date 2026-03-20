@@ -1,7 +1,11 @@
 namespace Muonroi.Data.EntityFrameworkCore.Entity.EFConfig
 {
+    /// <summary>
+    /// Configures the <see cref="MPermission"/> entity model.
+    /// </summary>
     public class MPermissionConfiguration : IEntityTypeConfiguration<MPermission>
     {
+        /// <inheritdoc />
         public void Configure(EntityTypeBuilder<MPermission> builder)
         {
             builder.HasIndex(b => b.Name)

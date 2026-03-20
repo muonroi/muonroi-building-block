@@ -1,7 +1,9 @@
 namespace Muonroi.AspNetCore.Controllers.Conventions;
 
+/// <inheritdoc />
 public class LowerCaseControllerNameConvention : IControllerModelConvention
 {
+/// <inheritdoc />
     public void Apply(ControllerModel controller)
     {
         string controllerName = controller.ControllerName;

@@ -11,8 +11,14 @@ public sealed class PolicyEnforcer(LicensePolicy? policy, IMDateTimeService date
     private readonly ConcurrentDictionary<string, Counter> _apiCounters = new();
     private readonly ConcurrentDictionary<string, Counter> _dbCounters = new();
 
+    /// <summary>
+    /// Gets the Current Policy.
+    /// </summary>
     public LicensePolicy? CurrentPolicy => policy;
 
+    /// <summary>
+    /// Gets the Is Enforcement Enabled.
+    /// </summary>
     public bool IsEnforcementEnabled => policy != null;
 
     /// <summary>
@@ -92,11 +98,17 @@ public sealed class PolicyEnforcer(LicensePolicy? policy, IMDateTimeService date
     private sealed class Counter
     {
         private int _count;
+        /// <summary>
+        /// Executes the Increment operation.
+        /// </summary>
         public int Increment()
         {
             return Interlocked.Increment(ref _count);
         }
 
+        /// <summary>
+        /// Gets the Value.
+        /// </summary>
         public int Value => _count;
     }
 }

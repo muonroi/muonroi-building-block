@@ -1,7 +1,13 @@
 namespace Muonroi.Governance.Authorization;
 
+/// <summary>
+/// Represents the Policy Decision Service Collection Extensions.
+/// </summary>
 public static class PolicyDecisionServiceCollectionExtensions
 {
+    /// <summary>
+    /// Executes the Add MPolicy Decision operation.
+    /// </summary>
     public static IServiceCollection AddMPolicyDecision(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);

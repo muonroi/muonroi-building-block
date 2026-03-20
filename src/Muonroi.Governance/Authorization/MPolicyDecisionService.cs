@@ -3,6 +3,9 @@ using System.Net.Http.Json;
 
 namespace Muonroi.Governance.Authorization;
 
+/// <summary>
+/// Represents the MPolicy Decision Service.
+/// </summary>
 public sealed class MPolicyDecisionService(
     MPolicyDecisionConfigs configs,
     IHttpClientFactory httpClientFactory,
@@ -15,8 +18,14 @@ public sealed class MPolicyDecisionService(
         httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     private readonly IMLog<MPolicyDecisionService>? _logger = logger;
 
+    /// <summary>
+    /// Gets the Is Enabled.
+    /// </summary>
     public bool IsEnabled => _configs.Enabled;
 
+    /// <summary>
+    /// Executes the Evaluate Async operation.
+    /// </summary>
     public async Task<MPolicyDecisionResult> EvaluateAsync(
         MPolicyDecisionRequest request,
         CancellationToken cancellationToken = default)

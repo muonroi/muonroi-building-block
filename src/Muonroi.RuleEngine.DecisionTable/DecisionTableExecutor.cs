@@ -5,11 +5,22 @@ using System.Diagnostics;
 
 namespace Muonroi.RuleEngine.DecisionTable;
 
+/// <summary>
+/// Executes a decision table against a set of input facts.
+/// </summary>
+/// <param name="feelEvaluator">Optional FEEL evaluator for input expressions.</param>
 public sealed class DecisionTableExecutor(IFeelCellEvaluator? feelEvaluator = null) : IDecisionTableExecutor
 {
     private readonly IFeelCellEvaluator _feelEvaluator =
         feelEvaluator ?? new FullFeelCellEvaluator(new SimplifiedFeelCellEvaluator());
 
+    /// <summary>
+    /// Evaluates the decision table and returns matched rows and outputs.
+    /// </summary>
+    /// <param name="table">Decision table to execute.</param>
+    /// <param name="inputFacts">Input facts keyed by column name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Execution result containing matches and outputs.</returns>
     public Task<DecisionTableExecutionResult> ExecuteAsync(
         DecisionTableModel table,
         IReadOnlyDictionary<string, object?> inputFacts,

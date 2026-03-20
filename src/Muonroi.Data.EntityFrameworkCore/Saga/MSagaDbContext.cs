@@ -1,15 +1,17 @@
-using Microsoft.EntityFrameworkCore;
 using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Timing;
-using Muonroi.Data.EntityFrameworkCore.Entity;
-using Muonroi.Governance.License;
-using Muonroi.Mediator.Mediator.Interfaces;
 using Muonroi.Messaging.Abstractions.Contracts;
-using Microsoft.Extensions.Logging;
 
 namespace Muonroi.Data.EntityFrameworkCore.Saga;
 
+/// <summary>
+/// Base saga DbContext that tracks saga entities and timestamps.
+/// </summary>
+/// <param name="options">The DbContext options.</param>
+/// <param name="mediator">The mediator for domain events.</param>
+/// <param name="licenseGuard">Optional license guard.</param>
+/// <param name="logger">Optional logger.</param>
+/// <param name="dateTimeService">Optional date/time service.</param>
+/// <param name="executionContextAccessor">Optional execution context accessor.</param>
 public abstract class MSagaDbContext(
     DbContextOptions options,
     IMediator mediator,
@@ -19,24 +21,34 @@ public abstract class MSagaDbContext(
     ISystemExecutionContextAccessor? executionContextAccessor = null)
     : MDbContext(options, mediator, licenseGuard, logger, dateTimeService)
 {
+    private readonly IMDateTimeService? _dateTimeService = dateTimeService;
+    private readonly ISystemExecutionContextAccessor? _executionContextAccessor = executionContextAccessor;
+
+    /// <summary>
+    /// Configures saga entity mappings.
+    /// </summary>
+    /// <param name="modelBuilder">The model builder.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
+        foreach (EntityTypeBuilder? builder in
         // Scan for all sagas inheriting from IMuonroiSaga
-        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        from IMutableEntityType entityType in modelBuilder.Model.GetEntityTypes()
+        where typeof(IMuonroiSaga).IsAssignableFrom(entityType.ClrType)
+        let builder = modelBuilder.Entity(entityType.ClrType)
+        select builder)
         {
-            if (typeof(IMuonroiSaga).IsAssignableFrom(entityType.ClrType))
-            {
-                var builder = modelBuilder.Entity(entityType.ClrType);
-                builder.HasKey("CorrelationId");
-                
-                // Add index for TenantId for performance
-                builder.HasIndex(nameof(IMuonroiSaga.TenantId));
-            }
+            builder.HasKey("CorrelationId");
+            // Add index for TenantId for performance
+            builder.HasIndex(nameof(IMuonroiSaga.TenantId));
         }
     }
 
+    /// <summary>
+    /// Saves changes and updates saga timestamps before persisting.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The number of state entries written to the database.</returns>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         UpdateSagaTimestamps();
@@ -45,12 +57,12 @@ public abstract class MSagaDbContext(
 
     private void UpdateSagaTimestamps()
     {
-        var entries = ChangeTracker.Entries<IMuonroiSaga>()
+        IEnumerable<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<IMuonroiSaga>> entries = ChangeTracker.Entries<IMuonroiSaga>()
             .Where(e => e.State is EntityState.Added or EntityState.Modified);
 
-        DateTime now = dateTimeService?.UtcNow() ?? DateTime.UtcNow; // MBB001-exempt: fallback when IMDateTimeService not injected
+        DateTime now = _dateTimeService?.UtcNow() ?? DateTime.UtcNow; // MBB001-exempt: fallback when IMDateTimeService not injected
 
-        foreach (var entry in entries)
+        foreach (Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<IMuonroiSaga>? entry in entries)
         {
             if (entry.State == EntityState.Added)
             {
@@ -58,7 +70,7 @@ public abstract class MSagaDbContext(
                 // Auto-inject tenant id if missing
                 if (string.IsNullOrWhiteSpace(entry.Entity.TenantId))
                 {
-                    entry.Entity.TenantId = executionContextAccessor?.Get().TenantId ?? string.Empty;
+                    entry.Entity.TenantId = _executionContextAccessor?.Get().TenantId ?? string.Empty;
                 }
             }
             entry.Entity.LastModificationTime = now;

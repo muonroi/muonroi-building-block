@@ -7,12 +7,17 @@ using System.Collections.Immutable;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Analyzers;
 
+/// <summary>
+/// Analyzer for the MBB004 diagnostic.
+/// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class MBB004_ForbiddenAsyncLocalAnalyzer : DiagnosticAnalyzer
+public sealed class Mbb004_ForbiddenAsyncLocalAnalyzer : DiagnosticAnalyzer
 {
+    /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(MBBDiagnosticDescriptors.MBB004ForbiddenAsyncLocal);
+        [MBBDiagnosticDescriptors.MBB004ForbiddenAsyncLocal];
 
+    /// <inheritdoc/>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -34,8 +39,8 @@ public sealed class MBB004_ForbiddenAsyncLocalAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        string ns = MBBAnalyzerHelpers.GetNamespace(objectCreation);
-        if (MBBAnalyzerHelpers.IsContextNamespace(ns))
+        string ns = MbbAnalyzerHelpers.GetNamespace(objectCreation);
+        if (MbbAnalyzerHelpers.IsContextNamespace(ns))
         {
             return;
         }
@@ -59,8 +64,8 @@ public sealed class MBB004_ForbiddenAsyncLocalAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        string ns = MBBAnalyzerHelpers.GetNamespace(declaration);
-        if (MBBAnalyzerHelpers.IsContextNamespace(ns))
+        string ns = MbbAnalyzerHelpers.GetNamespace(declaration);
+        if (MbbAnalyzerHelpers.IsContextNamespace(ns))
         {
             return;
         }

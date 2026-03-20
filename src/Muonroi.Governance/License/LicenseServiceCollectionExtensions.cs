@@ -7,6 +7,9 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the License Service Collection Extensions.
+/// </summary>
 public static class LicenseServiceCollectionExtensions
 {
     /// <summary>

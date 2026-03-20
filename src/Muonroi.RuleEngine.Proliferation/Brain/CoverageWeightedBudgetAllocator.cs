@@ -14,6 +14,7 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 /// </summary>
 public sealed class CoverageWeightedBudgetAllocator : IBudgetAllocator
 {
+    /// <summary>Allocates budget based on coverage and failure rate.</summary>
     public int AllocateBudget(string seedRuleCode, double coveragePercent, double failureRate, int baseBudget)
     {
         if (baseBudget <= 0) baseBudget = 1;

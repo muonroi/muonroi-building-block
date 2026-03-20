@@ -11,13 +11,19 @@ using System.Threading.Tasks;
 
 namespace Muonroi.RuleEngine.SourceGenerators.CodeFixes;
 
+/// <summary>
+/// Code fix provider for MBB002 diagnostics.
+/// </summary>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MBB002_JsonSerializerCodeFix)), Shared]
 public sealed class MBB002_JsonSerializerCodeFix : CodeFixProvider
 {
-    public override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create("MBB002");
+    /// <inheritdoc/>
+    public override ImmutableArray<string> FixableDiagnosticIds => ["MBB002"];
 
+    /// <inheritdoc/>
     public override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 
+    /// <inheritdoc/>
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
         SyntaxNode? root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);

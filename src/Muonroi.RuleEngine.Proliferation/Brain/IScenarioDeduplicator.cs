@@ -8,6 +8,7 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 /// </summary>
 public interface IScenarioDeduplicator
 {
+    /// <summary>Removes duplicate or near-duplicate scenarios.</summary>
     IReadOnlyList<NeuronScenario> Deduplicate(
         IReadOnlyList<NeuronScenario> candidates,
         IReadOnlyList<NeuronScenario> existingScenarios);

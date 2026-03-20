@@ -6,11 +6,13 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Mediator.Behaviours;
 
+/// <summary>
+/// Represents the MDiagnostics Behavior.
+/// </summary>
 public sealed class MDiagnosticsBehavior<TRequest, TResponse>(
     IMLog<MDiagnosticsBehavior<TRequest, TResponse>> logger,
     IMTraceContext traceContext,
     ITraceSessionStore sessionStore,
-    IMJsonSerializeService json,
     ISystemExecutionContextAccessor contextAccessor,
     IHttpContextAccessor? httpContextAccessor = null)
     : IPipelineBehavior<TRequest, TResponse>
@@ -18,6 +20,9 @@ public sealed class MDiagnosticsBehavior<TRequest, TResponse>(
 {
     private const string TraceHeader = "X-Muonroi-Trace";
 
+    /// <summary>
+    /// Executes the Handle operation.
+    /// </summary>
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         ISystemExecutionContext context = contextAccessor.Get();
@@ -112,6 +117,7 @@ public sealed class MDiagnosticsBehavior<TRequest, TResponse>(
     private static bool IsSensitive(Type type)
     {
         // Placeholder for [MTraceSensitive] attribute check in Phase 4
+        _ = type;
         return false;
     }
 

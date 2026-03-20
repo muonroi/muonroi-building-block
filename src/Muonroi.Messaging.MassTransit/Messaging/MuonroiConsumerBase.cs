@@ -15,10 +15,22 @@ public abstract class MuonroiConsumerBase<TMessage>(
     : IConsumer<TMessage>
     where TMessage : class
 {
+    /// <summary>
+    /// The Log.
+    /// </summary>
     protected readonly IMLog<TMessage> Log = log;
+    /// <summary>
+    /// The Context Accessor.
+    /// </summary>
     protected readonly ISystemExecutionContextAccessor ContextAccessor = contextAccessor;
+    /// <summary>
+    /// The License Guard.
+    /// </summary>
     protected readonly ILicenseGuard? LicenseGuard = licenseGuard;
 
+    /// <summary>
+    /// Executes the Consume operation.
+    /// </summary>
     public async Task Consume(ConsumeContext<TMessage> context)
     {
         LicenseGuard?.EnsureFeature(FreeTierFeatures.Premium.MessageBus);

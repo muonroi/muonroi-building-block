@@ -1,5 +1,8 @@
 namespace Muonroi.Governance.Operations;
 
+/// <summary>
+/// Represents the MEnterprise Slo Preset Service.
+/// </summary>
 public sealed class MEnterpriseSloPresetService : IMEnterpriseSloPresetService
 {
     private static readonly Dictionary<string, MEnterpriseSloPreset> Presets =
@@ -106,11 +109,17 @@ public sealed class MEnterpriseSloPresetService : IMEnterpriseSloPresetService
             }
         };
 
+    /// <summary>
+    /// Executes the Get Preset Names operation.
+    /// </summary>
     public IReadOnlyList<string> GetPresetNames()
     {
         return Presets.Keys.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
     }
 
+    /// <summary>
+    /// Executes the Get Preset operation.
+    /// </summary>
     public MEnterpriseSloPreset GetPreset(string? presetName)
     {
         string key = string.IsNullOrWhiteSpace(presetName) ? "balanced" : presetName.Trim();

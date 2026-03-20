@@ -1,7 +1,13 @@
 namespace Muonroi.Governance.Operations;
 
+/// <summary>
+/// Represents the MEnterprise Operations Endpoint Extensions.
+/// </summary>
 public static class MEnterpriseOperationsEndpointExtensions
 {
+    /// <summary>
+    /// Executes the Map MEnterprise Operations Endpoints operation.
+    /// </summary>
     public static IEndpointRouteBuilder MapMEnterpriseOperationsEndpoints(
         this IEndpointRouteBuilder endpoints,
         string basePath = "/api/v1/enterprise-ops")

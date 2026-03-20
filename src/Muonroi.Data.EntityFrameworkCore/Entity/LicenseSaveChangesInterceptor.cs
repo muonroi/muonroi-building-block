@@ -2,6 +2,11 @@ using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
 
+/// <summary>
+/// Enforces license checks when DbContext saves changes.
+/// </summary>
+/// <param name="guard">The license guard.</param>
+/// <param name="configs">License configuration.</param>
 public sealed class LicenseSaveChangesInterceptor(
     ILicenseGuard guard,
     LicenseConfigs configs)
@@ -9,6 +14,12 @@ public sealed class LicenseSaveChangesInterceptor(
 {
     private const string ActionType = "db.savechanges";
 
+    /// <summary>
+    /// Performs license validation before changes are saved.
+    /// </summary>
+    /// <param name="eventData">The event data.</param>
+    /// <param name="result">The current interception result.</param>
+    /// <returns>The interception result.</returns>
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData,
         InterceptionResult<int> result)
     {
@@ -36,6 +47,13 @@ public sealed class LicenseSaveChangesInterceptor(
         return base.SavingChanges(eventData, result);
     }
 
+    /// <summary>
+    /// Performs license validation before changes are saved asynchronously.
+    /// </summary>
+    /// <param name="eventData">The event data.</param>
+    /// <param name="result">The current interception result.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The interception result.</returns>
     public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData,
         InterceptionResult<int> result, CancellationToken cancellationToken = default)
     {

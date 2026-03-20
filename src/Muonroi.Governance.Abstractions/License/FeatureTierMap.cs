@@ -20,6 +20,9 @@ public static class FeatureTierMap
             [FreeTierFeatures.Premium.JavaScriptExpressions] = LicenseTier.Licensed
         };
 
+    /// <summary>
+    /// Executes the Try Get Minimum Tier operation.
+    /// </summary>
     public static bool TryGetMinimumTier(string featureName, out LicenseTier minimumTier)
     {
         if (string.IsNullOrWhiteSpace(featureName))

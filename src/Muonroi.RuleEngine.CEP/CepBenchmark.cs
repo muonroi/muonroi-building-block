@@ -5,6 +5,9 @@ namespace Muonroi.RuleEngine.CEP;
 /// </summary>
 public static class CepBenchmark
 {
+    /// <summary>
+    /// Runs a simple streaming vs batch timing comparison.
+    /// </summary>
     public static (TimeSpan Stream, TimeSpan Batch) Run(int count)
     {
         DateTime start = DateTime.UtcNow; // MBB001-exempt: static-class boundary

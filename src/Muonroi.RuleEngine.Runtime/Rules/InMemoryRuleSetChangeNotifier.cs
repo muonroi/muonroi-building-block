@@ -7,6 +7,7 @@ public sealed class InMemoryRuleSetChangeNotifier : IRuleSetChangeNotifier
 {
     private readonly ConcurrentDictionary<Guid, Func<RuleSetChangeEvent, Task>> _handlers = new();
 
+    /// <inheritdoc />
     public async Task PublishAsync(RuleSetChangeEvent changeEvent, CancellationToken cancellationToken = default)
     {
         foreach (Func<RuleSetChangeEvent, Task> handler in _handlers.Values)
@@ -16,6 +17,7 @@ public sealed class InMemoryRuleSetChangeNotifier : IRuleSetChangeNotifier
         }
     }
 
+    /// <inheritdoc />
     public IDisposable Subscribe(Func<RuleSetChangeEvent, Task> handler)
     {
         Guid id = Guid.NewGuid();

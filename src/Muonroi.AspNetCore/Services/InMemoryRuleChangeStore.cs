@@ -57,11 +57,10 @@ public sealed class InMemoryRuleChangeStore(IMDateTimeService dateTimeService) :
         lock (state.SyncRoot)
         {
             List<string> previousOrder = [.. state.CurrentOrder];
-            List<string> newOrder = request.OrderedRuleCodes
+            List<string> newOrder = [.. request.OrderedRuleCodes
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(x => x.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+                .Distinct(StringComparer.OrdinalIgnoreCase)];
 
             state.CurrentOrder = newOrder;
 

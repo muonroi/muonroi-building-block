@@ -31,7 +31,7 @@ internal sealed class SharedInMemoryDistributedCache : IDistributedCache
             Store[key] = refreshed;
         }
 
-        return entry.Value.ToArray();
+        return [.. entry.Value];
     }
 
     public async Task<byte[]?> GetAsync(string key, CancellationToken token = default)
@@ -49,7 +49,7 @@ internal sealed class SharedInMemoryDistributedCache : IDistributedCache
         DateTimeOffset now = DateTimeOffset.UtcNow;
         DateTimeOffset? absoluteExpiration = ResolveAbsoluteExpiration(now, options);
         Entry entry = new(
-            value.ToArray(),
+            [.. value],
             absoluteExpiration,
             options.SlidingExpiration,
             now);

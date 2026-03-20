@@ -13,6 +13,11 @@ public sealed class FileRuleSetStore : IRuleSetStore
     private readonly Regex _segmentRegex;
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> WorkflowLocks = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Creates a file-backed ruleset store.</summary>
+    /// <param name="rootPath">Root directory for rulesets.</param>
+    /// <param name="signer">Optional signer for integrity protection.</param>
+    /// <param name="configs">Optional store configuration.</param>
+    /// <param name="executionContextAccessor">Optional execution context accessor.</param>
     public FileRuleSetStore(
         string rootPath,
         IRuleSetSigner? signer = null,
@@ -55,6 +60,10 @@ public sealed class FileRuleSetStore : IRuleSetStore
         return EnsureUnderRoot(Path.Combine(GetTenantDirectory(), workflowSegment));
     }
 
+    /// <summary>Saves a new ruleset version and marks it active.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="json">Ruleset JSON content.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SaveAsync(string workflowName, string json, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(json);
@@ -86,6 +95,11 @@ public sealed class FileRuleSetStore : IRuleSetStore
         }
     }
 
+    /// <summary>Gets a ruleset by workflow and version.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="version">Specific version; when null, uses active version.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Ruleset JSON or null if not found.</returns>
     public async Task<string?> GetAsync(string workflowName, int? version = null,
         CancellationToken cancellationToken = default)
     {
@@ -120,6 +134,10 @@ public sealed class FileRuleSetStore : IRuleSetStore
         return content;
     }
 
+    /// <summary>Sets the active version for a workflow.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="version">Version to activate.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SetActiveVersionAsync(string workflowName, int version,
         CancellationToken cancellationToken = default)
     {
@@ -143,6 +161,10 @@ public sealed class FileRuleSetStore : IRuleSetStore
         }
     }
 
+    /// <summary>Gets all versions for a workflow.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Array of versions.</returns>
     public Task<int[]> GetVersionsAsync(string workflowName, CancellationToken cancellationToken = default)
     {
         string dir = GetWorkflowDirectory(workflowName);
@@ -152,6 +174,10 @@ public sealed class FileRuleSetStore : IRuleSetStore
         return Task.FromResult(versions);
     }
 
+    /// <summary>Gets the active version for a workflow.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The active version or null if none exists.</returns>
     public async Task<int?> GetActiveVersionAsync(string workflowName, CancellationToken cancellationToken = default)
     {
         string dir = GetWorkflowDirectory(workflowName);
@@ -170,6 +196,9 @@ public sealed class FileRuleSetStore : IRuleSetStore
         return versions.Length == 0 ? null : versions[^1];
     }
 
+    /// <summary>Lists workflows available for the current tenant.</summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of workflow names.</returns>
     public Task<IReadOnlyList<string>> GetWorkflowsAsync(CancellationToken cancellationToken = default)
     {
         _ = cancellationToken;

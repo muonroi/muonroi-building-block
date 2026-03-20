@@ -20,19 +20,88 @@ public sealed record FlowCoverageReport(
     double NodeCoveragePercentage,
     double EdgeCoveragePercentage);
 
-public sealed record NodeCoverage(string NodeId, string Label, bool IsCovered);
-public sealed record EdgeCoverage(string EdgeId, string Source, string Target, string EdgeType, bool IsCovered);
+/// <summary>Coverage status for a single flow node.</summary>
+public sealed record NodeCoverage
+{
+    /// <summary>Identifier of the node.</summary>
+    public string NodeId { get; init; } = string.Empty;
+    /// <summary>Display label for the node.</summary>
+    public string Label { get; init; } = string.Empty;
+    /// <summary>Indicates whether the node was exercised.</summary>
+    public bool IsCovered { get; init; }
+
+    /// <summary>
+    /// Creates a node coverage record.
+    /// </summary>
+    /// <param name="nodeId">Node identifier.</param>
+    /// <param name="label">Node label.</param>
+    /// <param name="isCovered">Whether the node was covered.</param>
+    public NodeCoverage(string nodeId, string label, bool isCovered)
+    {
+        NodeId = nodeId;
+        Label = label;
+        IsCovered = isCovered;
+    }
+
+    /// <summary>
+    /// Initializes a node coverage record for object-initializer use.
+    /// </summary>
+    public NodeCoverage()
+    {
+    }
+}
+
+/// <summary>Coverage status for a single flow edge.</summary>
+public sealed record EdgeCoverage
+{
+    /// <summary>Identifier of the edge.</summary>
+    public string EdgeId { get; init; } = string.Empty;
+    /// <summary>Source node identifier.</summary>
+    public string Source { get; init; } = string.Empty;
+    /// <summary>Target node identifier.</summary>
+    public string Target { get; init; } = string.Empty;
+    /// <summary>Type of the edge.</summary>
+    public string EdgeType { get; init; } = string.Empty;
+    /// <summary>Indicates whether the edge was exercised.</summary>
+    public bool IsCovered { get; init; }
+
+    /// <summary>
+    /// Creates an edge coverage record.
+    /// </summary>
+    /// <param name="edgeId">Edge identifier.</param>
+    /// <param name="source">Source node identifier.</param>
+    /// <param name="target">Target node identifier.</param>
+    /// <param name="edgeType">Edge type.</param>
+    /// <param name="isCovered">Whether the edge was covered.</param>
+    public EdgeCoverage(string edgeId, string source, string target, string edgeType, bool isCovered)
+    {
+        EdgeId = edgeId;
+        Source = source;
+        Target = target;
+        EdgeType = edgeType;
+        IsCovered = isCovered;
+    }
+
+    /// <summary>
+    /// Initializes an edge coverage record for object-initializer use.
+    /// </summary>
+    public EdgeCoverage()
+    {
+    }
+}
 
 /// <summary>
 /// Tracks which input fields have been covered by generated scenarios.
 /// </summary>
 public interface ICoverageTracker
 {
+    /// <summary>Calculates field coverage for a ruleset.</summary>
     CoverageReport GetCoverage(
         string seedRuleCode,
         IReadOnlyList<NeuronScenario> scenarios,
         RuleSetSchema schema);
 
+    /// <summary>Calculates node and edge coverage for a flow graph.</summary>
     FlowCoverageReport GetFlowCoverage(
         string seedRuleCode,
         IReadOnlyList<NeuronScenario> scenarios,
@@ -45,6 +114,7 @@ public interface ICoverageTracker
 /// </summary>
 public sealed class DefaultCoverageTracker : ICoverageTracker
 {
+    /// <summary>Calculates field coverage for a ruleset.</summary>
     public CoverageReport GetCoverage(
         string seedRuleCode,
         IReadOnlyList<NeuronScenario> scenarios,
@@ -83,6 +153,7 @@ public sealed class DefaultCoverageTracker : ICoverageTracker
         return new CoverageReport(covered, uncovered, Math.Round(percentage, 1));
     }
 
+    /// <summary>Calculates node and edge coverage for a flow graph.</summary>
     public FlowCoverageReport GetFlowCoverage(
         string seedRuleCode,
         IReadOnlyList<NeuronScenario> scenarios,
@@ -145,15 +216,24 @@ public sealed class DefaultCoverageTracker : ICoverageTracker
             }
 
             // Build node coverage
-            List<NodeCoverage> nodeCoverage = allNodes
-                .Select(n => new NodeCoverage(n.id, n.label, executedNodes.Contains(n.id)))
-                .ToList();
+            List<NodeCoverage> nodeCoverage = [.. allNodes
+                .Select(n => new NodeCoverage
+                {
+                    NodeId = n.id,
+                    Label = n.label,
+                    IsCovered = executedNodes.Contains(n.id)
+                })];
 
             // Build edge coverage: edge is covered if both source and target are covered
-            List<EdgeCoverage> edgeCoverage = allEdges
-                .Select(e => new EdgeCoverage(e.id, e.source, e.target, e.edgeType,
-                    executedNodes.Contains(e.source) && executedNodes.Contains(e.target)))
-                .ToList();
+            List<EdgeCoverage> edgeCoverage = [.. allEdges
+                .Select(e => new EdgeCoverage
+                {
+                    EdgeId = e.id,
+                    Source = e.source,
+                    Target = e.target,
+                    EdgeType = e.edgeType,
+                    IsCovered = executedNodes.Contains(e.source) && executedNodes.Contains(e.target)
+                })];
 
             double nodePct = allNodes.Count > 0
                 ? Math.Round((double)nodeCoverage.Count(n => n.IsCovered) / allNodes.Count * 100, 1)

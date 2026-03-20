@@ -6,16 +6,23 @@ using System.Linq;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Diagnostics;
 
+/// <summary>
+/// Analyzer for rule authoring diagnostics.
+/// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class RuleAuthoringDiagnosticAnalyzer : DiagnosticAnalyzer
 {
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
+    /// <inheritdoc/>
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
+    [
         RuleGenDiagnostics.MissingDependencyReference,
         RuleGenDiagnostics.OrderWithoutDependsOn,
         RuleGenDiagnostics.FactConsumptionWithoutDependency,
         RuleGenDiagnostics.NullableAssignedToNonNullableString,
-        RuleGenDiagnostics.FactGuardThrowsInvalidOperation);
+        RuleGenDiagnostics.FactGuardThrowsInvalidOperation,
+    ];
 
+    /// <inheritdoc/>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -23,12 +30,11 @@ public sealed class RuleAuthoringDiagnosticAnalyzer : DiagnosticAnalyzer
 
         context.RegisterCompilationAction(static compilationContext =>
         {
-            MethodDeclarationSyntax[] methods = compilationContext.Compilation.SyntaxTrees
+            MethodDeclarationSyntax[] methods = [.. compilationContext.Compilation.SyntaxTrees
                 .SelectMany(tree => tree.GetRoot(compilationContext.CancellationToken)
                     .DescendantNodes()
                     .OfType<MethodDeclarationSyntax>())
-                .Where(m => m.AttributeLists.Count > 0)
-                .ToArray();
+                .Where(m => m.AttributeLists.Count > 0)];
 
             RuleAuthoringAnalyzer.Analyze(
                 compilationContext.Compilation,

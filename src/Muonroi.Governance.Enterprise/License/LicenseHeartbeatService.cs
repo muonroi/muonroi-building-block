@@ -5,6 +5,9 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the License Heartbeat Service.
+/// </summary>
 public sealed class LicenseHeartbeatService(
     IHttpClientFactory httpClientFactory,
     LicenseConfigs configs,
@@ -15,6 +18,9 @@ public sealed class LicenseHeartbeatService(
 {
     private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
 
+    /// <summary>
+    /// Executes the Execute Async operation.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (configs.Mode != LicenseMode.Online ||

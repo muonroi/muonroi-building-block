@@ -3,12 +3,18 @@ using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Governance.Policy;
 
+/// <summary>
+/// Represents the Policy Verifier.
+/// </summary>
 public sealed class PolicyVerifier(
     LicenseConfigs configs,
     IHostEnvironment? environment,
     IMJsonSerializeService jsonSerializeService,
     IMLog<PolicyVerifier>? logger = null)
 {
+    /// <summary>
+    /// Executes the Verify operation.
+    /// </summary>
     public bool Verify(LicensePolicy policy)
     {
         if (policy == null)

@@ -2,6 +2,9 @@ using Muonroi.Governance.License;
 
 namespace Muonroi.Governance.Abstractions.License;
 
+/// <summary>
+/// Represents the License Guard Extensions.
+/// </summary>
 public static class LicenseGuardExtensions
 {
     /// <summary>

@@ -7,13 +7,21 @@ namespace Muonroi.RuleEngine.Proliferation.Brain;
 /// </summary>
 public enum RuleSetKind
 {
+    /// <summary>Unrecognized or empty ruleset payload.</summary>
     Unknown = 0,
+    /// <summary>Flow graph ruleset payload.</summary>
     FlowGraph = 1,
+    /// <summary>Decision table ruleset payload.</summary>
     DecisionTable = 2,
+    /// <summary>Code-based ruleset payload.</summary>
     CodeBased = 3,
+    /// <summary>Legacy ruleset payload.</summary>
     Legacy = 4
 }
 
+/// <summary>
+/// Detects the kind of ruleset encoded in JSON.
+/// </summary>
 public static class RuleSetKindDetector
 {
     /// <summary>

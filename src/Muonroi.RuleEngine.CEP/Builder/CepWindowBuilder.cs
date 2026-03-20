@@ -25,6 +25,7 @@ public static class CepWindowBuilder
 /// <summary>
 /// Fluent builder for <see cref="CepConfig"/>.
 /// </summary>
+/// <param name="name">Configuration name.</param>
 public sealed class CepConfigBuilder(string name)
 {
     private readonly string _name = NormalizeRequired(name, nameof(name));
@@ -155,11 +156,10 @@ public sealed class CepConfigBuilder(string name)
 
     private static string CreateId(string value)
     {
-        char[] chars = value
+        char[] chars = [.. value
             .Trim()
             .ToLowerInvariant()
-            .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')
-            .ToArray();
+            .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')];
 
         string collapsed = string.Join(
             '-',
@@ -193,6 +193,7 @@ public sealed class CepConfigBuilder(string name)
 /// <summary>
 /// Fluent builder for a runtime CEP window.
 /// </summary>
+/// <param name="config">Configuration to bind.</param>
 public sealed class CepWindowRuntimeBuilder<TPayload>(CepConfig config)
 {
     private readonly CepConfig _config = config ?? throw new ArgumentNullException(nameof(config));

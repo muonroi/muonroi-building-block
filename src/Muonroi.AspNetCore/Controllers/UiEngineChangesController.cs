@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +14,7 @@ using Muonroi.UiEngine.Catalog.Services;
 
 namespace Muonroi.AspNetCore.Controllers;
 
+/// <inheritdoc />
 [ApiController]
 [Authorize]
 [Route("api/v1/ui-engine/changes")]
@@ -30,6 +31,7 @@ public sealed class UiEngineChangesController(
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.UiEngine.Changes");
 
+/// <inheritdoc />
     [HttpPost("validate")]
     public async Task<ActionResult<RuleOrderChangeValidationResult>> Validate(
         [FromBody] RuleOrderChangeRequest request,
@@ -39,6 +41,7 @@ public sealed class UiEngineChangesController(
         return Ok(validation);
     }
 
+/// <inheritdoc />
     [HttpPost("apply")]
     public async Task<ActionResult<RuleChangeRecord>> Apply(
         [FromBody] RuleOrderChangeRequest request,
@@ -89,6 +92,7 @@ public sealed class UiEngineChangesController(
         return Ok(record);
     }
 
+/// <inheritdoc />
     [HttpPost("propose")]
     public async Task<ActionResult<RuleChangeProposal>> Propose(
         [FromBody] ProposeRuleChangeRequest request,
@@ -132,6 +136,7 @@ public sealed class UiEngineChangesController(
         return Ok(proposal);
     }
 
+/// <inheritdoc />
     [HttpGet("proposals")]
     public async Task<ActionResult<IReadOnlyList<RuleChangeProposal>>> ListPendingProposals(
         [FromQuery] string? tenantId,
@@ -142,6 +147,7 @@ public sealed class UiEngineChangesController(
         return Ok(proposals);
     }
 
+/// <inheritdoc />
     [HttpPost("proposals/{proposalId:guid}/approve")]
     public async Task<ActionResult<RuleChangeApprovalResponse>> ApproveProposal(
         [FromRoute] Guid proposalId,
@@ -209,6 +215,7 @@ public sealed class UiEngineChangesController(
         });
     }
 
+/// <inheritdoc />
     [HttpPost("proposals/{proposalId:guid}/reject")]
     public async Task<ActionResult<RuleChangeProposal>> RejectProposal(
         [FromRoute] Guid proposalId,
@@ -249,6 +256,7 @@ public sealed class UiEngineChangesController(
         return Ok(rejected);
     }
 
+/// <inheritdoc />
     [HttpPost("rollback")]
     public async Task<ActionResult<RuleChangeRecord>> Rollback(
         [FromBody] RuleOrderRollbackRequest request,
@@ -309,6 +317,7 @@ public sealed class UiEngineChangesController(
         return Ok(record);
     }
 
+/// <inheritdoc />
     [HttpGet("history")]
     public async Task<ActionResult<IReadOnlyList<RuleChangeRecord>>> History(
         [FromQuery] string endpointRoute,
@@ -331,10 +340,9 @@ public sealed class UiEngineChangesController(
         RuleOrderChangeValidationResult result = new();
         string route = NormalizeRoute(request.EndpointRoute);
         string tenantId = ResolveTenantId(request.TenantId);
-        List<string> orderedCodes = request.OrderedRuleCodes
+        List<string> orderedCodes = [.. request.OrderedRuleCodes
             .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Select(x => x.Trim())
-            .ToList();
+            .Select(x => x.Trim())];
 
         if (orderedCodes.Count == 0)
         {
@@ -554,8 +562,11 @@ public sealed class UiEngineChangesController(
     }
 }
 
+/// <inheritdoc />
 public sealed class RuleChangeApprovalResponse
 {
+/// <inheritdoc />
     public RuleChangeProposal Proposal { get; set; } = new();
+/// <inheritdoc />
     public RuleChangeRecord ChangeRecord { get; set; } = new();
 }

@@ -1,5 +1,8 @@
 namespace Muonroi.Tenancy.Core.Legacy;
 
+/// <summary>
+/// Ambient tenant context backed by <see cref="AsyncLocal{T}"/>.
+/// </summary>
 public class TenantContext : ITenantContext
 {
     private static readonly AsyncLocal<string?> _currentTenantId = new();

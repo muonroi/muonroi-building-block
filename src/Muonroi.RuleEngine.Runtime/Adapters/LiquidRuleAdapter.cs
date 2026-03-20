@@ -30,14 +30,38 @@ public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
     private readonly IEnumerable<IScribanFunctionProvider>? _functionProviders;
     private Template? _parsedTemplate;
 
+    /// <inheritdoc />
     public string Code => _code;
+
+    /// <inheritdoc />
     public int Order { get; init; }
+
+    /// <inheritdoc />
     public string[] DependsOn { get; init; } = [];
+
+    /// <inheritdoc />
     public HookPoint HookPoint => HookPoint.BeforeRule;
+
+    /// <inheritdoc />
     public RuleType Type => RuleType.Business; // actions modify state
+
+    /// <inheritdoc />
     public string Name => $"Liquid:{_code}";
+
+    /// <inheritdoc />
     public IEnumerable<Type> Dependencies => [];
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LiquidRuleAdapter{TContext}"/> class.
+    /// </summary>
+    /// <param name="code">Rule code for this node.</param>
+    /// <param name="template">Liquid/Scriban template.</param>
+    /// <param name="outputFormat">Output format (json|text|object).</param>
+    /// <param name="outputKey">FactBag key to store rendered output.</param>
+    /// <param name="projector">Context projector for variables.</param>
+    /// <param name="json">JSON serializer.</param>
+    /// <param name="log">Logger instance.</param>
+    /// <param name="functionProviders">Optional custom Scriban function providers.</param>
     public LiquidRuleAdapter(
         string code,
         string template,
@@ -58,6 +82,7 @@ public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
         _functionProviders = functionProviders;
     }
 
+    /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)
     {
         Dictionary<string, object?> variables = BuildVariables(ctx, facts);
@@ -85,6 +110,7 @@ public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
         return RuleResult.Passed();
     }
 
+    /// <inheritdoc />
     public Task ExecuteAsync(TContext context, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
 

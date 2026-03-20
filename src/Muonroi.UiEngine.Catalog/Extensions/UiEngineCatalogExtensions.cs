@@ -11,8 +11,14 @@ using Muonroi.UiEngine.Catalog.Services;
 
 namespace Muonroi.UiEngine.Catalog.Extensions;
 
+/// <summary>
+/// Service registration helpers for the UI engine catalog.
+/// </summary>
 public static class UiEngineCatalogExtensions
 {
+    /// <summary>
+    /// Registers catalog services and persistence providers.
+    /// </summary>
     public static IServiceCollection AddUiEngineCatalog(
         this IServiceCollection services,
         Action<UiEngineCatalogOptions>? configure = null)

@@ -1,11 +1,17 @@
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Amqp Context Consume Filter{T}.
+/// </summary>
 public class AmqpContextConsumeFilter<T>(
     IAmqpContext amqpContext,
     ISystemExecutionContextAccessor executionContextAccessor,
     ITenantContextPolicy tenantContextPolicy,
     ILogScopeFactory? logScopeFactory = null) : IFilter<ConsumeContext<T>> where T : class
 {
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(ConsumeContext<T> context, IPipe<ConsumeContext<T>> next)
     {
         Dictionary<string, object> headers = [];
@@ -66,6 +72,9 @@ public class AmqpContextConsumeFilter<T>(
         }
     }
 
+    /// <summary>
+    /// Executes the Probe operation.
+    /// </summary>
     public void Probe(ProbeContext context)
     {
     }

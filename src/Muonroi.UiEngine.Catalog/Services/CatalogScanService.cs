@@ -16,6 +16,9 @@ using RuntimeRuleOptions = Muonroi.RuleEngine.Runtime.Rules.RuleOptions;
 
 namespace Muonroi.UiEngine.Catalog.Services;
 
+/// <summary>
+/// Default catalog scanner for UI engine APIs and rules.
+/// </summary>
 public sealed class CatalogScanService(
     IApiDescriptionGroupCollectionProvider apiDescriptions,
     IServiceProvider serviceProvider,
@@ -26,6 +29,7 @@ public sealed class CatalogScanService(
     private readonly ISystemExecutionContextAccessor _executionContextAccessor =
         executionContextAccessor ?? new SystemExecutionContextAccessor();
 
+    /// <inheritdoc/>
     public Task<IReadOnlyList<MUiEngineCatalogApiDescriptor>> ScanApisAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -87,6 +91,7 @@ public sealed class CatalogScanService(
         return Task.FromResult(result);
     }
 
+    /// <inheritdoc/>
     public Task<IReadOnlyList<MUiEngineCatalogRuleDescriptor>> ScanRulesAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -154,6 +159,7 @@ public sealed class CatalogScanService(
         return Task.FromResult(deduped);
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<MUiEngineCatalogBinding>> BuildBindingsAsync(CancellationToken cancellationToken = default)
     {
         IReadOnlyList<MUiEngineCatalogApiDescriptor> apis = await ScanApisAsync(cancellationToken);
@@ -205,6 +211,7 @@ public sealed class CatalogScanService(
             .ThenBy(x => x.HttpMethod, StringComparer.OrdinalIgnoreCase)];
     }
 
+    /// <inheritdoc/>
     public async Task<MUiEngineCatalogGraph> BuildGraphAsync(CancellationToken cancellationToken = default)
     {
         IReadOnlyList<MUiEngineCatalogBinding> bindings = await BuildBindingsAsync(cancellationToken);

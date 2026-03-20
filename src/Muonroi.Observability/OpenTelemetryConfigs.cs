@@ -5,6 +5,7 @@ namespace Muonroi.Observability;
 /// </summary>
 public class OpenTelemetryConfigs
 {
+    /// <summary>Configuration section name.</summary>
     public const string SectionName = "OpenTelemetry";
 
     /// <summary>

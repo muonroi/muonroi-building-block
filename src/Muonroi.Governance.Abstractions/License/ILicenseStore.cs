@@ -1,10 +1,25 @@
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the ILicense Store.
+/// </summary>
 public interface ILicenseStore
 {
+    /// <summary>
+    /// Executes the Load operation.
+    /// </summary>
     LicensePayload? Load();
+    /// <summary>
+    /// Executes the Save operation.
+    /// </summary>
     void Save(LicensePayload payload);
+    /// <summary>
+    /// Executes the Load Activation Proof operation.
+    /// </summary>
     ActivationProof? LoadActivationProof();
+    /// <summary>
+    /// Executes the Save Activation Proof operation.
+    /// </summary>
     void SaveActivationProof(ActivationProof proof);
 
     /// <summary>

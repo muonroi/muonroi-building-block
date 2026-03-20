@@ -9,10 +9,17 @@ using Xunit;
 
 namespace Muonroi.BuildingBlock.IntegrationTests;
 
+/// <summary>
+/// Integration tests for multi-level caching behavior.
+/// </summary>
+/// <param name="factory">Test application factory.</param>
 public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory = factory;
 
+    /// <summary>
+    /// Verifies that a second request hits the cache.
+    /// </summary>
     [Fact]
     public async Task CacheHit_OnSecondRequest_ShouldReturnCachedData()
     {
@@ -44,6 +51,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         (secondTime - firstTime).Should().BeLessThan(TimeSpan.FromSeconds(1)); // Fast response
     }
 
+    /// <summary>
+    /// Verifies that the first request results in a cache miss.
+    /// </summary>
     [Fact]
     public async Task CacheMiss_OnFirstRequest_ShouldFetchFromSource()
     {
@@ -59,6 +69,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         cachedValue.Should().BeNull();
     }
 
+    /// <summary>
+    /// Verifies cache invalidation after updating a value.
+    /// </summary>
     [Fact]
     public async Task CacheInvalidation_AfterUpdate_ShouldRefreshData()
     {
@@ -80,6 +93,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         updatedValue.Should().Be("updated-value");
     }
 
+    /// <summary>
+    /// Verifies expiration behavior after TTL.
+    /// </summary>
     [Fact]
     public async Task CacheExpiration_AfterTTL_ShouldEvictData()
     {
@@ -101,6 +117,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         valueAfterExpiry.Should().BeNull();
     }
 
+    /// <summary>
+    /// Verifies fallback from memory to distributed cache.
+    /// </summary>
     [Fact]
     public async Task MultiLevelCache_MemoryThenRedis_ShouldFallback()
     {
@@ -123,6 +142,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         value.Should().Be("distributed-value");
     }
 
+    /// <summary>
+    /// Verifies tenant-prefixed cache keys isolate values.
+    /// </summary>
     [Fact]
     public async Task CacheKeyGeneration_WithTenantPrefix_ShouldIsolate()
     {
@@ -141,6 +163,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         value.Should().Be("tenant-001-value");
     }
 
+    /// <summary>
+    /// Verifies distributed cache coherency across instances.
+    /// </summary>
     [Fact]
     public async Task DistributedCacheCoherency_AcrossInstances_ShouldSync()
     {
@@ -169,6 +194,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         valueFromInstance2.Should().Be("instance-1-value");
     }
 
+    /// <summary>
+    /// Verifies protection against cache stampede.
+    /// </summary>
     [Fact]
     public async Task CacheStampede_Protection_ShouldPreventMultipleFetches()
     {
@@ -198,6 +226,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         // Note: Without explicit locking in GetOrSetAsync, may have multiple fetches
     }
 
+    /// <summary>
+    /// Verifies caching behavior for null values.
+    /// </summary>
     [Fact]
     public async Task NullValue_Caching_ShouldHandleCorrectly()
     {
@@ -214,6 +245,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         cachedValue.Should().BeNull();
     }
 
+    /// <summary>
+    /// Verifies large object caching and serialization.
+    /// </summary>
     [Fact]
     public async Task LargeObject_Caching_ShouldHandleSerializationCorrectly()
     {
@@ -241,6 +275,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         cachedObject.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Verifies different TTL values are respected.
+    /// </summary>
     [Theory]
     [InlineData(1)]
     [InlineData(5)]
@@ -261,6 +298,9 @@ public class Caching_IntegrationTests(CustomWebApplicationFactory factory) : ICl
         cachedValue.Should().Be($"value-ttl-{ttlMinutes}");
     }
 
+    /// <summary>
+    /// Verifies cache keys with special characters are supported.
+    /// </summary>
     [Theory]
     [InlineData("key@special")]
     [InlineData("key#hash")]

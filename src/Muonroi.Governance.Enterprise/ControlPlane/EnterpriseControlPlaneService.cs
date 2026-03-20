@@ -2,6 +2,9 @@ using Muonroi.Governance.Policy;
 
 namespace Muonroi.Governance.ControlPlane;
 
+/// <summary>
+/// Represents the MEnterprise Control Plane Service.
+/// </summary>
 public sealed class MEnterpriseControlPlaneService(
     IMControlPlaneStore store,
     IMControlPlaneSigner signer,
@@ -29,6 +32,9 @@ public sealed class MEnterpriseControlPlaneService(
     private readonly IMControlPlaneStore _store = store ?? throw new ArgumentNullException(nameof(store));
     private readonly IMControlPlaneSigner _signer = signer ?? throw new ArgumentNullException(nameof(signer));
 
+    /// <summary>
+    /// Executes the Issue License operation.
+    /// </summary>
     public MIssueLicenseResult IssueLicense(MIssueLicenseRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -106,6 +112,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Revoke License operation.
+    /// </summary>
     public MControlPlaneLicenseRecord RevokeLicense(MRevokeLicenseRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -149,6 +158,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Assign Tenants operation.
+    /// </summary>
     public MControlPlaneLicenseRecord AssignTenants(MAssignTenantsRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -190,6 +202,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Create Policy Draft operation.
+    /// </summary>
     public MControlPlanePolicyBundleRecord CreatePolicyDraft(MCreatePolicyDraftRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -257,6 +272,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Approve Policy Bundle operation.
+    /// </summary>
     public MControlPlanePolicyBundleRecord ApprovePolicyBundle(MApprovePolicyBundleRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -301,6 +319,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Activate Policy Bundle operation.
+    /// </summary>
     public MControlPlanePolicyBundleRecord ActivatePolicyBundle(MActivatePolicyBundleRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -361,6 +382,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Rollback Policy Bundle operation.
+    /// </summary>
     public MControlPlanePolicyBundleRecord RollbackPolicyBundle(MRollbackPolicyBundleRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -436,6 +460,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Get License operation.
+    /// </summary>
     public MControlPlaneLicenseRecord? GetLicense(string licenseId)
     {
         if (string.IsNullOrWhiteSpace(licenseId))
@@ -449,6 +476,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Get Policy Bundles operation.
+    /// </summary>
     public IReadOnlyList<MControlPlanePolicyBundleRecord> GetPolicyBundles(string licenseId)
     {
         if (string.IsNullOrWhiteSpace(licenseId))
@@ -465,6 +495,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Get Active Policy Bundle operation.
+    /// </summary>
     public MControlPlanePolicyBundleRecord? GetActivePolicyBundle(string licenseId)
     {
         if (string.IsNullOrWhiteSpace(licenseId))
@@ -484,6 +517,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Get Audit Trail operation.
+    /// </summary>
     public IReadOnlyList<MControlPlaneAuditRecord> GetAuditTrail(int take = 100)
     {
         if (take <= 0)
@@ -500,6 +536,9 @@ public sealed class MEnterpriseControlPlaneService(
         }
     }
 
+    /// <summary>
+    /// Executes the Verify License Signature operation.
+    /// </summary>
     public bool VerifyLicenseSignature(LicensePayload payload)
     {
         if (payload == null || string.IsNullOrWhiteSpace(payload.Signature))
@@ -510,6 +549,9 @@ public sealed class MEnterpriseControlPlaneService(
         return _signer.Verify(BuildLicenseSigningData(payload), payload.Signature);
     }
 
+    /// <summary>
+    /// Executes the Verify Policy Bundle Signature operation.
+    /// </summary>
     public bool VerifyPolicyBundleSignature(MControlPlanePolicyBundleRecord bundle)
     {
         if (bundle == null ||
@@ -522,6 +564,9 @@ public sealed class MEnterpriseControlPlaneService(
         return _signer.Verify(BuildPolicySigningData(bundle.Policy), bundle.Policy.Signature);
     }
 
+    /// <summary>
+    /// Executes the Verify Audit Record Signature operation.
+    /// </summary>
     public bool VerifyAuditRecordSignature(MControlPlaneAuditRecord auditRecord)
     {
         if (auditRecord == null || string.IsNullOrWhiteSpace(auditRecord.Signature))

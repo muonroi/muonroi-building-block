@@ -6,9 +6,13 @@ using System.Text;
 
 namespace Muonroi.Diagnostics.Generator;
 
+/// <summary>
+/// Source generator that emits trace wrapper methods for attributed methods.
+/// </summary>
 [Generator]
 public sealed class TraceableGenerator : IIncrementalGenerator
 {
+    /// <summary>Registers syntax transforms and source output for tracing.</summary>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var provider = context.SyntaxProvider

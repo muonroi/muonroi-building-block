@@ -40,7 +40,7 @@ public class PermissionService<TPermission, TDbContext>(
         MRole? existingRole = await queryService.GetRoleByNameAsync(request.Name, cancellationToken);
         if (existingRole != null)
         {
-            result.AddError(nameof(SystemEnum.RoleAlreadyExists), context.Language, [existingRole.Name]);
+            result.AddError(nameof(SystemEnum.RoleAlreadyExists), context.Language, existingRole.Name);
             return result;
         }
 
@@ -197,7 +197,7 @@ public class PermissionService<TPermission, TDbContext>(
     /// </summary>
     /// <param name="userId">The unique identifier of the user.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{TPermission}}"/> containing the user's permissions.</returns>
+    /// <returns>A <see cref="MResponse{T}"/> containing the user's permissions.</returns>
     public async Task<MResponse<List<TPermission>>> GetUserPermissionsAsync(Guid userId,
         CancellationToken cancellationToken)
     {
@@ -275,7 +275,7 @@ public class PermissionService<TPermission, TDbContext>(
     /// Gets all roles asynchronously.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{MRole}}"/> containing all roles.</returns>
+    /// <returns>A <see cref="MResponse{T}"/> containing all roles.</returns>
     public async Task<MResponse<List<MRole>>> GetRolesAsync(CancellationToken cancellationToken)
     {
         EnsureAdvancedAuthFeature();
@@ -290,7 +290,7 @@ public class PermissionService<TPermission, TDbContext>(
     /// Gets all permissions asynchronously.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{MPermission}}"/> containing all permissions.</returns>
+    /// <returns>A <see cref="MResponse{T}"/> containing all permissions.</returns>
     public async Task<MResponse<List<MPermission>>> GetPermissionsAsync(CancellationToken cancellationToken)
     {
         EnsureAdvancedAuthFeature();
@@ -306,7 +306,7 @@ public class PermissionService<TPermission, TDbContext>(
     /// </summary>
     /// <param name="roleId">The unique identifier of the role.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{MPermission}}"/> containing the role's permissions.</returns>
+    /// <returns>A <see cref="MResponse{T}"/> containing the role's permissions.</returns>
     public async Task<MResponse<List<MPermission>>> GetRolePermissionsAsync(Guid roleId,
         CancellationToken cancellationToken)
     {
@@ -323,7 +323,7 @@ public class PermissionService<TPermission, TDbContext>(
     /// </summary>
     /// <param name="roleId">The unique identifier of the role.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{MUser}}"/> containing the role's users.</returns>
+    /// <returns>A <see cref="MResponse{T}"/> containing the role's users.</returns>
     public async Task<MResponse<List<MUser>>> GetRoleUsersAsync(Guid roleId, CancellationToken cancellationToken)
     {
         EnsureAdvancedAuthFeature();
@@ -338,7 +338,7 @@ public class PermissionService<TPermission, TDbContext>(
     /// Gets definitions for all available permissions asynchronously.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{PermissionDefinition}}"/> containing permission definitions.</returns>
+    /// <returns>A <see cref="MResponse{T}"/> containing permission definitions.</returns>
     public async Task<MResponse<List<PermissionDefinition>>> GetPermissionDefinitionsAsync(
         CancellationToken cancellationToken)
     {
@@ -472,7 +472,7 @@ public class PermissionService<TPermission, TDbContext>(
     /// </summary>
     /// <param name="userId">The unique identifier of the user.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{List{MenuMetadata}}"/> containing menu metadata.</returns>
+    /// <returns>A <see cref="MResponse{T}"/> containing menu metadata.</returns>
     public async Task<MResponse<List<MenuMetadata>>> GetMenuMetadataAsync(Guid userId,
         CancellationToken cancellationToken)
     {
@@ -680,7 +680,7 @@ public class PermissionService<TPermission, TDbContext>(
     /// <param name="pageIndex">The page index (1-based).</param>
     /// <param name="pageSize">The number of users per page.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="MResponse{MPagedResult{MUser}}"/> containing the paged list of users.</returns>
+    /// <returns>A <see cref="MResponse{T}"/> containing the paged list of users.</returns>
     public async Task<MResponse<MPagedResult<MUser>>> GetUsersAsync(int pageIndex, int pageSize,
         CancellationToken cancellationToken)
     {

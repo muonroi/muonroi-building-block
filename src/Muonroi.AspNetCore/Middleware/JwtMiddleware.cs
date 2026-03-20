@@ -90,10 +90,9 @@ public class JwtMiddleware(
 
         List<string> permissions = string.IsNullOrWhiteSpace(verifyToken.Permission)
             ? []
-            : verifyToken.Permission!
+            : [.. verifyToken.Permission!
                 .Split([',', ';', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+                .Distinct(StringComparer.OrdinalIgnoreCase)];
 
         SystemExecutionContext rawContext = new(
             tenantId: verifyToken.TenantId,

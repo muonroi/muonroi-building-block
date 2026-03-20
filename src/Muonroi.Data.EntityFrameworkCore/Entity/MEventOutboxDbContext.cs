@@ -7,6 +7,10 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity;
 /// <summary>
 /// Wrapper-first outbox persistence built on top of MDbContext.
 /// </summary>
+/// <param name="options">The DbContext options.</param>
+/// <param name="mediator">The mediator for domain events.</param>
+/// <param name="licenseGuard">Optional license guard.</param>
+/// <param name="logger">Optional logger.</param>
 public class MEventOutboxDbContext(
     DbContextOptions<MEventOutboxDbContext> options,
     IMediator mediator,
@@ -14,16 +18,29 @@ public class MEventOutboxDbContext(
     IMLog<MDbContext>? logger = null)
     : MDbContext(options, mediator, licenseGuard, logger), IEventOutboxStore
 {
+    /// <summary>
+    /// Gets the outbox events set.
+    /// </summary>
     public DbSet<EventOutbox> OutboxEvents => Set<EventOutbox>();
 
     IQueryable<EventOutbox> IEventOutboxStore.EventOutboxes => OutboxEvents.AsQueryable();
 
+    /// <summary>
+    /// Adds an outbox entry to the store.
+    /// </summary>
+    /// <param name="outbox">The outbox entry.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public Task AddAsync(EventOutbox outbox, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(outbox);
         return OutboxEvents.AddAsync(outbox, cancellationToken).AsTask();
     }
 
+    /// <summary>
+    /// Configures the outbox schema mapping.
+    /// </summary>
+    /// <param name="modelBuilder">The model builder.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
