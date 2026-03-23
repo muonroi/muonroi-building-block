@@ -60,6 +60,44 @@ public class EnterpriseGovernanceServiceExtensionsTests
         Assert.Contains(typeof(MComplianceExportHostedService), hostedServices);
     }
 
+    [Fact]
+    public void AddMEnterpriseGovernance_WhenFallbackToOnlineActivationEnabled_ShouldRegisterChainSubmissionHostedService()
+    {
+        ServiceCollection services = new();
+        IConfiguration configuration = CreateConfiguration(new Dictionary<string, string?>
+        {
+            [$"{LicenseConfigs.SectionName}:FallbackToOnlineActivation"] = "true",
+            [$"{LicenseConfigs.SectionName}:Online:Endpoint"] = "https://license.muonroi.com"
+        });
+
+        services.AddMEnterpriseGovernance(configuration);
+
+        List<Type> hostedServices = services
+            .Where(x => x.ServiceType == typeof(IHostedService) && x.ImplementationType != null)
+            .Select(x => x.ImplementationType!)
+            .ToList();
+
+        Assert.Contains(typeof(ChainSubmissionHostedService), hostedServices);
+    }
+
+    [Fact]
+    public void AddMEnterpriseGovernance_WhenServicesIsNull_ShouldThrow()
+    {
+        IServiceCollection? services = null;
+        IConfiguration configuration = CreateConfiguration();
+
+        Assert.Throws<ArgumentNullException>(() => services!.AddMEnterpriseGovernance(configuration));
+    }
+
+    [Fact]
+    public void AddMEnterpriseGovernance_WhenConfigurationIsNull_ShouldThrow()
+    {
+        ServiceCollection services = new();
+        IConfiguration? configuration = null;
+
+        Assert.Throws<ArgumentNullException>(() => services.AddMEnterpriseGovernance(configuration!));
+    }
+
     private static IConfiguration CreateConfiguration(Dictionary<string, string?>? overrides = null)
     {
         Dictionary<string, string?> values = new()
