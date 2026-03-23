@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Diagnostics;
 using Xunit;
 
 namespace Muonroi.BuildingBlock.IntegrationTests;
@@ -201,20 +202,29 @@ public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicat
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act - First request (cache miss)
-        var firstRequestStart = DateTime.UtcNow;
+        Stopwatch stopwatch = Stopwatch.StartNew();
         var firstResponse = await _client.GetAsync("/api/protected/read");
-        var firstRequestDuration = DateTime.UtcNow - firstRequestStart;
+        stopwatch.Stop();
+        TimeSpan firstRequestDuration = stopwatch.Elapsed;
 
-        // Second request (cache hit)
-        var secondRequestStart = DateTime.UtcNow;
-        var secondResponse = await _client.GetAsync("/api/protected/read");
-        var secondRequestDuration = DateTime.UtcNow - secondRequestStart;
+        // Subsequent requests should benefit from the cached permission result.
+        List<TimeSpan> cachedDurations = [];
+        HttpResponseMessage? lastCachedResponse = null;
+        for (int i = 0; i < 3; i++)
+        {
+            stopwatch.Restart();
+            lastCachedResponse = await _client.GetAsync("/api/protected/read");
+            stopwatch.Stop();
+            cachedDurations.Add(stopwatch.Elapsed);
+        }
 
         // Assert
         firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        secondResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        // Second request should be faster or similar (cached)
-        secondRequestDuration.Should().BeLessThanOrEqualTo(firstRequestDuration * 2);
+        lastCachedResponse.Should().NotBeNull();
+        lastCachedResponse!.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        TimeSpan averageCachedDuration = TimeSpan.FromTicks((long)cachedDurations.Average(x => x.Ticks));
+        averageCachedDuration.Should().BeLessThanOrEqualTo(firstRequestDuration + TimeSpan.FromMilliseconds(50));
     }
 
     /// <summary>

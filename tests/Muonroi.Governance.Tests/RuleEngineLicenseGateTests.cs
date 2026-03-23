@@ -1,4 +1,3 @@
-
 namespace Muonroi.Governance.Tests;
 
 public class RuleEngineLicenseGateTests

@@ -1,3 +1,5 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.Caching.Redis.Tests;
 
 public class RedisExtensionsTests
@@ -91,6 +93,50 @@ public class RedisExtensionsTests
     }
 
     [Fact]
+    public async Task GetCacheAsync_NonGeneric_Returns_String_Value()
+    {
+        InMemoryDistributedCache cache = new();
+
+        await cache.SetCacheAsync("plain", "text-value", 1);
+        string? result = await cache.GetCacheAsync("plain");
+
+        result.Should().Be("\"text-value\"");
+    }
+
+    [Fact]
+    public async Task SetCacheAsync_WithNullExpiration_StillStoresValue()
+    {
+        InMemoryDistributedCache cache = new();
+
+        await cache.SetCacheAsync("key-null-exp", "value", absoluteExpirationInMinutes: null);
+        string? result = await cache.GetCacheAsync<string>("key-null-exp");
+
+        result.Should().Be("value");
+    }
+
+    [Fact]
+    public async Task RemoveAsync_Removes_Existing_Value()
+    {
+        InMemoryDistributedCache cache = new();
+        await cache.SetCacheAsync("remove-key", "to-delete");
+
+        await cache.RemoveAsync("remove-key");
+        string? result = await cache.GetCacheAsync<string>("remove-key");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WithInMemoryCache_Completes()
+    {
+        InMemoryDistributedCache cache = new();
+
+        Func<Task> action = async () => await cache.RefreshAsync("refresh-key");
+
+        await action.Should().NotThrowAsync();
+    }
+
+    [Fact]
     public async Task GetOrSetAsync_Uses_Cached_Value_When_Available()
     {
         InMemoryDistributedCache cache = new();
@@ -127,6 +173,43 @@ public class RedisExtensionsTests
         result.Should().Be("value");
         cached.Should().Be("value");
         calls.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetOrSetAsync_WhenFactoryReturnsNull_ReturnsNull_WithoutCaching()
+    {
+        InMemoryDistributedCache cache = new();
+
+        string? result = await cache.GetOrSetAsync<string>("null-key", () => Task.FromResult<string?>(null));
+        string? cached = await cache.GetCacheAsync<string>("null-key");
+
+        result.Should().BeNull();
+        cached.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetOrSetAsync_WhenCachedPayloadIsWhitespace_UsesFactory()
+    {
+        InMemoryDistributedCache cache = new();
+        await cache.SetAsync(
+            DistributedCacheKeyBuilder.Build("whitespace-key"),
+            Encoding.UTF8.GetBytes("   "),
+            new DistributedCacheEntryOptions(),
+            CancellationToken.None);
+
+        string? result = await cache.GetOrSetAsync("whitespace-key", () => Task.FromResult<string?>("fresh"));
+
+        result.Should().Be("fresh");
+    }
+
+    [Fact]
+    public async Task GetOrSetAsync_NullFactory_Throws()
+    {
+        InMemoryDistributedCache cache = new();
+
+        Func<Task> action = async () => await cache.GetOrSetAsync<string>("bad-factory", null!);
+
+        await action.Should().ThrowAsync<ArgumentNullException>();
     }
 
     [Fact]
@@ -168,6 +251,28 @@ public class RedisExtensionsTests
     }
 
     [Fact]
+    public async Task RefreshAsync_Propagates_Backend_Exception()
+    {
+        OperationThrowingDistributedCache cache = new(throwOnRefresh: true);
+
+        Func<Task> action = async () => await cache.RefreshAsync("k", licenseState: DistributedCacheLicensed);
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("refresh failed");
+    }
+
+    [Fact]
+    public async Task RemoveAsync_Propagates_Backend_Exception()
+    {
+        OperationThrowingDistributedCache cache = new(throwOnRemove: true);
+
+        Func<Task> action = async () => await cache.RemoveAsync("k", licenseState: DistributedCacheLicensed);
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("remove failed");
+    }
+
+    [Fact]
     public void AddRedis_Registers_Services()
     {
         ServiceCollection services = [];
@@ -189,6 +294,79 @@ public class RedisExtensionsTests
     }
 
     [Fact]
+    public void AddRedis_WhenDisabled_DoesNotRegisterRedisServices()
+    {
+        ServiceCollection services = [];
+        services.AddSingleton(DistributedCacheLicensed);
+        IConfiguration configuration = new ConfigurationBuilder().Build();
+        RedisConfigs configs = new()
+        {
+            Host = "localhost",
+            Port = "6379",
+            Enable = false
+        };
+
+        IServiceCollection returned = services.AddRedis(configuration, configs);
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        returned.Should().BeSameAs(services);
+        provider.GetService<IDistributedCache>().Should().BeNull();
+        provider.GetService<RedisClient>().Should().BeNull();
+    }
+
+    [Fact]
+    public void AddRedis_UsesConfigurationOverrides_AndSupportsPasswordlessRedis()
+    {
+        ServiceCollection services = [];
+        services.AddSingleton(DistributedCacheLicensed);
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [$"{RedisConfigs.DefaultSectionName}:Host"] = "cache.internal",
+                [$"{RedisConfigs.DefaultSectionName}:Port"] = "6380",
+                [$"{RedisConfigs.DefaultSectionName}:Password"] = "",
+                [$"{RedisConfigs.DefaultSectionName}:KeyPrefix"] = "tenant-cache"
+            })
+            .Build();
+        RedisConfigs configs = new()
+        {
+            Host = "localhost",
+            Port = "6379",
+            Password = "pwd",
+            KeyPrefix = "old-prefix",
+            Enable = true
+        };
+
+        services.AddRedis(configuration, configs);
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        configs.Host.Should().Be("cache.internal");
+        configs.Port.Should().Be("6380");
+        configs.Password.Should().Be("pwd");
+        configs.KeyPrefix.Should().Be("tenant-cache");
+        provider.GetRequiredService<RedisClient>().Should().NotBeNull();
+    }
+
+    [Fact]
+    public void AddRedis_Throws_WhenHostOrPortMissing()
+    {
+        ServiceCollection services = [];
+        services.AddSingleton(DistributedCacheLicensed);
+        IConfiguration configuration = new ConfigurationBuilder().Build();
+        RedisConfigs configs = new()
+        {
+            Host = "",
+            Port = "6379",
+            Enable = true
+        };
+
+        Action action = () => services.AddRedis(configuration, configs);
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Host and Port are required*");
+    }
+
+    [Fact]
     public void AddRedis_Throws_When_Configuration_Is_Null()
     {
         ServiceCollection services = [];
@@ -204,5 +382,23 @@ public class RedisExtensionsTests
         Action action = () => services.AddRedis(null!, configs);
 
         action.Should().Throw<ArgumentNullException>();
+    }
+
+    private sealed class OperationThrowingDistributedCache(
+        bool throwOnRemove = false,
+        bool throwOnRefresh = false)
+        : IDistributedCache
+    {
+        public byte[]? Get(string key) => null;
+        public Task<byte[]?> GetAsync(string key, CancellationToken token = default) => Task.FromResult<byte[]?>(null);
+        public void Refresh(string key) { }
+        public Task RefreshAsync(string key, CancellationToken token = default)
+            => throwOnRefresh ? throw new InvalidOperationException("refresh failed") : Task.CompletedTask;
+        public void Remove(string key) { }
+        public Task RemoveAsync(string key, CancellationToken token = default)
+            => throwOnRemove ? throw new InvalidOperationException("remove failed") : Task.CompletedTask;
+        public void Set(string key, byte[] value, DistributedCacheEntryOptions options) { }
+        public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default)
+            => Task.CompletedTask;
     }
 }

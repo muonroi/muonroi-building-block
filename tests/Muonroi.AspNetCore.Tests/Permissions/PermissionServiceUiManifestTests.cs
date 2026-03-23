@@ -6,7 +6,6 @@ using Muonroi.Core.Abstractions.Models;
 using Muonroi.Core.Abstractions.Models.Common;
 using Muonroi.Core.Abstractions.Response;
 using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
-using Muonroi.Governance.License;
 using Muonroi.Tenancy.Core;
 using NSubstitute;
 using Xunit;

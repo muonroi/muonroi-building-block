@@ -11,6 +11,7 @@ using Xunit;
 using Moq;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Governance.License;
+using Muonroi.Governance.Abstractions.License;
 
 public class RegistrationTests
 {
