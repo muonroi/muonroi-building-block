@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Governance.Enterprise.License;
 using Muonroi.Tenancy.Core;
 
 namespace Muonroi.Governance.Tests;

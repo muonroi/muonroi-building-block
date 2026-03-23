@@ -1,3 +1,5 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class MDbContextTests

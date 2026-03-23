@@ -33,6 +33,15 @@ public class RoutingDecisionTests
         decision.Reason.Should().Be("tenant override");
     }
 
+    [Fact]
+    public void RedirectTo_Without_Reason_Should_Leave_Reason_Null()
+    {
+        IRoutingDecision decision = RoutingDecision.RedirectTo("queue://alt");
+
+        decision.TargetAddress.Should().Be("queue://alt");
+        decision.Reason.Should().BeNull();
+    }
+
     /// <summary>
     /// Ensures that dead-letter decisions set the reject flag.
     /// </summary>
@@ -44,6 +53,24 @@ public class RoutingDecisionTests
         decision.TargetAddress.Should().BeNull();
         decision.Reject.Should().BeTrue();
         decision.Reason.Should().Be("policy rejected");
+    }
+
+    [Fact]
+    public void RoutingDecision_Record_Equality_Works()
+    {
+        RoutingDecision a = new(TargetAddress: "x");
+        RoutingDecision b = new(TargetAddress: "x");
+
+        a.Should().Be(b);
+    }
+
+    [Fact]
+    public void RoutingDecision_Record_Inequality_Works()
+    {
+        RoutingDecision a = new(TargetAddress: "x");
+        RoutingDecision b = new(TargetAddress: "y");
+
+        a.Should().NotBe(b);
     }
 
     /// <summary>

@@ -3,6 +3,7 @@ namespace Muonroi.Observability.Tests;
 using System.Diagnostics;
 using System.Collections.Generic;
 using Muonroi.Observability;
+using Muonroi.Governance.Abstractions.License;
 
 public class OtelTests
 {

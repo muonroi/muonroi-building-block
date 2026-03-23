@@ -41,7 +41,7 @@ public sealed class OrderContext
 """;
 
         using TempProjectContext project = TempProjectContext.Create(handler, runtimeJson);
-        string originalTarget = File.ReadAllText(project.HandlerPath);
+        string originalTarget = await File.ReadAllTextAsync(project.HandlerPath);
 
         CliRunResult result = await CliProcess.RunAsync(
             "merge",
@@ -57,7 +57,7 @@ public sealed class OrderContext
         Assert.NotEqual(0, result.ExitCode);
         Assert.Contains("Compile check failed", result.Combined, StringComparison.OrdinalIgnoreCase);
 
-        string currentTarget = File.ReadAllText(project.HandlerPath);
+        string currentTarget = await File.ReadAllTextAsync(project.HandlerPath);
         Assert.Equal(originalTarget, currentTarget);
 
         string generated = project.PathInRoot(Path.Combine("src", "OrderHandler.Generated.cs"));
@@ -123,7 +123,7 @@ public sealed class OrderContext
         Assert.True(File.Exists(invoiceGenerated));
         Assert.False(File.Exists(orderGenerated));
 
-        string generatedText = File.ReadAllText(invoiceGenerated);
+        string generatedText = await File.ReadAllTextAsync(invoiceGenerated);
         Assert.Contains("public partial class InvoiceHandler", generatedText);
         Assert.Contains("MExtractAsRule(\"INV-001\"", generatedText);
     }
@@ -189,7 +189,7 @@ public sealed class OrderContext
         Assert.Single(generatedFiles);
         Assert.EndsWith("INV_001.g.cs", generatedFiles[0], StringComparison.OrdinalIgnoreCase);
 
-        using JsonDocument json = JsonDocument.Parse(File.ReadAllText(exportJson));
+        using JsonDocument json = JsonDocument.Parse(await File.ReadAllTextAsync(exportJson));
         JsonElement root = json.RootElement;
 
         Assert.Equal(5, root.GetProperty("version").GetInt32());
@@ -262,10 +262,10 @@ public sealed class CustomerInfo
         string generated = project.PathInRoot(Path.Combine("src", "OrderHandler.Generated.cs"));
         Assert.True(File.Exists(generated));
 
-        string targetText = File.ReadAllText(project.HandlerPath);
+        string targetText = await File.ReadAllTextAsync(project.HandlerPath);
         Assert.Contains("partial class OrderHandler", targetText);
 
-        string generatedText = File.ReadAllText(generated);
+        string generatedText = await File.ReadAllTextAsync(generated);
         Assert.Contains("MExtractAsRule(\"VAL-OK-001\"", generatedText);
         Assert.Contains("ctx.Order.Total > 100", generatedText);
     }

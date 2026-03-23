@@ -134,6 +134,106 @@ public sealed class RuleGraphRuntimeAdapterTests : IDisposable
     }
 
     [Fact]
+    public async Task ExecuteAsync_SubFlowShouldApplyInputTransforms_AndUseChildPathWhenParentPathEmpty()
+    {
+        await using ServiceProvider provider = BuildProvider();
+        await SaveWorkflowAsync(provider, "TransformChildFlow", """
+        {
+          "workflowName": "TransformChildFlow",
+          "flowGraph": {
+            "nodes": [
+              { "id": "trigger", "type": "trigger", "data": {} },
+              { "id": "child-compiled", "type": "action", "ruleCode": "CHILD_TRANSFORM", "data": {} },
+              { "id": "end", "type": "end", "data": {} }
+            ],
+            "edges": [
+              { "id": "e1", "source": "trigger", "target": "child-compiled" },
+              { "id": "e2", "source": "child-compiled", "target": "end" }
+            ]
+          }
+        }
+        """);
+        await SaveWorkflowAsync(provider, "ParentTransformFlow", """
+        {
+          "workflowName": "ParentTransformFlow",
+          "flowGraph": {
+            "nodes": [
+              { "id": "trigger", "type": "trigger", "data": {} },
+              {
+                "id": "subflow",
+                "type": "sub-flow",
+                "data": {
+                  "subFlowConfig": {
+                    "targetFlowCode": "TransformChildFlow",
+                    "inputMappings": [
+                      { "sourcePath": "Amount", "targetPath": "InputAmount", "transformExpression": "number(amount)" },
+                      { "sourcePath": "ShouldApprove", "targetPath": "ApprovalFlag", "transformExpression": "boolean(flag)" }
+                    ],
+                    "outputMappings": [
+                      { "childPath": "TransformEcho", "parentPath": "", "exposeToParent": true }
+                    ]
+                  }
+                }
+              },
+              { "id": "end", "type": "end", "data": {} }
+            ],
+            "edges": [
+              { "id": "e1", "source": "trigger", "target": "subflow" },
+              { "id": "e2", "source": "subflow", "target": "end" }
+            ]
+          }
+        }
+        """);
+
+        using IServiceScope scope = provider.CreateScope();
+        RulesEngineService service = scope.ServiceProvider.GetRequiredService<RulesEngineService>();
+
+        FactBag facts = await service.ExecuteAsync("ParentTransformFlow", new TransformParentContext { Amount = "12.5", ShouldApprove = "true" });
+
+        facts.Get<string>("TransformEcho").Should().Be("amount:12.5|approved:True");
+    }
+
+    [Fact]
+    public async Task ExecuteWithResultAsync_SubFlowMissingChildWorkflow_ShouldReturnFailure()
+    {
+        await using ServiceProvider provider = BuildProvider();
+        await SaveWorkflowAsync(provider, "ParentMissingChildFlow", """
+        {
+          "workflowName": "ParentMissingChildFlow",
+          "flowGraph": {
+            "nodes": [
+              { "id": "trigger", "type": "trigger", "data": {} },
+              {
+                "id": "subflow",
+                "type": "sub-flow",
+                "data": {
+                  "subFlowConfig": {
+                    "targetFlowCode": "MissingChildFlow",
+                    "inputMappings": [],
+                    "outputMappings": []
+                  }
+                }
+              },
+              { "id": "end", "type": "end", "data": {} }
+            ],
+            "edges": [
+              { "id": "e1", "source": "trigger", "target": "subflow" },
+              { "id": "e2", "source": "subflow", "target": "end" }
+            ]
+          }
+        }
+        """);
+
+        using IServiceScope scope = provider.CreateScope();
+        RulesEngineService service = scope.ServiceProvider.GetRequiredService<RulesEngineService>();
+
+        OrchestratorResult result = await service.ExecuteWithResultAsync("ParentMissingChildFlow", new ParentContext { Value = "ABC123" });
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.Contains("MissingChildFlow", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task ExecuteWithResultAsync_ShouldPreserveFactsOnFailure()
     {
         await using ServiceProvider provider = BuildProvider();
@@ -439,6 +539,7 @@ public sealed class RuleGraphRuntimeAdapterTests : IDisposable
         services.AddScoped<IRule<OrderedContext>, RequiresSeedRule>();
         services.AddScoped<IRule<OrderedContext>, SeedRule>();
         services.AddScoped<IRule<ChildContext>, ChildCompiledRule>();
+        services.AddScoped<IRule<TransformChildContext>, TransformChildRule>();
 
         return services.BuildServiceProvider();
     }
@@ -462,6 +563,18 @@ public sealed class RuleGraphRuntimeAdapterTests : IDisposable
     private sealed class ChildContext
     {
         public string Input { get; set; } = string.Empty;
+    }
+
+    private sealed class TransformParentContext
+    {
+        public string Amount { get; set; } = string.Empty;
+        public string ShouldApprove { get; set; } = string.Empty;
+    }
+
+    private sealed class TransformChildContext
+    {
+        public decimal InputAmount { get; set; }
+        public bool ApprovalFlag { get; set; }
     }
 
     private sealed class GraphCompiledRule : IRule<GraphContext>
@@ -626,6 +739,17 @@ public sealed class RuleGraphRuntimeAdapterTests : IDisposable
         public Task<RuleResult> EvaluateAsync(ChildContext ctx, FactBag facts, CancellationToken ct)
         {
             facts.Set("ChildEcho", $"child:{ctx.Input}");
+            return Task.FromResult(RuleResult.Passed());
+        }
+    }
+
+    private sealed class TransformChildRule : IRule<TransformChildContext>
+    {
+        public string Code => "CHILD_TRANSFORM";
+
+        public Task<RuleResult> EvaluateAsync(TransformChildContext ctx, FactBag facts, CancellationToken ct)
+        {
+            facts.Set("TransformEcho", $"amount:{ctx.InputAmount}|approved:{ctx.ApprovalFlag}");
             return Task.FromResult(RuleResult.Passed());
         }
     }

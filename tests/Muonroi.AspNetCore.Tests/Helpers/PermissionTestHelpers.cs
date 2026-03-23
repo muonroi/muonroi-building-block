@@ -5,7 +5,6 @@ using Muonroi.AspNetCore.Services;
 using Muonroi.Data.EntityFrameworkCore.Entity;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.Models;
-using Muonroi.Governance.License;
 using Muonroi.Mediator.Mediator.Interfaces;
 
 // MBB001-exempt: test helper — cannot inject IMDateTimeService in test fixtures

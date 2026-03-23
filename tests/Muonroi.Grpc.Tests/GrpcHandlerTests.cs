@@ -1,5 +1,6 @@
 namespace Muonroi.Grpc.Tests;
 
+using Muonroi.Governance.Abstractions.License;
 using ServerGrpcServiceOptions = global::Grpc.AspNetCore.Server.GrpcServiceOptions;
 
 public class GrpcHandlerTests
