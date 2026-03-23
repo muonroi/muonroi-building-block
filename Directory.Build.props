@@ -21,6 +21,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <!-- Exclude from code coverage for specific projects -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Muonroi.Rules' or '$(MSBuildProjectName)' == 'Muonroi.BuildingBlock.IntegrationTests' or '$(MSBuildProjectName)' == 'RuleSourceGen.Api'">
+    <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
+  </ItemGroup>
+
   <PropertyGroup>
     <IsMuonroiTestProject Condition="'$(IsTestProject)' == 'true'">true</IsMuonroiTestProject>
     <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectName)').Contains('.Tests'))">true</IsMuonroiTestProject>
@@ -34,6 +39,22 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
+
+  <!-- Common Test Dependencies -->
+  <ItemGroup Condition="'$(IsMuonroiTestProject)' == 'true'">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="6.12.2" />
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+  </ItemGroup>
 
   <ItemGroup Condition="'$(IsCommercialPackage)' != 'true'">
     <None Include="$(MSBuildThisFileDirectory)LICENSE-APACHE"
