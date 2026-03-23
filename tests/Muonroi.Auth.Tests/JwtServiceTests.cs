@@ -17,6 +17,10 @@ public class JwtServiceTests
     {
         public DateTime UtcNow() => DateTime.UtcNow;
         public DateTime Now() => DateTime.Now;
+        public DateTime Today() => Now().Date;
+        public DateTime UtcToday() => UtcNow().Date;
+        public double NowTs() => DateTimeOffset.Now.ToUnixTimeSeconds();
+        public double UtcNowTs() => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
     }
 
     private static JwtService CreateService(

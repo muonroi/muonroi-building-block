@@ -12,7 +12,7 @@ public class FlowTests
             RedirectUri = "myapp://callback",
             Scopes = ["openid", "profile"]
         };
-        PkceClient client = new(options, new MJsonSerializeService());
+        PkceClient client = new(options);
 
         AuthorizationRequest request = client.CreateAuthorizationRequest();
 
@@ -35,7 +35,7 @@ public class FlowTests
             RedirectUri = "myapp://callback",
             Scopes = ["openid"]
         };
-        PkceClient client = new(options, new MJsonSerializeService());
+        PkceClient client = new(options);
 
         Func<Task> action = () => client.RedeemCodeForTokenAsync("code", "verifier", "https://wrong", new HttpClient(new StubHandler()));
 
@@ -52,7 +52,7 @@ public class FlowTests
             RedirectUri = "myapp://callback",
             Scopes = ["openid"]
         };
-        PkceClient client = new(options, new MJsonSerializeService());
+        PkceClient client = new(options);
 
         TokenResponse token = await client.RefreshTokenAsync("old", new HttpClient(new StubHandler("{\"access_token\":\"a2\",\"refresh_token\":\"new\"}")));
 

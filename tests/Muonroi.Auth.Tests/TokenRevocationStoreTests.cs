@@ -12,6 +12,10 @@ public class TokenRevocationStoreTests
         public DateTime CurrentTime { get; set; } = DateTime.UtcNow;
         public DateTime UtcNow() => CurrentTime;
         public DateTime Now() => CurrentTime;
+        public DateTime Today() => CurrentTime.Date;
+        public DateTime UtcToday() => CurrentTime.Date;
+        public double NowTs() => new DateTimeOffset(CurrentTime).ToUnixTimeSeconds();
+        public double UtcNowTs() => new DateTimeOffset(CurrentTime).ToUnixTimeSeconds();
     }
 
     [Fact]
