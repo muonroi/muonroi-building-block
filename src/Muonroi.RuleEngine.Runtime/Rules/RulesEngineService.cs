@@ -136,9 +136,26 @@ public sealed class RulesEngineService(
     /// <param name="context">Execution context.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The orchestrator result with facts and errors.</returns>
+    public Task<OrchestratorResult> ExecuteWithResultAsync<TContext>(
+        string workflowName,
+        TContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteWithResultAsync(workflowName, context, initialFacts: null, cancellationToken);
+    }
+
+    /// <summary>Executes a workflow with detailed result and optional initial facts seeded into the FactBag.</summary>
+    /// <typeparam name="TContext">Type of the execution context.</typeparam>
+    /// <param name="workflowName">The workflow name to execute.</param>
+    /// <param name="context">The context carrying data for rule evaluation.</param>
+    /// <param name="initialFacts">Optional initial facts to seed into the FactBag before rule execution.
+    /// Useful for dry-run where Liquid/FEEL templates need access to the input data (e.g., command.header).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Detailed execution result.</returns>
     public async Task<OrchestratorResult> ExecuteWithResultAsync<TContext>(
         string workflowName,
         TContext context,
+        IReadOnlyDictionary<string, object?>? initialFacts,
         CancellationToken cancellationToken = default)
     {
         EnsureRuleEngineFeature();
@@ -157,7 +174,7 @@ public sealed class RulesEngineService(
                 "Executing workflow '{WorkflowName}' using flow-graph dispatch for context '{ContextType}'.",
                 workflowName,
                 typeof(TContext).FullName ?? typeof(TContext).Name);
-            return await ExecuteFlowGraphWithResultAsync(workflowName, json, context, cancellationToken);
+            return await ExecuteFlowGraphWithResultAsync(workflowName, json, context, initialFacts, cancellationToken);
         }
 
         _log?.Info(
@@ -932,6 +949,7 @@ public sealed class RulesEngineService(
             workflowName,
             graphJson,
             context,
+            initialFacts: null,
             cancellationToken);
 
         if (execution.IsSuccess)
@@ -954,7 +972,8 @@ public sealed class RulesEngineService(
         string workflowName,
         string graphJson,
         TContext context,
-        CancellationToken cancellationToken)
+        IReadOnlyDictionary<string, object?>? initialFacts = null,
+        CancellationToken cancellationToken = default)
     {
         _ = workflowName;
         IReadOnlyList<RuleGraphEntry> entries = _graphParser!.Parse(graphJson);
@@ -983,6 +1002,7 @@ public sealed class RulesEngineService(
         return await orchestrator.ExecuteWithResultAsync(
             context,
             ExecutionMode.AllOrNothing,
+            initialFacts: initialFacts,
             cancellationToken: cancellationToken);
     }
 
