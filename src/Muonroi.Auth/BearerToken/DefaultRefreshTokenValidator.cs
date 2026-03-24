@@ -1,6 +1,6 @@
-using Muonroi.Core.Abstractions.Configuration;
-using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
-using Muonroi.Logging.Abstractions;
+
+
+
 
 namespace Muonroi.Auth.BearerToken;
 
@@ -27,15 +27,12 @@ public class DefaultRefreshTokenValidator<TDbContext, TPermission>(
             authOptions,
             tokenInfo);
 
-        if (refresh == null)
-        {
-            return null;
-        }
-
-        return new MAuthenticateInfoContext(true)
-        {
-            CurrentUserGuid = refresh.CreatorUserId.ToString(),
-            TokenValidityKey = refresh.TokenValidityKey ?? string.Empty
-        };
+        return refresh == null
+            ? null
+            : new MAuthenticateInfoContext(true)
+            {
+                CurrentUserGuid = refresh.CreatorUserId.ToString(),
+                TokenValidityKey = refresh.TokenValidityKey ?? string.Empty
+            };
     }
 }

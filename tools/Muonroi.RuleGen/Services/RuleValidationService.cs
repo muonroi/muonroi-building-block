@@ -28,7 +28,11 @@ internal static class RuleValidationService
             }
         }
 
-        Dictionary<string, ExtractedRuleDefinition> byCode = rules.ToDictionary(x => x.Code, StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, ExtractedRuleDefinition> byCode = new(StringComparer.OrdinalIgnoreCase);
+        foreach (ExtractedRuleDefinition rule in rules)
+        {
+            byCode.TryAdd(rule.Code, rule);
+        }
         foreach (ExtractedRuleDefinition rule in rules)
         {
             foreach (string dep in rule.DependsOn)
@@ -46,10 +50,11 @@ internal static class RuleValidationService
 
     private static void DetectCycles(IReadOnlyList<ExtractedRuleDefinition> rules, ValidationReport report)
     {
-        Dictionary<string, IReadOnlyList<string>> graph = rules.ToDictionary(
-            x => x.Code,
-            x => x.DependsOn,
-            StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, IReadOnlyList<string>> graph = new(StringComparer.OrdinalIgnoreCase);
+        foreach (ExtractedRuleDefinition rule in rules)
+        {
+            graph.TryAdd(rule.Code, rule.DependsOn);
+        }
 
         HashSet<string> visiting = new(StringComparer.OrdinalIgnoreCase);
         HashSet<string> visited = new(StringComparer.OrdinalIgnoreCase);

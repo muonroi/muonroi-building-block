@@ -21,3 +21,6 @@ global using System.Security.Cryptography;
 global using System.Text;
 global using System.Text.Json;
 global using System.Threading.Tasks;
+global using Muonroi.Core.Abstractions.Configuration;
+global using Muonroi.Logging.Abstractions;
+global using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
