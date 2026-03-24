@@ -78,7 +78,37 @@ public abstract class MRuleFlowExecuteController(
         return Ok(response);
     }
 
-    private static object? NormalizeJsonElement(JsonElement element)
+    /// <summary>
+    /// Maps an <see cref="OrchestratorResult"/> to the FE-expected MDryRunResult response shape.
+    /// Consumer overrides of <see cref="ExecuteAsync"/> should call this to return consistent dry-run responses.
+    /// </summary>
+    /// <param name="result">The orchestrator result from real pipeline execution.</param>
+    /// <param name="elapsedMs">Execution time in milliseconds.</param>
+    /// <returns>An anonymous object matching the MDryRunResult TypeScript interface.</returns>
+    protected static object MapOrchestratorToMDryRunResponse(OrchestratorResult result, long elapsedMs)
+    {
+        return new
+        {
+            isSuccess = result.IsSuccess,
+            errors = result.Errors,
+            results = result.RuleResults.Select(kvp => new
+            {
+                ruleName = kvp.Key,
+                isSuccess = kvp.Value.IsSuccess,
+                evaluationResult = kvp.Value.IsSuccess,
+                errors = kvp.Value.Errors
+            }),
+            factBag = result.Facts.AsReadOnly()
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase),
+            executionTimeMs = elapsedMs
+        };
+    }
+
+    /// <summary>
+    /// Normalizes a <see cref="JsonElement"/> input into CLR primitives for the fact bag.
+    /// Consumer overrides can use this to parse input JSON before building typed contexts.
+    /// </summary>
+    protected static object? NormalizeJsonElement(JsonElement element)
     {
         return element.ValueKind switch
         {
