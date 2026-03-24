@@ -17,6 +17,7 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.1" />
     <PackageReference Include="Scriban" Version="6.6.0" />
   </ItemGroup>
   <ItemGroup>
