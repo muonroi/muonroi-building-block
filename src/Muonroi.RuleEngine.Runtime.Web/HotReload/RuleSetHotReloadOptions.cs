@@ -11,9 +11,19 @@ public sealed class RuleSetHotReloadOptions
     public string? ControlPlaneUrl { get; set; }
 
     /// <summary>
-    /// Optional tenant group to subscribe to after connecting.
+    /// Subscribe to a single tenant group. Use for single-tenant consumers only.
+    /// For multi-tenant consumers, set <see cref="SubscribeAllTenants"/> to true instead.
+    /// When both are set, SubscribeAllTenants takes precedence.
     /// </summary>
     public string? TenantId { get; set; }
+
+    /// <summary>
+    /// When true, subscribes to the global all-tenants group to receive events for ALL tenants.
+    /// Use for multi-tenant consumer apps that serve multiple tenants.
+    /// The handler receives <see cref="Rules.RuleSetChangeEvent"/> with TenantId per event,
+    /// so the consumer can invalidate the correct tenant's cache.
+    /// </summary>
+    public bool SubscribeAllTenants { get; set; }
 
     /// <summary>
     /// Optional bearer token factory used when the hub requires authentication.

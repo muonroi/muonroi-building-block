@@ -19,6 +19,17 @@ public sealed class RuleSetChangeHub : Hub
         return Groups.AddToGroupAsync(Context.ConnectionId, BuildTenantGroup(normalizedTenantId));
     }
 
+    /// <summary>
+    /// Joins the caller to the global all-tenants group.
+    /// Consumer apps serving multiple tenants use this to receive events for ALL tenants
+    /// without needing to know tenant IDs upfront.
+    /// </summary>
+    /// <returns>A task representing the operation.</returns>
+    public Task JoinAllTenantsGroup()
+    {
+        return Groups.AddToGroupAsync(Context.ConnectionId, AllTenantsGroup);
+    }
+
     /// <summary>Removes the caller from a tenant-scoped ruleset change group.</summary>
     /// <param name="tenantId">Tenant identifier.</param>
     /// <returns>A task representing the operation.</returns>
@@ -32,6 +43,9 @@ public sealed class RuleSetChangeHub : Hub
 
         return Groups.RemoveFromGroupAsync(Context.ConnectionId, BuildTenantGroup(normalizedTenantId));
     }
+
+    /// <summary>The global group name for clients that want ALL tenant events.</summary>
+    public const string AllTenantsGroup = "all-tenants";
 
     /// <summary>Builds the SignalR group name for a tenant.</summary>
     /// <param name="tenantId">Tenant identifier.</param>
