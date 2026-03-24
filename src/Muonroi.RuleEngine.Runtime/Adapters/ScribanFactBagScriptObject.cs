@@ -24,12 +24,33 @@ internal sealed class ScribanFactBagScriptObject : ScriptObject
         return value switch
         {
             null => null,
+            string s => s,
+            bool or int or long or float or double or decimal => value,
             JsonElement jsonElement => ConvertJsonElement(jsonElement),
             IDictionary<string, object?> dict => ConvertDictionary(dict),
             IReadOnlyDictionary<string, object?> roDict => ConvertReadOnlyDictionary(roDict),
-            IEnumerable<object?> list when value is not string => ConvertList(list),
-            _ => value
+            IEnumerable<object?> list => ConvertList(list),
+            _ => ConvertPoco(value)
         };
+    }
+
+    private static ScriptObject ConvertPoco(object obj)
+    {
+        ScriptObject result = new();
+        foreach (System.Reflection.PropertyInfo prop in obj.GetType()
+            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            try
+            {
+                result[NormalizeKey(prop.Name)] = ConvertValue(prop.GetValue(obj));
+            }
+            catch
+            {
+                // skip inaccessible properties
+            }
+        }
+
+        return result;
     }
 
     private static object? ConvertJsonElement(JsonElement element)
@@ -99,8 +120,10 @@ internal sealed class ScribanFactBagScriptObject : ScriptObject
 
     private static string NormalizeKey(string key)
     {
-        // Scriban uses snake_case by default; preserve original keys
-        // by replacing dots with underscores (FactBag nested keys like "order.total")
-        return key.Replace('.', '_');
+        // Scriban member access is case-sensitive by default.
+        // Liquid templates use lowercase (e.g., {{command.header.orderId}}).
+        // FactBag keys are already lowercase; context projector properties are PascalCase.
+        // Normalize to lowercase + replace dots so both sources match template expectations.
+        return key.Replace('.', '_').ToLowerInvariant();
     }
 }
