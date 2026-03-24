@@ -93,6 +93,13 @@ public sealed class RuleSetHotReloadClient(
 
     private async Task SubscribeTenantGroupAsync(HubConnection connection, CancellationToken cancellationToken)
     {
+        if (options.SubscribeAllTenants)
+        {
+            await connection.InvokeAsync("JoinAllTenantsGroup", cancellationToken);
+            logger?.Debug("[RuleSetHotReload] Subscribed to all-tenants group (multi-tenant mode).");
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(options.TenantId))
         {
             return;
