@@ -30,19 +30,33 @@ internal sealed class ScribanFactBagScriptObject : ScriptObject
             IDictionary<string, object?> dict => ConvertDictionary(dict),
             IReadOnlyDictionary<string, object?> roDict => ConvertReadOnlyDictionary(roDict),
             IEnumerable<object?> list => ConvertList(list),
-            _ => ConvertPoco(value)
+            _ => ConvertPoco(value, 0)
         };
     }
 
-    private static ScriptObject ConvertPoco(object obj)
+    private static ScriptObject ConvertPoco(object obj, int depth = 0)
     {
         ScriptObject result = new();
+        if (depth > 3) return result; // prevent stack overflow on deep/circular object graphs
+
         foreach (System.Reflection.PropertyInfo prop in obj.GetType()
             .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
         {
             try
             {
-                result[NormalizeKey(prop.Name)] = ConvertValue(prop.GetValue(obj));
+                object? val = prop.GetValue(obj);
+                result[NormalizeKey(prop.Name)] = val switch
+                {
+                    null => null,
+                    string s => s,
+                    bool or int or long or float or double or decimal => val,
+                    JsonElement je => ConvertJsonElement(je),
+                    IDictionary<string, object?> d => ConvertDictionary(d),
+                    IReadOnlyDictionary<string, object?> rod => ConvertReadOnlyDictionary(rod),
+                    IEnumerable<object?> list => ConvertList(list),
+                    _ when depth < 3 => ConvertPoco(val, depth + 1),
+                    _ => val.ToString()
+                };
             }
             catch
             {
