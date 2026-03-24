@@ -174,6 +174,31 @@ public sealed class FileRuleSetStore : IRuleSetStore
         return Task.FromResult(versions);
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<(int Version, string Status, bool IsActive, DateTimeOffset CreatedAt)>> GetVersionDetailsAsync(
+        string workflowName, int limit = 10, int offset = 0, CancellationToken cancellationToken = default)
+    {
+        string dir = GetWorkflowDirectory(workflowName);
+        if (!Directory.Exists(dir))
+            return [];
+
+        int? activeVersion = await TryGetActiveVersionFromDirectoryAsync(dir, cancellationToken);
+        var items = GetVersionsInternal(dir)
+            .OrderByDescending(v => v)
+            .Skip(offset)
+            .Take(limit)
+            .Select(v =>
+            {
+                string filePath = EnsureUnderRoot(Path.Combine(dir, $"v{v}.json"));
+                DateTimeOffset createdAt = File.Exists(filePath) ? new DateTimeOffset(File.GetLastWriteTimeUtc(filePath), TimeSpan.Zero) : DateTimeOffset.UtcNow;
+                bool isActive = activeVersion.HasValue && activeVersion.Value == v;
+                string status = isActive ? "Active" : "Superseded";
+                return (v, status, isActive, createdAt);
+            })
+            .ToList();
+        return items;
+    }
+
     /// <summary>Gets the active version for a workflow.</summary>
     /// <param name="workflowName">Workflow name.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
