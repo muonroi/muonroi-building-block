@@ -1,5 +1,6 @@
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Muonroi.RuleEngine.Proliferation.Brain;
 using Muonroi.RuleEngine.Proliferation.Models;
@@ -29,9 +30,26 @@ public class ProliferationWorkerTests
     private ProliferationWorker CreateWorker(
         IProliferationChangeNotifier? notifier = null,
         IFailureAnalyzer? failureAnalyzer = null,
-        IScenarioDeduplicator? dedup = null) =>
-        new(_store.Object, _executor.Object, _brain.Object, _options,
-            notifier: notifier, failureAnalyzer: failureAnalyzer, deduplicator: dedup);
+        IScenarioDeduplicator? dedup = null)
+    {
+        ServiceCollection services = new();
+        services.AddSingleton(_store.Object);
+        services.AddSingleton(_executor.Object);
+        services.AddSingleton(_brain.Object);
+        if (notifier is not null) services.AddSingleton(notifier);
+        if (failureAnalyzer is not null) services.AddSingleton(failureAnalyzer);
+        if (dedup is not null) services.AddSingleton(dedup);
+
+        ServiceProvider sp = services.BuildServiceProvider();
+        Mock<IServiceScopeFactory> scopeFactory = new();
+        scopeFactory.Setup(f => f.CreateScope()).Returns(() =>
+        {
+            IServiceScope scope = sp.CreateScope();
+            return scope;
+        });
+
+        return new ProliferationWorker(scopeFactory.Object, _options);
+    }
 
     [Fact]
     public async Task RunCycle_MaxTotalScenarios_SkipsCycle()
