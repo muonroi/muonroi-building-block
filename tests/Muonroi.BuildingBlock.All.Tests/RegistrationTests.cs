@@ -1,4 +1,3 @@
-namespace Muonroi.BuildingBlock.All.Tests;
 
 using System.Reflection;
 using System.Collections.Generic;
@@ -12,6 +11,8 @@ using Moq;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Governance.License;
 using Muonroi.Governance.Abstractions.License;
+
+namespace Muonroi.BuildingBlock.All.Tests;
 
 public class RegistrationTests
 {

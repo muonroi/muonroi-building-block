@@ -6,11 +6,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-
-  <ItemGroup>
-  </ItemGroup>
-
-  <ItemGroup>
+<ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 

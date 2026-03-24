@@ -30,7 +30,7 @@
     <IsMuonroiTestProject Condition="'$(IsTestProject)' == 'true'">true</IsMuonroiTestProject>
     <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectName)').Contains('.Tests'))">true</IsMuonroiTestProject>
     <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectName)').Contains('.Test'))">true</IsMuonroiTestProject>
-    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('\\tests\\'))">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('\tests\'))">true</IsMuonroiTestProject>
     <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('/tests/'))">true</IsMuonroiTestProject>
     <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == ''">false</IsMuonroiTestProject>
   </PropertyGroup>

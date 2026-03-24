@@ -8,11 +8,7 @@
   </PropertyGroup>
   <PropertyGroup>
   </PropertyGroup>
-
-  <ItemGroup>
-  </ItemGroup>
-
-  <ItemGroup>
+<ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.Bff\Muonroi.Bff.csproj" />
   </ItemGroup>
 

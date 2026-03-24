@@ -4,16 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.0.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.*" />
-    <PackageReference Include="coverlet.collector" Version="6.0.2" />
-  </ItemGroup>
-  <ItemGroup>
+<ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
   </ItemGroup>
 </Project>
