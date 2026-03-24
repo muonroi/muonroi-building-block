@@ -1475,8 +1475,18 @@ public sealed class RulesEngineService(
                     continue;
                 }
 
-                object? codeValue = candidateType.GetProperty(nameof(IRule<FactBagRuleContext>.Code))?.GetValue(candidate);
-                if (codeValue is not string code ||
+                string? code;
+                try
+                {
+                    object? codeValue = candidateType.GetProperty(nameof(IRule<FactBagRuleContext>.Code))?.GetValue(candidate);
+                    code = codeValue as string;
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (code is null ||
                     !string.Equals(code, entry.RuleCode, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;

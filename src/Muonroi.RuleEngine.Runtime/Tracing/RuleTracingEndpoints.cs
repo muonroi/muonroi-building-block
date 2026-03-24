@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Mvc;
+
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
 /// <summary>
@@ -17,7 +19,7 @@ public static class RuleTracingEndpoints
             async Task<IResult> (
                 string tenantId,
                 EnableRuleDebuggerRequest? body,
-                IRuleDebuggerModeService service,
+                [FromServices] IRuleDebuggerModeService service,
                 CancellationToken ct) =>
             {
                 int durationMinutes = body?.DurationMinutes ?? 30;
@@ -37,7 +39,7 @@ public static class RuleTracingEndpoints
 
         group.MapPost(
             "/{tenantId}/disable",
-            async Task<IResult> (string tenantId, IRuleDebuggerModeService service, CancellationToken ct) =>
+            async Task<IResult> (string tenantId, [FromServices] IRuleDebuggerModeService service, CancellationToken ct) =>
             {
                 await service.DisableAsync(tenantId, ct);
                 return Results.Ok(new { TenantId = tenantId, Enabled = false });
@@ -49,7 +51,7 @@ public static class RuleTracingEndpoints
                 string tenantId,
                 string? correlationId,
                 DateTimeOffset? from,
-                IRuleTraceStore store,
+                [FromServices] IRuleTraceStore store,
                 CancellationToken ct) =>
             {
                 IReadOnlyList<RuleTraceEntry> entries = await store.QueryAsync(tenantId, correlationId, from, ct);
