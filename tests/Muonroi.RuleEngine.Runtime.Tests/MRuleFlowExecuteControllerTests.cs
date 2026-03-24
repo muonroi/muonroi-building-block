@@ -12,6 +12,13 @@ namespace Muonroi.RuleEngine.Runtime.Tests;
 
 public sealed class MRuleFlowExecuteControllerTests
 {
+    // Concrete subclass for testing the abstract base controller
+    private sealed class TestableRuleFlowExecuteController(
+        RulesEngineService rulesEngineService,
+        IRuleDryRunService dryRunService,
+        ISystemExecutionContextAccessor executionContextAccessor)
+        : MRuleFlowExecuteController(rulesEngineService, dryRunService, executionContextAccessor);
+
     [Fact]
     public async Task ExecuteAsync_ShouldReturnNotFound_WhenRulesetDoesNotExist()
     {
@@ -21,7 +28,7 @@ public sealed class MRuleFlowExecuteControllerTests
             SystemExecutionContextAccessor accessor = new();
             RulesEngineService rulesEngineService = new(new FileRuleSetStore(root, executionContextAccessor: accessor), executionContextAccessor: accessor);
             RecordingRuleDryRunService dryRunService = new();
-            MRuleFlowExecuteController controller = new(rulesEngineService, dryRunService, accessor);
+            TestableRuleFlowExecuteController controller = new(rulesEngineService, dryRunService, accessor);
 
             IActionResult result = await controller.ExecuteAsync(
                 "wf-missing",
@@ -83,7 +90,7 @@ public sealed class MRuleFlowExecuteControllerTests
                 }
             };
 
-            MRuleFlowExecuteController controller = new(rulesEngineService, dryRunService, accessor);
+            TestableRuleFlowExecuteController controller = new(rulesEngineService, dryRunService, accessor);
             JsonElement inputFacts = JsonDocument.Parse(
                 """{"amount":10,"enabled":true,"items":[1,2],"profile":{"name":"Muonroi"}}""").RootElement.Clone();
 
