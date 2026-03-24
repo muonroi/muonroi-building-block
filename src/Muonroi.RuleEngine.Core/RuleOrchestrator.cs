@@ -277,9 +277,17 @@ public sealed class RuleOrchestrator<TContext>(
         TContext context,
         ExecutionMode executionMode = ExecutionMode.AllOrNothing,
         HookPoint? filterPoint = null,
+        IReadOnlyDictionary<string, object?>? initialFacts = null,
         CancellationToken cancellationToken = default)
     {
         FactBag facts = new();
+        if (initialFacts is not null)
+        {
+            foreach ((string key, object? value) in initialFacts)
+            {
+                facts.Set(key, value!);
+            }
+        }
         Dictionary<string, RuleResult> ruleResults = [];
         List<string> errors = [];
         List<string> compensationErrors = [];
