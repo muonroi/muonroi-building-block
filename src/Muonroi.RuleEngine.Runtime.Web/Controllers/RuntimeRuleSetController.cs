@@ -144,6 +144,7 @@ public sealed class RuntimeRuleSetController(
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Workflow summary after activation.</returns>
     [HttpPost("{workflow}/activate/{version:int}")]
+    [HttpPost("{workflow}/{version:int}/activate")]
     public async Task<IActionResult> Activate(
         string workflow,
         int version,
