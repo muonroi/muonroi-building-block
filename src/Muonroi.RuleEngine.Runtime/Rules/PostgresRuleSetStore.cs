@@ -186,6 +186,26 @@ public sealed class PostgresRuleSetStore(
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<(int Version, string Status, bool IsActive, DateTimeOffset CreatedAt)>> GetVersionDetailsAsync(
+        string workflowName, int limit = 10, int offset = 0, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
+        string tenantId = ResolveTenantId();
+        string normalizedWorkflow = workflowName.Trim();
+
+        var items = await dbContext.RuleSets
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.WorkflowName == normalizedWorkflow)
+            .OrderByDescending(x => x.Version)
+            .Skip(offset)
+            .Take(limit)
+            .Select(x => new { x.Version, Status = x.Status.ToString(), x.IsActive, x.CreatedAt })
+            .ToListAsync(cancellationToken);
+
+        return items.Select(x => (x.Version, x.Status, x.IsActive, x.CreatedAt)).ToList();
+    }
+
+    /// <inheritdoc />
     public async Task<int?> GetActiveVersionAsync(string workflowName, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
