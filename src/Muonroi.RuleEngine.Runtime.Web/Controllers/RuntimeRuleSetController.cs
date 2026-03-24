@@ -40,22 +40,24 @@ public sealed class RuntimeRuleSetController(
         return Ok(items);
     }
 
-    /// <summary>Gets versions and active version for a workflow.</summary>
+    /// <summary>Gets rich version details for a workflow, compatible with MVersionDropdown.</summary>
     /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="limit">Page size (default 10).</param>
+    /// <param name="offset">Number of items to skip (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Workflow version summary.</returns>
+    /// <returns>Array of version items with status, isActive, and createdAt.</returns>
     [HttpGet("{workflow}/versions")]
-    public async Task<IActionResult> GetVersions(string workflow, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetVersions(string workflow, [FromQuery] int limit = 10, [FromQuery] int offset = 0, CancellationToken cancellationToken = default)
     {
-        int[] versions = await service.GetVersionsAsync(workflow, cancellationToken);
-        int? activeVersion = await service.GetActiveVersionAsync(workflow, cancellationToken);
-        RuleSetWorkflowSummary response = new()
+        var details = await service.GetVersionDetailsAsync(workflow, limit, offset, cancellationToken);
+        var items = details.Select(d => new RuleSetVersionItem
         {
-            WorkflowName = workflow,
-            ActiveVersion = activeVersion,
-            Versions = versions
-        };
-        return Ok(response);
+            Version = d.Version,
+            Status = d.Status,
+            IsActive = d.IsActive,
+            CreatedAt = d.CreatedAt
+        }).ToArray();
+        return Ok(items);
     }
 
     /// <summary>Exports a ruleset JSON payload for a workflow.</summary>

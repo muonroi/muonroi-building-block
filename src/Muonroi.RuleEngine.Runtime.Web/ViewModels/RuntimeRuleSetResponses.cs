@@ -11,6 +11,19 @@ public sealed class RuleSetWorkflowSummary
     public IReadOnlyList<int> Versions { get; init; } = [];
 }
 
+/// <summary>Rich version item returned by the versions endpoint.</summary>
+public sealed class RuleSetVersionItem
+{
+    /// <summary>Version number.</summary>
+    public required int Version { get; init; }
+    /// <summary>Lifecycle status (Draft, PendingApproval, Approved, Active, Superseded, etc.).</summary>
+    public required string Status { get; init; }
+    /// <summary>Whether this version is the active version.</summary>
+    public bool IsActive { get; init; }
+    /// <summary>When this version was created.</summary>
+    public required DateTimeOffset CreatedAt { get; init; }
+}
+
 /// <summary>Response returned after saving a ruleset.</summary>
 public sealed class RuleSetSaveResponse
 {

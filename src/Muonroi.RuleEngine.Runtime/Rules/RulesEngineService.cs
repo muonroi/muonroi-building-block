@@ -103,6 +103,14 @@ public sealed class RulesEngineService(
         return await store.GetVersionsAsync(workflowName, cancellationToken);
     }
 
+    /// <summary>Lists version details (version, status, isActive, createdAt) for a workflow with pagination.</summary>
+    public async Task<IReadOnlyList<(int Version, string Status, bool IsActive, DateTimeOffset CreatedAt)>> GetVersionDetailsAsync(
+        string workflowName, int limit = 10, int offset = 0, CancellationToken cancellationToken = default)
+    {
+        EnsureRuleEngineFeature();
+        return await store.GetVersionDetailsAsync(workflowName, limit, offset, cancellationToken);
+    }
+
     /// <summary>Gets the active version for a workflow.</summary>
     /// <param name="workflowName">Workflow name.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
