@@ -94,7 +94,7 @@ public sealed class EfCoreCepConfigRepositoryTests
         services.AddCepWeb(options => options.PostgresConnectionString = "Host=localhost;Database=cep;Username=test;Password=test");
 
         ServiceDescriptor descriptor = Assert.Single(
-            services.Where(x => x.ServiceType == typeof(ICepConfigRepository)));
+            services, x => x.ServiceType == typeof(ICepConfigRepository));
 
         Assert.Equal(ServiceLifetime.Scoped, descriptor.Lifetime);
         Assert.Equal("EfCoreCepConfigRepository", descriptor.ImplementationType?.Name);

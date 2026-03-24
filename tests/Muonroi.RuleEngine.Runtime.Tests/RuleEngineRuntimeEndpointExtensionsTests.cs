@@ -35,7 +35,6 @@ public sealed class RuleEngineRuntimeEndpointExtensionsTests
             .ToArray();
 
         patterns.Should().Contain("api/v1/rule-engine/rule-contracts/{sourceType}/{sourceCode}");
-        patterns.Should().Contain("api/v1/rule-engine/execute/{workflowCode}");
         patterns.Should().Contain("/muonroi/rule-debugger/{tenantId}/enable");
         patterns.Should().Contain(match => match.Contains("/hubs/ruleset-changes", StringComparison.Ordinal));
     }

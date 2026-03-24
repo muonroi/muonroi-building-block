@@ -5,9 +5,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-  <ItemGroup>
-  </ItemGroup>
-  <ItemGroup>
+<ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.BackgroundJobs.Quartz\Muonroi.BackgroundJobs.Quartz.csproj" />
   </ItemGroup>
 </Project>
