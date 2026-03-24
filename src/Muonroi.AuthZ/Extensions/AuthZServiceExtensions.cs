@@ -7,6 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.AuthZ.Authorization;
 using Muonroi.AuthZ.HotReload;
+using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Logging.Abstractions;
+using Muonroi.RuleEngine.Abstractions;
+using Muonroi.RuleEngine.Core;
 
 /// <summary>
 /// Service registration helpers for rule-driven authorization.
@@ -23,8 +27,17 @@ public static class AuthZServiceExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        // We need to register an implementation of IMRuleOrchestrator elsewhere,
-        // but here we register the evaluator that depends on it.
+        // Register orchestrator for AuthorizationRuleContext so the DI chain resolves.
+        // Wraps RuleOrchestrator<AuthorizationRuleContext> which has no IRuleContext constraint.
+        services.TryAddScoped<IMRuleOrchestrator<AuthorizationRuleContext>>(sp =>
+        {
+            RuleOrchestrator<AuthorizationRuleContext> inner = new(
+                sp.GetServices<IRule<AuthorizationRuleContext>>(),
+                sp.GetServices<IHookHandler<AuthorizationRuleContext>>(),
+                sp.GetService<IMLog<RuleOrchestrator<AuthorizationRuleContext>>>());
+            return new AuthorizationRuleOrchestratorAdapter(inner);
+        });
+
         services.AddSingleton<IAuthorizationPolicyEvaluator, RuleEngineAuthorizationPolicyEvaluator>();
         services.AddScoped<IAuthorizationHandler, MuonroiAuthorizationHandler>();
         services.AddScoped(typeof(Muonroi.AuthZ.RowSecurity.IRuleRowFilter<>), typeof(Muonroi.AuthZ.RowSecurity.RuleRowFilter<>));

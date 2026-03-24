@@ -20,6 +20,7 @@ public sealed class RuleOrchestrator<TContext>(
     ISystemExecutionContextAccessor? contextAccessor = null,
     IMTraceContext? traceContext = null)
 {
+
     /// <summary>
     /// Initializes a new instance of the <see cref="RuleOrchestrator{TContext}"/> class.
     /// </summary>

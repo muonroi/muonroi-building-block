@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Proliferation.Brain;
@@ -12,16 +13,9 @@ namespace Muonroi.RuleEngine.Proliferation.Worker;
 /// Background worker that generates and executes proliferation scenarios.
 /// </summary>
 public sealed class ProliferationWorker(
-    IProliferationStore store,
-    IScenarioExecutor executor,
-    IRuleProliferationBrain brain,
+    IServiceScopeFactory scopeFactory,
     ProliferationOptions options,
-    IMLog<ProliferationWorker>? logger = null,
-    IProliferationChangeNotifier? notifier = null,
-    IFailureAnalyzer? failureAnalyzer = null,
-    IScenarioDeduplicator? deduplicator = null,
-    ICoverageTracker? coverageTracker = null,
-    IBudgetAllocator? budgetAllocator = null) : BackgroundService
+    IMLog<ProliferationWorker>? logger = null) : BackgroundService
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.RuleEngine.Proliferation");
     private static readonly Meter Meter = new("Muonroi.RuleEngine.Proliferation");
@@ -74,6 +68,15 @@ public sealed class ProliferationWorker(
     internal async Task RunCycleAsync(CancellationToken ct)
     {
         using Activity? activity = ActivitySource.StartActivity("ProliferationCycle");
+        using IServiceScope scope = scopeFactory.CreateScope();
+        IProliferationStore store = scope.ServiceProvider.GetRequiredService<IProliferationStore>();
+        IScenarioExecutor executor = scope.ServiceProvider.GetRequiredService<IScenarioExecutor>();
+        IRuleProliferationBrain brain = scope.ServiceProvider.GetRequiredService<IRuleProliferationBrain>();
+        IProliferationChangeNotifier? notifier = scope.ServiceProvider.GetService<IProliferationChangeNotifier>();
+        IFailureAnalyzer? failureAnalyzer = scope.ServiceProvider.GetService<IFailureAnalyzer>();
+        IScenarioDeduplicator? deduplicator = scope.ServiceProvider.GetService<IScenarioDeduplicator>();
+        ICoverageTracker? coverageTracker = scope.ServiceProvider.GetService<ICoverageTracker>();
+        IBudgetAllocator? budgetAllocator = scope.ServiceProvider.GetService<IBudgetAllocator>();
 
         ProliferationStats stats = await store.GetStatsAsync(ct: ct);
         if (stats.TotalScenarios >= options.MaxTotalScenarios)
@@ -147,7 +150,7 @@ public sealed class ProliferationWorker(
                     && scenario.GenerationDepth < options.MaxGenerationDepth
                     && stats.TotalScenarios < options.MaxTotalScenarios)
                 {
-                    await GenerateNextGenerationAsync(scenario, result, stats, ct);
+                    await GenerateNextGenerationAsync(scenario, result, stats, store, brain, notifier, deduplicator, coverageTracker, budgetAllocator, ct);
                 }
 
                 if (!result.IsSuccess
@@ -155,7 +158,7 @@ public sealed class ProliferationWorker(
                     && stats.TotalScenarios < options.MaxTotalScenarios
                     && failureAnalyzer is not null)
                 {
-                    await AnalyzeFailureAndSaveAsync(scenario, result, stats, ct);
+                    await AnalyzeFailureAndSaveAsync(scenario, result, stats, store, failureAnalyzer, deduplicator, ct);
                 }
             }
             catch (Exception ex)
@@ -174,6 +177,12 @@ public sealed class ProliferationWorker(
         NeuronScenario parentScenario,
         ScenarioResult result,
         ProliferationStats currentStats,
+        IProliferationStore store,
+        IRuleProliferationBrain brain,
+        IProliferationChangeNotifier? notifier,
+        IScenarioDeduplicator? deduplicator,
+        ICoverageTracker? coverageTracker,
+        IBudgetAllocator? budgetAllocator,
         CancellationToken ct)
     {
         int remainingBudget = options.MaxTotalScenarios - currentStats.TotalScenarios;
@@ -291,6 +300,9 @@ public sealed class ProliferationWorker(
         NeuronScenario failedScenario,
         ScenarioResult failureResult,
         ProliferationStats currentStats,
+        IProliferationStore store,
+        IFailureAnalyzer failureAnalyzer,
+        IScenarioDeduplicator? deduplicator,
         CancellationToken ct)
     {
         int remainingBudget = options.MaxTotalScenarios - currentStats.TotalScenarios;
@@ -307,7 +319,7 @@ public sealed class ProliferationWorker(
                 TenantId = failedScenario.TenantId
             };
 
-            IReadOnlyList<NeuronScenario> children = await failureAnalyzer!.AnalyzeFailureAsync(
+            IReadOnlyList<NeuronScenario> children = await failureAnalyzer.AnalyzeFailureAsync(
                 failedScenario, failureResult, ruleSetJson, context, ct);
 
             if (children.Count == 0) return;

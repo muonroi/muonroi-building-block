@@ -12,9 +12,8 @@ namespace Muonroi.RuleEngine.Runtime.Web.Controllers;
 /// <param name="dryRunService">Dry-run executor for rule evaluation.</param>
 /// <param name="executionContextAccessor">Execution context accessor for tenant resolution.</param>
 [ApiController]
-[Authorize]
 [Route("api/v1/rule-engine")]
-public class MRuleFlowExecuteController(
+public abstract class MRuleFlowExecuteController(
     RulesEngineService rulesEngineService,
     IRuleDryRunService dryRunService,
     ISystemExecutionContextAccessor executionContextAccessor) : ControllerBase
