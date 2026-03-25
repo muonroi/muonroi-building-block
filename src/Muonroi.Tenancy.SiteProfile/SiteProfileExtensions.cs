@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Muonroi.Tenancy.SiteProfile;
 
@@ -9,6 +10,9 @@ namespace Muonroi.Tenancy.SiteProfile;
 /// </summary>
 public static class SiteProfileExtensions
 {
+    // Static tracker — populated during DI setup (single-threaded), consumed read-only at startup.
+    private static readonly SiteProfileRegistrationTracker s_tracker = new();
+
     /// <summary>
     /// Register all services for a specific site profile.
     /// One-liner in Program.cs: services.AddSiteProfile&lt;Sg01Profile&gt;(config)
@@ -22,6 +26,11 @@ public static class SiteProfileExtensions
         var profile = new TProfile();
         services.AddSingleton<ISiteProfile>(profile);
         profile.RegisterServices(services, configuration);
+
+        // Track site ID for startup validation
+        s_tracker.RecordSiteId(profile.SiteId);
+        RegisterValidatorOnce(services);
+
         return services;
     }
 
@@ -38,6 +47,11 @@ public static class SiteProfileExtensions
         ArgumentNullException.ThrowIfNull(profile);
         services.AddSingleton<ISiteProfile>(profile);
         profile.RegisterServices(services, configuration);
+
+        // Track site ID for startup validation
+        s_tracker.RecordSiteId(profile.SiteId);
+        RegisterValidatorOnce(services);
+
         return services;
     }
 
@@ -83,6 +97,9 @@ public static class SiteProfileExtensions
 
                 // Each profile registers its own services (DbContext, services, strategies)
                 profile.RegisterServices(services, configuration);
+
+                // Track site ID for startup validation
+                s_tracker.RecordSiteId(profile.SiteId);
             }
         }
 
@@ -108,6 +125,9 @@ public static class SiteProfileExtensions
                 $"Available: [{string.Join(", ", profiles.Keys)}]");
         });
 
+        // Register startup validator (once)
+        RegisterValidatorOnce(services);
+
         return services;
     }
 
@@ -132,6 +152,9 @@ public static class SiteProfileExtensions
         this IServiceCollection services)
         where TService : class
     {
+        // Track service type for startup validation
+        s_tracker.RecordResolvedServiceType(typeof(TService));
+
         services.AddScoped<TService>(sp =>
         {
             var resolver = sp.GetRequiredService<ISiteProfileResolver>();
@@ -152,5 +175,25 @@ public static class SiteProfileExtensions
         });
 
         return services;
+    }
+
+    /// <summary>
+    /// Disables SiteProfile startup validation. Use for testing or dev-only scenarios per D-04.
+    /// Must be called AFTER AddMultiSiteProfiles or AddSiteProfile.
+    /// </summary>
+    public static IServiceCollection SkipSiteProfileStartupValidation(this IServiceCollection services)
+    {
+        s_tracker.SetSkipValidation();
+        return services;
+    }
+
+    // Registers tracker + hosted service exactly once (idempotent based on DI descriptor presence).
+    private static void RegisterValidatorOnce(IServiceCollection services)
+    {
+        if (services.Any(sd => sd.ServiceType == typeof(SiteProfileRegistrationTracker)))
+            return;
+
+        services.AddSingleton(s_tracker);
+        services.AddHostedService<SiteProfileStartupValidator>();
     }
 }
