@@ -87,18 +87,42 @@ public abstract class MRuleFlowExecuteController(
     /// <returns>An anonymous object matching the MDryRunResult TypeScript interface.</returns>
     protected static object MapOrchestratorToMDryRunResponse(OrchestratorResult result, long elapsedMs)
     {
+        IReadOnlyDictionary<string, object?> allFacts = result.Facts.AsReadOnly();
+
         return new
         {
             isSuccess = result.IsSuccess,
             errors = result.Errors,
-            results = result.RuleResults.Select(kvp => new
+            results = result.RuleResults.Select(kvp =>
             {
-                ruleName = kvp.Key,
-                isSuccess = kvp.Value.IsSuccess,
-                evaluationResult = kvp.Value.IsSuccess,
-                errors = kvp.Value.Errors
+                // Extract node-specific facts: __graph.node.{id}.* and __node.{id}.*
+                string nodeId = kvp.Key;
+                Dictionary<string, object?> nodeOutputs = new(StringComparer.OrdinalIgnoreCase);
+                string graphPrefix = $"__graph.node.{nodeId}.";
+                string nodePrefix = $"__node.{nodeId}.";
+
+                foreach ((string key, object? value) in allFacts)
+                {
+                    if (key.StartsWith(graphPrefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        nodeOutputs[key[graphPrefix.Length..]] = value;
+                    }
+                    else if (key.StartsWith(nodePrefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        nodeOutputs[key[nodePrefix.Length..]] = value;
+                    }
+                }
+
+                return new
+                {
+                    ruleName = kvp.Key,
+                    isSuccess = kvp.Value.IsSuccess,
+                    evaluationResult = kvp.Value.IsSuccess,
+                    errors = kvp.Value.Errors,
+                    outputs = nodeOutputs.Count > 0 ? (object)nodeOutputs : null
+                };
             }),
-            factBag = result.Facts.AsReadOnly()
+            factBag = allFacts
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase),
             executionTimeMs = elapsedMs
         };
