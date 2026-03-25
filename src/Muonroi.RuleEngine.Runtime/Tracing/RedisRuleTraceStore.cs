@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.RuleEngine.Core.Tracing;
 
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
@@ -8,11 +9,13 @@ namespace Muonroi.RuleEngine.Runtime.Tracing;
 public sealed class RedisRuleTraceStore(
     IConnectionMultiplexer connectionMultiplexer,
     IOptions<RuleTracingOptions> options,
-    IMJsonSerializeService jsonSerializeService) : IRuleTraceStore
+    IMJsonSerializeService jsonSerializeService,
+    ITraceRedactor? redactor = null) : IRuleTraceStore
 {
     private readonly IConnectionMultiplexer _connectionMultiplexer =
         connectionMultiplexer ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
     private readonly RuleTracingOptions _options = options?.Value ?? new RuleTracingOptions();
+    private readonly ITraceRedactor? _redactor = redactor;
 
     /// <summary>Saves a trace entry with the specified TTL.</summary>
     public async ValueTask SaveAsync(RuleTraceEntry entry, TimeSpan ttl, CancellationToken ct = default)
@@ -20,7 +23,18 @@ public sealed class RedisRuleTraceStore(
         ArgumentNullException.ThrowIfNull(entry);
         ct.ThrowIfCancellationRequested();
 
-        if (ttl <= TimeSpan.Zero)
+        // Apply PII redaction before serializing (if a redactor is registered)
+        if (_redactor is not null)
+        {
+            entry = _redactor.Redact(entry);
+        }
+
+        // Resolve per-tenant TTL override if configured; fall back to the parameter, then to DefaultTtl
+        if (_options.TenantRetentionOverrides.TryGetValue(entry.TenantId, out TimeSpan tenantTtl))
+        {
+            ttl = tenantTtl;
+        }
+        else if (ttl <= TimeSpan.Zero)
         {
             ttl = _options.DefaultTtl;
         }

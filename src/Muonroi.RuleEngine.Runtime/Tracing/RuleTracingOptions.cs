@@ -22,4 +22,20 @@ public sealed class RuleTracingOptions
     public string DebuggerKeyPrefix { get; set; } = "rule-debugger:enabled";
     /// <summary>Duration to cache debugger mode lookups.</summary>
     public TimeSpan ModeCacheDuration { get; set; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// Field names to redact from InputFactsJson and OutputFactsJson.
+    /// Comparison is case-insensitive. Consumer apps should add domain-specific PII fields.
+    /// </summary>
+    public HashSet<string> RedactedFieldNames { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "password", "secret", "token", "ssn", "socialSecurityNumber",
+        "creditCard", "cardNumber", "cvv", "pin"
+    };
+
+    /// <summary>
+    /// Per-tenant trace retention TTL overrides. Key = tenantId, Value = TTL.
+    /// Tenants not in this dictionary use DefaultTtl.
+    /// </summary>
+    public Dictionary<string, TimeSpan> TenantRetentionOverrides { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
