@@ -131,7 +131,8 @@ internal sealed class ScribanFactBagScriptObject : ScriptObject
         ScriptObject result = new();
         foreach (JsonProperty prop in obj.EnumerateObject())
         {
-            result[NormalizeKey(prop.Name)] = ConvertJsonElement(prop.Value);
+            // Preserve original JSON property names (camelCase from JSON serializers)
+            result[prop.Name] = ConvertJsonElement(prop.Value);
         }
         return result;
     }
@@ -141,7 +142,8 @@ internal sealed class ScribanFactBagScriptObject : ScriptObject
         ScriptObject result = new();
         foreach (KeyValuePair<string, object?> kv in dict)
         {
-            result[NormalizeKey(kv.Key)] = ConvertValue(kv.Value);
+            // Preserve original dictionary keys (camelCase from NormalizeJsonElement)
+            result[kv.Key] = ConvertValue(kv.Value);
         }
         return result;
     }
@@ -151,7 +153,7 @@ internal sealed class ScribanFactBagScriptObject : ScriptObject
         ScriptObject result = new();
         foreach (KeyValuePair<string, object?> kv in dict)
         {
-            result[NormalizeKey(kv.Key)] = ConvertValue(kv.Value);
+            result[kv.Key] = ConvertValue(kv.Value);
         }
         return result;
     }
