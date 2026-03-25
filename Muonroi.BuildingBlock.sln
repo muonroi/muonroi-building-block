@@ -251,6 +251,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Tenancy.SiteProfile
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Mapping.Abstractions", "src\Muonroi.Mapping.Abstractions\Muonroi.Mapping.Abstractions.csproj", "{429DDD9B-FFC8-4B9C-A573-D721B730FC18}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Services.Abstractions", "src\Muonroi.Services.Abstractions\Muonroi.Services.Abstractions.csproj", "{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1677,6 +1679,18 @@ Global
 		{429DDD9B-FFC8-4B9C-A573-D721B730FC18}.Release|x64.Build.0 = Release|Any CPU
 		{429DDD9B-FFC8-4B9C-A573-D721B730FC18}.Release|x86.ActiveCfg = Release|Any CPU
 		{429DDD9B-FFC8-4B9C-A573-D721B730FC18}.Release|x86.Build.0 = Release|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Debug|x64.Build.0 = Debug|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Debug|x86.Build.0 = Debug|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Release|x64.ActiveCfg = Release|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Release|x64.Build.0 = Release|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Release|x86.ActiveCfg = Release|Any CPU
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1802,6 +1816,7 @@ Global
 		{3C3179D0-A8A9-42F9-9203-07EAD59A9AB2} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{429DDD9B-FFC8-4B9C-A573-D721B730FC18} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70FB77B9-3FAF-4A3C-A497-CEE99524EEC5}

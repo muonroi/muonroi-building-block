@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>1.0.0-alpha.1</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Description>Generic service base with virtual hook methods for schema-divergent multi-tenancy. Core provides CRUD; site overrides hooks.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Muonroi.Data.Abstractions\Muonroi.Data.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Mapping.Abstractions\Muonroi.Mapping.Abstractions.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
+  </ItemGroup>
+</Project>
