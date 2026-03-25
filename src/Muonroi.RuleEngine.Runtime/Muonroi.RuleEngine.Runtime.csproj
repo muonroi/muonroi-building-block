@@ -19,6 +19,8 @@
     <ProjectReference Include="..\Muonroi.Caching.Memory\Muonroi.Caching.Memory.csproj" />
     <ProjectReference Include="..\Muonroi.Governance.Abstractions\Muonroi.Governance.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Integration.Abstractions\Muonroi.Integration.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Tenancy.Abstractions\Muonroi.Tenancy.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Tenancy.Core\Muonroi.Tenancy.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Jint" Version="4.6.3" />

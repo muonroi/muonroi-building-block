@@ -1,6 +1,7 @@
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Governance.Abstractions.License;
+using Muonroi.Tenancy.Abstractions;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
@@ -116,7 +117,20 @@ public static class RuleEngineServiceCollectionExtensions
         services.TryAddSingleton(typeof(IContextFactory<>), typeof(ReflectionContextFactory<>));
         services.TryAddSingleton<IRuleSetChangeNotifier, InMemoryRuleSetChangeNotifier>();
 
-        services.AddDbContext<RuleEngineDbContext>(options => options.UseNpgsql(connectionString));
+        // Register RLS interceptor as a singleton so it can be injected into DbContext options.
+        services.AddOptions<MultiTenantOptions>().BindConfiguration(MultiTenantOptions.SectionName);
+        services.TryAddSingleton<TenantRlsConnectionInterceptor>(sp =>
+            new TenantRlsConnectionInterceptor(sp.GetRequiredService<IOptions<MultiTenantOptions>>()));
+
+        services.AddDbContext<RuleEngineDbContext>((sp, options) =>
+        {
+            options.UseNpgsql(connectionString);
+            MultiTenantOptions multiTenantOptions = sp.GetRequiredService<IOptions<MultiTenantOptions>>().Value;
+            if (multiTenantOptions.EnableRowLevelSecurity)
+            {
+                options.AddInterceptors(sp.GetRequiredService<TenantRlsConnectionInterceptor>());
+            }
+        });
 
         services.Replace(ServiceDescriptor.Scoped<IRuleSetStore, PostgresRuleSetStore>());
         services.Replace(ServiceDescriptor.Scoped<IRuleSetAuditStore, PostgresRuleSetAuditStore>());
