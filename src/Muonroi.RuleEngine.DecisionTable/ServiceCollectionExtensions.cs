@@ -73,6 +73,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ExcelToDecisionTableConverter>();
         services.AddSingleton<DecisionTableJsonSerializer>();
         services.AddSingleton<DecisionTableXmlSerializer>();
+
+        // DMN 1.3 import/export are available as static utility classes:
+        //   DmnExporter.ExportToDmnXml(table)    — model → DMN 1.3 XML
+        //   DmnImporter.ImportFromDmnXml(xml)    — DMN 1.3 XML → model
+        //   DmnHitPolicyMapper.ToDmnString(...)  — bidirectional hit policy mapping
         return services;
     }
 }
