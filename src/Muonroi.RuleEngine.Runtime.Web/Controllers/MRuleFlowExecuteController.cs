@@ -195,6 +195,12 @@ public abstract class MRuleFlowExecuteController(
                     elapsedMs = (object?)null  // not available from graph execution
                 };
 
+                // Read per-node trace snapshots captured by GraphRuleDispatchAdapter
+                var traceInput = allFacts.TryGetValue($"__trace.node.{nodeId}.input", out object? tiVal)
+                    ? tiVal as IDictionary<string, object?> : null;
+                var traceOutput = allFacts.TryGetValue($"__trace.node.{nodeId}.output", out object? toVal)
+                    ? toVal as IDictionary<string, object?> : null;
+
                 return new
                 {
                     ruleName = ruleCode,
@@ -203,13 +209,16 @@ public abstract class MRuleFlowExecuteController(
                     errors = kvp.Value.Errors,
                     outputs = nodeOutputs.Count > 0 ? (object)nodeOutputs : null,
                     status = status,
-                    businessFacts = businessFacts.Count > 0 ? (object)businessFacts : null
+                    businessFacts = businessFacts.Count > 0 ? (object)businessFacts : null,
+                    inputSnapshot = traceInput?.Count > 0 ? (object)traceInput : null,
+                    outputSnapshot = traceOutput?.Count > 0 ? (object)traceOutput : null
                 };
             }),
             factBag = allFacts
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase),
             factBagClean = allFacts
-                .Where(kvp => !kvp.Key.StartsWith("__graph.", StringComparison.OrdinalIgnoreCase))
+                .Where(kvp => !kvp.Key.StartsWith("__graph.", StringComparison.OrdinalIgnoreCase)
+                           && !kvp.Key.StartsWith("__trace.", StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase),
             executionTimeMs = elapsedMs
         };
