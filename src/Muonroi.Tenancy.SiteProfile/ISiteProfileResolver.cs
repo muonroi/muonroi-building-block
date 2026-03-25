@@ -18,7 +18,7 @@ public interface ISiteProfileResolver
 /// <summary>
 /// Default implementation — holds a resolved ISiteProfile instance.
 /// </summary>
-internal sealed class SiteProfileResolver(ISiteProfile profile) : ISiteProfileResolver
+public sealed class SiteProfileResolver(ISiteProfile profile) : ISiteProfileResolver
 {
     /// <inheritdoc />
     public ISiteProfile Current => profile;
