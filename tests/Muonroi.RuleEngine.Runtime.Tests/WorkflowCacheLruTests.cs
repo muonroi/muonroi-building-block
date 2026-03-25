@@ -4,6 +4,8 @@ using FluentAssertions;
 using Muonroi.RuleEngine.Runtime.Rules;
 using Xunit;
 
+// ReSharper disable AccessToModifiedClosure
+
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 /// <summary>
