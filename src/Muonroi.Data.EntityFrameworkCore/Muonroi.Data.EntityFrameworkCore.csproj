@@ -23,6 +23,7 @@
     <ProjectReference Include="..\Muonroi.Messaging.Abstractions\Muonroi.Messaging.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Rules\Muonroi.Rules.csproj" />
+    <ProjectReference Include="..\Muonroi.EntityFrameworkCore.Configuration\Muonroi.EntityFrameworkCore.Configuration.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
