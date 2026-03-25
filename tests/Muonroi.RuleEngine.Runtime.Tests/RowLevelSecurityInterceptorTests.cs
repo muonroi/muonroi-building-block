@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Muonroi.RuleEngine.Runtime.Rules;
 using Muonroi.Tenancy.Abstractions;
 using Muonroi.Tenancy.Core;
-using NSubstitute;
 using System.Data;
 using System.Data.Common;
 using Xunit;
@@ -12,11 +11,11 @@ namespace Muonroi.RuleEngine.Runtime.Tests;
 
 /// <summary>
 /// Tests for <see cref="TenantRlsConnectionInterceptor"/> covering all four RLS behaviors.
+/// The internal Set*OnConnection methods are tested directly to avoid constructing EF Core
+/// event data objects in tests.
 /// </summary>
 public sealed class RowLevelSecurityInterceptorTests : IDisposable
 {
-    private readonly List<string> _executedCommands = new();
-
     public void Dispose()
     {
         // Reset ambient tenant context after each test to prevent test pollution.
@@ -28,7 +27,7 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
     // -------------------------------------------------------------------------
 
     [Fact]
-    public async Task ConnectionOpenedAsync_WhenRlsDisabled_DoesNotExecuteSetCommand()
+    public void SetTenantIdOnConnection_WhenRlsDisabled_DoesNotExecuteAnyCommand()
     {
         // Arrange
         IOptions<MultiTenantOptions> options = Options.Create(new MultiTenantOptions
@@ -36,26 +35,18 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
             EnableRowLevelSecurity = false
         });
         TenantRlsConnectionInterceptor sut = new(options);
-        FakeDbConnection fakeConnection = new(_executedCommands);
+        FakeDbConnection fakeConnection = new();
         TenantContext.CurrentTenantId = "tenant-abc";
 
         // Act
-        await sut.ConnectionOpenedAsync(fakeConnection, new ConnectionEndEventData(
-            eventDefinition: null!,
-            messageGenerator: null!,
-            connection: fakeConnection,
-            connectionId: Guid.NewGuid(),
-            startTime: DateTimeOffset.UtcNow,
-            duration: TimeSpan.Zero,
-            async: true),
-            cancellationToken: CancellationToken.None);
+        sut.SetTenantIdOnConnection(fakeConnection);
 
         // Assert
-        _executedCommands.Should().BeEmpty("SET command must not run when RLS is disabled");
+        fakeConnection.ExecutedCommands.Should().BeEmpty("SET command must not run when RLS is disabled");
     }
 
     [Fact]
-    public void ConnectionOpened_WhenRlsDisabled_DoesNotExecuteSetCommand()
+    public async Task SetTenantIdOnConnectionAsync_WhenRlsDisabled_DoesNotExecuteAnyCommand()
     {
         // Arrange
         IOptions<MultiTenantOptions> options = Options.Create(new MultiTenantOptions
@@ -63,21 +54,14 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
             EnableRowLevelSecurity = false
         });
         TenantRlsConnectionInterceptor sut = new(options);
-        FakeDbConnection fakeConnection = new(_executedCommands);
+        FakeDbConnection fakeConnection = new();
         TenantContext.CurrentTenantId = "tenant-abc";
 
         // Act
-        sut.ConnectionOpened(fakeConnection, new ConnectionEndEventData(
-            eventDefinition: null!,
-            messageGenerator: null!,
-            connection: fakeConnection,
-            connectionId: Guid.NewGuid(),
-            startTime: DateTimeOffset.UtcNow,
-            duration: TimeSpan.Zero,
-            async: false));
+        await sut.SetTenantIdOnConnectionAsync(fakeConnection, CancellationToken.None);
 
         // Assert
-        _executedCommands.Should().BeEmpty("SET command must not run when RLS is disabled");
+        fakeConnection.ExecutedCommands.Should().BeEmpty("SET command must not run when RLS is disabled");
     }
 
     // -------------------------------------------------------------------------
@@ -85,7 +69,7 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
     // -------------------------------------------------------------------------
 
     [Fact]
-    public async Task ConnectionOpenedAsync_WhenRlsEnabled_AndTenantSet_ExecutesSetWithTenantId()
+    public void SetTenantIdOnConnection_WhenRlsEnabled_AndTenantSet_ExecutesSetWithTenantId()
     {
         // Arrange
         IOptions<MultiTenantOptions> options = Options.Create(new MultiTenantOptions
@@ -93,28 +77,20 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
             EnableRowLevelSecurity = true
         });
         TenantRlsConnectionInterceptor sut = new(options);
-        FakeDbConnection fakeConnection = new(_executedCommands);
+        FakeDbConnection fakeConnection = new();
         TenantContext.CurrentTenantId = "tenant-abc";
 
         // Act
-        await sut.ConnectionOpenedAsync(fakeConnection, new ConnectionEndEventData(
-            eventDefinition: null!,
-            messageGenerator: null!,
-            connection: fakeConnection,
-            connectionId: Guid.NewGuid(),
-            startTime: DateTimeOffset.UtcNow,
-            duration: TimeSpan.Zero,
-            async: true),
-            cancellationToken: CancellationToken.None);
+        sut.SetTenantIdOnConnection(fakeConnection);
 
         // Assert
-        _executedCommands.Should().ContainSingle();
-        _executedCommands[0].Should().Contain("app.current_tenant_id");
-        fakeConnection.LastParameterValue.Should().Be("tenant-abc");
+        fakeConnection.ExecutedCommands.Should().ContainSingle();
+        fakeConnection.ExecutedCommands[0].CommandText.Should().Contain("app.current_tenant_id");
+        fakeConnection.ExecutedCommands[0].ParameterValue.Should().Be("tenant-abc");
     }
 
     [Fact]
-    public void ConnectionOpened_WhenRlsEnabled_AndTenantSet_ExecutesSetWithTenantId()
+    public async Task SetTenantIdOnConnectionAsync_WhenRlsEnabled_AndTenantSet_ExecutesSetWithTenantId()
     {
         // Arrange
         IOptions<MultiTenantOptions> options = Options.Create(new MultiTenantOptions
@@ -122,23 +98,16 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
             EnableRowLevelSecurity = true
         });
         TenantRlsConnectionInterceptor sut = new(options);
-        FakeDbConnection fakeConnection = new(_executedCommands);
+        FakeDbConnection fakeConnection = new();
         TenantContext.CurrentTenantId = "tenant-abc";
 
         // Act
-        sut.ConnectionOpened(fakeConnection, new ConnectionEndEventData(
-            eventDefinition: null!,
-            messageGenerator: null!,
-            connection: fakeConnection,
-            connectionId: Guid.NewGuid(),
-            startTime: DateTimeOffset.UtcNow,
-            duration: TimeSpan.Zero,
-            async: false));
+        await sut.SetTenantIdOnConnectionAsync(fakeConnection, CancellationToken.None);
 
         // Assert
-        _executedCommands.Should().ContainSingle();
-        _executedCommands[0].Should().Contain("app.current_tenant_id");
-        fakeConnection.LastParameterValue.Should().Be("tenant-abc");
+        fakeConnection.ExecutedCommands.Should().ContainSingle();
+        fakeConnection.ExecutedCommands[0].CommandText.Should().Contain("app.current_tenant_id");
+        fakeConnection.ExecutedCommands[0].ParameterValue.Should().Be("tenant-abc");
     }
 
     // -------------------------------------------------------------------------
@@ -146,7 +115,7 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
     // -------------------------------------------------------------------------
 
     [Fact]
-    public async Task ConnectionOpenedAsync_WhenRlsEnabled_AndTenantNull_ExecutesSetWithEmptyString()
+    public void SetTenantIdOnConnection_WhenRlsEnabled_AndTenantNull_ExecutesSetWithEmptyString()
     {
         // Arrange
         IOptions<MultiTenantOptions> options = Options.Create(new MultiTenantOptions
@@ -154,28 +123,20 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
             EnableRowLevelSecurity = true
         });
         TenantRlsConnectionInterceptor sut = new(options);
-        FakeDbConnection fakeConnection = new(_executedCommands);
+        FakeDbConnection fakeConnection = new();
         TenantContext.CurrentTenantId = null;
 
         // Act
-        await sut.ConnectionOpenedAsync(fakeConnection, new ConnectionEndEventData(
-            eventDefinition: null!,
-            messageGenerator: null!,
-            connection: fakeConnection,
-            connectionId: Guid.NewGuid(),
-            startTime: DateTimeOffset.UtcNow,
-            duration: TimeSpan.Zero,
-            async: true),
-            cancellationToken: CancellationToken.None);
+        sut.SetTenantIdOnConnection(fakeConnection);
 
         // Assert
-        _executedCommands.Should().ContainSingle();
-        fakeConnection.LastParameterValue.Should().Be(string.Empty,
-            "null tenant ID must map to empty string so RLS blocks all rows");
+        fakeConnection.ExecutedCommands.Should().ContainSingle();
+        fakeConnection.ExecutedCommands[0].ParameterValue.Should().Be(string.Empty,
+            "null tenant ID must map to empty string so PostgreSQL RLS blocks all rows");
     }
 
     [Fact]
-    public void ConnectionOpened_WhenRlsEnabled_AndTenantNull_ExecutesSetWithEmptyString()
+    public async Task SetTenantIdOnConnectionAsync_WhenRlsEnabled_AndTenantNull_ExecutesSetWithEmptyString()
     {
         // Arrange
         IOptions<MultiTenantOptions> options = Options.Create(new MultiTenantOptions
@@ -183,31 +144,24 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
             EnableRowLevelSecurity = true
         });
         TenantRlsConnectionInterceptor sut = new(options);
-        FakeDbConnection fakeConnection = new(_executedCommands);
+        FakeDbConnection fakeConnection = new();
         TenantContext.CurrentTenantId = null;
 
         // Act
-        sut.ConnectionOpened(fakeConnection, new ConnectionEndEventData(
-            eventDefinition: null!,
-            messageGenerator: null!,
-            connection: fakeConnection,
-            connectionId: Guid.NewGuid(),
-            startTime: DateTimeOffset.UtcNow,
-            duration: TimeSpan.Zero,
-            async: false));
+        await sut.SetTenantIdOnConnectionAsync(fakeConnection, CancellationToken.None);
 
         // Assert
-        _executedCommands.Should().ContainSingle();
-        fakeConnection.LastParameterValue.Should().Be(string.Empty,
-            "null tenant ID must map to empty string so RLS blocks all rows");
+        fakeConnection.ExecutedCommands.Should().ContainSingle();
+        fakeConnection.ExecutedCommands[0].ParameterValue.Should().Be(string.Empty,
+            "null tenant ID must map to empty string so PostgreSQL RLS blocks all rows");
     }
 
     // -------------------------------------------------------------------------
-    // Test 4: SQL injection safety — tenant ID with quotes uses parameterized SET
+    // Test 4: SQL injection attempt in tenant ID is safely parameterized
     // -------------------------------------------------------------------------
 
     [Fact]
-    public async Task ConnectionOpenedAsync_WhenRlsEnabled_SqlInjectionInTenantId_IsParameterized()
+    public void SetTenantIdOnConnection_WhenRlsEnabled_SqlInjectionInTenantId_IsParameterized()
     {
         // Arrange
         IOptions<MultiTenantOptions> options = Options.Create(new MultiTenantOptions
@@ -215,45 +169,59 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
             EnableRowLevelSecurity = true
         });
         TenantRlsConnectionInterceptor sut = new(options);
-        FakeDbConnection fakeConnection = new(_executedCommands);
+        FakeDbConnection fakeConnection = new();
         string maliciousTenantId = "'; DROP TABLE \"RuleSets\"; --";
         TenantContext.CurrentTenantId = maliciousTenantId;
 
         // Act
-        await sut.ConnectionOpenedAsync(fakeConnection, new ConnectionEndEventData(
-            eventDefinition: null!,
-            messageGenerator: null!,
-            connection: fakeConnection,
-            connectionId: Guid.NewGuid(),
-            startTime: DateTimeOffset.UtcNow,
-            duration: TimeSpan.Zero,
-            async: true),
-            cancellationToken: CancellationToken.None);
+        sut.SetTenantIdOnConnection(fakeConnection);
 
-        // Assert: The malicious string is passed as a parameter value (not embedded in SQL text).
-        // The command text must NOT contain the raw injection string.
-        _executedCommands.Should().ContainSingle();
-        _executedCommands[0].Should().NotContain("DROP TABLE",
-            "SQL injection must be neutralized by parameterization");
-        fakeConnection.LastParameterValue.Should().Be(maliciousTenantId,
-            "parameter value must be the raw tenant string (ADO.NET handles escaping)");
+        // Assert: The command text contains a parameterized placeholder (@tid), not the raw injection string.
+        fakeConnection.ExecutedCommands.Should().ContainSingle();
+        fakeConnection.ExecutedCommands[0].CommandText.Should().NotContain("DROP TABLE",
+            "SQL injection must not appear in command text — only a parameter placeholder is present");
+        fakeConnection.ExecutedCommands[0].ParameterValue.Should().Be(maliciousTenantId,
+            "raw tenant ID string is passed as a bound parameter value (ADO.NET handles safe binding)");
+    }
+
+    [Fact]
+    public async Task SetTenantIdOnConnectionAsync_WhenRlsEnabled_SqlInjectionInTenantId_IsParameterized()
+    {
+        // Arrange
+        IOptions<MultiTenantOptions> options = Options.Create(new MultiTenantOptions
+        {
+            EnableRowLevelSecurity = true
+        });
+        TenantRlsConnectionInterceptor sut = new(options);
+        FakeDbConnection fakeConnection = new();
+        string maliciousTenantId = "'; DROP TABLE \"RuleSets\"; --";
+        TenantContext.CurrentTenantId = maliciousTenantId;
+
+        // Act
+        await sut.SetTenantIdOnConnectionAsync(fakeConnection, CancellationToken.None);
+
+        // Assert
+        fakeConnection.ExecutedCommands.Should().ContainSingle();
+        fakeConnection.ExecutedCommands[0].CommandText.Should().NotContain("DROP TABLE",
+            "SQL injection must not appear in command text — only a parameter placeholder is present");
+        fakeConnection.ExecutedCommands[0].ParameterValue.Should().Be(maliciousTenantId,
+            "raw tenant ID string is passed as a bound parameter value (ADO.NET handles safe binding)");
     }
 
     // -------------------------------------------------------------------------
-    // Fake DbConnection for test isolation
+    // Fake DbConnection / DbCommand for test isolation
     // -------------------------------------------------------------------------
 
+    private sealed record ExecutedCommandInfo(string CommandText, string? ParameterValue);
+
     /// <summary>
-    /// Minimal fake <see cref="DbConnection"/> that records executed command texts and parameter values.
+    /// Minimal fake <see cref="DbConnection"/> that records commands created and executed against it.
     /// </summary>
     private sealed class FakeDbConnection : DbConnection
     {
-        private readonly List<string> _log;
-        public string? LastParameterValue { get; private set; }
+        public List<ExecutedCommandInfo> ExecutedCommands { get; } = new();
 
-        public FakeDbConnection(List<string> log) => _log = log;
-
-#pragma warning disable CS8765
+#pragma warning disable CS8765 // Nullability mismatch with base
         public override string ConnectionString { get; set; } = string.Empty;
 #pragma warning restore CS8765
         public override string Database => string.Empty;
@@ -265,59 +233,44 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
         public override void Close() { }
         public override void Open() { }
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => throw new NotImplementedException();
-
-        protected override DbCommand CreateDbCommand() => new FakeDbCommand(this, _log, v => LastParameterValue = v);
+        protected override DbCommand CreateDbCommand() => new FakeDbCommand(ExecutedCommands);
     }
 
     /// <summary>
-    /// Minimal fake <see cref="DbCommand"/> that captures the SET command text and parameter values.
+    /// Minimal fake <see cref="DbCommand"/> that captures command text and first parameter value on execution.
     /// </summary>
     private sealed class FakeDbCommand : DbCommand
     {
-        private readonly FakeDbConnection _connection;
-        private readonly List<string> _log;
-        private readonly Action<string?> _captureParam;
+        private readonly List<ExecutedCommandInfo> _log;
         private readonly FakeDbParameterCollection _parameters = new();
 
-        public FakeDbCommand(FakeDbConnection connection, List<string> log, Action<string?> captureParam)
-        {
-            _connection = connection;
-            _log = log;
-            _captureParam = captureParam;
-        }
+        public FakeDbCommand(List<ExecutedCommandInfo> log) => _log = log;
 
-#pragma warning disable CS8765
+#pragma warning disable CS8765 // Nullability mismatch with base
         public override string CommandText { get; set; } = string.Empty;
 #pragma warning restore CS8765
         public override int CommandTimeout { get; set; }
         public override CommandType CommandType { get; set; }
         public override bool DesignTimeVisible { get; set; }
         public override UpdateRowSource UpdatedRowSource { get; set; }
-#pragma warning disable CS8765
-        protected override DbConnection? DbConnection { get => _connection; set { } }
-#pragma warning restore CS8765
+        protected override DbConnection? DbConnection { get; set; }
         protected override DbParameterCollection DbParameterCollection => _parameters;
         protected override DbTransaction? DbTransaction { get; set; }
 
         public override void Cancel() { }
         public override void Prepare() { }
+
         public override int ExecuteNonQuery()
         {
-            _log.Add(CommandText);
-            if (_parameters.Count > 0)
-            {
-                _captureParam(_parameters[0].Value?.ToString());
-            }
+            string? firstParamValue = _parameters.Count > 0 ? _parameters[0].Value?.ToString() : null;
+            _log.Add(new ExecutedCommandInfo(CommandText, firstParamValue));
             return 0;
         }
 
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            _log.Add(CommandText);
-            if (_parameters.Count > 0)
-            {
-                _captureParam(_parameters[0].Value?.ToString());
-            }
+            string? firstParamValue = _parameters.Count > 0 ? _parameters[0].Value?.ToString() : null;
+            _log.Add(new ExecutedCommandInfo(CommandText, firstParamValue));
             return await Task.FromResult(0);
         }
 
@@ -363,7 +316,7 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
         public override DbType DbType { get; set; }
         public override ParameterDirection Direction { get; set; } = ParameterDirection.Input;
         public override bool IsNullable { get; set; }
-#pragma warning disable CS8765 // Nullability mismatch — base declares non-nullable in older target
+#pragma warning disable CS8765 // Nullability mismatch with base
         public override string ParameterName { get; set; } = string.Empty;
         public override string SourceColumn { get; set; } = string.Empty;
 #pragma warning restore CS8765
