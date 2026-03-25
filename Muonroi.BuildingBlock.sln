@@ -247,6 +247,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.RuleEngine.Prolifer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.EntityFrameworkCore.Configuration", "src\Muonroi.EntityFrameworkCore.Configuration\Muonroi.EntityFrameworkCore.Configuration.csproj", "{3C3179D0-A8A9-42F9-9203-07EAD59A9AB2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Tenancy.SiteProfile", "src\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj", "{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1649,6 +1651,18 @@ Global
 		{3C3179D0-A8A9-42F9-9203-07EAD59A9AB2}.Release|x64.Build.0 = Release|Any CPU
 		{3C3179D0-A8A9-42F9-9203-07EAD59A9AB2}.Release|x86.ActiveCfg = Release|Any CPU
 		{3C3179D0-A8A9-42F9-9203-07EAD59A9AB2}.Release|x86.Build.0 = Release|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Debug|x64.Build.0 = Debug|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Debug|x86.Build.0 = Debug|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Release|x64.ActiveCfg = Release|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Release|x64.Build.0 = Release|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Release|x86.ActiveCfg = Release|Any CPU
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1772,6 +1786,7 @@ Global
 		{551B6BE0-E76A-4282-A0CA-F52544D6F7C3} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{89D46199-EEDE-4CE1-B3D8-BC5C90AE72AA} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{3C3179D0-A8A9-42F9-9203-07EAD59A9AB2} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{7E2547FF-1110-4092-BDA0-D5FCCA366E7C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70FB77B9-3FAF-4A3C-A497-CEE99524EEC5}
