@@ -6,6 +6,7 @@ using Muonroi.RuleEngine.Abstractions.Adapters;
 using Muonroi.RuleEngine.Runtime.Adapters;
 using NSubstitute;
 using Scriban.Runtime;
+using System.Diagnostics;
 using System.Text.Json;
 using Xunit;
 
@@ -145,6 +146,50 @@ public sealed class ScriptingRuleAdapterTests
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle(x => x.Contains("Liquid render error", StringComparison.OrdinalIgnoreCase));
         log.WarningCalls.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    [Trait("Category", "Phase31")]
+    public async Task ScribanTimeout_ReturnsFailure()
+    {
+        // Template with very large loop that will exceed the 5-second budget
+        string template = "{% for i in (1..100000000) %}{{ i }}{% endfor %}";
+        LiquidRuleAdapter<TestContext> adapter = CreateLiquidAdapter("timeout-test", template);
+        FactBag facts = new();
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
+        RuleResult result = await adapter.EvaluateAsync(new TestContext(1, "standard"), facts, CancellationToken.None);
+
+        stopwatch.Stop();
+        result.IsSuccess.Should().BeFalse();
+        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10)); // Must not hang
+    }
+
+    [Fact]
+    [Trait("Category", "Phase31")]
+    public async Task ScribanLoopLimit_StopsExecution()
+    {
+        // Template with loop exceeding the 10_000 iteration limit
+        string template = "{% for i in (1..20000) %}x{% endfor %}";
+        LiquidRuleAdapter<TestContext> adapter = CreateLiquidAdapter("loop-test", template);
+        FactBag facts = new();
+
+        RuleResult result = await adapter.EvaluateAsync(new TestContext(1, "standard"), facts, CancellationToken.None);
+
+        // Should fail because LoopLimit=10_000 is exceeded
+        result.IsSuccess.Should().BeFalse();
+    }
+
+    private static LiquidRuleAdapter<TestContext> CreateLiquidAdapter(string code, string template)
+    {
+        return new LiquidRuleAdapter<TestContext>(
+            code,
+            template,
+            "text",
+            "output",
+            new TestProjector(),
+            new MJsonSerializeService(),
+            Substitute.For<IMLog<LiquidRuleAdapter<TestContext>>>());
     }
 
     public sealed record TestContext(int Amount, string CustomerTier)
