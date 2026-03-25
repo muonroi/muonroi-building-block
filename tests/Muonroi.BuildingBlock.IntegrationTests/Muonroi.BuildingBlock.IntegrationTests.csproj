@@ -12,6 +12,8 @@
   <ItemGroup>
 <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.*" />
     <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.14" />
+    <PackageReference Include="Scriban" Version="7.0.3" />
+    <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="9.0.3" />
 </ItemGroup>
 
   <ItemGroup>
