@@ -95,20 +95,154 @@ public sealed class RuleDryRunServiceInternalTests
             }
         ];
 
+        // Updated: pass empty outputFacts dict (4th param)
+        IReadOnlyDictionary<string, object?> emptyFacts = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         List<RuleExecutionTrace> traces = (List<RuleExecutionTrace>)InvokePrivateStatic(
             "BuildCodeTraces",
             new[] { "RULE_A", "RULE_B" },
             entries,
-            Array.Empty<string>())!;
+            Array.Empty<string>(),
+            emptyFacts)!;
         List<RuleExecutionTrace> fallback = (List<RuleExecutionTrace>)InvokePrivateStatic(
             "BuildCodeTraces",
             new[] { "RULE_X" },
             Array.Empty<RuleTraceEntry>(),
-            new[] { "shared failure" })!;
+            new[] { "shared failure" },
+            emptyFacts)!;
 
         traces.Should().Contain(x => x.RuleName == "RULE_A" && x.Matched);
         traces.Should().Contain(x => x.RuleName == "RULE_B" && !x.Matched && x.FailReason == "boom");
         fallback.Should().ContainSingle(x => x.RuleName == "RULE_X" && x.FailReason == "shared failure");
+    }
+
+    [Fact]
+    public void BuildCodeTraces_EdgeScopedOverride_ShouldReplaceInputOutputJsonWhenFactBagHasTraceKeys()
+    {
+        // Arrange: outputFacts contains __trace.node.RULE_A.input and .output (edge-scoped data)
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        List<RuleTraceEntry> entries =
+        [
+            new()
+            {
+                RuleName = "RULE_A",
+                Phase = RuleTracePhase.AfterEval,
+                ExecutedAt = now,
+                IsSuccess = true,
+                InputFactsJson = """{"old":"input"}""",
+                OutputFactsJson = """{"old":"output"}"""
+            }
+        ];
+
+        Dictionary<string, object?> edgeScopedInput = new(StringComparer.OrdinalIgnoreCase) { ["foo"] = "bar" };
+        Dictionary<string, object?> edgeScopedOutput = new(StringComparer.OrdinalIgnoreCase) { ["result"] = "ok" };
+
+        Dictionary<string, object?> outputFacts = new(StringComparer.OrdinalIgnoreCase)
+        {
+            [$"__trace.node.RULE_A.input"] = edgeScopedInput,
+            [$"__trace.node.RULE_A.output"] = edgeScopedOutput
+        };
+
+        // Act
+        List<RuleExecutionTrace> traces = (List<RuleExecutionTrace>)InvokePrivateStatic(
+            "BuildCodeTraces",
+            new[] { "RULE_A" },
+            entries,
+            Array.Empty<string>(),
+            (IReadOnlyDictionary<string, object?>)outputFacts)!;
+
+        // Assert: InputFactsJson and OutputFactsJson should be overridden with edge-scoped data
+        RuleExecutionTrace trace = traces.Should().ContainSingle(x => x.RuleName == "RULE_A").Subject;
+        trace.InputFactsJson.Should().NotBe("""{"old":"input"}""",
+            "BuildCodeTraces should override with edge-scoped __trace.node.RULE_A.input");
+        trace.InputFactsJson.Should().Contain("foo",
+            "edge-scoped input key 'foo' should appear in serialized InputFactsJson");
+        trace.OutputFactsJson.Should().Contain("result",
+            "edge-scoped output key 'result' should appear in serialized OutputFactsJson");
+    }
+
+    [Fact]
+    public void BuildCodeTraces_EdgeScopedOverride_ShouldFallBackToTracerValueWhenFactBagKeyMissing()
+    {
+        // Arrange: outputFacts does NOT contain __trace.node.RULE_B.input — fallback to tracer entry value
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        const string originalInput = """{"original":"value"}""";
+        List<RuleTraceEntry> entries =
+        [
+            new()
+            {
+                RuleName = "RULE_B",
+                Phase = RuleTracePhase.AfterEval,
+                ExecutedAt = now,
+                IsSuccess = true,
+                InputFactsJson = originalInput
+            }
+        ];
+
+        // outputFacts has NO __trace.node.RULE_B.input key
+        IReadOnlyDictionary<string, object?> outputFacts = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+        // Act
+        List<RuleExecutionTrace> traces = (List<RuleExecutionTrace>)InvokePrivateStatic(
+            "BuildCodeTraces",
+            new[] { "RULE_B" },
+            entries,
+            Array.Empty<string>(),
+            outputFacts)!;
+
+        // Assert: InputFactsJson retains original tracer value when no edge-scoped override present
+        RuleExecutionTrace trace = traces.Should().ContainSingle(x => x.RuleName == "RULE_B").Subject;
+        trace.InputFactsJson.Should().Be(originalInput,
+            "InputFactsJson should fall back to tracer entry value when no __trace.node.* key in outputFacts");
+    }
+
+    [Fact]
+    public void BuildCodeTraces_PathBParity_ShouldProduceSameInputJsonShapeAsFactBagRead()
+    {
+        // D-08/DRTRACE-05: Both Path A (BuildCodeTraces) and Path B (MapOrchestratorToMDryRunResponse)
+        // read from __trace.node.{id}.input in outputFacts/FactBag.
+        // This test verifies that BuildCodeTraces produces the same JSON shape that Path B would see
+        // when reading the same key directly from FactBag.
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        string nodeId = "RULE_PARITY";
+
+        List<RuleTraceEntry> entries =
+        [
+            new()
+            {
+                RuleName = nodeId,
+                Phase = RuleTracePhase.AfterEval,
+                ExecutedAt = now,
+                IsSuccess = true
+            }
+        ];
+
+        // The FactBag key value that GraphRuleDispatchAdapter writes
+        Dictionary<string, object?> edgeScopedData = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["foo"] = "bar",
+            ["count"] = 42
+        };
+
+        Dictionary<string, object?> outputFacts = new(StringComparer.OrdinalIgnoreCase)
+        {
+            [$"__trace.node.{nodeId}.input"] = edgeScopedData
+        };
+
+        // Path A: BuildCodeTraces serializes the dict
+        List<RuleExecutionTrace> traces = (List<RuleExecutionTrace>)InvokePrivateStatic(
+            "BuildCodeTraces",
+            new[] { nodeId },
+            entries,
+            Array.Empty<string>(),
+            (IReadOnlyDictionary<string, object?>)outputFacts)!;
+
+        // Path B: MapOrchestratorToMDryRunResponse would read the same key and serialize it
+        string pathBJson = JsonSerializer.Serialize(edgeScopedData);
+
+        // Both paths should produce the same JSON shape
+        RuleExecutionTrace trace = traces.Should().ContainSingle(x => x.RuleName == nodeId).Subject;
+        trace.InputFactsJson.Should().Be(pathBJson,
+            "Path A (BuildCodeTraces) and Path B (MapOrchestratorToMDryRunResponse) should produce identical InputFactsJson from the same __trace.node.{id}.input data");
     }
 
     [Fact]
