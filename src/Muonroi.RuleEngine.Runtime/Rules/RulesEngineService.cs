@@ -37,6 +37,7 @@ public sealed class RulesEngineService(
     private static readonly ConcurrentDictionary<string, CachedWorkflowDefinition> WorkflowCache =
         new(StringComparer.OrdinalIgnoreCase);
     private const int MaxWorkflowCacheEntries = 2048;
+    private static readonly SemaphoreSlim _evictionLock = new(1, 1);
 
     private static readonly ConcurrentDictionary<Type, IReadOnlyDictionary<string, IReadOnlyList<Type>>> ReflectionRuleCache =
         new();
@@ -646,18 +647,48 @@ public sealed class RulesEngineService(
         if (WorkflowCache.TryGetValue(cacheKey, out CachedWorkflowDefinition? cached) &&
             string.Equals(cached.Json, json, StringComparison.Ordinal))
         {
+            // Update access time on cache hit to maintain LRU ordering (per D-01)
+            WorkflowCache[cacheKey] = cached with { LastAccessedUtc = DateTime.UtcNow };
             return cached;
         }
 
-        CachedWorkflowDefinition parsed = ParseWorkflowDefinition(json);
+        CachedWorkflowDefinition parsed = ParseWorkflowDefinition(json) with { LastAccessedUtc = DateTime.UtcNow };
         WorkflowCache[cacheKey] = parsed;
+
         if (WorkflowCache.Count > MaxWorkflowCacheEntries)
         {
-            WorkflowCache.Clear();
-            WorkflowCache[cacheKey] = parsed;
+            EvictOldestEntries();
         }
 
         return parsed;
+    }
+
+    /// <summary>
+    /// Evicts the oldest 25% of WorkflowCache entries by LastAccessedUtc.
+    /// Uses SemaphoreSlim(1,1) with non-blocking tryAcquire to prevent concurrent eviction stampede (per D-02).
+    /// </summary>
+    private static void EvictOldestEntries()
+    {
+        if (!_evictionLock.Wait(0)) return; // Another thread is already evicting — skip
+        try
+        {
+            if (WorkflowCache.Count <= MaxWorkflowCacheEntries) return; // Double-checked after acquiring lock
+
+            string[] toEvict = WorkflowCache
+                .OrderBy(kv => kv.Value.LastAccessedUtc)
+                .Take(MaxWorkflowCacheEntries / 4) // 512 entries = 25%
+                .Select(kv => kv.Key)
+                .ToArray();
+
+            foreach (string key in toEvict)
+            {
+                WorkflowCache.TryRemove(key, out _);
+            }
+        }
+        finally
+        {
+            _evictionLock.Release();
+        }
     }
 
     private static CachedWorkflowDefinition ParseWorkflowDefinition(string json)
@@ -1551,5 +1582,6 @@ public sealed class RulesEngineService(
         string Json,
         string[]? RuleCodes,
         Workflow[]? LegacyWorkflows,
-        ExecutionMode? ExecutionMode);
+        ExecutionMode? ExecutionMode,
+        DateTime LastAccessedUtc = default);
 }
