@@ -419,13 +419,25 @@ public sealed class RuleDryRunService(
                     .Select(x => x.IsSuccess)
                     .FirstOrDefault();
 
+                // Use AfterExec entry as the data source for structured fields (most complete snapshot).
+                // Fall back to latest entry if no AfterExec phase is present.
+                RuleTraceEntry? execEntry = group
+                    .Where(x => x.Phase == RuleTracePhase.AfterExec)
+                    .OrderByDescending(x => x.ExecutedAt)
+                    .FirstOrDefault();
+                RuleTraceEntry dataSource = execEntry ?? latest;
+
                 return new RuleExecutionTrace
                 {
                     RuleName = group.Key,
                     Matched = matched,
                     FailReason = matched
                         ? null
-                        : latest.FailureReason ?? latest.ExceptionMessage
+                        : latest.FailureReason ?? latest.ExceptionMessage,
+                    InputFactsJson = dataSource.InputFactsJson,
+                    OutputFactsJson = dataSource.OutputFactsJson,
+                    ChangedFactKeys = dataSource.ChangedFactKeys,
+                    ElapsedMs = dataSource.ElapsedMs
                 };
             })
             .OrderBy(x => x.RuleName, StringComparer.OrdinalIgnoreCase)];
