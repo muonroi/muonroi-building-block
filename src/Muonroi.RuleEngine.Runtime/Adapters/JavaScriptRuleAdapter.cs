@@ -18,7 +18,7 @@ public sealed class JavaScriptRuleAdapter<TContext> : IRule<TContext>
     private readonly IReadOnlyList<FeelOutputField> _outputFields;
     private readonly IContextProjector<TContext> _projector;
     private readonly IMLog<JavaScriptRuleAdapter<TContext>> _log;
-    private Func<IDictionary<string, object?>, object?>? _compiledDelegate;
+    private Func<IDictionary<string, object?>, CancellationToken, object?>? _compiledDelegate;
 
     /// <inheritdoc />
     public string Code => _code;
@@ -78,7 +78,7 @@ public sealed class JavaScriptRuleAdapter<TContext> : IRule<TContext>
         try
         {
             _compiledDelegate ??= JintExpressionCompiler.Compile(_expression);
-            result = _compiledDelegate(jsVars);
+            result = _compiledDelegate(jsVars, ct);
         }
         catch (Exception ex)
         {
@@ -94,7 +94,7 @@ public sealed class JavaScriptRuleAdapter<TContext> : IRule<TContext>
 
         if (passed)
         {
-            WriteOutputFields(jsVars, facts);
+            WriteOutputFields(jsVars, facts, ct);
         }
 
         return Task.FromResult(ruleResult);
@@ -104,16 +104,16 @@ public sealed class JavaScriptRuleAdapter<TContext> : IRule<TContext>
     public Task ExecuteAsync(TContext context, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
 
-    private void WriteOutputFields(Dictionary<string, object?> jsVars, FactBag facts)
+    private void WriteOutputFields(Dictionary<string, object?> jsVars, FactBag facts, CancellationToken ct)
     {
         foreach (FeelOutputField outputField in _outputFields)
         {
             object? value;
             try
             {
-                Func<IDictionary<string, object?>, object?> valueDelegate =
+                Func<IDictionary<string, object?>, CancellationToken, object?> valueDelegate =
                     JintExpressionCompiler.Compile(outputField.ValueExpression);
-                value = valueDelegate(jsVars);
+                value = valueDelegate(jsVars, ct);
             }
             catch
             {

@@ -13,19 +13,25 @@ namespace Muonroi.RuleEngine.Runtime.Compilation.JavaScript;
 /// </summary>
 public static class JintExpressionCompiler
 {
-    private static readonly ConcurrentDictionary<string, Func<IDictionary<string, object?>, object?>> Cache =
+    private static readonly ConcurrentDictionary<string, Func<IDictionary<string, object?>, CancellationToken, object?>> Cache =
         new(StringComparer.Ordinal);
 
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
 
     /// <summary>
-    /// Compiles a JavaScript expression into a cached delegate that returns the evaluation result.
-    /// FactBag variables are injected as global scope.
+    /// Compiles a JavaScript expression into a cached delegate that accepts a CancellationToken
+    /// and returns the evaluation result. FactBag variables are injected as global scope.
     /// </summary>
-    public static Func<IDictionary<string, object?>, object?> Compile(string jsExpression, TimeSpan? timeout = null)
+    /// <remarks>
+    /// D-01: The delegate creates a linked CancellationTokenSource combining the caller's token
+    /// with a 5-second hard deadline. This ensures both caller-initiated cancellation (e.g.,
+    /// request abort) and the budget timeout stop JS execution promptly.
+    /// </remarks>
+    public static Func<IDictionary<string, object?>, CancellationToken, object?> Compile(string jsExpression, TimeSpan? timeout = null)
     {
         string normalized = (jsExpression ?? string.Empty).Trim();
-        return Cache.GetOrAdd(normalized, expr => BuildDelegate(expr, timeout ?? DefaultTimeout));
+        TimeSpan effectiveTimeout = timeout ?? DefaultTimeout;
+        return Cache.GetOrAdd(normalized, expr => BuildDelegate(expr, effectiveTimeout));
     }
 
     /// <summary>
@@ -33,7 +39,7 @@ public static class JintExpressionCompiler
     /// </summary>
     public static Func<IDictionary<string, object>, bool> CompileBoolean(string jsExpression, TimeSpan? timeout = null)
     {
-        Func<IDictionary<string, object?>, object?> inner = Compile(jsExpression, timeout);
+        Func<IDictionary<string, object?>, CancellationToken, object?> inner = Compile(jsExpression, timeout);
         return variables =>
         {
             Dictionary<string, object?> nullable = new(variables.Count, StringComparer.OrdinalIgnoreCase);
@@ -41,20 +47,24 @@ public static class JintExpressionCompiler
             {
                 nullable[kv.Key] = kv.Value;
             }
-            return ToBoolean(inner(nullable));
+            return ToBoolean(inner(nullable, CancellationToken.None));
         };
     }
 
-    private static Func<IDictionary<string, object?>, object?> BuildDelegate(string expression, TimeSpan timeout)
+    private static Func<IDictionary<string, object?>, CancellationToken, object?> BuildDelegate(string expression, TimeSpan timeout)
     {
         if (string.IsNullOrWhiteSpace(expression))
         {
-            return _ => null;
+            return (_, _) => null;
         }
 
-        return variables =>
+        return (variables, ct) =>
         {
-            Engine engine = CreateSandboxedEngine(timeout);
+            // D-01: Link caller CT with a hard timeout budget — whichever fires first wins
+            using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(timeout);
+
+            Engine engine = CreateSandboxedEngine(timeout, cts.Token);
 
             foreach (KeyValuePair<string, object?> kv in variables)
             {
@@ -71,7 +81,7 @@ public static class JintExpressionCompiler
         };
     }
 
-    private static Engine CreateSandboxedEngine(TimeSpan timeout)
+    private static Engine CreateSandboxedEngine(TimeSpan timeout, CancellationToken ct)
     {
         return new Engine(options =>
         {
@@ -80,6 +90,7 @@ public static class JintExpressionCompiler
             options.MaxStatements(10_000);
             options.LimitMemory(16_000_000); // 16 MB
             options.LimitRecursion(64);
+            options.CancellationToken(ct);   // D-01: propagate caller + budget CT to Jint
         });
     }
 
