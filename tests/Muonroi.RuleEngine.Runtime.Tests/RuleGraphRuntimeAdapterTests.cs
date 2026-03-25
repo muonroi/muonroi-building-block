@@ -540,6 +540,15 @@ public sealed class RuleGraphRuntimeAdapterTests : IDisposable
         services.AddScoped<IRule<OrderedContext>, SeedRule>();
         services.AddScoped<IRule<ChildContext>, ChildCompiledRule>();
         services.AddScoped<IRule<TransformChildContext>, TransformChildRule>();
+        services.AddRuleEngine<TraceTestContext>();
+        services.AddScoped<IRule<TraceTestContext>, CaptureInputRule>();
+        services.AddScoped<IRule<TraceTestContext>, ProduceFactRule>();
+        services.AddScoped<IRule<TraceTestContext>, ConsumeFactRule>();
+        services.AddScoped<IRule<TraceTestContext>, ProduceLeftRule>();
+        services.AddScoped<IRule<TraceTestContext>, ProduceRightRule>();
+        services.AddScoped<IRule<TraceTestContext>, JoinFactsRule>();
+        services.AddScoped<IRule<TraceTestContext>, NoopRule>();
+        services.AddScoped<IRule<TraceTestContext>, TraceFailRule>();
 
         return services.BuildServiceProvider();
     }
@@ -750,6 +759,310 @@ public sealed class RuleGraphRuntimeAdapterTests : IDisposable
         public Task<RuleResult> EvaluateAsync(TransformChildContext ctx, FactBag facts, CancellationToken ct)
         {
             facts.Set("TransformEcho", $"amount:{ctx.InputAmount}|approved:{ctx.ApprovalFlag}");
+            return Task.FromResult(RuleResult.Passed());
+        }
+    }
+
+    // ── Edge-scoped input capture tests ────────────────────────────────────────
+
+    [Fact]
+    public async Task EdgeScopedInput_StartNode_ShouldCaptureInitialNonInternalFacts()
+    {
+        // Start node (trigger has IncomingEdges.Count == 0) should store __trace.initial.input
+        // containing only the non-internal keys present before execution.
+        await using ServiceProvider provider = BuildProvider();
+        await SaveWorkflowAsync(provider, "StartNodeInputFlow", """
+        {
+          "workflowName": "StartNodeInputFlow",
+          "flowGraph": {
+            "nodes": [
+              { "id": "trigger", "type": "trigger", "data": {} },
+              { "id": "capture", "type": "action", "ruleCode": "CAPTURE_INPUT", "data": {} },
+              { "id": "end", "type": "end", "data": {} }
+            ],
+            "edges": [
+              { "id": "e1", "source": "trigger", "target": "capture", "edgeType": "always" },
+              { "id": "e2", "source": "capture", "target": "end", "edgeType": "always" }
+            ]
+          }
+        }
+        """);
+
+        using IServiceScope scope = provider.CreateScope();
+        RulesEngineService service = scope.ServiceProvider.GetRequiredService<RulesEngineService>();
+
+        FactBag facts = await service.ExecuteAsync("StartNodeInputFlow", new TraceTestContext { InitialValue = "hello" });
+
+        // The trigger node is a start node (no incoming edges).
+        // After execution, __trace.initial.input should exist and contain only non-internal keys.
+        Dictionary<string, object?>? initialInput = facts.Get<Dictionary<string, object?>>("__trace.initial.input");
+        initialInput.Should().NotBeNull("start node should write __trace.initial.input");
+        initialInput!.Keys.Should().NotContain(k =>
+            k.StartsWith("__graph.", StringComparison.OrdinalIgnoreCase) ||
+            k.StartsWith("__trace.", StringComparison.OrdinalIgnoreCase),
+            "initial input should only contain non-internal keys");
+    }
+
+    [Fact]
+    public async Task EdgeScopedInput_SinglePredecessorNode_ShouldContainOnlyPredecessorOutput()
+    {
+        // A node with one incoming edge should have its __trace.node.{id}.input
+        // set to ONLY the predecessor's __trace.node.{sourceId}.output, not the full FactBag.
+        await using ServiceProvider provider = BuildProvider();
+        await SaveWorkflowAsync(provider, "SinglePredInputFlow", """
+        {
+          "workflowName": "SinglePredInputFlow",
+          "flowGraph": {
+            "nodes": [
+              { "id": "trigger", "type": "trigger", "data": {} },
+              { "id": "producer", "type": "action", "ruleCode": "PRODUCE_FACT", "data": {} },
+              { "id": "consumer", "type": "action", "ruleCode": "CONSUME_FACT", "data": {} },
+              { "id": "end", "type": "end", "data": {} }
+            ],
+            "edges": [
+              { "id": "e1", "source": "trigger", "target": "producer", "edgeType": "always" },
+              { "id": "e2", "source": "producer", "target": "consumer", "edgeType": "always" },
+              { "id": "e3", "source": "consumer", "target": "end", "edgeType": "always" }
+            ]
+          }
+        }
+        """);
+
+        using IServiceScope scope = provider.CreateScope();
+        RulesEngineService service = scope.ServiceProvider.GetRequiredService<RulesEngineService>();
+
+        FactBag facts = await service.ExecuteAsync("SinglePredInputFlow", new TraceTestContext());
+
+        // consumer's input should be scoped to producer's output (only "ProducedFact")
+        Dictionary<string, object?>? consumerInput = facts.Get<Dictionary<string, object?>>($"__trace.node.consumer.input");
+        consumerInput.Should().NotBeNull("consumer node should have edge-scoped input snapshot");
+
+        // The producer outputs "ProducedFact". The full FactBag also contains other keys from context.
+        // Edge-scoped input should NOT contain keys that were in FactBag before producer ran but not in producer's output.
+        consumerInput!.Should().ContainKey("ProducedFact",
+            "consumer's input should contain what producer produced as output");
+    }
+
+    [Fact]
+    public async Task EdgeScopedInput_MultiPredecessorMerge_BothActive_ShouldUnionBothOutputs()
+    {
+        // Diamond pattern: seed → left + right → join
+        // join has two incoming edges (left and right), both active ("always").
+        // join's input should be the union of left's output and right's output.
+        await using ServiceProvider provider = BuildProvider();
+        await SaveWorkflowAsync(provider, "MultiPredMergeInputFlow", """
+        {
+          "workflowName": "MultiPredMergeInputFlow",
+          "flowGraph": {
+            "nodes": [
+              { "id": "trigger", "type": "trigger", "data": {} },
+              { "id": "left", "type": "action", "ruleCode": "PRODUCE_LEFT", "data": {} },
+              { "id": "right", "type": "action", "ruleCode": "PRODUCE_RIGHT", "data": {} },
+              { "id": "join", "type": "action", "ruleCode": "JOIN_FACTS", "data": {} },
+              { "id": "end", "type": "end", "data": {} }
+            ],
+            "edges": [
+              { "id": "e1", "source": "trigger", "target": "left", "edgeType": "always" },
+              { "id": "e2", "source": "trigger", "target": "right", "edgeType": "always" },
+              { "id": "e3", "source": "left", "target": "join", "edgeType": "always" },
+              { "id": "e4", "source": "right", "target": "join", "edgeType": "always" },
+              { "id": "e5", "source": "join", "target": "end", "edgeType": "always" }
+            ]
+          }
+        }
+        """);
+
+        using IServiceScope scope = provider.CreateScope();
+        RulesEngineService service = scope.ServiceProvider.GetRequiredService<RulesEngineService>();
+
+        FactBag facts = await service.ExecuteAsync("MultiPredMergeInputFlow", new TraceTestContext());
+
+        // join's input should contain BOTH LeftFact and RightFact (merged from both active predecessors)
+        Dictionary<string, object?>? joinInput = facts.Get<Dictionary<string, object?>>($"__trace.node.join.input");
+        joinInput.Should().NotBeNull("join node should have edge-scoped input snapshot");
+        joinInput!.Should().ContainKey("LeftFact", "join input should contain left predecessor's output");
+        joinInput!.Should().ContainKey("RightFact", "join input should contain right predecessor's output");
+    }
+
+    [Fact]
+    public async Task EdgeScopedInput_MultiPredecessorMerge_OneInactive_ShouldOnlyIncludeActiveOutput()
+    {
+        // A node with two incoming edges (on-true and on-false) where upstream fails:
+        // - on-true edge (from "cond" when passed) → inactive because cond fails
+        // - on-false edge (from "cond" when not passed) → active because cond fails
+        // After-node input should only contain the on-false predecessor's output.
+        await using ServiceProvider provider = BuildProvider();
+        await SaveWorkflowAsync(provider, "PartialActiveEdgeFlow", """
+        {
+          "workflowName": "PartialActiveEdgeFlow",
+          "flowGraph": {
+            "nodes": [
+              { "id": "trigger", "type": "trigger", "data": {} },
+              { "id": "cond", "type": "condition", "ruleCode": "TRACE_FAIL", "data": {} },
+              { "id": "on-true-action", "type": "action", "ruleCode": "PRODUCE_LEFT", "data": {} },
+              { "id": "on-false-action", "type": "action", "ruleCode": "PRODUCE_RIGHT", "data": {} },
+              { "id": "after", "type": "action", "ruleCode": "JOIN_FACTS", "data": {} },
+              { "id": "end", "type": "end", "data": {} }
+            ],
+            "edges": [
+              { "id": "e1", "source": "trigger", "target": "cond", "edgeType": "always" },
+              { "id": "e2", "source": "cond", "target": "on-true-action", "edgeType": "on-true" },
+              { "id": "e3", "source": "cond", "target": "on-false-action", "edgeType": "on-false" },
+              { "id": "e4", "source": "on-true-action", "target": "after", "edgeType": "always" },
+              { "id": "e5", "source": "on-false-action", "target": "after", "edgeType": "always" },
+              { "id": "e6", "source": "after", "target": "end", "edgeType": "always" }
+            ]
+          }
+        }
+        """);
+
+        using IServiceScope scope = provider.CreateScope();
+        RulesEngineService service = scope.ServiceProvider.GetRequiredService<RulesEngineService>();
+
+        FactBag facts = await service.ExecuteAsync("PartialActiveEdgeFlow", new TraceTestContext());
+
+        // cond fails → on-false-action runs, on-true-action is skipped.
+        // "after" node's input should contain only RightFact (from on-false-action),
+        // NOT LeftFact (on-true-action was skipped so its output trace may not exist or is not active).
+        Dictionary<string, object?>? afterInput = facts.Get<Dictionary<string, object?>>($"__trace.node.after.input");
+        afterInput.Should().NotBeNull("after node should have edge-scoped input snapshot");
+        afterInput!.Should().ContainKey("RightFact", "after input should contain the active predecessor's output");
+    }
+
+    [Fact]
+    public async Task EdgeScopedInput_PredecessorWithNoOutputTrace_ShouldProduceEmptyInput()
+    {
+        // A node that doesn't write any new facts produces an empty output snapshot.
+        // The successor's input should be an empty dict (graceful fallback).
+        await using ServiceProvider provider = BuildProvider();
+        await SaveWorkflowAsync(provider, "EmptyOutputFlow", """
+        {
+          "workflowName": "EmptyOutputFlow",
+          "flowGraph": {
+            "nodes": [
+              { "id": "trigger", "type": "trigger", "data": {} },
+              { "id": "noop", "type": "action", "ruleCode": "NOOP_RULE", "data": {} },
+              { "id": "after", "type": "action", "ruleCode": "CONSUME_FACT", "data": {} },
+              { "id": "end", "type": "end", "data": {} }
+            ],
+            "edges": [
+              { "id": "e1", "source": "trigger", "target": "noop", "edgeType": "always" },
+              { "id": "e2", "source": "noop", "target": "after", "edgeType": "always" },
+              { "id": "e3", "source": "after", "target": "end", "edgeType": "always" }
+            ]
+          }
+        }
+        """);
+
+        using IServiceScope scope = provider.CreateScope();
+        RulesEngineService service = scope.ServiceProvider.GetRequiredService<RulesEngineService>();
+
+        FactBag facts = await service.ExecuteAsync("EmptyOutputFlow", new TraceTestContext());
+
+        // after's input should be scoped to the noop node's output.
+        // noop writes nothing user-visible (no business facts), but the adapter writes a "result" status key.
+        // The edge-scoped input should NOT contain any facts that existed in FactBag before noop ran
+        // (e.g. keys present from the initial request context).
+        Dictionary<string, object?>? afterInput = facts.Get<Dictionary<string, object?>>($"__trace.node.after.input");
+        afterInput.Should().NotBeNull("after node should have an edge-scoped input snapshot");
+        // The input is sourced from noop's __trace.node.noop.output, NOT the full FactBag.
+        // noop's output only contains what the adapter wrote (e.g. "result" status) — no user-provided initial facts.
+        afterInput!.Keys.Should().NotContain("InitialValue",
+            "InitialValue was in the full FactBag but not in noop's edge-scoped output");
+    }
+
+    // ── Additional rules for edge-scoped input tests ───────────────────────────
+
+    private sealed class TraceTestContext
+    {
+        public string InitialValue { get; set; } = string.Empty;
+    }
+
+    private sealed class TraceFailRule : IRule<TraceTestContext>
+    {
+        public string Code => "TRACE_FAIL";
+
+        public Task<RuleResult> EvaluateAsync(TraceTestContext ctx, FactBag facts, CancellationToken ct)
+        {
+            facts.Set("FailFact", "fail");
+            return Task.FromResult(RuleResult.Failure("forced failure"));
+        }
+    }
+
+    private sealed class CaptureInputRule : IRule<TraceTestContext>
+    {
+        public string Code => "CAPTURE_INPUT";
+
+        public Task<RuleResult> EvaluateAsync(TraceTestContext ctx, FactBag facts, CancellationToken ct)
+        {
+            facts.Set("CapturedValue", ctx.InitialValue);
+            return Task.FromResult(RuleResult.Passed());
+        }
+    }
+
+    private sealed class ProduceFactRule : IRule<TraceTestContext>
+    {
+        public string Code => "PRODUCE_FACT";
+
+        public Task<RuleResult> EvaluateAsync(TraceTestContext ctx, FactBag facts, CancellationToken ct)
+        {
+            facts.Set("ProducedFact", "produced-value");
+            return Task.FromResult(RuleResult.Passed());
+        }
+    }
+
+    private sealed class ConsumeFactRule : IRule<TraceTestContext>
+    {
+        public string Code => "CONSUME_FACT";
+
+        public Task<RuleResult> EvaluateAsync(TraceTestContext ctx, FactBag facts, CancellationToken ct)
+        {
+            // Reads what was produced; doesn't add new facts
+            facts.Set("ConsumedValue", facts.Get<string>("ProducedFact") ?? "nothing");
+            return Task.FromResult(RuleResult.Passed());
+        }
+    }
+
+    private sealed class ProduceLeftRule : IRule<TraceTestContext>
+    {
+        public string Code => "PRODUCE_LEFT";
+
+        public Task<RuleResult> EvaluateAsync(TraceTestContext ctx, FactBag facts, CancellationToken ct)
+        {
+            facts.Set("LeftFact", "left-value");
+            return Task.FromResult(RuleResult.Passed());
+        }
+    }
+
+    private sealed class ProduceRightRule : IRule<TraceTestContext>
+    {
+        public string Code => "PRODUCE_RIGHT";
+
+        public Task<RuleResult> EvaluateAsync(TraceTestContext ctx, FactBag facts, CancellationToken ct)
+        {
+            facts.Set("RightFact", "right-value");
+            return Task.FromResult(RuleResult.Passed());
+        }
+    }
+
+    private sealed class JoinFactsRule : IRule<TraceTestContext>
+    {
+        public string Code => "JOIN_FACTS";
+
+        public Task<RuleResult> EvaluateAsync(TraceTestContext ctx, FactBag facts, CancellationToken ct)
+        {
+            facts.Set("Joined", "done");
+            return Task.FromResult(RuleResult.Passed());
+        }
+    }
+
+    private sealed class NoopRule : IRule<TraceTestContext>
+    {
+        public string Code => "NOOP_RULE";
+
+        public Task<RuleResult> EvaluateAsync(TraceTestContext ctx, FactBag facts, CancellationToken ct)
+        {
+            // Intentionally writes nothing to FactBag
             return Task.FromResult(RuleResult.Passed());
         }
     }

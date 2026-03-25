@@ -34,15 +34,82 @@ internal sealed class GraphRuleDispatchAdapter<TContext> : IRule<TContext>
             return new RuleResult(true, ["SKIPPED: edge condition not met"]);
         }
 
-        // Snapshot FactBag keys BEFORE rule evaluation (input = what was available)
+        // Snapshot ALL FactBag keys BEFORE rule evaluation (needed to compute outputSnapshot later).
+        // keysBefore intentionally includes internal keys for accurate change detection.
         HashSet<string> keysBefore = new(facts.Keys, StringComparer.OrdinalIgnoreCase);
-        Dictionary<string, object?> inputSnapshot = new(StringComparer.OrdinalIgnoreCase);
+
+        // Capture values of non-internal keys for output-change detection (replaces inputSnapshot for this purpose).
+        Dictionary<string, object?> factValuesBefore = new(StringComparer.OrdinalIgnoreCase);
         foreach (string key in facts.Keys)
         {
             if (!key.StartsWith("__graph.", StringComparison.OrdinalIgnoreCase) &&
                 !key.StartsWith("__trace.", StringComparison.OrdinalIgnoreCase))
             {
-                inputSnapshot[key] = facts[key];
+                factValuesBefore[key] = facts[key];
+            }
+        }
+
+        // Build edge-scoped inputSnapshot — ONLY predecessor output facts (not full FactBag).
+        Dictionary<string, object?> inputSnapshot;
+
+        if (_entry.IncomingEdges.Count == 0)
+        {
+            // Start node: check if __trace.initial.input was already written by an earlier start node.
+            // If YES, reuse it; otherwise build from non-internal FactBag keys and store it.
+            Dictionary<string, object?>? existingInitial = facts.Get<Dictionary<string, object?>>("__trace.initial.input");
+            if (existingInitial is not null)
+            {
+                inputSnapshot = existingInitial;
+            }
+            else
+            {
+                inputSnapshot = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                foreach (string key in facts.Keys)
+                {
+                    if (!key.StartsWith("__graph.", StringComparison.OrdinalIgnoreCase) &&
+                        !key.StartsWith("__trace.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        inputSnapshot[key] = facts[key];
+                    }
+                }
+
+                facts.Set("__trace.initial.input", inputSnapshot);
+            }
+        }
+        else
+        {
+            // Non-start node: inputSnapshot = union of ONLY active predecessors' __trace.node.{id}.output.
+            inputSnapshot = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (RuleGraphIncomingEdge edge in _entry.IncomingEdges)
+            {
+                bool sourceExecuted = facts.Get<bool?>(MExecutionKey(edge.SourceNodeId)) == true;
+                if (!sourceExecuted)
+                {
+                    continue;
+                }
+
+                bool sourcePassed = facts.Get<bool?>(MPassedKey(edge.SourceNodeId)) == true;
+                bool sourceErrored = facts.Get<bool?>(MErroredKey(edge.SourceNodeId)) == true;
+
+                bool edgeActive = string.Equals(edge.EdgeType, "always", StringComparison.OrdinalIgnoreCase)
+                    || (string.Equals(edge.EdgeType, "on-true", StringComparison.OrdinalIgnoreCase) && sourcePassed)
+                    || (string.Equals(edge.EdgeType, "on-false", StringComparison.OrdinalIgnoreCase) && !sourcePassed && !sourceErrored)
+                    || (string.Equals(edge.EdgeType, "on-error", StringComparison.OrdinalIgnoreCase) && sourceErrored);
+
+                if (!edgeActive)
+                {
+                    continue;
+                }
+
+                Dictionary<string, object?>? predecessorOutput =
+                    facts.Get<Dictionary<string, object?>>($"__trace.node.{edge.SourceNodeId}.output");
+                if (predecessorOutput is not null)
+                {
+                    foreach (KeyValuePair<string, object?> kvp in predecessorOutput)
+                    {
+                        inputSnapshot[kvp.Key] = kvp.Value;
+                    }
+                }
             }
         }
 
@@ -70,7 +137,7 @@ internal sealed class GraphRuleDispatchAdapter<TContext> : IRule<TContext>
                     // New key added by this rule
                     outputSnapshot[key] = facts[key];
                 }
-                else if (!Equals(facts[key], inputSnapshot.GetValueOrDefault(key)))
+                else if (!Equals(facts[key], factValuesBefore.GetValueOrDefault(key)))
                 {
                     // Existing key modified by this rule
                     outputSnapshot[key] = facts[key];
