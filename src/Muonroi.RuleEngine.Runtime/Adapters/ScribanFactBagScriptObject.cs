@@ -14,17 +14,16 @@ internal sealed class ScribanFactBagScriptObject : ScriptObject
     {
         foreach (KeyValuePair<string, object?> kv in variables)
         {
-            string lowerKey = kv.Key.ToLowerInvariant();
-
-            // Dotted keys like "container.totalCount" → nest as container: { totalcount: value }
-            // Skip internal graph keys (__graph.node.*) — keep flat with underscore replacement
-            if (lowerKey.Contains('.') && !lowerKey.StartsWith("__"))
+            // Dotted keys like "container.totalCount" → nest as container: { totalCount: value }
+            // preserving original case for sub-keys (templates use camelCase).
+            // Internal keys (__graph.node.*) stay flat with underscore replacement.
+            if (kv.Key.Contains('.') && !kv.Key.StartsWith("__"))
             {
-                SetNestedValue(this, lowerKey, ConvertValue(kv.Value));
+                SetNestedValue(this, kv.Key, ConvertValue(kv.Value));
             }
             else
             {
-                this[lowerKey.Replace('.', '_')] = ConvertValue(kv.Value);
+                this[NormalizeKey(kv.Key)] = ConvertValue(kv.Value);
             }
         }
     }
@@ -35,7 +34,9 @@ internal sealed class ScribanFactBagScriptObject : ScriptObject
         ScriptObject current = root;
         for (int i = 0; i < parts.Length - 1; i++)
         {
-            string part = parts[i];
+            // Lowercase intermediate parts so FactBag key "container.totalCount"
+            // matches template {{container.totalCount}} (Scriban is case-sensitive)
+            string part = parts[i].ToLowerInvariant();
             if (current.TryGetValue(part, out object? existing) && existing is ScriptObject nested)
             {
                 current = nested;
@@ -48,6 +49,7 @@ internal sealed class ScribanFactBagScriptObject : ScriptObject
             }
         }
 
+        // Leaf key preserves original case (e.g., totalCount, not totalcount)
         current[parts[^1]] = value;
     }
 
