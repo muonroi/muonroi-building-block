@@ -181,6 +181,47 @@ public sealed class ScriptingRuleAdapterTests
         result.IsSuccess.Should().BeFalse();
     }
 
+    [Fact]
+    [Trait("Category", "Phase33")]
+    public async Task JavaScriptTimeout_ReturnsFailure()
+    {
+        // D-01: while(true) loop should be terminated by 5-second timeout enforced by Jint CancellationToken
+        JavaScriptRuleAdapter<TestContext> adapter = new(
+            "js-timeout",
+            "while(true){}",
+            outputFields: null,
+            new TestProjector(),
+            Substitute.For<IMLog<JavaScriptRuleAdapter<TestContext>>>());
+        FactBag facts = new();
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
+        RuleResult result = await adapter.EvaluateAsync(new TestContext(1, "standard"), facts, CancellationToken.None);
+
+        stopwatch.Stop();
+        result.IsSuccess.Should().BeFalse();
+        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10)); // Must terminate within budget
+    }
+
+    [Fact]
+    [Trait("Category", "Phase33")]
+    public async Task JavaScriptStatementLimit_ReturnsFailure()
+    {
+        // D-02: expression with >10k statements should be stopped by MaxStatements(10_000)
+        // Build a sequence of 20_000 variable assignments: "var a0=0; var a1=1; ... var a19999=19999;"
+        string manyStatements = string.Join(" ", Enumerable.Range(0, 20_000).Select(i => $"var a{i}={i};"));
+        JavaScriptRuleAdapter<TestContext> adapter = new(
+            "js-stmtlimit",
+            manyStatements,
+            outputFields: null,
+            new TestProjector(),
+            Substitute.For<IMLog<JavaScriptRuleAdapter<TestContext>>>());
+        FactBag facts = new();
+
+        RuleResult result = await adapter.EvaluateAsync(new TestContext(1, "standard"), facts, CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+    }
+
     private static LiquidRuleAdapter<TestContext> CreateLiquidAdapter(string code, string template)
     {
         return new LiquidRuleAdapter<TestContext>(
