@@ -11,8 +11,15 @@ internal static class GeneratedRuleSourceWriter
     public static string Render(ExtractedRuleDefinition definition)
     {
         string className = $"{ToIdentifier(definition.Code)}Rule";
-        (string dependencyFields, string dependencyCtor) = RenderDependencyConstructor(className, definition.Dependencies);
-        string dependenciesProperty = RenderDependenciesProperty(definition.Dependencies);
+
+        // Auto-inject IMLog<T>? as first dependency (per DRTRACE-06/DRTRACE-07)
+        // Using fully-qualified name to avoid namespace collision in generated files
+        string imlogType = $"Muonroi.Logging.Abstractions.IMLog<{className}>?";
+        ServiceDependency imlogDep = new(imlogType, "_log", "log");
+        List<ServiceDependency> allDependencies = [imlogDep, .. definition.Dependencies];
+
+        (string dependencyFields, string dependencyCtor) = RenderDependencyConstructor(className, allDependencies);
+        string dependenciesProperty = RenderDependenciesProperty(allDependencies);
         string dependsOn = definition.DependsOn.Count == 0
             ? "Array.Empty<string>()"
             : $"new[] {{ {string.Join(", ", definition.DependsOn.Select(value => $"\"{Escape(value)}\""))} }}";
@@ -28,7 +35,8 @@ internal static class GeneratedRuleSourceWriter
             "System.Reflection",
             "System.Threading",
             "System.Threading.Tasks",
-            "Muonroi.RuleEngine.Abstractions"
+            "Muonroi.RuleEngine.Abstractions",
+            "Muonroi.Logging.Abstractions"
         };
 
         foreach (string usingDirective in definition.Usings)
@@ -155,7 +163,16 @@ internal static class GeneratedRuleSourceWriter
         }
 
         string fields = string.Join("\n", dependencies.Select(dependency => $"    private readonly {dependency.TypeName} {dependency.FieldName};"));
-        string args = string.Join(", ", dependencies.Select(dependency => $"{dependency.TypeName} {dependency.ConstructorParameterName}"));
+        string args = string.Join(", ", dependencies.Select(dependency =>
+        {
+            string param = $"{dependency.TypeName} {dependency.ConstructorParameterName}";
+            // Add null default for nullable dependencies (e.g., IMLog<T>? gets = null)
+            if (dependency.TypeName.EndsWith("?", StringComparison.Ordinal))
+            {
+                param += " = null";
+            }
+            return param;
+        }));
         string assigns = string.Join("\n", dependencies.Select(dependency => $"        {dependency.FieldName} = {dependency.ConstructorParameterName};"));
         string constructor = "    public " + className + "(" + args + ")" + "\n"
             + "    {" + "\n"
@@ -391,7 +408,8 @@ internal static class GeneratedRuleSourceWriter
             return "Array.Empty<System.Type>()";
         }
 
-        string types = string.Join(", ", dependencies.Select(dependency => $"typeof({dependency.TypeName})"));
+        // Strip trailing '?' from type names — typeof(IMLog<T>?) is invalid C#; use typeof(IMLog<T>)
+        string types = string.Join(", ", dependencies.Select(dependency => $"typeof({dependency.TypeName.TrimEnd('?')})" ));
         return $"new[] {{ {types} }}";
     }
 
