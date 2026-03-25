@@ -138,10 +138,16 @@ public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
             }
         }
 
+        // D-04: 5-second timeout matching JS sandbox budget
+        using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(5));
+
         TemplateContext context = new()
         {
             StrictVariables = false,
             MemberRenamer = member => member.Name,  // Preserve original casing
+            LoopLimit = 10_000,                     // D-05: match JS 10k statement limit
+            CancellationToken = cts.Token,          // D-04: interrupt long-running loops via CheckAbort()
         };
         context.PushGlobal(scriptObject);
 

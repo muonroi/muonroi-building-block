@@ -152,8 +152,9 @@ public sealed class ScriptingRuleAdapterTests
     [Trait("Category", "Phase31")]
     public async Task ScribanTimeout_ReturnsFailure()
     {
-        // Template with very large loop that will exceed the 5-second budget
-        string template = "{% for i in (1..100000000) %}{{ i }}{% endfor %}";
+        // Scriban-native syntax: very large loop triggers LoopLimit (10_000) or 5-second CTS budget.
+        // Either the LoopLimit or the CancellationToken will stop execution and produce Failure.
+        string template = "{{ for i in 1..100000000 }}{{ i }}{{ end }}";
         LiquidRuleAdapter<TestContext> adapter = CreateLiquidAdapter("timeout-test", template);
         FactBag facts = new();
         Stopwatch stopwatch = Stopwatch.StartNew();
@@ -169,14 +170,14 @@ public sealed class ScriptingRuleAdapterTests
     [Trait("Category", "Phase31")]
     public async Task ScribanLoopLimit_StopsExecution()
     {
-        // Template with loop exceeding the 10_000 iteration limit
-        string template = "{% for i in (1..20000) %}x{% endfor %}";
+        // Scriban-native range syntax enforces LoopLimit (Liquid range syntax does not use StepLoop)
+        string template = "{{ for i in 1..20000 }}x{{ end }}";
         LiquidRuleAdapter<TestContext> adapter = CreateLiquidAdapter("loop-test", template);
         FactBag facts = new();
 
         RuleResult result = await adapter.EvaluateAsync(new TestContext(1, "standard"), facts, CancellationToken.None);
 
-        // Should fail because LoopLimit=10_000 is exceeded
+        // Should fail because LoopLimit=10_000 is exceeded (ScriptRuntimeException is caught -> Failure)
         result.IsSuccess.Should().BeFalse();
     }
 
