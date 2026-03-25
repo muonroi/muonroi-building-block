@@ -240,7 +240,7 @@ public sealed class RuleDryRunService(
             errors.Add(ex.Message);
         }
 
-        List<RuleExecutionTrace> traces = BuildCodeTraces(metadata.RuleCodes, tracer.GetEntries(), errors);
+        List<RuleExecutionTrace> traces = BuildCodeTraces(metadata.RuleCodes, tracer.GetEntries(), errors, outputFacts);
         stopwatch.Stop();
         return new RuleDryRunResult
         {
@@ -402,7 +402,8 @@ public sealed class RuleDryRunService(
     private static List<RuleExecutionTrace> BuildCodeTraces(
         IReadOnlyList<string> declaredCodes,
         IReadOnlyList<RuleTraceEntry> entries,
-        IReadOnlyList<string> errors)
+        IReadOnlyList<string> errors,
+        IReadOnlyDictionary<string, object?> outputFacts)
     {
         List<RuleExecutionTrace> traces = [.. entries
             .GroupBy(x => x.RuleName, StringComparer.OrdinalIgnoreCase)
@@ -444,6 +445,44 @@ public sealed class RuleDryRunService(
 
         if (traces.Count > 0 || declaredCodes.Count == 0)
         {
+            // Override InputFactsJson/OutputFactsJson with edge-scoped snapshots from FactBag.
+            // GraphRuleDispatchAdapter writes __trace.node.{nodeId}.input and .output for each executed node.
+            // Reading these here (Path A) aligns with Path B (MapOrchestratorToMDryRunResponse) which reads
+            // the same keys directly from FactBag — both paths now produce identical JSON shape.
+            for (int i = 0; i < traces.Count; i++)
+            {
+                RuleExecutionTrace trace = traces[i];
+                string inputKey = $"__trace.node.{trace.RuleName}.input";
+                string outputKey = $"__trace.node.{trace.RuleName}.output";
+
+                string? edgeScopedInput = null;
+                string? edgeScopedOutput = null;
+
+                if (outputFacts.TryGetValue(inputKey, out object? inVal) && inVal is IDictionary<string, object?> inDict)
+                {
+                    edgeScopedInput = JsonSerializer.Serialize(inDict);
+                }
+
+                if (outputFacts.TryGetValue(outputKey, out object? outVal) && outVal is IDictionary<string, object?> outDict)
+                {
+                    edgeScopedOutput = JsonSerializer.Serialize(outDict);
+                }
+
+                if (edgeScopedInput is not null || edgeScopedOutput is not null)
+                {
+                    traces[i] = new RuleExecutionTrace
+                    {
+                        RuleName = trace.RuleName,
+                        Matched = trace.Matched,
+                        FailReason = trace.FailReason,
+                        InputFactsJson = edgeScopedInput ?? trace.InputFactsJson,
+                        OutputFactsJson = edgeScopedOutput ?? trace.OutputFactsJson,
+                        ChangedFactKeys = trace.ChangedFactKeys,
+                        ElapsedMs = trace.ElapsedMs
+                    };
+                }
+            }
+
             return traces;
         }
 
