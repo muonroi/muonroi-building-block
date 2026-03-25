@@ -1,0 +1,14 @@
+title = "Gitleaks config for muonroi-building-block"
+
+[allowlist]
+  description = "Allowlisted patterns"
+  paths = [
+    '''tests/''',
+    '''\.github/workflows/''',
+  ]
+  regexTarget = "line"
+  regexes = [
+    '''CHANGE_ME''',
+    '''test[-_]key''',
+    '''dummy[-_]secret''',
+  ]
