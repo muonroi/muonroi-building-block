@@ -39,6 +39,12 @@ public sealed class RulesEngineService(
     private const int MaxWorkflowCacheEntries = 2048;
     private static readonly SemaphoreSlim _evictionLock = new(1, 1);
 
+    static RulesEngineService()
+    {
+        // Register the WorkflowCache size observable gauge once at class initialization.
+        WorkflowCacheTelemetry.RegisterCacheSizeProvider(() => WorkflowCache.Count);
+    }
+
     private static readonly ConcurrentDictionary<Type, IReadOnlyDictionary<string, IReadOnlyList<Type>>> ReflectionRuleCache =
         new();
 
@@ -613,12 +619,15 @@ public sealed class RulesEngineService(
         int? version,
         CancellationToken cancellationToken)
     {
+        long startTicks = Stopwatch.GetTimestamp();
         string tenantId = ResolveTenantId();
         if (_runtimeCache is not null)
         {
             await _runtimeCache.InvalidateAsync(tenantId, workflowName, cancellationToken);
         }
         WorkflowCache.TryRemove(BuildWorkflowCacheKey(tenantId, workflowName), out _);
+        double elapsedMs = Stopwatch.GetElapsedTime(startTicks).TotalMilliseconds;
+        WorkflowCacheTelemetry.RecordHotReloadLag(elapsedMs);
 
         if (_notifier is not null)
         {
@@ -649,11 +658,13 @@ public sealed class RulesEngineService(
         {
             // Update access time on cache hit to maintain LRU ordering (per D-01)
             WorkflowCache[cacheKey] = cached with { LastAccessedUtc = DateTime.UtcNow };
+            WorkflowCacheTelemetry.RecordHit(tenantId);
             return cached;
         }
 
         CachedWorkflowDefinition parsed = ParseWorkflowDefinition(json) with { LastAccessedUtc = DateTime.UtcNow };
         WorkflowCache[cacheKey] = parsed;
+        WorkflowCacheTelemetry.RecordMiss(tenantId);
 
         if (WorkflowCache.Count > MaxWorkflowCacheEntries)
         {
@@ -684,6 +695,8 @@ public sealed class RulesEngineService(
             {
                 WorkflowCache.TryRemove(key, out _);
             }
+
+            WorkflowCacheTelemetry.RecordEviction(toEvict.Length);
         }
         finally
         {

@@ -9,7 +9,8 @@ namespace Muonroi.RuleEngine.Runtime.Tests.Rules;
 
 /// <summary>
 /// Unit tests for WorkflowCacheTelemetry OTel metrics instrumentation.
-/// Uses MeterListener to capture metric recordings and reflection for private members.
+/// Uses MeterListener subscribed BEFORE the action to capture metric recordings.
+/// Uses reflection to access private static members (Phase31 pattern).
 /// </summary>
 [Trait("Category", "Phase38")]
 public class WorkflowCacheTelemetryTests : IDisposable
@@ -22,13 +23,8 @@ public class WorkflowCacheTelemetryTests : IDisposable
     private static readonly MethodInfo GetOrCreateMethod = typeof(RulesEngineService)
         .GetMethod("GetOrCreateWorkflowDefinition", BindingFlags.NonPublic | BindingFlags.Static)!;
 
-    // Reflection access to private static EvictOldestEntries method
-    private static readonly MethodInfo EvictOldestEntriesMethod = typeof(RulesEngineService)
-        .GetMethod("EvictOldestEntries", BindingFlags.NonPublic | BindingFlags.Static)!;
-
     private const string ValidJson = """[{"WorkflowName":"wf","Rules":["R1"]}]""";
 
-    // Helper to clear the cache before each test to ensure isolation
     private static void ClearCache()
     {
         object cache = CacheField.GetValue(null)!;
@@ -39,13 +35,6 @@ public class WorkflowCacheTelemetryTests : IDisposable
     {
         object cache = CacheField.GetValue(null)!;
         return (int)cache.GetType().GetProperty("Count")!.GetValue(cache)!;
-    }
-
-    private static void AddDirectToCache(string key, object value)
-    {
-        object cache = CacheField.GetValue(null)!;
-        // Use indexer via reflection
-        cache.GetType().GetMethod("TryAdd")!.Invoke(cache, [key, value]);
     }
 
     public WorkflowCacheTelemetryTests()
@@ -60,6 +49,7 @@ public class WorkflowCacheTelemetryTests : IDisposable
 
     /// <summary>
     /// Test 1: GetOrCreateWorkflowDefinition cache hit increments HitCounter by 1.
+    /// Listener is subscribed before the action to capture the measurement.
     /// </summary>
     [Fact]
     public void GetOrCreate_CacheHit_IncrementsHitCounter()
@@ -67,17 +57,18 @@ public class WorkflowCacheTelemetryTests : IDisposable
         // Arrange — prime the cache with a first call (miss)
         GetOrCreateMethod.Invoke(null, ["tenant1", "wf1", ValidJson]);
 
-        long hitsBefore = GetCounterValue(WorkflowCacheTelemetry.MeterName,
-            "muonroi.ruleengine.workflowcache.hits");
+        // Set up listener BEFORE the action
+        long[] hits = [0L];
+        using MeterListener listener = CreateLongCounterListener(
+            WorkflowCacheTelemetry.MeterName,
+            "muonroi.ruleengine.workflowcache.hits",
+            hits);
 
         // Act — second call with same JSON = cache hit
         GetOrCreateMethod.Invoke(null, ["tenant1", "wf1", ValidJson]);
 
-        long hitsAfter = GetCounterValue(WorkflowCacheTelemetry.MeterName,
-            "muonroi.ruleengine.workflowcache.hits");
-
         // Assert
-        (hitsAfter - hitsBefore).Should().Be(1);
+        hits[0].Should().Be(1, "one cache hit should increment HitCounter by 1");
     }
 
     /// <summary>
@@ -86,53 +77,55 @@ public class WorkflowCacheTelemetryTests : IDisposable
     [Fact]
     public void GetOrCreate_CacheMiss_IncrementsMissCounter()
     {
-        // Arrange
-        long missesBefore = GetCounterValue(WorkflowCacheTelemetry.MeterName,
-            "muonroi.ruleengine.workflowcache.misses");
+        // Set up listener BEFORE the action
+        long[] misses = [0L];
+        using MeterListener listener = CreateLongCounterListener(
+            WorkflowCacheTelemetry.MeterName,
+            "muonroi.ruleengine.workflowcache.misses",
+            misses);
 
-        // Act — first call = cache miss
+        // Act — first call for this key = cache miss
         GetOrCreateMethod.Invoke(null, ["tenant_miss", "wf_miss", ValidJson]);
 
-        long missesAfter = GetCounterValue(WorkflowCacheTelemetry.MeterName,
-            "muonroi.ruleengine.workflowcache.misses");
-
         // Assert
-        (missesAfter - missesBefore).Should().Be(1);
+        misses[0].Should().Be(1, "one cache miss should increment MissCounter by 1");
     }
 
     /// <summary>
-    /// Test 3: EvictOldestEntries increments EvictionCounter by the number of evicted entries.
+    /// Test 3: EvictOldestEntries called when cache exceeds max → EvictionCounter incremented.
+    /// Fills cache beyond MaxWorkflowCacheEntries to trigger eviction via GetOrCreate.
     /// </summary>
     [Fact]
     public void EvictOldestEntries_IncrementsEvictionCounterByEvictedCount()
     {
-        // Arrange — fill cache beyond max (2048) to trigger eviction
-        // We access the MaxWorkflowCacheEntries constant via reflection
+        // Arrange — get MaxWorkflowCacheEntries constant via reflection
         int maxEntries = (int)typeof(RulesEngineService)
             .GetField("MaxWorkflowCacheEntries", BindingFlags.NonPublic | BindingFlags.Static)!
             .GetValue(null)!;
 
         ClearCache();
 
-        // Add maxEntries + 1 entries to trigger the over-limit check in GetOrCreateWorkflowDefinition
-        // We fill them at different timestamps by adding via GetOrCreate
+        // Set up listener BEFORE filling cache past the limit
+        long[] evicted = [0L];
+        using MeterListener listener = CreateLongCounterListener(
+            WorkflowCacheTelemetry.MeterName,
+            "muonroi.ruleengine.workflowcache.evictions",
+            evicted);
+
+        // Act — add maxEntries + 1 entries to trigger LRU eviction
         for (int i = 0; i <= maxEntries; i++)
         {
             string json = $$"""[{"WorkflowName":"wf{{i}}","Rules":["R1"]}]""";
-            GetOrCreateMethod.Invoke(null, [$"t1", $"wf{i}", json]);
+            GetOrCreateMethod.Invoke(null, ["t1", $"wf{i}", json]);
         }
 
-        // At this point eviction was triggered. Record state.
-        long evictionsBefore = GetCounterValue(WorkflowCacheTelemetry.MeterName,
-            "muonroi.ruleengine.workflowcache.evictions");
-
-        // The eviction should have happened inside GetOrCreate when count exceeded max.
-        // evictionsBefore should already be > 0 after filling past max.
-        evictionsBefore.Should().BeGreaterThan(0);
+        // Assert — eviction should have fired with MaxWorkflowCacheEntries/4 = 512 entries evicted
+        evicted[0].Should().Be(maxEntries / 4,
+            $"LRU eviction removes 25% ({maxEntries / 4}) of {maxEntries} entries");
     }
 
     /// <summary>
-    /// Test 4: CacheSizeGauge observable returns WorkflowCache.Count via the registered provider.
+    /// Test 4: CacheSizeGauge observable returns WorkflowCache.Count via registered provider.
     /// </summary>
     [Fact]
     public void CacheSizeGauge_ReturnsCurrentCacheCount()
@@ -145,50 +138,78 @@ public class WorkflowCacheTelemetryTests : IDisposable
 
         int expectedCount = GetCacheCount();
 
-        // Act — read gauge value via MeterListener
-        int gaugeValue = ReadGaugeValue(WorkflowCacheTelemetry.MeterName,
+        // Act — read gauge value via MeterListener (observable gauges are polled via RecordObservableInstruments)
+        int gaugeValue = ReadCurrentGaugeValue(
+            WorkflowCacheTelemetry.MeterName,
             "muonroi.ruleengine.workflowcache.size");
 
         // Assert
-        gaugeValue.Should().Be(expectedCount);
+        gaugeValue.Should().Be(expectedCount,
+            $"CacheSizeGauge should return current WorkflowCache.Count = {expectedCount}");
     }
 
     /// <summary>
-    /// Test 5: NotifyRuleChangedAsync records hot-reload lag histogram value > 0.
+    /// Test 5: NotifyRuleChangedAsync records hot-reload lag histogram — at least one recording >= 0ms.
     /// </summary>
     [Fact]
     public async Task NotifyRuleChangedAsync_RecordsHotReloadLagHistogram()
     {
-        // Arrange — create a minimal RulesEngineService and a store
+        // Arrange — workflow name in JSON must match the workflowName parameter
+        const string workflowName = "wf_reload";
+        string reloadJson = $$"""[{"WorkflowName":"{{workflowName}}","Rules":["R1"]}]""";
+
         InMemoryRuleSetStore store = new();
-        await store.SaveAsync("wf_reload", ValidJson);
+        await store.SaveAsync(workflowName, reloadJson);
 
         RulesEngineService svc = new(store);
 
-        double lagBefore = GetHistogramSum(WorkflowCacheTelemetry.MeterName,
-            "muonroi.ruleengine.workflowcache.hotreload_lag_ms");
+        int[] recordingCount = [0];
+        double[] recordedMs = [-1.0];
+        using MeterListener listener = new();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == WorkflowCacheTelemetry.MeterName &&
+                instrument.Name == "muonroi.ruleengine.workflowcache.hotreload_lag_ms")
+            {
+                l.EnableMeasurementEvents(instrument);
+            }
+        };
+        listener.SetMeasurementEventCallback<double>((instrument, measurement, _, _) =>
+        {
+            if (instrument.Meter.Name == WorkflowCacheTelemetry.MeterName &&
+                instrument.Name == "muonroi.ruleengine.workflowcache.hotreload_lag_ms")
+            {
+                Interlocked.Increment(ref recordingCount[0]);
+                recordedMs[0] = measurement;
+            }
+        });
+        listener.Start();
 
-        // Act — SaveRuleSetAsync triggers NotifyRuleChangedAsync internally
-        await svc.SaveRuleSetAsync("wf_reload", ValidJson);
+        // Act — SaveRuleSetAsync internally calls NotifyRuleChangedAsync which records the histogram
+        await svc.SaveRuleSetAsync(workflowName, reloadJson);
 
-        double lagAfter = GetHistogramSum(WorkflowCacheTelemetry.MeterName,
-            "muonroi.ruleengine.workflowcache.hotreload_lag_ms");
-
-        // Assert — some time was recorded (>= 0 since internal ops are near-instant in tests)
-        (lagAfter - lagBefore).Should().BeGreaterThanOrEqualTo(0);
-        // Verify at least one recording was made (sum changes or recording count changes)
-        // Even 0ms is valid if the operations complete under measurement precision
-        lagAfter.Should().BeGreaterThanOrEqualTo(lagBefore);
+        // Assert — at least one histogram recording was made, and the value is >= 0
+        recordingCount[0].Should().BeGreaterThan(0,
+            "NotifyRuleChangedAsync must record hot-reload lag at least once");
+        recordedMs[0].Should().BeGreaterThanOrEqualTo(0,
+            "hot-reload lag must be a non-negative duration in milliseconds");
     }
 
     // ---------------------------------------------------------------------------------
-    // Helpers for reading OTel metric values via MeterListener
+    // Helpers
     // ---------------------------------------------------------------------------------
 
-    private static long GetCounterValue(string meterName, string instrumentName)
+    /// <summary>
+    /// Creates a MeterListener subscribed to a long counter instrument.
+    /// Measurements are accumulated via Interlocked into <paramref name="accumulator"/>[0].
+    /// Caller must dispose the listener after the action under test.
+    /// </summary>
+    private static MeterListener CreateLongCounterListener(
+        string meterName,
+        string instrumentName,
+        long[] accumulator)
     {
-        long total = 0;
-        using MeterListener listener = new();
+        MeterListener listener = new();
         listener.InstrumentPublished = (instrument, l) =>
         {
             if (instrument.Meter.Name == meterName && instrument.Name == instrumentName)
@@ -200,17 +221,16 @@ public class WorkflowCacheTelemetryTests : IDisposable
         {
             if (instrument.Meter.Name == meterName && instrument.Name == instrumentName)
             {
-                Interlocked.Add(ref total, measurement);
+                Interlocked.Add(ref accumulator[0], measurement);
             }
         });
         listener.Start();
-        listener.RecordObservableInstruments();
-        return total;
+        return listener;
     }
 
-    private static int ReadGaugeValue(string meterName, string instrumentName)
+    private static int ReadCurrentGaugeValue(string meterName, string instrumentName)
     {
-        int value = 0;
+        int[] value = [0];
         using MeterListener listener = new();
         listener.InstrumentPublished = (instrument, l) =>
         {
@@ -223,42 +243,20 @@ public class WorkflowCacheTelemetryTests : IDisposable
         {
             if (instrument.Meter.Name == meterName && instrument.Name == instrumentName)
             {
-                value = measurement;
+                value[0] = measurement;
             }
         });
         listener.Start();
+        // Force the observable gauge to report its current value
         listener.RecordObservableInstruments();
-        return value;
-    }
-
-    private static double GetHistogramSum(string meterName, string instrumentName)
-    {
-        double total = 0;
-        using MeterListener listener = new();
-        listener.InstrumentPublished = (instrument, l) =>
-        {
-            if (instrument.Meter.Name == meterName && instrument.Name == instrumentName)
-            {
-                l.EnableMeasurementEvents(instrument);
-            }
-        };
-        listener.SetMeasurementEventCallback<double>((instrument, measurement, _, _) =>
-        {
-            if (instrument.Meter.Name == meterName && instrument.Name == instrumentName)
-            {
-                total += measurement;
-            }
-        });
-        listener.Start();
-        listener.RecordObservableInstruments();
-        return total;
+        return value[0];
     }
 }
 
 /// <summary>
-/// Minimal in-memory IRuleSetStore implementation for telemetry tests.
+/// Minimal in-memory IRuleSetStore for telemetry tests.
 /// </summary>
-internal sealed class InMemoryRuleSetStore : Muonroi.RuleEngine.Runtime.Rules.IRuleSetStore
+internal sealed class InMemoryRuleSetStore : IRuleSetStore
 {
     private readonly ConcurrentDictionary<string, string> _store = new(StringComparer.OrdinalIgnoreCase);
 
