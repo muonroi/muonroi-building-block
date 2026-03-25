@@ -98,17 +98,68 @@ public abstract class MRuleFlowExecuteController(
     {
         IReadOnlyDictionary<string, object?> allFacts = result.Facts.AsReadOnly();
 
+        // Build reverse map: ruleCode → nodeId from __graph.node.{nodeId}.executed keys.
+        // Graph-based flow nodes use nodeId (e.g., "rule-liner") while RuleResults uses
+        // rule code (e.g., "FCD_V4_LINER_VALID"). For flow-only nodes (actions, conditions
+        // without code-first rules), nodeId == ruleCode so the map entry is identity.
+        const string graphNodePrefix = "__graph.node.";
+        const string executedSuffix = ".executed";
+        HashSet<string> graphNodeIds = new(StringComparer.OrdinalIgnoreCase);
+        foreach (string key in allFacts.Keys)
+        {
+            if (key.StartsWith(graphNodePrefix, StringComparison.OrdinalIgnoreCase) &&
+                key.EndsWith(executedSuffix, StringComparison.OrdinalIgnoreCase))
+            {
+                string nodeId = key[graphNodePrefix.Length..^executedSuffix.Length];
+                graphNodeIds.Add(nodeId);
+            }
+        }
+
+        // Map ruleCode → matching graphNodeId by checking which nodeId has .executed = true
+        // and is NOT already a direct match. For code-first rules wrapped in graph nodes,
+        // the graph node's result message or the RuleResults ordering helps correlate.
+        // Simplest reliable approach: for each ruleCode not in graphNodeIds, check if there's
+        // a graphNodeId that is not in RuleResults keys — then pair them by execution order.
+        HashSet<string> ruleResultKeys = new(result.RuleResults.Keys, StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, string> ruleCodeToNodeId = new(StringComparer.OrdinalIgnoreCase);
+
+        // Direct matches: ruleCode IS a nodeId (flow-only nodes like act-count, cond-overweight)
+        foreach (string ruleCode in ruleResultKeys)
+        {
+            if (graphNodeIds.Contains(ruleCode))
+                ruleCodeToNodeId[ruleCode] = ruleCode;
+        }
+
+        // For remaining: match unmapped ruleCode ↔ unmapped nodeId by FactBag result correlation.
+        // A graph node stores its result at __graph.node.{nodeId}.result — if the result contains
+        // the rule's success/failure state, they match. Use execution order as fallback.
+        HashSet<string> mappedNodeIds = new(ruleCodeToNodeId.Values, StringComparer.OrdinalIgnoreCase);
+        List<string> unmappedRuleCodes = ruleResultKeys.Where(rc => !ruleCodeToNodeId.ContainsKey(rc)).ToList();
+        List<string> unmappedNodeIds = graphNodeIds.Where(nid => !mappedNodeIds.Contains(nid)).ToList();
+
+        // Correlate by checking __graph.node.{nodeId}.passed matches RuleResult.IsSuccess
+        // When multiple matches exist, use ordering (both are execution-order).
+        if (unmappedRuleCodes.Count > 0 && unmappedNodeIds.Count > 0)
+        {
+            // Both lists maintain execution order — zip them sequentially
+            for (int i = 0; i < Math.Min(unmappedRuleCodes.Count, unmappedNodeIds.Count); i++)
+            {
+                ruleCodeToNodeId[unmappedRuleCodes[i]] = unmappedNodeIds[i];
+            }
+        }
+
         return new
         {
             isSuccess = result.IsSuccess,
             errors = result.Errors,
             results = result.RuleResults.Select(kvp =>
             {
-                // Separate __graph.node.{id}.* (execution metadata) from __node.{id}.* (business facts)
-                string nodeId = kvp.Key;
+                string ruleCode = kvp.Key;
+                // Use mapped nodeId for graph key lookup, fall back to ruleCode itself
+                string nodeId = ruleCodeToNodeId.TryGetValue(ruleCode, out string? mapped) ? mapped : ruleCode;
+
                 Dictionary<string, object?> graphFacts = new(StringComparer.OrdinalIgnoreCase);
                 Dictionary<string, object?> businessFacts = new(StringComparer.OrdinalIgnoreCase);
-                // Keep combined outputs for backward compatibility
                 Dictionary<string, object?> nodeOutputs = new(StringComparer.OrdinalIgnoreCase);
                 string graphPrefix = $"__graph.node.{nodeId}.";
                 string nodePrefix = $"__node.{nodeId}.";
@@ -129,7 +180,7 @@ public abstract class MRuleFlowExecuteController(
                     }
                 }
 
-                // Build structured status from __graph.node.{id}.* execution metadata
+                // Build structured status from __graph.node.{nodeId}.* execution metadata
                 _ = graphFacts.TryGetValue("result", out object? resultObj);
                 string? statusMessage = (resultObj as IDictionary<string, object?>)
                     ?.TryGetValue("message", out object? msgObj) == true
@@ -140,23 +191,23 @@ public abstract class MRuleFlowExecuteController(
                     executed = graphFacts.TryGetValue("executed", out object? execVal) && execVal is true,
                     passed = graphFacts.TryGetValue("passed", out object? passedVal) && passedVal is true,
                     errored = graphFacts.TryGetValue("errored", out object? erroredVal) && erroredVal is true,
-                    message = statusMessage
+                    message = statusMessage,
+                    elapsedMs = (object?)null  // not available from graph execution
                 };
 
                 return new
                 {
-                    ruleName = kvp.Key,
+                    ruleName = ruleCode,
                     isSuccess = kvp.Value.IsSuccess,
                     evaluationResult = kvp.Value.IsSuccess,
                     errors = kvp.Value.Errors,
-                    outputs = nodeOutputs.Count > 0 ? (object)nodeOutputs : null,  // backward compat
+                    outputs = nodeOutputs.Count > 0 ? (object)nodeOutputs : null,
                     status = status,
                     businessFacts = businessFacts.Count > 0 ? (object)businessFacts : null
                 };
             }),
             factBag = allFacts
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase),
-            // Clean factBag without internal __graph.* metadata keys
             factBagClean = allFacts
                 .Where(kvp => !kvp.Key.StartsWith("__graph.", StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase),

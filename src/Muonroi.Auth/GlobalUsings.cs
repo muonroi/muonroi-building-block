@@ -24,3 +24,6 @@ global using System.Threading.Tasks;
 global using Muonroi.Core.Abstractions.Configuration;
 global using Muonroi.Logging.Abstractions;
 global using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
+global using Fido2NetLib;
+global using Microsoft.Extensions.Caching.Distributed;
+global using Microsoft.EntityFrameworkCore;
