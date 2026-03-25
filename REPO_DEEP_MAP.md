@@ -57,7 +57,8 @@
 
 | File | Class | Purpose |
 |------|-------|---------|
-| RulesEngineService.cs | `RulesEngineService` | Main service facade |
+| RulesEngineService.cs | `RulesEngineService` | Main service facade — instrumented with WorkflowCacheTelemetry (Phase 38) |
+| WorkflowCacheTelemetry.cs | `WorkflowCacheTelemetry` | OTel metrics: hit/miss counters, eviction counter, cache size gauge, hot-reload lag histogram (Phase 38) |
 | RuleEngine.cs | `RuleEngine<T>` | `AddRule()`, `RemoveRule()`, `ExecuteAsync()`, `GetCatalog()` |
 | IRuleSetStore.cs | `IRuleSetStore` | RuleSet persistence |
 | IRuleSetAuditStore.cs | `IRuleSetAuditStore` | Audit storage |
