@@ -18,9 +18,22 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         string? resolved = ResolveTenantId(context);
         string? claimTenant = context.User.FindFirst(ClaimConstants.TenantId)?.Value;
 
-        if (string.IsNullOrWhiteSpace(claimTenant) ||
-            (resolved != null && !string.Equals(resolved, claimTenant, StringComparison.Ordinal)))
+        if (string.IsNullOrWhiteSpace(claimTenant))
         {
+            TenantResolutionTelemetry.RecordAuthFailure(
+                "missing_claim",
+                headerTenantId: resolved,
+                claimTenantId: null);
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
+        }
+
+        if (resolved != null && !string.Equals(resolved, claimTenant, StringComparison.Ordinal))
+        {
+            TenantResolutionTelemetry.RecordAuthFailure(
+                "header_claim_mismatch",
+                headerTenantId: resolved,
+                claimTenantId: claimTenant);
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             return;
         }
