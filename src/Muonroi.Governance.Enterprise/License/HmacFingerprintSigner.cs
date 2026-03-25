@@ -37,6 +37,7 @@ public sealed class HmacFingerprintSigner(LicensePayload? payload, LicenseConfig
 
         // Combine all elements into a functional dependency chain
         string keySource = $"{seed}:{projectSeed}:{salt}:{serverNonce}";
-        return Encoding.UTF8.GetBytes(keySource);
+        // D-07: SHA256 wrap produces fixed 32-byte key with uniform entropy distribution
+        return SHA256.HashData(Encoding.UTF8.GetBytes(keySource));
     }
 }
