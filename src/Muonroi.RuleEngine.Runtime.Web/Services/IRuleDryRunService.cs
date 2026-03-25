@@ -62,4 +62,12 @@ public sealed class RuleExecutionTrace
     public bool Matched { get; init; }
     /// <summary>Failure reason when the rule did not match.</summary>
     public string? FailReason { get; init; }
+    /// <summary>JSON string of FactBag state the rule received at evaluation time.</summary>
+    public string? InputFactsJson { get; init; }
+    /// <summary>JSON string of FactBag state after this rule completed execution.</summary>
+    public string? OutputFactsJson { get; init; }
+    /// <summary>Keys that were added or changed by this rule during execution.</summary>
+    public IReadOnlyList<string>? ChangedFactKeys { get; init; }
+    /// <summary>Execution time in milliseconds for this specific rule.</summary>
+    public long? ElapsedMs { get; init; }
 }
