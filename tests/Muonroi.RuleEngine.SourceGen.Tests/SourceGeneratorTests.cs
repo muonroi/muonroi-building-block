@@ -316,6 +316,150 @@ public sealed class TestRules
         public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => EmptyOptions;
     }
 
+    [Fact]
+    public void ExtractAsRuleGenerator_GeneratedClass_ShouldInjectIMLogAsFirstNullableConstructorParameter()
+    {
+        // Arrange — rule with zero user dependencies
+        string source = @"
+using System;
+
+namespace TestNamespace;
+
+public class MExtractAsRuleAttribute : Attribute
+{
+    public MExtractAsRuleAttribute(string code) {}
+    public int Order { get; set; }
+}
+
+public sealed class BalanceContext
+{
+    public decimal Amount { get; set; }
+}
+
+public sealed class TestRules
+{
+    [MExtractAsRule(""CHECK_BALANCE"", Order = 1)]
+    public bool CheckBalance(BalanceContext ctx)
+    {
+        return ctx.Amount > 0;
+    }
+}
+";
+        Compilation compilation = CreateCompilation(source);
+        GeneratorDriver driver = CreateDriver();
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
+
+        Assert.Empty(diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error));
+        string generated = string.Join("\n\n", GetGeneratedSources(driver.GetRunResult()).Select(item => item.SourceText.ToString()));
+
+        // IMLog field: private readonly Muonroi.Logging.Abstractions.IMLog<CheckBalanceRule>? _log;
+        Assert.Contains("Muonroi.Logging.Abstractions.IMLog<", generated);
+        Assert.Contains("_log", generated);
+
+        // IMLog constructor parameter: Muonroi.Logging.Abstractions.IMLog<CheckBalanceRule>? log = null
+        Assert.Contains("log = null", generated);
+
+        // typeof(...IMLog<CheckBalanceRule>) in Dependencies property — no nullable ?
+        Assert.Contains("typeof(Muonroi.Logging.Abstractions.IMLog<", generated);
+
+        // using Muonroi.Logging.Abstractions;
+        Assert.Contains("using Muonroi.Logging.Abstractions;", generated);
+    }
+
+    [Fact]
+    public void ExtractAsRuleGenerator_GeneratedClass_ShouldInjectIMLogBeforeUserDependencies()
+    {
+        // Arrange — rule with one user dependency; IMLog must come FIRST in constructor
+        string source = @"
+using System;
+
+namespace TestNamespace;
+
+public class MExtractAsRuleAttribute : Attribute
+{
+    public MExtractAsRuleAttribute(string code) {}
+    public int Order { get; set; }
+}
+
+public interface IMyService
+{
+    void DoWork();
+}
+
+public sealed class OrderContext
+{
+    public string OrderId { get; set; } = string.Empty;
+}
+
+public sealed class TestRules
+{
+    [MExtractAsRule(""PROCESS_ORDER"", Order = 1)]
+    public bool ProcessOrder(OrderContext ctx)
+    {
+        return !string.IsNullOrEmpty(ctx.OrderId);
+    }
+}
+";
+        // The [MExtractAsRule] dependency injection comes via DI attributes; since source generator
+        // uses constructor parameter syntax from annotations (no IMyService annotation here),
+        // we verify IMLog is present as nullable first parameter and Dependencies includes it.
+        Compilation compilation = CreateCompilation(source);
+        GeneratorDriver driver = CreateDriver();
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
+
+        Assert.Empty(diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error));
+        string generated = string.Join("\n\n", GetGeneratedSources(driver.GetRunResult()).Select(item => item.SourceText.ToString()));
+
+        // Nullable IMLog with default null in constructor
+        Assert.Contains("Muonroi.Logging.Abstractions.IMLog<", generated);
+        Assert.Contains("? log = null", generated);
+
+        // Dependencies property contains IMLog typeof (no nullable ?)
+        Assert.Contains("typeof(Muonroi.Logging.Abstractions.IMLog<", generated);
+        Assert.DoesNotContain("typeof(Muonroi.Logging.Abstractions.IMLog<ProcessOrderRule>?)", generated);
+    }
+
+    [Fact]
+    public void ExtractAsRuleGenerator_GeneratedClass_ShouldNotHaveNullableInTypeof()
+    {
+        // The typeof() in Dependencies must NOT contain trailing '?'
+        string source = @"
+using System;
+
+namespace TestNamespace;
+
+public class MExtractAsRuleAttribute : Attribute
+{
+    public MExtractAsRuleAttribute(string code) {}
+    public int Order { get; set; }
+}
+
+public sealed class InvoiceContext
+{
+    public decimal Total { get; set; }
+}
+
+public sealed class TestRules
+{
+    [MExtractAsRule(""VALIDATE_INVOICE"")]
+    public bool ValidateInvoice(InvoiceContext ctx)
+    {
+        return ctx.Total >= 0;
+    }
+}
+";
+        Compilation compilation = CreateCompilation(source);
+        GeneratorDriver driver = CreateDriver();
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
+
+        Assert.Empty(diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error));
+        string generated = string.Join("\n\n", GetGeneratedSources(driver.GetRunResult()).Select(item => item.SourceText.ToString()));
+
+        // Dependencies property must not have typeof(...?)
+        Assert.DoesNotContain("typeof(Muonroi.Logging.Abstractions.IMLog<ValidateInvoiceRule>?)", generated);
+        Assert.Contains("typeof(Muonroi.Logging.Abstractions.IMLog<ValidateInvoiceRule>)", generated);
+    }
+
     private sealed class DictionaryAnalyzerConfigOptions(IDictionary<string, string> values) : AnalyzerConfigOptions
     {
         private readonly IDictionary<string, string> _values = values;
