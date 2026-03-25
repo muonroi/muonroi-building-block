@@ -456,8 +456,9 @@ public sealed class TestRules
         string generated = string.Join("\n\n", GetGeneratedSources(driver.GetRunResult()).Select(item => item.SourceText.ToString()));
 
         // Dependencies property must not have typeof(...?)
-        Assert.DoesNotContain("typeof(Muonroi.Logging.Abstractions.IMLog<ValidateInvoiceRule>?)", generated);
-        Assert.Contains("typeof(Muonroi.Logging.Abstractions.IMLog<ValidateInvoiceRule>)", generated);
+        // Note: code "VALIDATE_INVOICE" → className "VALIDATE_INVOICERule" (underscores preserved by ToIdentifier)
+        Assert.DoesNotContain("typeof(Muonroi.Logging.Abstractions.IMLog<VALIDATE_INVOICERule>?)", generated);
+        Assert.Contains("typeof(Muonroi.Logging.Abstractions.IMLog<VALIDATE_INVOICERule>)", generated);
     }
 
     private sealed class DictionaryAnalyzerConfigOptions(IDictionary<string, string> values) : AnalyzerConfigOptions
