@@ -34,6 +34,18 @@ internal sealed class GraphRuleDispatchAdapter<TContext> : IRule<TContext>
             return new RuleResult(true, ["SKIPPED: edge condition not met"]);
         }
 
+        // Snapshot FactBag keys BEFORE rule evaluation (input = what was available)
+        HashSet<string> keysBefore = new(facts.Keys, StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, object?> inputSnapshot = new(StringComparer.OrdinalIgnoreCase);
+        foreach (string key in facts.Keys)
+        {
+            if (!key.StartsWith("__graph.", StringComparison.OrdinalIgnoreCase) &&
+                !key.StartsWith("__trace.", StringComparison.OrdinalIgnoreCase))
+            {
+                inputSnapshot[key] = facts[key];
+            }
+        }
+
         try
         {
             RuleResult result = await _inner.EvaluateAsync(ctx, facts, ct);
@@ -45,14 +57,36 @@ internal sealed class GraphRuleDispatchAdapter<TContext> : IRule<TContext>
                 isError: false,
                 message: result.Errors.Count > 0 ? string.Join("; ", result.Errors) : null);
 
+            // Compute output = keys that were added or changed after evaluation
+            Dictionary<string, object?> outputSnapshot = new(StringComparer.OrdinalIgnoreCase);
+            foreach (string key in facts.Keys)
+            {
+                if (key.StartsWith("__graph.", StringComparison.OrdinalIgnoreCase) ||
+                    key.StartsWith("__trace.", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (!keysBefore.Contains(key))
+                {
+                    // New key added by this rule
+                    outputSnapshot[key] = facts[key];
+                }
+                else if (!Equals(facts[key], inputSnapshot.GetValueOrDefault(key)))
+                {
+                    // Existing key modified by this rule
+                    outputSnapshot[key] = facts[key];
+                }
+            }
+
+            // Store per-node trace in FactBag for dry-run response mapping
+            facts.Set($"__trace.node.{_entry.NodeId}.input", inputSnapshot);
+            facts.Set($"__trace.node.{_entry.NodeId}.output", outputSnapshot);
+
             _pendingExecution.Value = result.IsSuccess
                 ? PendingExecutionState.ExecuteInner
                 : PendingExecutionState.Skip;
 
             if (handledFailure)
             {
-                // Preserve original failure in FactBag so callers can inspect
-                // which nodes actually failed even though the flow continues.
                 MAppendRoutedFailure(facts, _entry.NodeId, result);
                 return RuleResult.Passed();
             }
