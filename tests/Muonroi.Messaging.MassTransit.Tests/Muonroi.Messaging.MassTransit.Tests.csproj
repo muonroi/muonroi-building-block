@@ -8,7 +8,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.Memory" />
 <PackageReference Include="Scriban" />
-<PackageReference Include="Serilog.Sinks.Elasticsearch" />
 </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.Messaging.MassTransit\Muonroi.Messaging.MassTransit.csproj" />

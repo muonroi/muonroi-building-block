@@ -15,7 +15,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
 <PackageReference Include="Moq" />
 <PackageReference Include="Scriban" />
-<PackageReference Include="Serilog.Sinks.Elasticsearch" />
 </ItemGroup>
 
   <ItemGroup>
