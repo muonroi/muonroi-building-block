@@ -2,6 +2,7 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Logging.Abstractions;
 global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.Quota.Abstractions;
 global using Muonroi.RuleEngine.Abstractions;
 global using Muonroi.RuleEngine.Core.Tracing;
 global using System.Collections.Generic;
