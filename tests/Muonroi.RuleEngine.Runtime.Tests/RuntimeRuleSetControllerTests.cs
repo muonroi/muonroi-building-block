@@ -124,10 +124,9 @@ public sealed class RuntimeRuleSetControllerTests
 
             IActionResult versionsResult = await controller.GetVersions("wf-b");
             OkObjectResult versionsOk = versionsResult.Should().BeOfType<OkObjectResult>().Subject;
-            RuleSetWorkflowSummary versionsPayload = versionsOk.Value.Should().BeOfType<RuleSetWorkflowSummary>().Subject;
-            versionsPayload.WorkflowName.Should().Be("wf-b");
-            versionsPayload.ActiveVersion.Should().Be(2);
-            versionsPayload.Versions.Should().Equal(1, 2);
+            RuleSetVersionItem[] versionsPayload = versionsOk.Value.Should().BeOfType<RuleSetVersionItem[]>().Subject;
+            versionsPayload.Should().HaveCount(2);
+            versionsPayload.Select(v => v.Version).Should().BeEquivalentTo([1, 2]);
         }
         finally
         {
