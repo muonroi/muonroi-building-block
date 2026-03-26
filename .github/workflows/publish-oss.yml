@@ -83,6 +83,8 @@ jobs:
             "src/Muonroi.Tenancy.Abstractions"
             "src/Muonroi.Tenancy.Core"
             "src/Muonroi.Tenancy"
+            "src/Muonroi.Tenancy.SiteProfile.SourceGenerators"
+            "src/Muonroi.Tenancy.SiteProfile.Web"
             "src/Muonroi.RuleEngine.Abstractions"
             "src/Muonroi.RuleEngine.Core"
             "src/Muonroi.RuleEngine.SourceGenerators"
