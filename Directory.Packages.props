@@ -19,7 +19,8 @@
     <PackageVersion Include="ExcelDataReader.DataSet" Version="3.7.0" />
     <PackageVersion Include="Fido2" Version="4.0.0" />
     <PackageVersion Include="Fido2.AspNet" Version="4.0.0" />
-    <PackageVersion Include="FluentAssertions" Version="6.12.2" />
+    <!-- PINNED at 7.2.0 per D4: v8+ requires commercial license ($130/dev/year). Stay on v7.x (Apache 2.0 forever). Exact version used because CPM requires exact versions; this fulfills D4's intent of preventing v8 upgrade. -->
+    <PackageVersion Include="FluentAssertions" Version="7.2.0" />
     <PackageVersion Include="FluentValidation" Version="12.0.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
     <PackageVersion Include="Google.Protobuf" Version="3.29.1" />
