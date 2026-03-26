@@ -98,7 +98,7 @@ jobs:
           )
 
           for proj in "${COMMERCIAL_PROJECTS[@]}"; do
-            PACK_ARGS="-c Release --no-build -o $ARTIFACTS_DIR"
+            PACK_ARGS="-c Release -o $ARTIFACTS_DIR"
             if [ -n "${PACKAGE_VERSION:-}" ]; then
               PACK_ARGS="$PACK_ARGS -p:Version=$PACKAGE_VERSION"
             fi
