@@ -2,7 +2,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Linq;
 
@@ -12,8 +12,13 @@ namespace Muonroi.Tenancy.SiteProfile.SourceGenerators;
 /// Analyzer MSP001 — warns when a string literal matches a known SiteId value
 /// but the code doesn't use the generated <c>SiteIds.{name}</c> constant.
 ///
-/// Rationale: SiteId string literals are typo-prone. The generated SiteIds class
-/// provides compile-time safety. This analyzer nudges consumers to adopt constants.
+/// Architecture:
+/// 1. SemanticModelAction: collect ISiteProfile implementations → extract SiteId string values
+/// 2. SyntaxNodeAction: collect candidate string literals that MIGHT match a SiteId (deferred)
+/// 3. CompilationEndAction: cross-reference candidates against collected SiteIds → report diagnostics
+///
+/// This 3-phase approach avoids the race condition where SyntaxNodeAction runs
+/// before SemanticModelAction has populated knownSiteIds.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class SiteIdLiteralAnalyzer : DiagnosticAnalyzer
@@ -28,7 +33,8 @@ public sealed class SiteIdLiteralAnalyzer : DiagnosticAnalyzer
         category: "Muonroi.SiteProfile",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "String literals matching known SiteId values should use the generated SiteIds constants to prevent typos.");
+        description: "String literals matching known SiteId values should use the generated SiteIds constants to prevent typos.",
+        customTags: new[] { WellKnownDiagnosticTags.CompilationEnd });
 
     /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
@@ -40,21 +46,21 @@ public sealed class SiteIdLiteralAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
 
-        // Use CompilationStartAction to collect known SiteIds once per compilation,
-        // then register SemanticModelAction to avoid calling GetSemanticModel() directly (RS1030).
         context.RegisterCompilationStartAction(compilationContext =>
         {
             var iSiteProfile = compilationContext.Compilation
                 .GetTypeByMetadataName("Muonroi.Tenancy.SiteProfile.ISiteProfile");
 
-            // If ISiteProfile is not referenced, this project has no profiles — skip
             if (iSiteProfile is null) return;
 
-            // Collect known SiteId string values via SemanticModelAction (RS1030 compliant)
-            // We'll accumulate them in a concurrent-safe dictionary via SemanticModelAction
-            var knownSiteIds = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(
+            // Phase 1 output: known SiteId values (populated by SemanticModelAction)
+            var knownSiteIds = new ConcurrentDictionary<string, string>(
                 System.StringComparer.OrdinalIgnoreCase);
 
+            // Phase 2 output: candidate literals to check (populated by SyntaxNodeAction)
+            var candidates = new ConcurrentBag<(Location location, string value)>();
+
+            // Phase 1: Collect known SiteId values from ISiteProfile implementations
             compilationContext.RegisterSemanticModelAction(semanticModelContext =>
             {
                 var model = semanticModelContext.SemanticModel;
@@ -82,45 +88,46 @@ public sealed class SiteIdLiteralAnalyzer : DiagnosticAnalyzer
                 }
             });
 
-            compilationContext.RegisterSyntaxNodeAction(
-                ctx => AnalyzeStringLiteral(ctx, knownSiteIds),
-                SyntaxKind.StringLiteralExpression);
+            // Phase 2: Collect ALL string literals that pass skip rules (cheap, no semantic model needed)
+            compilationContext.RegisterSyntaxNodeAction(syntaxContext =>
+            {
+                var literalExpr = (LiteralExpressionSyntax)syntaxContext.Node;
+                var value = literalExpr.Token.ValueText;
+
+                // Quick reject: empty or whitespace-only strings are never SiteIds
+                if (string.IsNullOrWhiteSpace(value)) return;
+
+                // Skip if inside SiteId property definition — that's the source of truth
+                var containingProp = literalExpr.FirstAncestorOrSelf<PropertyDeclarationSyntax>();
+                if (containingProp?.Identifier.ValueText == "SiteId") return;
+
+                // Skip if already part of a member access (e.g. SiteIds.TCI)
+                if (literalExpr.Parent is MemberAccessExpressionSyntax) return;
+
+                // Collect as candidate — will check against knownSiteIds in Phase 3
+                candidates.Add((literalExpr.GetLocation(), value));
+
+            }, SyntaxKind.StringLiteralExpression);
+
+            // Phase 3: Cross-reference candidates against known SiteIds (runs AFTER phases 1+2)
+            compilationContext.RegisterCompilationEndAction(endContext =>
+            {
+                if (knownSiteIds.Count == 0) return;
+
+                foreach (var (location, value) in candidates)
+                {
+                    if (knownSiteIds.TryGetValue(value, out var constantName))
+                    {
+                        endContext.ReportDiagnostic(
+                            Diagnostic.Create(Rule, location, constantName, value));
+                    }
+                }
+            });
         });
-    }
-
-    private static void AnalyzeStringLiteral(
-        SyntaxNodeAnalysisContext context,
-        System.Collections.Concurrent.ConcurrentDictionary<string, string> knownSiteIds)
-    {
-        if (knownSiteIds.Count == 0) return;
-
-        var literalExpr = (LiteralExpressionSyntax)context.Node;
-        var value = literalExpr.Token.ValueText;
-
-        if (!knownSiteIds.TryGetValue(value, out var constantName)) return;
-
-        // Skip if inside an ISiteProfile.SiteId property definition — that's the source of truth
-        var containingProp = literalExpr.FirstAncestorOrSelf<PropertyDeclarationSyntax>();
-        if (containingProp?.Identifier.ValueText == "SiteId") return;
-
-        // Skip literals inside an ISiteProfile implementing class (allows the definition itself)
-        var containingClass = literalExpr.FirstAncestorOrSelf<ClassDeclarationSyntax>();
-        if (containingClass is not null
-            && context.SemanticModel.GetDeclaredSymbol(containingClass) is INamedTypeSymbol classSymbol
-            && classSymbol.AllInterfaces.Any(i => i.Name == "ISiteProfile"))
-            return;
-
-        // Skip if already part of a member access (e.g. SiteIds.TCI — not a bare literal)
-        if (literalExpr.Parent is MemberAccessExpressionSyntax) return;
-
-        // Report MSP001: suggest using SiteIds.{constantName} instead
-        context.ReportDiagnostic(
-            Diagnostic.Create(Rule, literalExpr.GetLocation(), constantName, value));
     }
 
     /// <summary>
     /// Extracts the compile-time SiteId string value from an ISiteProfile implementation.
-    /// Handles arrow expression, auto-property initializer, and simple return statement patterns.
     /// </summary>
     private static string? ExtractSiteIdLiteralValue(INamedTypeSymbol profileSymbol)
     {
@@ -134,15 +141,12 @@ public sealed class SiteIdLiteralAnalyzer : DiagnosticAnalyzer
             var syntax = syntaxRef.GetSyntax();
             if (syntax is not PropertyDeclarationSyntax propDecl) continue;
 
-            // Arrow expression: string SiteId => "VALUE"
             if (propDecl.ExpressionBody?.Expression is LiteralExpressionSyntax arrowLiteral)
                 return arrowLiteral.Token.ValueText;
 
-            // Auto-property with initializer: string SiteId { get; } = "VALUE"
             if (propDecl.Initializer?.Value is LiteralExpressionSyntax initLiteral)
                 return initLiteral.Token.ValueText;
 
-            // Getter with return statement: string SiteId { get { return "VALUE"; } }
             var getter = propDecl.AccessorList?.Accessors
                 .FirstOrDefault(a => a.Keyword.ValueText == "get");
             if (getter?.Body?.Statements.FirstOrDefault() is ReturnStatementSyntax ret
@@ -153,9 +157,6 @@ public sealed class SiteIdLiteralAnalyzer : DiagnosticAnalyzer
         return null;
     }
 
-    /// <summary>
-    /// Converts a SiteId string value to a valid C# identifier (uppercase, non-alphanumeric -> underscore).
-    /// </summary>
     private static string SanitizeIdentifier(string value)
     {
         if (string.IsNullOrEmpty(value)) return "_EMPTY";
