@@ -31,7 +31,6 @@
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="Serilog.Sinks.OpenTelemetry" />
-    <PackageReference Include="Serilog.Sinks.Elasticsearch" />
     <PackageReference Include="Serilog.Extensions.Hosting" />
   </ItemGroup>
 </Project>
