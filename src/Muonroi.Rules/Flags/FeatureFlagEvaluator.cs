@@ -7,6 +7,7 @@ namespace Muonroi.Rules.Flags;
 /// When a flag is disabled the evaluator runs the new rule-set in "shadow" mode
 /// and logs any differences in the output without affecting production.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class FeatureFlagEvaluator(IFeatureFlagClient client, IMLog<FeatureFlagEvaluator> logger)
 {
     /// <summary>
@@ -53,6 +54,7 @@ public readonly record struct FeatureContext(string TenantId, string? Segment = 
 /// <summary>
 /// Abstraction of a feature flag client (e.g. Unleash/OpenFeature).
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public interface IFeatureFlagClient
 {
     /// <summary>

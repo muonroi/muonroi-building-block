@@ -9,6 +9,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Represents a context capable of handling transactions during rule execution.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public interface ITransactionalRuleContext
 {
     /// <summary>

@@ -3,6 +3,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Defines the types of changes that can occur to a ruleset.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class RuleSetChangeTypes
 {
     /// <summary>
@@ -24,6 +25,7 @@ public static class RuleSetChangeTypes
 /// <param name="ChangeType">The type of change (e.g., saved, activated).</param>
 /// <param name="Version">The version of the ruleset, if applicable.</param>
 /// <param name="OccurredAtUtc">The timestamp when the change occurred.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed record RuleSetChangeEvent(
     string TenantId,
     string WorkflowName,

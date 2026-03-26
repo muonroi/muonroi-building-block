@@ -17,44 +17,6 @@ public static class RedisExtensions
     private const string layerDistributed = "distributed";
 
     /// <summary>
-    /// Registers Redis-backed Dapper caching.
-    /// </summary>
-    /// <param name="services">Service collection to update.</param>
-    /// <param name="configuration">Configuration source.</param>
-    /// <param name="redisConfigs">Redis configuration.</param>
-    /// <returns>The updated service collection.</returns>
-    public static IServiceCollection AddDapperCaching(this IServiceCollection services, IConfiguration configuration,
-        RedisConfigs redisConfigs)
-    {
-        ArgumentNullException.ThrowIfNull(configuration);
-        services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.DistributedCache);
-
-        if (!redisConfigs.Enable)
-        {
-            return services;
-        }
-
-        ConnectionStringBuilder s = new()
-        {
-            Host = $"{redisConfigs.Host}:{redisConfigs.Port}",
-            Password = redisConfigs.Password
-        };
-        RedisClient redisClient = new(s);
-
-        RedisConfiguration config = new()
-        {
-            AllMethodsEnableCache = redisConfigs.AllMethodsEnableCache,
-            Expire = TimeSpan.FromMinutes(redisConfigs.Expire),
-            KeyPrefix = redisConfigs.KeyPrefix
-        };
-        services.AddDapperCachingInRedis(config, redisClient);
-
-        services.AddSingleton<Dapper.Extensions.Caching.ICacheProvider, RedisCacheProvider>();
-
-        return services;
-    }
-
-    /// <summary>
     /// Registers Redis distributed cache services.
     /// </summary>
     /// <param name="services">Service collection to update.</param>
@@ -122,12 +84,6 @@ public static class RedisExtensions
             option.ConfigurationOptions = configurationOptions;
         });
         services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(configurationOptions));
-
-        // Build connection string - only include password if provided
-        string connectionString = string.IsNullOrEmpty(redisConfigs.Password)
-            ? $"{redisConfigs.Host}:{redisConfigs.Port}"
-            : $"{redisConfigs.Host}:{redisConfigs.Port},password={redisConfigs.Password}";
-        services.AddSingleton(_ => new RedisClient(connectionString));
 
         return services;
     }

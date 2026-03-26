@@ -7,7 +7,7 @@
     <PackageId>Muonroi.RuleEngine.NRules</PackageId>
     <Version>1.0.0-alpha.1</Version>
     <Authors>Muon Roi</Authors>
-    <Description>NRules integration for Muonroi.BuildingBlock Rule Engine</Description>
+    <Description>[FROZEN] Use Muonroi.RuleEngine.Runtime instead. NRules integration — no active development.</Description>
     <PackageReleaseNotes>v1.7.0: Updated to use new Abstractions v1.7.0 with Saga Pattern support. Compatible with ExecutionMode enum for flexible execution strategies.</PackageReleaseNotes>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>

@@ -7,6 +7,7 @@ namespace Muonroi.Rules.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/feel")]
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class FeelController : FeelControllerBase
 {
 }
@@ -14,6 +15,7 @@ public sealed class FeelController : FeelControllerBase
 /// <summary>
 /// Represents a request to evaluate a FEEL expression.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed record FeelEvaluateRequest
 {
     /// <summary>
@@ -29,6 +31,7 @@ public sealed record FeelEvaluateRequest
 /// <summary>
 /// Represents a request for FEEL expression autocompletion.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed record FeelAutocompleteRequest
 {
     /// <summary>

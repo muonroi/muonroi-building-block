@@ -5,6 +5,7 @@ namespace Muonroi.Rules.Table;
 /// <summary>
 /// Defines the hit policies for decision tables.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public enum HitPolicy
 {
     /// <summary>
@@ -23,11 +24,13 @@ public enum HitPolicy
 /// </summary>
 /// <param name="Inputs">The input values for the rule.</param>
 /// <param name="Outputs">The output values for the rule.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public record DecisionRule(Dictionary<string, string> Inputs, Dictionary<string, string> Outputs);
 
 /// <summary>
 /// Represents a decision table.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public class DecisionTable
 {
     /// <summary>

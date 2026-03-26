@@ -6,6 +6,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Redis Pub/Sub based notifier for cross-node ruleset hot reload.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class RedisRuleSetChangeNotifier : IRuleSetChangeNotifier, IDisposable
 {
     private readonly ISubscriber _subscriber;

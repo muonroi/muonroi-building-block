@@ -6,6 +6,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Abstraction for persisting and retrieving versioned ruleset definitions.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public interface IRuleSetStore
 {
     /// <summary>Saves the provided ruleset as a new version.</summary>

@@ -11,6 +11,7 @@ namespace Muonroi.Rules.Controllers;
 /// <summary>
 /// Base controller for FEEL operations, providing core evaluation and autocomplete logic.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public abstract class FeelControllerBase : ControllerBase
 {
     /// <summary>

@@ -11,6 +11,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Dependency injection helpers for ruleset storage and execution services.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class RuleEngineServiceCollectionExtensions
 {
     /// <summary>

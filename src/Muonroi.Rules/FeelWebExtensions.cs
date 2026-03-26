@@ -7,6 +7,7 @@ namespace Muonroi.Rules;
 /// <summary>
 /// Extension methods for registering FEEL web services.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class FeelWebExtensions
 {
     /// <summary>

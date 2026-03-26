@@ -3,6 +3,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Runtime cache for ruleset payloads to reduce storage reads.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public interface IRuleSetRuntimeCache
 {
     /// <summary>

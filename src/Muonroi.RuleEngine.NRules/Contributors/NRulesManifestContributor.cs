@@ -4,6 +4,7 @@ using Muonroi.Core.Abstractions.Models;
 
 namespace Muonroi.RuleEngine.NRules.Contributors;
 
+[Obsolete("Frozen: Use Muonroi.RuleEngine.Runtime instead. NRules integration is no longer actively developed.")]
 public sealed class NRulesManifestContributor : IUiEngineManifestContributor
 {
     public int Order => 110;

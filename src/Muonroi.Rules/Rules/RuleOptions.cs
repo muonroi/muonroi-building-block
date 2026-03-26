@@ -3,6 +3,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Strongly typed options controlling the enabled state of rules.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class RuleOptions
 {
     /// <summary>

@@ -9,6 +9,7 @@ namespace Muonroi.Rules.Rules;
 /// Stores ruleset JSON files on disk with versioning and rollback support.
 /// Optionally signs each artifact to detect tampering.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class FileRuleSetStore : IRuleSetStore
 {
     private readonly string _rootPath;

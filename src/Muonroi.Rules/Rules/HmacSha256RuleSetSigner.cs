@@ -10,6 +10,7 @@ namespace Muonroi.Rules.Rules;
 /// Initializes a new instance of the <see cref="HmacSha256RuleSetSigner"/> class.
 /// </remarks>
 /// <param name="key">The key used for signing.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class HmacSha256RuleSetSigner(byte[] key) : IRuleSetSigner
 {
     /// <summary>

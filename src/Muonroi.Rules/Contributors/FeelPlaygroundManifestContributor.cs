@@ -5,6 +5,7 @@ namespace Muonroi.Rules.Contributors;
 /// <summary>
 /// Contributes FEEL playground components and actions to the UI engine manifest.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class FeelPlaygroundManifestContributor : IUiEngineManifestContributor
 {
     /// <inheritdoc />

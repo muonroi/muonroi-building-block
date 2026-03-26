@@ -6,6 +6,7 @@ namespace Muonroi.Rules.Feel;
 /// <summary>
 /// Provides methods to evaluate FEEL (Friendly Enough Expression Language) expressions.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static partial class FeelEvaluator
 {
     private const double NumericTolerance = 1e-9;

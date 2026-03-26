@@ -6,6 +6,7 @@ namespace Muonroi.RuleEngine.NRules.Controllers;
 
 [ApiController]
 [Route("api/v1/rule-engine")]
+[Obsolete("Frozen: Use Muonroi.RuleEngine.Runtime instead. NRules integration is no longer actively developed.")]
 public sealed class NRulesController(IServiceProvider services, IMDateTimeService dateTimeService) : ControllerBase
 {
     private static readonly ConcurrentDictionary<string, NRulesDefinitionDto> Definitions = new(StringComparer.OrdinalIgnoreCase);
@@ -77,6 +78,7 @@ public sealed class NRulesController(IServiceProvider services, IMDateTimeServic
     }
 }
 
+[Obsolete("Frozen: Use Muonroi.RuleEngine.Runtime instead. NRules integration is no longer actively developed.")]
 public sealed record NRulesDefinitionDto
 {
     public string Id { get; init; } = string.Empty;
@@ -87,6 +89,7 @@ public sealed record NRulesDefinitionDto
     public DateTime UpdatedAtUtc { get; init; } = DateTime.UtcNow; // MBB001-exempt: static-class boundary
 }
 
+[Obsolete("Frozen: Use Muonroi.RuleEngine.Runtime instead. NRules integration is no longer actively developed.")]
 public sealed record NRulesTestRequest
 {
     public string RuleId { get; init; } = string.Empty;

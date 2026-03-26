@@ -24,6 +24,7 @@ namespace Muonroi.Rules.Rules;
 /// <param name="logger">The logger instance.</param>
 /// <param name="activation">The rule activation strategy.</param>
 /// <param name="licenseGuard">The license guard.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class RuleEngine<T>(
     IOptionsMonitor<RuleOptions>? options = null,
     IMLog<RuleEngine<T>>? logger = null,

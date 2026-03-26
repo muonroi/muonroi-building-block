@@ -5,6 +5,7 @@ namespace Muonroi.Rules.Table;
 /// <summary>
 /// Provides methods to export decision tables to different formats.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class DecisionTableExporter
 {
     /// <summary>
