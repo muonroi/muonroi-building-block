@@ -136,6 +136,11 @@ public static class SiteProfileExtensions
         // Register ISiteProfileResolver — per-request, resolves correct profile by SiteCode
         services.AddScoped<ISiteProfileResolver>(sp =>
         {
+            // SiteProfileScope takes precedence — used in tests and background jobs
+            var scopeOverride = SiteProfileScope.Current;
+            if (scopeOverride is not null)
+                return new SiteProfileResolver(scopeOverride);
+
             var siteCode = siteCodeAccessor(sp) ?? "default";
             if (profiles.TryGetValue(siteCode, out var match))
                 return new SiteProfileResolver(match);
