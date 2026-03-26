@@ -1,5 +1,4 @@
-using Serilog.Formatting.Elasticsearch;
-using Serilog.Sinks.Elasticsearch;
+using Serilog.Sinks.OpenTelemetry;
 
 namespace Muonroi.Observability.Logging;
 
@@ -27,7 +26,7 @@ public static class MSerilogAction
             .Enrich.FromLogContext()
             .Enrich.With(services.GetRequiredService<TenantIdEnricher>());
 
-        AddElasticsearchSink(context.Configuration, loggerConfiguration);
+        AddOpenTelemetrySink(context.Configuration, loggerConfiguration);
         AddFileSink(context.Configuration, loggerConfiguration);
 
         if (useConsole)
@@ -36,47 +35,44 @@ public static class MSerilogAction
         }
     }
 
-    private static void AddElasticsearchSink(IConfiguration configuration, LoggerConfiguration loggerConfiguration)
+    private static void AddOpenTelemetrySink(IConfiguration configuration, LoggerConfiguration loggerConfiguration)
     {
-        IConfigurationSection esSection = configuration.GetSection("Serilog:Elasticsearch");
-        if (!esSection.Exists())
+        IConfigurationSection otelSection = configuration.GetSection("Serilog:OpenTelemetry");
+        if (!otelSection.Exists())
         {
             return;
         }
 
-        string[]? nodes = esSection.GetSection("nodes").Get<string[]>();
-        if (nodes == null || nodes.Length == 0)
-        {
-            string? uri = esSection["Uri"];
-            if (!string.IsNullOrWhiteSpace(uri))
-            {
-                nodes = [uri];
-            }
-        }
-
-        if (nodes == null || nodes.Length == 0)
+        string? endpoint = otelSection["Endpoint"];
+        if (string.IsNullOrWhiteSpace(endpoint))
         {
             return;
         }
 
-        ElasticsearchSinkOptions options = new(nodes.Select(n => new Uri(n)))
+        string protocol = otelSection["Protocol"]?.ToLowerInvariant() switch
         {
-            AutoRegisterTemplate = true,
-            DetectElasticsearchVersion = true
+            "http" or "httpprotobuf" => "HttpProtobuf",
+            _ => "Grpc"
         };
 
-        if (bool.TryParse(esSection["useSniffing"], out bool useSniffing))
+        loggerConfiguration.WriteTo.OpenTelemetry(options =>
         {
-            // Note: Modern Elasticsearch sink might not have this property directly
-        }
+            options.Endpoint = endpoint;
+            options.Protocol = Enum.Parse<OtlpProtocol>(protocol);
 
-        string? dataStream = esSection["dataStream"];
-        if (!string.IsNullOrWhiteSpace(dataStream))
-        {
-            // Set data stream options if supported
-        }
-
-        _ = loggerConfiguration.WriteTo.Elasticsearch(options);
+            string? resourceAttributes = otelSection["ResourceAttributes"];
+            if (!string.IsNullOrWhiteSpace(resourceAttributes))
+            {
+                foreach (string pair in resourceAttributes.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    string[] kv = pair.Split('=', 2);
+                    if (kv.Length == 2)
+                    {
+                        options.ResourceAttributes[kv[0].Trim()] = kv[1].Trim();
+                    }
+                }
+            }
+        });
     }
 
     private static void AddFileSink(IConfiguration configuration, LoggerConfiguration loggerConfiguration)
@@ -102,7 +98,7 @@ public static class MSerilogAction
         }
 
         loggerConfiguration.WriteTo.File(
-            new ElasticsearchJsonFormatter(),
+            new Serilog.Formatting.Json.JsonFormatter(),
             path,
             rollingInterval: RollingInterval.Infinite);
     }
