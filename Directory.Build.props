@@ -14,7 +14,7 @@
 
     <!-- NuGet publish quality -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageTags>muonroi;dotnet;framework;building-block;microservices;multi-tenancy</PackageTags>
+    <PackageTags>muonroi;dotnet;framework;building-block;microservices;multi-tenancy;rule-engine</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <Nullable>enable</Nullable>
