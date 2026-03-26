@@ -33,7 +33,8 @@ public sealed class ContractComplianceAnalyzer : DiagnosticAnalyzer
         category: "Muonroi.SiteProfile",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "Each ISiteProfile.RegisterServices() must call AddKeyedScoped/AddKeyedSingleton/AddKeyedTransient for every service type registered via AddSiteResolvedService<T>().");
+        description: "Each ISiteProfile.RegisterServices() must call AddKeyedScoped/AddKeyedSingleton/AddKeyedTransient for every service type registered via AddSiteResolvedService<T>().",
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
 
     /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

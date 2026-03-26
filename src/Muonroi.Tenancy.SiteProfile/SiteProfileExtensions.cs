@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Tenancy.SiteProfile;
 
@@ -63,6 +64,10 @@ public static class SiteProfileExtensions
     /// then registers ISiteProfileResolver as scoped — resolves the correct profile per-request
     /// based on siteCodeAccessor (e.g., WorkContext.SiteCode).
     ///
+    /// If one site's RegisterServices throws, registration continues for remaining sites.
+    /// All failures are collected and thrown as an AggregateException at the end.
+    /// Individual failures are also tracked in SiteProfileRegistrationTracker for post-DI reporting.
+    ///
     /// Usage:
     /// <code>
     /// services.AddMultiSiteProfiles(
@@ -76,6 +81,7 @@ public static class SiteProfileExtensions
         this IServiceCollection services,
         IConfiguration configuration,
         Func<IServiceProvider, string?> siteCodeAccessor,
+        IMLog? diagnosticLog = null,
         params Assembly[] assemblies)
     {
         ArgumentNullException.ThrowIfNull(siteCodeAccessor);
@@ -83,6 +89,9 @@ public static class SiteProfileExtensions
         var profiles = new Dictionary<string, ISiteProfile>(StringComparer.OrdinalIgnoreCase);
 
         // Scan assemblies for ISiteProfile implementations
+        // Capture errors per site; continue registering remaining sites even if one fails.
+        var errors = new List<(string siteId, Exception ex)>();
+
         foreach (var assembly in assemblies)
         {
             var profileTypes = assembly.GetTypes()
@@ -96,9 +105,24 @@ public static class SiteProfileExtensions
                 profiles[profile.SiteId] = profile;
 
                 // Each profile registers its own services (DbContext, services, strategies)
-                profile.RegisterServices(services, configuration);
+                try
+                {
+                    profile.RegisterServices(services, configuration);
+                }
+                catch (Exception ex)
+                {
+                    // Log individual failure via IMLog if available (ecosystem convention per CLAUDE.md)
+                    diagnosticLog?.Warn(
+                        "[SiteProfile] Site '{SiteId}' failed to register services: {Message}",
+                        profile.SiteId, ex.Message);
 
-                // Track site ID for startup validation
+                    // Record in tracker so SiteProfileStartupValidator can report all failures
+                    // after DI is built and IMLog is available
+                    s_tracker.RecordRegistrationFailure(profile.SiteId, ex);
+                    errors.Add((profile.SiteId, ex));
+                }
+
+                // Track site ID for startup validation (even failed sites are tracked)
                 s_tracker.RecordSiteId(profile.SiteId);
             }
         }
@@ -127,6 +151,14 @@ public static class SiteProfileExtensions
 
         // Register startup validator (once)
         RegisterValidatorOnce(services);
+
+        // Throw aggregate after all successful profiles are registered — partial registration is preserved
+        if (errors.Count > 0)
+        {
+            throw new AggregateException(
+                $"SiteProfile registration failed for {errors.Count} site(s): {string.Join(", ", errors.Select(e => e.siteId))}",
+                errors.Select(e => e.ex));
+        }
 
         return services;
     }
