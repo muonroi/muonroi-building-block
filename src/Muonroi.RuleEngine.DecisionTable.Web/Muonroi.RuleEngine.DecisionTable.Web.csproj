@@ -8,7 +8,6 @@
     <IsPackable>true</IsPackable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Muonroi.RuleEngine.DecisionTable.Web</PackageId>
-    <Version>1.0.0-alpha.1</Version>
     <Authors>Muon Roi</Authors>
     <Description>Web API and UI assets for Muonroi Decision Table Designer.</Description>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>

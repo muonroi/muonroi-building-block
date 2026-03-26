@@ -6,7 +6,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Muonroi.RuleEngine.Core</PackageId>
-    <Version>1.0.0-alpha.1</Version>
     <Authors>Muon Roi</Authors>
     <Description>Rule Engine Core implementation for Muonroi.BuildingBlock</Description>
     <PackageReleaseNotes>v1.7.0: Updated to use new Abstractions v1.7.0 with Saga Pattern support. Added 48 new Theory tests for comprehensive edge case coverage.</PackageReleaseNotes>

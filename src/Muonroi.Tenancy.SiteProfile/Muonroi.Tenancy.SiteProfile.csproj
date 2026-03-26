@@ -3,7 +3,6 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0-alpha.2</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.4</FileVersion>
     <Description>Per-site DI registration pattern for schema-divergent multi-tenancy. Wire correct DbContext, services, and mappers per site deployment.</Description>

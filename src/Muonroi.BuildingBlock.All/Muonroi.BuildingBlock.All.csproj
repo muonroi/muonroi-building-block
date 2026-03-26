@@ -6,7 +6,6 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>Metapackage for Muonroi Building Block - Includes all sub-packages for a complete infrastructure setup.</Description>
     <PackageId>Muonroi.BuildingBlock.All</PackageId>
-    <Version>1.0.0-alpha.1</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <IsCommercialPackage>true</IsCommercialPackage>

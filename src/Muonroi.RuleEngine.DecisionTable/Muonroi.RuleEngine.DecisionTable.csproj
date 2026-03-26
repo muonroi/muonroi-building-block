@@ -6,7 +6,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Muonroi.RuleEngine.DecisionTable</PackageId>
-    <Version>1.0.0-alpha.1</Version>
     <Authors>Muon Roi</Authors>
     <Description>Decision table models, converters, validators, and serializers for Muonroi Rule Engine.</Description>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
