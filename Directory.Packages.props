@@ -3,9 +3,6 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
-  <!-- Version governance: TFM-conditional versions for framework-coupled packages -->
-  <Import Project="build/Version.props" />
-
   <ItemGroup>
     <!-- Sorted alphabetically by Include. All versions are pinned — no floating versions. -->
     <PackageVersion Include="Asp.Versioning.Mvc" Version="8.1.0" />
