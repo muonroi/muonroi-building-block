@@ -7,7 +7,6 @@
     <IsPackable>true</IsPackable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Muonroi.RuleEngine.Runtime.Web</PackageId>
-    <Version>1.0.0-alpha.1</Version>
     <Authors>Muon Roi</Authors>
     <Description>Runtime ruleset governance Web API and UI-engine manifest integration for Muonroi RuleEngine.</Description>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>

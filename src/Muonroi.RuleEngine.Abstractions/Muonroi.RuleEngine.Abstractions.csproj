@@ -6,7 +6,6 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>Muonroi.RuleEngine.Abstractions</PackageId>
-    <Version>1.0.0-alpha.1</Version>
     <Authors>Muon Roi</Authors>
     <Description>Rule Engine Abstractions for Muonroi.BuildingBlock</Description>
     <PackageReleaseNotes>v1.7.0: Added Saga Pattern support (ICompensatableRule), ExecutionMode enum (AllOrNothing/BestEffort/CompensateOnFailure), and OrchestratorResult for detailed execution feedback. Added 84 comprehensive unit tests.</PackageReleaseNotes>

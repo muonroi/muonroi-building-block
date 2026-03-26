@@ -4,7 +4,6 @@
     <IsRoslynComponent>true</IsRoslynComponent>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <Version>1.0.0-alpha.1</Version>
     <PackageId>Muonroi.Tenancy.SiteProfile.SourceGenerators</PackageId>
     <Authors>Muon Roi</Authors>
     <Description>Source generator for Muonroi.Tenancy.SiteProfile — AOT-safe ISiteProfile scan, registration, and SiteId constants.</Description>
