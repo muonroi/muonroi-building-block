@@ -2,7 +2,6 @@ using Asp.Versioning;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using FluentValidation;
-using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.IdentityModel.Tokens;
@@ -139,9 +138,6 @@ public static class InfrastructureExtensions
                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
-
-        services.AddFluentValidationAutoValidation()
-            .AddFluentValidationClientsideAdapters();
 
         services.AddValidatorsFromAssemblies(assemblies);
         return services;
