@@ -171,8 +171,9 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
 
         // DbContext registration comment + call
         sb.AppendLine($"        // DbContext registration for site \"{model.SiteId}\"");
-        sb.AppendLine($"        // Uses MultiTenantServiceCollectionExtensions.AddDbContext from Muonroi.Tenancy.Core");
-        sb.AppendLine($"        Muonroi.Tenancy.Core.MultiTenantServiceCollectionExtensions.AddDbContext<{model.DbContextTypeName}>(services, configuration);");
+        sb.AppendLine($"        // Consumer project must provide MultiTenantServiceCollectionExtensions.AddDbContext<T>");
+        sb.AppendLine($"        // via a global using or local using for the appropriate namespace.");
+        sb.AppendLine($"        MultiTenantServiceCollectionExtensions.AddDbContext<{model.DbContextTypeName}>(services, configuration);");
 
         // Behavior Apply() calls
         if (model.BehaviorTypeNames.Count > 0)
