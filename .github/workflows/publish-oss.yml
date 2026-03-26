@@ -93,6 +93,7 @@ jobs:
             "src/Muonroi.RuleEngine.DecisionTable"
             # Muonroi.RuleEngine.NRules excluded — [FROZEN] deprecated, use RuleEngine.Runtime
             "src/Muonroi.RuleEngine.CEP"
+            "src/Muonroi.Quota.Abstractions"
             "src/Muonroi.Data.Abstractions"
             "src/Muonroi.Data.Dapper"
             "src/Muonroi.Data.EntityFrameworkCore"
@@ -115,7 +116,9 @@ jobs:
             "src/Muonroi.Logging.Abstractions"
             "src/Muonroi.Integration.Abstractions"
             "src/Muonroi.Diagnostics.Generator"
-            # Muonroi.Rules excluded — [DEPRECATED] use RuleEngine.Runtime
+            "src/Muonroi.Diagnostics"
+            "src/Muonroi.Services.Abstractions"
+            "src/Muonroi.Rules"
           )
 
           for proj in "${OSS_PROJECTS[@]}"; do

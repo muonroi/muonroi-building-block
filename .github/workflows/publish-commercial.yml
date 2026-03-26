@@ -98,7 +98,6 @@ jobs:
             "src/Muonroi.RuleEngine.Proliferation.Persistence"
             "src/Muonroi.Integration.Connectors"
             "src/Muonroi.Integration.Persistence"
-            "src/Muonroi.Diagnostics"
             "src/Muonroi.Kubernetes"
             "src/Muonroi.UiEngine.Catalog"
             "src/Muonroi.BuildingBlock.All"
