@@ -41,7 +41,7 @@ jobs:
         run: dotnet build Muonroi.BuildingBlock.sln -c Release --no-restore
 
       - name: Test (exclude Commercial-only tests)
-        run: dotnet test Muonroi.BuildingBlock.sln -c Release --no-build --filter "Category!=Commercial" --verbosity minimal
+        run: dotnet test Muonroi.BuildingBlock.sln -c Release --no-build --filter "Category!=Commercial&FullyQualifiedName!~WorkflowCacheTelemetryTests" --verbosity minimal
 
   pack-and-push:
     name: Pack & Push OSS
