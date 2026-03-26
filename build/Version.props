@@ -5,9 +5,9 @@
   must match the consumer's target framework to avoid diamond dependency conflicts.
 
   How it works:
-  - When a consumer targets net8.0, MSBuild picks the net8.0 PropertyGroup and downgrades
-    transitive dependencies to 8.0.x, matching the .NET 8 shared runtime.
-  - When targeting a newer TFM, add a new PropertyGroup block with the appropriate versions.
+  - Default values (below) apply when no TFM-specific override matches.
+  - When a consumer targets net8.0, the net8.0 PropertyGroup overrides with 8.0.x versions,
+    matching the .NET 8 shared runtime and preventing transitive version conflicts.
 
   Extending for future TFMs:
   - net9.0: Add <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'"> with 9.x versions
@@ -15,7 +15,35 @@
 -->
 <Project>
 
-  <!-- net8.0: Pin framework-coupled packages to 8.0.x to match the .NET 8 shared runtime -->
+  <!-- Default values: used when no TFM-specific condition matches (net9.0, net472, netstandard2.0, etc.) -->
+  <PropertyGroup>
+    <!-- Microsoft.Extensions.* core packages -->
+    <MicrosoftExtensionsVersion>10.0.3</MicrosoftExtensionsVersion>
+    <!-- Microsoft.Extensions.Caching.* packages -->
+    <MicrosoftExtensionsCachingVersion>10.0.3</MicrosoftExtensionsCachingVersion>
+    <!-- Microsoft.Extensions.Http (non-resilience) -->
+    <MicrosoftExtensionsHttpVersion>10.0.3</MicrosoftExtensionsHttpVersion>
+    <!-- Microsoft.Extensions.Http.Polly -->
+    <MicrosoftExtensionsHttpPollyVersion>8.0.10</MicrosoftExtensionsHttpPollyVersion>
+    <!-- Microsoft.Extensions.Http.Resilience -->
+    <MicrosoftExtensionsHttpResilienceVersion>8.1.0</MicrosoftExtensionsHttpResilienceVersion>
+    <!-- Microsoft.EntityFrameworkCore.* (main packages) -->
+    <EfCoreVersion>8.0.24</EfCoreVersion>
+    <!-- Microsoft.EntityFrameworkCore.Design (versioned separately) -->
+    <EfCoreDesignVersion>8.0.11</EfCoreDesignVersion>
+    <!-- Npgsql.EntityFrameworkCore.PostgreSQL -->
+    <NpgsqlEfCoreVersion>8.0.11</NpgsqlEfCoreVersion>
+    <!-- Pomelo.EntityFrameworkCore.MySql -->
+    <PomeloMySqlVersion>8.0.2</PomeloMySqlVersion>
+    <!-- Microsoft.AspNetCore.* packages -->
+    <AspNetCoreVersion>8.0.15</AspNetCoreVersion>
+    <!-- Microsoft.AspNetCore.SignalR.Client -->
+    <AspNetCoreSignalRVersion>8.0.1</AspNetCoreSignalRVersion>
+    <!-- Microsoft.AspNetCore.TestHost -->
+    <AspNetCoreTestHostVersion>8.0.11</AspNetCoreTestHostVersion>
+  </PropertyGroup>
+
+  <!-- net8.0: Override to pin framework-coupled packages to 8.0.x for .NET 8 shared runtime compatibility -->
   <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <!-- Microsoft.Extensions.* core packages -->
     <MicrosoftExtensionsVersion>8.0.5</MicrosoftExtensionsVersion>
