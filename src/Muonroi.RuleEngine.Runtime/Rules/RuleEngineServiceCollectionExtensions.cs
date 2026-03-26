@@ -1,6 +1,8 @@
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Governance.Abstractions.License;
+using Muonroi.RuleEngine.Core.Events;
+using Muonroi.RuleEngine.Runtime.Events;
 using Muonroi.Tenancy.Abstractions;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
@@ -188,6 +190,81 @@ public static class RuleEngineServiceCollectionExtensions
         options.EnableCanary = true;
         ReplaceSingleton(services, options);
         services.TryAddScoped<ICanaryRolloutService, CanaryRolloutService>();
+        return services;
+    }
+
+    /// <summary>
+    /// Wires the CloudEvents bridge into the rule engine pipeline.
+    /// <list type="bullet">
+    ///   <item>Decorates the existing <see cref="IRuleSetChangeNotifier"/> registration with
+    ///   <see cref="CloudEventPublishingNotifier"/> so that every ruleset lifecycle change also
+    ///   publishes a CloudEvent to <see cref="IEventSink"/>.</item>
+    ///   <item>Registers <see cref="InMemoryEventSink"/> as <see cref="IEventSink"/> (singleton) if
+    ///   no <see cref="IEventSink"/> is already registered.</item>
+    ///   <item>Registers <see cref="RuleExecutionEventPublisher"/> as a singleton.</item>
+    ///   <item>Registers <see cref="EventDrivenRuleEvaluator"/> as scoped (needs tenant context per request).</item>
+    /// </list>
+    /// Call this method after <see cref="AddRuleEngineStore"/> or <see cref="AddMRuleEngineWithPostgres"/>.
+    /// </summary>
+    public static IServiceCollection AddRuleEventBridge(this IServiceCollection services)
+        => services.AddRuleEngineEventBridge();
+
+    /// <summary>
+    /// Wires the CloudEvents bridge into the rule engine pipeline.
+    /// <list type="bullet">
+    ///   <item>Decorates the existing <see cref="IRuleSetChangeNotifier"/> with <see cref="CloudEventPublishingNotifier"/>.</item>
+    ///   <item>Registers <see cref="InMemoryEventSink"/> as <see cref="IEventSink"/> if none registered.</item>
+    ///   <item>Registers <see cref="RuleExecutionEventPublisher"/> (singleton) and <see cref="EventDrivenRuleEvaluator"/> (scoped).</item>
+    /// </list>
+    /// </summary>
+    public static IServiceCollection AddRuleEngineEventBridge(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        // Register InMemoryEventSink as default IEventSink if none registered
+        services.TryAddSingleton<IEventSink, InMemoryEventSink>();
+
+        // Decorate the existing IRuleSetChangeNotifier with CloudEventPublishingNotifier
+        // We do this by replacing the registration with a factory that wraps the original.
+        ServiceDescriptor? existingNotifier = services
+            .LastOrDefault(sd => sd.ServiceType == typeof(IRuleSetChangeNotifier));
+
+        if (existingNotifier is not null)
+        {
+            // Remove the existing registration
+            services.Remove(existingNotifier);
+
+            // Re-register as a decorator factory
+            services.AddSingleton<IRuleSetChangeNotifier>(sp =>
+            {
+                // Recreate the original notifier using the descriptor
+                IRuleSetChangeNotifier inner = existingNotifier.ImplementationInstance as IRuleSetChangeNotifier
+                    ?? (existingNotifier.ImplementationFactory is not null
+                        ? (IRuleSetChangeNotifier)existingNotifier.ImplementationFactory(sp)
+                        : (IRuleSetChangeNotifier)ActivatorUtilities.CreateInstance(sp, existingNotifier.ImplementationType!));
+
+                IEventSink eventSink = sp.GetRequiredService<IEventSink>();
+                return new CloudEventPublishingNotifier(inner, eventSink);
+            });
+        }
+        else
+        {
+            // No existing notifier — register InMemoryRuleSetChangeNotifier wrapped in the decorator
+            services.AddSingleton<IRuleSetChangeNotifier>(sp =>
+            {
+                InMemoryRuleSetChangeNotifier inner = new();
+                IEventSink eventSink = sp.GetRequiredService<IEventSink>();
+                return new CloudEventPublishingNotifier(inner, eventSink);
+            });
+        }
+
+        // Register the execution event publisher
+        services.TryAddSingleton<RuleExecutionEventPublisher>();
+
+        // Register the event-driven evaluator as scoped (requires tenant context)
+        services.TryAddScoped<IEventDrivenRuleEvaluator, EventDrivenRuleEvaluator>();
+        services.TryAddScoped<EventDrivenRuleEvaluator>();
+
         return services;
     }
 
