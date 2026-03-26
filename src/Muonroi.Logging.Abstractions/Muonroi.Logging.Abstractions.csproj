@@ -9,6 +9,6 @@
     <Description>Logging contracts for Muonroi: IMLog&lt;T&gt;, IMLogContext, log scope interfaces, and log property conventions.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 </Project>

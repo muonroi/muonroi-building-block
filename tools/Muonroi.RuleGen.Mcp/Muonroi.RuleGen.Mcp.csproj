@@ -22,12 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
-    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.4.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
-    <PackageReference Include="MimeKit" Version="4.15.1" />
-    <PackageReference Include="ModelContextProtocol" Version="1.1.0" />
-    <PackageReference Include="Scriban" Version="7.0.3" />
+    <PackageReference Include="BouncyCastle.Cryptography" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="MimeKit" />
+    <PackageReference Include="ModelContextProtocol" />
+    <PackageReference Include="Scriban" />
   </ItemGroup>
 </Project>

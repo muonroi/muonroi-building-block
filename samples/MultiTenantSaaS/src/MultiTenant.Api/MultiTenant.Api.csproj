@@ -6,10 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    <PackageReference Include="Muonroi.Governance.Abstractions" Version="1.0.0-alpha.1" />
-    <PackageReference Include="Muonroi.RuleEngine.Abstractions" Version="1.0.0-alpha.1" />
-    <PackageReference Include="Muonroi.RuleEngine.Core" Version="1.0.0-alpha.1" />
-    <PackageReference Include="Muonroi.RuleEngine.Runtime" Version="1.0.0-alpha.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Muonroi.Governance.Abstractions" />
+    <PackageReference Include="Muonroi.RuleEngine.Abstractions" />
+    <PackageReference Include="Muonroi.RuleEngine.Core" />
+    <PackageReference Include="Muonroi.RuleEngine.Runtime" />
   </ItemGroup>
 </Project>

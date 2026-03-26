@@ -6,10 +6,10 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
-    <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.14" />
-    <PackageReference Include="Scriban" Version="7.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.*" />
+    <PackageReference Include="AsyncEnumerator" />
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="Scriban" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.AspNetCore\Muonroi.AspNetCore.csproj" />

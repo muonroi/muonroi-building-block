@@ -15,6 +15,6 @@
     <ProjectReference Include="..\Muonroi.Tenancy.Abstractions\Muonroi.Tenancy.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MassTransit.Abstractions" Version="8.2.2" />
+    <PackageReference Include="MassTransit.Abstractions" />
   </ItemGroup>
 </Project>

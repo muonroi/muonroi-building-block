@@ -11,6 +11,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.Data.Abstractions\Muonroi.Data.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Mapping.Abstractions\Muonroi.Mapping.Abstractions.csproj" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
 </Project>

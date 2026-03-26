@@ -19,11 +19,11 @@
     <ProjectReference Include="..\Muonroi.Caching.Abstractions\Muonroi.Caching.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Fido2" Version="4.*" />
-    <PackageReference Include="Fido2.AspNet" Version="4.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.*" />
-    <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.14" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
+    <PackageReference Include="Fido2" />
+    <PackageReference Include="Fido2.AspNet" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
   </ItemGroup>
 </Project>
