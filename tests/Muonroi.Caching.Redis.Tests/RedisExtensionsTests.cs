@@ -289,7 +289,6 @@ public class RedisExtensionsTests
         services.AddRedis(configuration, configs);
         using ServiceProvider provider = services.BuildServiceProvider();
 
-        provider.GetService<RedisClient>().Should().NotBeNull();
         provider.GetService<IDistributedCache>().Should().NotBeNull();
     }
 
@@ -311,7 +310,6 @@ public class RedisExtensionsTests
 
         returned.Should().BeSameAs(services);
         provider.GetService<IDistributedCache>().Should().BeNull();
-        provider.GetService<RedisClient>().Should().BeNull();
     }
 
     [Fact]
@@ -344,7 +342,6 @@ public class RedisExtensionsTests
         configs.Port.Should().Be("6380");
         configs.Password.Should().Be("pwd");
         configs.KeyPrefix.Should().Be("tenant-cache");
-        provider.GetRequiredService<RedisClient>().Should().NotBeNull();
     }
 
     [Fact]

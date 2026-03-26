@@ -3,6 +3,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Publishes and subscribes ruleset change events for hot-reload.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public interface IRuleSetChangeNotifier
 {
     /// <summary>

@@ -3,6 +3,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Configuration for ruleset storage on disk.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class RuleStoreConfigs
 {
     /// <summary>

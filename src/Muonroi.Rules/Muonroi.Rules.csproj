@@ -6,7 +6,7 @@
     <Version>1.0.0-alpha.1</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <Description>Rule definition base classes and conventions for Muonroi Rule Engine: IRule, IRuleContext, validation and business rule base types.</Description>
+    <Description>[DEPRECATED] Use Muonroi.RuleEngine.Runtime instead. Legacy rule definition base classes.</Description>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

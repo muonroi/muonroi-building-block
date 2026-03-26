@@ -5,6 +5,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// In-process notifier used when no distributed transport is configured.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class InMemoryRuleSetChangeNotifier : IRuleSetChangeNotifier
 {
     private readonly ConcurrentDictionary<Guid, Func<RuleSetChangeEvent, Task>> _handlers = new();

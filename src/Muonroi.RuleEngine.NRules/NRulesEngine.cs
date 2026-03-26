@@ -4,6 +4,7 @@ namespace Muonroi.RuleEngine.NRules;
 /// <summary>
 /// Executes rules defined using NRules and supports rule versioning and toggling.
 /// </summary>
+[Obsolete("Frozen: Use Muonroi.RuleEngine.Runtime instead. NRules integration is no longer actively developed.")]
 public sealed class NRulesEngine
 {
     private readonly ISessionFactory _sessionFactory;

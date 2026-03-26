@@ -3,6 +3,7 @@ namespace Muonroi.Rules.Feel;
 /// <summary>
 /// Supported FEEL data types.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public enum FeelType
 {
     /// <summary>Numeric value.</summary>

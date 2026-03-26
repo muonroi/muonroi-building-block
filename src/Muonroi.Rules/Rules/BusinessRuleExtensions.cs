@@ -50,6 +50,7 @@ internal sealed class MappedBusinessRule<TOuter, TInner>(IBusinessRule<TInner> i
 /// <summary>
 /// Extension helpers for composing <see cref="IBusinessRule{TContext}"/> instances.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class BusinessRuleExtensions
 {
     /// <summary>

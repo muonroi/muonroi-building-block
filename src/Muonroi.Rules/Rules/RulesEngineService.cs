@@ -19,6 +19,7 @@ namespace Muonroi.Rules.Rules;
 /// <param name="runtimeCache">The ruleset runtime cache.</param>
 /// <param name="notifier">The ruleset change notifier.</param>
 /// <param name="serviceProvider">The service provider for resolving rule dependencies.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class RulesEngineService(
     IRuleSetStore store,
     ReSettings? settings = null,

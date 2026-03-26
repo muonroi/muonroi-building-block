@@ -6,6 +6,7 @@ namespace Muonroi.Rules.Rules;
 /// Evaluates JSON defined rules using the Microsoft RulesEngine library.
 /// </summary>
 /// <typeparam name="TContext">Type of the context object.</typeparam>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class ExternalJsonRule<TContext> : IBusinessRule<TContext>
 {
     private readonly RulesEngine.RulesEngine _engine;

@@ -3,6 +3,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Memory-backed runtime cache with hot invalidation from ruleset change events.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class RuleSetRuntimeCache : IRuleSetRuntimeCache, IDisposable
 {
     private readonly IMemoryCache _cache;

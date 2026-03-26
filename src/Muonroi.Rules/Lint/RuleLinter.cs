@@ -3,6 +3,7 @@ namespace Muonroi.Rules.Lint;
 /// <summary>
 /// Defines the severity levels for linting messages.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public enum LintSeverity
 {
     /// <summary>Indicates a potential issue that does not prevent execution.</summary>
@@ -17,11 +18,13 @@ public enum LintSeverity
 /// <param name="Code">The unique error or warning code.</param>
 /// <param name="Message">The descriptive message.</param>
 /// <param name="Severity">The severity level of the message.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public record LintMessage(string Code, string Message, LintSeverity Severity);
 
 /// <summary>
 /// Provides methods for linting rule engine definitions.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class RuleLinter
 {
     /// <summary>

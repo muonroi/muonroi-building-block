@@ -4,8 +4,8 @@ namespace Muonroi.Rules.Rules;
 
 /// <summary>
 /// Activates rules for a percentage of executions to support canary rollouts.
-/// The supplied <paramref name="percentageProvider"/> returns the rollout percentage     
-/// (0-100) for the given rule and context, allowing per-tenant or per-group control.     
+/// The supplied <paramref name="percentageProvider"/> returns the rollout percentage
+/// (0-100) for the given rule and context, allowing per-tenant or per-group control.
 /// </summary>
 /// <typeparam name="T">Type of the context passed to the rule.</typeparam>
 /// <remarks>
@@ -13,6 +13,7 @@ namespace Muonroi.Rules.Rules;
 /// </remarks>
 /// <param name="percentageProvider">A function that provides the activation percentage.</param>
 /// <param name="random">Optional random number generator.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class PercentageRuleActivationStrategy<T>(
     Func<IRule<T>, T, double> percentageProvider,
     Random? random = null) : IRuleActivationStrategy<T>

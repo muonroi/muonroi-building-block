@@ -8,6 +8,7 @@ namespace Muonroi.Rules.Feel;
 /// <summary>
 /// Implementation of the FEEL standard library functions.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class FeelStandardLibrary
 {
     /// <summary>

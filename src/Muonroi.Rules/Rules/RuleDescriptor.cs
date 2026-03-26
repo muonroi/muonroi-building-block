@@ -12,6 +12,7 @@ namespace Muonroi.Rules.Rules;
 /// <param name="Order">Explicit order of the rule. Lower values run first.</param>
 /// <param name="DependsOn">Codes of rules that must run before this rule.</param>
 /// <param name="DefaultEnabled">Whether the rule is enabled by default.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed record RuleDescriptor(
     string Code,
     string Name,
