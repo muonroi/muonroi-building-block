@@ -88,7 +88,7 @@ jobs:
             "src/Muonroi.RuleEngine.SourceGenerators"
             "src/Muonroi.RuleEngine.Testing"
             "src/Muonroi.RuleEngine.DecisionTable"
-            "src/Muonroi.RuleEngine.NRules"
+            # Muonroi.RuleEngine.NRules excluded — [FROZEN] deprecated, use RuleEngine.Runtime
             "src/Muonroi.RuleEngine.CEP"
             "src/Muonroi.Data.Abstractions"
             "src/Muonroi.Data.Dapper"
@@ -108,7 +108,7 @@ jobs:
             "src/Muonroi.BuildingBlock.Shared"
             "src/Muonroi.Logging"
             "src/Muonroi.Logging.Abstractions"
-            "src/Muonroi.Rules"
+            # Muonroi.Rules excluded — [DEPRECATED] use RuleEngine.Runtime
           )
 
           for proj in "${OSS_PROJECTS[@]}"; do
