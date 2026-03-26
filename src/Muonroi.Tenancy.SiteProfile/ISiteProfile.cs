@@ -18,6 +18,13 @@ public interface ISiteProfile
     string SiteId { get; }
 
     /// <summary>
+    /// Whether this site is currently enabled. Defaults to true.
+    /// Override to disable a site at runtime (e.g., maintenance mode).
+    /// Checked by SiteProfileStateMiddleware if opted in.
+    /// </summary>
+    bool IsEnabled => true;
+
+    /// <summary>
     /// Register all DI services for this site.
     /// Called once at startup. Wire DbContext, repositories, services, mappers.
     /// </summary>
