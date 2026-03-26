@@ -14,7 +14,7 @@ public sealed class MDefaultRuleFlowContractProviderTests
     {
         MDefaultRuleFlowContractProvider provider = CreateProvider();
 
-        var response = await provider.MGetContractAsync("rule", "FLOW_PRIMARY_TEST");
+        var response = await provider.MGetContractAsync("rule", "FLOW_TEST_PRIMARY");
 
         response.Should().NotBeNull();
         response!.SourceType.Should().Be("rule");
@@ -94,7 +94,7 @@ public sealed class MDefaultRuleFlowContractProviderTests
 
     public sealed class FlowPrimaryRule : IRule<TestContext>
     {
-        public string Code => "FLOW_PRIMARY_TEST";
+        public string Code => "FLOW_TEST_PRIMARY";
 
         public Task<RuleResult> EvaluateAsync(TestContext ctx, FactBag facts, CancellationToken ct)
         {

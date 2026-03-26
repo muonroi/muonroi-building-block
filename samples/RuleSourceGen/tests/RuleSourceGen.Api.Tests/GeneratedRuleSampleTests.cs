@@ -1,5 +1,4 @@
 using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Testing;
 using RuleSourceGen.Api.Models;
 using RuleSourceGen.Api.Rules;
 
@@ -10,6 +9,17 @@ public class GeneratedRuleSampleTests
     [Fact]
     public async Task GeneratedRules_ProduceExpectedDiscountFacts()
     {
+        DiscountRequest request = new()
+        {
+            CustomerType = "premium",
+            Subtotal = 600m,
+            LoyaltyYears = 6,
+            IsBlackFriday = true
+        };
+
+        FactBag facts = new();
+
+        // Execute rules in dependency order (VALIDATE → PREMIUM → LOYALTY → SEASONAL)
         IRule<DiscountRequest>[] rules =
         [
             new DISCOUNT_VALIDATERule(),
@@ -18,15 +28,13 @@ public class GeneratedRuleSampleTests
             new DISCOUNT_SEASONALRule()
         ];
 
-        MRuleOrchestratorSpy<DiscountRequest> spy = new(rules);
-
-        FactBag facts = await spy.ExecuteAsync(new DiscountRequest
+        List<string> executedCodes = [];
+        foreach (IRule<DiscountRequest> rule in rules)
         {
-            CustomerType = "premium",
-            Subtotal = 600m,
-            LoyaltyYears = 6,
-            IsBlackFriday = true
-        });
+            RuleResult result = await rule.EvaluateAsync(request, facts, CancellationToken.None);
+            Assert.True(result.IsSuccess, $"Rule {rule.Code} failed: {string.Join(", ", result.Errors)}");
+            executedCodes.Add(rule.Code);
+        }
 
         decimal totalRate = facts.Get<decimal>("DISCOUNT_PREMIUM:result")
                             + facts.Get<decimal>("DISCOUNT_LOYALTY:result")
@@ -35,20 +43,21 @@ public class GeneratedRuleSampleTests
         Assert.Equal(0.25m, totalRate);
         Assert.Equal(
             ["DISCOUNT_VALIDATE", "DISCOUNT_PREMIUM", "DISCOUNT_LOYALTY", "DISCOUNT_SEASONAL"],
-            (IEnumerable<string>)[.. spy.ExecutionRecords.Select(x => x.RuleCode)]);
+            (IEnumerable<string>)executedCodes);
     }
 
     [Fact]
     public async Task ValidationRule_FailsForMissingCustomerType()
     {
-        IRule<DiscountRequest>[] rules = [new DISCOUNT_VALIDATERule()];
-        MRuleOrchestratorSpy<DiscountRequest> spy = new(rules);
+        DISCOUNT_VALIDATERule rule = new();
+        FactBag facts = new();
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => spy.ExecuteAsync(new DiscountRequest
+        RuleResult result = await rule.EvaluateAsync(new DiscountRequest
         {
             Subtotal = 100m
-        }));
+        }, facts, CancellationToken.None);
 
-        Assert.Contains("CustomerType is required", ex.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Contains(result.Errors, e => e.Contains("CustomerType is required"));
     }
 }
