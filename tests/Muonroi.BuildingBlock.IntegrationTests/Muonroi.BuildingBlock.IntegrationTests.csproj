@@ -13,7 +13,6 @@
 <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.Bcl.Memory" />
     <PackageReference Include="Scriban" />
-    <PackageReference Include="Serilog.Sinks.Elasticsearch" />
 </ItemGroup>
 
   <ItemGroup>
