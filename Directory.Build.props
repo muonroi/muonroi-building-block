@@ -79,4 +79,7 @@
           Pack="true" PackagePath="\"
           Condition="Exists('$(MSBuildThisFileDirectory)icon.png')" />
   </ItemGroup>
+
+  <!-- Version governance: TFM-conditional versions for framework-coupled packages -->
+  <Import Project="build/Version.props" />
 </Project>
