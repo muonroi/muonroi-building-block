@@ -83,6 +83,7 @@ jobs:
             "src/Muonroi.Tenancy.Abstractions"
             "src/Muonroi.Tenancy.Core"
             "src/Muonroi.Tenancy"
+            "src/Muonroi.Tenancy.SiteProfile"
             "src/Muonroi.Tenancy.SiteProfile.SourceGenerators"
             "src/Muonroi.Tenancy.SiteProfile.Web"
             "src/Muonroi.RuleEngine.Abstractions"
@@ -95,6 +96,7 @@ jobs:
             "src/Muonroi.Data.Abstractions"
             "src/Muonroi.Data.Dapper"
             "src/Muonroi.Data.EntityFrameworkCore"
+            "src/Muonroi.EntityFrameworkCore.Configuration"
             "src/Muonroi.Caching.Abstractions"
             "src/Muonroi.Caching.Memory"
             "src/Muonroi.Auth"
@@ -103,6 +105,7 @@ jobs:
             "src/Muonroi.Http"
             "src/Muonroi.Resilience"
             "src/Muonroi.Mapper"
+            "src/Muonroi.Mapping.Abstractions"
             "src/Muonroi.Mediator"
             "src/Muonroi.Messaging.Abstractions"
             "src/Muonroi.Observability"
@@ -110,6 +113,8 @@ jobs:
             "src/Muonroi.BuildingBlock.Shared"
             "src/Muonroi.Logging"
             "src/Muonroi.Logging.Abstractions"
+            "src/Muonroi.Integration.Abstractions"
+            "src/Muonroi.Diagnostics.Generator"
             # Muonroi.Rules excluded — [DEPRECATED] use RuleEngine.Runtime
           )
 
