@@ -14,9 +14,9 @@
     <ProjectReference Include="..\Muonroi.Data.Abstractions\Muonroi.Data.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.66" />
-    <PackageReference Include="Dapper.Extensions.NetCore" Version="5.3.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
-    <PackageReference Include="Google.Protobuf" Version="3.29.1" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Dapper.Extensions.NetCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Google.Protobuf" />
   </ItemGroup>
 </Project>

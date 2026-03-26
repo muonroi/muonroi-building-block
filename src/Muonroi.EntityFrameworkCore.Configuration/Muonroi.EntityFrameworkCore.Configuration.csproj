@@ -9,6 +9,6 @@
     <Description>Composable EF Core entity configuration with template method pattern for schema-divergent multi-tenancy.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
 </Project>

@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    <PackageReference Include="Muonroi.RuleEngine.DecisionTable.Web" Version="1.0.0-alpha.1" />
-    <PackageReference Include="Muonroi.Rules" Version="1.0.0-alpha.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Muonroi.RuleEngine.DecisionTable.Web" />
+    <PackageReference Include="Muonroi.Rules" />
   </ItemGroup>
 </Project>

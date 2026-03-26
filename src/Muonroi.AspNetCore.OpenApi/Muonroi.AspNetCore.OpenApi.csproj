@@ -15,6 +15,6 @@
     <ProjectReference Include="..\Muonroi.Mediator\Muonroi.Mediator.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>
 </Project>

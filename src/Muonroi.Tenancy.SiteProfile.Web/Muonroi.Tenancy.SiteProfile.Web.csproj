@@ -17,7 +17,7 @@
     <ProjectReference Include="../Muonroi.Tenancy.SiteProfile/Muonroi.Tenancy.SiteProfile.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
   </ItemGroup>
   <!-- Framework reference for middleware (IApplicationBuilder, HttpContext) -->
   <ItemGroup>

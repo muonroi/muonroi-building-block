@@ -15,8 +15,8 @@
     <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Quartz" Version="3.15.0" />
-    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.15.0" />
-    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.15.0" />
+    <PackageReference Include="Quartz" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" />
+    <PackageReference Include="Quartz.Extensions.Hosting" />
   </ItemGroup>
 </Project>

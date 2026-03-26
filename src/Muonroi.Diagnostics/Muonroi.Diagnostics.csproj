@@ -13,6 +13,6 @@
     <ProjectReference Include="..\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="StackExchange.Redis" Version="2.8.37" />
+    <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 </Project>

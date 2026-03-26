@@ -6,9 +6,9 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.14" />
-<PackageReference Include="Scriban" Version="7.0.3" />
-<PackageReference Include="Serilog.Sinks.Elasticsearch" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+<PackageReference Include="Scriban" />
+<PackageReference Include="Serilog.Sinks.Elasticsearch" />
 </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.Messaging.MassTransit\Muonroi.Messaging.MassTransit.csproj" />
