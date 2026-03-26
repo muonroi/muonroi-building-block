@@ -4,6 +4,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <!-- This is a test HELPER library, not a test project itself.
+         Name contains "Testing" which triggers IsMuonroiTestProject detection in Directory.Build.props.
+         Override to ensure correct pack behavior and exclude test framework dependencies. -->
+    <IsTestProject>false</IsTestProject>
+    <IsPackable>true</IsPackable>
     <PackageId>Muonroi.RuleEngine.Testing</PackageId>
     <Authors>Muon Roi</Authors>
     <Description>Testing helpers for Muonroi rule orchestration.</Description>
