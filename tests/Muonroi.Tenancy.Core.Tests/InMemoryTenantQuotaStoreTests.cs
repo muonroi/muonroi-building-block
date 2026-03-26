@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.Tenancy.Abstractions.Models;
+using Muonroi.Quota.Abstractions;
 using NSubstitute;
 using Xunit;
 

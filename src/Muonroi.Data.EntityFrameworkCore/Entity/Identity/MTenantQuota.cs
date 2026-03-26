@@ -1,4 +1,4 @@
-using Muonroi.Tenancy.Abstractions.Models;
+using Muonroi.Quota.Abstractions;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 

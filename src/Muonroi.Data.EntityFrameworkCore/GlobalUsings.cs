@@ -44,6 +44,7 @@ global using Muonroi.Data.EntityFrameworkCore.Repositories;
 global using Muonroi.Governance.License;
 global using Muonroi.Mediator.Mediator.Interfaces;
 global using Muonroi.Messaging.Abstractions.Events;
+global using Muonroi.Quota.Abstractions;
 global using Muonroi.RuleEngine.Abstractions;
 global using Muonroi.Rules.Rules;
 global using Muonroi.Tenancy.Abstractions;

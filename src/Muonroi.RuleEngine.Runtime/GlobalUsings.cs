@@ -13,6 +13,7 @@ global using Microsoft.Extensions.Options;
 global using Muonroi.Core.Abstractions.Context;
 global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Governance.License;
+global using Muonroi.Quota.Abstractions;
 global using Muonroi.RuleEngine.Abstractions;
 global using Muonroi.RuleEngine.Abstractions.Adapters;
 global using Muonroi.RuleEngine.Core.Tracing;

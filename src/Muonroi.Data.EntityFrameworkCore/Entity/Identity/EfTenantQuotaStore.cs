@@ -1,5 +1,4 @@
-using Muonroi.Tenancy.Abstractions.Interfaces;
-using Muonroi.Tenancy.Abstractions.Models;
+using Muonroi.Quota.Abstractions;
 using System.Globalization;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity.Identity;

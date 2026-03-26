@@ -1,5 +1,4 @@
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.Tenancy.Abstractions.Models;
+using Muonroi.Quota.Abstractions;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 

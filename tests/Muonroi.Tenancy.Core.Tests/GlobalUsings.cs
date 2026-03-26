@@ -14,7 +14,7 @@ global using Muonroi.Core.Abstractions.Constants;
 global using Muonroi.Core.Abstractions.Context;
 global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Logging.Abstractions;
-global using Muonroi.RuleEngine.Abstractions;
+global using Muonroi.Quota.Abstractions;
 global using Muonroi.Tenancy.Abstractions;
 global using Muonroi.Tenancy.Core;
 global using Muonroi.Tenancy.Core.Shared;

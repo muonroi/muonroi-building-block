@@ -8,6 +8,7 @@ global using Muonroi.Core.Abstractions.Context;
 global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Messaging.Abstractions.Contracts;
 global using Muonroi.Messaging.MassTransit.Messaging;
+global using Muonroi.Quota.Abstractions;
 global using Muonroi.RuleEngine.Abstractions;
 global using NSubstitute;
 global using System;

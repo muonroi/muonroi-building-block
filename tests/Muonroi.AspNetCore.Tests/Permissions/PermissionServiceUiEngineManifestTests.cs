@@ -7,8 +7,8 @@ using Muonroi.Core.Abstractions.Models.Common;
 using Muonroi.Core.Abstractions.Response;
 using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 using Muonroi.Governance.Authorization;
+using Muonroi.Quota.Abstractions;
 using Muonroi.Tenancy.Abstractions.Interfaces;
-using Muonroi.Tenancy.Abstractions.Models;
 using Muonroi.Tenancy.Core;
 using Muonroi.Tenancy.Core.Shared;
 using NSubstitute;
@@ -349,7 +349,7 @@ public class PermissionServiceUiEngineManifestTests
 
         await db.SaveChangesAsync();
 
-        InMemoryTenantQuotaStore quotaStore = new(new FakeDateTimeService(), new FakeJsonSerializeService());
+        Muonroi.Quota.Abstractions.InMemoryTenantQuotaStore quotaStore = new(new FakeDateTimeService(), new FakeJsonSerializeService());
         await quotaStore.SaveQuotaAsync(TenantContext.CurrentTenantId, TenantQuotaPresets.Free);
         PermissionService<TestPerm, TestDbContext> service = CreateService(db, new MAuthenticateInfoContext(false), quotaStore: quotaStore);
         MResponse<MUiEngineManifest> freeResponse = await service.GetUiEngineManifestAsync(user.EntityId, CancellationToken.None);
