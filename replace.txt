@@ -1,0 +1,3 @@
+regex:.*Co-Authored-By: Claude.*==
+
+regex:.*Co-authored-by: Claude.*==

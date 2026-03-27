@@ -13,6 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.AspNetCore\Muonroi.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.AspNetCore.RuleEngine\Muonroi.AspNetCore.RuleEngine.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.AspNetCore.OpenApi\Muonroi.AspNetCore.OpenApi.csproj" />
   </ItemGroup>
 </Project>

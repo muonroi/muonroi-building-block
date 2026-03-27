@@ -1,4 +1,4 @@
-﻿using Muonroi.AspNetCore.Models.Changes;
+using Muonroi.AspNetCore.Models.Changes;
 
 namespace Muonroi.AspNetCore.Services;
 
