@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Muonroi.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace Muonroi.Tenancy.SiteProfile;
 
@@ -16,13 +16,13 @@ namespace Muonroi.Tenancy.SiteProfile;
 internal sealed class SiteProfileStartupValidator(
     SiteProfileRegistrationTracker tracker,
     IServiceProvider serviceProvider,
-    IMLog<SiteProfileStartupValidator> logger) : IHostedService
+    ILogger<SiteProfileStartupValidator> logger) : IHostedService
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
         if (tracker.SkipValidation)
         {
-            logger.Info("SiteProfile startup validation skipped (SkipStartupValidation enabled)");
+            logger.LogInformation("SiteProfile startup validation skipped (SkipStartupValidation enabled)");
             return Task.CompletedTask;
         }
 
@@ -61,7 +61,7 @@ internal sealed class SiteProfileStartupValidator(
             throw new InvalidOperationException(message);
         }
 
-        logger.Info(
+        logger.LogInformation(
             "SiteProfile startup validation passed: {SiteCount} site(s) \u00d7 {ServiceCount} service type(s) verified",
             tracker.SiteIds.Count,
             tracker.ResolvedServiceTypes.Count);
