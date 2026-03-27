@@ -25,6 +25,15 @@ public sealed class GenerateSiteProfileAttribute : Attribute
     public Type DbContextType { get; }
 
     /// <summary>
+    /// When true, the generated RegisterServices() skips AddDbContext registration.
+    /// Use when the consumer already registers DbContext via its own infrastructure
+    /// (e.g., Autofac + legacy AddInternalInfrastructure) and adding another AddDbContext
+    /// causes DI container conflicts (DbContextOptions resolution ambiguity).
+    /// Default: false.
+    /// </summary>
+    public bool SkipDbContextRegistration { get; set; }
+
+    /// <summary>
     /// Creates a GenerateSiteProfile attribute.
     /// </summary>
     /// <param name="siteId">Site identifier string (e.g., "TCI").</param>

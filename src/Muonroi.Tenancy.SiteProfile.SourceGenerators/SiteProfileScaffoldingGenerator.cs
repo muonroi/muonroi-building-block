@@ -70,6 +70,17 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
         // Extract namespace
         string namespaceName = GetNamespace(classSymbol);
 
+        // Extract SkipDbContextRegistration named argument (default false)
+        bool skipDbContext = false;
+        foreach (var namedArg in generateAttr.NamedArguments)
+        {
+            if (namedArg.Key == "SkipDbContextRegistration" && namedArg.Value.Value is bool val)
+            {
+                skipDbContext = val;
+                break;
+            }
+        }
+
         // Collect [SiteProfileBehavior] attributes (AllowMultiple = true)
         List<string> behaviorTypeNames = new List<string>();
         foreach (var attr in classSymbol.GetAttributes())
@@ -92,7 +103,8 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
             siteId: siteId,
             dbContextTypeName: dbContextSymbol.ToDisplayString(),
             behaviorTypeNames: behaviorTypeNames,
-            isPartial: isPartial);
+            isPartial: isPartial,
+            skipDbContextRegistration: skipDbContext);
     }
 
     private static AttributeData? FindAttribute(INamedTypeSymbol symbol, string shortName)
@@ -169,11 +181,19 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
         sb.AppendLine("    public void RegisterServices(IServiceCollection services, IConfiguration configuration)");
         sb.AppendLine("    {");
 
-        // DbContext registration comment + call
-        sb.AppendLine($"        // DbContext registration for site \"{model.SiteId}\"");
-        sb.AppendLine($"        // Consumer project must provide MultiTenantServiceCollectionExtensions.AddDbContext<T>");
-        sb.AppendLine($"        // via a global using or local using for the appropriate namespace.");
-        sb.AppendLine($"        MultiTenantServiceCollectionExtensions.AddDbContext<{model.DbContextTypeName}>(services, configuration);");
+        // DbContext registration (skipped when SkipDbContextRegistration = true)
+        if (!model.SkipDbContextRegistration)
+        {
+            sb.AppendLine($"        // DbContext registration for site \"{model.SiteId}\"");
+            sb.AppendLine($"        // Consumer project must provide MultiTenantServiceCollectionExtensions.AddDbContext<T>");
+            sb.AppendLine($"        // via a global using or local using for the appropriate namespace.");
+            sb.AppendLine($"        MultiTenantServiceCollectionExtensions.AddDbContext<{model.DbContextTypeName}>(services, configuration);");
+        }
+        else
+        {
+            sb.AppendLine($"        // DbContext registration SKIPPED for site \"{model.SiteId}\" (SkipDbContextRegistration = true)");
+            sb.AppendLine($"        // Consumer registers DbContext via its own infrastructure (e.g., AddInternalInfrastructure)");
+        }
 
         // Behavior Apply() calls
         if (model.BehaviorTypeNames.Count > 0)
@@ -221,6 +241,7 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
         public string DbContextTypeName { get; }
         public List<string> BehaviorTypeNames { get; }
         public bool IsPartial { get; }
+        public bool SkipDbContextRegistration { get; }
 
         public ScaffoldingModel(
             string className,
@@ -228,7 +249,8 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
             string siteId,
             string dbContextTypeName,
             List<string> behaviorTypeNames,
-            bool isPartial)
+            bool isPartial,
+            bool skipDbContextRegistration = false)
         {
             ClassName = className;
             NamespaceName = namespaceName;
@@ -236,6 +258,7 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
             DbContextTypeName = dbContextTypeName;
             BehaviorTypeNames = behaviorTypeNames;
             IsPartial = isPartial;
+            SkipDbContextRegistration = skipDbContextRegistration;
         }
     }
 }
