@@ -8,7 +8,6 @@
     <Description>Caching contracts: IMultiLevelCacheService, CacheConfigs, and cache key conventions for Muonroi applications.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Muonroi.Core\Muonroi.Core.csproj" />
-    <ProjectReference Include="..\Muonroi.Tenancy.Core\Muonroi.Tenancy.Core.csproj" />
+    <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
   </ItemGroup>
 </Project>
