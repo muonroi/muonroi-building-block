@@ -11,20 +11,11 @@ public class DistributedCacheKeyBuilderTests
     }
 
     [Fact]
-    public void Build_Falls_Back_To_Current_TenantContext()
+    public void Build_Returns_Key_Without_Tenant_When_No_TenantId_Passed()
     {
-        string? original = TenantContext.CurrentTenantId;
-
-        try
-        {
-            TenantContext.CurrentTenantId = "tenant-a";
-
-            DistributedCacheKeyBuilder.Build("shared-key").Should().Be("tenant-a:shared-key");
-        }
-        finally
-        {
-            TenantContext.CurrentTenantId = original;
-        }
+        // After removing TenantContext.CurrentTenantId fallback, Build() with no tenantId
+        // must return the key without any tenant prefix — callers must pass tenantId explicitly.
+        DistributedCacheKeyBuilder.Build("shared-key").Should().Be("shared-key");
     }
 
     [Fact]

@@ -16,7 +16,7 @@ public static class DistributedCacheKeyBuilder
     {
         ArgumentNullException.ThrowIfNull(key);
 
-        string? resolvedTenantId = NormalizeTenantId(tenantId ?? TenantContext.CurrentTenantId);
+        string? resolvedTenantId = NormalizeTenantId(tenantId);
         if (string.IsNullOrWhiteSpace(keyNamespace))
         {
             return string.IsNullOrWhiteSpace(resolvedTenantId) ? key : string.Concat(resolvedTenantId, ":", key);
