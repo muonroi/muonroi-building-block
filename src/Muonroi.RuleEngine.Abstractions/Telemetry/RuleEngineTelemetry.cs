@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
-namespace Muonroi.RuleEngine.Core.Telemetry;
+namespace Muonroi.RuleEngine.Abstractions.Telemetry;
 
 /// <summary>
 /// Provides OpenTelemetry sources and instruments for the rule engine and mediator rule execution pipeline.

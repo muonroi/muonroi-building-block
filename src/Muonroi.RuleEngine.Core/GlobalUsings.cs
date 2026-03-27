@@ -11,4 +11,4 @@ global using System.Diagnostics.Metrics;
 global using System.Linq;
 global using System.Reflection;
 global using System.Text.Json;
-global using Muonroi.RuleEngine.Core.Telemetry;
+global using Muonroi.RuleEngine.Abstractions.Telemetry;
