@@ -5,7 +5,7 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity;
 /// </summary>
 public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnitOfWork, IMDataContext, ITransactionalRuleContext, IIdentityAuth
 {
-    private readonly IMediator _mediator;
+    private readonly IMediator? _mediator;
     private readonly IMLog<MDbContext>? _logger;
     private readonly ILicenseGuard? _licenseGuard;
     private readonly IMDateTimeService? _dateTimeService;
@@ -97,7 +97,7 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
     /// <param name="licenseGuard">The license guard.</param>
     /// <param name="logger">The logger.</param>
     /// <param name="dateTimeService">The date time service.</param>
-    public MDbContext(DbContextOptions options, IMediator mediator, ILicenseGuard? licenseGuard = null, IMLog<MDbContext>? logger = null, IMDateTimeService? dateTimeService = null)
+    public MDbContext(DbContextOptions options, IMediator? mediator = null, ILicenseGuard? licenseGuard = null, IMLog<MDbContext>? logger = null, IMDateTimeService? dateTimeService = null)
         : base(options)
     {
         _mediator = mediator;
@@ -233,6 +233,13 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
 
     private async Task DispatchDomainEventsAsync()
     {
+        if (_mediator is null)
+        {
+            // No mediator registered — clear tracked events without dispatch
+            _trackEntities.Clear();
+            return;
+        }
+
         IEnumerable<MEntity> domainEntities = _trackEntities
             .Where(x => x.DomainEvents is { Count: > 0 })
             .Distinct();

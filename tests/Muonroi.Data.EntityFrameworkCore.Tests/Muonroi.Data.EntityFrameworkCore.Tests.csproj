@@ -7,5 +7,6 @@
   </PropertyGroup>
 <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Data.EntityFrameworkCore.Events\Muonroi.Data.EntityFrameworkCore.Events.csproj" />
   </ItemGroup>
 </Project>
