@@ -51,7 +51,13 @@ public static class SiteProfileDbContextExtensions
             var tenantContext = sp.GetRequiredService<ITenantContext>();
             var connFactory = sp.GetRequiredService<ITenantConnectionStringFactory>();
             var raw = connFactory.GetConnectionString(tenantContext.TenantId);
-            var cs = connectionStringTransform is not null ? connectionStringTransform(raw) : raw;
+
+            // Resolve transform: explicit param wins, then keyed DI fallback (for consumers that register
+            // a named transform via services.AddKeyedSingleton("SiteDbContext:ConnectionStringTransform", ...))
+            var transform = connectionStringTransform
+                ?? sp.GetKeyedService<Func<string, string>>("SiteDbContext:ConnectionStringTransform");
+            var cs = transform is not null ? transform(raw) : raw;
+
             var builder = new DbContextOptionsBuilder<TContext>();
             builder.UseSqlServer(cs);
             return builder.Options;
