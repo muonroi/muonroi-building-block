@@ -185,9 +185,9 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
         if (!model.SkipDbContextRegistration)
         {
             sb.AppendLine($"        // DbContext registration for site \"{model.SiteId}\"");
-            sb.AppendLine($"        // Consumer project must provide MultiTenantServiceCollectionExtensions.AddDbContext<T>");
-            sb.AppendLine($"        // via a global using or local using for the appropriate namespace.");
-            sb.AppendLine($"        MultiTenantServiceCollectionExtensions.AddDbContext<{model.DbContextTypeName}>(services, configuration);");
+            sb.AppendLine($"        // Ecosystem: registers DbContextOptions<T> only (no non-generic) — prevents Autofac conflict");
+            sb.AppendLine($"        // with EFCoreStoreDbContext<TenantInfo>. Safe for multiple site DbContexts in the same container.");
+            sb.AppendLine($"        Muonroi.Tenancy.SiteProfile.Web.SiteProfileDbContextExtensions.AddSiteDbContext<{model.DbContextTypeName}>(services, configuration);");
         }
         else
         {
