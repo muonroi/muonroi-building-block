@@ -5,7 +5,7 @@ using Muonroi.Mediator.Exceptions;
 using Muonroi.Mediator.Mediator.Attributes;
 using Muonroi.Mediator.Mediator.Interfaces;
 using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Core.Telemetry;
+using Muonroi.RuleEngine.Abstractions.Telemetry;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;

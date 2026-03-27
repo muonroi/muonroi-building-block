@@ -1,6 +1,6 @@
 using Muonroi.Mediator.Behaviours;
 using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Core.Telemetry;
+using Muonroi.RuleEngine.Abstractions.Telemetry;
 
 namespace Muonroi.Mediator.Tests.Behaviours;
 
