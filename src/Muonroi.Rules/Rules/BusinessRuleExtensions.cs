@@ -50,25 +50,56 @@ internal sealed class MappedBusinessRule<TOuter, TInner>(IBusinessRule<TInner> i
 /// <summary>
 /// Extension helpers for composing <see cref="IBusinessRule{TContext}"/> instances.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class BusinessRuleExtensions
 {
+    /// <summary>
+    /// Combines two rules using a logical AND operation.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context.</typeparam>
+    /// <param name="left">The left rule.</param>
+    /// <param name="right">The right rule.</param>
+    /// <returns>A new rule representing the logical AND of the two rules.</returns>
     public static IBusinessRule<TContext> And<TContext>(this IBusinessRule<TContext> left,
         IBusinessRule<TContext> right)
     {
         return new CompositeBusinessRule<TContext>(left, right, static (l, r) => l && r, "AND");
     }
 
+    /// <summary>
+    /// Combines two rules using a logical OR operation.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context.</typeparam>
+    /// <param name="left">The left rule.</param>
+    /// <param name="right">The right rule.</param>
+    /// <returns>A new rule representing the logical OR of the two rules.</returns>
     public static IBusinessRule<TContext> Or<TContext>(this IBusinessRule<TContext> left, IBusinessRule<TContext> right)
     {
         return new CompositeBusinessRule<TContext>(left, right, static (l, r) => l || r, "OR");
     }
 
+    /// <summary>
+    /// Wraps a rule with a caching layer.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context.</typeparam>
+    /// <param name="rule">The rule to cache.</param>
+    /// <param name="cache">The memory cache instance.</param>
+    /// <param name="duration">Optional duration for the cache. Defaults to 5 minutes.</param>
+    /// <returns>A cached version of the rule.</returns>
     public static IBusinessRule<TContext> Cache<TContext>(this IBusinessRule<TContext> rule, IMemoryCache cache,
         TimeSpan? duration = null)
     {
         return new CachedBusinessRule<TContext>(rule, cache, duration);
     }
 
+    /// <summary>
+    /// Adapts a rule from one context type to another.
+    /// </summary>
+    /// <typeparam name="TOuter">The outer context type.</typeparam>
+    /// <typeparam name="TInner">The inner context type.</typeparam>
+    /// <param name="rule">The rule to adapt.</param>
+    /// <param name="map">A function to map the outer context to the inner context.</param>
+    /// <returns>An adapted rule.</returns>
     public static IBusinessRule<TOuter> Adapt<TOuter, TInner>(this IBusinessRule<TInner> rule, Func<TOuter, TInner> map)
     {
         return new MappedBusinessRule<TOuter, TInner>(rule, map);

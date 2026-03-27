@@ -1,5 +1,7 @@
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Core.Abstractions.Diagnostics;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.RuleEngine.Core;
 
@@ -10,29 +12,40 @@ namespace Muonroi.RuleEngine.Core;
 public sealed class RuleOrchestrator<TContext>(
     IEnumerable<IRule<TContext>> rules,
     IEnumerable<IHookHandler<TContext>> hooks,
-    ILogger<RuleOrchestrator<TContext>>? logger,
+    IMLog<RuleOrchestrator<TContext>>? logger = null,
     IMJsonSerializeService? jsonSerializeService = null,
     IEnumerable<IRuleEventListener<TContext>>? listeners = null,
     ITenantQuotaTracker? quotaTracker = null,
     IRuleExecutionTracer? tracer = null,
-    ISystemExecutionContextAccessor? contextAccessor = null)
+    ISystemExecutionContextAccessor? contextAccessor = null,
+    IMTraceContext? traceContext = null)
 {
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RuleOrchestrator{TContext}"/> class.
+    /// </summary>
+    /// <param name="rules">The rules to orchestrate.</param>
+    /// <param name="hooks">The hook handlers.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="listeners">The rule event listeners.</param>
+    /// <param name="quotaTracker">The tenant quota tracker.</param>
+    /// <param name="tracer">The rule execution tracer.</param>
+    /// <param name="contextAccessor">The system execution context accessor.</param>
+    /// <param name="traceContext">The trace context.</param>
     public RuleOrchestrator(
         IEnumerable<IRule<TContext>> rules,
         IEnumerable<IHookHandler<TContext>> hooks,
-        ILogger<RuleOrchestrator<TContext>>? logger,
+        IMLog<RuleOrchestrator<TContext>>? logger,
         IEnumerable<IRuleEventListener<TContext>>? listeners,
         ITenantQuotaTracker? quotaTracker = null,
         IRuleExecutionTracer? tracer = null,
-        ISystemExecutionContextAccessor? contextAccessor = null)
-        : this(rules, hooks, logger, null, listeners, quotaTracker, tracer, contextAccessor)
+        ISystemExecutionContextAccessor? contextAccessor = null,
+        IMTraceContext? traceContext = null)
+        : this(rules, hooks, logger, null, listeners, quotaTracker, tracer, contextAccessor, traceContext)
     {
     }
 
     private readonly IReadOnlyList<IRule<TContext>> _rules = [.. Order(rules)];
-
-    private readonly ILogger<RuleOrchestrator<TContext>> _logger =
-        logger ?? NullLogger<RuleOrchestrator<TContext>>.Instance;
 
     private readonly IEnumerable<IRuleEventListener<TContext>> _listeners = listeners ?? [];
     private readonly IMJsonSerializeService _jsonSerializeService =
@@ -40,7 +53,15 @@ public sealed class RuleOrchestrator<TContext>(
     private readonly ITenantQuotaTracker? _quotaTracker = quotaTracker;
     private readonly IRuleExecutionTracer? _tracer = tracer;
     private readonly ISystemExecutionContextAccessor? _contextAccessor = contextAccessor;
+    private readonly IMTraceContext? _traceContext = traceContext;
 
+    /// <summary>
+    /// Executes the orchestration pipeline.
+    /// </summary>
+    /// <param name="context">The execution context.</param>
+    /// <param name="filterPoint">Optional hook point filter.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="Task{FactBag}"/> representing the asynchronous operation.</returns>
     public async Task<FactBag> ExecuteAsync(TContext context, HookPoint? filterPoint = null, CancellationToken cancellationToken = default)
     {
         FactBag facts = new();
@@ -93,8 +114,7 @@ public sealed class RuleOrchestrator<TContext>(
                         cancellationToken);
                 }
 
-                _logger.LogInformation("Executing rule {Rule} with context {@Context} and facts {@Facts}", rule.Name,
-                    context, facts);
+                logger?.Info("Executing rule {Rule} with facts {@Facts}", rule.Name, facts);
 
                 string version = rule.GetType().Assembly.GetName().Version?.ToString() ?? "unknown";
                 string? traceTenantId = Activity.Current?.GetTagItem("tenant.id") as string;
@@ -107,6 +127,9 @@ public sealed class RuleOrchestrator<TContext>(
                 RuleEngineTelemetry.RulesMatched.Add(1, tags);
 
                 await NotifyMatched(rule, context, facts, cancellationToken);
+
+                // ── Diagnostics ──────────────────────────────────────────────────
+                using var ruleNode = _traceContext?.Current?.BeginNode(rule.Code, MTraceNodeType.Rule);
 
                 Dictionary<string, object?> beforeFacts = new(facts.AsReadOnly());
                 await TraceRuleAsync(
@@ -173,13 +196,13 @@ public sealed class RuleOrchestrator<TContext>(
                         string errorMessage = result.Errors.Count > 0
                             ? string.Join("; ", result.Errors)
                             : $"Rule {rule.Name} failed.";
-                        _logger.LogWarning("Rule {Rule} failed: {Error}", rule.Name, errorMessage);
+                        logger?.Warn("Rule {Rule} failed: {Error}", rule.Name, errorMessage);
                         throw new InvalidOperationException(errorMessage);
                     }
 
                     executedRuleCount++;
-                    _logger.LogInformation("Rule {Rule} succeeded in {Elapsed} ms with facts {@Facts}", rule.Name,
-                        sw.ElapsedMilliseconds, facts);
+                    logger?.Info("Rule {Rule} succeeded in {Elapsed} ms with facts {@Facts}", rule.Name,
+                         sw.ElapsedMilliseconds, facts);
                 }
                 catch (Exception ex)
                 {
@@ -197,7 +220,7 @@ public sealed class RuleOrchestrator<TContext>(
                         failureReason: ex.Message,
                         exception: ex,
                         cancellationToken);
-                    _logger.LogError(ex, "Rule {Rule} failed after {Elapsed} ms", rule.Name, sw.ElapsedMilliseconds);
+                    logger?.Error(ex, "Rule {Rule} failed after {Elapsed} ms", rule.Name, sw.ElapsedMilliseconds);
                     throw;
                 }
                 finally
@@ -254,9 +277,17 @@ public sealed class RuleOrchestrator<TContext>(
         TContext context,
         ExecutionMode executionMode = ExecutionMode.AllOrNothing,
         HookPoint? filterPoint = null,
+        IReadOnlyDictionary<string, object?>? initialFacts = null,
         CancellationToken cancellationToken = default)
     {
         FactBag facts = new();
+        if (initialFacts is not null)
+        {
+            foreach ((string key, object? value) in initialFacts)
+            {
+                facts.Set(key, value!);
+            }
+        }
         Dictionary<string, RuleResult> ruleResults = [];
         List<string> errors = [];
         List<string> compensationErrors = [];
@@ -328,8 +359,7 @@ public sealed class RuleOrchestrator<TContext>(
                         cancellationToken);
                 }
 
-                _logger.LogInformation("Executing rule {Rule} with context {@Context} and facts {@Facts}", rule.Name,
-                    context, facts);
+                logger?.Info("Executing rule {Rule} with facts {@Facts}", rule.Name, facts);
 
                 string version = rule.GetType().Assembly.GetName().Version?.ToString() ?? "unknown";
                 string? traceTenantId = Activity.Current?.GetTagItem("tenant.id") as string;
@@ -341,6 +371,9 @@ public sealed class RuleOrchestrator<TContext>(
 
                 RuleEngineTelemetry.RulesMatched.Add(1, tags);
                 await NotifyMatched(rule, context, facts, cancellationToken);
+
+                // ── Diagnostics ──────────────────────────────────────────────────
+                using var ruleNode = _traceContext?.Current?.BeginNode(rule.Code, MTraceNodeType.Rule);
 
                 Dictionary<string, object?> beforeFacts = new(facts.AsReadOnly());
                 await TraceRuleAsync(
@@ -424,13 +457,13 @@ public sealed class RuleOrchestrator<TContext>(
                             exception: null,
                             cancellationToken);
                         errors.Add(errorMessage);
-                        _logger.LogWarning("Rule {Rule} failed: {Error}", rule.Name, errorMessage);
+                        logger?.Warn("Rule {Rule} failed: {Error}", rule.Name, errorMessage);
                         stopExecution = executionMode != ExecutionMode.BestEffort;
                     }
                     else
                     {
-                        _logger.LogInformation("Rule {Rule} succeeded in {Elapsed} ms with facts {@Facts}", rule.Name,
-                            sw.ElapsedMilliseconds, facts);
+                        logger?.Info("Rule {Rule} succeeded in {Elapsed} ms with facts {@Facts}", rule.Name,
+                             sw.ElapsedMilliseconds, facts);
                     }
                 }
                 catch (OperationCanceledException)
@@ -442,7 +475,7 @@ public sealed class RuleOrchestrator<TContext>(
                     sw.Stop();
                     result = RuleResult.Failure(ex.Message);
                     await RunHooks(HookPoint.Error, rule, result, facts, context, sw.Elapsed, cancellationToken);
-                    _logger.LogError(ex, "Rule {Rule} failed after {Elapsed} ms", rule.Name, sw.ElapsedMilliseconds);
+                    logger?.Error(ex, "Rule {Rule} failed after {Elapsed} ms", rule.Name, sw.ElapsedMilliseconds);
                     await TraceRuleAsync(
                         rule,
                         context,
@@ -549,7 +582,7 @@ public sealed class RuleOrchestrator<TContext>(
                     exception: ex,
                     cancellationToken);
                 compensationErrors.Add(message);
-                _logger.LogError(ex, "Compensation failed for rule {Rule}", rule.Name);
+                logger?.Error(ex, "Compensation failed for rule {Rule}", rule.Name);
             }
         }
     }
@@ -572,7 +605,7 @@ public sealed class RuleOrchestrator<TContext>(
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Hook execution failed at {Point} for {Rule}", point, rule.Name);
+                logger?.Error(ex, "Hook execution failed at {Point} for {Rule}", point, rule.Name);
             }
         }
     }
@@ -587,7 +620,7 @@ public sealed class RuleOrchestrator<TContext>(
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Event listener failed for rule {Rule} (matched)", rule.Name);
+                logger?.Error(ex, "Event listener failed for rule {Rule} (matched)", rule.Name);
             }
         }
     }
@@ -604,7 +637,7 @@ public sealed class RuleOrchestrator<TContext>(
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Event listener failed for rule {Rule} (fired)", rule.Name);
+                logger?.Error(ex, "Event listener failed for rule {Rule} (fired)", rule.Name);
             }
         }
     }
@@ -643,6 +676,7 @@ public sealed class RuleOrchestrator<TContext>(
             {
                 TenantId = tenantId ?? string.Empty,
                 CorrelationId = ResolveCorrelationId(executionContext),
+                TraceSessionId = _traceContext?.Current?.SessionId,
                 UserId = executionContext.UserId ?? string.Empty,
                 SourceType = executionContext.SourceType,
                 RuleName = rule.Name,
@@ -726,7 +760,10 @@ public sealed class RuleOrchestrator<TContext>(
         HashSet<string> visiting = [];
         HashSet<string> visited = [];
 
-        foreach (string code in map.Keys)
+        foreach (string code in map.Values
+                     .OrderBy(rule => rule.Order)
+                     .ThenBy(rule => rule.Code, StringComparer.OrdinalIgnoreCase)
+                     .Select(rule => rule.Code))
         {
             Visit(code);
         }
@@ -745,7 +782,9 @@ public sealed class RuleOrchestrator<TContext>(
                 throw new InvalidOperationException("Cyclic rule dependency detected.");
             }
 
-            foreach (string dep in map[code].DependsOn)
+            foreach (string dep in map[code].DependsOn
+                         .OrderBy(dep => map[dep].Order)
+                         .ThenBy(dep => dep, StringComparer.OrdinalIgnoreCase))
             {
                 if (!map.ContainsKey(dep))
                 {

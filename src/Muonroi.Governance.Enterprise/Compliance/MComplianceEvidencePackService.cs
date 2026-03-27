@@ -1,5 +1,10 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.Governance.Compliance;
 
+/// <summary>
+/// Represents the MCompliance Evidence Pack Service.
+/// </summary>
 public sealed class MComplianceEvidencePackService(
     LicenseConfigs licenseConfigs,
     IMComplianceExportService exportService,
@@ -17,6 +22,9 @@ public sealed class MComplianceEvidencePackService(
         exportService ?? throw new ArgumentNullException(nameof(exportService));
     private readonly IHostEnvironment? _hostEnvironment = hostEnvironment;
 
+    /// <summary>
+    /// Executes the Generate Async operation.
+    /// </summary>
     public async Task<MComplianceEvidencePackResult> GenerateAsync(
         MComplianceEvidencePackRequest request,
         CancellationToken cancellationToken = default)

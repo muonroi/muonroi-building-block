@@ -17,11 +17,13 @@ public interface ITransactionalRuleContext
     /// <summary>
     /// Begins a new transaction.
     /// </summary>
+    /// <returns>The started transaction or null.</returns>
     Task<IDbContextTransaction?> BeginTransactionAsync();
 
     /// <summary>
     /// Commits the provided transaction.
     /// </summary>
+    /// <param name="transaction">Transaction to commit.</param>
     Task CommitTransactionAsync(IDbContextTransaction transaction);
 
     /// <summary>

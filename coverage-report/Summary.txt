@@ -1,0 +1,1307 @@
+Summary
+  Generated on: 3/23/2026 - 3:18:19 PM
+  Coverage date: 3/23/2026 - 3:15:05 PM - 3/23/2026 - 3:18:01 PM
+  Parser: MultiReport (53x Cobertura)
+  Assemblies: 54
+  Classes: 1179
+  Files: 838
+  Line coverage: 44.9%
+  Covered lines: 26150
+  Uncovered lines: 31964
+  Coverable lines: 58114
+  Total lines: 95744
+  Branch coverage: 36.8% (7763 of 21039)
+  Covered branches: 7763
+  Total branches: 21039
+  Method coverage: 58.7% (3997 of 6808)
+  Full method coverage: 49.4% (3365 of 6808)
+  Covered methods: 3997
+  Fully covered methods: 3365
+  Total methods: 6808
+
+muonroi-mcp-dev                                                                                                                                         67.9%
+  Muonroi.RuleGen.Mcp.Infrastructure.ComplianceScanner                                                                                                  83.9%
+  Muonroi.RuleGen.Mcp.Infrastructure.ConsoleIsolationRunner                                                                                                0%
+  Muonroi.RuleGen.Mcp.Infrastructure.EcosystemCatalog                                                                                                   72.6%
+  Muonroi.RuleGen.Mcp.Infrastructure.OssBoundaryCatalog                                                                                                 39.7%
+  Muonroi.RuleGen.Mcp.Infrastructure.RuleGenCommandContextFactory                                                                                       64.8%
+  Muonroi.RuleGen.Mcp.Infrastructure.ScanTargetSet                                                                                                       100%
+  Muonroi.RuleGen.Mcp.Infrastructure.WorkspaceLocator                                                                                                     34%
+  Muonroi.RuleGen.Mcp.Models.ComplianceCheckResult                                                                                                       100%
+  Muonroi.RuleGen.Mcp.Models.ComplianceViolation                                                                                                         100%
+  Muonroi.RuleGen.Mcp.Models.DecisionTableExportResult                                                                                                   100%
+  Muonroi.RuleGen.Mcp.Models.DecisionTableImportResult                                                                                                   100%
+  Muonroi.RuleGen.Mcp.Models.DecisionTableValidationResult                                                                                               100%
+  Muonroi.RuleGen.Mcp.Models.EcosystemRuleDescriptor                                                                                                     100%
+  Muonroi.RuleGen.Mcp.Models.OssBoundaryCheckResult                                                                                                        0%
+  Muonroi.RuleGen.Mcp.Models.OssBoundaryViolation                                                                                                          0%
+  Muonroi.RuleGen.Mcp.Models.PolicySignResult                                                                                                            100%
+  Muonroi.RuleGen.Mcp.Models.PolicyVerifyResult                                                                                                          100%
+  Muonroi.RuleGen.Mcp.Models.RuleGenExtractResult                                                                                                        100%
+  Muonroi.RuleGen.Mcp.Models.RuleGenGenerateTestsResult                                                                                                  100%
+  Muonroi.RuleGen.Mcp.Models.RuleGenMergeResult                                                                                                            0%
+  Muonroi.RuleGen.Mcp.Models.RuleGenRegisterResult                                                                                                       100%
+  Muonroi.RuleGen.Mcp.Models.RuleGenSplitResult                                                                                                            0%
+  Muonroi.RuleGen.Mcp.Models.RuleGenVerifyResult                                                                                                         100%
+  Muonroi.RuleGen.Mcp.Models.RuleGenWatchResult                                                                                                          100%
+  Muonroi.RuleGen.Mcp.Models.ScaffoldResult                                                                                                              100%
+  Muonroi.RuleGen.Mcp.Models.WrapperSuggestionResult                                                                                                     100%
+  Muonroi.RuleGen.Mcp.Program                                                                                                                              0%
+  Muonroi.RuleGen.Mcp.Prompts.CreateRuleFromRequirementsPrompt                                                                                           100%
+  Muonroi.RuleGen.Mcp.Prompts.FixMbbViolationsPrompt                                                                                                     100%
+  Muonroi.RuleGen.Mcp.Prompts.ScaffoldNewFeaturePrompt                                                                                                   100%
+  Muonroi.RuleGen.Mcp.Resources.DeveloperResourceHandler                                                                                                 100%
+  Muonroi.RuleGen.Mcp.Tools.Compliance.CheckMbbViolationsTool                                                                                            100%
+  Muonroi.RuleGen.Mcp.Tools.Compliance.CheckOssBoundaryTool                                                                                                0%
+  Muonroi.RuleGen.Mcp.Tools.Compliance.SuggestEcosystemWrapperTool                                                                                       100%
+  Muonroi.RuleGen.Mcp.Tools.DecisionTableGen.ExportDecisionTableDmnTool                                                                                  100%
+  Muonroi.RuleGen.Mcp.Tools.DecisionTableGen.ExportDecisionTableJsonTool                                                                                 100%
+  Muonroi.RuleGen.Mcp.Tools.DecisionTableGen.ImportExcelTool                                                                                             100%
+  Muonroi.RuleGen.Mcp.Tools.DecisionTableGen.ValidateDecisionTableTool                                                                                   100%
+  Muonroi.RuleGen.Mcp.Tools.Policy.PolicySigningHelpers                                                                                                  100%
+  Muonroi.RuleGen.Mcp.Tools.Policy.SignPolicyTool                                                                                                        100%
+  Muonroi.RuleGen.Mcp.Tools.Policy.VerifyPolicyTool                                                                                                     68.4%
+  Muonroi.RuleGen.Mcp.Tools.RuleGen.ExtractRulesTool                                                                                                    76.9%
+  Muonroi.RuleGen.Mcp.Tools.RuleGen.GenerateTestsTool                                                                                                    100%
+  Muonroi.RuleGen.Mcp.Tools.RuleGen.LoadRulesetJsonTool                                                                                                    0%
+  Muonroi.RuleGen.Mcp.Tools.RuleGen.MergeRulesTool                                                                                                         0%
+  Muonroi.RuleGen.Mcp.Tools.RuleGen.RegisterRulesTool                                                                                                    100%
+  Muonroi.RuleGen.Mcp.Tools.RuleGen.RuleGenToolHelpers                                                                                                  75.7%
+  Muonroi.RuleGen.Mcp.Tools.RuleGen.SplitRulesTool                                                                                                         0%
+  Muonroi.RuleGen.Mcp.Tools.RuleGen.TranslateFeelTool                                                                                                    100%
+  Muonroi.RuleGen.Mcp.Tools.RuleGen.VerifyRulesTool                                                                                                       90%
+  Muonroi.RuleGen.Mcp.Tools.RuleGen.WatchRulesTool                                                                                                      94.3%
+  Muonroi.RuleGen.Mcp.Tools.Scaffold.ScaffoldDbContextTool                                                                                                 0%
+  Muonroi.RuleGen.Mcp.Tools.Scaffold.ScaffoldRepositoryTool                                                                                                0%
+  Muonroi.RuleGen.Mcp.Tools.Scaffold.ScaffoldRuleClassTool                                                                                               100%
+  Muonroi.RuleGen.Mcp.Tools.Scaffold.ScaffoldServiceTool                                                                                                   0%
+  Muonroi.RuleGen.Mcp.Tools.Scaffold.ScaffoldTemplates                                                                                                  27.6%
+
+Muonroi.AspNetCore                                                                                                                                      45.3%
+  Muonroi.AspNetCore.Attributes.AuthorizePermissionAttribute                                                                                             100%
+  Muonroi.AspNetCore.Attributes.GenericCrudPermissionAttribute                                                                                           100%
+  Muonroi.AspNetCore.Attributes.PermissionAttribute<T>                                                                                                   100%
+  Muonroi.AspNetCore.Controllers.ActionFilters.AuthorizePermissionFilter<T>                                                                             43.9%
+  Muonroi.AspNetCore.Controllers.ActionFilters.FeatureFlagAttribute                                                                                      100%
+  Muonroi.AspNetCore.Controllers.ActionFilters.FeatureFlagFilter                                                                                         100%
+  Muonroi.AspNetCore.Controllers.ActionFilters.MControllerBaseConvention                                                                                  19%
+  Muonroi.AspNetCore.Controllers.ActionFilters.PermissionFilter<T>                                                                                      50.3%
+  Muonroi.AspNetCore.Controllers.ActionFilters.RequestLoggingFilter                                                                                     78.7%
+  Muonroi.AspNetCore.Controllers.ActionFilters.RequireAuthenticatedTokenFilter<T1, T2>                                                                     0%
+  Muonroi.AspNetCore.Controllers.Conventions.GenericControllerRouteConvention                                                                           30.7%
+  Muonroi.AspNetCore.Controllers.Conventions.LowerCaseControllerNameConvention                                                                           100%
+  Muonroi.AspNetCore.Controllers.CrudContext<T>                                                                                                          100%
+  Muonroi.AspNetCore.Controllers.CrudRuleExtensions                                                                                                       28%
+  Muonroi.AspNetCore.Controllers.DefaultAuthContextFactory                                                                                              52.2%
+  Muonroi.AspNetCore.Controllers.GenericControllerFeatureProvider                                                                                        3.2%
+  Muonroi.AspNetCore.Controllers.MAuthControllerBase<T1, T2>                                                                                               0%
+  Muonroi.AspNetCore.Controllers.MControllerBase                                                                                                         100%
+  Muonroi.AspNetCore.Controllers.MGenericController<T1, T2>                                                                                                0%
+  Muonroi.AspNetCore.Controllers.MUiEngineGeneratePromptRequest                                                                                            0%
+  Muonroi.AspNetCore.Controllers.MUiEngineManifestPromptResponse                                                                                           0%
+  Muonroi.AspNetCore.Controllers.MUiEngineManifestValidationResponse                                                                                       0%
+  Muonroi.AspNetCore.Controllers.RuleChangeApprovalResponse                                                                                                0%
+  Muonroi.AspNetCore.Controllers.Rules.ProductValidationRule<T>                                                                                            0%
+  Muonroi.AspNetCore.Controllers.TenantQuotaController                                                                                                     0%
+  Muonroi.AspNetCore.Controllers.UiEngineChangesController                                                                                                 0%
+  Muonroi.AspNetCore.Controllers.UiEngineManifestController                                                                                                0%
+  Muonroi.AspNetCore.Controllers.UiEngineRuntimeManifestControllerBase                                                                                     0%
+  Muonroi.AspNetCore.Controllers.UpgradeRequest                                                                                                            0%
+  Muonroi.AspNetCore.Cors.CorsExtensions                                                                                                                 100%
+  Muonroi.AspNetCore.DI.Autofac.AuthContextModule                                                                                                          0%
+  Muonroi.AspNetCore.DI.Autofac.MediatorModule                                                                                                             0%
+  Muonroi.AspNetCore.Exceptions.InvalidPermissionException                                                                                               100%
+  Muonroi.AspNetCore.Exceptions.PermissionDeniedException                                                                                                100%
+  Muonroi.AspNetCore.Extensions.ApplicationExtensions                                                                                                   19.6%
+  Muonroi.AspNetCore.Extensions.ArchitectureValidationExtensions                                                                                        54.7%
+  Muonroi.AspNetCore.Extensions.InfrastructureExtensions                                                                                                26.6%
+  Muonroi.AspNetCore.Extensions.MCookieAuthExtension                                                                                                    44.4%
+  Muonroi.AspNetCore.Extensions.MHttpContextExtension                                                                                                   82.3%
+  Muonroi.AspNetCore.Extensions.PermissionProviderExtensions                                                                                             100%
+  Muonroi.AspNetCore.Extensions.ServiceCollectionExtensions                                                                                             66.6%
+  Muonroi.AspNetCore.Extensions.UiEnginePolicyExtensions                                                                                                  40%
+  Muonroi.AspNetCore.Extensions.UiEnginePolicyOptions                                                                                                    100%
+  Muonroi.AspNetCore.Filters.AmqpContext                                                                                                                 100%
+  Muonroi.AspNetCore.Filters.GlobalExceptionFilter                                                                                                       100%
+  Muonroi.AspNetCore.Logging.MLogEntry                                                                                                                   100%
+  Muonroi.AspNetCore.Middleware.AmqpContext                                                                                                              100%
+  Muonroi.AspNetCore.Middleware.JwtMiddleware                                                                                                            100%
+  Muonroi.AspNetCore.Middleware.LicenseMiddleware                                                                                                       94.1%
+  Muonroi.AspNetCore.Middleware.MCookieAuthMiddleware                                                                                                   87.5%
+  Muonroi.AspNetCore.Middleware.MExceptionMiddleware                                                                                                    97.4%
+  Muonroi.AspNetCore.Middleware.QuotaEnforcementMiddleware                                                                                               100%
+  Muonroi.AspNetCore.Middleware.QuotaEnforcementMiddlewareExtensions                                                                                       0%
+  Muonroi.AspNetCore.Models.Changes.ProposeRuleChangeRequest                                                                                             100%
+  Muonroi.AspNetCore.Models.Changes.ReviewProposalRequest                                                                                                100%
+  Muonroi.AspNetCore.Models.Changes.RuleChangeProposal                                                                                                   100%
+  Muonroi.AspNetCore.Models.Changes.RuleChangeRecord                                                                                                     100%
+  Muonroi.AspNetCore.Models.Changes.RuleOrderChangeRequest                                                                                               100%
+  Muonroi.AspNetCore.Models.Changes.RuleOrderChangeValidationResult                                                                                      100%
+  Muonroi.AspNetCore.Models.Changes.RuleOrderRollbackRequest                                                                                             100%
+  Muonroi.AspNetCore.Services.AuthService<T1, T2>                                                                                                          0%
+  Muonroi.AspNetCore.Services.InMemoryRuleChangeProposalStore                                                                                           92.1%
+  Muonroi.AspNetCore.Services.InMemoryRuleChangeStore                                                                                                     98%
+  Muonroi.AspNetCore.Services.MDefaultControllerExecutionContextResolver                                                                                 100%
+  Muonroi.AspNetCore.Services.NoopCatalogScanService                                                                                                       0%
+  Muonroi.AspNetCore.Services.NoopUiEngineSchemaNotifier                                                                                                   0%
+  Muonroi.AspNetCore.Services.PermissionQueryService<T>                                                                                                  100%
+  Muonroi.AspNetCore.Services.PermissionService<T1, T2>                                                                                                 68.9%
+  Muonroi.AspNetCore.Services.UiEngineCapabilityResolver                                                                                                93.2%
+  Muonroi.AspNetCore.Services.UiEngineManifestOrchestrator<T>                                                                                           84.8%
+  Muonroi.AspNetCore.Services.UiEngineSchemaVersionService<T>                                                                                            100%
+  Muonroi.AspNetCore.Services.UiManifestBuilder                                                                                                           98%
+
+Muonroi.AspNetCore.OpenApi                                                                                                                              94.2%
+  Muonroi.AspNetCore.OpenApi.OpenApi.SwaggerDefaultValues                                                                                               94.2%
+
+Muonroi.Auth                                                                                                                                               0%
+  Muonroi.Auth.AuthServiceCollectionExtensions                                                                                                             0%
+  Muonroi.Auth.BearerToken.DefaultRefreshTokenValidator<T1, T2>                                                                                            0%
+  Muonroi.Auth.BearerToken.Signers.HmacTokenSigner                                                                                                         0%
+  Muonroi.Auth.BearerToken.Signers.RsaTokenSigner                                                                                                          0%
+  Muonroi.Auth.Jwt.InMemoryRsaKeyStore                                                                                                                     0%
+  Muonroi.Auth.Jwt.JwtService                                                                                                                              0%
+  Muonroi.Auth.Jwt.RedisRsaKeyStore                                                                                                                        0%
+  Muonroi.Auth.Jwt.RedisTokenRevocationStore                                                                                                               0%
+  Muonroi.Auth.Jwt.TokenRevocationStore                                                                                                                    0%
+  Muonroi.Auth.Keys.JsonWebKeySetController                                                                                                                0%
+  Muonroi.Auth.Mfa.WebAuthenticate.AuthenticationResult                                                                                                    0%
+  Muonroi.Auth.Mfa.WebAuthenticate.RegistrationResult                                                                                                      0%
+  Muonroi.Auth.Mfa.WebAuthenticate.WebAuthenticateService                                                                                                  0%
+  Muonroi.Auth.Mfa.WebAuthenticate.WebAuthnServiceCollectionExtensions                                                                                     0%
+  Muonroi.Auth.Oidc.AuthorizationRequest                                                                                                                   0%
+  Muonroi.Auth.Oidc.OidcOptions                                                                                                                            0%
+  Muonroi.Auth.Oidc.PkceClient                                                                                                                             0%
+  Muonroi.Auth.Oidc.TokenResponse                                                                                                                          0%
+  Muonroi.Auth.OidcHandler                                                                                                                                 0%
+  Muonroi.Auth.TokenBinding.DPoPBindingService                                                                                                             0%
+
+Muonroi.AuthZ                                                                                                                                           23.5%
+  Muonroi.AuthZ.Authorization.AuthorizationResult                                                                                                          0%
+  Muonroi.AuthZ.Authorization.AuthorizationRuleContext                                                                                                  88.8%
+  Muonroi.AuthZ.Authorization.MuonroiAuthorizationHandler                                                                                                  0%
+  Muonroi.AuthZ.Authorization.MuonroiAuthorizationRequirement                                                                                              0%
+  Muonroi.AuthZ.Authorization.RuleEngineAuthorizationPolicyEvaluator                                                                                       0%
+  Muonroi.AuthZ.Extensions.AuthZServiceExtensions                                                                                                       42.8%
+  Muonroi.AuthZ.HotReload.AuthRuleHotReloadClient                                                                                                       11.1%
+  Muonroi.AuthZ.HotReload.AuthRuleHotReloadOptions                                                                                                        75%
+  Muonroi.AuthZ.HotReload.DefaultAuthRuleChangeHandler                                                                                                   100%
+  Muonroi.AuthZ.Policies.OpaAuthorizationService                                                                                                          75%
+  Muonroi.AuthZ.RowSecurity.RowFilterContext<T>                                                                                                          100%
+  Muonroi.AuthZ.RowSecurity.RuleRowFilter<T>                                                                                                               0%
+
+Muonroi.BackgroundJobs.Abstractions                                                                                                                     62.9%
+  Muonroi.BackgroundJobs.Abstractions.BackgroundJobConfigs                                                                                               100%
+  Muonroi.BackgroundJobs.Abstractions.BackgroundJobHandler                                                                                              23.3%
+  Muonroi.BackgroundJobs.Abstractions.MuonroiJobExecutionContext                                                                                         100%
+  Muonroi.BackgroundJobs.Abstractions.TenantAwareJobBase                                                                                                 100%
+
+Muonroi.BackgroundJobs.Hangfire                                                                                                                         43.2%
+  Muonroi.BackgroundJobs.Hangfire.Hangfire.BackgroundJobConfigs                                                                                          100%
+  Muonroi.BackgroundJobs.Hangfire.Hangfire.BackgroundJobHandler                                                                                          100%
+  Muonroi.BackgroundJobs.Hangfire.Hangfire.JobContextActivatorFilter                                                                                    14.2%
+
+Muonroi.BackgroundJobs.Quartz                                                                                                                           32.8%
+  Muonroi.BackgroundJobs.Quartz.Quartz.BackgroundJobConfigs                                                                                              100%
+  Muonroi.BackgroundJobs.Quartz.Quartz.BackgroundJobHandler                                                                                              100%
+  Muonroi.BackgroundJobs.Quartz.Quartz.QuartzContextJobListener                                                                                         13.5%
+
+Muonroi.Bff                                                                                                                                             28.5%
+  Muonroi.Bff.BffAuthenticationExtensions                                                                                                               86.3%
+  Muonroi.Bff.InMemoryTokenStore                                                                                                                         7.6%
+  Muonroi.Bff.RedisTokenStore                                                                                                                              0%
+
+Muonroi.BuildingBlock.IntegrationTests                                                                                                                     0%
+  Muonroi.BuildingBlock.IntegrationTests.Caching_IntegrationTests                                                                                          0%
+  Muonroi.BuildingBlock.IntegrationTests.CustomWebApplicationFactory                                                                                       0%
+  Muonroi.BuildingBlock.IntegrationTests.JwtMiddleware_IntegrationTests                                                                                    0%
+  Muonroi.BuildingBlock.IntegrationTests.MultiTenant_IntegrationTests                                                                                      0%
+  Muonroi.BuildingBlock.IntegrationTests.PermissionFilter_IntegrationTests                                                                                 0%
+  Muonroi.BuildingBlock.IntegrationTests.Program                                                                                                           0%
+  Muonroi.BuildingBlock.IntegrationTests.SharedInMemoryDistributedCache                                                                                    0%
+  Muonroi.BuildingBlock.IntegrationTests.TestDbContext                                                                                                     0%
+  Muonroi.BuildingBlock.IntegrationTests.TestTenant                                                                                                        0%
+  Muonroi.BuildingBlock.IntegrationTests.TestTenantIdResolver                                                                                              0%
+  Muonroi.BuildingBlock.IntegrationTests.TestUser                                                                                                          0%
+
+Muonroi.Caching.Abstractions                                                                                                                             100%
+  Muonroi.Caching.Abstractions.Distributed.DistributedCacheKeyBuilder                                                                                    100%
+  Muonroi.Caching.Abstractions.Distributed.DistributedCacheRuntimeTelemetry                                                                              100%
+
+Muonroi.Caching.Memory                                                                                                                                    87%
+  Muonroi.Caching.Memory.MultiLevel.CacheConfigs                                                                                                         100%
+  Muonroi.Caching.Memory.MultiLevel.MultiLevelCacheExtensions                                                                                            100%
+  Muonroi.Caching.Memory.MultiLevel.MultiLevelCacheService                                                                                              86.4%
+
+Muonroi.Caching.Redis                                                                                                                                   83.5%
+  Muonroi.Caching.Redis.Redis.RedisExtensions                                                                                                           82.7%
+  Muonroi.Caching.Redis.Routing.RedisRoutingTableOptions                                                                                                 100%
+  Muonroi.Caching.Redis.Routing.RedisRoutingTableStore                                                                                                  84.4%
+  Muonroi.Caching.Redis.Routing.RoutingTableEntry                                                                                                        100%
+
+Muonroi.Core                                                                                                                                            72.7%
+  Muonroi.Core.Extensions.CoreServiceCollectionExtensions                                                                                                100%
+  Muonroi.Core.Extensions.JsonExtensions                                                                                                                 100%
+  Muonroi.Core.Extensions.MConfigurationExtension                                                                                                       27.5%
+  Muonroi.Core.Extensions.MCryptographyExtension                                                                                                        64.7%
+  Muonroi.Core.Extensions.MDateTimeExtension                                                                                                             100%
+  Muonroi.Core.Extensions.MGenericTypeExtensions                                                                                                          50%
+  Muonroi.Core.Extensions.MLockExtension                                                                                                                72.7%
+  Muonroi.Core.Extensions.MPermissionExtension<T>                                                                                                        100%
+  Muonroi.Core.Extensions.MStringExtension                                                                                                              96.6%
+  Muonroi.Core.Helpers.MDateTimeService                                                                                                                 66.6%
+  Muonroi.Core.Helpers.MPasswordHelper                                                                                                                   100%
+  Muonroi.Core.Helpers.MSequentialGuidGenerator                                                                                                         72.7%
+  Muonroi.Core.Pagination.MPaginationExtensions                                                                                                          100%
+  Muonroi.Core.Timing.Clock                                                                                                                              100%
+  Muonroi.Core.Timing.ClockProviders                                                                                                                     100%
+  Muonroi.Core.Timing.LocalClockProvider                                                                                                                 100%
+  Muonroi.Core.Timing.UnspecifiedClockProvider                                                                                                           100%
+  Muonroi.Core.Timing.UtcClockProvider                                                                                                                   100%
+
+Muonroi.Core.Abstractions                                                                                                                               65.6%
+  Muonroi.Core.Abstractions.Configuration.AuthClaimMap                                                                                                   100%
+  Muonroi.Core.Abstractions.Configuration.AuthOptions                                                                                                    100%
+  Muonroi.Core.Abstractions.Configuration.RedisConfigs                                                                                                   100%
+  Muonroi.Core.Abstractions.Constants.RbacCacheKeys                                                                                                      100%
+  Muonroi.Core.Abstractions.Context.DefaultTenantContextPolicy                                                                                           4.6%
+  Muonroi.Core.Abstractions.Context.MissingTenantContextException                                                                                          0%
+  Muonroi.Core.Abstractions.Context.MissingUserContextException                                                                                            0%
+  Muonroi.Core.Abstractions.Context.MTraceContextHolder                                                                                                  100%
+  Muonroi.Core.Abstractions.Context.NullContextResolver                                                                                                    0%
+  Muonroi.Core.Abstractions.Context.NullLogScopeFactory                                                                                                   25%
+  Muonroi.Core.Abstractions.Context.SystemExecutionContext                                                                                               100%
+  Muonroi.Core.Abstractions.Context.SystemExecutionContextAccessor                                                                                       100%
+  Muonroi.Core.Abstractions.Context.SystemExecutionContextScope                                                                                          100%
+  Muonroi.Core.Abstractions.Diagnostics.MLineTraceRecord                                                                                                 100%
+  Muonroi.Core.Abstractions.Diagnostics.MTraceableAttribute                                                                                                0%
+  Muonroi.Core.Abstractions.Diagnostics.MTraceEventRecord                                                                                                100%
+  Muonroi.Core.Abstractions.Diagnostics.MTraceNodeRecord                                                                                                86.6%
+  Muonroi.Core.Abstractions.Diagnostics.MTraceSessionRecord                                                                                              100%
+  Muonroi.Core.Abstractions.Helpers.MAuthenticateTokenHelper<T>                                                                                            0%
+  Muonroi.Core.Abstractions.Helpers.MHelpers                                                                                                            90.9%
+  Muonroi.Core.Abstractions.Interfaces.MAuthenticateInfoContext                                                                                           60%
+  Muonroi.Core.Abstractions.Interfaces.UserContext                                                                                                       100%
+  Muonroi.Core.Abstractions.Models.ActionMetadata                                                                                                        100%
+  Muonroi.Core.Abstractions.Models.ActionPermission                                                                                                      100%
+  Muonroi.Core.Abstractions.Models.Common.AssignPermissionRequestModel                                                                                   100%
+  Muonroi.Core.Abstractions.Models.Common.AssignRoleRequestModel                                                                                         100%
+  Muonroi.Core.Abstractions.Models.Common.ConnectionStrings                                                                                              100%
+  Muonroi.Core.Abstractions.Models.Common.CreatePermissionRequestModel                                                                                   100%
+  Muonroi.Core.Abstractions.Models.Common.CreateRoleRequestModel                                                                                         100%
+  Muonroi.Core.Abstractions.Models.Common.DatabaseConfigs                                                                                                100%
+  Muonroi.Core.Abstractions.Models.Common.DatabaseSettings                                                                                                 0%
+  Muonroi.Core.Abstractions.Models.Common.DistributedRedisOptions                                                                                        100%
+  Muonroi.Core.Abstractions.Models.Common.MOidcConfig                                                                                                      0%
+  Muonroi.Core.Abstractions.Models.Common.MPaginationConfig                                                                                              100%
+  Muonroi.Core.Abstractions.Models.Common.MTokenInfo                                                                                                    28.5%
+  Muonroi.Core.Abstractions.Models.Common.Requests.Login.LoginRequestModel                                                                                 0%
+  Muonroi.Core.Abstractions.Models.Common.Requests.Login.RefreshTokenRequestModel                                                                          0%
+  Muonroi.Core.Abstractions.Models.Common.Requests.Registers.RegisterRequestModel                                                                          0%
+  Muonroi.Core.Abstractions.Models.Common.Responses.Login.LoginResponseModel                                                                               0%
+  Muonroi.Core.Abstractions.Models.Common.Responses.Login.RefreshTokenResponseModel                                                                        0%
+  Muonroi.Core.Abstractions.Models.Common.SystemConfig                                                                                                   100%
+  Muonroi.Core.Abstractions.Models.Common.UpdateRoleRequestModel                                                                                         100%
+  Muonroi.Core.Abstractions.Models.FieldPermission                                                                                                       100%
+  Muonroi.Core.Abstractions.Models.MControllerExecutionContext                                                                                           100%
+  Muonroi.Core.Abstractions.Models.MenuMetadata                                                                                                          100%
+  Muonroi.Core.Abstractions.Models.MenuPermission                                                                                                        100%
+  Muonroi.Core.Abstractions.Models.MLanguageInfo                                                                                                           0%
+  Muonroi.Core.Abstractions.Models.MPagedResult<T>                                                                                                       100%
+  Muonroi.Core.Abstractions.Models.MPagedResultModel                                                                                                    27.2%
+  Muonroi.Core.Abstractions.Models.MTokenPayload                                                                                                         100%
+  Muonroi.Core.Abstractions.Models.MUiEngineAction                                                                                                       100%
+  Muonroi.Core.Abstractions.Models.MUiEngineApiContract                                                                                                    0%
+  Muonroi.Core.Abstractions.Models.MUiEngineAppShell                                                                                                      60%
+  Muonroi.Core.Abstractions.Models.MUiEngineAuthProfile                                                                                                  100%
+  Muonroi.Core.Abstractions.Models.MUiEngineCapability                                                                                                   100%
+  Muonroi.Core.Abstractions.Models.MUiEngineComponent                                                                                                    100%
+  Muonroi.Core.Abstractions.Models.MUiEngineComponentDescriptor                                                                                          100%
+  Muonroi.Core.Abstractions.Models.MUiEngineComponentRegistry                                                                                            100%
+  Muonroi.Core.Abstractions.Models.MUiEngineContractInfo                                                                                                 100%
+  Muonroi.Core.Abstractions.Models.MUiEngineDataSource                                                                                                  85.7%
+  Muonroi.Core.Abstractions.Models.MUiEngineGenerationHints                                                                                              100%
+  Muonroi.Core.Abstractions.Models.MUiEngineKeyBuilder                                                                                                  83.3%
+  Muonroi.Core.Abstractions.Models.MUiEngineLayout                                                                                                      95.4%
+  Muonroi.Core.Abstractions.Models.MUiEngineLayoutArea                                                                                                   100%
+  Muonroi.Core.Abstractions.Models.MUiEngineManifest                                                                                                    87.5%
+  Muonroi.Core.Abstractions.Models.MUiEngineNavigationGroup                                                                                              100%
+  Muonroi.Core.Abstractions.Models.MUiEngineNavigationNode                                                                                               100%
+  Muonroi.Core.Abstractions.Models.MUiEngineRuleBinding                                                                                                    0%
+  Muonroi.Core.Abstractions.Models.MUiEngineSchemaChangeNotification                                                                                     100%
+  Muonroi.Core.Abstractions.Models.MUiEngineSchemaVersion                                                                                                100%
+  Muonroi.Core.Abstractions.Models.MUiEngineScreen                                                                                                       100%
+  Muonroi.Core.Abstractions.Models.MUiManifest                                                                                                           100%
+  Muonroi.Core.Abstractions.Models.MUiManifestGroup                                                                                                      100%
+  Muonroi.Core.Abstractions.Models.MUiManifestItem                                                                                                      93.7%
+  Muonroi.Core.Abstractions.Models.MUiRouteBuilder                                                                                                      81.2%
+  Muonroi.Core.Abstractions.Models.MUserModel                                                                                                              0%
+  Muonroi.Core.Abstractions.Models.PermissionDefinition                                                                                                  100%
+  Muonroi.Core.Abstractions.Models.PermissionTree                                                                                                        100%
+  Muonroi.Core.Abstractions.Models.TabPermission                                                                                                         100%
+  Muonroi.Core.Abstractions.Models.UiEngineManifestContext                                                                                               100%
+  Muonroi.Core.Abstractions.Response.ApiError                                                                                                            100%
+  Muonroi.Core.Abstractions.Response.MErrorResult                                                                                                        100%
+  Muonroi.Core.Abstractions.Response.MResponse<T>                                                                                                        100%
+  Muonroi.Core.Abstractions.Response.MVoidMethodResult                                                                                                  80.8%
+  Muonroi.Core.Abstractions.SeedWorks.MEntity                                                                                                           57.7%
+  Muonroi.Core.Abstractions.SeedWorks.MJsonSerializeService                                                                                              100%
+  Muonroi.Core.Abstractions.Serialization.MDateTimeConverter                                                                                             100%
+  Muonroi.Core.Abstractions.Validation.MValidationObject                                                                                                72.3%
+  Muonroi.UiEngine.Catalog.Models.CatalogSnapshotSummary                                                                                                   0%
+  Muonroi.UiEngine.Catalog.Models.MUiEngineCatalogApiDescriptor                                                                                            0%
+  Muonroi.UiEngine.Catalog.Models.MUiEngineCatalogBinding                                                                                                  0%
+  Muonroi.UiEngine.Catalog.Models.MUiEngineCatalogGraph                                                                                                    0%
+  Muonroi.UiEngine.Catalog.Models.MUiEngineCatalogGraphEdge                                                                                                0%
+  Muonroi.UiEngine.Catalog.Models.MUiEngineCatalogGraphNode                                                                                                0%
+  Muonroi.UiEngine.Catalog.Models.MUiEngineCatalogRuleDescriptor                                                                                           0%
+  Muonroi.UiEngine.Catalog.Models.MUiEngineCatalogRuleRef                                                                                                  0%
+  Muonroi.UiEngine.Catalog.Models.MUiEngineCatalogSnapshot                                                                                                 0%
+
+Muonroi.Data.Abstractions                                                                                                                                100%
+  Muonroi.Data.Abstractions.UnitOfWork.MultiDbUnitOfWork                                                                                                 100%
+
+Muonroi.Data.Dapper                                                                                                                                       75%
+  Muonroi.Data.Dapper.Dapper.EntityFrameworkCore.Storage.Converters.MStringConverter                                                                     100%
+  Muonroi.Data.Dapper.Dapper.Handlers.MProtobufTimestampHandler                                                                                            0%
+  Muonroi.Data.Dapper.Dapper.Handlers.MSqlMapperTypeExtensions                                                                                             0%
+  Muonroi.Data.Dapper.Dapper.Handlers.MTrimStringHandler                                                                                                 100%
+  Muonroi.Data.Dapper.Dapper.MConnectionStringProvider                                                                                                     0%
+  Muonroi.Data.Dapper.Dapper.MDapperCommand                                                                                                              100%
+  Muonroi.Data.Dapper.Dapper.MDapperExtensions                                                                                                           100%
+
+Muonroi.Data.EntityFrameworkCore                                                                                                                        56.6%
+  Muonroi.Data.EntityFrameworkCore.Auth.AuthorizeInternal                                                                                               15.1%
+  Muonroi.Data.EntityFrameworkCore.Auth.DefaultRefreshTokenValidator<T1, T2>                                                                               0%
+  Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig.MongoDbContextConfigurator<T>                                                                     0%
+  Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig.MySqlDbContextConfigurator<T>                                                                     0%
+  Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig.PermissionSyncService<T>                                                                        100%
+  Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig.PostgreSqlDbContextConfigurator<T>                                                              100%
+  Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig.SqliteDbContextConfigurator<T>                                                                  100%
+  Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig.SqlServerDbContextConfigurator<T>                                                               100%
+  Muonroi.Data.EntityFrameworkCore.Entity.DataSample.DefaultLanguagesCreator<T>                                                                            0%
+  Muonroi.Data.EntityFrameworkCore.Entity.DataSample.HostRoleAndUserCreator<T>                                                                             0%
+  Muonroi.Data.EntityFrameworkCore.Entity.DataSample.InitialHostDbBuilder<T>                                                                               0%
+  Muonroi.Data.EntityFrameworkCore.Entity.DataSample.MigrationManager                                                                                      0%
+  Muonroi.Data.EntityFrameworkCore.Entity.DataSample.PermissionDataMigrator<T>                                                                             0%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.CustomColumnOrderConvention                                                                           100%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.MLanguageConfiguration                                                                                100%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.ModelBuilderUtcExtension                                                                              100%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.MPermissionAuditLogConfiguration                                                                      100%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.MPermissionConfiguration                                                                              100%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.MPermissionGroupConfiguration                                                                         100%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.MRoleConfiguration                                                                                    100%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.MUserConfiguration                                                                                    100%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.MUserLoginAttemptConfiguration                                                                        100%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.MUserRoleConfiguration                                                                                100%
+  Muonroi.Data.EntityFrameworkCore.Entity.EFConfig.MUserTokenConfiguration                                                                               100%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.EfTenantQuotaStore<T>                                                                                93.9%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MLanguage                                                                                               0%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MPermission                                                                                           100%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MPermissionAuditLog                                                                                   100%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MPermissionGroup                                                                                      100%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MRefreshToken                                                                                        85.7%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MRole                                                                                                 100%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MRolePermission                                                                                       100%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MTenantQuota                                                                                          100%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MTenantQuotaUsage                                                                                     100%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MUser                                                                                                63.8%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MUserLoginAttempt                                                                                    87.5%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MUserRole                                                                                             100%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MUserToken                                                                                              0%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MUserWithPermissions                                                                                  100%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.MWebAuthnCredential                                                                                     0%
+  Muonroi.Data.EntityFrameworkCore.Entity.Identity.TenantQuotaEfServiceCollectionExtensions                                                                0%
+  Muonroi.Data.EntityFrameworkCore.Entity.LicenseSaveChangesInterceptor                                                                                 89.8%
+  Muonroi.Data.EntityFrameworkCore.Entity.MDbContext                                                                                                    87.8%
+  Muonroi.Data.EntityFrameworkCore.Entity.MDbContextConfiguration                                                                                       76.6%
+  Muonroi.Data.EntityFrameworkCore.Entity.MEventOutboxDbContext                                                                                          100%
+  Muonroi.Data.EntityFrameworkCore.Entity.MMongoDbEntity                                                                                                   0%
+  Muonroi.Data.EntityFrameworkCore.Entity.SharedDbContextFactory<T>                                                                                     80.2%
+  Muonroi.Data.EntityFrameworkCore.Extensions.DbContextExtensions                                                                                        100%
+  Muonroi.Data.EntityFrameworkCore.Extensions.MuonroiSagaServiceCollectionExtensions                                                                     100%
+  Muonroi.Data.EntityFrameworkCore.Extensions.PermissionProviderExtensions                                                                              72.7%
+  Muonroi.Data.EntityFrameworkCore.MDbContextOutboxExtensions                                                                                            100%
+  Muonroi.Data.EntityFrameworkCore.Repositories.AuthenticateRepository<T1, T2>                                                                             0%
+  Muonroi.Data.EntityFrameworkCore.Repositories.MQuery<T>                                                                                               69.2%
+  Muonroi.Data.EntityFrameworkCore.Repositories.MRepository<T>                                                                                            88%
+  Muonroi.Data.EntityFrameworkCore.Rules.Login.CheckAccountLockRule<T1, T2>                                                                                0%
+  Muonroi.Data.EntityFrameworkCore.Rules.Login.GenerateTokenRule<T1, T2>                                                                                   0%
+  Muonroi.Data.EntityFrameworkCore.Rules.Login.LoadUserRule<T1, T2>                                                                                        0%
+  Muonroi.Data.EntityFrameworkCore.Rules.Login.LoginContext<T1, T2>                                                                                        0%
+  Muonroi.Data.EntityFrameworkCore.Rules.Login.ValidateLoginInfoRule<T1, T2>                                                                               0%
+  Muonroi.Data.EntityFrameworkCore.Rules.Login.VerifyPasswordRule<T1, T2>                                                                                  0%
+  Muonroi.Data.EntityFrameworkCore.Saga.MSagaDbContext                                                                                                   100%
+
+Muonroi.Diagnostics                                                                                                                                     84.9%
+  Muonroi.Diagnostics.Context.MTraceContext                                                                                                              100%
+  Muonroi.Diagnostics.Context.MTraceSession                                                                                                              100%
+  Muonroi.Diagnostics.Context.MTraceSessionScope                                                                                                         100%
+  Muonroi.Diagnostics.Extensions.MDiagnosticsServiceCollectionExtensions                                                                                 100%
+  Muonroi.Diagnostics.Store.InMemoryTraceSessionStore                                                                                                    100%
+  Muonroi.Diagnostics.Store.RedisTraceSessionStore                                                                                                         0%
+
+Muonroi.Governance                                                                                                                                      22.4%
+  Muonroi.Governance.Authorization.MPolicyDecisionService                                                                                                  0%
+  Muonroi.Governance.Authorization.PolicyDecisionServiceCollectionExtensions                                                                            46.8%
+  Muonroi.Governance.License.AssemblyHashCollector                                                                                                         0%
+  Muonroi.Governance.License.DefaultLicenseFingerprintProvider                                                                                             0%
+  Muonroi.Governance.License.LicenseActivationRequest                                                                                                      0%
+  Muonroi.Governance.License.LicenseActivationResult                                                                                                     100%
+  Muonroi.Governance.License.LicenseActivationService                                                                                                      0%
+  Muonroi.Governance.License.LicenseConfigurationValidationHostedService                                                                                   0%
+  Muonroi.Governance.License.LicenseGuard                                                                                                               83.7%
+  Muonroi.Governance.License.LicenseInfoEndpointExtensions                                                                                                 0%
+  Muonroi.Governance.License.LicenseInfoResponse                                                                                                           0%
+  Muonroi.Governance.License.LicenseRefreshHostedService                                                                                                   0%
+  Muonroi.Governance.License.LicenseRefreshRequest                                                                                                         0%
+  Muonroi.Governance.License.LicenseServiceCollectionExtensions                                                                                         30.2%
+  Muonroi.Governance.License.LicenseStateNotifier                                                                                                        100%
+  Muonroi.Governance.License.LicenseStore                                                                                                                  0%
+  Muonroi.Governance.License.LicenseVerifier                                                                                                            35.2%
+  Muonroi.Governance.License.NoopFingerprintChainStore                                                                                                   100%
+  Muonroi.Governance.License.NoopFingerprintSigner                                                                                                       100%
+  Muonroi.Governance.License.NoopLicenseGuardEnhancer                                                                                                   66.6%
+  Muonroi.Governance.License.TenantLicenseFeatureGateAdapter                                                                                             100%
+  Muonroi.Governance.Policy.FilePolicyStore                                                                                                                0%
+  Muonroi.Governance.Policy.PolicyVerifier                                                                                                                 0%
+
+Muonroi.Governance.Abstractions                                                                                                                           62%
+  Muonroi.Governance.Abstractions.Integrity.AssemblyManifestEntry                                                                                        100%
+  Muonroi.Governance.Abstractions.License.LicenseCapabilityResolver                                                                                     90.1%
+  Muonroi.Governance.Abstractions.License.LicenseConfigs                                                                                                92.7%
+  Muonroi.Governance.Abstractions.License.LicenseGuardExtensions                                                                                        77.2%
+  Muonroi.Governance.Abstractions.License.MComplianceConfigs                                                                                             100%
+  Muonroi.Governance.Abstractions.License.MEnterpriseSecurityConfigs                                                                                     100%
+  Muonroi.Governance.Abstractions.License.OnlineLicenseConfigs                                                                                            90%
+  Muonroi.Governance.Authorization.MPolicyDecisionConfigs                                                                                                 75%
+  Muonroi.Governance.Authorization.MPolicyDecisionRequest                                                                                                  0%
+  Muonroi.Governance.Authorization.MPolicyDecisionResult                                                                                                   0%
+  Muonroi.Governance.License.ActivationProof                                                                                                            32.2%
+  Muonroi.Governance.License.ActivationRequest                                                                                                             0%
+  Muonroi.Governance.License.ActivationResponse                                                                                                            0%
+  Muonroi.Governance.License.CommercialFeatureStartupValidationHostedService                                                                               0%
+  Muonroi.Governance.License.CommercialLicenseStartupGuards                                                                                               45%
+  Muonroi.Governance.License.FeatureTierMap                                                                                                                0%
+  Muonroi.Governance.License.FingerprintChainEntry                                                                                                       100%
+  Muonroi.Governance.License.FreeTierFeatures                                                                                                            100%
+  Muonroi.Governance.License.ILicenseStore                                                                                                                 0%
+  Muonroi.Governance.License.LicenseActionContext                                                                                                       83.3%
+  Muonroi.Governance.License.LicenseException                                                                                                           33.3%
+  Muonroi.Governance.License.LicenseExecutionContext                                                                                                     100%
+  Muonroi.Governance.License.LicenseHeartbeatRequest                                                                                                       0%
+  Muonroi.Governance.License.LicenseHeartbeatResponse                                                                                                      0%
+  Muonroi.Governance.License.LicensePayload                                                                                                               80%
+  Muonroi.Governance.License.LicenseRuntimeStatus                                                                                                       40.1%
+  Muonroi.Governance.License.LicenseState                                                                                                                 84%
+  Muonroi.Governance.License.ProofTierAccessor                                                                                                          64.7%
+  Muonroi.Governance.Policy.FeatureQuota                                                                                                                 100%
+  Muonroi.Governance.Policy.LicensePolicy                                                                                                                100%
+  Muonroi.Governance.Policy.PolicyEnforcementRules                                                                                                       100%
+
+Muonroi.Governance.Enterprise                                                                                                                           17.1%
+  Muonroi.Governance.Compliance.MComplianceEndpointExtensions                                                                                              0%
+  Muonroi.Governance.Compliance.MComplianceEvidencePackDocument                                                                                            0%
+  Muonroi.Governance.Compliance.MComplianceEvidencePackRequest                                                                                             0%
+  Muonroi.Governance.Compliance.MComplianceEvidencePackResult                                                                                              0%
+  Muonroi.Governance.Compliance.MComplianceEvidencePackService                                                                                             0%
+  Muonroi.Governance.Compliance.MComplianceEvidencePackSummary                                                                                             0%
+  Muonroi.Governance.Compliance.MComplianceExportQuery                                                                                                     0%
+  Muonroi.Governance.Compliance.MComplianceExportRecord                                                                                                    0%
+  Muonroi.Governance.Compliance.MComplianceExportRunResult                                                                                                 0%
+  Muonroi.Governance.Compliance.MComplianceExportState                                                                                                     0%
+  Muonroi.Governance.Compliance.MComplianceVerificationRequest                                                                                             0%
+  Muonroi.Governance.Compliance.MComplianceVerificationResult                                                                                              0%
+  Muonroi.Governance.ControlPlane.MActivatePolicyBundleRequest                                                                                             0%
+  Muonroi.Governance.ControlPlane.MApprovePolicyBundleRequest                                                                                              0%
+  Muonroi.Governance.ControlPlane.MAssignTenantsRequest                                                                                                    0%
+  Muonroi.Governance.ControlPlane.MControlPlaneAuditRecord                                                                                                 0%
+  Muonroi.Governance.ControlPlane.MControlPlaneEndpointExtensions                                                                                          0%
+  Muonroi.Governance.ControlPlane.MControlPlaneLicenseRecord                                                                                               0%
+  Muonroi.Governance.ControlPlane.MControlPlanePolicyBundleRecord                                                                                          0%
+  Muonroi.Governance.ControlPlane.MControlPlaneRegistry                                                                                                    0%
+  Muonroi.Governance.ControlPlane.MControlPlaneServiceCollectionExtensions                                                                                 0%
+  Muonroi.Governance.ControlPlane.MCreatePolicyDraftRequest                                                                                                0%
+  Muonroi.Governance.ControlPlane.MEnterpriseControlPlaneService                                                                                           0%
+  Muonroi.Governance.ControlPlane.MFileControlPlaneStore                                                                                                   0%
+  Muonroi.Governance.ControlPlane.MIssueLicenseRequest                                                                                                     0%
+  Muonroi.Governance.ControlPlane.MIssueLicenseResult                                                                                                      0%
+  Muonroi.Governance.ControlPlane.MRevokeLicenseRequest                                                                                                    0%
+  Muonroi.Governance.ControlPlane.MRollbackPolicyBundleRequest                                                                                             0%
+  Muonroi.Governance.ControlPlane.MRsaControlPlaneSigner                                                                                                   0%
+  Muonroi.Governance.Enterprise.Compliance.MComplianceExportHostedService                                                                                  0%
+  Muonroi.Governance.Enterprise.Compliance.MComplianceExportService                                                                                        0%
+  Muonroi.Governance.Enterprise.EnterpriseGovernanceServiceExtensions                                                                                      0%
+  Muonroi.Governance.Enterprise.License.LicenseActivationHostedService                                                                                     0%
+  Muonroi.Governance.Enterprise.License.LicenseActivator                                                                                                   0%
+  Muonroi.Governance.Enterprise.Operations.MUpgradeCompatibilityService                                                                                    0%
+  Muonroi.Governance.Enterprise.Policy.PolicyEnforcer                                                                                                      0%
+  Muonroi.Governance.Enterprise.ServerValidation.ChainSubmissionHostedService                                                                              0%
+  Muonroi.Governance.Enterprise.ServerValidation.ChainSubmissionRequest                                                                                  100%
+  Muonroi.Governance.Enterprise.ServerValidation.ChainSubmissionResponse                                                                                 100%
+  Muonroi.Governance.Enterprise.ServerValidation.ChainSubmitter                                                                                         71.8%
+  Muonroi.Governance.Enterprise.ServerValidation.NonceRotator                                                                                              0%
+  Muonroi.Governance.License.AntiTamperDetector                                                                                                           35%
+  Muonroi.Governance.License.AntiTamperingRuntimeTelemetry                                                                                                80%
+  Muonroi.Governance.License.AntiTamperingTenantPartition                                                                                                100%
+  Muonroi.Governance.License.AuditTrailRuntimeTelemetry                                                                                                  100%
+  Muonroi.Governance.License.AuditTrailTenantPartition                                                                                                   100%
+  Muonroi.Governance.License.CodeIntegrityVerifier                                                                                                      83.3%
+  Muonroi.Governance.License.EnterpriseLicenseGuardEnhancer                                                                                               64%
+  Muonroi.Governance.License.FileFingerprintChainStore                                                                                                  66.6%
+  Muonroi.Governance.License.FingerprintProvider                                                                                                           0%
+  Muonroi.Governance.License.HmacFingerprintSigner                                                                                                       100%
+  Muonroi.Governance.License.LicenseHeartbeatService                                                                                                       0%
+  Muonroi.Governance.License.MEnterpriseFailClosedMatrix                                                                                                   0%
+  Muonroi.Governance.License.MEnterpriseSecurityProfile                                                                                                 69.2%
+  Muonroi.Governance.Operations.MEnterpriseOperationsEndpointExtensions                                                                                    0%
+  Muonroi.Governance.Operations.MEnterpriseSloModuleThreshold                                                                                              0%
+  Muonroi.Governance.Operations.MEnterpriseSloPreset                                                                                                       0%
+  Muonroi.Governance.Operations.MEnterpriseSloPresetService                                                                                                0%
+  Muonroi.Governance.Operations.MUpgradeCompatibilityFileRequest                                                                                           0%
+  Muonroi.Governance.Operations.MUpgradeCompatibilityIssue                                                                                                 0%
+  Muonroi.Governance.Operations.MUpgradeCompatibilityRequest                                                                                               0%
+  Muonroi.Governance.Operations.MUpgradeCompatibilityResult                                                                                                0%
+  Muonroi.Governance.Operations.MUpgradeLicenseConfigSnapshot                                                                                              0%
+  Muonroi.Governance.ServerValidation.TpmAnchor                                                                                                            0%
+
+Muonroi.Grpc                                                                                                                                            33.5%
+  Muonroi.Grpc.Grpc.BaseGrpcService                                                                                                                     29.2%
+  Muonroi.Grpc.Grpc.GrpcClientAuthForwardingOptions                                                                                                      100%
+  Muonroi.Grpc.Grpc.GrpcClientAuthInterceptor                                                                                                           75.6%
+  Muonroi.Grpc.Grpc.GrpcClientAuthInterceptor<T>                                                                                                         100%
+  Muonroi.Grpc.Grpc.GrpcClientDefaultsConfig                                                                                                             100%
+  Muonroi.Grpc.Grpc.GrpcClientTelemetryInterceptor                                                                                                       8.1%
+  Muonroi.Grpc.Grpc.GrpcHandler                                                                                                                         81.6%
+  Muonroi.Grpc.Grpc.GrpcMethodPolicyConfig                                                                                                                 0%
+  Muonroi.Grpc.Grpc.GrpcRateLimitConfig                                                                                                                 66.6%
+  Muonroi.Grpc.Grpc.GrpcRateLimiter                                                                                                                      3.8%
+  Muonroi.Grpc.Grpc.GrpcRuntimeTelemetry                                                                                                                   0%
+  Muonroi.Grpc.Grpc.GrpcServerConfig                                                                                                                     100%
+  Muonroi.Grpc.Grpc.GrpcServerInterceptor                                                                                                                7.9%
+  Muonroi.Grpc.Grpc.GrpcServiceConfig                                                                                                                    100%
+  Muonroi.Grpc.Grpc.GrpcServicesConfig                                                                                                                   100%
+  Muonroi.Grpc.Grpc.GrpcServicesConfigBinding                                                                                                            100%
+  Muonroi.Grpc.Grpc.MetadataExtensions                                                                                                                     0%
+  Muonroi.Grpc.Services.BaseGrpcService                                                                                                                    0%
+
+Muonroi.Http                                                                                                                                            62.7%
+  Muonroi.Http.Http.AuthenticateHeaderHandler                                                                                                            100%
+  Muonroi.Http.Http.BaseApiService                                                                                                                         0%
+  Muonroi.Http.Http.CorrelationIdHandler                                                                                                                 100%
+
+Muonroi.Integration.Abstractions                                                                                                                          47%
+  Muonroi.Integration.Abstractions.ConnectorConfigDto                                                                                                      0%
+  Muonroi.Integration.Abstractions.ConnectorContext                                                                                                      100%
+  Muonroi.Integration.Abstractions.ConnectorMetadata                                                                                                    66.6%
+  Muonroi.Integration.Abstractions.ConnectorResilienceConfig                                                                                               0%
+  Muonroi.Integration.Abstractions.ConnectorResult                                                                                                       100%
+
+Muonroi.Integration.Connectors                                                                                                                             0%
+  Muonroi.Integration.Connectors.Database.SqlQueryConnector                                                                                                0%
+  Muonroi.Integration.Connectors.DefaultConnectorRegistry                                                                                                  0%
+  Muonroi.Integration.Connectors.Email.SmtpConnector                                                                                                       0%
+  Muonroi.Integration.Connectors.Http.HttpConnector                                                                                                        0%
+  Muonroi.Integration.Connectors.Redis.RedisConnector                                                                                                      0%
+  Muonroi.Integration.Connectors.Registration.ConnectorRegistration                                                                                        0%
+  Muonroi.Integration.Connectors.Slack.SlackWebhookConnector                                                                                               0%
+
+Muonroi.Kubernetes                                                                                                                                       100%
+  Muonroi.Kubernetes.Kubernetes.KubernetesConfigs                                                                                                        100%
+
+Muonroi.Logging                                                                                                                                         69.3%
+  Muonroi.Logging.MLog<T>                                                                                                                               91.5%
+  Muonroi.Logging.MLogContext                                                                                                                            100%
+  Muonroi.Logging.MLogContextScope                                                                                                                       100%
+  Muonroi.Logging.MLogFactory                                                                                                                            100%
+  Muonroi.Logging.MLogNonGeneric                                                                                                                        14.2%
+  Muonroi.Logging.MLogScopeFactory                                                                                                                       100%
+  Muonroi.Logging.MLogServiceCollectionExtensions                                                                                                        100%
+
+Muonroi.Mapper                                                                                                                                          58.6%
+  Muonroi.Mapper.Mapper.MapperServiceCollectionExtensions                                                                                                  0%
+  Muonroi.Mapper.Mapper.MappingConfiguration                                                                                                             100%
+  Muonroi.Mapper.Mapper.SimpleMapper                                                                                                                     100%
+
+Muonroi.Mediator                                                                                                                                        85.6%
+  Muonroi.Mediator.BaseCommandHandler                                                                                                                   47.2%
+  Muonroi.Mediator.Behaviours.LoggingBehavior<T1, T2>                                                                                                    100%
+  Muonroi.Mediator.Behaviours.MAuthorizationBehavior<T1, T2>                                                                                             100%
+  Muonroi.Mediator.Behaviours.MDiagnosticsBehavior<T1, T2>                                                                                              85.5%
+  Muonroi.Mediator.Behaviours.MExceptionHandlerBehavior<T1, T2>                                                                                          100%
+  Muonroi.Mediator.Behaviours.MPostProcessorBehavior<T1, T2>                                                                                             100%
+  Muonroi.Mediator.Behaviours.MPreProcessorBehavior<T1, T2>                                                                                              100%
+  Muonroi.Mediator.Behaviours.MRuleEngineBehavior<T1, T2>                                                                                               90.8%
+  Muonroi.Mediator.Behaviours.MTenantValidationBehavior<T1, T2>                                                                                          100%
+  Muonroi.Mediator.Behaviours.RuleExecutionLogScope                                                                                                      100%
+  Muonroi.Mediator.Behaviours.ValidationBehavior<T1, T2>                                                                                                 100%
+  Muonroi.Mediator.Exceptions.MForbiddenException                                                                                                       86.6%
+  Muonroi.Mediator.Exceptions.MRuleViolationException                                                                                                   85.7%
+  Muonroi.Mediator.Exceptions.MUnauthorizedException                                                                                                     100%
+  Muonroi.Mediator.MBaseCommandHandler                                                                                                                  36.5%
+  Muonroi.Mediator.Mediator.Attributes.MAuthorizeAttribute                                                                                               100%
+  Muonroi.Mediator.Mediator.Attributes.MEmitOnPassAttribute                                                                                              100%
+  Muonroi.Mediator.Mediator.Context.MRequestContextBag                                                                                                   100%
+  Muonroi.Mediator.Mediator.Interfaces.IMRuleRequest<T1, T2>                                                                                               0%
+  Muonroi.Mediator.Mediator.Interfaces.RequestExceptionHandlerState<T>                                                                                   100%
+  Muonroi.Mediator.Mediator.MMediator                                                                                                                   77.9%
+  Muonroi.Mediator.Mediator.MMediatorOptions                                                                                                             100%
+  Muonroi.Mediator.Mediator.NoMediator                                                                                                                   100%
+  Muonroi.Mediator.Mediator.Pipeline.NotificationHandlerWrapperImpl<T>                                                                                  82.3%
+  Muonroi.Mediator.Mediator.Pipeline.RequestHandlerWrapperCache                                                                                          100%
+  Muonroi.Mediator.Mediator.Pipeline.RequestHandlerWrapperImpl<T1, T2>                                                                                   100%
+  Muonroi.Mediator.Mediator.Pipeline.StreamHandlerWrapperImpl<T1, T2>                                                                                    100%
+  Muonroi.Mediator.Mediator.ServiceCollectionExtensions                                                                                                  100%
+  Muonroi.Mediator.Mediator.Unit                                                                                                                         100%
+
+Muonroi.Messaging.Abstractions                                                                                                                            56%
+  Muonroi.Messaging.Abstractions.Contracts.MuonroiMessageEnvelope                                                                                        100%
+  Muonroi.Messaging.Abstractions.Contracts.RoutingDecision                                                                                               100%
+  Muonroi.Messaging.Abstractions.Events.DomainEvent                                                                                                      100%
+  Muonroi.Messaging.Abstractions.Events.EventOutbox                                                                                                      100%
+  Muonroi.Messaging.Abstractions.Events.IntegrationEvent                                                                                                 100%
+  Muonroi.Messaging.Abstractions.Events.MEntitiesChangedEvent<T>                                                                                         100%
+  Muonroi.Messaging.Abstractions.Events.MEntitiesCreatedEvent<T>                                                                                         100%
+  Muonroi.Messaging.Abstractions.Events.MEntitiesDeletedEvent<T>                                                                                         100%
+  Muonroi.Messaging.Abstractions.Events.MEntityChangedEvent<T>                                                                                           100%
+  Muonroi.Messaging.Abstractions.Events.MEntityCreatedEvent<T>                                                                                           100%
+  Muonroi.Messaging.Abstractions.Events.MEntityDeletedEvent<T>                                                                                           100%
+  Muonroi.Messaging.Abstractions.Events.MessageBusRuntimeTelemetry                                                                                      33.3%
+  Muonroi.Messaging.Abstractions.InternalEvents.MEntitiesChangedEvent<T>                                                                                   0%
+  Muonroi.Messaging.Abstractions.InternalEvents.MEntitiesCreatedEvent<T>                                                                                   0%
+  Muonroi.Messaging.Abstractions.InternalEvents.MEntitiesDeletedEvent<T>                                                                                   0%
+  Muonroi.Messaging.Abstractions.InternalEvents.MEntityChangedEvent<T>                                                                                     0%
+  Muonroi.Messaging.Abstractions.InternalEvents.MEntityCreatedEvent<T>                                                                                     0%
+  Muonroi.Messaging.Abstractions.InternalEvents.MEntityDeletedEvent<T>                                                                                     0%
+
+Muonroi.Messaging.MassTransit                                                                                                                           53.8%
+  Muonroi.Messaging.MassTransit.Messaging.AmqpContextConsumeFilter<T>                                                                                   98.2%
+  Muonroi.Messaging.MassTransit.Messaging.EcsConsumeLoggingFilter<T>                                                                                    85.3%
+  Muonroi.Messaging.MassTransit.Messaging.EcsPublishLoggingFilter<T>                                                                                    79.2%
+  Muonroi.Messaging.MassTransit.Messaging.EcsSendLoggingFilter<T>                                                                                       79.2%
+  Muonroi.Messaging.MassTransit.Messaging.KafkaBusConfigurator                                                                                             0%
+  Muonroi.Messaging.MassTransit.Messaging.KafkaConfigs                                                                                                     0%
+  Muonroi.Messaging.MassTransit.Messaging.KafkaHealthCheck                                                                                                 0%
+  Muonroi.Messaging.MassTransit.Messaging.MassTransitFilterExtensions                                                                                      0%
+  Muonroi.Messaging.MassTransit.Messaging.MassTransitHandler                                                                                               0%
+  Muonroi.Messaging.MassTransit.Messaging.MessageBusConfigs                                                                                             88.8%
+  Muonroi.Messaging.MassTransit.Messaging.MessageBusRuntimeConfigs                                                                                       100%
+  Muonroi.Messaging.MassTransit.Messaging.MessageBusRuntimeTelemetry                                                                                    73.8%
+  Muonroi.Messaging.MassTransit.Messaging.MuonroiConsumerBase<T>                                                                                           0%
+  Muonroi.Messaging.MassTransit.Messaging.MuonroiContextPublishFilter<T>                                                                                87.8%
+  Muonroi.Messaging.MassTransit.Messaging.MuonroiContextSendFilter<T>                                                                                      0%
+  Muonroi.Messaging.MassTransit.Messaging.OutboxRelayBackgroundService                                                                                    58%
+  Muonroi.Messaging.MassTransit.Messaging.OutboxRelayConfigs                                                                                             100%
+  Muonroi.Messaging.MassTransit.Messaging.PublishEndpointAuthExtensions                                                                                  100%
+  Muonroi.Messaging.MassTransit.Messaging.RabbitMqBusConfigurator                                                                                       36.8%
+  Muonroi.Messaging.MassTransit.Messaging.RabbitMqConfigs                                                                                                100%
+  Muonroi.Messaging.MassTransit.Messaging.RabbitMqHealthCheck                                                                                              0%
+  Muonroi.Messaging.MassTransit.Messaging.RoutingRejectedException                                                                                       100%
+  Muonroi.Messaging.MassTransit.Messaging.RuleEngineRoutingFilter<T>                                                                                    69.2%
+  Muonroi.Messaging.MassTransit.Messaging.TenantContextConsumeFilter<T>                                                                                    0%
+  Muonroi.Messaging.MassTransit.Messaging.TenantQuotaMessagingFilter<T>                                                                                 67.4%
+
+Muonroi.Observability                                                                                                                                     32%
+  Muonroi.Observability.Logging.LogSanitizer                                                                                                             100%
+  Muonroi.Observability.Logging.MLogEntry                                                                                                                100%
+  Muonroi.Observability.Logging.MSerilogAction                                                                                                             0%
+  Muonroi.Observability.Logging.TenantIdEnricher                                                                                                         8.3%
+  Muonroi.Observability.OpenTelemetry.Compat.DistributedCacheRuntimeTelemetry                                                                              0%
+  Muonroi.Observability.OpenTelemetry.Compat.GrpcRuntimeTelemetry                                                                                          0%
+  Muonroi.Observability.OpenTelemetry.Compat.MessageBusRuntimeTelemetry                                                                                    0%
+  Muonroi.Observability.OpenTelemetry.OpenTelemetryConfigs                                                                                                 0%
+  Muonroi.Observability.OpenTelemetryConfigs                                                                                                              50%
+  Muonroi.Observability.OtelSetup                                                                                                                       65.4%
+
+Muonroi.Resilience                                                                                                                                      89.7%
+  Muonroi.Resilience.Policies.PolicyHandler                                                                                                             89.7%
+
+Muonroi.RuleEngine.Abstractions                                                                                                                         84.4%
+  Muonroi.RuleEngine.Abstractions.Authoring.MFactEntry                                                                                                  33.3%
+  Muonroi.RuleEngine.Abstractions.Authoring.MFactSchemaField                                                                                             100%
+  Muonroi.RuleEngine.Abstractions.Authoring.MFactSchemaNode                                                                                              100%
+  Muonroi.RuleEngine.Abstractions.Authoring.MRuleAuthoringEntry                                                                                          100%
+  Muonroi.RuleEngine.Abstractions.Authoring.MRuleAuthoringManifest                                                                                       100%
+  Muonroi.RuleEngine.Abstractions.Authoring.MRuleContextDescriptionAttribute                                                                             100%
+  Muonroi.RuleEngine.Abstractions.Authoring.MRuleFactDescriptionAttribute                                                                                100%
+  Muonroi.RuleEngine.Abstractions.ExtractAsRuleAttribute                                                                                                 100%
+  Muonroi.RuleEngine.Abstractions.FactBag                                                                                                               90.9%
+  Muonroi.RuleEngine.Abstractions.IRule<T>                                                                                                              91.6%
+  Muonroi.RuleEngine.Abstractions.MExtractAsRuleAttribute                                                                                               71.4%
+  Muonroi.RuleEngine.Abstractions.MFactBagAwareRule<T>                                                                                                  64.7%
+  Muonroi.RuleEngine.Abstractions.MRuleCatalogEntryAttribute                                                                                             100%
+  Muonroi.RuleEngine.Abstractions.MRuleModeAttribute                                                                                                     100%
+  Muonroi.RuleEngine.Abstractions.OrchestratorResult                                                                                                     100%
+  Muonroi.RuleEngine.Abstractions.QuotaExceededException                                                                                                 100%
+  Muonroi.RuleEngine.Abstractions.QuotaUsage                                                                                                             100%
+  Muonroi.RuleEngine.Abstractions.RuleGroupAttribute                                                                                                       0%
+  Muonroi.RuleEngine.Abstractions.RuleModeAttribute                                                                                                      100%
+  Muonroi.RuleEngine.Abstractions.RuleResult                                                                                                              70%
+  Muonroi.RuleEngine.Abstractions.TenantRuleGroupAttribute                                                                                                 0%
+
+Muonroi.RuleEngine.CEP                                                                                                                                  75.4%
+  Muonroi.RuleEngine.CEP.Builder.CepConfigBuilder                                                                                                       80.6%
+  Muonroi.RuleEngine.CEP.Builder.CepWindow<T>                                                                                                            100%
+  Muonroi.RuleEngine.CEP.Builder.CepWindowBuilder                                                                                                        100%
+  Muonroi.RuleEngine.CEP.Builder.CepWindowRuntimeBuilder<T>                                                                                             83.3%
+  Muonroi.RuleEngine.CEP.CepBenchmark                                                                                                                    100%
+  Muonroi.RuleEngine.CEP.CepConfig                                                                                                                       100%
+  Muonroi.RuleEngine.CEP.CepEngine<T>                                                                                                                     95%
+  Muonroi.RuleEngine.CEP.CepEvent<T>                                                                                                                     100%
+  Muonroi.RuleEngine.CEP.CepWebExtensions                                                                                                               56.2%
+  Muonroi.RuleEngine.CEP.Contributors.CepManifestContributor                                                                                               0%
+  Muonroi.RuleEngine.CEP.Controllers.CepConfigDto                                                                                                        100%
+  Muonroi.RuleEngine.CEP.Controllers.CepController                                                                                                      86.8%
+  Muonroi.RuleEngine.CEP.Controllers.CepSimulationEvent                                                                                                  100%
+  Muonroi.RuleEngine.CEP.Controllers.CepSimulationRequest                                                                                                100%
+  Muonroi.RuleEngine.CEP.Controllers.CepSimulationResponse                                                                                               100%
+  Muonroi.RuleEngine.CEP.Controllers.CepSimulationWindowResult                                                                                           100%
+  Muonroi.RuleEngine.CEP.Observability.CepMetrics                                                                                                        100%
+  Muonroi.RuleEngine.CEP.Options.CepOptions                                                                                                               75%
+  Muonroi.RuleEngine.CEP.Persistence.CepConfigDatabaseMigrator                                                                                             0%
+  Muonroi.RuleEngine.CEP.Persistence.CepConfigDbContext                                                                                                  100%
+  Muonroi.RuleEngine.CEP.Persistence.CepConfigEntity                                                                                                     100%
+  Muonroi.RuleEngine.CEP.Repositories.EfCoreCepConfigRepository                                                                                         97.1%
+  Muonroi.RuleEngine.CEP.Repositories.InMemoryCepConfigRepository                                                                                       97.9%
+
+Muonroi.RuleEngine.Core                                                                                                                                 56.1%
+  Muonroi.RuleEngine.Core.AuditTrailHook<T>                                                                                                                0%
+  Muonroi.RuleEngine.Core.Contributors.RuleFlowManifestContributor                                                                                         0%
+  Muonroi.RuleEngine.Core.DefaultRuleFactory<T>                                                                                                          100%
+  Muonroi.RuleEngine.Core.MRuleEngineBuilder<T>                                                                                                         42.8%
+  Muonroi.RuleEngine.Core.MRuleEngineOptions                                                                                                            36.3%
+  Muonroi.RuleEngine.Core.MRuleExecutionRouter<T>                                                                                                       28.5%
+  Muonroi.RuleEngine.Core.RuleAuditLogger<T>                                                                                                               0%
+  Muonroi.RuleEngine.Core.RuleOrchestrator<T>                                                                                                           61.1%
+  Muonroi.RuleEngine.Core.Runtime.Activation                                                                                                             100%
+  Muonroi.RuleEngine.Core.Runtime.AgendaScheduler                                                                                                        100%
+  Muonroi.RuleEngine.Core.ServiceCollectionExtensions                                                                                                   39.3%
+  Muonroi.RuleEngine.Core.Telemetry.RuleEngineTelemetry                                                                                                  100%
+  Muonroi.RuleEngine.Core.Tracing.RuleTraceEntry                                                                                                         100%
+  Muonroi.RuleEngine.Core.Workflow.MRuleWorkflowDefinition<T>                                                                                           67.7%
+  Muonroi.RuleEngine.Core.Workflow.MRuleWorkflowExecutionContext<T>                                                                                       50%
+  Muonroi.RuleEngine.Core.Workflow.MRuleWorkflowOptions                                                                                                  100%
+  Muonroi.RuleEngine.Core.Workflow.MRuleWorkflowResult<T>                                                                                                100%
+  Muonroi.RuleEngine.Core.Workflow.MRuleWorkflowRunner<T>                                                                                               93.4%
+  Muonroi.RuleEngine.Core.Workflow.MRuleWorkflowStep<T>                                                                                                 96.4%
+  Muonroi.Rules.Flags.FeatureContext                                                                                                                     100%
+  Muonroi.Rules.Flags.FeatureFlagEvaluator                                                                                                               100%
+
+Muonroi.RuleEngine.DecisionTable                                                                                                                        26.6%
+  Muonroi.RuleEngine.DecisionTable.Converters.DecisionTableExpressionEvaluator                                                                          12.4%
+  Muonroi.RuleEngine.DecisionTable.Converters.DecisionTableToJsonConverter                                                                              76.4%
+  Muonroi.RuleEngine.DecisionTable.Converters.DecisionTableToRuleConverter                                                                              69.2%
+  Muonroi.RuleEngine.DecisionTable.Converters.ExcelToDecisionTableConverter                                                                             90.3%
+  Muonroi.RuleEngine.DecisionTable.DecisionTableDiffer                                                                                                     0%
+  Muonroi.RuleEngine.DecisionTable.DecisionTableEngineOptions                                                                                              0%
+  Muonroi.RuleEngine.DecisionTable.DecisionTableExecutor                                                                                                   0%
+  Muonroi.RuleEngine.DecisionTable.Feel.FullFeelCellEvaluator                                                                                           56.4%
+  Muonroi.RuleEngine.DecisionTable.Feel.SimplifiedFeelCellEvaluator                                                                                        0%
+  Muonroi.RuleEngine.DecisionTable.Models.CellDiff                                                                                                         0%
+  Muonroi.RuleEngine.DecisionTable.Models.CellExpression                                                                                                 100%
+  Muonroi.RuleEngine.DecisionTable.Models.ColumnChange                                                                                                     0%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTable                                                                                                  100%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTableAuditEntry                                                                                          0%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTableBulkResult                                                                                          0%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTableCell                                                                                              100%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTableColumn                                                                                            100%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTableDiff                                                                                                0%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTableExecutionResult                                                                                    80%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTableOutputRow                                                                                         100%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTablePageResult                                                                                          0%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTableQuery                                                                                               0%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTableRow                                                                                               100%
+  Muonroi.RuleEngine.DecisionTable.Models.DecisionTableVersionSnapshot                                                                                     0%
+  Muonroi.RuleEngine.DecisionTable.Models.RowDiff                                                                                                          0%
+  Muonroi.RuleEngine.DecisionTable.Serializers.DecisionTableJsonSerializer                                                                               100%
+  Muonroi.RuleEngine.DecisionTable.Serializers.DecisionTableXmlSerializer                                                                                100%
+  Muonroi.RuleEngine.DecisionTable.ServiceCollectionExtensions                                                                                             0%
+  Muonroi.RuleEngine.DecisionTable.Stores.EfCoreDecisionTableStore                                                                                         0%
+  Muonroi.RuleEngine.DecisionTable.Stores.InMemoryDecisionTableStore                                                                                       0%
+  Muonroi.RuleEngine.DecisionTable.Stores.Persistence.DecisionTableAuditEntity                                                                             0%
+  Muonroi.RuleEngine.DecisionTable.Stores.Persistence.DecisionTableDatabaseMigrator                                                                        0%
+  Muonroi.RuleEngine.DecisionTable.Stores.Persistence.DecisionTableDbContext                                                                               0%
+  Muonroi.RuleEngine.DecisionTable.Stores.Persistence.DecisionTableRecordEntity                                                                            0%
+  Muonroi.RuleEngine.DecisionTable.Stores.Persistence.DecisionTableVersionEntity                                                                           0%
+  Muonroi.RuleEngine.DecisionTable.Validators.ConflictReport                                                                                             100%
+  Muonroi.RuleEngine.DecisionTable.Validators.DecisionTableValidator                                                                                      70%
+  Muonroi.RuleEngine.DecisionTable.Validators.GapDetector                                                                                                 50%
+  Muonroi.RuleEngine.DecisionTable.Validators.MultiColumnOverlapDetector                                                                                55.6%
+  Muonroi.RuleEngine.DecisionTable.Validators.OverlapDetector                                                                                           55.2%
+  Muonroi.RuleEngine.DecisionTable.Validators.RedundancyDetector                                                                                        51.3%
+  Muonroi.RuleEngine.DecisionTable.Validators.RedundancyReport                                                                                             0%
+  Muonroi.RuleEngine.DecisionTable.Validators.ValidationResult                                                                                           100%
+  System.Text.RegularExpressions.Generated                                                                                                              24.5%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>FE4DA79AC4B220E73560932501904AFAFBD93CBB176F2C831F7FEC0222FB5D38C__BetweenRegex_2           8.5%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>FE4DA79AC4B220E73560932501904AFAFBD93CBB176F2C831F7FEC0222FB5D38C__OperatorPrefixRegex_3   78.1%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>FE4DA79AC4B220E73560932501904AFAFBD93CBB176F2C831F7FEC0222FB5D38C__OperatorRegex_0         63.1%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>FE4DA79AC4B220E73560932501904AFAFBD93CBB176F2C831F7FEC0222FB5D38C__RangeRegex_1             8.2%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>FE4DA79AC4B220E73560932501904AFAFBD93CBB176F2C831F7FEC0222FB5D38C__RangeUnaryRegex_4          0%
+
+Muonroi.RuleEngine.DecisionTable.Web                                                                                                                       0%
+  AspNetCoreGeneratedDocument.Views_DecisionTable_Editor                                                                                                   0%
+  AspNetCoreGeneratedDocument.Views_DecisionTable_List                                                                                                     0%
+  AspNetCoreGeneratedDocument.Views_DecisionTable_Preview                                                                                                  0%
+  Muonroi.RuleEngine.DecisionTable.Web.Contributors.DecisionTableManifestContributor                                                                       0%
+  Muonroi.RuleEngine.DecisionTable.Web.Controllers.DecisionTableCompatControllerBase                                                                       0%
+  Muonroi.RuleEngine.DecisionTable.Web.Controllers.DecisionTableController                                                                                 0%
+  Muonroi.RuleEngine.DecisionTable.Web.Controllers.DecisionTableExportController                                                                           0%
+  Muonroi.RuleEngine.DecisionTable.Web.Controllers.DecisionTableFeelController                                                                             0%
+  Muonroi.RuleEngine.DecisionTable.Web.Controllers.DecisionTableValidationController                                                                       0%
+  Muonroi.RuleEngine.DecisionTable.Web.DecisionTableWebExtensions                                                                                          0%
+  Muonroi.RuleEngine.DecisionTable.Web.ViewModels.DecisionTableBulkDeleteRequest                                                                           0%
+  Muonroi.RuleEngine.DecisionTable.Web.ViewModels.DecisionTableBulkUpsertRequest                                                                           0%
+  Muonroi.RuleEngine.DecisionTable.Web.ViewModels.DecisionTableExecuteRequest                                                                              0%
+  Muonroi.RuleEngine.DecisionTable.Web.ViewModels.DecisionTableExecuteResponse                                                                             0%
+  Muonroi.RuleEngine.DecisionTable.Web.ViewModels.DecisionTableOutputItem                                                                                  0%
+  Muonroi.RuleEngine.DecisionTable.Web.ViewModels.DecisionTableRowReorderRequest                                                                           0%
+  Muonroi.RuleEngine.DecisionTable.Web.ViewModels.DecisionTableViewModel                                                                                   0%
+  Muonroi.RuleEngine.DecisionTable.Web.ViewModels.FeelValidateRequest                                                                                      0%
+  Muonroi.RuleEngine.DecisionTable.Web.ViewModels.FeelValidateResponse                                                                                     0%
+  Muonroi.RuleEngine.DecisionTable.Web.ViewModels.ValidationResultViewModel                                                                                0%
+
+Muonroi.RuleEngine.Proliferation                                                                                                                        75.5%
+  Muonroi.RuleEngine.Proliferation.Auth.ApiKeyRotationService                                                                                           77.1%
+  Muonroi.RuleEngine.Proliferation.Auth.AuthStrategyResolver                                                                                            98.3%
+  Muonroi.RuleEngine.Proliferation.Auth.CachingOAuth2TokenProvider                                                                                      98.1%
+  Muonroi.RuleEngine.Proliferation.Auth.MtlsHttpClientFactory                                                                                              0%
+  Muonroi.RuleEngine.Proliferation.Brain.BoundaryExtractionResult                                                                                        100%
+  Muonroi.RuleEngine.Proliferation.Brain.BranchHint                                                                                                      100%
+  Muonroi.RuleEngine.Proliferation.Brain.ClaudeProliferationBrain                                                                                       94.3%
+  Muonroi.RuleEngine.Proliferation.Brain.CompositeProliferationBrain                                                                                     100%
+  Muonroi.RuleEngine.Proliferation.Brain.CoverageReport                                                                                                  100%
+  Muonroi.RuleEngine.Proliferation.Brain.CoverageWeightedBudgetAllocator                                                                                94.4%
+  Muonroi.RuleEngine.Proliferation.Brain.CrossRuleAnalysis                                                                                               100%
+  Muonroi.RuleEngine.Proliferation.Brain.CrossRuleDependencyAnalyzer                                                                                    92.5%
+  Muonroi.RuleEngine.Proliferation.Brain.DecisionTableHitPolicyAnalyzer                                                                                 95.3%
+  Muonroi.RuleEngine.Proliferation.Brain.DefaultChaosScenarioGenerator                                                                                  99.3%
+  Muonroi.RuleEngine.Proliferation.Brain.DefaultCoverageTracker                                                                                         23.3%
+  Muonroi.RuleEngine.Proliferation.Brain.DefaultFailureAnalyzer                                                                                         96.2%
+  Muonroi.RuleEngine.Proliferation.Brain.DefaultPromptBuilder                                                                                           37.7%
+  Muonroi.RuleEngine.Proliferation.Brain.DefaultRegressionRunner                                                                                           0%
+  Muonroi.RuleEngine.Proliferation.Brain.EdgeCoverage                                                                                                      0%
+  Muonroi.RuleEngine.Proliferation.Brain.FactKeyConflict                                                                                                  60%
+  Muonroi.RuleEngine.Proliferation.Brain.FactKeyDependency                                                                                               100%
+  Muonroi.RuleEngine.Proliferation.Brain.FeelBoundaryExtractor                                                                                          83.3%
+  Muonroi.RuleEngine.Proliferation.Brain.FieldBoundary                                                                                                   100%
+  Muonroi.RuleEngine.Proliferation.Brain.FieldSchema                                                                                                     100%
+  Muonroi.RuleEngine.Proliferation.Brain.FlowCoverageReport                                                                                              100%
+  Muonroi.RuleEngine.Proliferation.Brain.FlowEdgeSummary                                                                                                  50%
+  Muonroi.RuleEngine.Proliferation.Brain.FlowGraphAnalysis                                                                                               100%
+  Muonroi.RuleEngine.Proliferation.Brain.FlowGraphPathAnalyzer                                                                                          84.5%
+  Muonroi.RuleEngine.Proliferation.Brain.FlowNodeSummary                                                                                                  50%
+  Muonroi.RuleEngine.Proliferation.Brain.FlowPath                                                                                                         80%
+  Muonroi.RuleEngine.Proliferation.Brain.HitPolicyAnalysis                                                                                               100%
+  Muonroi.RuleEngine.Proliferation.Brain.InfraHealthMonitor                                                                                             87.3%
+  Muonroi.RuleEngine.Proliferation.Brain.InfraHealthStatus                                                                                              83.3%
+  Muonroi.RuleEngine.Proliferation.Brain.InputHashDeduplicator                                                                                          80.4%
+  Muonroi.RuleEngine.Proliferation.Brain.NaturalLanguageRuleConverter                                                                                   81.7%
+  Muonroi.RuleEngine.Proliferation.Brain.NlConversionRequest                                                                                            66.6%
+  Muonroi.RuleEngine.Proliferation.Brain.NlConversionResult                                                                                              100%
+  Muonroi.RuleEngine.Proliferation.Brain.NodeCoverage                                                                                                     75%
+  Muonroi.RuleEngine.Proliferation.Brain.OllamaEmbedder                                                                                                    0%
+  Muonroi.RuleEngine.Proliferation.Brain.OllamaProliferationBrain                                                                                       84.7%
+  Muonroi.RuleEngine.Proliferation.Brain.OpenAiProliferationBrain                                                                                       94.3%
+  Muonroi.RuleEngine.Proliferation.Brain.RegressionEntry                                                                                                   0%
+  Muonroi.RuleEngine.Proliferation.Brain.RegressionReport                                                                                                  0%
+  Muonroi.RuleEngine.Proliferation.Brain.RuleSetKindDetector                                                                                             100%
+  Muonroi.RuleEngine.Proliferation.Brain.RuleSetSchema                                                                                                   100%
+  Muonroi.RuleEngine.Proliferation.Brain.RuleSetSchemaExtractor                                                                                         82.6%
+  Muonroi.RuleEngine.Proliferation.Brain.ScenarioInputValidator                                                                                          100%
+  Muonroi.RuleEngine.Proliferation.Brain.ScenarioParser                                                                                                  100%
+  Muonroi.RuleEngine.Proliferation.Brain.SyntheticScenarioGenerator                                                                                      100%
+  Muonroi.RuleEngine.Proliferation.Brain.TestReplacementAdvisor                                                                                         89.6%
+  Muonroi.RuleEngine.Proliferation.Brain.TestReplacementReport                                                                                           100%
+  Muonroi.RuleEngine.Proliferation.Brain.ValidationResult                                                                                                100%
+  Muonroi.RuleEngine.Proliferation.Brain.VectorSemanticDeduplicator                                                                                     38.1%
+  Muonroi.RuleEngine.Proliferation.Execution.ExternalScenarioExecutor                                                                                   78.5%
+  Muonroi.RuleEngine.Proliferation.Execution.RoutingScenarioExecutor                                                                                     100%
+  Muonroi.RuleEngine.Proliferation.Execution.ScenarioExecutor                                                                                              7%
+  Muonroi.RuleEngine.Proliferation.Export.TestReportExporter                                                                                               0%
+  Muonroi.RuleEngine.Proliferation.Export.TrxWriter                                                                                                     95.9%
+  Muonroi.RuleEngine.Proliferation.Export.XUnitXmlWriter                                                                                                94.5%
+  Muonroi.RuleEngine.Proliferation.Models.ApiKeyRotationConfig                                                                                           100%
+  Muonroi.RuleEngine.Proliferation.Models.AuthResult                                                                                                     100%
+  Muonroi.RuleEngine.Proliferation.Models.CiRunResult                                                                                                      0%
+  Muonroi.RuleEngine.Proliferation.Models.ExternalProjectConfig                                                                                          100%
+  Muonroi.RuleEngine.Proliferation.Models.MtlsConfig                                                                                                    33.3%
+  Muonroi.RuleEngine.Proliferation.Models.NeuronScenario                                                                                                 100%
+  Muonroi.RuleEngine.Proliferation.Models.OAuth2Config                                                                                                   100%
+  Muonroi.RuleEngine.Proliferation.Models.ProliferationContext                                                                                           100%
+  Muonroi.RuleEngine.Proliferation.Models.ProliferationPlan                                                                                              100%
+  Muonroi.RuleEngine.Proliferation.Models.ProliferationStats                                                                                            88.8%
+  Muonroi.RuleEngine.Proliferation.Models.ProliferationSuggestion                                                                                        100%
+  Muonroi.RuleEngine.Proliferation.Models.ResponseMapping                                                                                                 75%
+  Muonroi.RuleEngine.Proliferation.Models.RuleLineage                                                                                                    100%
+  Muonroi.RuleEngine.Proliferation.Models.ScenarioResult                                                                                                 100%
+  Muonroi.RuleEngine.Proliferation.Models.TenantSimulationStats                                                                                          100%
+  Muonroi.RuleEngine.Proliferation.ProliferationOptions                                                                                                  100%
+  Muonroi.RuleEngine.Proliferation.ProliferationServiceCollectionExtensions                                                                             50.6%
+  Muonroi.RuleEngine.Proliferation.Store.InMemoryProliferationStore                                                                                     95.4%
+  Muonroi.RuleEngine.Proliferation.WebhookPayload                                                                                                        100%
+  Muonroi.RuleEngine.Proliferation.Worker.ProliferationWorker                                                                                           57.3%
+
+Muonroi.RuleEngine.Proliferation.Persistence                                                                                                               0%
+  Muonroi.RuleEngine.Proliferation.Persistence.Entities.NeuronScenarioEntity                                                                               0%
+  Muonroi.RuleEngine.Proliferation.Persistence.Entities.RuleLineageEntity                                                                                  0%
+  Muonroi.RuleEngine.Proliferation.Persistence.Entities.ScenarioResultEntity                                                                               0%
+  Muonroi.RuleEngine.Proliferation.Persistence.PostgresProliferationStore                                                                                  0%
+  Muonroi.RuleEngine.Proliferation.Persistence.ProliferationDbContext                                                                                      0%
+  Muonroi.RuleEngine.Proliferation.Persistence.ProliferationPersistenceExtensions                                                                          0%
+
+Muonroi.RuleEngine.Runtime                                                                                                                              63.3%
+  Muonroi.RuleEngine.Runtime.Adapters.ConnectorResilienceOptions                                                                                         100%
+  Muonroi.RuleEngine.Runtime.Adapters.ConnectorRuleAdapter<T>                                                                                           91.5%
+  Muonroi.RuleEngine.Runtime.Adapters.ContextAdaptedRule<T>                                                                                             69.2%
+  Muonroi.RuleEngine.Runtime.Adapters.DecisionTableRuleAdapter<T>                                                                                       89.8%
+  Muonroi.RuleEngine.Runtime.Adapters.FactBagRuleContext                                                                                                 100%
+  Muonroi.RuleEngine.Runtime.Adapters.FeelOutputField                                                                                                    100%
+  Muonroi.RuleEngine.Runtime.Adapters.FeelRuleAdapter<T>                                                                                                83.5%
+  Muonroi.RuleEngine.Runtime.Adapters.GraphRuleDispatchAdapter<T>                                                                                       95.2%
+  Muonroi.RuleEngine.Runtime.Adapters.JavaScriptRuleAdapter<T>                                                                                          77.7%
+  Muonroi.RuleEngine.Runtime.Adapters.LiquidRuleAdapter<T>                                                                                                86%
+  Muonroi.RuleEngine.Runtime.Adapters.ReflectionContextFactory<T>                                                                                        100%
+  Muonroi.RuleEngine.Runtime.Adapters.ReflectionContextProjector<T>                                                                                     71.8%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleEntryOverrideAdapter<T>                                                                                       66.6%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowConnectorResilience                                                                                          0%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowContractReference                                                                                            0%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowEdge                                                                                                        80%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowExpression                                                                                                 100%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowFeelOutputField                                                                                            100%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowGraph                                                                                                      100%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowInputMapping                                                                                               100%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowLiquidConfig                                                                                                 0%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowNode                                                                                                      83.3%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowNodeData                                                                                                  93.7%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowOutputMapping                                                                                              100%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowRuleSetEnvelope                                                                                            100%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleFlowSubFlowConfig                                                                                              100%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleGraphEntry                                                                                                     100%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleGraphIncomingEdge                                                                                              100%
+  Muonroi.RuleEngine.Runtime.Adapters.RuleGraphParser                                                                                                   92.9%
+  Muonroi.RuleEngine.Runtime.Adapters.ScribanFactBagScriptObject                                                                                        22.6%
+  Muonroi.RuleEngine.Runtime.Adapters.SubFlowCallStack                                                                                                  69.2%
+  Muonroi.RuleEngine.Runtime.Adapters.SubFlowCycleException                                                                                              100%
+  Muonroi.RuleEngine.Runtime.Adapters.SubFlowExecutionResult                                                                                             100%
+  Muonroi.RuleEngine.Runtime.Adapters.SubFlowInputMapping                                                                                                100%
+  Muonroi.RuleEngine.Runtime.Adapters.SubFlowOutputMapping                                                                                               100%
+  Muonroi.RuleEngine.Runtime.Adapters.SubFlowRuleAdapter<T>                                                                                             83.5%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.ExpressionTreeVisitor                                                                                     38.4%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelBetweenNode                                                                                              0%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelBinaryNode                                                                                             100%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelBooleanLiteralNode                                                                                     100%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelEveryNode                                                                                                0%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelExpressionCompiler                                                                                    17.2%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelExpressionParser                                                                                      58.2%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelForNode                                                                                                  0%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelFunctionCallNode                                                                                         0%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelIfNode                                                                                                   0%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelInValuesNode                                                                                           100%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelListLiteralNode                                                                                          0%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelNullLiteralNode                                                                                          0%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelNumberLiteralNode                                                                                      100%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelRangeNode                                                                                              100%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelSomeNode                                                                                                 0%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelStringLiteralNode                                                                                      100%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelToken                                                                                                  100%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelUnaryNode                                                                                                0%
+  Muonroi.RuleEngine.Runtime.Compilation.Feel.FeelVariableNode                                                                                           100%
+  Muonroi.RuleEngine.Runtime.Compilation.JavaScript.JintExpressionCompiler                                                                              47.3%
+  Muonroi.RuleEngine.Runtime.Rules.BusinessRuleExtensions                                                                                                100%
+  Muonroi.RuleEngine.Runtime.Rules.CachedBusinessRule<T>                                                                                                 100%
+  Muonroi.RuleEngine.Runtime.Rules.CanaryRolloutRecord                                                                                                   100%
+  Muonroi.RuleEngine.Runtime.Rules.CanaryRolloutService                                                                                                   90%
+  Muonroi.RuleEngine.Runtime.Rules.CompositeBusinessRule<T>                                                                                              100%
+  Muonroi.RuleEngine.Runtime.Rules.ExternalJsonRule<T>                                                                                                   100%
+  Muonroi.RuleEngine.Runtime.Rules.FileRuleSetAuditStore                                                                                                81.3%
+  Muonroi.RuleEngine.Runtime.Rules.FileRuleSetStore                                                                                                     92.5%
+  Muonroi.RuleEngine.Runtime.Rules.HmacSha256RuleSetSigner                                                                                               100%
+  Muonroi.RuleEngine.Runtime.Rules.InMemoryRuleSetChangeNotifier                                                                                         100%
+  Muonroi.RuleEngine.Runtime.Rules.IRuleSetStore                                                                                                           0%
+  Muonroi.RuleEngine.Runtime.Rules.MappedBusinessRule<T1, T2>                                                                                            100%
+  Muonroi.RuleEngine.Runtime.Rules.Migrations.InitialRuleControlPlane                                                                                      0%
+  Muonroi.RuleEngine.Runtime.Rules.Migrations.RuleEngineDbContextModelSnapshot                                                                             0%
+  Muonroi.RuleEngine.Runtime.Rules.MRuleAuthoringManifestRegistry                                                                                       83.9%
+  Muonroi.RuleEngine.Runtime.Rules.PercentageRuleActivationStrategy<T>                                                                                   100%
+  Muonroi.RuleEngine.Runtime.Rules.PostgresRuleSetAuditStore                                                                                               0%
+  Muonroi.RuleEngine.Runtime.Rules.PostgresRuleSetStore                                                                                                    0%
+  Muonroi.RuleEngine.Runtime.Rules.RedisRuleSetChangeNotifier                                                                                           94.1%
+  Muonroi.RuleEngine.Runtime.Rules.RsaRuleSetAuditSigner                                                                                                86.3%
+  Muonroi.RuleEngine.Runtime.Rules.RuleAuthoringManifestEndpoints                                                                                       93.5%
+  Muonroi.RuleEngine.Runtime.Rules.RuleControlPlaneOptions                                                                                              66.6%
+  Muonroi.RuleEngine.Runtime.Rules.RuleDescriptor                                                                                                        100%
+  Muonroi.RuleEngine.Runtime.Rules.RuleEngine<T>                                                                                                        80.6%
+  Muonroi.RuleEngine.Runtime.Rules.RuleEngineDbContext                                                                                                  95.5%
+  Muonroi.RuleEngine.Runtime.Rules.RuleEngineDbContextFactory                                                                                              0%
+  Muonroi.RuleEngine.Runtime.Rules.RuleEngineServiceCollectionExtensions                                                                                80.7%
+  Muonroi.RuleEngine.Runtime.Rules.RuleOptions                                                                                                           100%
+  Muonroi.RuleEngine.Runtime.Rules.RulesEngineService                                                                                                   67.8%
+  Muonroi.RuleEngine.Runtime.Rules.RuleSetApprovalService                                                                                               92.6%
+  Muonroi.RuleEngine.Runtime.Rules.RuleSetAuditEntry                                                                                                     100%
+  Muonroi.RuleEngine.Runtime.Rules.RuleSetAuditPage                                                                                                      100%
+  Muonroi.RuleEngine.Runtime.Rules.RuleSetAuditRecord                                                                                                      0%
+  Muonroi.RuleEngine.Runtime.Rules.RuleSetChangeEvent                                                                                                    100%
+  Muonroi.RuleEngine.Runtime.Rules.RuleSetDefinitionValidator                                                                                            100%
+  Muonroi.RuleEngine.Runtime.Rules.RuleSetRecord                                                                                                        93.7%
+  Muonroi.RuleEngine.Runtime.Rules.RuleSetRuntimeCache                                                                                                   100%
+  Muonroi.RuleEngine.Runtime.Rules.RuleSetValidationIssue                                                                                               88.8%
+  Muonroi.RuleEngine.Runtime.Rules.RuleSetValidationResult                                                                                               100%
+  Muonroi.RuleEngine.Runtime.Rules.RuleStoreConfigs                                                                                                      100%
+  Muonroi.RuleEngine.Runtime.Rules.StartCanaryRequest                                                                                                    100%
+  Muonroi.RuleEngine.Runtime.Rules.TenantQuotaOverrideRecord                                                                                               0%
+  Muonroi.RuleEngine.Runtime.Rules.TenantRuleAssignmentRecord                                                                                              0%
+  Muonroi.RuleEngine.Runtime.Tracing.RedisRuleTraceStore                                                                                                86.5%
+  Muonroi.RuleEngine.Runtime.Tracing.RuleDebuggerModeService                                                                                             100%
+  Muonroi.RuleEngine.Runtime.Tracing.RuleExecutionTracer                                                                                                 100%
+  Muonroi.RuleEngine.Runtime.Tracing.RuleTracerServiceCollectionExtensions                                                                               100%
+  Muonroi.RuleEngine.Runtime.Tracing.RuleTracingEndpoints                                                                                                100%
+  Muonroi.RuleEngine.Runtime.Tracing.RuleTracingOptions                                                                                                  100%
+
+Muonroi.RuleEngine.Runtime.Web                                                                                                                            84%
+  Muonroi.RuleEngine.Runtime.Web.Contributors.RuntimeRuleSetManifestContributor                                                                          100%
+  Muonroi.RuleEngine.Runtime.Web.Controllers.MRuleFlowContractController                                                                                  80%
+  Muonroi.RuleEngine.Runtime.Web.Controllers.MRuleFlowExecuteController                                                                                 92.9%
+  Muonroi.RuleEngine.Runtime.Web.Controllers.RuntimeRuleSetController                                                                                   81.6%
+  Muonroi.RuleEngine.Runtime.Web.Hubs.RuleSetChangeHub                                                                                                  85.7%
+  Muonroi.RuleEngine.Runtime.Web.Models.MRuleContractField                                                                                              62.5%
+  Muonroi.RuleEngine.Runtime.Web.Models.MRuleContractSchema                                                                                               75%
+  Muonroi.RuleEngine.Runtime.Web.Models.MRuleFlowContractLookupResponse                                                                                  100%
+  Muonroi.RuleEngine.Runtime.Web.Models.MRuleFlowNodeContractResponse                                                                                   71.4%
+  Muonroi.RuleEngine.Runtime.Web.Models.MRuleFlowSummary                                                                                                33.3%
+  Muonroi.RuleEngine.Runtime.Web.RuleEngineRuntimeEndpointExtensions                                                                                     100%
+  Muonroi.RuleEngine.Runtime.Web.RuleEngineRuntimeWebExtensions                                                                                          100%
+  Muonroi.RuleEngine.Runtime.Web.Services.MDefaultRuleFlowContractProvider                                                                              79.4%
+  Muonroi.RuleEngine.Runtime.Web.Services.RuleDryRunResult                                                                                               100%
+  Muonroi.RuleEngine.Runtime.Web.Services.RuleDryRunService                                                                                             77.6%
+  Muonroi.RuleEngine.Runtime.Web.Services.RuleExecutionTrace                                                                                             100%
+  Muonroi.RuleEngine.Runtime.Web.Services.RuleSetHubNotifier                                                                                            75.8%
+  Muonroi.RuleEngine.Runtime.Web.ViewModels.ActivateRuleSetRequest                                                                                       100%
+  Muonroi.RuleEngine.Runtime.Web.ViewModels.DryRunRuleSetRequest                                                                                        66.6%
+  Muonroi.RuleEngine.Runtime.Web.ViewModels.RuleSetDryRunResponse                                                                                          0%
+  Muonroi.RuleEngine.Runtime.Web.ViewModels.RuleSetExportResponse                                                                                        100%
+  Muonroi.RuleEngine.Runtime.Web.ViewModels.RuleSetSaveResponse                                                                                          100%
+  Muonroi.RuleEngine.Runtime.Web.ViewModels.RuleSetWorkflowSummary                                                                                       100%
+  Muonroi.RuleEngine.Runtime.Web.ViewModels.SaveRuleSetRequest                                                                                           100%
+  Muonroi.RuleEngine.Runtime.Web.ViewModels.ValidateRuleSetRequest                                                                                       100%
+
+Muonroi.RuleEngine.SourceGenerators                                                                                                                       55%
+  Muonroi.RuleEngine.SourceGenerators.Analyzers.Mbb001_ForbiddenDateTimeAnalyzer                                                                           0%
+  Muonroi.RuleEngine.SourceGenerators.Analyzers.Mbb002_ForbiddenJsonSerializerAnalyzer                                                                     0%
+  Muonroi.RuleEngine.SourceGenerators.Analyzers.Mbb003_ForbiddenDbContextAnalyzer                                                                          0%
+  Muonroi.RuleEngine.SourceGenerators.Analyzers.Mbb004_ForbiddenAsyncLocalAnalyzer                                                                         0%
+  Muonroi.RuleEngine.SourceGenerators.Analyzers.Mbb005_AbstractionInfraDepAnalyzer                                                                         0%
+  Muonroi.RuleEngine.SourceGenerators.Analyzers.Mbb006_MissingTierGuardAnalyzer                                                                            0%
+  Muonroi.RuleEngine.SourceGenerators.Analyzers.Mbb007_ForbiddenSerilogContextAnalyzer                                                                     0%
+  Muonroi.RuleEngine.SourceGenerators.Analyzers.MbbAnalyzerHelpers                                                                                         0%
+  Muonroi.RuleEngine.SourceGenerators.Authoring.AuthoringContextOverride                                                                                 100%
+  Muonroi.RuleEngine.SourceGenerators.Authoring.AuthoringFactDefinition                                                                                  100%
+  Muonroi.RuleEngine.SourceGenerators.Authoring.AuthoringFactOverride                                                                                     80%
+  Muonroi.RuleEngine.SourceGenerators.Authoring.AuthoringManifestDefinition                                                                              100%
+  Muonroi.RuleEngine.SourceGenerators.Authoring.AuthoringRuleDefinition                                                                                  100%
+  Muonroi.RuleEngine.SourceGenerators.Authoring.AuthoringSchemaField                                                                                     100%
+  Muonroi.RuleEngine.SourceGenerators.Authoring.AuthoringSchemaNode                                                                                      100%
+  Muonroi.RuleEngine.SourceGenerators.Authoring.CatalogMetadataDefinition                                                                                100%
+  Muonroi.RuleEngine.SourceGenerators.Authoring.FactSchemaWalker                                                                                        67.5%
+  Muonroi.RuleEngine.SourceGenerators.Authoring.RuleAuthoringManifestExtractor                                                                          75.7%
+  Muonroi.RuleEngine.SourceGenerators.CodeFixes.MBB001_DateTimeCodeFix                                                                                     0%
+  Muonroi.RuleEngine.SourceGenerators.CodeFixes.MBB002_JsonSerializerCodeFix                                                                               0%
+  Muonroi.RuleEngine.SourceGenerators.Diagnostics.MBBDiagnosticDescriptors                                                                                 0%
+  Muonroi.RuleEngine.SourceGenerators.Diagnostics.RuleAuthoringAnalyzer                                                                                 46.2%
+  Muonroi.RuleEngine.SourceGenerators.Diagnostics.RuleAuthoringDiagnosticAnalyzer                                                                          0%
+  Muonroi.RuleEngine.SourceGenerators.Diagnostics.RuleGenDiagnostics                                                                                     100%
+  Muonroi.RuleEngine.SourceGenerators.ExtractAsRuleGenerator                                                                                              64%
+  Muonroi.RuleEngine.SourceGenerators.FeelExpressionSyntaxValidator                                                                                       55%
+  Muonroi.RuleEngine.SourceGenerators.Models.ExtractedRuleDefinition                                                                                    79.1%
+  Muonroi.RuleEngine.SourceGenerators.Models.HelperMethodDefinition                                                                                        0%
+  Muonroi.RuleEngine.SourceGenerators.Models.ParameterModel                                                                                              100%
+  Muonroi.RuleEngine.SourceGenerators.Models.ServiceDependency                                                                                             0%
+  Muonroi.RuleEngine.SourceGenerators.RuleCatalogRegistrationGenerator                                                                                  69.4%
+  Muonroi.RuleEngine.SourceGenerators.RuleRegistrationGenerator                                                                                            0%
+  Muonroi.RuleEngine.SourceGenerators.SourceWriters.GeneratedRuleSourceWriter                                                                             66%
+  Muonroi.RuleEngine.SourceGenerators.SourceWriters.RuleAuthoringManifestSourceWriter                                                                   98.8%
+
+Muonroi.RuleEngine.Testing                                                                                                                              61.1%
+  Muonroi.RuleEngine.Testing.FactBagAssertions                                                                                                           100%
+  Muonroi.RuleEngine.Testing.MFactBagAssertion                                                                                                          61.1%
+  Muonroi.RuleEngine.Testing.MFactBagAssertions                                                                                                            0%
+  Muonroi.RuleEngine.Testing.MRuleExecutionRecord                                                                                                         80%
+  Muonroi.RuleEngine.Testing.MRuleOrchestratorSpy<T>                                                                                                     100%
+  Muonroi.RuleEngine.Testing.MRuleTestBuilder<T>                                                                                                          48%
+  Muonroi.RuleEngine.Testing.MRuleTestResult                                                                                                            66.6%
+
+Muonroi.RuleGen                                                                                                                                           47%
+  Muonroi.RuleGen.Cli.CommandContext                                                                                                                     7.5%
+  Muonroi.RuleGen.Cli.CommandLineParser                                                                                                                  100%
+  Muonroi.RuleGen.Cli.CommandLineWriter                                                                                                                 15.3%
+  Muonroi.RuleGen.Cli.OptionReader                                                                                                                       100%
+  Muonroi.RuleGen.Cli.RuleGenConfig                                                                                                                       75%
+  Muonroi.RuleGen.Cli.RuleGenConventionsConfig                                                                                                          33.3%
+  Muonroi.RuleGen.Cli.RuleGenExtractConfig                                                                                                               100%
+  Muonroi.RuleGen.Cli.RuleGenValidationConfig                                                                                                           66.6%
+  Muonroi.RuleGen.Commands.ExtractCommand                                                                                                                 47%
+  Muonroi.RuleGen.Commands.GenerateTestsCommand                                                                                                            0%
+  Muonroi.RuleGen.Commands.MergeCommand                                                                                                                    0%
+  Muonroi.RuleGen.Commands.ProliferateCommand                                                                                                              0%
+  Muonroi.RuleGen.Commands.RegisterCommand                                                                                                                 0%
+  Muonroi.RuleGen.Commands.SplitCommand                                                                                                                 93.7%
+  Muonroi.RuleGen.Commands.VerifyCommand                                                                                                                92.1%
+  Muonroi.RuleGen.Commands.WatchCommand                                                                                                                    0%
+  Muonroi.RuleGen.Models.DiscoveredDispatcherContext                                                                                                     100%
+  Muonroi.RuleGen.Models.DiscoveredRuleType                                                                                                              100%
+  Muonroi.RuleGen.Models.ExtractedRuleDefinition                                                                                                         100%
+  Muonroi.RuleGen.Models.HelperMethodDefinition                                                                                                         37.5%
+  Muonroi.RuleGen.Models.ParameterModel                                                                                                                  100%
+  Muonroi.RuleGen.Models.RuntimeRuleDefinition                                                                                                           100%
+  Muonroi.RuleGen.Models.RuntimeRuleSet                                                                                                                  100%
+  Muonroi.RuleGen.Models.ServiceDependency                                                                                                               100%
+  Muonroi.RuleGen.Models.ValidationReport                                                                                                                100%
+  Muonroi.RuleGen.Program                                                                                                                                  0%
+  Muonroi.RuleGen.Services.AuditMetadataService                                                                                                         78.9%
+  Muonroi.RuleGen.Services.CompileCheckResult                                                                                                            100%
+  Muonroi.RuleGen.Services.CompileCheckService                                                                                                          93.6%
+  Muonroi.RuleGen.Services.CSharpRulePatternService                                                                                                     87.5%
+  Muonroi.RuleGen.Services.FeelCSharpTranslator                                                                                                         86.4%
+  Muonroi.RuleGen.Services.RoslynRuleExtractor                                                                                                          82.7%
+  Muonroi.RuleGen.Services.RuleTypeDiscoveryService                                                                                                       60%
+  Muonroi.RuleGen.Services.RuleValidationService                                                                                                         100%
+  Muonroi.RuleGen.Services.RuntimeRuleJsonService                                                                                                       86.6%
+  Muonroi.RuleGen.Services.SourceDiscoveryService                                                                                                       66.3%
+  Muonroi.RuleGen.Writers.DispatcherWriter                                                                                                              85.8%
+  Muonroi.RuleGen.Writers.RegistrationWriter                                                                                                             100%
+  Muonroi.RuleGen.Writers.RuleClassWriter                                                                                                               74.8%
+  Muonroi.RuleGen.Writers.TestScaffoldWriter                                                                                                             100%
+  System.Text.RegularExpressions.Generated                                                                                                              86.4%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>FB5E03C7033CA42D1B4ABB07A4F3C018B25A71BDE2E9DA7E701FC5D6A9E1960BA__SingleEqualsRegex_0       86%
+
+Muonroi.Rules                                                                                                                                           19.5%
+  Muonroi.Rules.Contributors.FeelPlaygroundManifestContributor                                                                                             0%
+  Muonroi.Rules.Controllers.FeelAutocompleteRequest                                                                                                        0%
+  Muonroi.Rules.Controllers.FeelControllerBase                                                                                                             0%
+  Muonroi.Rules.Controllers.FeelEvaluateRequest                                                                                                            0%
+  Muonroi.Rules.Feel.FeelBoolean                                                                                                                           0%
+  Muonroi.Rules.Feel.FeelContext                                                                                                                           0%
+  Muonroi.Rules.Feel.FeelDate                                                                                                                              0%
+  Muonroi.Rules.Feel.FeelDateTime                                                                                                                          0%
+  Muonroi.Rules.Feel.FeelDuration                                                                                                                          0%
+  Muonroi.Rules.Feel.FeelEvaluator                                                                                                                      32.3%
+  Muonroi.Rules.Feel.FeelList                                                                                                                              0%
+  Muonroi.Rules.Feel.FeelNull                                                                                                                              0%
+  Muonroi.Rules.Feel.FeelNumber                                                                                                                            0%
+  Muonroi.Rules.Feel.FeelParser                                                                                                                            0%
+  Muonroi.Rules.Feel.FeelRange                                                                                                                             0%
+  Muonroi.Rules.Feel.FeelStandardLibrary                                                                                                                   0%
+  Muonroi.Rules.Feel.FeelString                                                                                                                            0%
+  Muonroi.Rules.Feel.FeelTime                                                                                                                              0%
+  Muonroi.Rules.FeelWebExtensions                                                                                                                          0%
+  Muonroi.Rules.Flags.FeatureContext                                                                                                                       0%
+  Muonroi.Rules.Flags.FeatureFlagEvaluator                                                                                                                 0%
+  Muonroi.Rules.Lint.LintMessage                                                                                                                           0%
+  Muonroi.Rules.Lint.RuleLinter                                                                                                                            0%
+  Muonroi.Rules.Rules.BusinessRuleExtensions                                                                                                               0%
+  Muonroi.Rules.Rules.CachedBusinessRule<T>                                                                                                                0%
+  Muonroi.Rules.Rules.CompositeBusinessRule<T>                                                                                                             0%
+  Muonroi.Rules.Rules.ExternalJsonRule<T>                                                                                                                  0%
+  Muonroi.Rules.Rules.FileRuleSetStore                                                                                                                     0%
+  Muonroi.Rules.Rules.HmacSha256RuleSetSigner                                                                                                              0%
+  Muonroi.Rules.Rules.InMemoryRuleSetChangeNotifier                                                                                                        0%
+  Muonroi.Rules.Rules.MappedBusinessRule<T1, T2>                                                                                                           0%
+  Muonroi.Rules.Rules.PercentageRuleActivationStrategy<T>                                                                                                  0%
+  Muonroi.Rules.Rules.RedisRuleSetChangeNotifier                                                                                                           0%
+  Muonroi.Rules.Rules.RuleDescriptor                                                                                                                       0%
+  Muonroi.Rules.Rules.RuleEngine<T>                                                                                                                        0%
+  Muonroi.Rules.Rules.RuleEngineServiceCollectionExtensions                                                                                                0%
+  Muonroi.Rules.Rules.RuleOptions                                                                                                                          0%
+  Muonroi.Rules.Rules.RulesEngineService                                                                                                                   0%
+  Muonroi.Rules.Rules.RuleSetChangeEvent                                                                                                                   0%
+  Muonroi.Rules.Rules.RuleSetRuntimeCache                                                                                                                  0%
+  Muonroi.Rules.Rules.RuleStoreConfigs                                                                                                                     0%
+  Muonroi.Rules.Table.DecisionRule                                                                                                                         0%
+  Muonroi.Rules.Table.DecisionTable                                                                                                                        0%
+  Muonroi.Rules.Table.DecisionTableExporter                                                                                                                0%
+  Muonroi.Rules.Table.DecisionTableImporter                                                                                                                0%
+  System.Text.RegularExpressions.Generated                                                                                                              27.4%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F628AD7EC2D0275D2DF7BD5A5D02941A1C33461DD68675DD389EAA0F444166748__ComparisonRegex_1       72.9%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F628AD7EC2D0275D2DF7BD5A5D02941A1C33461DD68675DD389EAA0F444166748__EqualRegex_7               0%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F628AD7EC2D0275D2DF7BD5A5D02941A1C33461DD68675DD389EAA0F444166748__GreaterRegex_5             0%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F628AD7EC2D0275D2DF7BD5A5D02941A1C33461DD68675DD389EAA0F444166748__InListRegex_2           59.5%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F628AD7EC2D0275D2DF7BD5A5D02941A1C33461DD68675DD389EAA0F444166748__LessRegex_6                0%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F628AD7EC2D0275D2DF7BD5A5D02941A1C33461DD68675DD389EAA0F444166748__MatchesRegex_3          48.6%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F628AD7EC2D0275D2DF7BD5A5D02941A1C33461DD68675DD389EAA0F444166748__RangeRegex_0            30.2%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F628AD7EC2D0275D2DF7BD5A5D02941A1C33461DD68675DD389EAA0F444166748__RangeRegex_4               0%
+
+Muonroi.Secrets                                                                                                                                          100%
+  Muonroi.Secrets.Secrets.ConfigurationSecretProvider                                                                                                    100%
+
+Muonroi.ServiceDiscovery.Consul                                                                                                                         32.9%
+  Muonroi.ServiceDiscovery.Consul.Consul.ConsulConfigs                                                                                                   100%
+  Muonroi.ServiceDiscovery.Consul.Consul.ConsulHandler                                                                                                  25.6%
+
+Muonroi.SignalR                                                                                                                                         10.4%
+  Muonroi.SignalR.Services.MUiEngineHub                                                                                                                    0%
+  Muonroi.SignalR.Services.MUiEngineSchemaNotifier                                                                                                         0%
+  Muonroi.SignalR.SignalR.MUiEngineHub                                                                                                                     0%
+  Muonroi.SignalR.SignalR.MUiEngineSchemaNotifier                                                                                                          0%
+  Muonroi.SignalR.SignalR.SignalRServiceCollectionExtensions                                                                                              70%
+  Muonroi.SignalR.SignalR.TenantHubFilter                                                                                                                  0%
+
+Muonroi.Tenancy.Abstractions                                                                                                                            67.2%
+  Muonroi.Tenancy.Abstractions.InMemoryTenantQuotaStore                                                                                                 92.7%
+  Muonroi.Tenancy.Abstractions.InMemoryTenantQuotaTracker                                                                                               48.6%
+  Muonroi.Tenancy.Abstractions.Models.TenantQuota                                                                                                        100%
+  Muonroi.Tenancy.Abstractions.Models.TenantQuotaPresets                                                                                                  50%
+  Muonroi.Tenancy.Abstractions.MultiTenantOptions                                                                                                        100%
+  Muonroi.Tenancy.Abstractions.TenantConnectionStringsOptions                                                                                            100%
+  Muonroi.Tenancy.Abstractions.TenantQuotaServiceCollectionExtensions                                                                                    100%
+
+Muonroi.Tenancy.Core                                                                                                                                    56.4%
+  Muonroi.Tenancy.Core.ContextMirrorScope                                                                                                               93.3%
+  Muonroi.Tenancy.Core.DefaultTenantConnectionStringFactory                                                                                              100%
+  Muonroi.Tenancy.Core.DefaultTenantIdResolver                                                                                                          82.7%
+  Muonroi.Tenancy.Core.Legacy.DefaultTenantConnectionStringFactory                                                                                         0%
+  Muonroi.Tenancy.Core.Legacy.DefaultTenantIdResolver                                                                                                      0%
+  Muonroi.Tenancy.Core.Legacy.MappingTenantConnectionStringFactory                                                                                         0%
+  Muonroi.Tenancy.Core.Legacy.MultiTenantConfigs                                                                                                         100%
+  Muonroi.Tenancy.Core.Legacy.TenantConnectionStringsOptions                                                                                               0%
+  Muonroi.Tenancy.Core.Legacy.TenantContext                                                                                                                0%
+  Muonroi.Tenancy.Core.Legacy.TenantContextMiddleware                                                                                                      0%
+  Muonroi.Tenancy.Core.Legacy.TenantSecurityValidator                                                                                                      0%
+  Muonroi.Tenancy.Core.Legacy.TenantServiceCollectionExtensions                                                                                         51.5%
+  Muonroi.Tenancy.Core.MappingTenantConnectionStringFactory                                                                                              100%
+  Muonroi.Tenancy.Core.Security.TenantSecurityValidator                                                                                                   62%
+  Muonroi.Tenancy.Core.Shared.InMemoryTenantQuotaStore                                                                                                   100%
+  Muonroi.Tenancy.Core.Shared.TenantQuotaServiceCollectionExtensions                                                                                       0%
+  Muonroi.Tenancy.Core.Shared.TenantQuotaTracker                                                                                                        77.9%
+  Muonroi.Tenancy.Core.TenantContext                                                                                                                     100%
+  Muonroi.Tenancy.Core.TenantSchemaSelector                                                                                                              100%
+  Muonroi.Tenancy.Core.TenantSecurityValidator                                                                                                          89.6%
+
+Muonroi.UiEngine.Catalog                                                                                                                                   0%
+  Muonroi.UiEngine.Catalog.Attributes.BindRuleContextAttribute                                                                                             0%
+  Muonroi.UiEngine.Catalog.Controllers.MConnectorCatalogController                                                                                         0%
+  Muonroi.UiEngine.Catalog.Controllers.MRuleCatalogCompatController                                                                                        0%
+  Muonroi.UiEngine.Catalog.Controllers.UiEngineCatalogController                                                                                           0%
+  Muonroi.UiEngine.Catalog.Extensions.UiEngineCatalogExtensions                                                                                            0%
+  Muonroi.UiEngine.Catalog.Models.MRuleCatalogGroupResponse                                                                                                0%
+  Muonroi.UiEngine.Catalog.Models.MRuleCatalogItemResponse                                                                                                 0%
+  Muonroi.UiEngine.Catalog.Options.UiEngineCatalogOptions                                                                                                  0%
+  Muonroi.UiEngine.Catalog.Persistence.CatalogSnapshotEntity                                                                                               0%
+  Muonroi.UiEngine.Catalog.Persistence.UiEngineCatalogDatabaseMigrator                                                                                     0%
+  Muonroi.UiEngine.Catalog.Persistence.UiEngineCatalogDbContext                                                                                            0%
+  Muonroi.UiEngine.Catalog.Services.CatalogScanService                                                                                                     0%
+  Muonroi.UiEngine.Catalog.Services.CatalogSnapshotStoreHelper                                                                                             0%
+  Muonroi.UiEngine.Catalog.Services.EfCoreCatalogSnapshotStore                                                                                             0%
+  Muonroi.UiEngine.Catalog.Services.InMemoryCatalogSnapshotStore                                                                                           0%
+
+RuleSourceGen.Api                                                                                                                                       18.6%
+  Program                                                                                                                                                  0%
+  RuleSourceGen.Api.Controllers.DiscountsController                                                                                                        0%
+  RuleSourceGen.Api.Models.DiscountRequest                                                                                                               100%
+  RuleSourceGen.Api.Models.DiscountResponse                                                                                                                0%
+  RuleSourceGen.Api.Rules.DISCOUNT_LOYALTYRule                                                                                                          78.2%
+  RuleSourceGen.Api.Rules.DISCOUNT_PREMIUMRule                                                                                                          75.8%
+  RuleSourceGen.Api.Rules.DISCOUNT_SEASONALRule                                                                                                         78.2%
+  RuleSourceGen.Api.Rules.DISCOUNT_VALIDATERule                                                                                                           75%
+  RuleSourceGen.Api.Rules.DiscountRules                                                                                                                    0%
+  RuleSourceGen.Api.Rules.Generated.GeneratedManifestProvider                                                                                              0%
+  RuleSourceGen.Api.Rules.Generated.RuleCatalogRegistration                                                                                                0%
+  RuleSourceGen.Api.Rules.ValidationRules                                                                                                                  0%

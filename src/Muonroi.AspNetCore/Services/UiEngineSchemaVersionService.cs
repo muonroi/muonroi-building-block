@@ -1,8 +1,17 @@
 namespace Muonroi.AspNetCore.Services;
 
+/// <summary>
+/// Service for building the UI engine schema version and calculating its hash.
+/// </summary>
+/// <typeparam name="TDbContext">The type of the database context.</typeparam>
 public sealed class UiEngineSchemaVersionService<TDbContext>(TDbContext dbContext, IMDateTimeService dateTimeService, IMJsonSerializeService jsonSerializeService)
     where TDbContext : MDbContext
 {
+    /// <summary>
+    /// Builds the UI engine schema version asynchronously.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="Task{MUiEngineSchemaVersion}"/> representing the built schema version.</returns>
     public async Task<MUiEngineSchemaVersion> BuildUiEngineSchemaVersionAsync(CancellationToken cancellationToken = default)
     {
         var fingerprint = await dbContext.Set<MPermission>()

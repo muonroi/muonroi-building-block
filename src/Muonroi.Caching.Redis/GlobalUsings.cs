@@ -1,5 +1,3 @@
-global using Dapper.Extensions.Caching.Redis;
-global using FreeRedis;
 global using Microsoft.Extensions.Caching.Distributed;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;

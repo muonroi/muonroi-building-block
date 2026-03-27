@@ -8,6 +8,12 @@ namespace Muonroi.Rules.Rules;
 /// (0-100) for the given rule and context, allowing per-tenant or per-group control.
 /// </summary>
 /// <typeparam name="T">Type of the context passed to the rule.</typeparam>
+/// <remarks>
+/// Initializes a new instance of the <see cref="PercentageRuleActivationStrategy{T}"/> class.
+/// </remarks>
+/// <param name="percentageProvider">A function that provides the activation percentage.</param>
+/// <param name="random">Optional random number generator.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class PercentageRuleActivationStrategy<T>(
     Func<IRule<T>, T, double> percentageProvider,
     Random? random = null) : IRuleActivationStrategy<T>
@@ -17,6 +23,12 @@ public sealed class PercentageRuleActivationStrategy<T>(
 
     private readonly Random _random = random ?? Random.Shared;
 
+    /// <summary>
+    /// Determines whether the rule should be active based on the configured percentage.
+    /// </summary>
+    /// <param name="rule">The rule to evaluate.</param>
+    /// <param name="context">The context for evaluation.</param>
+    /// <returns>True if the rule should be active; otherwise, false.</returns>
     public bool IsActive(IRule<T> rule, T context)
     {
         double percentage = _percentageProvider(rule, context);

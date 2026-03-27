@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+<PackageReference Include="BouncyCastle.Cryptography" />
+<PackageReference Include="MimeKit" />
+<PackageReference Include="Moq" />
+    <PackageReference Include="Scriban" />
+<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Proliferation\Muonroi.RuleEngine.Proliferation.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Proliferation.Persistence\Muonroi.RuleEngine.Proliferation.Persistence.csproj" />
+  </ItemGroup>
+</Project>

@@ -3,7 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0-alpha.1</Version>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Description>Complex Event Processing integration for Muonroi Rule Engine. Pattern-based event correlation and temporal windowing.</Description>
@@ -15,5 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Core\Muonroi.Core.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />
   </ItemGroup>
 </Project>

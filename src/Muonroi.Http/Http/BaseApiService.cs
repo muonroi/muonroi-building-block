@@ -1,24 +1,32 @@
-using Microsoft.Extensions.Logging;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models.Common;
-using Muonroi.Http.Http;
-using Polly;
-using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Net.Http.Json;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Http.Http;
 
+/// <summary>
+/// Base API service with resilient HTTP request execution.
+/// </summary>
 public abstract class BaseApiService(
     IHttpClientFactory httpClientFactory,
     IAuthenticateInfoContext authContext,
-    ILogger<BaseApiService> logger)
+    IMLog<BaseApiService> logger)
 {
+    /// <summary>
+    /// HTTP client factory for outbound calls.
+    /// </summary>
     protected readonly IHttpClientFactory HttpClientFactory = httpClientFactory;
+    /// <summary>
+    /// Authentication context used for outgoing requests.
+    /// </summary>
     protected readonly IAuthenticateInfoContext AuthContext = authContext;
-    protected readonly ILogger<BaseApiService> Logger = logger;
+    /// <summary>
+    /// Logger for API operations.
+    /// </summary>
+    protected readonly IMLog<BaseApiService> Logger = logger;
 
+    /// <summary>
+    /// Sends an HTTP request through the provided resilience pipeline.
+    /// </summary>
     protected async Task<TResponse> SendAsync<TResponse>(
         string clientName,
         HttpRequestMessage request,
@@ -32,6 +40,7 @@ public abstract class BaseApiService(
         }, cancellationToken);
 
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsAsync<TResponse>(cancellationToken);
+        return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken)
+            ?? throw new InvalidOperationException("Response deserialization returned null.");
     }
 }

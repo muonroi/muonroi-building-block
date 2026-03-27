@@ -1,15 +1,19 @@
-using Microsoft.Extensions.Logging;
-using Polly;
-using Polly.CircuitBreaker;
-using Polly.Retry;
-using Polly.Timeout;
-using System;
-using System.Threading.Tasks;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Resilience.Policies;
 
-public class PolicyHandler(ILogger<PolicyHandler> logger)
+/// <summary>
+/// Builds resilience pipelines with retry, circuit breaker, and timeout policies.
+/// </summary>
+/// <param name="logger">Logger used for policy events.</param>
+public class PolicyHandler(IMLog<PolicyHandler> logger)
 {
+    /// <summary>
+    /// Creates a default resilience pipeline for the specified service.
+    /// </summary>
+    /// <typeparam name="T">Result type handled by the pipeline.</typeparam>
+    /// <param name="serviceName">Service name for log messages.</param>
+    /// <returns>The configured resilience pipeline.</returns>
     public ResiliencePipeline<T> CreateDefaultPipeline<T>(string serviceName)
     {
         return new ResiliencePipelineBuilder<T>()
@@ -22,7 +26,7 @@ public class PolicyHandler(ILogger<PolicyHandler> logger)
                 Delay = TimeSpan.FromSeconds(1),
                 OnRetry = args =>
                 {
-                    logger.LogWarning("Retrying {ServiceName} due to {Exception}. Attempt: {Attempt}", 
+                    logger.LogWarning("Retrying {ServiceName} due to {Exception}. Attempt: {Attempt}",
                         serviceName, args.Outcome.Exception?.Message, args.AttemptNumber);
                     return default;
                 }
@@ -36,13 +40,13 @@ public class PolicyHandler(ILogger<PolicyHandler> logger)
                 BreakDuration = TimeSpan.FromSeconds(30),
                 OnOpened = args =>
                 {
-                    logger.LogError("Circuit breaker opened for {ServiceName} for {BreakDuration}s", 
+                    logger.LogError("Circuit breaker opened for {ServiceName} for {BreakDuration}s",
                         serviceName, args.BreakDuration.TotalSeconds);
                     return default;
                 },
                 OnClosed = args =>
                 {
-                    logger.LogInformation("Circuit breaker closed for {ServiceName}", serviceName);
+                    logger?.Info("Circuit breaker closed for {ServiceName}", serviceName);
                     return default;
                 }
             })

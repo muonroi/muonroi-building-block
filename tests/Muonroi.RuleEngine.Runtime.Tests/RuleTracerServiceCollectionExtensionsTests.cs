@@ -1,0 +1,39 @@
+using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.RuleEngine.Core.Tracing;
+using Muonroi.RuleEngine.Runtime.Tracing;
+using NSubstitute;
+using StackExchange.Redis;
+using Xunit;
+
+namespace Muonroi.RuleEngine.Runtime.Tests;
+
+public sealed class RuleTracerServiceCollectionExtensionsTests
+{
+    [Fact]
+    public void AddRuleEngineTracing_NullServices_Throws()
+    {
+        Action action = () => RuleTracerServiceCollectionExtensions.AddRuleEngineTracing(null!);
+
+        action.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void AddRuleEngineTracing_RegistersTracingServices_AndAppliesOptions()
+    {
+        ServiceCollection services = new();
+        services.AddSingleton(Substitute.For<IConnectionMultiplexer>());
+        services.AddSingleton(Substitute.For<IMJsonSerializeService>());
+
+        services.AddRuleEngineTracing(options => options.DefaultTtl = TimeSpan.FromMinutes(45));
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        provider.GetRequiredService<IRuleTraceStore>().Should().BeOfType<RedisRuleTraceStore>();
+        provider.GetRequiredService<IRuleDebuggerModeService>().Should().BeOfType<RuleDebuggerModeService>();
+        provider.GetRequiredService<IRuleExecutionTracer>().Should().BeOfType<RuleExecutionTracer>();
+        provider.GetRequiredService<IOptions<RuleTracingOptions>>()
+            .Value.DefaultTtl.Should().Be(TimeSpan.FromMinutes(45));
+    }
+}

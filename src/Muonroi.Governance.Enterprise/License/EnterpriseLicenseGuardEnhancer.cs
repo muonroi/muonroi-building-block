@@ -1,3 +1,8 @@
+using Muonroi.Governance.Abstractions.License;
+using Muonroi.Governance.Enterprise.Policy;
+using Muonroi.Core.Abstractions.Context;
+using Muonroi.Tenancy.Core;
+
 namespace Muonroi.Governance.License;
 
 /// <summary>
@@ -7,18 +12,26 @@ namespace Muonroi.Governance.License;
 /// </summary>
 public sealed class EnterpriseLicenseGuardEnhancer(
     LicenseConfigs configs,
-    PolicyEnforcer? policyEnforcer = null) : ILicenseGuardEnhancer
+    CodeIntegrityVerifier codeIntegrityVerifier,
+    AntiTamperDetector tamperDetector,
+    PolicyEnforcer? policyEnforcer = null,
+    ISystemExecutionContextAccessor? executionContextAccessor = null) : ILicenseGuardEnhancer
 {
-    private readonly AntiTamperDetector _tamperDetector = new(configs);
+    private readonly AntiTamperDetector _tamperDetector = tamperDetector;
+    private readonly CodeIntegrityVerifier _codeIntegrityVerifier = codeIntegrityVerifier;
+    private readonly ISystemExecutionContextAccessor? _executionContextAccessor = executionContextAccessor;
     private static readonly ConcurrentDictionary<string, DateTimeOffset> LastAntiTamperChecks =
         new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Executes the On Startup operation.
+    /// </summary>
     public void OnStartup(LicenseConfigs startupConfigs, LicenseState state)
     {
         LicenseEnforcementMode mode = startupConfigs.GetEffectiveEnforcementMode(state.Tier);
         if (mode == LicenseEnforcementMode.Production && state.Tier != LicenseTier.Free)
         {
-            _ = CodeIntegrityVerifier.VerifyIntegrity(throwOnFailure: GetEffectiveFailMode() != LicenseFailMode.Soft);
+            _ = _codeIntegrityVerifier.VerifyIntegrity(state, throwOnFailure: GetEffectiveFailMode() != LicenseFailMode.Soft);
         }
 
         if (startupConfigs.EnableAntiTampering && mode == LicenseEnforcementMode.Production)
@@ -27,6 +40,9 @@ public sealed class EnterpriseLicenseGuardEnhancer(
         }
     }
 
+    /// <summary>
+    /// Executes the On Ensure Valid operation.
+    /// </summary>
     public void OnEnsureValid(string actionType, LicenseState state)
     {
         EnforceEnterpriseFailClosedPolicy(actionType, state);
@@ -49,6 +65,9 @@ public sealed class EnterpriseLicenseGuardEnhancer(
         }
     }
 
+    /// <summary>
+    /// Executes the On Record Action operation.
+    /// </summary>
     public void OnRecordAction(LicenseActionContext context, LicenseState state)
     {
         // Hook for enterprise-specific audit side effects.
@@ -83,7 +102,8 @@ public sealed class EnterpriseLicenseGuardEnhancer(
             return;
         }
 
-        RunAntiTamperingCheck("startup", TenantContext.CurrentTenantId, "license.guard.startup", force: true);
+        string? startupTenantId = ResolveTenantId();
+        RunAntiTamperingCheck("startup", startupTenantId, "license.guard.startup", force: true);
     }
 
     private void TryRunRuntimeAntiTamperingCheck(string actionType, LicenseState state)
@@ -98,7 +118,7 @@ public sealed class EnterpriseLicenseGuardEnhancer(
             return;
         }
 
-        string? tenantId = TenantContext.CurrentTenantId;
+        string? tenantId = ResolveTenantId();
         string tenantPartition = AntiTamperingTenantPartition.Normalize(tenantId);
         DateTimeOffset now = DateTimeOffset.UtcNow;
         TimeSpan interval = TimeSpan.FromSeconds(Math.Max(0, configs.AntiTamperingCheckIntervalSeconds));
@@ -194,6 +214,17 @@ public sealed class EnterpriseLicenseGuardEnhancer(
             sw.Stop();
             AntiTamperingRuntimeTelemetry.TrackCheck(scope, status, tenantId, tamperDetected, sw.Elapsed);
         }
+    }
+
+    private string? ResolveTenantId()
+    {
+        string? tenantId = _executionContextAccessor?.Get()?.TenantId;
+        if (string.IsNullOrWhiteSpace(tenantId))
+        {
+            tenantId = TenantContext.CurrentTenantId;
+        }
+
+        return tenantId;
     }
 
     private void EnforceEnterpriseFailClosedPolicy(string requestedFeature, LicenseState state)

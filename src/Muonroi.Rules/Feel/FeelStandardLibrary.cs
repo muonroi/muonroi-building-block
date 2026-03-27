@@ -5,8 +5,19 @@ using System.Xml;
 
 namespace Muonroi.Rules.Feel;
 
+/// <summary>
+/// Implementation of the FEEL standard library functions.
+/// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class FeelStandardLibrary
 {
+    /// <summary>
+    /// Attempts to call a FEEL standard library function.
+    /// </summary>
+    /// <param name="functionName">The name of the function to call.</param>
+    /// <param name="arguments">The arguments to pass to the function.</param>
+    /// <param name="result">When this method returns, contains the result of the function call, or null if the call failed.</param>
+    /// <returns>True if the function was found and called; otherwise, false.</returns>
     public static bool TryCall(string functionName, IReadOnlyList<object?> arguments, out object? result)
     {
         string name = Normalize(functionName);

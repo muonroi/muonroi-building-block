@@ -7,6 +7,13 @@ namespace Muonroi.Core.Abstractions.Models.Common.Requests.Login;
 /// </summary>
 public class LoginRequestModel
 {
+    /// <summary>
+    /// Gets or sets the username for the login attempt.
+    /// </summary>
     public required string Username { get; set; }
+
+    /// <summary>
+    /// Gets or sets the password for the login attempt.
+    /// </summary>
     public required string Password { get; set; }
 }

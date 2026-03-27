@@ -8,9 +8,13 @@ using System.Text;
 
 namespace Muonroi.RuleEngine.SourceGenerators;
 
+/// <summary>
+/// Incremental generator that registers discovered rule implementations.
+/// </summary>
 [Generator]
 public sealed class RuleRegistrationGenerator : IIncrementalGenerator
 {
+    /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // 1. Quét các class kế thừa IRule<T> hoặc được sinh ra bởi generator của chúng ta

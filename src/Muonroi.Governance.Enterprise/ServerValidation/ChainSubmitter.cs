@@ -1,6 +1,8 @@
+using Muonroi.Governance.Abstractions.License;
+using Muonroi.Logging.Abstractions;
 using System.Net.Http.Json;
 
-namespace Muonroi.Governance.ServerValidation;
+namespace Muonroi.Governance.Enterprise.ServerValidation;
 
 /// <summary>
 /// Handles the submission of action chains to the license server for audit and verification.
@@ -8,12 +10,15 @@ namespace Muonroi.Governance.ServerValidation;
 public sealed class ChainSubmitter(
     LicenseConfigs configs,
     IHttpClientFactory httpClientFactory,
-    ILogger<ChainSubmitter>? logger = null,
+    IMLog<ChainSubmitter>? logger = null,
     LicenseState? licenseState = null,
     IServiceScopeFactory? scopeFactory = null)
 {
     private readonly LicenseState _licenseState = licenseState ?? LicenseState.CreateFree();
 
+    /// <summary>
+    /// Executes the Submit Async operation.
+    /// </summary>
     public async Task<ChainSubmissionResponse> SubmitAsync(IEnumerable<FingerprintChainEntry> entries, string? tenantId,
         CancellationToken cancellationToken = default)
     {
@@ -161,7 +166,7 @@ public sealed class ChainSubmitter(
             }
 
             string error = await response.Content.ReadAsStringAsync(cancellationToken);
-            logger?.LogWarning("[License] Chain submission failed: {Status}. {Error}", response.StatusCode, error);
+            logger?.Warn("[License] Chain submission failed: {Status}. {Error}", response.StatusCode, error);
             status = "error";
             activity?.SetStatus(ActivityStatusCode.Error, $"server-status:{response.StatusCode}");
 
@@ -213,7 +218,7 @@ public sealed class ChainSubmitter(
                 return false;
             }
 
-            logger?.LogWarning("[Security] Server response missing signature - consider enabling RequireServerSignature in production");
+            logger?.Warn("[Security] Server response missing signature - consider enabling RequireServerSignature in production");
             return true; // Allow for now (backward compatibility)
         }
 
@@ -235,7 +240,7 @@ public sealed class ChainSubmitter(
                     return false;
                 }
 
-                logger?.LogWarning("[Security] Cannot verify response signature - public key not available");
+                logger?.Warn("[Security] Cannot verify response signature - public key not available");
                 return true; // Allow if public key not configured (offline mode)
             }
 
@@ -295,7 +300,7 @@ public sealed class ChainSubmitter(
         }
         catch (Exception ex)
         {
-            logger?.LogWarning(ex, "[Security] Failed to load public key for response verification");
+            logger?.Error(ex, "[Security] Failed to load public key for response verification");
             return null;
         }
     }
@@ -313,7 +318,7 @@ public sealed class ChainSubmitter(
 
             if (string.IsNullOrEmpty(actualEndpoint))
             {
-                logger?.LogWarning("[Security] Cannot verify endpoint - BaseAddress is null");
+                logger?.Warn("[Security] Cannot verify endpoint - BaseAddress is null");
                 return !MEnterpriseSecurityProfile.RequiresTrustedEndpoint(configs, _licenseState);
             }
 
@@ -343,7 +348,7 @@ public sealed class ChainSubmitter(
         }
         catch (Exception ex)
         {
-            logger?.LogWarning(ex, "[Security] Error verifying endpoint domain");
+            logger?.Error(ex, "[Security] Error verifying endpoint domain");
             return !MEnterpriseSecurityProfile.RequiresTrustedEndpoint(configs, _licenseState);
         }
     }
@@ -476,18 +481,45 @@ public sealed class ChainSubmitter(
     }
 }
 
+/// <summary>
+/// Represents the Chain Submission Request.
+/// </summary>
 public sealed class ChainSubmissionRequest
 {
+    /// <summary>
+    /// Gets or sets the License Id.
+    /// </summary>
     public string LicenseId { get; set; } = string.Empty;
+    /// <summary>
+    /// Gets or sets the Tenant Id.
+    /// </summary>
     public string? TenantId { get; set; }
+    /// <summary>
+    /// Gets or sets the Entries.
+    /// </summary>
     public List<FingerprintChainEntry> Entries { get; set; } = [];
+    /// <summary>
+    /// Gets or sets the Submitted At.
+    /// </summary>
     public DateTimeOffset SubmittedAt { get; set; }
 }
 
+/// <summary>
+/// Represents the Chain Submission Response.
+/// </summary>
 public sealed class ChainSubmissionResponse
 {
+    /// <summary>
+    /// Gets or sets the Accepted.
+    /// </summary>
     public bool Accepted { get; set; }
+    /// <summary>
+    /// Gets or sets the New Nonce.
+    /// </summary>
     public string? NewNonce { get; set; }
+    /// <summary>
+    /// Gets or sets the Error.
+    /// </summary>
     public string? Error { get; set; }
 
     /// <summary>

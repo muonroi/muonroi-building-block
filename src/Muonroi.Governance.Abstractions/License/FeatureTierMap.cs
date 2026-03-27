@@ -15,9 +15,14 @@ public static class FeatureTierMap
             [FreeTierFeatures.Premium.MessageBus] = LicenseTier.Licensed,
             [FreeTierFeatures.Premium.DistributedCache] = LicenseTier.Licensed,
             [FreeTierFeatures.Premium.AuditTrail] = LicenseTier.Licensed,
-            [FreeTierFeatures.Premium.AntiTampering] = LicenseTier.Licensed
+            [FreeTierFeatures.Premium.AntiTampering] = LicenseTier.Licensed,
+            [FreeTierFeatures.Premium.Connectors] = LicenseTier.Licensed,
+            [FreeTierFeatures.Premium.JavaScriptExpressions] = LicenseTier.Licensed
         };
 
+    /// <summary>
+    /// Executes the Try Get Minimum Tier operation.
+    /// </summary>
     public static bool TryGetMinimumTier(string featureName, out LicenseTier minimumTier)
     {
         if (string.IsNullOrWhiteSpace(featureName))

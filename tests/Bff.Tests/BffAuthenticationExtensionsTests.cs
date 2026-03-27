@@ -47,4 +47,18 @@ public class BffAuthenticationExtensionsTests
         ITokenStore? store = provider.GetService<ITokenStore>();
         Assert.NotNull(store);
     }
+
+    [Fact]
+    public void TokenStoreCanBeConfiguredToUseRedisImplementation()
+    {
+        ServiceCollection services = [];
+        services.AddLogging();
+        services.AddDistributedMemoryCache();
+        services.AddBffAuthentication(useRedisTokenStore: true);
+
+        using ServiceProvider provider = services.BuildServiceProvider();
+        using IServiceScope scope = provider.CreateScope();
+
+        Assert.IsType<RedisTokenStore>(scope.ServiceProvider.GetRequiredService<ITokenStore>());
+    }
 }

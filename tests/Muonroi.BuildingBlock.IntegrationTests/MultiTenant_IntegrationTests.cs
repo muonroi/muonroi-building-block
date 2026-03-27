@@ -6,15 +6,25 @@ using Xunit;
 
 namespace Muonroi.BuildingBlock.IntegrationTests;
 
+/// <summary>
+/// Integration tests for multi-tenant behavior.
+/// </summary>
 public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;
 
+    /// <summary>
+    /// Initializes a new test instance with the application factory.
+    /// </summary>
+    /// <param name="factory">Test application factory.</param>
     public MultiTenant_IntegrationTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
     }
 
+    /// <summary>
+    /// Verifies tenant resolution from request headers.
+    /// </summary>
     [Theory]
     [InlineData("tenant-001")]
     [InlineData("tenant-002")]
@@ -40,6 +50,9 @@ public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFa
         content.Should().Contain(tenantId);
     }
 
+    /// <summary>
+    /// Verifies tenant resolution from subdomain.
+    /// </summary>
     [Fact]
     public async Task TenantResolution_FromSubdomain_ShouldExtractTenantId()
     {
@@ -59,6 +72,9 @@ public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFa
         response.StatusCode.Should().NotBe(HttpStatusCode.InternalServerError);
     }
 
+    /// <summary>
+    /// Verifies tenant resolution from route path.
+    /// </summary>
     [Theory]
     [InlineData("tenant-001", "/api/tenant/tenant-001/data")]
     [InlineData("tenant-002", "/api/tenant/tenant-002/data")]
@@ -80,6 +96,9 @@ public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFa
         response.StatusCode.Should().NotBe(HttpStatusCode.InternalServerError);
     }
 
+    /// <summary>
+    /// Verifies fallback tenant resolution when none is provided.
+    /// </summary>
     [Fact]
     public async Task TenantResolution_FallbackStrategy_ShouldUseDefault()
     {
@@ -100,6 +119,9 @@ public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFa
         content.Should().Contain("test-tenant-001"); // Default tenant from TestTenantIdResolver
     }
 
+    /// <summary>
+    /// Verifies data isolation across tenants.
+    /// </summary>
     [Fact]
     public async Task DataIsolation_BetweenTenants_ShouldEnforceFiltering()
     {
@@ -148,6 +170,9 @@ public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFa
         content.Should().NotContain("tenant-002");
     }
 
+    /// <summary>
+    /// Verifies tenant-prefixed cache keys isolate cached data.
+    /// </summary>
     [Fact]
     public async Task CacheKeyPrefixing_WithTenantId_ShouldIsolateCachedData()
     {
@@ -183,6 +208,9 @@ public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFa
         tenant2Response1.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Verifies tenant context is preserved across middleware.
+    /// </summary>
     [Fact]
     public async Task TenantContextPropagation_AcrossMiddleware_ShouldMaintainContext()
     {
@@ -203,6 +231,9 @@ public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFa
         response.StatusCode.Should().NotBe(HttpStatusCode.InternalServerError);
     }
 
+    /// <summary>
+    /// Verifies invalid tenant identifiers are handled.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
@@ -228,6 +259,9 @@ public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFa
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
+    /// <summary>
+    /// Verifies missing tenant identifiers default to a tenant.
+    /// </summary>
     [Fact]
     public async Task MissingTenantId_ShouldUseDefaultTenant()
     {
@@ -248,6 +282,9 @@ public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFa
         content.Should().Contain("test-tenant-001"); // Default
     }
 
+    /// <summary>
+    /// Verifies tenant context does not change mid-request.
+    /// </summary>
     [Fact]
     public async Task TenantSwitching_MidRequest_ShouldNotOccur()
     {
@@ -268,6 +305,9 @@ public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFa
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Verifies concurrent requests from different tenants are isolated.
+    /// </summary>
     [Fact]
     public async Task ConcurrentRequests_FromDifferentTenants_ShouldBeIsolated()
     {

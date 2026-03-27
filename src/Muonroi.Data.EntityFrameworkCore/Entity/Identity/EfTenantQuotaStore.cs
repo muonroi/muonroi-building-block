@@ -1,12 +1,21 @@
-using Muonroi.Tenancy.Abstractions.Interfaces;
-using Muonroi.Tenancy.Abstractions.Models;
+using Muonroi.Quota.Abstractions;
 using System.Globalization;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 
+/// <summary>
+/// Stores tenant quota data in an EF Core context.
+/// </summary>
+/// <typeparam name="TContext">The EF Core context type.</typeparam>
+/// <param name="context">The database context.</param>
+/// <param name="dateTimeService">Date/time service for period calculation.</param>
 public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeService dateTimeService) : ITenantQuotaStore
     where TContext : MDbContext
 {
+    /// <summary>Gets the quota configuration for a tenant.</summary>
+    /// <param name="tenantId">The tenant identifier.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The tenant quota, or <c>null</c> if not found.</returns>
     public async Task<TenantQuota?> GetQuotaAsync(string tenantId, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(tenantId);
@@ -19,6 +28,10 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
         return entity is null ? null : MapToModel(entity);
     }
 
+    /// <summary>Persists the quota configuration for a tenant.</summary>
+    /// <param name="tenantId">The tenant identifier.</param>
+    /// <param name="quota">The quota definition to save.</param>
+    /// <param name="ct">Cancellation token.</param>
     public async Task SaveQuotaAsync(string tenantId, TenantQuota quota, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(tenantId);
@@ -50,10 +63,17 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
         entity.MaxRuleComplexity = quota.MaxRuleComplexity;
         entity.MaxWorkflowSizeKB = quota.MaxWorkflowSizeKB;
         entity.MaxExecutionTimeMs = quota.MaxExecutionTimeMs;
+        entity.MaxTotalConnectors = quota.MaxTotalConnectors;
+        entity.MaxConnectorExecutionsPerDay = quota.MaxConnectorExecutionsPerDay;
 
         await context.SaveChangesAsync(ct);
     }
 
+    /// <summary>Records usage for a quota bucket.</summary>
+    /// <param name="tenantId">The tenant identifier.</param>
+    /// <param name="type">The quota type being tracked.</param>
+    /// <param name="amount">The amount to add (or subtract).</param>
+    /// <param name="ct">Cancellation token.</param>
     public async Task RecordUsageAsync(string tenantId, QuotaType type, int amount, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(tenantId);
@@ -92,6 +112,10 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
         await context.SaveChangesAsync(ct);
     }
 
+    /// <summary>Gets current quota usage for a tenant.</summary>
+    /// <param name="tenantId">The tenant identifier.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The current quota usage snapshot.</returns>
     public async Task<QuotaUsage> GetUsageAsync(string tenantId, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(tenantId);
@@ -127,6 +151,8 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
         };
     }
 
+    /// <summary>Removes stale usage rows that are outside the current day.</summary>
+    /// <param name="ct">Cancellation token.</param>
     public async Task ResetDailyCountersAsync(CancellationToken ct = default)
     {
         DateTime todayUtc = dateTimeService.UtcNow().Date;
@@ -161,7 +187,9 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
             MaxWorkflowExecutionsPerHour = entity.MaxWorkflowExecutionsPerHour,
             MaxRuleComplexity = entity.MaxRuleComplexity,
             MaxWorkflowSizeKB = entity.MaxWorkflowSizeKB,
-            MaxExecutionTimeMs = entity.MaxExecutionTimeMs
+            MaxExecutionTimeMs = entity.MaxExecutionTimeMs,
+            MaxTotalConnectors = entity.MaxTotalConnectors,
+            MaxConnectorExecutionsPerDay = entity.MaxConnectorExecutionsPerDay
         };
     }
 
@@ -205,7 +233,9 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
             [QuotaType.StorageUsageMB] = quota.MaxStorageMB,
             [QuotaType.TotalRules] = quota.MaxRulesPerTenant,
             [QuotaType.TotalDecisionTables] = quota.MaxDecisionTables,
-            [QuotaType.TotalWorkflows] = quota.MaxJsonWorkflows
+            [QuotaType.TotalWorkflows] = quota.MaxJsonWorkflows,
+            [QuotaType.TotalConnectors] = quota.MaxTotalConnectors,
+            [QuotaType.ConnectorExecutionsPerDay] = quota.MaxConnectorExecutionsPerDay
         };
     }
 }

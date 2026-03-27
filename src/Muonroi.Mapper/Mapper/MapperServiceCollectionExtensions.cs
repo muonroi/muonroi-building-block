@@ -2,8 +2,14 @@ using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.Mapper.Mapper;
 
+/// <summary>
+/// Service registration helpers for the mapper.
+/// </summary>
 public static class MapperServiceCollectionExtensions
 {
+    /// <summary>
+    /// Scans assemblies and registers mapping configuration and mapper services.
+    /// </summary>
     public static IServiceCollection ConfigureMapper(this IServiceCollection services, params Assembly[]? assemblies)
     {
         if (assemblies == null || assemblies.Length == 0)

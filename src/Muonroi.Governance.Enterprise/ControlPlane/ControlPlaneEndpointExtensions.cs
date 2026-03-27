@@ -1,7 +1,13 @@
 namespace Muonroi.Governance.ControlPlane;
 
+/// <summary>
+/// Represents the MControl Plane Endpoint Extensions.
+/// </summary>
 public static class MControlPlaneEndpointExtensions
 {
+    /// <summary>
+    /// Executes the Map MEnterprise Control Plane Endpoints operation.
+    /// </summary>
     public static IEndpointRouteBuilder MapMEnterpriseControlPlaneEndpoints(
         this IEndpointRouteBuilder endpoints,
         string basePath = "/api/v1/control-plane")

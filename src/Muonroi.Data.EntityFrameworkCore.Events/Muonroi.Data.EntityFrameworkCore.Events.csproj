@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Muonroi.Data.EntityFrameworkCore</RootNamespace>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Description>Event dispatch, outbox persistence, and saga support for Muonroi Data.EntityFrameworkCore. Adds Mediator and Messaging integration on top of the persistence-only core.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Muonroi.Mediator\Muonroi.Mediator.csproj" />
+    <ProjectReference Include="..\Muonroi.Messaging.Abstractions\Muonroi.Messaging.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

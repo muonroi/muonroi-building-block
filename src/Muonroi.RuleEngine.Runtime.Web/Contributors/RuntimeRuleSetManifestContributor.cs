@@ -2,12 +2,22 @@ using Muonroi.Core.Abstractions.Enums;
 
 namespace Muonroi.RuleEngine.Runtime.Web.Contributors;
 
+/// <summary>
+/// Registers UI engine screens, actions, and data sources for the runtime ruleset UI.
+/// </summary>
 public sealed class RuntimeRuleSetManifestContributor : IUiEngineManifestContributor
 {
+    /// <summary>Execution order for manifest contributors.</summary>
     public int Order => 140;
+    /// <summary>Module identifier for runtime ruleset assets.</summary>
     public string ModuleId => "runtime-ruleset";
+    /// <summary>Minimum license tier required to access runtime ruleset UI.</summary>
     public string RequiredTier => "Starter";
 
+    /// <summary>Adds runtime ruleset UI metadata to the manifest.</summary>
+    /// <param name="context">Manifest context to update.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A task representing the operation.</returns>
     public Task ContributeAsync(UiEngineManifestContext context, CancellationToken ct = default)
     {
         _ = ct;

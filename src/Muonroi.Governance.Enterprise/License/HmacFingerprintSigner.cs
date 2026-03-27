@@ -1,10 +1,18 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the Hmac Fingerprint Signer.
+/// </summary>
 public sealed class HmacFingerprintSigner(LicensePayload? payload, LicenseConfigs configs)
     : IFingerprintSigner
 {
     private readonly LicenseConfigs _configs = configs ?? throw new ArgumentNullException(nameof(configs));
 
+    /// <summary>
+    /// Executes the Compute Signature operation.
+    /// </summary>
     public string ComputeSignature(string previousSignature, LicenseActionContext context, long sequence)
     {
         byte[] key = BuildKey(payload);
@@ -29,6 +37,7 @@ public sealed class HmacFingerprintSigner(LicensePayload? payload, LicenseConfig
 
         // Combine all elements into a functional dependency chain
         string keySource = $"{seed}:{projectSeed}:{salt}:{serverNonce}";
-        return Encoding.UTF8.GetBytes(keySource);
+        // D-07: SHA256 wrap produces fixed 32-byte key with uniform entropy distribution
+        return SHA256.HashData(Encoding.UTF8.GetBytes(keySource));
     }
 }

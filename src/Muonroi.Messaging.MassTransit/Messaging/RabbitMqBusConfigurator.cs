@@ -1,7 +1,13 @@
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Rabbit Mq Bus Configurator.
+/// </summary>
 public class RabbitMqBusConfigurator : IBusConfigurator
 {
+    /// <summary>
+    /// Executes the Configure operation.
+    /// </summary>
     public void Configure(IBusRegistrationConfigurator configurator, MessageBusConfigs configs)
     {
         RabbitMqConfigs rabbit = configs.RabbitMq ?? throw new InvalidDataException("RabbitMQ configuration missing");
@@ -16,11 +22,13 @@ public class RabbitMqBusConfigurator : IBusConfigurator
 
         configurator.UsingRabbitMq((context, cfg) =>
         {
-            cfg.Host(rabbit.Host, rabbit.VirtualHost, h =>
+            cfg.Host(rabbit.Host, (ushort)rabbit.Port, rabbit.VirtualHost, h =>
             {
                 h.Username(rabbit.Username);
                 h.Password(rabbit.Password);
+                h.Heartbeat(TimeSpan.FromSeconds(rabbit.HeartbeatSeconds));
                 h.PublisherConfirmation = rabbit.PublisherConfirmation;
+                
                 if (rabbit.UseSsl)
                 {
                     h.UseSsl(s =>
@@ -32,6 +40,12 @@ public class RabbitMqBusConfigurator : IBusConfigurator
                     });
                 }
             });
+
+            if (rabbit.UseQuorumQueues)
+            {
+                cfg.SetQuorumQueue();
+            }
+
             cfg.ConfigureEndpoints(context);
         });
     }

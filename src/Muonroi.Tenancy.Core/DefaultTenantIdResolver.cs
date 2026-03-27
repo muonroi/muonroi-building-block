@@ -1,5 +1,8 @@
 namespace Muonroi.Tenancy.Core;
 
+/// <summary>
+/// Resolves tenant identifiers from claims, headers, route values, path segments, or subdomains.
+/// </summary>
 public class DefaultTenantIdResolver : ITenantIdResolver
 {
     private static readonly HashSet<string> ReservedPathPrefixes = new(StringComparer.OrdinalIgnoreCase)
@@ -13,6 +16,7 @@ public class DefaultTenantIdResolver : ITenantIdResolver
         "v3"
     };
 
+    /// <inheritdoc />
     public Task<string?> ResolveTenantIdAsync(HttpContext context)
     {
         string? tenantId = context.User.FindFirst(ClaimConstants.TenantId)?.Value?.Trim();

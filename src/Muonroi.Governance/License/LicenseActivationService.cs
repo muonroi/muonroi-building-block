@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Hosting;
+using Muonroi.Governance.Abstractions.Integrity;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.License;
 
@@ -14,17 +16,23 @@ public sealed class LicenseActivationService : ILicenseActivationService
     private readonly IHostEnvironment? _environment;
     private readonly HttpClient _httpClient;
     private readonly IMJsonSerializeService _jsonSerializeService;
+    private readonly IAssemblyHashCollector _hashCollector;
 
+    /// <summary>
+    /// Initializes a new instance of LicenseActivationService.
+    /// </summary>
     public LicenseActivationService(
         LicenseConfigs configs,
         ILicenseFingerprintProvider fingerprintProvider,
         IMJsonSerializeService jsonSerializeService,
+        IAssemblyHashCollector hashCollector,
         IHostEnvironment? environment = null,
         HttpClient? httpClient = null)
     {
         _configs = configs;
         _fingerprintProvider = fingerprintProvider;
         _jsonSerializeService = jsonSerializeService;
+        _hashCollector = hashCollector;
         _environment = environment;
         _httpClient = httpClient ?? new HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(
@@ -45,17 +53,18 @@ public sealed class LicenseActivationService : ILicenseActivationService
         try
         {
             string fingerprint = _fingerprintProvider.GetFingerprint();
-            LicenseActivationRequest request = new()
+            ActivationRequest request = new()
             {
                 LicenseKey = licenseKey,
-                Fingerprint = fingerprint,
-                ProjectSeed = _configs.ProjectSeed,
-                MachineName = Environment.MachineName,
-                ApplicationName = _environment?.ApplicationName
+                MachineFingerprint = fingerprint,
+                ProductVersion = _environment?.ApplicationName ?? "unknown",
+                ActivationTime = DateTimeOffset.UtcNow,
+                Environment = _environment?.EnvironmentName ?? "Production",
+                AssemblyManifest = _hashCollector.Collect()
             };
 
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync(
-                $"{_configs.Online.Endpoint}/activate",
+                $"{_configs.Online.Endpoint.TrimEnd('/')}/api/v1/activate",
                 request,
                 cancellationToken);
 
@@ -65,12 +74,14 @@ public sealed class LicenseActivationService : ILicenseActivationService
                 return LicenseActivationResult.Failed($"Server returned {response.StatusCode}: {error}");
             }
 
-            LicensePayload? payload = await response.Content.ReadFromJsonAsync<LicensePayload>(cancellationToken: cancellationToken);
-            if (payload == null)
+            ActivationResponse? activation = await response.Content.ReadFromJsonAsync<ActivationResponse>(cancellationToken: cancellationToken);
+            if (activation?.Success != true || activation.Proof?.SignedLicensePayload == null)
             {
-                return LicenseActivationResult.Failed("Server returned empty payload.");
+                return LicenseActivationResult.Failed(activation?.Error ?? "Server returned invalid activation proof.");
             }
 
+            LicensePayload payload = activation.Proof.SignedLicensePayload;
+            await SaveActivationProofAsync(activation.Proof, cancellationToken);
             // Save license locally for offline use
             await SaveLicenseLocallyAsync(payload, cancellationToken);
 
@@ -209,6 +220,24 @@ public sealed class LicenseActivationService : ILicenseActivationService
         await File.WriteAllTextAsync(path, json, cancellationToken);
     }
 
+    private async Task SaveActivationProofAsync(ActivationProof proof, CancellationToken cancellationToken)
+    {
+        string? path = ResolveActivationProofPath();
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        string? directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string json = _jsonSerializeService.Serialize(proof);
+        await File.WriteAllTextAsync(path, json, cancellationToken);
+    }
+
     private string? ResolveLicensePath()
     {
         string? path = _configs.LicenseFilePath;
@@ -219,27 +248,68 @@ public sealed class LicenseActivationService : ILicenseActivationService
             : AppContext.BaseDirectory;
         return Path.GetFullPath(Path.Combine(root, path));
     }
+
+    private string? ResolveActivationProofPath()
+    {
+        string? path = _configs.ActivationProofPath;
+        if (string.IsNullOrWhiteSpace(path)) return null;
+        if (Path.IsPathRooted(path)) return path;
+        string root = !string.IsNullOrWhiteSpace(_environment?.ContentRootPath)
+            ? _environment.ContentRootPath
+            : AppContext.BaseDirectory;
+        return Path.GetFullPath(Path.Combine(root, path));
+    }
 }
 
+/// <summary>
+/// Represents the ILicense Activation Service.
+/// </summary>
 public interface ILicenseActivationService
 {
+    /// <summary>
+    /// Executes the Activate Async operation.
+    /// </summary>
     Task<LicenseActivationResult> ActivateAsync(string licenseKey, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Executes the Refresh Async operation.
+    /// </summary>
     Task<LicenseActivationResult> RefreshAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Executes the Deactivate Async operation.
+    /// </summary>
     Task<bool> DeactivateAsync(CancellationToken cancellationToken = default);
 }
 
+/// <summary>
+/// Represents the License Activation Result.
+/// </summary>
 public sealed class LicenseActivationResult
 {
+    /// <summary>
+    /// Gets or sets the Is Success.
+    /// </summary>
     public bool IsSuccess { get; init; }
+    /// <summary>
+    /// Gets or sets the Error.
+    /// </summary>
     public string? Error { get; init; }
+    /// <summary>
+    /// Gets or sets the Payload.
+    /// </summary>
     public LicensePayload? Payload { get; init; }
 
+    /// <summary>
+    /// Executes the Success operation.
+    /// </summary>
     public static LicenseActivationResult Success(LicensePayload payload) => new()
     {
         IsSuccess = true,
         Payload = payload
     };
 
+    /// <summary>
+    /// Executes the Failed operation.
+    /// </summary>
     public static LicenseActivationResult Failed(string error) => new()
     {
         IsSuccess = false,
@@ -247,18 +317,48 @@ public sealed class LicenseActivationResult
     };
 }
 
+/// <summary>
+/// Represents the License Activation Request.
+/// </summary>
 public sealed class LicenseActivationRequest
 {
+    /// <summary>
+    /// Gets or sets the License Key.
+    /// </summary>
     public string? LicenseKey { get; set; }
+    /// <summary>
+    /// Gets or sets the Fingerprint.
+    /// </summary>
     public string? Fingerprint { get; set; }
+    /// <summary>
+    /// Gets or sets the Project Seed.
+    /// </summary>
     public string? ProjectSeed { get; set; }
+    /// <summary>
+    /// Gets or sets the Machine Name.
+    /// </summary>
     public string? MachineName { get; set; }
+    /// <summary>
+    /// Gets or sets the Application Name.
+    /// </summary>
     public string? ApplicationName { get; set; }
 }
 
+/// <summary>
+/// Represents the License Refresh Request.
+/// </summary>
 public sealed class LicenseRefreshRequest
 {
+    /// <summary>
+    /// Gets or sets the License Id.
+    /// </summary>
     public string? LicenseId { get; set; }
+    /// <summary>
+    /// Gets or sets the Fingerprint.
+    /// </summary>
     public string? Fingerprint { get; set; }
+    /// <summary>
+    /// Gets or sets the Server Nonce.
+    /// </summary>
     public string? ServerNonce { get; set; }
 }

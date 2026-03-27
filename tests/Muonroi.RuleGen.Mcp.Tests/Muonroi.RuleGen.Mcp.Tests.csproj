@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+<PackageReference Include="BouncyCastle.Cryptography" />
+<PackageReference Include="MimeKit" />
+<PackageReference Include="Scriban" />
+</ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\tools\Muonroi.RuleGen.Mcp\Muonroi.RuleGen.Mcp.csproj" />
+  </ItemGroup>
+</Project>

@@ -2,6 +2,14 @@ using Muonroi.Core.Abstractions.Context;
 
 namespace Muonroi.AspNetCore.Middleware;
 
+/// <summary>
+/// Middleware for handling JWT-based authentication and context resolution.
+/// </summary>
+/// <param name="next">The next delegate in the middleware pipeline.</param>
+/// <param name="callbackVerifyToken">The callback function to verify the token.</param>
+/// <param name="executionContextAccessor">The accessor for system execution context.</param>
+/// <param name="tenantContextPolicy">The policy for resolving and validating tenant context.</param>
+/// <param name="logScopeFactory">The factory for creating log scopes.</param>
 public class JwtMiddleware(
     RequestDelegate next,
     Func<IServiceProvider, HttpContext, Task<IAuthenticateInfoContext>> callbackVerifyToken,
@@ -9,6 +17,12 @@ public class JwtMiddleware(
     ITenantContextPolicy tenantContextPolicy,
     ILogScopeFactory? logScopeFactory = null)
 {
+    /// <summary>
+    /// Invokes the middleware.
+    /// </summary>
+    /// <param name="context">The HTTP context.</param>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task that represents the completion of the middleware invocation.</returns>
     public async Task Invoke(HttpContext context, IServiceProvider serviceProvider)
     {
         if (IsAnonymousPath(context))
@@ -76,10 +90,9 @@ public class JwtMiddleware(
 
         List<string> permissions = string.IsNullOrWhiteSpace(verifyToken.Permission)
             ? []
-            : verifyToken.Permission!
+            : [.. verifyToken.Permission!
                 .Split([',', ';', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+                .Distinct(StringComparer.OrdinalIgnoreCase)];
 
         SystemExecutionContext rawContext = new(
             tenantId: verifyToken.TenantId,

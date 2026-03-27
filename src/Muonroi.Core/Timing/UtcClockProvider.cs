@@ -5,14 +5,19 @@ namespace Muonroi.Core.Timing;
 /// </summary>
 public class UtcClockProvider : IClockProvider
 {
+    /// <inheritdoc />
     public DateTime Now => DateTime.Now;
 
+    /// <inheritdoc />
     public DateTime UtcNow => DateTime.UtcNow;
 
+    /// <inheritdoc />
     public DateTimeKind Kind => DateTimeKind.Utc;
 
+    /// <inheritdoc />
     public bool SupportsMultipleTimezone => true;
 
+    /// <inheritdoc />
     public DateTime Normalize(DateTime dateTime)
     {
         if (dateTime.Kind == DateTimeKind.Local)

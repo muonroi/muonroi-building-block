@@ -1,11 +1,17 @@
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Amqp Context Consume Filter{T}.
+/// </summary>
 public class AmqpContextConsumeFilter<T>(
     IAmqpContext amqpContext,
     ISystemExecutionContextAccessor executionContextAccessor,
     ITenantContextPolicy tenantContextPolicy,
     ILogScopeFactory? logScopeFactory = null) : IFilter<ConsumeContext<T>> where T : class
 {
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(ConsumeContext<T> context, IPipe<ConsumeContext<T>> next)
     {
         Dictionary<string, object> headers = [];
@@ -25,6 +31,8 @@ public class AmqpContextConsumeFilter<T>(
             headers[ClaimConstants.Username] = username;
         if (sourceHeaders.TryGetHeader(ClaimConstants.AccessToken, out object? accessToken) && accessToken != null)
             headers[ClaimConstants.AccessToken] = accessToken;
+        if (sourceHeaders.TryGetHeader("X-Muonroi-Identity-Sig", out object? identitySig) && identitySig != null)
+            headers["X-Muonroi-Identity-Sig"] = identitySig;
         if (sourceHeaders.TryGetHeader(CustomHeader.TenantId, out object? tenantId) && tenantId != null)
             headers[CustomHeader.TenantId] = tenantId;
         if (sourceHeaders.TryGetHeader(CustomHeader.SentAt, out object? sentAt) && sentAt != null)
@@ -36,6 +44,10 @@ public class AmqpContextConsumeFilter<T>(
         amqpContext.AddHeaders(headers);
         string correlationId = amqpContext.GetHeaderByKey(CustomHeader.CorrelationId) ?? Guid.NewGuid().ToString("N");
         string? headerSourceType = amqpContext.GetHeaderByKey(CustomHeader.SourceType);
+        
+        bool hasAccessToken = !string.IsNullOrWhiteSpace(amqpContext.GetHeaderByKey(ClaimConstants.AccessToken));
+        bool hasIdentitySig = !string.IsNullOrWhiteSpace(amqpContext.GetHeaderByKey("X-Muonroi-Identity-Sig"));
+        
         SystemExecutionContext rawContext = new(
             tenantId: amqpContext.GetHeaderByKey(CustomHeader.TenantId),
             userId: amqpContext.GetHeaderByKey(ClaimConstants.UserIdentifier),
@@ -43,7 +55,7 @@ public class AmqpContextConsumeFilter<T>(
             correlationId: correlationId,
             accessToken: amqpContext.GetHeaderByKey(ClaimConstants.AccessToken),
             apiKey: null,
-            isAuthenticated: !string.IsNullOrWhiteSpace(amqpContext.GetHeaderByKey(ClaimConstants.AccessToken)),
+            isAuthenticated: hasAccessToken || hasIdentitySig,
             permissions: [],
             sourceType: string.IsNullOrWhiteSpace(headerSourceType) ? "message-bus" : headerSourceType!);
         ISystemExecutionContext resolvedContext = tenantContextPolicy.ResolveAndValidate(rawContext);
@@ -60,6 +72,9 @@ public class AmqpContextConsumeFilter<T>(
         }
     }
 
+    /// <summary>
+    /// Executes the Probe operation.
+    /// </summary>
     public void Probe(ProbeContext context)
     {
     }

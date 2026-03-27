@@ -1,7 +1,9 @@
 namespace Muonroi.AspNetCore.Extensions;
 
+/// <inheritdoc />
 public static class PermissionProviderExtensions
 {
+/// <inheritdoc />
     public static IServiceCollection AddPermissionProviders(this IServiceCollection services,
         params Assembly[] assemblies)
     {

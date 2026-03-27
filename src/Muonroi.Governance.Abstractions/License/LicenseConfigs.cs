@@ -1,11 +1,28 @@
-namespace Muonroi.Governance.License;
+using Muonroi.Governance.License;
 
+namespace Muonroi.Governance.Abstractions.License;
+
+/// <summary>
+/// Represents the License Configs.
+/// </summary>
 public sealed class LicenseConfigs
 {
+    /// <summary>
+    /// The Section Name.
+    /// </summary>
     public const string SectionName = "LicenseConfigs";
 
+    /// <summary>
+    /// Gets or sets the Mode.
+    /// </summary>
     public LicenseMode Mode { get; set; } = LicenseMode.Offline;
+    /// <summary>
+    /// Gets or sets the License File Path.
+    /// </summary>
     public string? LicenseFilePath { get; set; }
+    /// <summary>
+    /// Gets or sets the Public Key Path.
+    /// </summary>
     public string? PublicKeyPath { get; set; }
 
     /// <summary>
@@ -18,17 +35,30 @@ public sealed class LicenseConfigs
     public string? ActivationProofPath { get; set; } = "licenses/activation_proof.json";
 
     /// <summary>
+    /// Path to the activation JWT file for frontend license verification (MLicenseVerifier).
+    /// Default: "licenses/activation_jwt.txt"
+    /// This file is automatically created during online activation when the server provides a JWT.
+    /// </summary>
+    public string? ActivationJwtPath { get; set; } = "licenses/activation_jwt.txt";
+
+    /// <summary>
     /// If true, attempt online activation when activation proof is not found.
     /// Default: true for better developer experience.
     /// Set to false in production if you want to require pre-activation.
     /// </summary>
     public bool FallbackToOnlineActivation { get; set; } = true;
+    /// <summary>
+    /// Gets or sets the Fingerprint Salt.
+    /// </summary>
     public string? FingerprintSalt { get; set; }
     private string? _projectSeed;
-    public string? ProjectSeed 
-    { 
-        get => Obfuscate(_projectSeed); 
-        set => _projectSeed = Obfuscate(value); 
+    /// <summary>
+    /// The Project Seed.
+    /// </summary>
+    public string? ProjectSeed
+    {
+        get => Obfuscate(_projectSeed);
+        set => _projectSeed = Obfuscate(value);
     }
 
     /// <summary>
@@ -56,12 +86,15 @@ public sealed class LicenseConfigs
 
     private static string? Obfuscate(string? input)
     {
-        if (string.IsNullOrEmpty(input)) return input;
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
         // Simple XOR with a fixed internal key to hide it from plain memory scanners
         char[] chars = input.ToCharArray();
         for (int i = 0; i < chars.Length; i++)
         {
-            chars[i] = (char)(chars[i] ^ (0x57 + i));
+            chars[i] = (char)(chars[i] ^ 0x57 + i);
         }
         return new string(chars);
     }
@@ -71,7 +104,13 @@ public sealed class LicenseConfigs
     /// </summary>
     public bool EnableChain { get; set; } = false;
 
+    /// <summary>
+    /// Gets or sets the Chain Storage.
+    /// </summary>
     public LicenseChainStorage ChainStorage { get; set; } = LicenseChainStorage.None;
+    /// <summary>
+    /// Gets or sets the Chain File Path.
+    /// </summary>
     public string? ChainFilePath { get; set; }
 
     /// <summary>
@@ -115,6 +154,12 @@ public sealed class LicenseConfigs
     public bool SkipSignatureVerification { get; set; } = false;
 
     /// <summary>
+    /// Skip assembly whitelist verification during activation.
+    /// WARNING: Only set to true for development/testing. Never in production!
+    /// </summary>
+    public bool SkipAssemblyWhitelist { get; set; } = false;
+
+    /// <summary>
     /// TIER 3: Submit action chains to the license server for remote audit.
     /// </summary>
     public bool EnableServerValidation { get; set; } = false;
@@ -135,6 +180,9 @@ public sealed class LicenseConfigs
     /// </summary>
     public bool EnableTpmAnchoring { get; set; } = false;
 
+    /// <summary>
+    /// Executes the Online operation.
+    /// </summary>
     public OnlineLicenseConfigs Online { get; set; } = new();
 
     /// <summary>
@@ -153,9 +201,15 @@ public sealed class LicenseConfigs
     /// </summary>
     public LicenseEnforcementMode GetEffectiveEnforcementMode(LicenseTier tier)
     {
-        if (EnforcementMode.HasValue) return EnforcementMode.Value;
+        if (EnforcementMode.HasValue)
+        {
+            return EnforcementMode.Value;
+        }
 
-        if (tier == LicenseTier.Free) return LicenseEnforcementMode.Free;
+        if (tier == LicenseTier.Free)
+        {
+            return LicenseEnforcementMode.Free;
+        }
 
         string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
         if (env.Equals("Development", StringComparison.OrdinalIgnoreCase))
@@ -167,16 +221,40 @@ public sealed class LicenseConfigs
     }
 }
 
+/// <summary>
+/// Represents the Online License Configs.
+/// </summary>
 public sealed class OnlineLicenseConfigs
 {
+    /// <summary>
+    /// Gets or sets the Endpoint.
+    /// </summary>
     public string? Endpoint { get; set; }
 
     /// <summary>
     /// TIER 3: Endpoint for submitting action chains (e.g., "/api/v1/chain/submit").
     /// </summary>
     public string? ChainSubmissionEndpoint { get; set; } = "/api/v1/chain/submit";
+    /// <summary>
+    /// Gets or sets the Timeout Seconds.
+    /// </summary>
     public int TimeoutSeconds { get; set; } = 10;
+    /// <summary>
+    /// Gets or sets the Refresh Minutes.
+    /// </summary>
     public int RefreshMinutes { get; set; } = 1440;
+    /// <summary>
+    /// Gets or sets the Enable Heartbeat.
+    /// </summary>
+    public bool EnableHeartbeat { get; set; } = false;
+    /// <summary>
+    /// Gets or sets the Heartbeat Interval Minutes.
+    /// </summary>
+    public int HeartbeatIntervalMinutes { get; set; } = 240;
+    /// <summary>
+    /// Gets or sets the Revocation Grace Hours.
+    /// </summary>
+    public int RevocationGraceHours { get; set; } = 24;
 
     /// <summary>
     /// TIER 3+: Enable certificate pinning to prevent fake server and MITM attacks.
@@ -200,6 +278,9 @@ public sealed class OnlineLicenseConfigs
     public List<string>? TrustedCertificateThumbprints { get; set; }
 }
 
+/// <summary>
+/// Represents the MEnterprise Security Configs.
+/// </summary>
 public sealed class MEnterpriseSecurityConfigs
 {
     /// <summary>
@@ -245,6 +326,9 @@ public sealed class MEnterpriseSecurityConfigs
     ];
 }
 
+/// <summary>
+/// Represents the MCompliance Configs.
+/// </summary>
 public sealed class MComplianceConfigs
 {
     /// <summary>

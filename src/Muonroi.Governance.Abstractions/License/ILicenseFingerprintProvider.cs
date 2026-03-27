@@ -6,5 +6,8 @@ namespace Muonroi.Governance.License;
 /// </summary>
 public interface ILicenseFingerprintProvider
 {
+    /// <summary>
+    /// Executes the Get Fingerprint operation.
+    /// </summary>
     string GetFingerprint();
 }

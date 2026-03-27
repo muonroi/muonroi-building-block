@@ -5,7 +5,10 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 /// <summary>
 /// File-backed NDJSON audit store for runtime ruleset governance actions.
 /// </summary>
-public sealed class FileRuleSetAuditStore(string rootPath, IMJsonSerializeService jsonSerializeService)
+public sealed class FileRuleSetAuditStore(
+    string rootPath,
+    IMJsonSerializeService jsonSerializeService,
+    ISystemExecutionContextAccessor? executionContextAccessor = null)
     : IRuleSetAuditStore
 {
     private readonly string _rootPath = Path.GetFullPath(string.IsNullOrWhiteSpace(rootPath)
@@ -14,7 +17,12 @@ public sealed class FileRuleSetAuditStore(string rootPath, IMJsonSerializeServic
 
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> FileLocks =
         new(StringComparer.OrdinalIgnoreCase);
+    private readonly ISystemExecutionContextAccessor _executionContext =
+        executionContextAccessor ?? new SystemExecutionContextAccessor();
 
+    /// <summary>Appends an audit entry to the store.</summary>
+    /// <param name="entry">Audit entry to append.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task AppendAsync(RuleSetAuditEntry entry, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -34,6 +42,12 @@ public sealed class FileRuleSetAuditStore(string rootPath, IMJsonSerializeServic
         }
     }
 
+    /// <summary>Queries audit entries for the current tenant.</summary>
+    /// <param name="workflowName">Optional workflow filter.</param>
+    /// <param name="page">Page number starting at 1.</param>
+    /// <param name="pageSize">Page size (1-500).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged audit entries.</returns>
     public async Task<RuleSetAuditPage> QueryAsync(
         string? workflowName = null,
         int page = 1,
@@ -108,11 +122,12 @@ public sealed class FileRuleSetAuditStore(string rootPath, IMJsonSerializeServic
         return Path.GetFullPath(path);
     }
 
-    private static string ResolveTenantId()
+    private string ResolveTenantId()
     {
-        return string.IsNullOrWhiteSpace(TenantContext.CurrentTenantId)
+        string? tenantId = _executionContext.Get().TenantId;
+        return string.IsNullOrWhiteSpace(tenantId)
             ? "default"
-            : TenantContext.CurrentTenantId!;
+            : tenantId;
     }
 
     private static string SanitizeSegment(string value)

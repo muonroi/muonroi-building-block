@@ -2,8 +2,12 @@ using Muonroi.Mapper.Interfaces;
 
 namespace Muonroi.Mapper.Mapper;
 
+/// <summary>
+/// Reflection-based mapper using cached mapping actions.
+/// </summary>
 public sealed class SimpleMapper(MappingConfiguration configuration) : IMapper
 {
+    /// <inheritdoc/>
     public TDestination Map<TDestination>(object source)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -14,6 +18,7 @@ public sealed class SimpleMapper(MappingConfiguration configuration) : IMapper
         return destination;
     }
 
+    /// <inheritdoc/>
     public TDestination Map<TSource, TDestination>(TSource source, TDestination destination)
     {
         if (source is null) throw new ArgumentNullException(nameof(source));
@@ -24,6 +29,7 @@ public sealed class SimpleMapper(MappingConfiguration configuration) : IMapper
         return destination;
     }
 
+    /// <inheritdoc/>
     public object Map(object source, object destination)
     {
         ArgumentNullException.ThrowIfNull(source);

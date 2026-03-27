@@ -1,10 +1,22 @@
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the Audit Trail Runtime Telemetry.
+/// </summary>
 public static class AuditTrailRuntimeTelemetry
 {
+    /// <summary>
+    /// The Activity Source Name.
+    /// </summary>
     public const string ActivitySourceName = "Muonroi.BuildingBlock.AuditTrail";
+    /// <summary>
+    /// The Meter Name.
+    /// </summary>
     public const string MeterName = "Muonroi.BuildingBlock.AuditTrail";
 
+    /// <summary>
+    /// Executes the Activity Source operation.
+    /// </summary>
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
 
     private static readonly Meter Meter = new(MeterName);
@@ -19,6 +31,9 @@ public static class AuditTrailRuntimeTelemetry
         Meter.CreateHistogram<long>("audittrail_entries_count", unit: "items",
             description: "Audit trail entries processed per operation.");
 
+    /// <summary>
+    /// Executes the Track Operation operation.
+    /// </summary>
     public static void TrackOperation(
         string operation,
         string status,

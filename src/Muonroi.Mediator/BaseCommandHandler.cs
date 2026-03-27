@@ -1,80 +1,153 @@
-using Microsoft.Extensions.Logging;
 using Muonroi.Core.Abstractions.Models.Common;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Response;
 using Muonroi.Core.Extensions;
-using Muonroi.Mapper.Interfaces;
-using Muonroi.Mediator.Mediator.Interfaces;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Mediator;
 
+/// <summary>
+/// Represents the Base Command Handler.
+/// </summary>
 public abstract class BaseCommandHandler(
     IMapper mapper,
     IAuthenticateInfoContext tokenInfo,
-    ILogger logger,
+    IMLog<BaseCommandHandler> logger,
     IMediator mediator,
     MPaginationConfig? paginationConfig)
 {
+    /// <summary>
+    /// Gets the Pagination Config.
+    /// </summary>
     protected MPaginationConfig? PaginationConfig => paginationConfig;
+    /// <summary>
+    /// Gets the Token Info.
+    /// </summary>
     protected IAuthenticateInfoContext TokenInfo => tokenInfo;
+    /// <summary>
+    /// Gets the Default Page Index.
+    /// </summary>
     protected int DefaultPageIndex => paginationConfig?.DefaultPageIndex ?? 0;
+    /// <summary>
+    /// Gets the Default Page Size.
+    /// </summary>
     protected int DefaultPageSize => paginationConfig?.DefaultPageSize ?? 0;
+    /// <summary>
+    /// Gets the Max Page Size.
+    /// </summary>
     protected int MaxPageSize => paginationConfig?.MaxPageSize ?? 0;
+    /// <summary>
+    /// Gets the Mapper.
+    /// </summary>
     protected IMapper Mapper => mapper;
-    protected ILogger Logger => logger;
+    /// <summary>
+    /// Gets the Logger.
+    /// </summary>
+    protected IMLog<BaseCommandHandler> Logger => logger;
+    /// <summary>
+    /// Gets the Mediator.
+    /// </summary>
     protected IMediator Mediator => mediator;
+    /// <summary>
+    /// Gets the Current User Id.
+    /// </summary>
     protected string CurrentUserId => tokenInfo.CurrentUserGuid;
+    /// <summary>
+    /// Gets the Current Username.
+    /// </summary>
     protected string CurrentUsername => tokenInfo.CurrentUsername;
+    /// <summary>
+    /// Executes the Now Ts Only Day operation.
+    /// </summary>
     protected static double NowTsOnlyDay => DateTime.UtcNow.GetTimeStamp(); // MBB001-exempt: static-class boundary
+    /// <summary>
+    /// Executes the Now Ts operation.
+    /// </summary>
     protected static double NowTs => DateTime.UtcNow.GetTimeStamp(true); // MBB001-exempt: static-class boundary
+    /// <summary>
+    /// Gets the Now.
+    /// </summary>
     protected static DateTime Now => DateTime.UtcNow; // MBB001-exempt: static-class boundary
 
 
+    /// <summary>
+    /// Executes the Send Async {TResponse} operation.
+    /// </summary>
     protected async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request,
         CancellationToken cancellationToken)
     {
         return await Mediator.Send(request, cancellationToken);
     }
 
+    /// <summary>
+    /// Executes the Publish Async {TNotification} operation.
+    /// </summary>
     protected async Task PublishAsync<TNotification>(TNotification notification, CancellationToken cancellationToken)
         where TNotification : Mediator.Interfaces.INotification
     {
         await Mediator.Publish(notification, cancellationToken);
     }
 
+    /// <summary>
+    /// Executes the Log Info operation.
+    /// </summary>
     protected void LogInfo(string? message)
     {
-        if (string.IsNullOrEmpty(message)) return;
-        logger.LogInformation(message);
+        if (string.IsNullOrEmpty(message))
+        {
+            return;
+        }
+
+        logger?.Info(message);
     }
 
+    /// <summary>
+    /// Executes the Log Error operation.
+    /// </summary>
     protected void LogError(string? message)
     {
-        if (string.IsNullOrEmpty(message)) return;
+        if (string.IsNullOrEmpty(message))
+        {
+            return;
+        }
+
         logger.LogError(message);
     }
 
+    /// <summary>
+    /// Executes the Log Error operation.
+    /// </summary>
     protected void LogError(Exception ex)
     {
         logger.LogError(ex, ex.Message);
     }
 
+    /// <summary>
+    /// Executes the Log Error operation.
+    /// </summary>
     protected void LogError(string message, Exception ex)
     {
         logger.LogError(ex, message);
     }
 
+    /// <summary>
+    /// Executes the Log Warning operation.
+    /// </summary>
     protected void LogWarning(string message)
     {
         ArgumentNullException.ThrowIfNull(message);
         logger.LogWarning(message);
     }
 
+    /// <summary>
+    /// Executes the Map T operation.
+    /// </summary>
     protected T Map<T>(object source)
     {
         return Mapper.Map<T>(source);
     }
 
+    /// <summary>
+    /// Executes the Map T operation.
+    /// </summary>
     protected T Map<T>(object source, T destination)
     {
         ArgumentNullException.ThrowIfNull(destination);

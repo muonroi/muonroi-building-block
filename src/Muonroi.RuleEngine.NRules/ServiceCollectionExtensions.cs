@@ -4,6 +4,7 @@ using Muonroi.Core.Abstractions.Interfaces;
 namespace Muonroi.RuleEngine.NRules;
 
 /// <summary>DI helpers for registering the NRules engine.</summary>
+[Obsolete("Frozen: Use Muonroi.RuleEngine.Runtime instead. NRules integration is no longer actively developed.")]
 public static class ServiceCollectionExtensions
 {
     /// <summary>Adds the NRules engine and loads rules from the given assemblies.</summary>

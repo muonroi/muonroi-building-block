@@ -1,3 +1,5 @@
+using Muonroi.Logging.Abstractions;
+
 namespace Muonroi.RuleEngine.Core;
 
 /// <summary>
@@ -6,11 +8,11 @@ namespace Muonroi.RuleEngine.Core;
 public sealed class MRuleExecutionRouter<TContext>(
     RuleOrchestrator<TContext> orchestrator,
     Microsoft.Extensions.Options.IOptions<MRuleEngineOptions>? options,
-    ILogger<MRuleExecutionRouter<TContext>>? logger = null) : IMRuleExecutionRouter<TContext>
+    IMLog<MRuleExecutionRouter<TContext>>? logger = null) : IMRuleExecutionRouter<TContext>
 {
     private readonly MRuleEngineOptions _options = options?.Value ?? new MRuleEngineOptions();
-    private readonly ILogger<MRuleExecutionRouter<TContext>> _logger = logger ?? NullLogger<MRuleExecutionRouter<TContext>>.Instance;
 
+    /// <inheritdoc/>
     public async Task<FactBag> ExecuteAsync(
         TContext context,
         Func<CancellationToken, Task>? traditionalPath = null,
@@ -49,12 +51,12 @@ public sealed class MRuleExecutionRouter<TContext>(
         double roll = Random.Shared.NextDouble();
         if (traditionalPath is not null && roll <= _options.NormalizedTraditionalWeight)
         {
-            _logger.LogInformation("MRuleExecutionRouter selected Traditional path in Hybrid mode.");
+            logger?.Info("MRuleExecutionRouter selected Traditional path in Hybrid mode.");
             await traditionalPath(cancellationToken);
             return new FactBag();
         }
 
-        _logger.LogInformation("MRuleExecutionRouter selected Rules path in Hybrid mode.");
+        logger?.Info("MRuleExecutionRouter selected Rules path in Hybrid mode.");
         return await orchestrator.ExecuteAsync(context, cancellationToken: cancellationToken);
     }
 
@@ -92,11 +94,11 @@ public sealed class MRuleExecutionRouter<TContext>(
 
         if (missingInShadow.Length == 0 && extraInShadow.Length == 0)
         {
-            _logger.LogInformation("Shadow execution completed with no key-level fact differences.");
+            logger?.Info("Shadow execution completed with no key-level fact differences.");
             return;
         }
 
-        _logger.LogWarning(
+        logger?.Warn(
             "Shadow execution fact differences. MissingInShadow={Missing}, ExtraInShadow={Extra}",
             string.Join(", ", missingInShadow),
             string.Join(", ", extraInShadow));

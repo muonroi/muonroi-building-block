@@ -1,7 +1,13 @@
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Kafka Health Check.
+/// </summary>
 public class KafkaHealthCheck(KafkaConfigs cfg) : IHealthCheck
 {
+    /// <summary>
+    /// Executes the Check Health Async operation.
+    /// </summary>
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {

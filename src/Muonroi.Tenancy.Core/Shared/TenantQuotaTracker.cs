@@ -2,12 +2,20 @@ using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.Tenancy.Core.Shared;
 
+/// <summary>
+/// Distributed cache-backed tenant quota tracker.
+/// </summary>
+/// <param name="cache">Distributed cache used for usage counters.</param>
+/// <param name="quotaStore">Quota store for limits and persistence.</param>
+/// <param name="logger">Logger instance.</param>
+/// <param name="dateTimeService">Time provider.</param>
 public sealed class TenantQuotaTracker(
     IDistributedCache cache,
     ITenantQuotaStore quotaStore,
-    ILogger<TenantQuotaTracker> logger,
+    IMLog<TenantQuotaTracker> logger,
     IMDateTimeService dateTimeService) : ITenantQuotaTracker
 {
+    /// <inheritdoc />
     public async Task<bool> CheckQuotaAsync(string tenantId, QuotaType type, int amount = 1, CancellationToken ct = default)
     {
         TenantQuota? quota = await quotaStore.GetQuotaAsync(tenantId, ct);
@@ -27,6 +35,7 @@ public sealed class TenantQuotaTracker(
         return usage + amount <= limit;
     }
 
+    /// <inheritdoc />
     public async Task IncrementUsageAsync(string tenantId, QuotaType type, int amount = 1, CancellationToken ct = default)
     {
         string key = GetCacheKey(tenantId, type);
@@ -42,11 +51,13 @@ public sealed class TenantQuotaTracker(
         await quotaStore.RecordUsageAsync(tenantId, type, amount, ct);
     }
 
+    /// <inheritdoc />
     public Task<QuotaUsage> GetUsageAsync(string tenantId, CancellationToken ct = default)
     {
         return quotaStore.GetUsageAsync(tenantId, ct);
     }
 
+    /// <inheritdoc />
     public Task ResetDailyQuotasAsync(CancellationToken ct = default)
     {
         return quotaStore.ResetDailyCountersAsync(ct);
@@ -96,6 +107,8 @@ public sealed class TenantQuotaTracker(
             QuotaType.TotalRules => quota.MaxRulesPerTenant,
             QuotaType.TotalDecisionTables => quota.MaxDecisionTables,
             QuotaType.TotalWorkflows => quota.MaxJsonWorkflows,
+            QuotaType.TotalConnectors => quota.MaxTotalConnectors,
+            QuotaType.ConnectorExecutionsPerDay => quota.MaxConnectorExecutionsPerDay,
             _ => int.MaxValue
         };
     }

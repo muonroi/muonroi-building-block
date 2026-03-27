@@ -1,0 +1,10 @@
+global using FluentAssertions;
+global using Microsoft.Extensions.DependencyInjection;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.Core.Abstractions.SeedWorks;
+global using Muonroi.Quota.Abstractions;
+global using Muonroi.Tenancy.Abstractions;
+global using Muonroi.Tenancy.Abstractions.Interfaces;
+global using System;
+global using System.Threading.Tasks;
+global using Xunit;

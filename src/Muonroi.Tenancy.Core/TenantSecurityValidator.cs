@@ -1,12 +1,36 @@
 namespace Muonroi.Tenancy.Core;
 
+/// <summary>
+/// Validates tenant identifiers across context, claims, and headers.
+/// </summary>
 public static class TenantSecurityValidator
 {
+    /// <summary>
+    /// Error code for missing tenant context.
+    /// </summary>
     public const string MissingTenantContext = "missing-tenant-context";
+    /// <summary>
+    /// Error code for missing tenant claim.
+    /// </summary>
     public const string MissingTenantClaim = "missing-tenant-claim";
+    /// <summary>
+    /// Error code for context and claim mismatch.
+    /// </summary>
     public const string TenantMismatch = "tenant-mismatch";
+    /// <summary>
+    /// Error code for header and claim mismatch.
+    /// </summary>
     public const string HeaderClaimMismatch = "header-claim-mismatch";
 
+    /// <summary>
+    /// Validates tenant identifiers and returns a failure code if invalid.
+    /// </summary>
+    /// <param name="contextTenantId">Tenant identifier from context.</param>
+    /// <param name="claimTenantId">Tenant identifier from claims.</param>
+    /// <param name="headerTenantId">Tenant identifier from headers.</param>
+    /// <param name="requireTenantClaim">Whether a claim is required.</param>
+    /// <param name="errorCode">The failure code when validation fails.</param>
+    /// <returns><c>true</c> if validation succeeds; otherwise, <c>false</c>.</returns>
     public static bool TryValidate(
         string? contextTenantId,
         string? claimTenantId,

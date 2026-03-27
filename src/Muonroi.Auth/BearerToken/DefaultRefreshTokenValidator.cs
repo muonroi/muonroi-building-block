@@ -1,18 +1,23 @@
-using Muonroi.Core.Abstractions.Configuration;
-using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
+
+
+
 
 namespace Muonroi.Auth.BearerToken;
 
+/// <summary>
+/// Default refresh token validator that resolves tokens from the HTTP context.
+/// </summary>
 public class DefaultRefreshTokenValidator<TDbContext, TPermission>(
     TDbContext dbContext,
     IMultiLevelCacheService cacheService,
     IOptions<AuthOptions> authOptions,
-    ILogger<DefaultRefreshTokenValidator<TDbContext, TPermission>> logger,
+    IMLog<MDbContext> logger,
     MTokenInfo tokenInfo)
     : IRefreshTokenValidator
     where TDbContext : MDbContext
     where TPermission : Enum
 {
+    /// <inheritdoc/>
     public async Task<MAuthenticateInfoContext?> ValidateAsync(HttpContext httpContext)
     {
         MRefreshToken? refresh = await dbContext.ResolveTokenFromHttpContext(
@@ -22,15 +27,12 @@ public class DefaultRefreshTokenValidator<TDbContext, TPermission>(
             authOptions,
             tokenInfo);
 
-        if (refresh == null)
-        {
-            return null;
-        }
-
-        return new MAuthenticateInfoContext(true)
-        {
-            CurrentUserGuid = refresh.CreatorUserId.ToString(),
-            TokenValidityKey = refresh.TokenValidityKey ?? string.Empty
-        };
+        return refresh == null
+            ? null
+            : new MAuthenticateInfoContext(true)
+            {
+                CurrentUserGuid = refresh.CreatorUserId.ToString(),
+                TokenValidityKey = refresh.TokenValidityKey ?? string.Empty
+            };
     }
 }

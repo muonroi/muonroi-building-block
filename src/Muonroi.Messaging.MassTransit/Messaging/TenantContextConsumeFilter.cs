@@ -9,6 +9,9 @@ public class TenantContextConsumeFilter<T>(
     ITenantContextPolicy tenantContextPolicy,
     ILogScopeFactory? logScopeFactory = null) : IFilter<ConsumeContext<T>> where T : class
 {
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(ConsumeContext<T> context, IPipe<ConsumeContext<T>> next)
     {
         string? tenantId = null;
@@ -36,6 +39,9 @@ public class TenantContextConsumeFilter<T>(
         await next.Send(context);
     }
 
+    /// <summary>
+    /// Executes the Probe operation.
+    /// </summary>
     public void Probe(ProbeContext context)
     {
     }

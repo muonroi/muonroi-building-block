@@ -8,11 +8,17 @@ namespace Muonroi.RuleEngine.DecisionTable.Converters;
 /// <summary>
 /// Converts a decision table to JSON workflow compatible with RulesEngineService.
 /// </summary>
+/// <param name="jsonSerializeService">Optional JSON serializer for output payloads.</param>
 public sealed class DecisionTableToJsonConverter(IMJsonSerializeService? jsonSerializeService = null) : IDecisionTableConverter
 {
     private readonly IMJsonSerializeService _jsonSerializeService =
         jsonSerializeService ?? new MJsonSerializeService();
 
+    /// <summary>
+    /// Converts a decision table into a workflow JSON string.
+    /// </summary>
+    /// <param name="table">Decision table to convert.</param>
+    /// <returns>Serialized workflow JSON.</returns>
     public string Convert(DecisionTableModel table)
     {
         DecisionTableRow[] enabledRows = [.. table.Rows

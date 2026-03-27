@@ -2,8 +2,10 @@ using Muonroi.Core.Extensions;
 
 namespace Muonroi.AspNetCore.Extensions;
 
+/// <inheritdoc />
 public static class MCookieAuthExtension
 {
+/// <inheritdoc />
     public static void AppendAuthCookie(this HttpResponse response, string token, MTokenInfo info)
     {
         if (string.IsNullOrEmpty(token))

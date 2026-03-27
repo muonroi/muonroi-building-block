@@ -14,12 +14,47 @@
 
     <!-- NuGet publish quality -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageTags>muonroi;dotnet;framework;building-block;microservices;multi-tenancy</PackageTags>
+    <PackageTags>muonroi;dotnet;framework;building-block;microservices;multi-tenancy;rule-engine</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <!-- Exclude from code coverage for specific projects -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Muonroi.Rules' or '$(MSBuildProjectName)' == 'Muonroi.BuildingBlock.IntegrationTests' or '$(MSBuildProjectName)' == 'RuleSourceGen.Api'">
+    <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <IsMuonroiTestProject Condition="'$(IsTestProject)' == 'true'">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectName)').Contains('.Tests'))">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectName)').Contains('.Test'))">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('\tests\'))">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == '' and $([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('/tests/'))">true</IsMuonroiTestProject>
+    <IsMuonroiTestProject Condition="'$(IsMuonroiTestProject)' == ''">false</IsMuonroiTestProject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsMuonroiTestProject)' == 'true'">
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- Common Test Dependencies — versions managed by Directory.Packages.props (CPM) -->
+  <ItemGroup Condition="'$(IsMuonroiTestProject)' == 'true'">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="NSubstitute" />
+  </ItemGroup>
 
   <ItemGroup Condition="'$(IsCommercialPackage)' != 'true'">
     <None Include="$(MSBuildThisFileDirectory)LICENSE-APACHE"
@@ -44,4 +79,13 @@
           Pack="true" PackagePath="\"
           Condition="Exists('$(MSBuildThisFileDirectory)icon.png')" />
   </ItemGroup>
+
+  <!-- Package version: single source of truth — bump here to release all packages -->
+  <PropertyGroup>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionSuffix>alpha.4</VersionSuffix>
+  </PropertyGroup>
+
+  <!-- Version governance: TFM-conditional versions for framework-coupled packages -->
+  <Import Project="build/Version.props" />
 </Project>

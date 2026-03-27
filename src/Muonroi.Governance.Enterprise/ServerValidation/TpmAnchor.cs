@@ -10,6 +10,9 @@ namespace Muonroi.Governance.ServerValidation;
 /// </summary>
 public sealed class TpmAnchor
 {
+    /// <summary>
+    /// Initializes a new instance of TpmAnchor.
+    /// </summary>
     public TpmAnchor()
     {
     }

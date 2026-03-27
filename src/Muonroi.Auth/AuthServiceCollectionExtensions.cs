@@ -4,8 +4,16 @@ using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.Auth;
 
+/// <summary>
+/// Extension methods for registering authentication services in the dependency injection container.
+/// </summary>
 public static class AuthServiceCollectionExtensions
 {
+    /// <summary>
+    /// Registers an in-memory RSA key store and token revocation store.
+    /// </summary>
+    /// <param name="services">The service collection to add services to.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddInMemoryRsaKeyStore(this IServiceCollection services)
     {
         services.RemoveAll<IRsaKeyStore>();
@@ -17,6 +25,12 @@ public static class AuthServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Registers a Redis-backed RSA key store and token revocation store.
+    /// </summary>
+    /// <param name="services">The service collection to add services to.</param>
+    /// <param name="configuration">The configuration to bind settings from.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddRedisRsaKeyStore(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);

@@ -2,12 +2,19 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
+/// <summary>
+/// Database-backed ruleset store with versioning and activation support.
+/// </summary>
 public sealed class PostgresRuleSetStore(
     RuleEngineDbContext dbContext,
-    RuleControlPlaneOptions? controlPlaneOptions = null) : IRuleSetStore
+    RuleControlPlaneOptions? controlPlaneOptions = null,
+    ISystemExecutionContextAccessor? executionContextAccessor = null) : IRuleSetStore
 {
     private readonly RuleControlPlaneOptions _options = controlPlaneOptions ?? new RuleControlPlaneOptions();
+    private readonly ISystemExecutionContextAccessor _executionContext =
+        executionContextAccessor ?? new SystemExecutionContextAccessor();
 
+    /// <inheritdoc />
     public async Task SaveAsync(string workflowName, string json, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
@@ -66,6 +73,7 @@ public sealed class PostgresRuleSetStore(
         }
     }
 
+    /// <inheritdoc />
     public async Task<string?> GetAsync(
         string workflowName,
         int? version = null,
@@ -96,6 +104,7 @@ public sealed class PostgresRuleSetStore(
         return record?.Json;
     }
 
+    /// <inheritdoc />
     public async Task SetActiveVersionAsync(
         string workflowName,
         int version,
@@ -160,6 +169,7 @@ public sealed class PostgresRuleSetStore(
         }
     }
 
+    /// <inheritdoc />
     public async Task<int[]> GetVersionsAsync(string workflowName, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
@@ -175,6 +185,27 @@ public sealed class PostgresRuleSetStore(
         return versions;
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<(int Version, string Status, bool IsActive, DateTimeOffset CreatedAt)>> GetVersionDetailsAsync(
+        string workflowName, int limit = 10, int offset = 0, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
+        string tenantId = ResolveTenantId();
+        string normalizedWorkflow = workflowName.Trim();
+
+        var items = await dbContext.RuleSets
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.WorkflowName == normalizedWorkflow)
+            .OrderByDescending(x => x.Version)
+            .Skip(offset)
+            .Take(limit)
+            .Select(x => new { x.Version, Status = x.Status.ToString(), x.IsActive, x.CreatedAt })
+            .ToListAsync(cancellationToken);
+
+        return items.Select(x => (x.Version, x.Status, x.IsActive, x.CreatedAt)).ToList();
+    }
+
+    /// <inheritdoc />
     public async Task<int?> GetActiveVersionAsync(string workflowName, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
@@ -200,6 +231,7 @@ public sealed class PostgresRuleSetStore(
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<string>> GetWorkflowsAsync(CancellationToken cancellationToken = default)
     {
         string tenantId = ResolveTenantId();
@@ -213,11 +245,12 @@ public sealed class PostgresRuleSetStore(
         return workflows;
     }
 
-    private static string ResolveTenantId()
+    private string ResolveTenantId()
     {
-        return string.IsNullOrWhiteSpace(TenantContext.CurrentTenantId)
+        string? tenantId = _executionContext.Get().TenantId;
+        return string.IsNullOrWhiteSpace(tenantId)
             ? "default"
-            : TenantContext.CurrentTenantId!;
+            : tenantId;
     }
 
     private async Task<IDbContextTransaction?> TryBeginTransactionAsync(CancellationToken cancellationToken)

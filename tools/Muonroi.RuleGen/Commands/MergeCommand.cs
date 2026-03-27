@@ -786,9 +786,7 @@ internal static class MergeCommand
             return string.Empty;
         }
 
-        List<string> namespaceParts = sourceNamespace
-            .Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries)
-            .ToList();
+        List<string> namespaceParts = [.. sourceNamespace.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries)];
         string sourceFullPath = Path.GetFullPath(sourceAnchorDirectory);
         string targetFullPath = Path.GetFullPath(targetDirectory);
         string relative = Path.GetRelativePath(sourceFullPath, targetFullPath);
@@ -1370,11 +1368,10 @@ internal static class MergeCommand
 
         string ns = classNode.Ancestors().OfType<BaseNamespaceDeclarationSyntax>().FirstOrDefault()?.Name.ToString()
             ?? "Generated.Handlers";
-        string[] usings = root.Usings
+        string[] usings = [.. root.Usings
             .Select(x => x.ToString().Trim())
             .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
+            .Distinct(StringComparer.Ordinal)];
 
         MergedRuleMethod rule = new(
             Code: code,
@@ -1629,10 +1626,9 @@ internal static class MergeCommand
             body = body[1..^1];
         }
 
-        List<string> lines = body
+        List<string> lines = [.. body
             .Split(["\r\n", "\n"], StringSplitOptions.None)
-            .Select(x => x.TrimEnd())
-            .ToList();
+            .Select(x => x.TrimEnd())];
 
         while (lines.Count > 0 && string.IsNullOrWhiteSpace(lines[0]))
         {

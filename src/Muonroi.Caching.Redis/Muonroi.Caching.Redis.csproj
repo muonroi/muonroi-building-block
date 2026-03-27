@@ -3,7 +3,6 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0-alpha.1</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <IsCommercialPackage>true</IsCommercialPackage>
@@ -16,11 +15,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.Caching.Abstractions\Muonroi.Caching.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Governance.Abstractions\Muonroi.Governance.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Tenancy.Core\Muonroi.Tenancy.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Dapper.Extensions.Caching.Redis" Version="5.3.1" />
-    <PackageReference Include="FreeRedis" Version="1.4.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.*" />
-    <PackageReference Include="StackExchange.Redis" Version="2.8.37" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 </Project>

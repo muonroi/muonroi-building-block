@@ -1,9 +1,13 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.AspNetCore.Middleware;
 
+/// <inheritdoc />
 public sealed class LicenseMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = next ?? throw new ArgumentNullException(nameof(next));
 
+/// <inheritdoc />
     public async Task InvokeAsync(HttpContext context, ILicenseGuard guard, LicenseConfigs configs)
     {
         if (configs.EnforceOnMiddleware)

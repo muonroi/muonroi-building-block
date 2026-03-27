@@ -1,7 +1,9 @@
 namespace Muonroi.AspNetCore.Extensions;
 
+/// <inheritdoc />
 public static class MHttpContextExtension
 {
+/// <inheritdoc />
     public static string GetRequestedIpAddress(this HttpContext httpContext)
     {
         string? result = string.Empty;
@@ -51,6 +53,7 @@ public static class MHttpContextExtension
         return result ?? string.Empty;
     }
 
+/// <inheritdoc />
     public static string GetHeaderUserAgent(this HttpContext httpContext)
     {
         return httpContext.Request.Headers[HeaderNames.UserAgent].ToString();

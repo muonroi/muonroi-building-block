@@ -4,12 +4,30 @@ using Muonroi.Core.Abstractions.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Web.Contributors;
 
+/// <summary>
+/// Adds decision table UI metadata to the UiEngine manifest.
+/// </summary>
 public sealed class DecisionTableManifestContributor : IUiEngineManifestContributor
 {
+    /// <summary>
+    /// Ordering for manifest contributions.
+    /// </summary>
     public int Order => 100;
+    /// <summary>
+    /// Module identifier for decision table UI features.
+    /// </summary>
     public string ModuleId => "decision-table";
+    /// <summary>
+    /// Minimum license tier required for the module.
+    /// </summary>
     public string RequiredTier => "Professional";
 
+    /// <summary>
+    /// Populates the manifest with decision table screens, actions, and data sources.
+    /// </summary>
+    /// <param name="context">The manifest context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A completed task.</returns>
     public Task ContributeAsync(UiEngineManifestContext context, CancellationToken ct = default)
     {
         _ = ct;
@@ -119,8 +137,11 @@ public sealed class DecisionTableManifestContributor : IUiEngineManifestContribu
                             ["exportEndpoint"] = "/api/v1/decision-tables/{id}/export/{format}",
                             ["feelEndpoint"] = "/api/v1/feel/autocomplete",
                             ["historyEndpoint"] = "/api/v1/decision-tables/{id}/versions",
+                            ["historyVersionEndpoint"] = "/api/v1/decision-tables/{id}/versions/{v}",
+                            ["diffEndpoint"] = "/api/v1/decision-tables/{id}/versions/{v1}/diff/{v2}",
                             ["auditEndpoint"] = "/api/v1/decision-tables/{id}/audit",
                             ["reorderEndpoint"] = "/api/v1/decision-tables/{id}/rows/reorder",
+                            ["executeEndpoint"] = "/api/v1/decision-tables/{id}/execute",
                             ["maxRows"] = "1000",
                             ["enableExcelImport"] = "true",
                             ["enableVersionDiff"] = "true"

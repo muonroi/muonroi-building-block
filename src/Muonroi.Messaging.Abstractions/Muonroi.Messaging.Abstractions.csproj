@@ -3,7 +3,6 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0-alpha.1</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Description>Message bus contracts: IIntegrationEvent, IEventHandler, and message envelope types for Muonroi messaging integrations.</Description>
@@ -12,5 +11,9 @@
     <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Core\Muonroi.Core.csproj" />
     <ProjectReference Include="..\Muonroi.Mediator\Muonroi.Mediator.csproj" />
+    <ProjectReference Include="..\Muonroi.Tenancy.Abstractions\Muonroi.Tenancy.Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MassTransit.Abstractions" />
   </ItemGroup>
 </Project>

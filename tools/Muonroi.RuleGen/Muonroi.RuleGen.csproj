@@ -15,10 +15,14 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Proliferation\Muonroi.RuleEngine.Proliferation.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
-    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="8.0.*" />
-    <PackageReference Include="Spectre.Console" Version="0.49.*" />
+    <PackageReference Include="BouncyCastle.Cryptography" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" />
+    <PackageReference Include="MimeKit" />
+    <PackageReference Include="Scriban" />
+    <PackageReference Include="Spectre.Console" />
   </ItemGroup>
 </Project>

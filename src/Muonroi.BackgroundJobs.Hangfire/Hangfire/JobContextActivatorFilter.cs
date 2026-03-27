@@ -5,6 +5,12 @@ using Muonroi.Tenancy.Core;
 
 namespace Muonroi.BackgroundJobs.Hangfire.Hangfire;
 
+/// <summary>
+/// Hangfire filter that restores Muonroi execution context for job runs.
+/// </summary>
+/// <param name="accessor">Optional execution context accessor.</param>
+/// <param name="policy">Optional tenant context policy.</param>
+/// <param name="logScopeFactory">Optional log scope factory.</param>
 public sealed class JobContextActivatorFilter(
     ISystemExecutionContextAccessor? accessor = null,
     ITenantContextPolicy? policy = null,
@@ -15,6 +21,7 @@ public sealed class JobContextActivatorFilter(
     private readonly ITenantContextPolicy _policy = policy ?? new DefaultTenantContextPolicy(new NullContextResolver());
     private readonly ILogScopeFactory _logScopeFactory = logScopeFactory ?? NullLogScopeFactory.Instance;
 
+    /// <inheritdoc />
     public void OnPerforming(PerformingContext filterContext)
     {
         IMuonroiJobExecutionContext? jobContext =
@@ -48,6 +55,7 @@ public sealed class JobContextActivatorFilter(
         filterContext.Items[ScopeKey] = new CombinedScope(executionScope, mirrorScope);
     }
 
+    /// <inheritdoc />
     public void OnPerformed(PerformedContext filterContext)
     {
         if (filterContext.Items.TryGetValue(ScopeKey, out object? scope) && scope is IDisposable disposableScope)

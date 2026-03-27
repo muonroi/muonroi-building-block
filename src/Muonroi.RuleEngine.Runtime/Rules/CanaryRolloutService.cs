@@ -1,14 +1,24 @@
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
+/// <summary>
+/// Manages canary rollouts for ruleset versions.
+/// </summary>
 public sealed class CanaryRolloutService(
     RuleEngineDbContext dbContext,
     IRuleSetStore store,
     IRuleSetAuditStore auditStore,
     IRuleSetChangeNotifier? notifier = null,
-    IMemoryCache? memoryCache = null) : ICanaryRolloutService
+    IMemoryCache? memoryCache = null,
+    ISystemExecutionContextAccessor? executionContextAccessor = null) : ICanaryRolloutService
 {
     private static readonly TimeSpan CanaryLookupCacheTtl = TimeSpan.FromSeconds(30);
+    private readonly ISystemExecutionContextAccessor _executionContext =
+        executionContextAccessor ?? new SystemExecutionContextAccessor();
 
+    /// <summary>Starts a canary rollout for a ruleset version.</summary>
+    /// <param name="request">The canary rollout request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The created rollout record.</returns>
     public async Task<CanaryRolloutRecord> StartCanaryAsync(
         StartCanaryRequest request,
         CancellationToken cancellationToken = default)
@@ -107,6 +117,10 @@ public sealed class CanaryRolloutService(
         return record;
     }
 
+    /// <summary>Promotes an active canary rollout.</summary>
+    /// <param name="rolloutId">Rollout identifier.</param>
+    /// <param name="promotedBy">Actor performing the promotion.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task PromoteCanaryAsync(
         Guid rolloutId,
         string promotedBy,
@@ -160,6 +174,11 @@ public sealed class CanaryRolloutService(
         }
     }
 
+    /// <summary>Rolls back an active canary rollout.</summary>
+    /// <param name="rolloutId">Rollout identifier.</param>
+    /// <param name="rolledBackBy">Actor performing the rollback.</param>
+    /// <param name="reason">Reason for rollback.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task RollbackCanaryAsync(
         Guid rolloutId,
         string rolledBackBy,
@@ -216,6 +235,11 @@ public sealed class CanaryRolloutService(
         }
     }
 
+    /// <summary>Returns whether a canary version is active for a tenant.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="tenantId">Tenant identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns><c>true</c> when a canary version applies to the tenant.</returns>
     public async Task<bool> IsCanaryActiveForTenantAsync(
         string workflowName,
         string tenantId,
@@ -225,6 +249,11 @@ public sealed class CanaryRolloutService(
         return version.HasValue;
     }
 
+    /// <summary>Gets the canary version for a tenant if targeted.</summary>
+    /// <param name="workflowName">Workflow name.</param>
+    /// <param name="tenantId">Tenant identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The canary version or <c>null</c> if none applies.</returns>
     public async Task<int?> GetCanaryVersionForTenantAsync(
         string workflowName,
         string tenantId,
@@ -333,10 +362,11 @@ public sealed class CanaryRolloutService(
             .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)];
     }
 
-    private static string ResolveTenantId()
+    private string ResolveTenantId()
     {
-        return string.IsNullOrWhiteSpace(TenantContext.CurrentTenantId)
+        string? tenantId = _executionContext.Get().TenantId;
+        return string.IsNullOrWhiteSpace(tenantId)
             ? "default"
-            : TenantContext.CurrentTenantId!;
+            : tenantId;
     }
 }

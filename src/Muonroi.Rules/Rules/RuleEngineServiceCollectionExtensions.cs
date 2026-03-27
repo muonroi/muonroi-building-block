@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.License;
 using StackExchange.Redis;
 
@@ -10,6 +11,7 @@ namespace Muonroi.Rules.Rules;
 /// <summary>
 /// Dependency injection helpers for ruleset storage and execution services.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class RuleEngineServiceCollectionExtensions
 {
     /// <summary>

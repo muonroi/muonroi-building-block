@@ -1,10 +1,18 @@
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
+/// <summary>
+/// Database-backed audit store for ruleset governance actions.
+/// </summary>
 public sealed class PostgresRuleSetAuditStore(
     RuleEngineDbContext dbContext,
     IRuleSetAuditSigner signer,
-    IMJsonSerializeService jsonSerializeService) : IRuleSetAuditStore
+    IMJsonSerializeService jsonSerializeService,
+    ISystemExecutionContextAccessor? executionContextAccessor = null) : IRuleSetAuditStore
 {
+    private readonly ISystemExecutionContextAccessor _executionContext =
+        executionContextAccessor ?? new SystemExecutionContextAccessor();
+
+    /// <inheritdoc />
     public async Task AppendAsync(RuleSetAuditEntry entry, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -60,6 +68,7 @@ public sealed class PostgresRuleSetAuditStore(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task<RuleSetAuditPage> QueryAsync(
         string? workflowName = null,
         int page = 1,
@@ -125,10 +134,11 @@ public sealed class PostgresRuleSetAuditStore(
         return $"{tenantId}|{workflowName}|{version}|{eventType}|{actor}|{occurredAt:O}|{contentHash}";
     }
 
-    private static string ResolveTenantId()
+    private string ResolveTenantId()
     {
-        return string.IsNullOrWhiteSpace(TenantContext.CurrentTenantId)
+        string? tenantId = _executionContext.Get().TenantId;
+        return string.IsNullOrWhiteSpace(tenantId)
             ? "default"
-            : TenantContext.CurrentTenantId!;
+            : tenantId;
     }
 }

@@ -13,6 +13,10 @@ public sealed class RedisRuleSetChangeNotifier : IRuleSetChangeNotifier, IDispos
     private readonly IMJsonSerializeService _jsonSerializeService;
     private int _disposed;
 
+    /// <summary>Creates a Redis-backed ruleset change notifier.</summary>
+    /// <param name="connection">Redis connection.</param>
+    /// <param name="channelName">Pub/Sub channel name.</param>
+    /// <param name="jsonSerializeService">Serializer for change events.</param>
     public RedisRuleSetChangeNotifier(IConnectionMultiplexer connection, string channelName, IMJsonSerializeService jsonSerializeService)
     {
         _jsonSerializeService = jsonSerializeService;
@@ -24,6 +28,7 @@ public sealed class RedisRuleSetChangeNotifier : IRuleSetChangeNotifier, IDispos
         });
     }
 
+    /// <inheritdoc />
     public async Task PublishAsync(RuleSetChangeEvent changeEvent, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -31,6 +36,7 @@ public sealed class RedisRuleSetChangeNotifier : IRuleSetChangeNotifier, IDispos
         await _subscriber.PublishAsync(RedisChannel.Literal(_channelName), payload);
     }
 
+    /// <inheritdoc />
     public IDisposable Subscribe(Func<RuleSetChangeEvent, Task> handler)
     {
         Guid id = Guid.NewGuid();
@@ -67,6 +73,7 @@ public sealed class RedisRuleSetChangeNotifier : IRuleSetChangeNotifier, IDispos
         }
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 1) return;

@@ -17,16 +17,30 @@ using Muonroi.Tenancy.Core;
 
 namespace Muonroi.BuildingBlock.IntegrationTests;
 
+/// <summary>
+/// Test web application factory with in-memory services and JWT configuration.
+/// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
+    /// <summary>Test tenant identifier.</summary>
     public string TestTenantId { get; set; } = "test-tenant-001";
+    /// <summary>Test user identifier.</summary>
     public string TestUserId { get; set; } = Guid.NewGuid().ToString();
+    /// <summary>Test username.</summary>
     public string TestUsername { get; set; } = "testuser@example.com";
+    /// <summary>Test permission bitmask.</summary>
     public long TestUserPermissions { get; set; } = 0b1111111111;
+    /// <summary>JWT signing key used in tests.</summary>
     public string JwtSecretKey { get; set; } = "test-secret-key-minimum-32-characters-long-for-hs256";
+    /// <summary>JWT issuer used in tests.</summary>
     public string JwtIssuer { get; set; } = "test-issuer";
+    /// <summary>JWT audience used in tests.</summary>
     public string JwtAudience { get; set; } = "test-audience";
 
+    /// <summary>
+    /// Configures the test web host and test services.
+    /// </summary>
+    /// <param name="builder">Web host builder.</param>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSolutionRelativeContentRoot("tests/Muonroi.BuildingBlock.IntegrationTests");
@@ -63,6 +77,15 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         });
     }
 
+    /// <summary>
+    /// Generates a JWT token for integration tests.
+    /// </summary>
+    /// <param name="userId">User identifier.</param>
+    /// <param name="username">User name.</param>
+    /// <param name="permissions">Permission bitmask.</param>
+    /// <param name="tenantId">Optional tenant identifier.</param>
+    /// <param name="expiration">Optional token expiration.</param>
+    /// <returns>Serialized JWT token.</returns>
     public string GenerateJwtToken(
         string userId,
         string username,
@@ -108,31 +131,60 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     }
 }
 
+/// <summary>
+/// In-memory EF Core context used by integration tests.
+/// </summary>
+/// <param name="options">Context options.</param>
 public class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options)
 {
+    /// <summary>Users table.</summary>
     public DbSet<TestUser> Users { get; set; } = null!;
+    /// <summary>Tenants table.</summary>
     public DbSet<TestTenant> Tenants { get; set; } = null!;
 }
 
+/// <summary>
+/// Test user entity.
+/// </summary>
 public class TestUser
 {
+    /// <summary>User identifier.</summary>
     public Guid Id { get; set; }
+    /// <summary>User name.</summary>
     public string Username { get; set; } = string.Empty;
+    /// <summary>Tenant identifier.</summary>
     public string TenantId { get; set; } = string.Empty;
+    /// <summary>Permission bitmask.</summary>
     public long Permissions { get; set; }
+    /// <summary>Whether the user is active.</summary>
     public bool IsActive { get; set; }
 }
 
+/// <summary>
+/// Test tenant entity.
+/// </summary>
 public class TestTenant
 {
+    /// <summary>Tenant primary key.</summary>
     public int Id { get; set; }
+    /// <summary>Tenant identifier.</summary>
     public string TenantId { get; set; } = string.Empty;
+    /// <summary>Tenant name.</summary>
     public string Name { get; set; } = string.Empty;
+    /// <summary>Whether the tenant is active.</summary>
     public bool IsActive { get; set; }
 }
 
+/// <summary>
+/// Resolves tenant identifiers for integration tests.
+/// </summary>
 public class TestTenantIdResolver : ITenantIdResolver
 {
+    /// <summary>
+    /// Resolves tenant id from headers or returns a default.
+    /// </summary>
+    /// <param name="context">HTTP context.</param>
+    /// <returns>Resolved tenant identifier.</returns>
     public Task<string?> ResolveTenantIdAsync(HttpContext context)
     {
         if (context.Request.Headers.TryGetValue("X-Tenant-Id", out var headerValue))

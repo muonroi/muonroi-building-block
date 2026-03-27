@@ -3,9 +3,17 @@ using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Validators;
 
+/// <summary>
+/// Detects gaps in range-based input columns.
+/// </summary>
 public sealed class GapDetector
 {
-    public static IReadOnlyList<string> Detect(DecisionTableModel table)
+    /// <summary>
+    /// Detects gaps in the first input column ranges.
+    /// </summary>
+    /// <param name="table">Decision table to inspect.</param>
+    /// <returns>List of gap descriptions.</returns>
+    public IReadOnlyList<string> Detect(DecisionTableModel table)
     {
         List<string> gaps = [];
         if (table.InputColumns.Count != 1)

@@ -1,18 +1,25 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Http.Http;
 
+/// <summary>
+/// Adds bearer authorization headers from the current auth context.
+/// </summary>
 public class AuthenticateHeaderHandler : DelegatingHandler
 {
-    private readonly ILogger _logger;
+    private readonly IMLog<AuthenticateHeaderHandler> _logger;
 
     private readonly IAuthenticateInfoContext _authContext;
 
+    /// <summary>
+    /// Configuration used by the handler.
+    /// </summary>
     public IConfiguration Configuration;
 
-    public AuthenticateHeaderHandler(ILogger<AuthenticateHeaderHandler> logger, IAuthenticateInfoContext authContext,
+    /// <summary>
+    /// Initializes the handler.
+    /// </summary>
+    public AuthenticateHeaderHandler(IMLog<AuthenticateHeaderHandler> logger, IAuthenticateInfoContext authContext,
         IConfiguration configuration)
     {
         _logger = logger;
@@ -20,6 +27,7 @@ public class AuthenticateHeaderHandler : DelegatingHandler
         Configuration = configuration;
     }
 
+    /// <inheritdoc/>
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
         CancellationToken cancellationToken)
     {

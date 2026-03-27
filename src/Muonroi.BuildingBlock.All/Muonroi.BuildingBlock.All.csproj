@@ -6,7 +6,6 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>Metapackage for Muonroi Building Block - Includes all sub-packages for a complete infrastructure setup.</Description>
     <PackageId>Muonroi.BuildingBlock.All</PackageId>
-    <Version>1.0.0-alpha.1</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <IsCommercialPackage>true</IsCommercialPackage>
@@ -14,11 +13,16 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="Scriban" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Muonroi.AspNetCore\Muonroi.AspNetCore.csproj" />
     <ProjectReference Include="..\Muonroi.Core\Muonroi.Core.csproj" />
     <ProjectReference Include="..\Muonroi.Auth\Muonroi.Auth.csproj" />
     <ProjectReference Include="..\Muonroi.AuthZ\Muonroi.AuthZ.csproj" />
     <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.Events\Muonroi.Data.EntityFrameworkCore.Events.csproj" />
     <ProjectReference Include="..\Muonroi.Data.Dapper\Muonroi.Data.Dapper.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Core\Muonroi.RuleEngine.Core.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Runtime.Web\Muonroi.RuleEngine.Runtime.Web.csproj" />

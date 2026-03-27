@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using Muonroi.Governance.License;
+using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.Tenancy.Abstractions;
 using Muonroi.Tenancy.Core;
@@ -16,9 +17,17 @@ namespace Muonroi.Rules.Rules;
 /// from business logic and lets callers decide which rules to run at runtime.
 /// </summary>
 /// <typeparam name="T">Type of context passed to each rule.</typeparam>
+/// <remarks>
+/// Initializes a new instance of the <see cref="RuleEngine{T}"/> class.
+/// </remarks>
+/// <param name="options">The rule options monitor.</param>
+/// <param name="logger">The logger instance.</param>
+/// <param name="activation">The rule activation strategy.</param>
+/// <param name="licenseGuard">The license guard.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class RuleEngine<T>(
     IOptionsMonitor<RuleOptions>? options = null,
-    ILogger? logger = null,
+    IMLog<RuleEngine<T>>? logger = null,
     IRuleActivationStrategy<T>? activation = null,
     ILicenseGuard? licenseGuard = null)
 {
@@ -36,6 +45,12 @@ public sealed class RuleEngine<T>(
     private static readonly Histogram<double> _durations =
         _meter.CreateHistogram<double>("rule_duration_ms", "ms", "Rule execution duration");
 
+    /// <summary>
+    /// Adds a rule to the engine with a specific descriptor.
+    /// </summary>
+    /// <param name="rule">The rule to add.</param>
+    /// <param name="descriptor">The descriptor for the rule.</param>
+    /// <returns>The <see cref="RuleEngine{T}"/> instance for chaining.</returns>
     public RuleEngine<T> AddRule(IRule<T> rule, RuleDescriptor descriptor)
     {
         _rules.Add((rule, descriptor));
@@ -43,12 +58,22 @@ public sealed class RuleEngine<T>(
         return this;
     }
 
+    /// <summary>
+    /// Adds a rule to the engine. A default descriptor will be generated.
+    /// </summary>
+    /// <param name="rule">The rule to add.</param>
+    /// <returns>The <see cref="RuleEngine{T}"/> instance for chaining.</returns>
     public RuleEngine<T> AddRule(IRule<T> rule)
     {
         string code = GenerateRuleCode(rule);
         return AddRule(rule, new RuleDescriptor(code, rule.GetType().Name, string.Empty, rule.Type));
     }
 
+    /// <summary>
+    /// Removes a rule from the engine by its code.
+    /// </summary>
+    /// <param name="ruleCode">The unique code of the rule to remove.</param>
+    /// <returns><c>true</c> if the rule was removed; otherwise, <c>false</c>.</returns>
     public bool RemoveRule(string ruleCode)
     {
         if (string.IsNullOrWhiteSpace(ruleCode))
@@ -93,6 +118,10 @@ public sealed class RuleEngine<T>(
         return code;
     }
 
+    /// <summary>
+    /// Gets the catalog of all registered rules.
+    /// </summary>
+    /// <returns>An enumeration of rule descriptors.</returns>
     public IEnumerable<RuleDescriptor> GetCatalog()
     {
         return _rules.Select(r => r.Descriptor);
@@ -148,22 +177,49 @@ public sealed class RuleEngine<T>(
         return result;
     }
 
+    /// <summary>
+    /// Executes rules of the specified types against the given context.
+    /// </summary>
+    /// <param name="context">The context to execute rules against.</param>
+    /// <param name="ruleTypes">The types of rules to execute.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public Task ExecuteAsync(T context, params RuleType[] ruleTypes)
     {
         return ExecuteAsync(context, null, CancellationToken.None, ruleTypes);
     }
 
+    /// <summary>
+    /// Executes rules of the specified types against the given context, with support for cancellation.
+    /// </summary>
+    /// <param name="context">The context to execute rules against.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="ruleTypes">The types of rules to execute.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public Task ExecuteAsync(T context, CancellationToken cancellationToken, params RuleType[] ruleTypes)
     {
         return ExecuteAsync(context, null, cancellationToken, ruleTypes);
     }
 
+    /// <summary>
+    /// Executes specific rules by their codes against the given context.
+    /// </summary>
+    /// <param name="context">The context to execute rules against.</param>
+    /// <param name="selectedRuleCodes">The codes of the rules to execute.</param>
+    /// <param name="ruleTypes">The types of rules to execute.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public Task ExecuteAsync(T context, IEnumerable<string>? selectedRuleCodes, params RuleType[] ruleTypes)
     {
         return ExecuteAsync(context, selectedRuleCodes, CancellationToken.None, ruleTypes);
     }
 
-    // Update all calls to ExecuteRulesAsync to pass the cancellationToken parameter
+    /// <summary>
+    /// Executes specific rules by their codes against the given context, with support for cancellation.
+    /// </summary>
+    /// <param name="context">The context to execute rules against.</param>
+    /// <param name="selectedRuleCodes">The codes of the rules to execute.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="ruleTypes">The types of rules to execute.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task ExecuteAsync(
         T context,
         IEnumerable<string>? selectedRuleCodes,
@@ -250,7 +306,7 @@ public sealed class RuleEngine<T>(
         string[] unused = [.. _rules.Select(r => r.Descriptor.Code).Except(executed, StringComparer.OrdinalIgnoreCase)];
         if (unused.Length > 0)
         {
-            logger?.LogWarning("Registered rules not executed: {Rules}", string.Join(", ", unused));
+            logger?.Warn("Registered rules not executed: {Rules}", string.Join(", ", unused));
         }
     }
 

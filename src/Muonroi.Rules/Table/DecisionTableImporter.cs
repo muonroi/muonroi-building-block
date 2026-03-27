@@ -2,23 +2,66 @@
 
 namespace Muonroi.Rules.Table;
 
+/// <summary>
+/// Defines the hit policies for decision tables.
+/// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public enum HitPolicy
 {
+    /// <summary>
+    /// The first rule that matches is used.
+    /// </summary>
     First,
+
+    /// <summary>
+    /// Only one rule should match; otherwise, an error occurs.
+    /// </summary>
     Unique
 }
 
+/// <summary>
+/// Represents a single rule in a decision table.
+/// </summary>
+/// <param name="Inputs">The input values for the rule.</param>
+/// <param name="Outputs">The output values for the rule.</param>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public record DecisionRule(Dictionary<string, string> Inputs, Dictionary<string, string> Outputs);
 
+/// <summary>
+/// Represents a decision table.
+/// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public class DecisionTable
 {
+    /// <summary>
+    /// Gets or sets the hit policy for the decision table.
+    /// </summary>
     public HitPolicy HitPolicy { get; set; }
+
+    /// <summary>
+    /// Gets the list of input headers.
+    /// </summary>
     public List<string> InputHeaders { get; } = [];
+
+    /// <summary>
+    /// Gets the list of output headers.
+    /// </summary>
     public List<string> OutputHeaders { get; } = [];
+
+    /// <summary>
+    /// Gets the list of rules in the decision table.
+    /// </summary>
     public List<DecisionRule> Rules { get; } = [];
+
+    /// <summary>
+    /// Gets the list of warnings generated during import.
+    /// </summary>
     public List<string> Warnings { get; } = [];
 }
 
+/// <summary>
+/// Provides methods to import decision tables from different formats.
+/// </summary>
 public static partial class DecisionTableImporter
 {
     [GeneratedRegex(@"^\[(?<min>-?\d+(?:\.\d+)?)\.\.(?<max>-?\d+(?:\.\d+)?)\]$", RegexOptions.CultureInvariant)]
@@ -35,6 +78,13 @@ public static partial class DecisionTableImporter
 
     private readonly record struct Interval(double Min, double Max, bool IncludeMin, bool IncludeMax);
 
+    /// <summary>
+    /// Imports a decision table from a CSV string.
+    /// </summary>
+    /// <param name="csvContent">The CSV content to import.</param>
+    /// <returns>A <see cref="DecisionTable"/> instance.</returns>
+    /// <exception cref="ArgumentException">Thrown when the CSV content is empty.</exception>
+    /// <exception cref="InvalidDataException">Thrown when the CSV content is malformed.</exception>
     public static DecisionTable ImportCsv(string csvContent)
     {
         if (string.IsNullOrWhiteSpace(csvContent))

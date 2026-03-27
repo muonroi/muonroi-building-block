@@ -6,15 +6,19 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace Muonroi.Data.EntityFrameworkCore.Auth;
 
+/// <summary>
+/// Internal helpers for authentication and token validation using EF Core.
+/// </summary>
 public static class AuthorizeInternal
 {
     private const string BearerPrefix = "Bearer ";
-
+    private sealed class AuthorizeInternalLogger { }
+    /// <summary>Resolves a refresh token from the current HTTP context.</summary>
     public static async Task<MRefreshToken?> ResolveTokenFromHttpContext<TDbContext>(
         this TDbContext dbContext,
         HttpContext context,
         IMultiLevelCacheService cacheService,
-        ILogger? logger = null,
+        IMLog<MDbContext>? logger = null,
         IOptions<AuthOptions>? authOptions = null,
         MTokenInfo? tokenInfo = null)
         where TDbContext : MDbContext
@@ -42,7 +46,7 @@ public static class AuthorizeInternal
 
     internal static async Task<MRefreshToken?> ResolveTokenValidityKey<TDbContext>(
         this TDbContext dbContext, string authorizationHeader,
-        HttpContext context, IMultiLevelCacheService cacheService, ILogger? logger = null,
+        HttpContext context, IMultiLevelCacheService cacheService, IMLog<MDbContext>? logger = null,
         IOptions<AuthOptions>? authOptions = null,
         MTokenInfo? tokenInfo = null)
         where TDbContext : MDbContext
@@ -50,7 +54,7 @@ public static class AuthorizeInternal
         if (!TryGetValidatedClaims(authorizationHeader, context, tokenInfo, out List<Claim>? claims))
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            logger?.LogWarning("JWT validation failed while resolving token validity context");
+            logger?.Warn("JWT validation failed while resolving token validity context");
             return null;
         }
 
@@ -66,7 +70,7 @@ public static class AuthorizeInternal
         if (!Guid.TryParse(userIdentifier, out Guid userGuid))
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            logger?.LogWarning("Invalid user identifier in token");
+            logger?.Warn("Invalid user identifier in token");
             return null;
         }
 
@@ -77,10 +81,8 @@ public static class AuthorizeInternal
                 !string.Equals(contextTenant, claimTenantId, StringComparison.Ordinal))
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                logger?.LogWarning(
-                    "Tenant mismatch while resolving token validity. ClaimTenant={ClaimTenant}, ContextTenant={ContextTenant}",
-                    claimTenantId,
-                    contextTenant);
+                logger?.Warn(
+                    "Tenant mismatch while resolving token validity. ClaimTenant={ClaimTenant}, ContextTenant={ContextTenant}");
                 return null;
             }
         }
@@ -109,14 +111,14 @@ public static class AuthorizeInternal
 
         if (refresh is null)
         {
-            logger?.LogWarning("Refresh token not found for user {User}", userGuid);
+            logger?.Warn("Refresh token not found for user {User}", userGuid);
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             return null;
         }
 
         if (refresh.IsDeleted || refresh.IsRevoked)
         {
-            logger?.LogWarning("Attempt using revoked token for user {User}", userGuid);
+            logger?.Warn("Attempt using revoked token for user {User}", userGuid);
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             return null;
         }
@@ -188,6 +190,7 @@ public static class AuthorizeInternal
         return Convert.ChangeType(claim.Value, typeof(T));
     }
 
+    /// <summary>Validates login credentials and issues access/refresh tokens.</summary>
     public static async Task<MResponse<LoginResponseModel>> ResolveLoginAsync<TDbContext, TPermission>(
         this TDbContext dbContext, LoginRequestModel request,
         MResponse<LoginResponseModel> result,
@@ -275,6 +278,7 @@ public static class AuthorizeInternal
         return result;
     }
 
+    /// <summary>Validates a refresh token and issues new access/refresh tokens.</summary>
     public static async Task<MResponse<RefreshTokenResponseModel>> ResolveRefreshToken<TDbContext, TPermission>(
         this TDbContext dbContext,
         RefreshTokenRequestModel request,
@@ -443,6 +447,7 @@ public static class AuthorizeInternal
     }
 
 
+    /// <summary>Updates login attempt counters and lockout state after a failed login.</summary>
     public static async Task HandleFailedLoginAttempt<TDbContext>(MUser existedUser,
         MUserLoginAttempt? loginAttemptHistory, TDbContext dbContext,
         CancellationToken cancellationToken)

@@ -1,10 +1,18 @@
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
+/// <summary>
+/// Implements approval workflow transitions for rulesets.
+/// </summary>
 public sealed class RuleSetApprovalService(
     RuleEngineDbContext dbContext,
     IRuleSetAuditStore auditStore,
-    IRuleSetChangeNotifier? notifier = null) : IRuleSetApprovalService
+    IRuleSetChangeNotifier? notifier = null,
+    ISystemExecutionContextAccessor? executionContextAccessor = null) : IRuleSetApprovalService
 {
+    private readonly ISystemExecutionContextAccessor _executionContext =
+        executionContextAccessor ?? new SystemExecutionContextAccessor();
+
+    /// <inheritdoc />
     public async Task<RuleSetRecord> SubmitForApprovalAsync(
         string workflowName,
         int version,
@@ -67,6 +75,7 @@ public sealed class RuleSetApprovalService(
         return record;
     }
 
+    /// <inheritdoc />
     public async Task<RuleSetRecord> ApproveAsync(
         string workflowName,
         int version,
@@ -135,6 +144,7 @@ public sealed class RuleSetApprovalService(
         return record;
     }
 
+    /// <inheritdoc />
     public async Task<RuleSetRecord> RejectAsync(
         string workflowName,
         int version,
@@ -200,11 +210,12 @@ public sealed class RuleSetApprovalService(
         return record;
     }
 
-    private static string ResolveTenantId()
+    private string ResolveTenantId()
     {
-        return string.IsNullOrWhiteSpace(TenantContext.CurrentTenantId)
+        string? tenantId = _executionContext.Get().TenantId;
+        return string.IsNullOrWhiteSpace(tenantId)
             ? "default"
-            : TenantContext.CurrentTenantId!;
+            : tenantId;
     }
 }
 

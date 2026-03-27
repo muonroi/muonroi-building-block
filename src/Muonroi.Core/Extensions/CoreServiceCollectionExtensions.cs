@@ -5,8 +5,21 @@ using Muonroi.Logging;
 
 namespace Muonroi.Core.Extensions;
 
+/// <summary>
+/// Provides extension methods for setting up core services in an <see cref="IServiceCollection"/>.
+/// </summary>
 public static class CoreServiceCollectionExtensions
 {
+    /// <summary>
+    /// Adds core services to the specified <see cref="IServiceCollection"/>.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
+    /// <param name="configuration">The configuration to use for setting up services.</param>
+    /// <param name="isSecretDefault">A flag indicating if secrets are default.</param>
+    /// <param name="secretKey">The secret key for decryption.</param>
+    /// <param name="paginationConfigs">Optional pagination configurations.</param>
+    /// <param name="tokenConfig">Optional token information.</param>
+    /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
     public static IServiceCollection AddCoreServices(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -30,6 +43,14 @@ public static class CoreServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Adds Redis configuration to the specified <see cref="IServiceCollection"/>.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add the configuration to.</param>
+    /// <param name="configuration">The configuration containing Redis settings.</param>
+    /// <param name="isSecretDefault">A flag indicating if secrets are default (defaults to true).</param>
+    /// <param name="secretKey">The secret key for decryption (defaults to empty string).</param>
+    /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
     public static IServiceCollection AddRedisConfiguration(this IServiceCollection services,
         IConfiguration configuration,
         bool isSecretDefault = true,

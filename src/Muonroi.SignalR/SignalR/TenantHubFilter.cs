@@ -6,6 +6,12 @@ namespace Muonroi.SignalR.SignalR;
 /// </summary>
 public sealed class TenantHubFilter(ITenantIdResolver resolver, MTokenInfo tokenInfo, ILicenseGuard guard) : IHubFilter
 {
+    /// <summary>
+    /// Resolves tenant id for the invocation and enforces tenant requirements.
+    /// </summary>
+    /// <param name="invocationContext">Hub invocation context.</param>
+    /// <param name="next">Next filter in the pipeline.</param>
+    /// <returns>The invocation result.</returns>
     public async ValueTask<object?> InvokeMethodAsync(
         HubInvocationContext invocationContext,
         Func<HubInvocationContext, ValueTask<object?>> next)

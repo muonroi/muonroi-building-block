@@ -13,10 +13,21 @@ using DecisionTableValidationResult = Muonroi.RuleEngine.DecisionTable.Validator
 
 namespace Muonroi.RuleEngine.DecisionTable.Web.Controllers;
 
+/// <summary>
+/// Base controller providing compatibility endpoints for decision tables.
+/// </summary>
 public abstract class DecisionTableCompatControllerBase(
     IDecisionTableStore store,
     DecisionTableValidator validator) : ControllerBase
 {
+    /// <summary>
+    /// Lists decision tables with pagination and optional search.
+    /// </summary>
+    /// <param name="page">Page number.</param>
+    /// <param name="pageSize">Page size.</param>
+    /// <param name="search">Optional search term.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The paged decision table list.</returns>
     [HttpGet]
     public virtual async Task<IActionResult> List(
         [FromQuery] int page = 1,
@@ -35,6 +46,12 @@ public abstract class DecisionTableCompatControllerBase(
         return Ok(result);
     }
 
+    /// <summary>
+    /// Gets a decision table by identifier.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The decision table.</returns>
     [HttpGet("{id}")]
     public virtual async Task<IActionResult> Get(string id, CancellationToken cancellationToken = default)
     {
@@ -42,6 +59,12 @@ public abstract class DecisionTableCompatControllerBase(
         return table is null ? NotFound() : Ok(table);
     }
 
+    /// <summary>
+    /// Creates a decision table.
+    /// </summary>
+    /// <param name="table">Decision table payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The created decision table.</returns>
     [HttpPost]
     public virtual async Task<IActionResult> Create(
         [FromBody] DecisionTableModel table,
@@ -62,6 +85,13 @@ public abstract class DecisionTableCompatControllerBase(
         return CreatedAtAction(nameof(Get), new { id = table.Id }, table);
     }
 
+    /// <summary>
+    /// Updates an existing decision table.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="table">Decision table payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The updated decision table.</returns>
     [HttpPut("{id}")]
     public virtual async Task<IActionResult> Update(
         string id,
@@ -88,6 +118,13 @@ public abstract class DecisionTableCompatControllerBase(
         return Ok(saved ?? table);
     }
 
+    /// <summary>
+    /// Reorders rows in a decision table.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="request">Row reorder request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result of the reorder operation.</returns>
     [HttpPost("{id}/rows/reorder")]
     public virtual async Task<IActionResult> ReorderRows(
         string id,
@@ -115,6 +152,14 @@ public abstract class DecisionTableCompatControllerBase(
         return Ok(table);
     }
 
+    /// <summary>
+    /// Returns the decision table version history.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="page">Page number.</param>
+    /// <param name="pageSize">Page size.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The version history.</returns>
     [HttpGet("{id}/versions")]
     public virtual async Task<IActionResult> Versions(
         string id,
@@ -126,6 +171,12 @@ public abstract class DecisionTableCompatControllerBase(
         return Ok(versions);
     }
 
+    /// <summary>
+    /// Validates a decision table.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The validation result.</returns>
     [HttpPost("{id}/validate")]
     public virtual async Task<IActionResult> Validate(string id, CancellationToken cancellationToken = default)
     {
@@ -139,6 +190,13 @@ public abstract class DecisionTableCompatControllerBase(
         return Ok(result);
     }
 
+    /// <summary>
+    /// Exports a decision table in the requested format.
+    /// </summary>
+    /// <param name="id">Decision table identifier.</param>
+    /// <param name="format">Export format.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The exported file payload.</returns>
     [HttpGet("{id}/export/{format}")]
     public virtual async Task<IActionResult> Export(
         string id,
@@ -170,11 +228,20 @@ public abstract class DecisionTableCompatControllerBase(
         };
     }
 
+    /// <summary>
+    /// Resolves the actor name from the request or execution context.
+    /// </summary>
+    /// <param name="actorFromRequest">Optional actor supplied by request.</param>
+    /// <returns>The resolved actor.</returns>
     protected virtual string? ResolveActor(string? actorFromRequest = null)
     {
         return string.IsNullOrWhiteSpace(actorFromRequest) ? ResolveActor() : actorFromRequest;
     }
 
+    /// <summary>
+    /// Resolves the actor name from the execution context.
+    /// </summary>
+    /// <returns>The resolved actor.</returns>
     protected virtual string ResolveActor()
     {
         MControllerExecutionContext? context = ResolveExecutionContext();
@@ -191,12 +258,28 @@ public abstract class DecisionTableCompatControllerBase(
         return "anonymous";
     }
 
+    /// <summary>
+    /// Reason string for create operations.
+    /// </summary>
+    /// <returns>The create reason.</returns>
     protected virtual string ResolveCreateReason() => "create";
 
+    /// <summary>
+    /// Reason string for update operations.
+    /// </summary>
+    /// <returns>The update reason.</returns>
     protected virtual string ResolveUpdateReason() => "update";
 
+    /// <summary>
+    /// Reason string for reorder operations.
+    /// </summary>
+    /// <returns>The reorder reason.</returns>
     protected virtual string ResolveReorderReason() => "reorder";
 
+    /// <summary>
+    /// Resolves controller execution context from the HTTP request.
+    /// </summary>
+    /// <returns>The resolved execution context.</returns>
     protected virtual MControllerExecutionContext? ResolveExecutionContext()
     {
         HttpContext? httpContext = HttpContext;

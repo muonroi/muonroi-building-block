@@ -17,8 +17,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.10.40171" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.10.2185" PrivateAssets="all" />
+    <PackageReference Include="MessagePack" />
+    <PackageReference Include="Microsoft.IO.Redist" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" PrivateAssets="all" />
+    <PackageReference Include="MimeKit" />
   </ItemGroup>
 
   <ItemGroup>

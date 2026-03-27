@@ -2,14 +2,18 @@ using Microsoft.AspNetCore.Http;
 using Muonroi.Core.Abstractions.Constants;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Governance.License;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Grpc.Grpc;
 
+/// <summary>
+/// Server-side gRPC interceptor with tenancy, licensing, and telemetry handling.
+/// </summary>
 public class GrpcServerInterceptor(
     ISystemExecutionContextAccessor executionContextAccessor,
     ITenantContextPolicy tenantContextPolicy,
     MTokenInfo tokenInfo,
-    ILogger<GrpcServerInterceptor> logger,
+    IMLog<GrpcServerInterceptor>? logger = null,
     LicenseState? licenseState = null,
     IOptions<GrpcServicesConfig>? grpcConfigOptions = null,
     GrpcRateLimiter? rateLimiter = null,
@@ -22,14 +26,13 @@ public class GrpcServerInterceptor(
     private readonly ITenantContextPolicy _tenantContextPolicy = tenantContextPolicy;
     private readonly bool _multiTenantEnabled = tokenInfo.MultiTenantEnabled;
     private readonly LicenseState _licenseState = licenseState ?? LicenseState.CreateFree();
-    private readonly ILogger<GrpcServerInterceptor> _logger =
-        logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GrpcServerInterceptor>.Instance;
     private readonly GrpcServerConfig _serverConfig = grpcConfigOptions?.Value.Server ?? new GrpcServerConfig();
     private readonly GrpcRateLimiter _rateLimiter = rateLimiter ?? new GrpcRateLimiter();
     private readonly bool _requireTenantClaimForAuthenticatedUser =
         multiTenantOptions?.Value.RequireTenantClaimForAuthenticatedUser ?? true;
     private readonly ILicenseGuard? _licenseGuard = licenseGuard;
 
+    /// <inheritdoc/>
     public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(
         TRequest request,
         ServerCallContext context,
@@ -43,7 +46,7 @@ public class GrpcServerInterceptor(
         using ContextMirrorScope contextMirror = ContextMirrorScope.Apply(executionContext, logScopeFactory);
         using Activity? activity = StartActivity(context.Method, "unary", executionContext.TenantId);
 
-        _logger.LogInformation("gRPC call {Method} started CorrelationId={CorrelationId}",
+        logger?.Info("gRPC call {Method} started CorrelationId={CorrelationId}",
             context.Method, executionContext.CorrelationId);
 
         Stopwatch sw = Stopwatch.StartNew();
@@ -52,7 +55,7 @@ public class GrpcServerInterceptor(
         try
         {
             TResponse response = await continuation(request, context);
-            _logger.LogInformation("gRPC call {Method} completed CorrelationId={CorrelationId}",
+            logger?.Info("gRPC call {Method} completed CorrelationId={CorrelationId}",
                 context.Method, executionContext.CorrelationId);
             return response;
         }
@@ -75,6 +78,7 @@ public class GrpcServerInterceptor(
         }
     }
 
+    /// <inheritdoc/>
     public override async Task<TResponse> ClientStreamingServerHandler<TRequest, TResponse>(
         IAsyncStreamReader<TRequest> requestStream,
         ServerCallContext context,
@@ -114,6 +118,7 @@ public class GrpcServerInterceptor(
         }
     }
 
+    /// <inheritdoc/>
     public override async Task ServerStreamingServerHandler<TRequest, TResponse>(
         TRequest request,
         IServerStreamWriter<TResponse> responseStream,
@@ -153,6 +158,7 @@ public class GrpcServerInterceptor(
         }
     }
 
+    /// <inheritdoc/>
     public override async Task DuplexStreamingServerHandler<TRequest, TResponse>(
         IAsyncStreamReader<TRequest> requestStream,
         IServerStreamWriter<TResponse> responseStream,
@@ -215,7 +221,7 @@ public class GrpcServerInterceptor(
         string? apiKey = context.RequestHeaders.GetValue(CustomHeader.ApiKey)?.Trim();
 
         List<string> permissions = user?.Claims
-                .Where(x => x.Type == ClaimConstants.Permission || x.Type == ClaimTypes.Role)
+                .Where(x => x.Type is ClaimConstants.Permission or ClaimTypes.Role)
                 .Select(x => x.Value)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -358,8 +364,14 @@ public class GrpcServerInterceptor(
 
 }
 
+/// <summary>
+/// Helpers for reading gRPC metadata values.
+/// </summary>
 public static class MetadataExtensions
 {
+    /// <summary>
+    /// Gets the first metadata value for the provided key.
+    /// </summary>
     public static string? GetValue(this Metadata metadata, string key)
     {
         Metadata.Entry? entry = metadata.FirstOrDefault(m => m.Key.Equals(key, StringComparison.OrdinalIgnoreCase));

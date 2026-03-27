@@ -1,5 +1,5 @@
 global using Microsoft.AspNetCore.Http;
-global using Muonroi.Tenancy.Abstractions.Models;
+global using Muonroi.Quota.Abstractions;
 global using Muonroi.Tenancy.Abstractions.Interfaces;
 global using System;
 global using System.Threading;

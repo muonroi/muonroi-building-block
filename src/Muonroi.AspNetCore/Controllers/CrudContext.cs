@@ -5,9 +5,13 @@ namespace Muonroi.AspNetCore.Controllers;
 /// </summary>
 public enum CrudOperationType
 {
+    /// <summary>Creates a new entity.</summary>
     Create,
+    /// <summary>Updates an existing entity.</summary>
     Update,
+    /// <summary>Deletes an entity.</summary>
     Delete,
+    /// <summary>Reads entity data.</summary>
     Read
 }
 

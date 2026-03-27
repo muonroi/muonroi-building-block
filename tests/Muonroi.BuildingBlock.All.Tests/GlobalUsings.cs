@@ -1,0 +1,10 @@
+global using Microsoft.AspNetCore.Hosting;
+global using Microsoft.Extensions.DependencyInjection;
+global using Moq;
+global using Xunit;
+global using Muonroi.Governance.License;
+global using System.Reflection;
+global using Microsoft.Extensions.Hosting;
+global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.AspNetCore.Extensions;
+global using Microsoft.Extensions.Configuration;

@@ -3,8 +3,14 @@ using RabbitMQ.Client;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
+/// <summary>
+/// Represents the Rabbit Mq Health Check.
+/// </summary>
 public class RabbitMqHealthCheck(RabbitMqConfigs configs) : IHealthCheck
 {
+    /// <summary>
+    /// Executes the Check Health Async operation.
+    /// </summary>
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {

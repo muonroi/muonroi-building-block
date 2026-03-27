@@ -1,0 +1,63 @@
+{
+  "id": "loan-tiers",
+  "name": "Loan Tiering",
+  "description": "Sample decision table for loan approval tiering",
+  "hitPolicy": "First",
+  "inputColumns": [
+    {
+      "id": "creditScore",
+      "name": "creditScore",
+      "label": "Credit Score",
+      "dataType": "number"
+    },
+    {
+      "id": "debtRatio",
+      "name": "debtRatio",
+      "label": "Debt To Income",
+      "dataType": "number"
+    }
+  ],
+  "outputColumns": [
+    {
+      "id": "tier",
+      "name": "tier",
+      "label": "Tier",
+      "dataType": "string"
+    }
+  ],
+  "rows": [
+    {
+      "id": "row-premium",
+      "order": 1,
+      "inputCells": [
+        { "columnId": "creditScore", "expression": ">= 760" },
+        { "columnId": "debtRatio", "expression": "<= 0.30" }
+      ],
+      "outputCells": [
+        { "columnId": "tier", "expression": "\"premium\"" }
+      ]
+    },
+    {
+      "id": "row-standard",
+      "order": 2,
+      "inputCells": [
+        { "columnId": "creditScore", "expression": ">= 700" },
+        { "columnId": "debtRatio", "expression": "<= 0.40" }
+      ],
+      "outputCells": [
+        { "columnId": "tier", "expression": "\"standard\"" }
+      ]
+    },
+    {
+      "id": "row-manual",
+      "order": 3,
+      "inputCells": [
+        { "columnId": "creditScore", "expression": "-" },
+        { "columnId": "debtRatio", "expression": "-" }
+      ],
+      "outputCells": [
+        { "columnId": "tier", "expression": "\"manual-review\"" }
+      ]
+    }
+  ]
+}

@@ -1,20 +1,47 @@
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the License Mode.
+/// </summary>
 public enum LicenseMode
 {
+    /// <summary>
+    /// Represents the Offline value.
+    /// </summary>
     Offline,
+    /// <summary>
+    /// Represents the Online value.
+    /// </summary>
     Online
 }
 
+/// <summary>
+/// Represents the License Fail Mode.
+/// </summary>
 public enum LicenseFailMode
 {
+    /// <summary>
+    /// Represents the Soft value.
+    /// </summary>
     Soft,
+    /// <summary>
+    /// Represents the Hard value.
+    /// </summary>
     Hard
 }
 
+/// <summary>
+/// Represents the License Chain Storage.
+/// </summary>
 public enum LicenseChainStorage
 {
+    /// <summary>
+    /// Represents the None value.
+    /// </summary>
     None,
+    /// <summary>
+    /// Represents the File value.
+    /// </summary>
     File
 }
 

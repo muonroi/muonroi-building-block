@@ -1,11 +1,9 @@
+using Muonroi.Governance.Abstractions.Integrity;
+using Muonroi.Governance.Abstractions.License;
+using Muonroi.Logging.Abstractions;
 using System.Net.Http.Json;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
-using Microsoft.Extensions.Logging;
 
-namespace Muonroi.Governance.License;
+namespace Muonroi.Governance.Enterprise.License;
 
 /// <summary>
 /// Handles online license activation to generate activation proofs.
@@ -28,9 +26,13 @@ public sealed class LicenseActivator(
     IHttpClientFactory httpClientFactory,
     LicenseConfigs configs,
     IMJsonSerializeService jsonSerializeService,
-    ILogger<LicenseActivator>? logger = null)
+    IAssemblyHashCollector assemblyHashCollector,
+    IHostEnvironment? hostEnvironment = null,
+    IMLog<LicenseActivator>? logger = null)
 {
-    private readonly string _basePath = AppDomain.CurrentDomain.BaseDirectory;
+    private readonly string _basePath = !string.IsNullOrWhiteSpace(hostEnvironment?.ContentRootPath)
+        ? hostEnvironment.ContentRootPath
+        : AppDomain.CurrentDomain.BaseDirectory;
 
     /// <summary>
     /// Attempts to activate the license online and save the activation proof.
@@ -45,7 +47,7 @@ public sealed class LicenseActivator(
         }
         catch (Exception ex)
         {
-            logger?.LogWarning(ex, "[License] Activation failed - will retry later or use offline mode");
+            logger?.Error(ex, "[License] Activation failed - will retry later or use offline mode");
             return false;
         }
     }
@@ -56,7 +58,7 @@ public sealed class LicenseActivator(
     /// </summary>
     public async Task<ActivationProof> ActivateAsync(CancellationToken cancellationToken = default)
     {
-        logger?.LogInformation("[License] Starting online activation...");
+        logger?.Info("[License] Starting online activation...");
 
         // 1. Read license key
         string? licenseKey = await ReadLicenseKeyAsync();
@@ -72,7 +74,8 @@ public sealed class LicenseActivator(
             MachineFingerprint = GetMachineFingerprint(),
             ProductVersion = GetProductVersion(),
             ActivationTime = DateTimeOffset.UtcNow,
-            Environment = GetEnvironmentName()
+            Environment = GetEnvironmentName(),
+            AssemblyManifest = configs.SkipAssemblyWhitelist ? [] : assemblyHashCollector.Collect()
         };
 
         // 3. Send activation request to server
@@ -80,7 +83,7 @@ public sealed class LicenseActivator(
         string activationUrl = configs.Online.Endpoint ?? "https://license.muonroi.com";
         string endpoint = $"{activationUrl.TrimEnd('/')}/api/v1/activate";
 
-        logger?.LogInformation("[License] Connecting to activation server: {Endpoint}", endpoint);
+        logger?.Info("[License] Connecting to activation server: {Endpoint}", endpoint);
 
         HttpResponseMessage response;
         try
@@ -116,12 +119,17 @@ public sealed class LicenseActivator(
         ActivationProof proof = activationResponse.Proof;
         await SaveActivationProofAsync(proof);
 
-        logger?.LogInformation(
-            "[License] ✅ Activation successful!\n" +
-            "   Organization: {Organization}\n" +
-            "   Tier: {Tier}\n" +
-            "   Valid until: {ExpiresAt:yyyy-MM-dd}\n" +
-            "   Proof saved to: {ProofPath}",
+        // 6. Save activation JWT for frontend license verification
+        if (!string.IsNullOrEmpty(activationResponse.ActivationJwt))
+        {
+            await SaveActivationJwtAsync(activationResponse.ActivationJwt);
+        }
+
+        // 7. Download and save RSA public key for offline signature verification
+        await TryDownloadPublicKeyAsync(activationUrl, cancellationToken);
+
+        logger?.Info(
+            "[License] Activation successful - Org: {Organization} Tier: {Tier} ValidUntil: {ExpiresAt:yyyy-MM-dd} ProofPath: {ProofPath}",
             proof.OrganizationName,
             proof.Tier,
             proof.ExpiresAt,
@@ -129,7 +137,7 @@ public sealed class LicenseActivator(
 
         if (!string.IsNullOrEmpty(activationResponse.Message))
         {
-            logger?.LogInformation("[License] Server message: {Message}", activationResponse.Message);
+            logger?.Info("[License] Server message: {Message}", activationResponse.Message);
         }
 
         return proof;
@@ -152,12 +160,93 @@ public sealed class LicenseActivator(
 
         await File.WriteAllTextAsync(proofPath, json);
 
-        logger?.LogDebug("[License] Activation proof saved to: {Path}", proofPath);
+        logger?.Debug("[License] Activation proof saved to: {Path}", proofPath);
+    }
+
+    /// <summary>
+    /// Saves the activation JWT to disk for frontend license verification.
+    /// </summary>
+    private async Task SaveActivationJwtAsync(string jwt)
+    {
+        string jwtPath = GetActivationJwtPath();
+        string? directory = Path.GetDirectoryName(jwtPath);
+
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        await File.WriteAllTextAsync(jwtPath, jwt);
+
+        logger?.Debug("[License] Activation JWT saved to: {Path}", jwtPath);
+    }
+
+    /// <summary>
+    /// Gets the path where activation JWT should be saved.
+    /// </summary>
+    private string GetActivationJwtPath()
+    {
+        string configuredPath = configs.ActivationJwtPath ?? "licenses/activation_jwt.txt";
+
+        return Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.Combine(_basePath, configuredPath);
+    }
+
+    /// <summary>
+    /// Downloads the RSA public key from the License Server for offline signature verification.
+    /// </summary>
+    private async Task TryDownloadPublicKeyAsync(string activationUrl, CancellationToken cancellationToken)
+    {
+        try
+        {
+            string publicKeyUrl = $"{activationUrl.TrimEnd('/')}/api/v1/signing-key/public";
+            HttpClient client = httpClientFactory.CreateClient("LicenseServer");
+            HttpResponseMessage response = await client.GetAsync(publicKeyUrl, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                logger?.Warn("[License] Failed to download public key: {Status}", response.StatusCode);
+                return;
+            }
+
+            string publicKeyPem = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(publicKeyPem))
+            {
+                return;
+            }
+
+            string keyPath = GetPublicKeyPath();
+            string? directory = Path.GetDirectoryName(keyPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            await File.WriteAllTextAsync(keyPath, publicKeyPem, cancellationToken);
+            logger?.Info("[License] Public key saved to: {Path}", keyPath);
+        }
+        catch (Exception ex)
+        {
+            logger?.Warn("[License] Could not download public key (offline verification may fail): {Message}", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Gets the path where the signing public key should be saved.
+    /// </summary>
+    private string GetPublicKeyPath()
+    {
+        string configuredPath = configs.PublicKeyPath ?? "licenses/public_key.pem";
+
+        return Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.Combine(_basePath, configuredPath);
     }
 
     /// <summary>
     /// Reads the license key from configuration.
-    /// Supports multiple sources: file, environment variable, or direct config.
+    /// Supports multiple sources: direct config property, file, or environment variable.
     /// </summary>
     private async Task<string?> ReadLicenseKeyAsync()
     {
@@ -189,12 +278,12 @@ public sealed class LicenseActivator(
                 }
                 catch (Exception ex)
                 {
-                    logger?.LogWarning(ex, "[License] Failed to read license file: {Path}", filePath);
+                    logger?.Error(ex, "[License] Failed to read license file: {Path}", filePath);
                 }
             }
         }
 
-        // 2. Try environment variable
+        // 2. Try environment variable (legacy/explicit fallback)
         string? envKey = Environment.GetEnvironmentVariable("MUONROI_LICENSE_KEY");
         if (!string.IsNullOrEmpty(envKey))
         {

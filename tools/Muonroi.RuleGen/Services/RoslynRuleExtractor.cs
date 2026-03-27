@@ -105,7 +105,7 @@ internal sealed class RoslynRuleExtractor
                     continue;
                 }
 
-                (string Code, int Order, string HookPoint, IReadOnlyList<string> DependsOn) = ParseExtractAttribute(extractAttr, model);
+                (string Code, int Order, string HookPoint, IReadOnlyList<string> DependsOn, bool UseFactBagAware) = ParseExtractAttribute(extractAttr, model);
                 if (string.IsNullOrWhiteSpace(Code))
                 {
                     continue;
@@ -158,7 +158,8 @@ internal sealed class RoslynRuleExtractor
                     method.ExpressionBody?.Expression.ToString(),
                     method.Modifiers.Any(m => m.IsKind(SyntaxKind.AsyncKeyword)),
                     tree.FilePath,
-                    line));
+                    line,
+                    UseFactBagAware));
             }
         }
 
@@ -344,16 +345,17 @@ internal sealed class RoslynRuleExtractor
             .FirstOrDefault(IsExtractAttribute);
     }
 
-    private static (string Code, int Order, string HookPoint, IReadOnlyList<string> DependsOn) ParseExtractAttribute(AttributeSyntax attribute, SemanticModel model)
+    private static (string Code, int Order, string HookPoint, IReadOnlyList<string> DependsOn, bool UseFactBagAware) ParseExtractAttribute(AttributeSyntax attribute, SemanticModel model)
     {
         string code = string.Empty;
         int order = 0;
         string hookPoint = "BeforeRule";
         List<string> dependsOn = [];
+        bool useFactBagAware = false;
 
         if (attribute.ArgumentList is null)
         {
-            return (code, order, hookPoint, dependsOn);
+            return (code, order, hookPoint, dependsOn, useFactBagAware);
         }
 
         foreach (AttributeArgumentSyntax argument in attribute.ArgumentList.Arguments)
@@ -390,10 +392,19 @@ internal sealed class RoslynRuleExtractor
             if (string.Equals(property, "DependsOn", StringComparison.OrdinalIgnoreCase))
             {
                 dependsOn.AddRange(ParseStringCollection(argument.Expression, model));
+                continue;
+            }
+
+            if (string.Equals(property, "UseFactBagAware", StringComparison.OrdinalIgnoreCase))
+            {
+                if (bool.TryParse(argument.Expression.ToString(), out bool parsed))
+                {
+                    useFactBagAware = parsed;
+                }
             }
         }
 
-        return (code, order, hookPoint, dependsOn);
+        return (code, order, hookPoint, dependsOn, useFactBagAware);
     }
 
     private static IEnumerable<string> ParseStringCollection(ExpressionSyntax expression, SemanticModel model)

@@ -12,14 +12,26 @@ using Muonroi.Tenancy.Core;
 
 namespace Muonroi.BuildingBlock.IntegrationTests;
 
+/// <summary>
+/// Integration test host entry point.
+/// </summary>
 public class Program
 {
+    /// <summary>
+    /// Starts the test web application.
+    /// </summary>
+    /// <param name="args">Command-line arguments.</param>
     public static void Main(string[] args)
     {
         WebApplication app = BuildApp(args);
         app.Run();
     }
 
+    /// <summary>
+    /// Builds the test web application pipeline.
+    /// </summary>
+    /// <param name="args">Command-line arguments.</param>
+    /// <returns>The configured web application.</returns>
     public static WebApplication BuildApp(string[] args)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

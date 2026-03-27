@@ -1,0 +1,19 @@
+{
+  "workflowName": "loan-approval",
+  "version": 1,
+  "rules": [
+    {
+      "code": "CREDIT_SCORE",
+      "type": "validation",
+      "order": 0,
+      "expression": "input.creditScore >= 650"
+    },
+    {
+      "code": "DEBT_RATIO",
+      "type": "validation",
+      "order": 1,
+      "dependsOn": ["CREDIT_SCORE"],
+      "expression": "(input.monthlyDebt / input.monthlyIncome) <= 0.45"
+    }
+  ]
+}

@@ -2,13 +2,20 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Hosting;
 using System.Runtime.InteropServices;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the Fingerprint Provider.
+/// </summary>
 public sealed class FingerprintProvider(
     LicenseConfigs configs,
     IHostEnvironment? environment) : ILicenseFingerprintProvider
 {
+    /// <summary>
+    /// Executes the Get Fingerprint operation.
+    /// </summary>
     public string GetFingerprint()
     {
         string hardwareId = GetHardwareId();

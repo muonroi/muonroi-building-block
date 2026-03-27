@@ -1,13 +1,19 @@
+using Muonroi.Governance.Abstractions.License;
+using Muonroi.Governance.Compliance;
 using Muonroi.Governance.ControlPlane;
+using Muonroi.Logging.Abstractions;
 
-namespace Muonroi.Governance.Compliance;
+namespace Muonroi.Governance.Enterprise.Compliance;
 
+/// <summary>
+/// Represents the MCompliance Export Service.
+/// </summary>
 public sealed class MComplianceExportService(
     LicenseConfigs licenseConfigs,
     IFingerprintChainStore chainStore,
     IEnumerable<IMControlPlaneStore> controlPlaneStores,
     IHostEnvironment? hostEnvironment = null,
-    ILogger<MComplianceExportService>? logger = null) : IMComplianceExportService
+    IMLog<MComplianceExportService>? logger = null) : IMComplianceExportService
 {
     private const string GenesisHash = "GENESIS";
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -22,11 +28,17 @@ public sealed class MComplianceExportService(
     private readonly IEnumerable<IMControlPlaneStore> _controlPlaneStores =
         controlPlaneStores ?? [];
     private readonly IHostEnvironment? _hostEnvironment = hostEnvironment;
-    private readonly ILogger<MComplianceExportService>? _logger = logger;
+    private readonly IMLog<MComplianceExportService>? _logger = logger;
     private readonly object _lock = new();
 
+    /// <summary>
+    /// Gets the Is Enabled.
+    /// </summary>
     public bool IsEnabled => _licenseConfigs.Compliance.Enabled;
 
+    /// <summary>
+    /// Executes the Export Async operation.
+    /// </summary>
     public async Task<MComplianceExportRunResult> ExportAsync(CancellationToken cancellationToken = default)
     {
         MCompliancePaths paths = ResolvePaths();
@@ -116,7 +128,7 @@ public sealed class MComplianceExportService(
             }
             catch (Exception ex)
             {
-                _logger?.LogWarning(ex, "Failed to load control-plane registry for compliance export.");
+                _logger?.Error(ex, "Failed to load control-plane registry for compliance export.");
                 registry = new MControlPlaneRegistry();
             }
 
@@ -188,6 +200,9 @@ public sealed class MComplianceExportService(
         };
     }
 
+    /// <summary>
+    /// Executes the Get Export Records Async operation.
+    /// </summary>
     public async Task<IReadOnlyList<MComplianceExportRecord>> GetExportRecordsAsync(
         MComplianceExportQuery query,
         CancellationToken cancellationToken = default)
@@ -262,6 +277,9 @@ public sealed class MComplianceExportService(
         return records;
     }
 
+    /// <summary>
+    /// Executes the Verify Async operation.
+    /// </summary>
     public async Task<MComplianceVerificationResult> VerifyAsync(
         MComplianceVerificationRequest? request = null,
         CancellationToken cancellationToken = default)
@@ -342,6 +360,9 @@ public sealed class MComplianceExportService(
         };
     }
 
+    /// <summary>
+    /// Executes the Prune Evidence Packs Async operation.
+    /// </summary>
     public Task<int> PruneEvidencePacksAsync(CancellationToken cancellationToken = default)
     {
         if (!IsEnabled || !_licenseConfigs.Compliance.EnableAutoPruneEvidencePacks)
@@ -379,7 +400,7 @@ public sealed class MComplianceExportService(
             }
             catch (Exception ex)
             {
-                _logger?.LogWarning(ex, "Failed to prune compliance evidence pack '{File}'.", file);
+                _logger?.Error(ex, "Failed to prune compliance evidence pack '{File}'.", file);
             }
         }
 

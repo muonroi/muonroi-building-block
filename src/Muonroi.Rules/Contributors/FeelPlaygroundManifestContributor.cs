@@ -2,12 +2,20 @@ using Muonroi.Core.Abstractions.Enums;
 
 namespace Muonroi.Rules.Contributors;
 
+/// <summary>
+/// Contributes FEEL playground components and actions to the UI engine manifest.
+/// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class FeelPlaygroundManifestContributor : IUiEngineManifestContributor
 {
+    /// <inheritdoc />
     public int Order => 130;
+    /// <inheritdoc />
     public string ModuleId => "feel-playground";
+    /// <inheritdoc />
     public string RequiredTier => "Starter";
 
+    /// <inheritdoc />
     public Task ContributeAsync(UiEngineManifestContext context, CancellationToken ct = default)
     {
         _ = ct;

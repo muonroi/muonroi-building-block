@@ -47,13 +47,22 @@ public class OpaPolicyTests
         Assert.False(await svc.AuthorizeAsync(input));
     }
 
-    private class MockHttpMessageHandler(string response) : HttpMessageHandler
+    [Fact]
+    public async Task Denies_on_http_error()
+    {
+        MockHttpMessageHandler handler = new("", HttpStatusCode.InternalServerError);
+        HttpClient client = new(handler) { BaseAddress = new Uri("http://localhost") };
+        OpaAuthorizationService svc = new(client);
+        Assert.False(await svc.AuthorizeAsync(new { }));
+    }
+
+    private class MockHttpMessageHandler(string response, HttpStatusCode statusCode = HttpStatusCode.OK) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             HttpResponseMessage result = new()
             {
-                StatusCode = HttpStatusCode.OK,
+                StatusCode = statusCode,
                 Content = new StringContent(response)
             };
             return Task.FromResult(result);

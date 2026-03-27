@@ -1,84 +1,105 @@
-# Muonroi Building Block
+# muonroi-building-block
 
-Muonroi Building Block is a modular .NET infrastructure framework for monolith, modular monolith, and microservices architectures.
+Muonroi Building Block is the .NET foundation of the Muonroi open-core ecosystem: rule engine, decision tables, governance, tenancy, observability, and the commercial extensions that sit on top of the OSS base.
 
-[![CI](https://github.com/muonroi/MuonroiBuildingBlock/actions/workflows/ci.yml/badge.svg)](https://github.com/muonroi/MuonroiBuildingBlock/actions/workflows/ci.yml)
-[![OSS License](https://img.shields.io/badge/OSS-Apache%202.0-green.svg)](LICENSE-APACHE)
-[![Commercial License](https://img.shields.io/badge/Enterprise-Commercial-blue.svg)](LICENSE-COMMERCIAL)
+[![CI](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml/badge.svg)](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/github/muonroi/muonroi-building-block/graph/badge.svg?token=97f35491-9d56-4c92-918e-aae729589699)](https://codecov.io/github/muonroi/muonroi-building-block)
+[![OSS License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](./LICENSE-APACHE)
+[![Commercial License](https://img.shields.io/badge/commercial-available-blue.svg)](./LICENSE-COMMERCIAL)
 
-## Package System
-
-| Package | Description | Tier |
-| :--- | :--- | :---: |
-| `Muonroi.Core.Abstractions` | Core contracts, interfaces, and base types. | OSS (free) |
-| `Muonroi.Core` | Core services implementation (datetime, JSON, logging wrappers, execution context). | OSS (free) |
-| `Muonroi.Governance.Abstractions` | License governance contracts and policy interfaces. | OSS (free) |
-| `Muonroi.Governance` | OSS license governance implementation. | OSS (free) |
-| `Muonroi.Governance.Enterprise` | Enterprise anti-tampering, audit chain, fail-closed policy controls. | Commercial |
-| `Muonroi.Tenancy.Abstractions` | Multi-tenancy contracts and shared models. | OSS (free) |
-| `Muonroi.Tenancy.Core` | Shared-database multi-tenancy core and tenant filters. | OSS (free) |
-| `Muonroi.Tenancy` | Tenant runtime context and middleware integration. | OSS (free) |
-| `Muonroi.RuleEngine.Abstractions` | Rule engine contracts. | OSS (free) |
-| `Muonroi.RuleEngine.Core` | Rule engine execution core. | OSS (free) |
-| `Muonroi.RuleEngine.SourceGenerators` | Source generators for rule authoring and diagnostics. | OSS (free) |
-| `Muonroi.RuleEngine.Testing` | Testing helpers for rule orchestration. | OSS (free) |
-| `Muonroi.RuleEngine.DecisionTable` | Decision table models, validation, conversion and persistence abstractions. | OSS (free) |
-| `Muonroi.RuleEngine.NRules` | NRules integration for Muonroi Rule Engine. | OSS (free) |
-| `Muonroi.RuleEngine.CEP` | Complex Event Processing integration. | OSS (free) |
-| `Muonroi.RuleEngine.Runtime.Web` | Runtime web APIs and enterprise runtime integration surfaces. | Commercial |
-| `Muonroi.RuleEngine.DecisionTable.Web` | Decision table web/API runtime package. | Commercial |
-| `Muonroi.Data.Abstractions` | Data contracts and repository abstractions. | OSS (free) |
-| `Muonroi.Data.Dapper` | Dapper integration for read-heavy data access. | OSS (free) |
-| `Muonroi.Data.EntityFrameworkCore` | EF Core infrastructure and repository base. | OSS (free) |
-| `Muonroi.Caching.Abstractions` | Caching contracts and cache configs. | OSS (free) |
-| `Muonroi.Caching.Memory` | Multi-level memory/distributed cache implementation. | OSS (free) |
-| `Muonroi.Caching.Redis` | Redis-backed caching integration. | Commercial |
-| `Muonroi.Auth` | JWT auth infrastructure and middleware integrations. | OSS (free) |
-| `Muonroi.AuthZ` | Advanced authorization package. | Commercial |
-| `Muonroi.AspNetCore` | ASP.NET Core hosting integration and infrastructure extensions. | OSS (free) |
-| `Muonroi.AspNetCore.OpenApi` | OpenAPI/Swagger integration. | OSS (free) |
-| `Muonroi.Http` | HTTP client utilities and tenant propagation helpers. | OSS (free) |
-| `Muonroi.Resilience` | Retry/circuit breaker/timeout policies with telemetry hooks. | OSS (free) |
-| `Muonroi.Mapper` | Object mapping infrastructure. | OSS (free) |
-| `Muonroi.Mediator` | Mediator pattern implementation and pipeline behaviors. | OSS (free) |
-| `Muonroi.Messaging.Abstractions` | Messaging contracts and integration event abstractions. | OSS (free) |
-| `Muonroi.Messaging.MassTransit` | MassTransit transport integration package. | Commercial |
-| `Muonroi.Observability` | OpenTelemetry integration and instrumentation helpers. | OSS (free) |
-| `Muonroi.BackgroundJobs.Abstractions` | Background job contracts and scheduler abstractions. | OSS (free) |
-| `Muonroi.BackgroundJobs.Hangfire` | Hangfire scheduler integration package. | Commercial |
-| `Muonroi.BackgroundJobs.Quartz` | Quartz scheduler integration package. | Commercial |
-| `Muonroi.SignalR` | SignalR integration package. | Commercial |
-| `Muonroi.Grpc` | gRPC integration package. | Commercial |
-| `Muonroi.Secrets` | Secret management integrations. | Commercial |
-| `Muonroi.Bff` | Backend-for-Frontend package. | Commercial |
-| `Muonroi.ServiceDiscovery.Consul` | Consul service discovery integration. | Commercial |
-| `Muonroi.UiEngine.Catalog` | UI engine catalog package. | Commercial |
-| `Muonroi.BuildingBlock.Shared` | Shared result/pagination/common utility types. | OSS (free) |
-| `Muonroi.Logging` | Structured logging implementation. | OSS (free) |
-| `Muonroi.Logging.Abstractions` | Logging contracts and context interfaces. | OSS (free) |
-| `Muonroi.Rules` | Rule definitions and conventions package. | OSS (free) |
-| `Muonroi.BuildingBlock.All` | Meta-package aggregating OSS and commercial modules. | Commercial |
-
-## Quick Install
+## Install
 
 ```bash
-# OSS packages (public NuGet.org)
-dotnet add package Muonroi.Core
 dotnet add package Muonroi.RuleEngine.Core
-
-# Commercial packages (private feed - requires license)
-# See: https://muonroi.com/docs/commercial/setup
+dotnet add package Muonroi.RuleEngine.SourceGenerators
 ```
 
-## Documentation
+## Quick Example
 
-- Docs site: https://muonroi.github.io/MuonroiBuildingBlock/
-- Commercial editions: [COMMERCIAL-EDITIONS.md](COMMERCIAL-EDITIONS.md)
-- OSS/commercial boundary: [OSS-BOUNDARY.md](OSS-BOUNDARY.md)
+Annotate rule logic in normal C#:
+
+```csharp
+[MExtractAsRule("HIGH_VALUE_ORDER", DependsOn = new[] { "CREDIT_SCORE" })]
+public RuleResult HighValue(OrderContext context, FactBag facts)
+{
+    if (context.Amount <= 1000m) return RuleResult.Failure("Below threshold.");
+    facts["requiresReview"] = true;
+    return RuleResult.Success();
+}
+```
+
+Generate the registration and wire the engine:
+
+```bash
+muonroi-rule extract --source src/Rules --output Generated/Rules
+muonroi-rule register --rules Generated/Rules --output Generated/RuleEngineRegistrationExtensions.g.cs
+```
+
+```csharp
+using Muonroi.RuleEngine.Generated;
+
+builder.Services.AddRuleEngine<OrderContext>();
+builder.Services.AddGeneratedRules();
+```
+
+Result: the rule enters the DI graph without a handwritten registration block, and `muonroi-rule verify` can catch dependency and rule-code mistakes before runtime.
+
+## Package Families
+
+| Area | OSS packages | Commercial packages |
+| --- | --- | --- |
+| Core | `Muonroi.Core.Abstractions`, `Muonroi.Core`, `Muonroi.Logging`, `Muonroi.Logging.Abstractions` | - |
+| Governance | `Muonroi.Governance.Abstractions`, `Muonroi.Governance` | `Muonroi.Governance.Enterprise` |
+| Rule engine | `Muonroi.RuleEngine.Abstractions`, `Muonroi.RuleEngine.Core`, `Muonroi.RuleEngine.SourceGenerators`, `Muonroi.RuleEngine.DecisionTable`, `Muonroi.RuleEngine.Testing` | `Muonroi.RuleEngine.Runtime.Web`, `Muonroi.RuleEngine.DecisionTable.Web`, `Muonroi.RuleEngine.CEP`, `Muonroi.UiEngine.Catalog` |
+| Infrastructure | `Muonroi.AspNetCore`, `Muonroi.Tenancy`, `Muonroi.Observability`, `Muonroi.Data.*` | `Muonroi.Caching.Redis`, `Muonroi.SignalR`, `Muonroi.Bff`, `Muonroi.AuthZ`, more |
+
+The boundary rule remains simple:
+
+- OSS packages must not reference commercial packages.
+- Commercial packages may reference OSS packages.
+
+See [OSS-BOUNDARY.md](./OSS-BOUNDARY.md) for the detailed matrix.
+
+## What To Read First
+
+- Docs: https://docs.muonroi.com/docs/getting-started/introduction
+- Rule engine guide: https://docs.muonroi.com/docs/guides/rule-engine/rule-engine-guide
+- Rule source generator deep dive: https://docs.muonroi.com/docs/guides/rule-engine/rule-source-generator
+- Decision table guide: https://docs.muonroi.com/docs/guides/rule-engine/decision-table-guide
+- Samples index: [samples/README.md](./samples/README.md)
+
+## Samples
+
+- [Quickstart.RuleEngine](./samples/Quickstart.RuleEngine/README.md)
+- [Quickstart.DecisionTable](./samples/Quickstart.DecisionTable/README.md)
+- [FraudDetection](./samples/FraudDetection/README.md)
+- [LoanApproval](./samples/LoanApproval/README.md)
+- [MultiTenantSaaS](./samples/MultiTenantSaaS/README.md)
+- [RuleSourceGen](./samples/RuleSourceGen/README.md)
+
+## Local Development
+
+```bash
+dotnet restore Muonroi.BuildingBlock.sln
+dotnet build Muonroi.BuildingBlock.sln -c Debug
+```
+
+Useful gates before opening a PR:
+
+```bash
+pwsh ./scripts/check-modular-boundaries.ps1 -RepoRoot .
+dotnet test Muonroi.BuildingBlock.sln -c Debug
+```
+
+## Community
+
+- Docs: https://docs.muonroi.com
+- Issues: https://github.com/muonroi/muonroi-building-block/issues
+- Contributing guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Security policy: https://docs.muonroi.com/docs/resources/SECURITY
+
+Discussion templates are prepared under [`.github/DISCUSSION_TEMPLATE`](./.github/DISCUSSION_TEMPLATE) and become active as soon as GitHub Discussions is enabled for the repository.
 
 ## License
 
-This repository uses dual licensing:
-
-- OSS packages are licensed under Apache License 2.0 (`LICENSE-APACHE`).
-- Enterprise/commercial packages are licensed under Muonroi Commercial License (`LICENSE-COMMERCIAL`).
+OSS packages are Apache 2.0. Commercial packages are distributed under the Muonroi commercial license and require activation proof in deployed environments.

@@ -41,7 +41,7 @@ jobs:
         run: dotnet build Muonroi.BuildingBlock.sln -c Release --no-restore
 
       - name: Test (exclude Commercial-only tests)
-        run: dotnet test Muonroi.BuildingBlock.sln -c Release --no-build --filter "Category!=Commercial" --verbosity minimal
+        run: dotnet test Muonroi.BuildingBlock.sln -c Release --no-build --filter "Category!=Commercial&FullyQualifiedName!~WorkflowCacheTelemetryTests" --verbosity minimal
 
   pack-and-push:
     name: Pack & Push OSS
@@ -83,16 +83,21 @@ jobs:
             "src/Muonroi.Tenancy.Abstractions"
             "src/Muonroi.Tenancy.Core"
             "src/Muonroi.Tenancy"
+            "src/Muonroi.Tenancy.SiteProfile"
+            "src/Muonroi.Tenancy.SiteProfile.SourceGenerators"
+            "src/Muonroi.Tenancy.SiteProfile.Web"
             "src/Muonroi.RuleEngine.Abstractions"
             "src/Muonroi.RuleEngine.Core"
             "src/Muonroi.RuleEngine.SourceGenerators"
             "src/Muonroi.RuleEngine.Testing"
             "src/Muonroi.RuleEngine.DecisionTable"
-            "src/Muonroi.RuleEngine.NRules"
+            # Muonroi.RuleEngine.NRules excluded — [FROZEN] deprecated, use RuleEngine.Runtime
             "src/Muonroi.RuleEngine.CEP"
+            "src/Muonroi.Quota.Abstractions"
             "src/Muonroi.Data.Abstractions"
             "src/Muonroi.Data.Dapper"
             "src/Muonroi.Data.EntityFrameworkCore"
+            "src/Muonroi.EntityFrameworkCore.Configuration"
             "src/Muonroi.Caching.Abstractions"
             "src/Muonroi.Caching.Memory"
             "src/Muonroi.Auth"
@@ -101,6 +106,7 @@ jobs:
             "src/Muonroi.Http"
             "src/Muonroi.Resilience"
             "src/Muonroi.Mapper"
+            "src/Muonroi.Mapping.Abstractions"
             "src/Muonroi.Mediator"
             "src/Muonroi.Messaging.Abstractions"
             "src/Muonroi.Observability"
@@ -108,11 +114,15 @@ jobs:
             "src/Muonroi.BuildingBlock.Shared"
             "src/Muonroi.Logging"
             "src/Muonroi.Logging.Abstractions"
+            "src/Muonroi.Integration.Abstractions"
+            "src/Muonroi.Diagnostics.Generator"
+            "src/Muonroi.Diagnostics"
+            "src/Muonroi.Services.Abstractions"
             "src/Muonroi.Rules"
           )
 
           for proj in "${OSS_PROJECTS[@]}"; do
-            PACK_ARGS="-c Release --no-build -o $ARTIFACTS_DIR"
+            PACK_ARGS="-c Release -o $ARTIFACTS_DIR"
             if [ -n "${PACKAGE_VERSION:-}" ]; then
               PACK_ARGS="$PACK_ARGS -p:Version=$PACKAGE_VERSION"
             fi

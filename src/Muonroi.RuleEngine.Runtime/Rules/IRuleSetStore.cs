@@ -20,6 +20,14 @@ public interface IRuleSetStore
     /// <summary>Lists all available versions for a workflow.</summary>
     Task<int[]> GetVersionsAsync(string workflowName, CancellationToken cancellationToken = default);
 
+    /// <summary>Lists version details (version, status, isActive, createdAt) for a workflow. Falls back to <see cref="GetVersionsAsync"/> when not overridden.</summary>
+    Task<IReadOnlyList<(int Version, string Status, bool IsActive, DateTimeOffset CreatedAt)>> GetVersionDetailsAsync(string workflowName, int limit = 10, int offset = 0, CancellationToken cancellationToken = default)
+    {
+        _ = limit;
+        _ = offset;
+        return Task.FromResult<IReadOnlyList<(int, string, bool, DateTimeOffset)>>([]);
+    }
+
     /// <summary>
     /// Returns the active version for a workflow when supported by the backing store.
     /// Implementations that do not persist active metadata can return <c>null</c>.

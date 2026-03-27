@@ -15,6 +15,9 @@ public class MSequentialGuidGenerator : IGuidGenerator
 
     private static readonly RandomNumberGenerator _rng = RandomNumberGenerator.Create();
 
+    /// <summary>
+    /// Gets or sets the database type for generating sequential GUIDs.
+    /// </summary>
     public SequentialGuidDatabaseType DatabaseType { get; set; }
 
     /// <summary>
@@ -26,11 +29,20 @@ public class MSequentialGuidGenerator : IGuidGenerator
         DatabaseType = SequentialGuidDatabaseType.SqlServer;
     }
 
+    /// <summary>
+    /// Creates a new sequential GUID based on the configured <see cref="DatabaseType"/>.
+    /// </summary>
+    /// <returns>A new sequential GUID.</returns>
     public Guid Create()
     {
         return Create(DatabaseType);
     }
 
+    /// <summary>
+    /// Creates a new sequential GUID for the specified database type.
+    /// </summary>
+    /// <param name="databaseType">The database type to generate the GUID for.</param>
+    /// <returns>A new sequential GUID.</returns>
     public static Guid Create(SequentialGuidDatabaseType databaseType)
     {
         return databaseType switch
@@ -43,6 +55,11 @@ public class MSequentialGuidGenerator : IGuidGenerator
         };
     }
 
+    /// <summary>
+    /// Creates a new sequential GUID for the specified <see cref="SequentialGuidType"/>.
+    /// </summary>
+    /// <param name="guidType">The type of sequential GUID to generate.</param>
+    /// <returns>A new sequential GUID.</returns>
     public static Guid Create(SequentialGuidType guidType)
     {
         // We start with 16 bytes of cryptographically strong random data.
@@ -105,12 +122,24 @@ public class MSequentialGuidGenerator : IGuidGenerator
     /// </summary>
     public enum SequentialGuidDatabaseType
     {
+        /// <summary>
+        /// SQL Server.
+        /// </summary>
         SqlServer,
 
+        /// <summary>
+        /// Oracle.
+        /// </summary>
         Oracle,
 
+        /// <summary>
+        /// MySQL.
+        /// </summary>
         MySql,
 
+        /// <summary>
+        /// PostgreSQL.
+        /// </summary>
         PostgreSql
     }
 
@@ -127,7 +156,7 @@ public class MSequentialGuidGenerator : IGuidGenerator
 
         /// <summary>
         /// The GUID should be sequential when formatted using the
-        /// <see cref="Guid.ToByteArray" /> method.
+        /// <see cref="Guid.ToByteArray()" /> method.
         /// </summary>
         SequentialAsBinary,
 

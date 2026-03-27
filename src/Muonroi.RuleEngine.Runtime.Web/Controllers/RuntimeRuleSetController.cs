@@ -3,13 +3,23 @@ using Muonroi.RuleEngine.Runtime.Web.ViewModels;
 
 namespace Muonroi.RuleEngine.Runtime.Web.Controllers;
 
+/// <summary>
+/// API endpoints for listing, exporting, validating, activating, and auditing runtime rulesets.
+/// </summary>
+/// <param name="service">Rules engine service for ruleset operations.</param>
+/// <param name="auditStore">Audit store for ruleset change history.</param>
+/// <param name="executionContextAccessor">Execution context accessor for tenant resolution.</param>
 [ApiController]
 [Authorize]
 [Route("api/v1/rule-engine/rulesets")]
 public sealed class RuntimeRuleSetController(
     RulesEngineService service,
-    IRuleSetAuditStore auditStore) : ControllerBase
+    IRuleSetAuditStore auditStore,
+    ISystemExecutionContextAccessor executionContextAccessor) : ControllerBase
 {
+    /// <summary>Lists all workflows with version summaries.</summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of workflow summaries.</returns>
     [HttpGet]
     public async Task<IActionResult> ListWorkflows(CancellationToken cancellationToken = default)
     {
@@ -30,20 +40,31 @@ public sealed class RuntimeRuleSetController(
         return Ok(items);
     }
 
+    /// <summary>Gets rich version details for a workflow, compatible with MVersionDropdown.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="limit">Page size (default 10).</param>
+    /// <param name="offset">Number of items to skip (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Array of version items with status, isActive, and createdAt.</returns>
     [HttpGet("{workflow}/versions")]
-    public async Task<IActionResult> GetVersions(string workflow, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetVersions(string workflow, [FromQuery] int limit = 10, [FromQuery] int offset = 0, CancellationToken cancellationToken = default)
     {
-        int[] versions = await service.GetVersionsAsync(workflow, cancellationToken);
-        int? activeVersion = await service.GetActiveVersionAsync(workflow, cancellationToken);
-        RuleSetWorkflowSummary response = new()
+        var details = await service.GetVersionDetailsAsync(workflow, limit, offset, cancellationToken);
+        var items = details.Select(d => new RuleSetVersionItem
         {
-            WorkflowName = workflow,
-            ActiveVersion = activeVersion,
-            Versions = versions
-        };
-        return Ok(response);
+            Version = d.Version,
+            Status = d.Status,
+            IsActive = d.IsActive,
+            CreatedAt = d.CreatedAt
+        }).ToArray();
+        return Ok(items);
     }
 
+    /// <summary>Exports a ruleset JSON payload for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="version">Optional ruleset version.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Ruleset export payload.</returns>
     [HttpGet("{workflow}/export")]
     public async Task<IActionResult> Export(
         string workflow,
@@ -67,6 +88,11 @@ public sealed class RuntimeRuleSetController(
         return Ok(response);
     }
 
+    /// <summary>Saves a ruleset definition for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="request">Ruleset save request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Save result payload.</returns>
     [HttpPost("{workflow}")]
     public async Task<IActionResult> Save(
         string workflow,
@@ -111,7 +137,14 @@ public sealed class RuntimeRuleSetController(
         return Ok(response);
     }
 
+    /// <summary>Activates a specific ruleset version for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="version">Ruleset version to activate.</param>
+    /// <param name="request">Optional activation request payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Workflow summary after activation.</returns>
     [HttpPost("{workflow}/activate/{version:int}")]
+    [HttpPost("{workflow}/{version:int}/activate")]
     public async Task<IActionResult> Activate(
         string workflow,
         int version,
@@ -137,6 +170,11 @@ public sealed class RuntimeRuleSetController(
         return Ok(response);
     }
 
+    /// <summary>Validates a ruleset definition without saving it.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="request">Validation request payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Validation result.</returns>
     [HttpPost("{workflow}/validate")]
     public async Task<IActionResult> Validate(
         string workflow,
@@ -148,6 +186,11 @@ public sealed class RuntimeRuleSetController(
         return Ok(result);
     }
 
+    /// <summary>Runs a ruleset in dry-run mode for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="request">Dry-run request payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Dry-run result payload.</returns>
     [HttpPost("{workflow}/dry-run")]
     public async Task<IActionResult> DryRun(
         string workflow,
@@ -185,6 +228,12 @@ public sealed class RuntimeRuleSetController(
         }
     }
 
+    /// <summary>Returns audit history for a workflow.</summary>
+    /// <param name="workflow">Workflow identifier.</param>
+    /// <param name="page">Page number (1-based).</param>
+    /// <param name="pageSize">Page size.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Audit page payload.</returns>
     [HttpGet("{workflow}/audit")]
     public async Task<IActionResult> Audit(
         string workflow,
@@ -211,9 +260,9 @@ public sealed class RuntimeRuleSetController(
             Version = version,
             Actor = actor,
             Detail = detail,
-            TenantId = string.IsNullOrWhiteSpace(Muonroi.Tenancy.Core.TenantContext.CurrentTenantId)
+            TenantId = string.IsNullOrWhiteSpace(executionContextAccessor.Get().TenantId)
                 ? "default"
-                : Muonroi.Tenancy.Core.TenantContext.CurrentTenantId!
+                : executionContextAccessor.Get().TenantId!
         };
         await auditStore.AppendAsync(entry, cancellationToken);
     }

@@ -1,9 +1,12 @@
 namespace Muonroi.AspNetCore.Controllers;
 
+/// <inheritdoc />
 public class GenericControllerFeatureProvider(IEnumerable<Assembly> assemblies) : IApplicationFeatureProvider<ControllerFeature>
 {
+/// <inheritdoc />
     public GenericControllerFeatureProvider() : this([Assembly.GetEntryAssembly()!]) { }
 
+/// <inheritdoc />
     public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
     {
         Assembly? currentAssembly = Assembly.GetEntryAssembly();

@@ -91,14 +91,20 @@ jobs:
             "src/Muonroi.Secrets"
             "src/Muonroi.Bff"
             "src/Muonroi.ServiceDiscovery.Consul"
+            "src/Muonroi.RuleEngine.Runtime"
             "src/Muonroi.RuleEngine.Runtime.Web"
             "src/Muonroi.RuleEngine.DecisionTable.Web"
+            "src/Muonroi.RuleEngine.Proliferation"
+            "src/Muonroi.RuleEngine.Proliferation.Persistence"
+            "src/Muonroi.Integration.Connectors"
+            "src/Muonroi.Integration.Persistence"
+            "src/Muonroi.Kubernetes"
             "src/Muonroi.UiEngine.Catalog"
             "src/Muonroi.BuildingBlock.All"
           )
 
           for proj in "${COMMERCIAL_PROJECTS[@]}"; do
-            PACK_ARGS="-c Release --no-build -o $ARTIFACTS_DIR"
+            PACK_ARGS="-c Release -o $ARTIFACTS_DIR"
             if [ -n "${PACKAGE_VERSION:-}" ]; then
               PACK_ARGS="$PACK_ARGS -p:Version=$PACKAGE_VERSION"
             fi

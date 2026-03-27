@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+<PackageReference Include="Moq" />
+</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.Diagnostics\Muonroi.Diagnostics.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Mediator\Muonroi.Mediator.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Core\Muonroi.RuleEngine.Core.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Core\Muonroi.Core.csproj" />
+  </ItemGroup>
+</Project>

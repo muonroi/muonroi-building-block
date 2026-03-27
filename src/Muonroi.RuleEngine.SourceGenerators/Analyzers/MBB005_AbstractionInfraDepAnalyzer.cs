@@ -1,15 +1,15 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Muonroi.RuleEngine.SourceGenerators.Diagnostics;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace Muonroi.RuleEngine.SourceGenerators.Analyzers;
 
+/// <summary>
+/// Analyzer for the MBB005 diagnostic.
+/// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class MBB005_AbstractionInfraDepAnalyzer : DiagnosticAnalyzer
+public sealed class Mbb005_AbstractionInfraDepAnalyzer : DiagnosticAnalyzer
 {
     private static readonly string[] ForbiddenDependencyTokens =
     [
@@ -22,9 +22,11 @@ public sealed class MBB005_AbstractionInfraDepAnalyzer : DiagnosticAnalyzer
         "RabbitMQ.Client"
     ];
 
+    /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(MBBDiagnosticDescriptors.MBB005AbstractionInfraDependency);
+        [MBBDiagnosticDescriptors.MBB005AbstractionInfraDependency];
 
+    /// <inheritdoc/>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

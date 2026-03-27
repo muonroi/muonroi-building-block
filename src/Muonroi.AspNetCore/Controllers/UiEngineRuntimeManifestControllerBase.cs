@@ -11,6 +11,7 @@ using Muonroi.Tenancy.Core;
 
 namespace Muonroi.AspNetCore.Controllers;
 
+/// <inheritdoc />
 public abstract class UiEngineRuntimeManifestControllerBase(
     IEnumerable<IUiEngineManifestContributor> contributors,
     IConfiguration configuration,
@@ -19,6 +20,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
     IMJsonSerializeService jsonSerializeService,
     IMControllerExecutionContextResolver? executionContextResolver = null) : ControllerBase
 {
+/// <inheritdoc />
     [HttpGet]
     public virtual IActionResult GetRoot()
     {
@@ -32,6 +34,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         });
     }
 
+/// <inheritdoc />
     [HttpGet("current")]
     public virtual async Task<IActionResult> GetCurrent(
         [FromQuery] string? minimalFor,
@@ -44,6 +47,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         return BuildManifestWithEtagResult(manifest);
     }
 
+/// <inheritdoc />
     [HttpGet("{userId:guid}")]
     public virtual async Task<IActionResult> GetByUser(
         Guid userId,
@@ -56,6 +60,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         return BuildManifestWithEtagResult(manifest);
     }
 
+/// <inheritdoc />
     [HttpGet("contract-info")]
     public virtual IActionResult GetContractInfo()
     {
@@ -69,6 +74,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         });
     }
 
+/// <inheritdoc />
     [HttpGet("schema-hash")]
     public virtual async Task<IActionResult> GetSchemaHash(CancellationToken cancellationToken = default)
     {
@@ -87,6 +93,9 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         });
     }
 
+    /// <summary>
+    /// Gets the route prefixes used to resolve UI engine endpoints.
+    /// </summary>
     protected virtual IReadOnlyList<string> RoutePrefixes =>
     [
         "/api/v1/ui-engine",
@@ -94,21 +103,33 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         "/api/v1/ui-engine-lab/ui-engine"
     ];
 
+    /// <summary>
+    /// Resolves the tenant tier for UI engine manifest generation.
+    /// </summary>
     protected virtual string ResolveTenantTier()
     {
         return configuration.GetValue<string>("UiEngineLab:TenantTier") ?? "Free";
     }
 
+    /// <summary>
+    /// Resolves the tenant identifier for UI engine manifest generation.
+    /// </summary>
     protected virtual string ResolveTenantId()
     {
         return configuration.GetValue<string>("UiEngineLab:TenantId") ?? "_global";
     }
 
+    /// <summary>
+    /// Resolves the current user's permission set.
+    /// </summary>
     protected virtual IReadOnlyList<string> ResolveUserPermissions()
     {
         return [];
     }
 
+    /// <summary>
+    /// Resolves the active API route prefix for the current request.
+    /// </summary>
     protected virtual string ResolveRoutePrefix()
     {
         string path = Request.Path.Value ?? string.Empty;
@@ -123,11 +144,22 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         return RoutePrefixes[0];
     }
 
+    /// <summary>
+    /// Builds the UI engine manifest for a user using the current execution context.
+    /// </summary>
+    /// <param name="userId">User identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     protected virtual async Task<MUiEngineManifest> BuildManifestAsync(Guid userId, CancellationToken cancellationToken)
     {
         return await BuildManifestAsync(userId, ResolveExecutionContext(), cancellationToken);
     }
 
+    /// <summary>
+    /// Builds the UI engine manifest for a specific user.
+    /// </summary>
+    /// <param name="userId">User identifier.</param>
+    /// <param name="executionContext">Execution context overrides.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     protected virtual async Task<MUiEngineManifest> BuildManifestAsync(
         Guid userId,
         MControllerExecutionContext? executionContext,
@@ -163,6 +195,9 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         return manifest;
     }
 
+    /// <summary>
+    /// Resolves the tenant tier from an execution context override.
+    /// </summary>
     protected virtual string ResolveTenantTier(MControllerExecutionContext? executionContext)
     {
         if (!string.IsNullOrWhiteSpace(executionContext?.TenantTier))
@@ -173,6 +208,9 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         return ResolveTenantTier();
     }
 
+    /// <summary>
+    /// Resolves the tenant identifier from an execution context override.
+    /// </summary>
     protected virtual string ResolveTenantId(MControllerExecutionContext? executionContext)
     {
         if (!string.IsNullOrWhiteSpace(executionContext?.TenantId))
@@ -183,6 +221,9 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         return ResolveTenantId();
     }
 
+    /// <summary>
+    /// Resolves the permissions list from an execution context override.
+    /// </summary>
     protected virtual IReadOnlyList<string> ResolveUserPermissions(MControllerExecutionContext? executionContext)
     {
         if (executionContext is { Permissions.Count: > 0 })
@@ -193,6 +234,9 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         return ResolveUserPermissions();
     }
 
+    /// <summary>
+    /// Resolves the execution context for the current request.
+    /// </summary>
     protected virtual MControllerExecutionContext ResolveExecutionContext()
     {
         HttpContext? httpContext = HttpContext;

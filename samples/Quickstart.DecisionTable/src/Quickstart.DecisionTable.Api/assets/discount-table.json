@@ -1,0 +1,63 @@
+{
+  "id": "discount-rules",
+  "name": "Discount Rules",
+  "description": "Community quickstart decision table for discount calculation",
+  "hitPolicy": "First",
+  "inputColumns": [
+    {
+      "id": "amount",
+      "name": "amount",
+      "label": "Order Amount",
+      "dataType": "number"
+    },
+    {
+      "id": "customerType",
+      "name": "customerType",
+      "label": "Customer Type",
+      "dataType": "string"
+    }
+  ],
+  "outputColumns": [
+    {
+      "id": "discountRate",
+      "name": "discountRate",
+      "label": "Discount Rate",
+      "dataType": "number"
+    }
+  ],
+  "rows": [
+    {
+      "id": "row-premium",
+      "order": 1,
+      "inputCells": [
+        { "columnId": "amount", "expression": ">= 1000" },
+        { "columnId": "customerType", "expression": "\"premium\"" }
+      ],
+      "outputCells": [
+        { "columnId": "discountRate", "expression": "0.15" }
+      ]
+    },
+    {
+      "id": "row-standard",
+      "order": 2,
+      "inputCells": [
+        { "columnId": "amount", "expression": ">= 1000" },
+        { "columnId": "customerType", "expression": "-" }
+      ],
+      "outputCells": [
+        { "columnId": "discountRate", "expression": "0.10" }
+      ]
+    },
+    {
+      "id": "row-default",
+      "order": 3,
+      "inputCells": [
+        { "columnId": "amount", "expression": "-" },
+        { "columnId": "customerType", "expression": "-" }
+      ],
+      "outputCells": [
+        { "columnId": "discountRate", "expression": "0.00" }
+      ]
+    }
+  ]
+}

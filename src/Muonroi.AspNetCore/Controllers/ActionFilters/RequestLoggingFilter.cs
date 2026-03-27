@@ -1,13 +1,15 @@
 namespace Muonroi.AspNetCore.Controllers.ActionFilters;
 
+/// <inheritdoc />
 public class RequestLoggingFilter(
-    ILogger<RequestLoggingFilter> logger,
+    IMLog<RequestLoggingFilter>? logger,
     IMJsonSerializeService jsonSerialize,
     MAuthenticateInfoContext authContext,
     IConfiguration configuration,
     IHostEnvironment hostEnvironment,
     ILogSanitizer? logSanitizer = null) : IAsyncActionFilter
 {
+/// <inheritdoc />
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         HttpRequest request = context.HttpContext.Request;
@@ -29,7 +31,7 @@ public class RequestLoggingFilter(
             ApplicationInfo = hostEnvironment.ApplicationName,
             Message = $"Incoming {request.Method} {request.Path}"
         };
-        logger.LogInformation("{@Entry}", entry);
+        logger?.Info("{@Entry}", entry);
 
         ActionExecutedContext executed = await next();
         watch.Stop();
@@ -40,7 +42,7 @@ public class RequestLoggingFilter(
         entry.ErrorCode = executed.Exception?.GetType().Name;
         entry.LogTrace = executed.Exception?.ToString();
 
-        logger.LogInformation("{@Entry}", entry);
+        logger?.Info("{@Entry}", entry);
     }
 
     private string SerializeArgumentsSafe(IDictionary<string, object?> arguments)

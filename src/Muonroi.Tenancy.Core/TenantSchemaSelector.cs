@@ -3,8 +3,14 @@ namespace Muonroi.Tenancy.Core;
 /// <summary>
 /// Resolves tenant schema names and can inject schema hints into connection strings when separate-schema mode is used.
 /// </summary>
+/// <param name="multiTenantOptions">Multi-tenant options.</param>
 public sealed class TenantSchemaSelector(IOptions<MultiTenantOptions> multiTenantOptions)
 {
+    /// <summary>
+    /// Resolves the schema name for the specified tenant.
+    /// </summary>
+    /// <param name="tenantId">The tenant identifier.</param>
+    /// <returns>The resolved schema name.</returns>
     public string ResolveSchema(string? tenantId)
     {
         if (multiTenantOptions.Value.Strategy != TenantIsolationStrategy.SeparateSchema)
@@ -25,6 +31,12 @@ public sealed class TenantSchemaSelector(IOptions<MultiTenantOptions> multiTenan
         return string.IsNullOrWhiteSpace(schema) ? "dbo" : schema;
     }
 
+    /// <summary>
+    /// Applies schema hints to a connection string when separate-schema mode is enabled.
+    /// </summary>
+    /// <param name="connectionString">The base connection string.</param>
+    /// <param name="tenantId">The tenant identifier.</param>
+    /// <returns>The updated connection string.</returns>
     public string ApplyToConnectionString(string connectionString, string? tenantId)
     {
         if (multiTenantOptions.Value.Strategy != TenantIsolationStrategy.SeparateSchema ||

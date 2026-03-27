@@ -4,6 +4,7 @@ using Muonroi.RuleGen.Services;
 using Muonroi.RuleGen.Writers;
 using Spectre.Console;
 using System.Diagnostics;
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace Muonroi.RuleGen.Commands;
@@ -100,7 +101,121 @@ internal static class ExtractCommand
 
         stopwatch.Stop();
         PrintSummaryTable(definitions, sourceFiles.Count, stopwatch.ElapsedMilliseconds);
+
+        // ── Auto-register: generate registration extension + dispatchers ──
+        if (options.AutoRegister)
+        {
+            await RunAutoRegisterAsync(options, definitions);
+        }
+
+        // ── Proliferate: generate scenarios + inline coverage report ──
+        if (options.Proliferate)
+        {
+            if (string.IsNullOrWhiteSpace(options.WorkflowName))
+            {
+                CommandLineWriter.WriteWarning("--proliferate requires --workflow-name to be specified. Skipping proliferation.");
+            }
+            else
+            {
+                // Build a synthetic ruleset JSON from extracted definitions for the named workflow
+                string ruleSetJson = BuildSyntheticRuleSetJson(options.WorkflowName, definitions);
+                try
+                {
+                    await ProliferateCommand.RunInlineAsync(options.WorkflowName, ruleSetJson, context.WorkingDirectory);
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.MarkupLine($"[yellow]Warning:[/] Proliferation failed: {ex.Message}");
+                }
+            }
+        }
+
         return 0;
+    }
+
+    /// <summary>
+    /// Builds a minimal ruleset JSON from extracted rule definitions so that the
+    /// proliferation engine can analyze the workflow's input fields.
+    /// </summary>
+    private static string BuildSyntheticRuleSetJson(string workflowName, IReadOnlyList<ExtractedRuleDefinition> definitions)
+    {
+        // Collect distinct parameter names across all definitions as input fields
+        var inputFields = definitions
+            .SelectMany(d => d.Parameters.Select(p => new { name = p.Name, type = p.TypeName ?? "string" }))
+            .DistinctBy(p => p.name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        // Build a simple JSON structure that RuleSetSchemaExtractor can parse
+        var fieldsJson = string.Join(",\n    ", inputFields.Select(f =>
+            $"{{\"name\":\"{f.name}\",\"dataType\":\"{f.type}\",\"isRequired\":true}}"));
+
+        return $$"""
+            {
+              "workflowName": "{{workflowName}}",
+              "kind": "CodeBased",
+              "inputFields": [
+                {{fieldsJson}}
+              ],
+              "outputFields": []
+            }
+            """;
+    }
+
+    private static async Task RunAutoRegisterAsync(ExtractOptions options, IReadOnlyList<ExtractedRuleDefinition> definitions)
+    {
+        string registrationNamespace = options.RegistrationNamespace ?? options.Namespace;
+        string dispatcherNamespace = options.DispatcherNamespace ?? registrationNamespace;
+        string dispatcherDir = options.DispatcherOutput ?? options.Output;
+
+        DiscoveredRuleType[] discovered = [.. definitions
+            .Select(d => new DiscoveredRuleType($"{RuleClassWriter.ToIdentifier(d.Code)}Rule", d.ContextType))
+            .DistinctBy(x => $"{x.ClassName}|{x.ContextType}")];
+
+        IReadOnlyList<DiscoveredDispatcherContext> dispatchers = DispatcherWriter.BuildContexts(
+            discovered,
+            options.DispatcherSuffix,
+            options.WorkflowName);
+
+        IReadOnlyList<DiscoveredDispatcherContext> dispatchersForRegistration =
+            options.RegisterDispatchers ? dispatchers : [];
+
+        string rendered = RegistrationWriter.Render(
+            registrationNamespace,
+            discovered,
+            dispatchersForRegistration,
+            options.IncludeRuleEngine,
+            options.RegistrationClassName);
+
+        string registrationFile = Path.Combine(options.Output, options.RegistrationFileName);
+        Directory.CreateDirectory(Path.GetDirectoryName(registrationFile)!);
+        await File.WriteAllTextAsync(registrationFile, rendered);
+
+        int generatedDispatcherCount = 0;
+        int skippedDispatcherCount = 0;
+        if (options.GenerateDispatchers)
+        {
+            Directory.CreateDirectory(dispatcherDir);
+            foreach (DiscoveredDispatcherContext dispatcher in dispatchers)
+            {
+                string dispatcherFile = Path.Combine(dispatcherDir, dispatcher.FileName);
+                if (File.Exists(dispatcherFile) && !options.DispatcherOverwrite)
+                {
+                    skippedDispatcherCount++;
+                    continue;
+                }
+
+                string content = DispatcherWriter.Render(dispatcherNamespace, dispatcher);
+                await File.WriteAllTextAsync(dispatcherFile, content);
+                generatedDispatcherCount++;
+            }
+        }
+
+        AnsiConsole.MarkupLine($"[green]Auto-register:[/] registration '{Path.GetFileName(registrationFile)}' ({discovered.Length} rules).");
+        if (options.GenerateDispatchers)
+        {
+            AnsiConsole.MarkupLine(
+                $"[green]Dispatchers:[/] generated {generatedDispatcherCount}, skipped {skippedDispatcherCount}, output: '{dispatcherDir}'.");
+        }
     }
 
     private static void PrintSummaryTable(IReadOnlyList<ExtractedRuleDefinition> definitions, int fileCount, long elapsedMs)
@@ -142,6 +257,23 @@ internal static class ExtractCommand
         public bool OrganizeByNamespace { get; init; }
         public bool Parallel { get; init; }
 
+        // ── Auto-register options ──
+        public bool AutoRegister { get; init; }
+        public string RegistrationFileName { get; init; } = "MGeneratedRuleRegistrationExtensions.g.cs";
+        public string RegistrationClassName { get; init; } = "MGeneratedRuleRegistrationExtensions";
+        public string? RegistrationNamespace { get; init; }
+        public bool GenerateDispatchers { get; init; }
+        public bool RegisterDispatchers { get; init; }
+        public bool IncludeRuleEngine { get; init; }
+        public string? DispatcherOutput { get; init; }
+        public string? DispatcherNamespace { get; init; }
+        public bool DispatcherOverwrite { get; init; }
+        public string DispatcherSuffix { get; init; } = "GeneratedRuleEngineDispatcher";
+        public string? WorkflowName { get; init; }
+
+        // ── Proliferate flag (CLI-only, no config fallback) ──
+        public bool Proliferate { get; init; }
+
         public static ExtractOptions FromContext(CommandContext context)
         {
             RuleGenExtractConfig cfg = context.Config.Extract;
@@ -161,6 +293,9 @@ internal static class ExtractCommand
                 project,
                 resolvedOutput);
 
+            bool autoRegister = OptionReader.GetBool(context, "auto-register", cfg.AutoRegister);
+            bool generateDispatchers = OptionReader.GetBool(context, "generate-dispatchers", cfg.GenerateDispatchers);
+
             return new ExtractOptions
             {
                 Source = source,
@@ -175,7 +310,25 @@ internal static class ExtractCommand
                 Validate = OptionReader.GetBool(context, "validate", cfg.Validate),
                 OrganizeByNamespace = OptionReader.GetBool(context, "organize-by-namespace", cfg.OrganizeByNamespace),
                 Parallel = OptionReader.GetBool(context, "parallel", cfg.Parallel),
-                TenantId = OptionReader.GetString(context, "tenant")
+                TenantId = OptionReader.GetString(context, "tenant"),
+                // Auto-register options
+                AutoRegister = autoRegister,
+                RegistrationFileName = OptionReader.GetString(context, "registration-file-name", cfg.RegistrationFileName)
+                    ?? "MGeneratedRuleRegistrationExtensions.g.cs",
+                RegistrationClassName = OptionReader.GetString(context, "registration-class", cfg.RegistrationClassName)
+                    ?? "MGeneratedRuleRegistrationExtensions",
+                RegistrationNamespace = OptionReader.GetString(context, "registration-namespace", cfg.RegistrationNamespace),
+                GenerateDispatchers = generateDispatchers,
+                RegisterDispatchers = OptionReader.GetBool(context, "register-dispatchers", cfg.RegisterDispatchers),
+                IncludeRuleEngine = OptionReader.GetBool(context, "include-rule-engine", cfg.IncludeRuleEngine),
+                DispatcherOutput = OptionReader.GetString(context, "dispatcher-output", cfg.DispatcherOutput),
+                DispatcherNamespace = OptionReader.GetString(context, "dispatcher-namespace", cfg.DispatcherNamespace),
+                DispatcherOverwrite = OptionReader.GetBool(context, "dispatcher-overwrite", cfg.DispatcherOverwrite),
+                DispatcherSuffix = OptionReader.GetString(context, "dispatcher-suffix", cfg.DispatcherSuffix)
+                    ?? "GeneratedRuleEngineDispatcher",
+                WorkflowName = OptionReader.GetString(context, "workflow-name", cfg.WorkflowName),
+                // CLI-only flag: no config fallback
+                Proliferate = OptionReader.GetBool(context, "proliferate", false)
             };
         }
 
@@ -374,9 +527,7 @@ internal static class ExtractCommand
                 return string.Empty;
             }
 
-            List<string> namespaceParts = sourceNamespace
-                .Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries)
-                .ToList();
+            List<string> namespaceParts = [.. sourceNamespace.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries)];
             string sourceFullPath = Path.GetFullPath(sourceAnchorDirectory);
             string targetFullPath = Path.GetFullPath(targetDirectory);
             string relative = Path.GetRelativePath(sourceFullPath, targetFullPath);

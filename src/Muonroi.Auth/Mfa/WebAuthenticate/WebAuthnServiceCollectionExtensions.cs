@@ -1,7 +1,13 @@
 namespace Muonroi.Auth.Mfa.WebAuthenticate;
 
+/// <summary>
+/// Service registration helpers for WebAuthn.
+/// </summary>
 public static class WebAuthnServiceCollectionExtensions
 {
+    /// <summary>
+    /// Registers WebAuthn services and configuration.
+    /// </summary>
     public static IServiceCollection AddWebAuthn(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);

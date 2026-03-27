@@ -4,6 +4,7 @@
 namespace Muonroi.RuleEngine.NRules;
 
 /// <summary>Configuration for rule enabling and versioning.</summary>
+[Obsolete("Frozen: Use Muonroi.RuleEngine.Runtime instead. NRules integration is no longer actively developed.")]
 public sealed class RuleOptions
 {
     /// <summary>Configuration per rule name.</summary>
@@ -11,6 +12,7 @@ public sealed class RuleOptions
 }
 
 /// <summary>Configuration for a specific rule.</summary>
+[Obsolete("Frozen: Use Muonroi.RuleEngine.Runtime instead. NRules integration is no longer actively developed.")]
 public sealed class RuleConfig
 {
     /// <summary>Whether the rule is enabled. Defaults to <c>true</c>.</summary>

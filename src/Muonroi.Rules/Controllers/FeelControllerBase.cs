@@ -8,8 +8,17 @@ using Muonroi.Rules.Feel;
 
 namespace Muonroi.Rules.Controllers;
 
+/// <summary>
+/// Base controller for FEEL operations, providing core evaluation and autocomplete logic.
+/// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public abstract class FeelControllerBase : ControllerBase
 {
+    /// <summary>
+    /// Evaluates a FEEL expression with the provided context.
+    /// </summary>
+    /// <param name="request">The evaluation request.</param>
+    /// <returns>An <see cref="IActionResult"/> containing the evaluation result.</returns>
     [HttpPost("evaluate")]
     public virtual IActionResult Evaluate([FromBody] FeelEvaluateRequest request)
     {
@@ -32,6 +41,11 @@ public abstract class FeelControllerBase : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Provides autocompletion suggestions for a partial FEEL expression.
+    /// </summary>
+    /// <param name="request">The autocomplete request.</param>
+    /// <returns>An <see cref="IActionResult"/> containing the suggestions.</returns>
     [HttpPost("autocomplete")]
     public virtual IActionResult Autocomplete([FromBody] FeelAutocompleteRequest request)
     {
@@ -56,6 +70,10 @@ public abstract class FeelControllerBase : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Returns examples of FEEL expressions.
+    /// </summary>
+    /// <returns>An <see cref="IActionResult"/> containing the examples.</returns>
     [HttpGet("examples")]
     public virtual IActionResult Examples()
     {
@@ -67,6 +85,10 @@ public abstract class FeelControllerBase : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Returns a list of FEEL keywords.
+    /// </summary>
+    /// <returns>A list of keywords.</returns>
     protected virtual IReadOnlyList<string> GetKeywords() =>
     [
         "if",
@@ -84,6 +106,10 @@ public abstract class FeelControllerBase : ControllerBase
         "not"
     ];
 
+    /// <summary>
+    /// Returns numeric FEEL expression examples.
+    /// </summary>
+    /// <returns>A list of numeric examples.</returns>
     protected virtual IReadOnlyList<string> GetNumericExamples() =>
     [
         "amount > 1000",
@@ -91,18 +117,31 @@ public abstract class FeelControllerBase : ControllerBase
         "if score >= 90 then \"A\" else \"B\""
     ];
 
+    /// <summary>
+    /// Returns string FEEL expression examples.
+    /// </summary>
+    /// <returns>A list of string examples.</returns>
     protected virtual IReadOnlyList<string> GetStringExamples() =>
     [
         "customerType in (\"vip\", \"gold\")",
         "country matches \"^(US|CA)$\""
     ];
 
+    /// <summary>
+    /// Returns list and context FEEL expression examples.
+    /// </summary>
+    /// <returns>A list of examples.</returns>
     protected virtual IReadOnlyList<string> GetListExamples() =>
     [
         "for x in [1..5] return x * 2",
         "some item in items satisfies item.price > 100"
     ];
 
+    /// <summary>
+    /// Extracts the last token from a partial FEEL expression.
+    /// </summary>
+    /// <param name="value">The expression string.</param>
+    /// <returns>The last token extracted.</returns>
     protected static string ExtractLastToken(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -115,6 +154,11 @@ public abstract class FeelControllerBase : ControllerBase
         return parts.Length == 0 ? string.Empty : parts[^1];
     }
 
+    /// <summary>
+    /// Converts a <see cref="JsonElement"/> to its corresponding .NET object.
+    /// </summary>
+    /// <param name="element">The JSON element to convert.</param>
+    /// <returns>The converted object.</returns>
     protected static object ConvertJsonValue(JsonElement element)
     {
         return element.ValueKind switch
@@ -130,6 +174,10 @@ public abstract class FeelControllerBase : ControllerBase
         };
     }
 
+    /// <summary>
+    /// Resolves the <see cref="MControllerExecutionContext"/> for the current request.
+    /// </summary>
+    /// <returns>The execution context, or null if it cannot be resolved.</returns>
     protected virtual MControllerExecutionContext? ResolveExecutionContext()
     {
         HttpContext? httpContext = HttpContext;

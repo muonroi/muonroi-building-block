@@ -1,57 +1,83 @@
+using Muonroi.Governance.Abstractions.License;
+
 namespace Muonroi.Governance.License;
 
+/// <summary>
+/// Represents the License Guard.
+/// </summary>
 public sealed class LicenseGuard : ILicenseGuard
 {
     private readonly LicenseConfigs _configs;
     private readonly IFingerprintChainStore _chainStore;
     private readonly IFingerprintSigner _signer;
     private readonly ILicenseGuardEnhancer _enhancer;
+    private readonly LicenseRuntimeStatus _runtimeStatus;
 
     private static readonly ConcurrentDictionary<string, string> RollingTokens = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Initializes a new instance of LicenseGuard.
+    /// </summary>
     public LicenseGuard(
         LicenseConfigs configs,
         LicenseState state,
         IFingerprintChainStore chainStore,
         IFingerprintSigner signer,
+        LicenseRuntimeStatus? runtimeStatus = null,
         ILicenseGuardEnhancer? enhancer = null)
     {
         _configs = configs;
         Current = state;
         _chainStore = chainStore;
         _signer = signer;
+        _runtimeStatus = runtimeStatus ?? new LicenseRuntimeStatus();
         _enhancer = enhancer ?? new NoopLicenseGuardEnhancer();
 
-        _ = configs.GetEffectiveEnforcementMode(state.Tier);
+        _runtimeStatus.InitializeFromProof(state.ActivationProof);
+        _ = configs.GetEffectiveEnforcementMode(Tier);
         _enhancer.OnStartup(configs, state);
     }
 
+    /// <summary>
+    /// Gets the Current.
+    /// </summary>
     public LicenseState Current { get; }
 
-    public LicenseTier Tier => Current.Tier;
+    /// <summary>
+    /// Executes the Tier operation.
+    /// </summary>
+    public LicenseTier Tier => _runtimeStatus.GetEffectiveTier(Current);
 
-    public bool IsFreeMode => Current.Tier == LicenseTier.Free;
+    /// <summary>
+    /// Gets the Is Free Mode.
+    /// </summary>
+    public bool IsFreeMode => Tier == LicenseTier.Free;
 
+    /// <summary>
+    /// Executes the Ensure Valid operation.
+    /// </summary>
     public void EnsureValid(string actionType, string? actionName = null, string? payloadHash = null,
         string? correlationId = null)
     {
+        _runtimeStatus.EvaluateGracePeriod(DateTimeOffset.UtcNow);
+
+        if (!Current.IsValid)
+        {
+            HandleInvalidLicense();
+        }
+
+        if (!HasFeature(actionType))
+        {
+            throw new InvalidOperationException(
+                $"[LICENSE] Feature '{actionType}' is not included in your license. Tier: {Tier}.");
+        }
+
         if (IsFreeMode)
         {
             return;
         }
 
         _enhancer.OnEnsureValid(actionType, Current);
-
-        if (!Current.HasFeature(actionType))
-        {
-            throw new InvalidOperationException(
-                $"[LICENSE] Feature '{actionType}' is not included in your license. Tier: {Tier}.");
-        }
-
-        if (!Current.IsValid)
-        {
-            HandleInvalidLicense();
-        }
 
         if (_configs.EnableChain)
         {
@@ -65,11 +91,17 @@ public sealed class LicenseGuard : ILicenseGuard
         }
     }
 
+    /// <summary>
+    /// Executes the Has Feature operation.
+    /// </summary>
     public bool HasFeature(string featureName)
     {
-        return Current.HasFeature(featureName);
+        return _runtimeStatus.HasFeature(Current, featureName);
     }
 
+    /// <summary>
+    /// Executes the Ensure Feature operation.
+    /// </summary>
     public void EnsureFeature(string featureName)
     {
         if (!HasFeature(featureName))
@@ -79,6 +111,9 @@ public sealed class LicenseGuard : ILicenseGuard
         }
     }
 
+    /// <summary>
+    /// Executes the Record Action operation.
+    /// </summary>
     public void RecordAction(LicenseActionContext context)
     {
         if (!_configs.EnableChain)
@@ -125,11 +160,17 @@ public sealed class LicenseGuard : ILicenseGuard
         }
     }
 
+    /// <summary>
+    /// Executes the Get Chain Token operation.
+    /// </summary>
     public string GetChainToken()
     {
         return GetRollingToken(ResolveTenantPartition());
     }
 
+    /// <summary>
+    /// Executes the Decrypt Securely operation.
+    /// </summary>
     public string DecryptSecurely(string purpose, string encryptedData, Func<string, string, string> decryptor)
     {
         string projectSeed = _configs.ProjectSeed ?? "DEFAULT";
@@ -139,6 +180,9 @@ public sealed class LicenseGuard : ILicenseGuard
         return decryptor(key, encryptedData);
     }
 
+    /// <summary>
+    /// Executes the Get Functional Key operation.
+    /// </summary>
     [Obsolete("Use DecryptSecurely")]
     public string GetFunctionalKey(string purpose)
     {

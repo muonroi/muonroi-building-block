@@ -1,0 +1,20 @@
+title: "[Announcement] "
+labels:
+  - announcement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this format for release notes, roadmap checkpoints, or ecosystem updates once GitHub Discussions is enabled.
+  - type: input
+    id: topic
+    attributes:
+      label: Announcement topic
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+    validations:
+      required: true

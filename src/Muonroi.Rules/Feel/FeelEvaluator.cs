@@ -3,6 +3,10 @@ using System.Text;
 
 namespace Muonroi.Rules.Feel;
 
+/// <summary>
+/// Provides methods to evaluate FEEL (Friendly Enough Expression Language) expressions.
+/// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static partial class FeelEvaluator
 {
     private const double NumericTolerance = 1e-9;
@@ -23,11 +27,23 @@ public static partial class FeelEvaluator
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex MatchesRegex();
 
+    /// <summary>
+    /// Evaluates a FEEL expression and returns a boolean result.
+    /// </summary>
+    /// <param name="expression">The FEEL expression to evaluate.</param>
+    /// <param name="variables">The context variables for the expression.</param>
+    /// <returns>True if the expression evaluates to true; otherwise, false.</returns>
     public static bool Evaluate(string expression, IDictionary<string, object> variables)
     {
         return ToBoolean(EvaluateValue(expression, variables));
     }
 
+    /// <summary>
+    /// Evaluates a FEEL expression and returns the resulting value.
+    /// </summary>
+    /// <param name="expression">The FEEL expression to evaluate.</param>
+    /// <param name="variables">The context variables for the expression.</param>
+    /// <returns>The result of the evaluation, or null if evaluation fails.</returns>
     public static object? EvaluateValue(string expression, IDictionary<string, object> variables)
     {
         if (string.IsNullOrWhiteSpace(expression))
@@ -999,6 +1015,19 @@ public static partial class FeelEvaluator
 
             if (Current.Kind == TokenKind.Identifier)
             {
+                if (Current.Text.Equals("for", StringComparison.OrdinalIgnoreCase) &&
+                    Peek(1).Kind == TokenKind.Identifier)
+                {
+                    return ParseForExpression();
+                }
+
+                if ((Current.Text.Equals("some", StringComparison.OrdinalIgnoreCase) ||
+                     Current.Text.Equals("every", StringComparison.OrdinalIgnoreCase)) &&
+                    Peek(1).Kind == TokenKind.Identifier)
+                {
+                    return ParseQuantifiedExpression();
+                }
+
                 if (Current.Text.Equals("function", StringComparison.OrdinalIgnoreCase) &&
                     Peek(1).Kind == TokenKind.LeftParen)
                 {
@@ -1128,6 +1157,227 @@ public static partial class FeelEvaluator
                 "round" => Math.Round(AsDouble(args.ElementAtOrDefault(0)), (int)AsDouble(args.ElementAtOrDefault(1))),
                 _ => throw new InvalidOperationException($"Unsupported function '{name}'.")
             };
+        }
+
+        /// <summary>
+        /// Parses: for &lt;var&gt; in &lt;source&gt; return &lt;body&gt;
+        /// The "for" identifier is at Current when called.
+        /// </summary>
+        private object? ParseForExpression()
+        {
+            Next(); // consume "for"
+
+            if (Current.Kind != TokenKind.Identifier)
+            {
+                throw new InvalidOperationException("Expected variable name after 'for'.");
+            }
+
+            string varName = Current.Text;
+            Next(); // consume variable name
+
+            Expect(TokenKind.In); // consume "in"
+
+            // Parse the source expression — stop when we see a "return" identifier
+            object? source = ParseForSource();
+
+            // Expect "return" keyword (tokenized as Identifier)
+            if (Current.Kind != TokenKind.Identifier ||
+                !Current.Text.Equals("return", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Expected 'return' in for expression.");
+            }
+
+            Next(); // consume "return"
+
+            // Parse the body expression — uses the remaining expression
+            // which can include nested property access like d.vgm.wgt
+            List<object?> sequence = [];
+            if (source is null or string)
+            {
+                return Array.Empty<object?>();
+            }
+
+            if (source is IEnumerable<object?> generic)
+            {
+                sequence.AddRange(generic);
+            }
+            else if (source is System.Collections.IEnumerable enumerable)
+            {
+                foreach (object? item in enumerable)
+                {
+                    sequence.Add(item);
+                }
+            }
+            else
+            {
+                return Array.Empty<object?>();
+            }
+
+            // Save current position to re-parse body for each iteration
+            int bodyStart = _position;
+            List<object?> output = [];
+            foreach (object? item in sequence)
+            {
+                _position = bodyStart;
+                _scope[varName] = item!;
+                output.Add(ParseExpression());
+            }
+
+            // Remove loop variable from scope after iteration
+            _scope.Remove(varName);
+            return output.ToArray();
+        }
+
+        /// <summary>
+        /// Parses the source expression in a for-loop, stopping before the "return" keyword.
+        /// </summary>
+        private object? ParseForSource()
+        {
+            // If the source is a simple identifier (possibly with dots), parse it directly
+            // We need to stop before "return" which is tokenized as Identifier
+            // Use a simple approach: parse an additive expression, but peek ahead for "return"
+            if (Current.Kind == TokenKind.Identifier &&
+                Peek(1).Kind == TokenKind.Identifier &&
+                Peek(1).Text.Equals("return", StringComparison.OrdinalIgnoreCase))
+            {
+                // Simple case: source is a single identifier like "details"
+                string identifier = Current.Text;
+                Next();
+                return ResolvePath(_scope, identifier);
+            }
+
+            if (Current.Kind == TokenKind.LeftBracket)
+            {
+                // List literal: for x in [1, 2, 3] return ...
+                Next(); // consume '['
+                object? list = ParseListLiteral();
+                // After list, expect "return"
+                return list;
+            }
+
+            // For range expressions like "1..10", parse as additive
+            object? left = ParseAdditive();
+            if (Match(TokenKind.DotDot))
+            {
+                object? right = ParseAdditive();
+                int start = (int)AsDouble(left);
+                int end = (int)AsDouble(right);
+                int step = start <= end ? 1 : -1;
+                List<object?> range = [];
+                for (int i = start; step > 0 ? i <= end : i >= end; i += step)
+                {
+                    range.Add((double)i);
+                }
+
+                return range;
+            }
+
+            return left;
+        }
+
+        /// <summary>
+        /// Parses: some|every &lt;var&gt; in &lt;source&gt; satisfies &lt;predicate&gt;
+        /// </summary>
+        private object? ParseQuantifiedExpression()
+        {
+            string quantifier = Current.Text.ToLowerInvariant();
+            Next(); // consume "some" or "every"
+
+            if (Current.Kind != TokenKind.Identifier)
+            {
+                throw new InvalidOperationException($"Expected variable name after '{quantifier}'.");
+            }
+
+            string varName = Current.Text;
+            Next(); // consume variable name
+
+            Expect(TokenKind.In); // consume "in"
+
+            // Parse the source (stop before "satisfies")
+            object? source = ParseQuantifiedSource();
+
+            // Expect "satisfies" keyword
+            if (Current.Kind != TokenKind.Identifier ||
+                !Current.Text.Equals("satisfies", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"Expected 'satisfies' in {quantifier} expression.");
+            }
+
+            Next(); // consume "satisfies"
+
+            List<object?> sequence = [];
+            if (source is IEnumerable<object?> generic)
+            {
+                sequence.AddRange(generic);
+            }
+            else if (source is System.Collections.IEnumerable enumerable and not string)
+            {
+                foreach (object? item in enumerable)
+                {
+                    sequence.Add(item);
+                }
+            }
+            else
+            {
+                return false;
+            }
+
+            int predicateStart = _position;
+            if (quantifier == "some")
+            {
+                foreach (object? item in sequence)
+                {
+                    _position = predicateStart;
+                    _scope[varName] = item!;
+                    if (ToBoolean(ParseExpression()))
+                    {
+                        _scope.Remove(varName);
+                        return true;
+                    }
+                }
+
+                _scope.Remove(varName);
+                return false;
+            }
+            else // every
+            {
+                foreach (object? item in sequence)
+                {
+                    _position = predicateStart;
+                    _scope[varName] = item!;
+                    if (!ToBoolean(ParseExpression()))
+                    {
+                        _scope.Remove(varName);
+                        return false;
+                    }
+                }
+
+                _scope.Remove(varName);
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Parses the source expression in a quantified expression, stopping before "satisfies".
+        /// </summary>
+        private object? ParseQuantifiedSource()
+        {
+            if (Current.Kind == TokenKind.Identifier &&
+                Peek(1).Kind == TokenKind.Identifier &&
+                Peek(1).Text.Equals("satisfies", StringComparison.OrdinalIgnoreCase))
+            {
+                string identifier = Current.Text;
+                Next();
+                return ResolvePath(_scope, identifier);
+            }
+
+            if (Current.Kind == TokenKind.LeftBracket)
+            {
+                Next();
+                return ParseListLiteral();
+            }
+
+            return ParseAdditive();
         }
 
         private object? ParseFunctionDefinition()

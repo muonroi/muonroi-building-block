@@ -1,7 +1,13 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.Caching.Redis.Routing;
 using Muonroi.Core.Abstractions.Configuration;
+using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Caching.Redis.Redis;
 
+/// <summary>
+/// Redis registration and cache helper extensions.
+/// </summary>
 public static class RedisExtensions
 {
     private const string cacheOperation = "cache.operation";
@@ -10,37 +16,13 @@ public static class RedisExtensions
     private const string statusError = "error";
     private const string layerDistributed = "distributed";
 
-    public static IServiceCollection AddDapperCaching(this IServiceCollection services, IConfiguration configuration,
-        RedisConfigs redisConfigs)
-    {
-        ArgumentNullException.ThrowIfNull(configuration);
-        services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.DistributedCache);
-
-        if (!redisConfigs.Enable)
-        {
-            return services;
-        }
-
-        ConnectionStringBuilder s = new()
-        {
-            Host = $"{redisConfigs.Host}:{redisConfigs.Port}",
-            Password = redisConfigs.Password
-        };
-        RedisClient redisClient = new(s);
-
-        RedisConfiguration config = new()
-        {
-            AllMethodsEnableCache = redisConfigs.AllMethodsEnableCache,
-            Expire = TimeSpan.FromMinutes(redisConfigs.Expire),
-            KeyPrefix = redisConfigs.KeyPrefix
-        };
-        services.AddDapperCachingInRedis(config, redisClient);
-
-        services.AddSingleton<Dapper.Extensions.Caching.ICacheProvider, RedisCacheProvider>();
-
-        return services;
-    }
-
+    /// <summary>
+    /// Registers Redis distributed cache services.
+    /// </summary>
+    /// <param name="services">Service collection to update.</param>
+    /// <param name="configuration">Configuration source.</param>
+    /// <param name="redisConfigs">Redis configuration.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddRedis(this IServiceCollection services, IConfiguration configuration,
         RedisConfigs redisConfigs)
     {
@@ -85,33 +67,58 @@ public static class RedisExtensions
                 $"Invalid {RedisConfigs.DefaultSectionName}: Host and Port are required");
         }
 
+        ConfigurationOptions configurationOptions = new()
+        {
+            EndPoints = { { redisConfigs.Host, int.Parse(redisConfigs.Port) } },
+            AllowAdmin = redisConfigs.AllowAdmin,
+            AbortOnConnectFail = redisConfigs.AbortOnConnectFail
+        };
+        if (!string.IsNullOrEmpty(redisConfigs.Password))
+        {
+            configurationOptions.Password = redisConfigs.Password;
+        }
+
         services.AddStackExchangeRedisCache(option =>
         {
             option.InstanceName = redisConfigs.KeyPrefix;
-            ConfigurationOptions configOptions = new()
-            {
-                EndPoints = { { redisConfigs.Host, int.Parse(redisConfigs.Port) } },
-                AllowAdmin = redisConfigs.AllowAdmin,
-                AbortOnConnectFail = redisConfigs.AbortOnConnectFail
-            };
-            // Only set password if provided
-            if (!string.IsNullOrEmpty(redisConfigs.Password))
-            {
-                configOptions.Password = redisConfigs.Password;
-            }
-
-            option.ConfigurationOptions = configOptions;
+            option.ConfigurationOptions = configurationOptions;
         });
-
-        // Build connection string - only include password if provided
-        string connectionString = string.IsNullOrEmpty(redisConfigs.Password)
-            ? $"{redisConfigs.Host}:{redisConfigs.Port}"
-            : $"{redisConfigs.Host}:{redisConfigs.Port},password={redisConfigs.Password}";
-        services.AddSingleton(_ => new RedisClient(connectionString));
+        services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(configurationOptions));
 
         return services;
     }
 
+    /// <summary>
+    /// Registers the Redis-backed routing table store used by Track 8 message routing.
+    /// </summary>
+    /// <param name="services">The service collection to update.</param>
+    /// <param name="configure">Optional routing table configuration.</param>
+    /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
+    public static IServiceCollection AddRedisRoutingTable(
+        this IServiceCollection services,
+        Action<RedisRoutingTableOptions>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddOptions<RedisRoutingTableOptions>();
+        if (configure != null)
+        {
+            services.Configure(configure);
+        }
+
+        services.TryAddSingleton<IRedisRoutingTableStore, RedisRoutingTableStore>();
+        return services;
+    }
+
+    /// <summary>
+    /// Gets a cached string value from Redis.
+    /// </summary>
+    /// <param name="distributedCache">Distributed cache instance.</param>
+    /// <param name="key">Cache key.</param>
+    /// <param name="licenseState">Optional license state.</param>
+    /// <param name="licenseGuard">Optional license guard.</param>
+    /// <param name="token">Cancellation token.</param>
+    /// <returns>The cached value or null.</returns>
     public static async Task<string?> GetCacheAsync(this IDistributedCache distributedCache, string key,
         LicenseState? licenseState = null,
         ILicenseGuard? licenseGuard = null,
@@ -153,6 +160,16 @@ public static class RedisExtensions
         }
     }
 
+    /// <summary>
+    /// Gets a cached value from Redis and deserializes it.
+    /// </summary>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="distributedCache">Distributed cache instance.</param>
+    /// <param name="key">Cache key.</param>
+    /// <param name="licenseState">Optional license state.</param>
+    /// <param name="licenseGuard">Optional license guard.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The cached value or default.</returns>
     public static async Task<T?> GetCacheAsync<T>(this IDistributedCache distributedCache, string key,
         LicenseState? licenseState = null,
         ILicenseGuard? licenseGuard = null,
@@ -200,6 +217,17 @@ public static class RedisExtensions
         }
     }
 
+    /// <summary>
+    /// Stores a value in Redis.
+    /// </summary>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="distributedCache">Distributed cache instance.</param>
+    /// <param name="key">Cache key.</param>
+    /// <param name="value">Value to store.</param>
+    /// <param name="absoluteExpirationInMinutes">Absolute expiration in minutes.</param>
+    /// <param name="licenseState">Optional license state.</param>
+    /// <param name="licenseGuard">Optional license guard.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public static async Task SetCacheAsync<T>(this IDistributedCache distributedCache, string key, T value,
         int? absoluteExpirationInMinutes = 1440,
         LicenseState? licenseState = null,
@@ -254,6 +282,14 @@ public static class RedisExtensions
         }
     }
 
+    /// <summary>
+    /// Removes a cached value from Redis.
+    /// </summary>
+    /// <param name="distributedCache">Distributed cache instance.</param>
+    /// <param name="key">Cache key.</param>
+    /// <param name="licenseState">Optional license state.</param>
+    /// <param name="licenseGuard">Optional license guard.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public static async Task RemoveAsync(this IDistributedCache distributedCache, string key,
         LicenseState? licenseState = null,
         ILicenseGuard? licenseGuard = null,
@@ -297,6 +333,14 @@ public static class RedisExtensions
         }
     }
 
+    /// <summary>
+    /// Refreshes a cached value in Redis.
+    /// </summary>
+    /// <param name="distributedCache">Distributed cache instance.</param>
+    /// <param name="key">Cache key.</param>
+    /// <param name="licenseState">Optional license state.</param>
+    /// <param name="licenseGuard">Optional license guard.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public static async Task RefreshAsync(this IDistributedCache distributedCache, string key,
         LicenseState? licenseState = null,
         ILicenseGuard? licenseGuard = null,
@@ -340,6 +384,18 @@ public static class RedisExtensions
         }
     }
 
+    /// <summary>
+    /// Gets a cached value or computes and stores it in Redis.
+    /// </summary>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="distributedCache">Distributed cache instance.</param>
+    /// <param name="key">Cache key.</param>
+    /// <param name="cacheData">Factory to create the value when missing.</param>
+    /// <param name="absoluteExpirationInMinutes">Absolute expiration in minutes.</param>
+    /// <param name="licenseState">Optional license state.</param>
+    /// <param name="licenseGuard">Optional license guard.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The cached or computed value.</returns>
     public static async Task<T?> GetOrSetAsync<T>(this IDistributedCache distributedCache
         , string key
         , Func<Task<T?>> cacheData

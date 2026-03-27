@@ -1,27 +1,35 @@
-using System.CodeDom.Compiler;
-using System.Globalization;
-using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Context;
+using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
-using Muonroi.Tenancy.Core;
 using Muonroi.UiEngine.Catalog.Attributes;
 using Muonroi.UiEngine.Catalog.Models;
+using System.CodeDom.Compiler;
+using System.Globalization;
+using System.Reflection;
 using RuntimeRuleOptions = Muonroi.RuleEngine.Runtime.Rules.RuleOptions;
 
 namespace Muonroi.UiEngine.Catalog.Services;
 
+/// <summary>
+/// Default catalog scanner for UI engine APIs and rules.
+/// </summary>
 public sealed class CatalogScanService(
     IApiDescriptionGroupCollectionProvider apiDescriptions,
     IServiceProvider serviceProvider,
-    ILogger<CatalogScanService> logger,
-    IOptionsMonitor<RuntimeRuleOptions>? runtimeRuleOptions = null) : ICatalogScanService
+    IMLog<CatalogScanService> logger,
+    IOptionsMonitor<RuntimeRuleOptions>? runtimeRuleOptions = null,
+    ISystemExecutionContextAccessor? executionContextAccessor = null) : ICatalogScanService
 {
+    private readonly ISystemExecutionContextAccessor _executionContextAccessor =
+        executionContextAccessor ?? new SystemExecutionContextAccessor();
+
+    /// <inheritdoc/>
     public Task<IReadOnlyList<MUiEngineCatalogApiDescriptor>> ScanApisAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -54,7 +62,7 @@ public sealed class CatalogScanService(
                 ?? TryGetRouteValue(api.ActionDescriptor.RouteValues, "action");
             if (string.IsNullOrWhiteSpace(controllerName) || string.IsNullOrWhiteSpace(actionName))
             {
-                logger.LogDebug(
+                logger.Debug(
                     "CatalogScan missing route values. Route={Route}, Method={Method}, Controller={Controller}, Action={Action}, DisplayName={DisplayName}",
                     route,
                     method,
@@ -83,6 +91,7 @@ public sealed class CatalogScanService(
         return Task.FromResult(result);
     }
 
+    /// <inheritdoc/>
     public Task<IReadOnlyList<MUiEngineCatalogRuleDescriptor>> ScanRulesAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -90,7 +99,7 @@ public sealed class CatalogScanService(
 
         Type ruleOpenGeneric = typeof(IRule<>);
         Type compensatableOpenGeneric = typeof(ICompensatableRule<>);
-        string? tenantId = string.IsNullOrWhiteSpace(TenantContext.CurrentTenantId) ? null : TenantContext.CurrentTenantId;
+        string? tenantId = NormalizeTenantId(_executionContextAccessor.Get().TenantId);
 
         foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
@@ -150,6 +159,7 @@ public sealed class CatalogScanService(
         return Task.FromResult(deduped);
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<MUiEngineCatalogBinding>> BuildBindingsAsync(CancellationToken cancellationToken = default)
     {
         IReadOnlyList<MUiEngineCatalogApiDescriptor> apis = await ScanApisAsync(cancellationToken);
@@ -201,6 +211,7 @@ public sealed class CatalogScanService(
             .ThenBy(x => x.HttpMethod, StringComparer.OrdinalIgnoreCase)];
     }
 
+    /// <inheritdoc/>
     public async Task<MUiEngineCatalogGraph> BuildGraphAsync(CancellationToken cancellationToken = default)
     {
         IReadOnlyList<MUiEngineCatalogBinding> bindings = await BuildBindingsAsync(cancellationToken);
@@ -294,7 +305,7 @@ public sealed class CatalogScanService(
 
     private Dictionary<(string route, string method), (string? ContextType, string? WorkflowName)> BuildBoundContextsByAction()
     {
-        Dictionary<(string route, string method), (string? ContextType, string? WorkflowName)> mappings = new();
+        Dictionary<(string route, string method), (string? ContextType, string? WorkflowName)> mappings = [];
 
         foreach (ApiDescription api in apiDescriptions.ApiDescriptionGroups.Items.SelectMany(group => group.Items))
         {
@@ -598,5 +609,10 @@ public sealed class CatalogScanService(
         {
             return [];
         }
+    }
+
+    private static string? NormalizeTenantId(string? tenantId)
+    {
+        return string.IsNullOrWhiteSpace(tenantId) ? null : tenantId.Trim();
     }
 }

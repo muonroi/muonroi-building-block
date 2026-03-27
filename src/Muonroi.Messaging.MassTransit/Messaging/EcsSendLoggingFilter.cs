@@ -7,17 +7,24 @@ namespace Muonroi.Messaging.MassTransit.Messaging;
 public class EcsSendLoggingFilter<T>(
     ILicenseGuard? licenseGuard = null,
     LicenseState? licenseState = null,
-    IMLogContext? logContext = null)
+    IMLogContext? logContext = null,
+    ISystemExecutionContextAccessor? contextAccessor = null)
     : IFilter<SendContext<T>>
     where T : class
 {
     private readonly LicenseState _licenseState = licenseState ?? licenseGuard?.Current ?? LicenseState.CreateFree();
 
+    /// <summary>
+    /// Executes the Ecs Send Logging Filter operation.
+    /// </summary>
     public EcsSendLoggingFilter(LicenseState? licenseState)
-        : this(null, licenseState)
+        : this(null, licenseState, null, null)
     {
     }
 
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(SendContext<T> context, IPipe<SendContext<T>> next)
     {
         EnsureMessageBusLicensed();
@@ -25,7 +32,7 @@ public class EcsSendLoggingFilter<T>(
         string messageType = typeof(T).FullName ?? typeof(T).Name;
         Uri? destinationAddress = context.DestinationAddress ?? context.SourceAddress;
         string destination = destinationAddress?.ToString() ?? string.Empty;
-        string? tenantId = ResolveTenantId(context);
+        string? tenantId = ResolveTenantId(context, contextAccessor);
         string transport = MessageBusRuntimeTelemetry.ResolveTransport(destinationAddress);
         Stopwatch stopwatch = Stopwatch.StartNew();
         string status = "ok";
@@ -33,16 +40,20 @@ public class EcsSendLoggingFilter<T>(
         using Activity? activity = MessageBusRuntimeTelemetry.ActivitySource.StartActivity(
             "messagebus.send",
             ActivityKind.Producer);
+
+        string? correlationIdValue = contextAccessor?.Get().CorrelationId ?? context.CorrelationId?.ToString();
+
         activity?.SetTag("messaging.operation", "send");
         activity?.SetTag("messaging.message_type", messageType);
         activity?.SetTag("messaging.destination", destination);
         activity?.SetTag("messaging.system", transport);
         activity?.SetTag("tenant.id", tenantId ?? string.Empty);
+        activity?.SetTag("correlation.id", correlationIdValue ?? string.Empty);
 
-        using IMLogContextScope? messageId = logContext?.PushProperty("message.id", context.MessageId);
-        using IMLogContextScope? correlationId = logContext?.PushProperty("correlation.id", context.CorrelationId);
-        using IMLogContextScope? conversationId = logContext?.PushProperty("conversation.id", context.ConversationId);
-        using IMLogContextScope? eventAction = logContext?.PushProperty("event.action", "send");
+        using IMLogContextScope? messageIdLog = logContext?.PushProperty("message.id", context.MessageId);
+        using IMLogContextScope? correlationIdLog = logContext?.PushProperty("correlation.id", context.CorrelationId);
+        using IMLogContextScope? conversationIdLog = logContext?.PushProperty("conversation.id", context.ConversationId);
+        using IMLogContextScope? eventActionLog = logContext?.PushProperty("event.action", "send");
 
         try
         {
@@ -68,6 +79,9 @@ public class EcsSendLoggingFilter<T>(
         }
     }
 
+    /// <summary>
+    /// Executes the Probe operation.
+    /// </summary>
     public void Probe(ProbeContext context)
     {
     }
@@ -87,7 +101,7 @@ public class EcsSendLoggingFilter<T>(
         }
     }
 
-    private static string? ResolveTenantId(SendContext<T> context)
+    private static string? ResolveTenantId(SendContext<T> context, ISystemExecutionContextAccessor? accessor)
     {
         SendHeaders? headers = context.Headers;
         if (headers != null &&
@@ -101,7 +115,7 @@ public class EcsSendLoggingFilter<T>(
             }
         }
 
-        string? tenantFromRuntime = TenantContext.CurrentTenantId?.Trim();
+        string? tenantFromRuntime = accessor?.Get().TenantId?.Trim();
         if (!string.IsNullOrWhiteSpace(tenantFromRuntime))
         {
             headers?.Set(CustomHeader.TenantId, tenantFromRuntime);

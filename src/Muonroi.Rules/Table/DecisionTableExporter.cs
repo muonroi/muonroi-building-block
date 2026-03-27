@@ -2,8 +2,17 @@ using System.Text;
 
 namespace Muonroi.Rules.Table;
 
+/// <summary>
+/// Provides methods to export decision tables to different formats.
+/// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public static class DecisionTableExporter
 {
+    /// <summary>
+    /// Exports the specified decision table to a CSV string.
+    /// </summary>
+    /// <param name="table">The decision table to export.</param>
+    /// <returns>A CSV string representation of the decision table.</returns>
     public static string ExportCsv(DecisionTable table)
     {
         StringBuilder sb = new();

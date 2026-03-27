@@ -1,7 +1,11 @@
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
+/// <summary>
+/// Validates the structure of ruleset payloads.
+/// </summary>
 public sealed class RuleSetDefinitionValidator : IRuleSetDefinitionValidator
 {
+    /// <inheritdoc />
     public RuleSetValidationResult Validate(string workflowName, string json)
     {
         RuleSetValidationResult result = new()
@@ -135,9 +139,21 @@ public sealed class RuleSetDefinitionValidator : IRuleSetDefinitionValidator
             return;
         }
 
+        // Track 8: Flow-graph-only rulesets (no Rules[] array needed)
+        if (root.TryGetProperty("flowGraph", out JsonElement flowGraph) || root.TryGetProperty("FlowGraph", out flowGraph))
+        {
+            if (flowGraph.ValueKind == JsonValueKind.Object &&
+                flowGraph.TryGetProperty("nodes", out JsonElement nodes) &&
+                nodes.ValueKind == JsonValueKind.Array && nodes.GetArrayLength() > 0)
+            {
+                result.Shape = "FlowGraphOnly";
+                return;
+            }
+        }
+
         result.Errors.Add(new RuleSetValidationIssue(
             "RulesMissing",
-            "Cannot find rules definition. Expected property 'rules'/'Rules' or legacy workflow object.",
+            "Cannot find rules definition. Expected property 'rules'/'Rules', 'flowGraph', or legacy workflow object.",
             "$.rules"));
     }
 

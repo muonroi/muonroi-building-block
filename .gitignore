@@ -384,6 +384,10 @@ docs/
 styles/
 public/
 Samples/
+!samples/
+!samples/**
+samples/**/bin/
+samples/**/obj/
 docfx.json
 index.md
 index.vi.md
@@ -402,3 +406,5 @@ tools/MockLicenseServer/server_private_key.pem
 tools/MockLicenseServer/server_public_key.pem
 *.pem
 *.snk
+/git_token.txt
+/.planning/quick/260325-o35-fix-3-remaining-deep-research-findings-o

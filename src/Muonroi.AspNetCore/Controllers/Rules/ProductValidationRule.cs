@@ -8,20 +8,28 @@ namespace Muonroi.AspNetCore.Controllers.Rules;
 public class ProductValidationRule<TProduct> : IRule<CrudContext<TProduct>>
     where TProduct : MEntity
 {
+/// <inheritdoc />
     public string Code => "PRODUCT_VALIDATION";
 
+/// <inheritdoc />
     public string Name => "Product Validation Rule";
 
+/// <inheritdoc />
     public int Order => 10;
 
+/// <inheritdoc />
     public IReadOnlyList<string> DependsOn => [];
 
+/// <inheritdoc />
     public IEnumerable<Type> Dependencies => [];
 
+/// <inheritdoc />
     public HookPoint HookPoint => HookPoint.BeforeCreate;
 
+/// <inheritdoc />
     public RuleType Type => RuleType.Validation;
 
+/// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(CrudContext<TProduct> context, FactBag facts, CancellationToken cancellationToken)
     {
         List<string> errors = [];
@@ -67,6 +75,7 @@ public class ProductValidationRule<TProduct> : IRule<CrudContext<TProduct>>
         return await Task.FromResult(RuleResult.Passed());
     }
 
+/// <inheritdoc />
     public Task ExecuteAsync(CrudContext<TProduct> context, CancellationToken cancellationToken)
     {
         return Task.CompletedTask;

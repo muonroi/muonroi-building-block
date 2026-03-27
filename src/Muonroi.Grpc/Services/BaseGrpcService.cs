@@ -9,6 +9,13 @@ using Polly.Timeout;
 using Polly.Wrap;
 namespace Muonroi.Grpc.Services;
 
+/// <summary>
+/// Base class for gRPC client services with retry and timeout policies.
+/// </summary>
+/// <param name="contextAccessor">Execution context accessor for metadata propagation.</param>
+/// <param name="licenseState">Optional license state override.</param>
+/// <param name="grpcConfigOptions">Optional gRPC configuration options.</param>
+/// <param name="licenseGuard">Optional license guard for feature checks.</param>
 public abstract class BaseGrpcService(
     ISystemExecutionContextAccessor contextAccessor,
     LicenseState? licenseState = null,
@@ -19,6 +26,9 @@ public abstract class BaseGrpcService(
     private readonly LicenseState _licenseState = licenseState ?? LicenseState.CreateFree();
     private readonly GrpcClientDefaultsConfig _clientDefaults = grpcConfigOptions?.Value.ClientDefaults ?? new();
 
+    /// <summary>
+    /// Builds gRPC metadata from the current execution context.
+    /// </summary>
     protected Metadata CreateMetadata()
     {
         Metadata metadata = [];
@@ -43,11 +53,17 @@ public abstract class BaseGrpcService(
         return metadata;
     }
 
+    /// <summary>
+    /// Executes a gRPC call using default policies.
+    /// </summary>
     protected async Task<MResponse> CallGrpcServiceAsync<MResponse>(Func<Metadata, Task<MResponse>> grpcCall)
     {
         return await CallGrpcServiceAsync("unknown", grpcCall, null);
     }
 
+    /// <summary>
+    /// Executes a gRPC call using resolved method policies.
+    /// </summary>
     protected async Task<MResponse> CallGrpcServiceAsync<MResponse>(
         string methodName,
         Func<Metadata, Task<MResponse>> grpcCall,

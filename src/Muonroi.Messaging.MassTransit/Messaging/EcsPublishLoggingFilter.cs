@@ -7,17 +7,24 @@ namespace Muonroi.Messaging.MassTransit.Messaging;
 public class EcsPublishLoggingFilter<T>(
     ILicenseGuard? licenseGuard = null,
     LicenseState? licenseState = null,
-    IMLogContext? logContext = null)
+    IMLogContext? logContext = null,
+    ISystemExecutionContextAccessor? contextAccessor = null)
     : IFilter<PublishContext<T>>
     where T : class
 {
     private readonly LicenseState _licenseState = licenseState ?? licenseGuard?.Current ?? LicenseState.CreateFree();
 
+    /// <summary>
+    /// Executes the Ecs Publish Logging Filter operation.
+    /// </summary>
     public EcsPublishLoggingFilter(LicenseState? licenseState)
-        : this(null, licenseState)
+        : this(null, licenseState, null, null)
     {
     }
 
+    /// <summary>
+    /// Executes the Send operation.
+    /// </summary>
     public async Task Send(PublishContext<T> context, IPipe<PublishContext<T>> next)
     {
         EnsureMessageBusLicensed();
@@ -25,7 +32,7 @@ public class EcsPublishLoggingFilter<T>(
         string messageType = typeof(T).FullName ?? typeof(T).Name;
         Uri? destinationAddress = context.DestinationAddress ?? context.SourceAddress;
         string destination = destinationAddress?.ToString() ?? string.Empty;
-        string? tenantId = ResolveTenantId(context);
+        string? tenantId = ResolveTenantId(context, contextAccessor);
         string transport = MessageBusRuntimeTelemetry.ResolveTransport(destinationAddress);
         Stopwatch stopwatch = Stopwatch.StartNew();
         string status = "ok";
@@ -33,16 +40,20 @@ public class EcsPublishLoggingFilter<T>(
         using Activity? activity = MessageBusRuntimeTelemetry.ActivitySource.StartActivity(
             "messagebus.publish",
             ActivityKind.Producer);
+
+        string? correlationIdValue = contextAccessor?.Get().CorrelationId ?? context.CorrelationId?.ToString();
+
         activity?.SetTag("messaging.operation", "publish");
         activity?.SetTag("messaging.message_type", messageType);
         activity?.SetTag("messaging.destination", destination);
         activity?.SetTag("messaging.system", transport);
         activity?.SetTag("tenant.id", tenantId ?? string.Empty);
+        activity?.SetTag("correlation.id", correlationIdValue ?? string.Empty);
 
-        using IMLogContextScope? messageId = logContext?.PushProperty("message.id", context.MessageId);
-        using IMLogContextScope? correlationId = logContext?.PushProperty("correlation.id", context.CorrelationId);
-        using IMLogContextScope? conversationId = logContext?.PushProperty("conversation.id", context.ConversationId);
-        using IMLogContextScope? eventAction = logContext?.PushProperty("event.action", "publish");
+        using IMLogContextScope? messageIdLog = logContext?.PushProperty("message.id", context.MessageId);
+        using IMLogContextScope? correlationIdLog = logContext?.PushProperty("correlation.id", context.CorrelationId);
+        using IMLogContextScope? conversationIdLog = logContext?.PushProperty("conversation.id", context.ConversationId);
+        using IMLogContextScope? eventActionLog = logContext?.PushProperty("event.action", "publish");
         try
         {
             await next.Send(context);
@@ -67,6 +78,9 @@ public class EcsPublishLoggingFilter<T>(
         }
     }
 
+    /// <summary>
+    /// Executes the Probe operation.
+    /// </summary>
     public void Probe(ProbeContext context)
     {
     }
@@ -86,7 +100,7 @@ public class EcsPublishLoggingFilter<T>(
         }
     }
 
-    private static string? ResolveTenantId(PublishContext<T> context)
+    private static string? ResolveTenantId(PublishContext<T> context, ISystemExecutionContextAccessor? accessor)
     {
         SendHeaders? headers = context.Headers;
         if (headers != null &&
@@ -100,7 +114,7 @@ public class EcsPublishLoggingFilter<T>(
             }
         }
 
-        string? tenantFromRuntime = TenantContext.CurrentTenantId?.Trim();
+        string? tenantFromRuntime = accessor?.Get().TenantId?.Trim();
         if (!string.IsNullOrWhiteSpace(tenantFromRuntime))
         {
             headers?.Set(CustomHeader.TenantId, tenantFromRuntime);

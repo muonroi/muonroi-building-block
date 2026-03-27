@@ -1,9 +1,15 @@
 namespace Muonroi.Auth.TokenBinding;
 
+/// <summary>
+/// Helpers for DPoP token binding and proof validation.
+/// </summary>
 public class DPoPBindingService
 {
     private static readonly ConcurrentDictionary<string, bool> ReplayCache = new();
 
+    /// <summary>
+    /// Creates a short-lived access token bound to a JWK thumbprint.
+    /// </summary>
     public static string CreateAccessToken(JsonWebKey jwk, SigningCredentials credentials)
     {
         string jkt = ComputeJkt(jwk);
@@ -22,6 +28,9 @@ public class DPoPBindingService
         return handler.WriteToken(token);
     }
 
+    /// <summary>
+    /// Validates a DPoP proof JWT against the expected request context.
+    /// </summary>
     public static bool ValidateProof(string proofJwt, string httpMethod, string httpUri, string expectedJkt)
     {
         JwtSecurityTokenHandler handler = new();
@@ -49,6 +58,9 @@ public class DPoPBindingService
         return !string.IsNullOrEmpty(jti) && ReplayCache.TryAdd(jti, true);
     }
 
+    /// <summary>
+    /// Computes the JWK thumbprint (jkt) value.
+    /// </summary>
     public static string ComputeJkt(JsonWebKey jwk)
     {
         SortedDictionary<string, object?> dict = new()

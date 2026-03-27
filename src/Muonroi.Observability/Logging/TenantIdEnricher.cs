@@ -3,11 +3,17 @@ using Serilog.Core;
 
 namespace Muonroi.Observability.Logging;
 
+/// <summary>
+/// Enriches log events with tenant, user, and correlation identifiers.
+/// </summary>
 public sealed class TenantIdEnricher(ISystemExecutionContextAccessor accessor) : ILogEventEnricher
 {
     private readonly ISystemExecutionContextAccessor _accessor =
         accessor ?? throw new ArgumentNullException(nameof(accessor));
 
+    /// <summary>
+    /// Adds context identifiers to the log event.
+    /// </summary>
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {
         ArgumentNullException.ThrowIfNull(logEvent);

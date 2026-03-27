@@ -1,0 +1,14 @@
+global using FluentAssertions;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Text;
+global using System.Threading.Tasks;
+global using Muonroi.Core.Extensions;
+global using Muonroi.Core.Helpers;
+global using Muonroi.Core.Pagination;
+global using Muonroi.Core.Timing;
+global using Muonroi.Core.Abstractions.Models.Common;
+global using Xunit;

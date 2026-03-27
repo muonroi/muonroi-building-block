@@ -1,15 +1,29 @@
 namespace Muonroi.Data.EntityFrameworkCore.Auth;
 
+/// <summary>
+/// Default implementation for validating refresh tokens and building auth context.
+/// </summary>
+/// <typeparam name="TDbContext">The EF Core context type.</typeparam>
+/// <typeparam name="TPermission">The permission enum type.</typeparam>
+/// <param name="dbContext">The database context.</param>
+/// <param name="cacheService">The cache service.</param>
+/// <param name="resourceSetting">The resource setting storage.</param>
+/// <param name="configuration">The application configuration.</param>
+/// <param name="tokenInfo">Token configuration info.</param>
+/// <param name="logger">Optional logger.</param>
 public class DefaultRefreshTokenValidator<TDbContext, TPermission>(
     TDbContext dbContext,
     IMultiLevelCacheService cacheService,
     ResourceSetting resourceSetting,
     IConfiguration configuration,
     MTokenInfo tokenInfo,
-    ILogger<DefaultRefreshTokenValidator<TDbContext, TPermission>>? logger = null) : IRefreshTokenValidator
+    IMLog<MDbContext>? logger = null) : IRefreshTokenValidator
     where TDbContext : MDbContext
     where TPermission : Enum
 {
+    /// <summary>Validates the refresh token from the current HTTP context.</summary>
+    /// <param name="httpContext">The current HTTP context.</param>
+    /// <returns>The authentication context or <c>null</c> if validation fails.</returns>
     public async Task<MAuthenticateInfoContext?> ValidateAsync(HttpContext httpContext)
     {
         MRefreshToken? refresh =

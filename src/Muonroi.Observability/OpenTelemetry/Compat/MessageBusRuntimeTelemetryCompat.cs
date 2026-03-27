@@ -1,14 +1,36 @@
-using Muonroi.Messaging.Abstractions.Events;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace Muonroi.Observability.OpenTelemetry.Compat;
 
+/// <summary>
+/// Self-contained message bus telemetry for OpenTelemetry.
+/// Inlines constants previously delegated to Muonroi.Messaging.Abstractions.
+/// </summary>
 public static class MessageBusRuntimeTelemetry
 {
-    public const string ActivitySourceName = Muonroi.Messaging.Abstractions.Events.MessageBusRuntimeTelemetry.ActivitySourceName;
-    public const string MeterName = Muonroi.Messaging.Abstractions.Events.MessageBusRuntimeTelemetry.MeterName;
+    /// <summary>Activity source name.</summary>
+    public const string ActivitySourceName = "Muonroi.BuildingBlock.MessageBus";
+    /// <summary>Meter name.</summary>
+    public const string MeterName = "Muonroi.BuildingBlock.MessageBus";
 
-    public static ActivitySource ActivitySource => Muonroi.Messaging.Abstractions.Events.MessageBusRuntimeTelemetry.ActivitySource;
+    /// <summary>Activity source instance.</summary>
+    public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
 
+    private static readonly Meter Meter = new(MeterName);
+    private static readonly Counter<long> OperationCounter =
+        Meter.CreateCounter<long>("message_bus_operations_total", description: "Total message bus operations");
+    private static readonly Histogram<double> DurationHistogram =
+        Meter.CreateHistogram<double>("message_bus_operation_duration_ms", unit: "ms", description: "Message bus operation duration");
+
+    /// <summary>Tracks a message bus operation.</summary>
+    /// <param name="operation">Operation name.</param>
+    /// <param name="messageType">Message type.</param>
+    /// <param name="destination">Destination address.</param>
+    /// <param name="transport">Transport name.</param>
+    /// <param name="status">Operation status.</param>
+    /// <param name="tenantId">Tenant identifier.</param>
+    /// <param name="elapsed">Elapsed time.</param>
     public static void TrackOperation(
         string operation,
         string messageType,
@@ -18,6 +40,16 @@ public static class MessageBusRuntimeTelemetry
         string? tenantId,
         TimeSpan elapsed)
     {
-        Muonroi.Messaging.Abstractions.Events.MessageBusRuntimeTelemetry.TrackOperation(operation, messageType, destination, transport, status, tenantId, elapsed);
+        TagList tags = new()
+        {
+            { "messaging.operation", operation },
+            { "messaging.message_type", messageType },
+            { "messaging.destination", destination },
+            { "messaging.transport", transport },
+            { "messaging.status", status },
+            { "tenant.id", tenantId ?? string.Empty }
+        };
+        OperationCounter.Add(1, tags);
+        DurationHistogram.Record(elapsed.TotalMilliseconds, tags);
     }
 }

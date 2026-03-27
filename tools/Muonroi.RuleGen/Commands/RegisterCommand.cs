@@ -35,6 +35,7 @@ internal static class RegisterCommand
             generateDispatchers);
         string dispatcherSuffix = OptionReader.GetString(context, "dispatcher-suffix", "GeneratedRuleEngineDispatcher")
             ?? "GeneratedRuleEngineDispatcher";
+        string? workflowName = OptionReader.GetString(context, "workflow-name", context.Config.Extract.WorkflowName);
         string rulesDir = Path.GetFullPath(rules, context.WorkingDirectory);
         string outputFile = Path.GetFullPath(output, context.WorkingDirectory);
         string dispatcherDir = Path.GetFullPath(
@@ -46,7 +47,8 @@ internal static class RegisterCommand
         IReadOnlyList<Models.DiscoveredRuleType> discovered = RuleTypeDiscoveryService.Discover(rulesDir);
         IReadOnlyList<Models.DiscoveredDispatcherContext> dispatchers = DispatcherWriter.BuildContexts(
             discovered,
-            dispatcherSuffix);
+            dispatcherSuffix,
+            workflowName);
         IReadOnlyList<Models.DiscoveredDispatcherContext> dispatchersForRegistration =
             registerDispatchers ? dispatchers : [];
         string rendered = RegistrationWriter.Render(

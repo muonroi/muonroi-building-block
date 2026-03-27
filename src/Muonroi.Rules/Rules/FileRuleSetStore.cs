@@ -9,6 +9,7 @@ namespace Muonroi.Rules.Rules;
 /// Stores ruleset JSON files on disk with versioning and rollback support.
 /// Optionally signs each artifact to detect tampering.
 /// </summary>
+[Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
 public sealed class FileRuleSetStore : IRuleSetStore
 {
     private readonly string _rootPath;
@@ -17,6 +18,12 @@ public sealed class FileRuleSetStore : IRuleSetStore
     private readonly Regex _segmentRegex;
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> WorkflowLocks = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FileRuleSetStore"/> class.
+    /// </summary>
+    /// <param name="rootPath">The root directory where rulesets are stored.</param>
+    /// <param name="signer">Optional signer for ruleset artifacts.</param>
+    /// <param name="configs">Optional configuration for the ruleset store.</param>
     public FileRuleSetStore(string rootPath, IRuleSetSigner? signer = null, RuleStoreConfigs? configs = null)
     {
         if (string.IsNullOrWhiteSpace(rootPath))
@@ -60,6 +67,13 @@ public sealed class FileRuleSetStore : IRuleSetStore
         return EnsureUnderRoot(Path.Combine(GetTenantDirectory(), workflowSegment));
     }
 
+    /// <summary>
+    /// Saves a new version of a ruleset.
+    /// </summary>
+    /// <param name="workflowName">The name of the workflow.</param>
+    /// <param name="json">The JSON content of the ruleset.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous save operation.</returns>
     public async Task SaveAsync(string workflowName, string json, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(json);
@@ -91,6 +105,13 @@ public sealed class FileRuleSetStore : IRuleSetStore
         }
     }
 
+    /// <summary>
+    /// Retrieves a ruleset by its name and optional version.
+    /// </summary>
+    /// <param name="workflowName">The name of the workflow.</param>
+    /// <param name="version">The optional version to retrieve. If not specified, the active version is used.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous retrieval operation, containing the JSON content of the ruleset, or null if not found.</returns>
     public async Task<string?> GetAsync(string workflowName, int? version = null,
         CancellationToken cancellationToken = default)
     {
@@ -140,6 +161,13 @@ public sealed class FileRuleSetStore : IRuleSetStore
         return content;
     }
 
+    /// <summary>
+    /// Sets the active version of a ruleset.
+    /// </summary>
+    /// <param name="workflowName">The name of the workflow.</param>
+    /// <param name="version">The version to set as active.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task SetActiveVersionAsync(string workflowName, int version,
         CancellationToken cancellationToken = default)
     {
@@ -169,6 +197,12 @@ public sealed class FileRuleSetStore : IRuleSetStore
         }
     }
 
+    /// <summary>
+    /// Retrieves all available versions of a ruleset.
+    /// </summary>
+    /// <param name="workflowName">The name of the workflow.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation, containing an array of available versions.</returns>
     public Task<int[]> GetVersionsAsync(string workflowName, CancellationToken cancellationToken = default)
     {
         string dir = GetWorkflowDirectory(workflowName);

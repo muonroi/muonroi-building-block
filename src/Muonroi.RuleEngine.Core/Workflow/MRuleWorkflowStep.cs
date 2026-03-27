@@ -5,10 +5,15 @@ namespace Muonroi.RuleEngine.Core.Workflow;
 /// </summary>
 public enum MRuleWorkflowStepType
 {
+    /// <summary>The entry point of the workflow.</summary>
     Start = 0,
+    /// <summary>A task that executes a rule engine set.</summary>
     RuleTask = 1,
+    /// <summary>A task that executes custom logic or external services.</summary>
     ServiceTask = 2,
+    /// <summary>A gateway that diverts the flow based on a condition.</summary>
     ExclusiveGateway = 3,
+    /// <summary>An end point of the workflow.</summary>
     End = 4
 }
 
@@ -37,8 +42,19 @@ public sealed class MRuleWorkflowStep<TContext>
         _execute = execute ?? throw new ArgumentNullException(nameof(execute));
     }
 
+    /// <summary>
+    /// Gets the unique identifier for the step.
+    /// </summary>
     public string Id { get; }
+
+    /// <summary>
+    /// Gets the display name for the step.
+    /// </summary>
     public string Name { get; }
+
+    /// <summary>
+    /// Gets the category of the workflow step.
+    /// </summary>
     public MRuleWorkflowStepType StepType { get; }
 
     internal Task<string?> ExecuteAsync(
@@ -48,6 +64,13 @@ public sealed class MRuleWorkflowStep<TContext>
         return _execute(context, cancellationToken);
     }
 
+    /// <summary>
+    /// Creates a start step.
+    /// </summary>
+    /// <param name="id">The step identifier.</param>
+    /// <param name="nextStepId">The identifier of the next step.</param>
+    /// <param name="name">Optional display name.</param>
+    /// <returns>A new <see cref="MRuleWorkflowStep{TContext}"/> representing a start node.</returns>
     public static MRuleWorkflowStep<TContext> Start(
         string id,
         string nextStepId,
@@ -60,6 +83,15 @@ public sealed class MRuleWorkflowStep<TContext>
             (_, _) => Task.FromResult<string?>(nextStepId));
     }
 
+    /// <summary>
+    /// Creates a rule task step.
+    /// </summary>
+    /// <param name="id">The step identifier.</param>
+    /// <param name="nextStepId">The identifier of the next step.</param>
+    /// <param name="modeOverride">Optional rule execution mode override.</param>
+    /// <param name="traditionalPath">Optional delegate for traditional rule execution.</param>
+    /// <param name="name">Optional display name.</param>
+    /// <returns>A new <see cref="MRuleWorkflowStep{TContext}"/> representing a rule execution task.</returns>
     public static MRuleWorkflowStep<TContext> RuleTask(
         string id,
         string nextStepId,
@@ -89,6 +121,14 @@ public sealed class MRuleWorkflowStep<TContext>
             });
     }
 
+    /// <summary>
+    /// Creates a service task step.
+    /// </summary>
+    /// <param name="id">The step identifier.</param>
+    /// <param name="nextStepId">The identifier of the next step.</param>
+    /// <param name="action">The asynchronous action to execute.</param>
+    /// <param name="name">Optional display name.</param>
+    /// <returns>A new <see cref="MRuleWorkflowStep{TContext}"/> representing a custom logic task.</returns>
     public static MRuleWorkflowStep<TContext> ServiceTask(
         string id,
         string nextStepId,
@@ -106,6 +146,13 @@ public sealed class MRuleWorkflowStep<TContext>
             });
     }
 
+    /// <summary>
+    /// Creates an exclusive gateway step.
+    /// </summary>
+    /// <param name="id">The step identifier.</param>
+    /// <param name="decision">The delegate that determines the next step identifier.</param>
+    /// <param name="name">Optional display name.</param>
+    /// <returns>A new <see cref="MRuleWorkflowStep{TContext}"/> representing a conditional gateway.</returns>
     public static MRuleWorkflowStep<TContext> ExclusiveGateway(
         string id,
         Func<MRuleWorkflowExecutionContext<TContext>, CancellationToken, Task<string>> decision,
@@ -122,6 +169,12 @@ public sealed class MRuleWorkflowStep<TContext>
             });
     }
 
+    /// <summary>
+    /// Creates an end step.
+    /// </summary>
+    /// <param name="id">The step identifier.</param>
+    /// <param name="name">Optional display name.</param>
+    /// <returns>A new <see cref="MRuleWorkflowStep{TContext}"/> representing a workflow termination node.</returns>
     public static MRuleWorkflowStep<TContext> End(
         string id,
         string? name = null)

@@ -84,6 +84,46 @@ internal sealed class RuleGenExtractConfig
     public bool Validate { get; set; } = true;
     public bool OrganizeByNamespace { get; set; }
     public bool Parallel { get; set; } = true;
+
+    // ── Auto-register options (run register right after extract) ──
+
+    /// <summary>When true, automatically runs the register step after extraction.</summary>
+    public bool AutoRegister { get; set; } = true;
+
+    /// <summary>Registration extension file name.</summary>
+    public string RegistrationFileName { get; set; } = "MGeneratedRuleRegistrationExtensions.g.cs";
+
+    /// <summary>Registration extension class name.</summary>
+    public string RegistrationClassName { get; set; } = "MGeneratedRuleRegistrationExtensions";
+
+    /// <summary>Namespace for the registration extension. Defaults to the output namespace.</summary>
+    public string? RegistrationNamespace { get; set; }
+
+    /// <summary>Generate typed dispatcher interface + implementation per context type.</summary>
+    public bool GenerateDispatchers { get; set; } = true;
+
+    /// <summary>Register dispatchers in the DI extension method.</summary>
+    public bool RegisterDispatchers { get; set; } = true;
+
+    /// <summary>Include AddRuleEngine&lt;T&gt;() call in registration.</summary>
+    public bool IncludeRuleEngine { get; set; } = true;
+
+    /// <summary>Output directory for dispatcher files. Defaults to same as output.</summary>
+    public string? DispatcherOutput { get; set; }
+
+    /// <summary>Namespace for dispatcher files. Defaults to registration namespace.</summary>
+    public string? DispatcherNamespace { get; set; }
+
+    /// <summary>Overwrite existing dispatcher files.</summary>
+    public bool DispatcherOverwrite { get; set; } = true;
+
+    /// <summary>Dispatcher class name suffix.</summary>
+    public string DispatcherSuffix { get; set; } = "GeneratedRuleEngineDispatcher";
+
+    /// <summary>Workflow name for version-aware dispatch via RulesEngineService.
+    /// When set, the generated dispatcher delegates to RulesEngineService (flow graph + version selection).
+    /// When null, the dispatcher delegates directly to RuleOrchestrator (code-first only).</summary>
+    public string? WorkflowName { get; set; }
 }
 
 internal sealed class RuleGenConventionsConfig

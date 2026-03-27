@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Muonroi.RuleGen.VisualStudio;
 
+/// <summary>
+/// VSIX package entry point for Muonroi RuleGen.
+/// </summary>
 [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
 [InstalledProductRegistration("Muonroi RuleGen", "Extract/Merge/Watch commands for Muonroi.RuleGen", "1.0")]
 [ProvideMenuResource("Menus.ctmenu", 1)]
@@ -20,6 +23,11 @@ public sealed class RuleGenVsixPackage : AsyncPackage
         return (RuleGenOptionsPage)GetDialogPage(typeof(RuleGenOptionsPage));
     }
 
+    /// <summary>
+    /// Initializes the package and registers commands.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="progress">Progress reporter.</param>
     protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
     {
         await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);

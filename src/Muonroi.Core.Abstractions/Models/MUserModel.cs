@@ -43,12 +43,36 @@ public class MUserModel
         TenantId = tenantId;
     }
 
+    /// <summary>
+    /// The user GUID.
+    /// </summary>
     public string UserGuid { get; set; }
+    /// <summary>
+    /// The user's name.
+    /// </summary>
     public string Name { get; set; }
+    /// <summary>
+    /// The user's surname.
+    /// </summary>
     public string Surname { get; set; }
+    /// <summary>
+    /// The user's phone number.
+    /// </summary>
     public string PhoneNumber { get; set; }
+    /// <summary>
+    /// The user's email address.
+    /// </summary>
     public string Email { get; set; }
+    /// <summary>
+    /// The username.
+    /// </summary>
     public string Username { get; set; }
+    /// <summary>
+    /// The tenant ID.
+    /// </summary>
     public string? TenantId { get; set; }
+    /// <summary>
+    /// The token validity.
+    /// </summary>
     public string TokenValidity { get; set; }
 }

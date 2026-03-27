@@ -4,6 +4,7 @@ namespace Muonroi.Rules.Rules
     /// Defines a composable business rule evaluated against a given context.
     /// </summary>
     /// <typeparam name="TContext">Type of the context object.</typeparam>
+    [Obsolete("Deprecated: Use Muonroi.RuleEngine.Runtime instead. This package will be removed in a future version.")]
     public interface IBusinessRule<TContext>
     {
         /// <summary>

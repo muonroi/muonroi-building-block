@@ -3,6 +3,9 @@ using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.RuleEngine.DecisionTable.Stores;
 
+/// <summary>
+/// An in-memory implementation of <see cref="IDecisionTableStore"/>.
+/// </summary>
 public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerializeService) : IDecisionTableStore
 {
     private readonly ConcurrentDictionary<string, InMemoryDecisionTableRecord> _tables = new(StringComparer.OrdinalIgnoreCase);
@@ -10,6 +13,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
     private readonly ConcurrentDictionary<string, List<DecisionTableVersionSnapshot>> _versionHistory = new(StringComparer.OrdinalIgnoreCase);
     private long _nextAuditId;
 
+    /// <inheritdoc />
     public Task<DecisionTablePageResult> QueryAsync(DecisionTableQuery query, CancellationToken cancellationToken = default)
     {
         int page = Math.Max(1, query.Page);
@@ -56,6 +60,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
         });
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<DecisionTableModel>> GetAllAsync(
         int page = 1,
         int pageSize = 20,
@@ -71,6 +76,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
         return result.Items;
     }
 
+    /// <inheritdoc />
     public Task<DecisionTableModel?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         _tables.TryGetValue(id, out InMemoryDecisionTableRecord? record);
@@ -82,6 +88,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
         return Task.FromResult<DecisionTableModel?>(Clone(record.Table));
     }
 
+    /// <inheritdoc />
     public Task SaveAsync(
         DecisionTableModel table,
         string? actor = null,
@@ -109,6 +116,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public async Task<DecisionTableBulkResult> BulkUpsertAsync(
         IReadOnlyList<DecisionTableModel> tables,
         string? actor = null,
@@ -133,6 +141,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
         };
     }
 
+    /// <inheritdoc />
     public Task<DecisionTableBulkResult> BulkDeleteAsync(
         IReadOnlyList<string> ids,
         string? actor = null,
@@ -167,6 +176,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
         });
     }
 
+    /// <inheritdoc />
     public Task<bool> ReorderRowsAsync(
         string id,
         IReadOnlyList<string> orderedRowIds,
@@ -201,6 +211,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
         return Task.FromResult(true);
     }
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<DecisionTableVersionSnapshot>> GetVersionHistoryAsync(
         string id,
         int page = 1,
@@ -224,6 +235,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
         return Task.FromResult<IReadOnlyList<DecisionTableVersionSnapshot>>(result);
     }
 
+    /// <inheritdoc />
     public Task<DecisionTableVersionSnapshot?> GetVersionAsync(
         string id,
         int version,
@@ -238,6 +250,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
         return Task.FromResult(snapshot is null ? null : Clone(snapshot));
     }
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<DecisionTableAuditEntry>> GetAuditTrailAsync(
         string? id = null,
         int page = 1,
@@ -256,6 +269,7 @@ public sealed class InMemoryDecisionTableStore(IMJsonSerializeService jsonSerial
         return Task.FromResult<IReadOnlyList<DecisionTableAuditEntry>>(entries);
     }
 
+    /// <inheritdoc />
     public Task DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
         return BulkDeleteAsync([id], reason: "single-delete", cancellationToken: cancellationToken);

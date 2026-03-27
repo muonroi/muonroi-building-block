@@ -1,0 +1,11 @@
+global using Dapper;
+global using FluentAssertions;
+global using NSubstitute;
+global using System;
+global using System.Collections.Generic;
+global using System.Data;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Muonroi.Data.Dapper.Dapper;
+global using Muonroi.Data.Dapper.Dapper.EntityFrameworkCore.Storage.Converters;
+global using Xunit;
