@@ -1,8 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Tenancy.Abstractions;
-
 namespace Muonroi.Tenancy.SiteProfile.Web;
 
 /// <summary>
@@ -20,46 +15,107 @@ namespace Muonroi.Tenancy.SiteProfile.Web;
 /// </summary>
 public static class SiteProfileDbContextExtensions
 {
+    // Key used to store/retrieve SiteDbInfrastructureOptions from DI
+    internal const string InfrastructureOptionsKey = "SiteDbContext:InfrastructureOptions";
+
+    /// <summary>
+    /// One-call setup for the entire site DbContext infrastructure.
+    /// Registers <see cref="ITenantContext"/> and <see cref="ITenantConnectionStringFactory"/>
+    /// adapters from consumer-provided resolvers, plus an optional connection string transform.
+    ///
+    /// Call this ONCE in Program.cs BEFORE <c>AddSiteServices()</c> or any <c>AddSiteDbContext&lt;T&gt;()</c>.
+    ///
+    /// <example>
+    /// <code>
+    /// services.AddSiteDbInfrastructure(o =>
+    /// {
+    ///     o.TenantId = sp => accessor.MultiTenantContext?.TenantInfo?.TenantId;
+    ///     o.ConnectionString = sp => accessor.MultiTenantContext?.TenantInfo?.ConnectionString!;
+    ///     o.ConnectionStringTransform = cs => Cryptography.Decrypt(secretKey, cs);
+    ///     o.ConfigureDbContext = (b, cs) => b.UseSqlServer(cs, o => o.UseCompatibilityLevel(120));
+    /// });
+    /// </code>
+    /// </example>
+    /// </summary>
+    public static IServiceCollection AddSiteDbInfrastructure(
+        this IServiceCollection services,
+        Action<SiteDbInfrastructureOptions> configure)
+    {
+        var options = new SiteDbInfrastructureOptions();
+        configure(options);
+
+        if (options.TenantId is null)
+            throw new ArgumentException("SiteDbInfrastructureOptions.TenantId resolver is required.", nameof(configure));
+
+        if (options.ConnectionString is null)
+            throw new ArgumentException("SiteDbInfrastructureOptions.ConnectionString resolver is required.", nameof(configure));
+
+        // Store options for AddSiteDbContext to consume
+        services.AddSingleton(options);
+
+        // Register ITenantContext — adapts consumer's tenant resolution to ecosystem interface
+        Func<IServiceProvider, string?> tenantIdResolver = options.TenantId;
+        services.AddScoped<ITenantContext>(sp =>
+            new DelegatingTenantContext(tenantIdResolver(sp)));
+
+        // Register ITenantConnectionStringFactory — adapts consumer's connection string resolution
+        Func<IServiceProvider, string> connectionStringResolver = options.ConnectionString;
+        services.AddScoped<ITenantConnectionStringFactory>(sp =>
+            new DelegatingTenantConnectionStringFactory(connectionStringResolver(sp)));
+
+        // Register connection string transform as keyed singleton (consumed by AddSiteDbContext fallback)
+        if (options.ConnectionStringTransform is not null)
+        {
+            services.AddKeyedSingleton(
+                "SiteDbContext:ConnectionStringTransform",
+                options.ConnectionStringTransform);
+        }
+
+        return services;
+    }
+
     /// <summary>
     /// Registers <typeparamref name="TContext"/> as a scoped DbContext using the ecosystem tenant
     /// connection string factory, without registering the non-generic <c>DbContextOptions</c> base
     /// that causes Autofac "last wins" conflicts.
     ///
-    /// Use this instead of <c>services.AddDbContext&lt;T&gt;()</c> for per-site DbContexts to avoid
-    /// the Autofac registration conflict with <c>EFCoreStoreDbContext&lt;TenantInfo&gt;</c>.
+    /// Requires <see cref="AddSiteDbInfrastructure"/> to be called first (registers ITenantContext
+    /// and ITenantConnectionStringFactory). Or consumer can register those interfaces manually.
     /// </summary>
     /// <typeparam name="TContext">The DbContext type to register.</typeparam>
     /// <param name="services">The service collection.</param>
-    /// <param name="configuration">Application configuration (passed through for future extensibility).</param>
-    /// <param name="connectionStringTransform">
-    /// Optional transform applied to the raw connection string before use.
-    /// Use this for consumers that encrypt connection strings — e.g.,
-    /// <c>cs =&gt; Cryptography.Decrypt(secretKey, cs)</c>.
-    /// When null, the raw connection string from <see cref="ITenantConnectionStringFactory"/> is used as-is.
-    /// </param>
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddSiteDbContext<TContext>(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        Func<string, string>? connectionStringTransform = null)
+        this IServiceCollection services)
         where TContext : DbContext
     {
         // Register ONLY the generic DbContextOptions<TContext> — NOT the non-generic DbContextOptions base.
         // This is the key difference from AddDbContext<T>() which registers both.
         services.AddScoped<DbContextOptions<TContext>>(sp =>
         {
-            var tenantContext = sp.GetRequiredService<ITenantContext>();
-            var connFactory = sp.GetRequiredService<ITenantConnectionStringFactory>();
-            var raw = connFactory.GetConnectionString(tenantContext.TenantId);
+            ITenantContext tenantContext = sp.GetRequiredService<ITenantContext>();
+            ITenantConnectionStringFactory connFactory = sp.GetRequiredService<ITenantConnectionStringFactory>();
+            string raw = connFactory.GetConnectionString(tenantContext.TenantId);
 
-            // Resolve transform: explicit param wins, then keyed DI fallback (for consumers that register
-            // a named transform via services.AddKeyedSingleton("SiteDbContext:ConnectionStringTransform", ...))
-            var transform = connectionStringTransform
-                ?? sp.GetKeyedService<Func<string, string>>("SiteDbContext:ConnectionStringTransform");
-            var cs = transform is not null ? transform(raw) : raw;
+            // Resolve transform from keyed DI (registered by AddSiteDbInfrastructure)
+            Func<string, string>? transform =
+                sp.GetKeyedService<Func<string, string>>("SiteDbContext:ConnectionStringTransform");
+            string cs = transform is not null ? transform(raw) : raw;
 
             var builder = new DbContextOptionsBuilder<TContext>();
-            builder.UseSqlServer(cs);
+
+            // Resolve db provider configuration from options (registered by AddSiteDbInfrastructure)
+            SiteDbInfrastructureOptions? options = sp.GetService<SiteDbInfrastructureOptions>();
+            if (options?.ConfigureDbContext is not null)
+            {
+                options.ConfigureDbContext(builder, cs);
+            }
+            else
+            {
+                // Default: SQL Server for backward compatibility
+                builder.UseSqlServer(cs);
+            }
+
             return builder.Options;
         });
 
@@ -68,10 +124,38 @@ public static class SiteProfileDbContextExtensions
         // resolved from the service provider (e.g., ILogger, domain services).
         services.AddScoped<TContext>(sp =>
         {
-            var options = sp.GetRequiredService<DbContextOptions<TContext>>();
+            DbContextOptions<TContext> options = sp.GetRequiredService<DbContextOptions<TContext>>();
             return ActivatorUtilities.CreateInstance<TContext>(sp, options);
         });
 
         return services;
+    }
+
+    /// <summary>
+    /// Backward-compatible overload that accepts <c>IConfiguration</c> (for source-generated code).
+    /// The <paramref name="configuration"/> parameter is accepted but not used — tenant resolution
+    /// and connection strings come from <see cref="SiteDbInfrastructureOptions"/> registered via
+    /// <see cref="AddSiteDbInfrastructure"/>.
+    /// </summary>
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public static IServiceCollection AddSiteDbContext<TContext>(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        where TContext : DbContext
+        => AddSiteDbContext<TContext>(services);
+
+    // -----------------------------------------------------------------------
+    // Internal adapter types — minimal implementations of ecosystem interfaces
+    // that delegate to consumer-provided resolvers.
+    // -----------------------------------------------------------------------
+
+    private sealed class DelegatingTenantContext(string? tenantId) : ITenantContext
+    {
+        public string? TenantId { get; set; } = tenantId;
+    }
+
+    private sealed class DelegatingTenantConnectionStringFactory(string connectionString) : ITenantConnectionStringFactory
+    {
+        public string GetConnectionString(string? tenantId) => connectionString;
     }
 }
