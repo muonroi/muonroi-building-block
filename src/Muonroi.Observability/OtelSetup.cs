@@ -1,5 +1,5 @@
+using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Tenancy.Core;
 using Muonroi.Observability.OpenTelemetry.Compat;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
@@ -22,6 +22,10 @@ public static class OtelSetup
 {
     private const string GrpcActivitySourceName = "Muonroi.BuildingBlock.Grpc";
     private const string GrpcMeterName = "Muonroi.BuildingBlock.Grpc";
+    private const string MessageBusActivitySourceName = "Muonroi.BuildingBlock.MessageBus";
+    private const string MessageBusMeterName = "Muonroi.BuildingBlock.MessageBus";
+    private const string DistributedCacheActivitySourceName = "Muonroi.BuildingBlock.DistributedCache";
+    private const string DistributedCacheMeterName = "Muonroi.BuildingBlock.DistributedCache";
 
     /// <summary>
     /// Registers OpenTelemetry tracing and metrics for the host.
@@ -37,11 +41,7 @@ public static class OtelSetup
 
         services.AddOpenTelemetry()
             .ConfigureResource(rb => rb
-                .AddService(configs.ServiceName ?? "MuonroiService")
-                .AddAttributes(
-                [
-                    new KeyValuePair<string, object>("tenant.id", TenantContext.CurrentTenantId ?? string.Empty)
-                ]))
+                .AddService(configs.ServiceName ?? "MuonroiService"))
             .WithTracing(tracer =>
             {
                 _ = tracer
@@ -51,9 +51,9 @@ public static class OtelSetup
                     .AddSource("MassTransit")
                     .AddSource("BackgroundJob")
                     .AddSource(GrpcActivitySourceName)
-                    .AddSource(Muonroi.Messaging.Abstractions.Events.MessageBusRuntimeTelemetry.ActivitySourceName)
-                    .AddSource(Muonroi.Caching.Abstractions.Distributed.DistributedCacheRuntimeTelemetry.ActivitySourceName)
-                    .AddProcessor(new TenantActivityEnricher());
+                    .AddSource(MessageBusActivitySourceName)
+                    .AddSource(DistributedCacheActivitySourceName)
+                    .AddProcessor(sp => new TenantActivityEnricher(sp));
 
                 if (!string.IsNullOrWhiteSpace(configs.OtlpEndpoint))
                 {
@@ -68,8 +68,8 @@ public static class OtelSetup
                     .AddRuntimeInstrumentation()
                     .AddMeter("MassTransit")
                     .AddMeter(GrpcMeterName)
-                    .AddMeter(Muonroi.Messaging.Abstractions.Events.MessageBusRuntimeTelemetry.MeterName)
-                    .AddMeter(Muonroi.Caching.Abstractions.Distributed.DistributedCacheRuntimeTelemetry.MeterName);
+                    .AddMeter(MessageBusMeterName)
+                    .AddMeter(DistributedCacheMeterName);
 
                 if (!string.IsNullOrWhiteSpace(configs.OtlpEndpoint))
                 {
@@ -80,14 +80,15 @@ public static class OtelSetup
         return services;
     }
 
-    private sealed class TenantActivityEnricher : BaseProcessor<Activity>
+    private sealed class TenantActivityEnricher(IServiceProvider sp) : BaseProcessor<Activity>
     {
         /// <summary>
-        /// Executes the On Start operation.
+        /// Adds tenant.id tag to each activity using DI-resolved context accessor.
         /// </summary>
         public override void OnStart(Activity activity)
         {
-            string? tenantId = TenantContext.CurrentTenantId;
+            ISystemExecutionContextAccessor? accessor = sp.GetService<ISystemExecutionContextAccessor>();
+            string? tenantId = accessor?.Get()?.TenantId;
             if (!string.IsNullOrWhiteSpace(tenantId))
             {
                 activity.SetTag("tenant.id", tenantId);

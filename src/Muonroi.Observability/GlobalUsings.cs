@@ -5,6 +5,7 @@ global using Microsoft.Extensions.Hosting;
 global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Core.Abstractions.Models;
 global using Muonroi.Governance.Abstractions.License;
+global using Muonroi.Governance.License;
 global using Muonroi.Tenancy.Abstractions;
 global using System;
 global using System.Collections.Generic;
