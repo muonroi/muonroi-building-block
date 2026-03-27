@@ -26,9 +26,6 @@
     <ProjectReference Include="..\Muonroi.Governance\Muonroi.Governance.csproj" />
     <ProjectReference Include="..\Muonroi.Http\Muonroi.Http.csproj" />
     <ProjectReference Include="..\Muonroi.BackgroundJobs.Abstractions\Muonroi.BackgroundJobs.Abstractions.csproj" />
-    <ProjectReference Include="..\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
-    <ProjectReference Include="..\Muonroi.RuleEngine.Core\Muonroi.RuleEngine.Core.csproj" />
-    <ProjectReference Include="..\Muonroi.RuleEngine.Runtime\Muonroi.RuleEngine.Runtime.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />

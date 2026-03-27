@@ -13,7 +13,6 @@ using Muonroi.AspNetCore.Filters;
 using Muonroi.AspNetCore.Middleware;
 using Muonroi.Auth.BearerToken.Signers;
 using Muonroi.Core.Extensions;
-using Muonroi.RuleEngine.Runtime.Rules;
 using Muonroi.Tenancy.Core.Legacy;
 using Muonroi.UiEngine.Catalog.Services;
 using System.Security;
@@ -67,7 +66,6 @@ public static class InfrastructureExtensions
         _ = services.AddControllerConfiguration(assemblies)
             .AddLicenseProtection(configuration)
             .AddCoreServices(configuration, isSecretDefault, secreteKey, paginationConfigs, tokenConfig)
-            .AddRuleEngineStore(configuration)
             .AddMultiLevelCaching(configuration)
             .AddAuthContext()
             .AddTenantContext(configuration)
@@ -97,8 +95,6 @@ public static class InfrastructureExtensions
         services.TryAddScoped<ICatalogScanService, NoopCatalogScanService>();
         services.TryAddSingleton<IUiEngineSchemaNotifier, NoopUiEngineSchemaNotifier>();
         services.TryAddScoped<IMControllerExecutionContextResolver, MDefaultControllerExecutionContextResolver>();
-        _ = services.AddSingleton<IRuleChangeStore, InMemoryRuleChangeStore>();
-        _ = services.AddSingleton<IRuleChangeProposalStore, InMemoryRuleChangeProposalStore>();
         _ = services.AddUiEngineChangePolicies();
         _ = services.AddHealthChecks();
         _ = services.AddEndpointsApiExplorer();
@@ -125,12 +121,7 @@ public static class InfrastructureExtensions
             options.Filters.Add<RequestLoggingFilter>();
             options.Conventions.Add(new LowerCaseControllerNameConvention());
             options.Conventions.Add(new MControllerBaseConvention());
-            options.Conventions.Add(new GenericControllerRouteConvention());
         })
-            .ConfigureApplicationPartManager(manager =>
-            {
-                manager.FeatureProviders.Add(new GenericControllerFeatureProvider(assemblies));
-            })
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;

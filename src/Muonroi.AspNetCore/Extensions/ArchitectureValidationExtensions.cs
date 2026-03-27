@@ -197,8 +197,7 @@ public static class ArchitectureValidationExtensions
             t.Name.EndsWith("Controller") &&
             t is { IsClass: true, IsAbstract: false } &&
             typeof(ControllerBase).IsAssignableFrom(t) &&
-            !t.Name.StartsWith('M') && // Skip library controllers
-            !IsSubclassOfRawGeneric(typeof(MGenericController<,>), t)
+            !t.Name.StartsWith('M') // Skip library controllers
         )];
 
         foreach (Type? controller in from controller in controllers
@@ -206,9 +205,7 @@ public static class ArchitectureValidationExtensions
                                          typeof(MControllerBase).IsAssignableFrom(controller)
                                      let inheritsFromMAuthController =
                                          IsSubclassOfRawGeneric(typeof(MAuthControllerBase<,>), controller)
-                                     let inheritsFromMGenericController =
-                                         IsSubclassOfRawGeneric(typeof(MGenericController<,>), controller)
-                                     where !inheritsFromMControllerBase && !inheritsFromMAuthController && !inheritsFromMGenericController
+                                     where !inheritsFromMControllerBase && !inheritsFromMAuthController
                                      select controller)
         {
             PrintWarning(

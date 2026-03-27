@@ -39,8 +39,6 @@ global using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 global using Muonroi.Governance.Authorization;
 global using Muonroi.Governance.License;
 global using Muonroi.Quota.Abstractions;
-global using Muonroi.RuleEngine.Abstractions;
-global using Muonroi.RuleEngine.Core;
 global using Muonroi.Tenancy.Abstractions;
 global using Muonroi.Tenancy.Abstractions.Interfaces;
 global using Muonroi.Tenancy.Core;
