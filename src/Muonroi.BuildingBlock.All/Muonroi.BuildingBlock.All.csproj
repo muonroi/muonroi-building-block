@@ -18,6 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.AspNetCore\Muonroi.AspNetCore.csproj" />
+    <ProjectReference Include="..\Muonroi.AspNetCore.RuleEngine\Muonroi.AspNetCore.RuleEngine.csproj" />
     <ProjectReference Include="..\Muonroi.Core\Muonroi.Core.csproj" />
     <ProjectReference Include="..\Muonroi.Auth\Muonroi.Auth.csproj" />
     <ProjectReference Include="..\Muonroi.AuthZ\Muonroi.AuthZ.csproj" />
