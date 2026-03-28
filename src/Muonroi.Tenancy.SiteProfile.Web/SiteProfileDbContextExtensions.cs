@@ -1,3 +1,5 @@
+using Muonroi.Tenancy.SiteProfile.Web.Configuration;
+
 namespace Muonroi.Tenancy.SiteProfile.Web;
 
 /// <summary>
@@ -172,6 +174,21 @@ public static class SiteProfileDbContextExtensions
         configure?.Invoke(options);
         services.AddSingleton(options);
         services.AddHostedService<SiteMigrationRunner>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers <see cref="ISiteConfiguration"/> as a scoped service that reads per-site
+    /// configuration from the "Sites:{SiteId}:*" section of appsettings.json.
+    ///
+    /// The current SiteId is resolved automatically via <see cref="ISiteProfileResolver"/>.
+    /// Hot-reload is transparent — values re-read from IConfiguration on each call.
+    ///
+    /// Call after <see cref="AddSiteDbInfrastructure"/> (which registers ISiteProfileResolver).
+    /// </summary>
+    public static IServiceCollection AddSiteConfiguration(this IServiceCollection services)
+    {
+        services.AddScoped<ISiteConfiguration, SiteConfiguration>();
         return services;
     }
 
