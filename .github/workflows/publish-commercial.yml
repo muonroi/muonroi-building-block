@@ -120,6 +120,14 @@ jobs:
             --source "https://nuget.pkg.github.com/muonroi/index.json" \
             --skip-duplicate
 
+      - name: Push to NuGet.org
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run == false }}
+        run: |
+          dotnet nuget push "./artifacts/commercial/*.nupkg" \
+            --api-key "${{ secrets.NUGET_ORG_API_KEY }}" \
+            --source "https://api.nuget.org/v3/index.json" \
+            --skip-duplicate
+
       - name: Upload artifacts (dry run)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         uses: actions/upload-artifact@v4
