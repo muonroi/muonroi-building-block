@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Tenancy.SiteProfile.Web.HotReload;
+using Muonroi.Tenancy.SiteProfile.Web.Telemetry;
 
 namespace Muonroi.Tenancy.SiteProfile.Web;
 
@@ -31,5 +32,18 @@ public static class SiteProfileWebExtensions
     public static IApplicationBuilder UseSiteProfileStateMiddleware(this IApplicationBuilder app)
     {
         return app.UseMiddleware<SiteProfileStateMiddleware>();
+    }
+
+    /// <summary>
+    /// Adds middleware that enriches each request with site-scoped observability:
+    /// Activity.Current site.id tag, IMLog SiteId scope, and site_profile_requests_total counter.
+    ///
+    /// Place after <see cref="UseSiteProfileStateMiddleware"/> in the pipeline.
+    /// Requires <see cref="Muonroi.Tenancy.SiteProfile.ISiteProfileResolver"/> to be registered (via AddMultiSiteProfiles).
+    /// When resolver is absent, the middleware is a no-op passthrough.
+    /// </summary>
+    public static IApplicationBuilder UseSiteProfileTelemetry(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<SiteProfileTelemetryMiddleware>();
     }
 }
