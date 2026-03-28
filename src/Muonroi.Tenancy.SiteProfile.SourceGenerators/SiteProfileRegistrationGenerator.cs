@@ -69,15 +69,11 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
             context.CompilationProvider.Select(static (compilation, ct) =>
             {
                 var results = ImmutableArray.CreateBuilder<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>();
-                // Resolve the [SiteGrpcService] attribute type from compilation
+
                 INamedTypeSymbol? attrType = compilation.GetTypeByMetadataName("Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceAttribute");
                 if (attrType is null) return results.ToImmutable();
 
-                // Scan only assemblies that reference the Grpc package.
-                // Strategy: check if the assembly's module references an assembly named
-                // "Muonroi.Tenancy.SiteProfile.Grpc" (by name string, not identity —
-                // avoids version/publicKeyToken mismatch between NuGet cache and project output).
-                string grpcAssemblyName = attrType.ContainingAssembly.Name; // "Muonroi.Tenancy.SiteProfile.Grpc"
+                string grpcAssemblyName = attrType.ContainingAssembly.Name;
 
                 foreach (var reference in compilation.References)
                 {
@@ -85,7 +81,6 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
                     if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assemblySymbol)
                         continue;
 
-                    // Skip the Grpc assembly itself (it defines the attribute, not site services)
                     if (string.Equals(assemblySymbol.Name, grpcAssemblyName, StringComparison.Ordinal))
                         continue;
 
