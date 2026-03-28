@@ -208,6 +208,30 @@
 | TenantResolutionMiddleware.cs | `TenantResolutionMiddleware` | ASP.NET middleware |
 | Cache/RedisTenantCache.cs | `RedisTenantCache` | Redis tenant cache |
 
+### Tenancy.SiteProfile (`src/Muonroi.Tenancy.SiteProfile/`)
+
+| File | Class/Interface | Purpose |
+|------|----------------|---------|
+| ISiteProfile.cs | `ISiteProfile` | Marker + `SiteId`, `RegisterServices()` |
+| ISiteProfileResolver.cs | `ISiteProfileResolver`, `SiteProfileResolver` | Per-request site profile resolution |
+| SiteProfileExtensions.cs | `SiteProfileExtensions` | `AddSiteProfile<T>()`, `AddMultiSiteProfiles()`, `AddSiteResolvedService<T>()` |
+| SiteProfileScope.cs | `SiteProfileScope` | AsyncLocal override for tests/background jobs |
+| SiteProfileRegistrationTracker.cs | `SiteProfileRegistrationTracker` | Validates all sites registered correctly at startup |
+| SiteProfileStartupValidator.cs | `SiteProfileStartupValidator` | IHostedService: validates + logs failures |
+
+### Tenancy.SiteProfile.Web (`src/Muonroi.Tenancy.SiteProfile.Web/`)
+
+| File | Class/Interface | Purpose |
+|------|----------------|---------|
+| SiteDbInfrastructureOptions.cs | `SiteDbInfrastructureOptions` | EF Core per-site options: TenantId, ConnectionString, ConnectionStringTransform, ConfigureDbContext |
+| SiteProfileDbContextExtensions.cs | `SiteProfileDbContextExtensions` | `AddSiteDbInfrastructure()`, `AddSiteDbContext<T>()` — Autofac-safe EF Core per-site DbContext |
+| SiteDapperInfrastructureOptions.cs | `SiteDapperInfrastructureOptions` | Dapper per-site options: WriteConnectionString, ReadConnectionString, ConnectionStringTransform |
+| SiteProfileDapperExtensions.cs | `SiteProfileDapperExtensions`, `IDapperRead` | `AddSiteDapperInfrastructure()` — registers scoped IConnectionStringProvider, IDapper (write), IDapperRead (read replica) per site |
+| Repositories/MSiteRepository.cs | `MSiteRepository<TContext, TEntity>` | Abstract repo base with `DbContext` property resolved per-site via `ISiteProfileResolver` |
+| SiteProfileWebExtensions.cs | `SiteProfileWebExtensions` | `AddSiteProfileWeb()` — registers middleware + hot-reload |
+| SiteProfileStateMiddleware.cs | `SiteProfileStateMiddleware` | Sets site profile state per request |
+| HotReload/ISiteProfileChangeHandler.cs | `ISiteProfileChangeHandler` | Hot-reload contract |
+
 ---
 
 ## 3. Core Abstractions (Ecosystem Wrappers)

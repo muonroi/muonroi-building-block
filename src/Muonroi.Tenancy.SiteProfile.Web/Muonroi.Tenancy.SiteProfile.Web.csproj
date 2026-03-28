@@ -17,6 +17,7 @@
     <ProjectReference Include="../Muonroi.Data.EntityFrameworkCore/Muonroi.Data.EntityFrameworkCore.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Dapper.Extensions.NetCore" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
   </ItemGroup>
