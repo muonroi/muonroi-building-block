@@ -1,4 +1,6 @@
+using Muonroi.Mediator.Mediator.Interfaces;
 using Muonroi.Tenancy.SiteProfile.Web.Configuration;
+using Muonroi.Tenancy.SiteProfile.Web.Handlers;
 
 namespace Muonroi.Tenancy.SiteProfile.Web;
 
@@ -189,6 +191,48 @@ public static class SiteProfileDbContextExtensions
     public static IServiceCollection AddSiteConfiguration(this IServiceCollection services)
     {
         services.AddScoped<ISiteConfiguration, SiteConfiguration>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers a per-site MediatR command handler so the ecosystem keyed DI system can dispatch
+    /// <typeparamref name="TCmd"/> to the correct site-specific handler at runtime.
+    ///
+    /// <para>
+    /// Under the hood this delegates to <c>AddSiteResolvedService&lt;IRequestHandler&lt;TCmd, TResp&gt;&gt;()</c>,
+    /// which registers a scoped factory that resolves the correct keyed handler by the current
+    /// <c>SiteId</c> (with a <c>"default"</c> fallback if no site-specific key is found).
+    /// </para>
+    ///
+    /// <para>
+    /// Each site-specific handler must be registered separately inside its
+    /// <c>ISiteProfile.RegisterServices()</c> implementation using a keyed registration:
+    /// </para>
+    ///
+    /// <example>
+    /// <code>
+    /// // Program.cs — register the dispatcher factory once:
+    /// services.AddSiteCommandHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;();
+    ///
+    /// // TciSiteProfile.RegisterServices() — register the TCI implementation:
+    /// services.AddKeyedScoped&lt;IRequestHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;,
+    ///     TciCreateOrderHandler&gt;("TCI");
+    ///
+    /// // EportSiteProfile.RegisterServices() — register the ePort implementation:
+    /// services.AddKeyedScoped&lt;IRequestHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;,
+    ///     EportCreateOrderHandler&gt;("EPORT");
+    /// </code>
+    /// </example>
+    /// </summary>
+    /// <typeparam name="TCmd">The command/request type implementing <see cref="IRequest{TResp}"/>.</typeparam>
+    /// <typeparam name="TResp">The response type returned by the handler.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddSiteCommandHandler<TCmd, TResp>(
+        this IServiceCollection services)
+        where TCmd : IRequest<TResp>
+    {
+        services.AddSiteResolvedService<IRequestHandler<TCmd, TResp>>();
         return services;
     }
 
