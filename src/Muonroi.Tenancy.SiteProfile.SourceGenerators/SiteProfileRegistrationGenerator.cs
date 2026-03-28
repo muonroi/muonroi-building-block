@@ -73,9 +73,11 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
                 INamedTypeSymbol? attrType = compilation.GetTypeByMetadataName("Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceAttribute");
                 if (attrType is null) return results.ToImmutable();
 
-                // Scan only assemblies that reference the Grpc package (contain SiteGrpcServiceAttribute usage).
-                // This avoids scanning hundreds of framework/runtime assemblies.
-                IAssemblySymbol? grpcAssembly = attrType.ContainingAssembly;
+                // Scan only assemblies that reference the Grpc package.
+                // Strategy: check if the assembly's module references an assembly named
+                // "Muonroi.Tenancy.SiteProfile.Grpc" (by name string, not identity —
+                // avoids version/publicKeyToken mismatch between NuGet cache and project output).
+                string grpcAssemblyName = attrType.ContainingAssembly.Name; // "Muonroi.Tenancy.SiteProfile.Grpc"
 
                 foreach (var reference in compilation.References)
                 {
@@ -83,22 +85,24 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
                     if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assemblySymbol)
                         continue;
 
-                    // Only scan assemblies that have a module-level reference to the Grpc assembly
-                    // (i.e., they actually reference Muonroi.Tenancy.SiteProfile.Grpc where [SiteGrpcService] lives)
-                    bool referencesGrpcAssembly = false;
-                    foreach (var referencedModule in assemblySymbol.Modules)
+                    // Skip the Grpc assembly itself (it defines the attribute, not site services)
+                    if (string.Equals(assemblySymbol.Name, grpcAssemblyName, StringComparison.Ordinal))
+                        continue;
+
+                    bool referencesGrpc = false;
+                    foreach (var module in assemblySymbol.Modules)
                     {
-                        foreach (var referencedAssembly in referencedModule.ReferencedAssemblySymbols)
+                        foreach (var refAsm in module.ReferencedAssemblySymbols)
                         {
-                            if (SymbolEqualityComparer.Default.Equals(referencedAssembly, grpcAssembly))
+                            if (string.Equals(refAsm.Name, grpcAssemblyName, StringComparison.Ordinal))
                             {
-                                referencesGrpcAssembly = true;
+                                referencesGrpc = true;
                                 break;
                             }
                         }
-                        if (referencesGrpcAssembly) break;
+                        if (referencesGrpc) break;
                     }
-                    if (!referencesGrpcAssembly) continue;
+                    if (!referencesGrpc) continue;
 
                     ScanNamespaceForSiteGrpcService(assemblySymbol.GlobalNamespace, attrType, results, ct);
                 }
