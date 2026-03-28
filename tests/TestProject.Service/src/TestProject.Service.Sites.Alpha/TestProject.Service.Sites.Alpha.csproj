@@ -4,20 +4,25 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Not a test project — disable test SDK injection from Directory.Build.props -->
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Muonroi.Tenancy.SiteProfile" />
-    <PackageReference Include="Muonroi.Tenancy.SiteProfile.SourceGenerators" />
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.SourceGenerators">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Muonroi.Tenancy.SiteProfile.Web" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TestProject.Service.Core\TestProject.Service.Core.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\TestProject.Service.Core\TestProject.Service.Core.csproj" />
   </ItemGroup>
 
 </Project>
