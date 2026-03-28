@@ -17,6 +17,7 @@
     <ProjectReference Include="../Muonroi.Data.EntityFrameworkCore/Muonroi.Data.EntityFrameworkCore.csproj" />
     <ProjectReference Include="../Muonroi.Caching.Abstractions/Muonroi.Caching.Abstractions.csproj" />
     <ProjectReference Include="../Muonroi.Quota.Abstractions/Muonroi.Quota.Abstractions.csproj" />
+    <ProjectReference Include="../Muonroi.Mediator/Muonroi.Mediator.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Dapper.Extensions.NetCore" />
