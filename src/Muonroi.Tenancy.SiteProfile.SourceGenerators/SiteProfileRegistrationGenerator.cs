@@ -409,9 +409,16 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
         sb.AppendLine("#nullable enable");
         sb.AppendLine("using System;");
         sb.AppendLine("using System.Collections.Generic;");
-        sb.AppendLine("using Muonroi.Tenancy.SiteProfile.Grpc;");
         sb.AppendLine();
         sb.AppendLine("namespace Muonroi.Tenancy.SiteProfile.Generated;");
+        sb.AppendLine();
+        sb.AppendLine("/// <summary>");
+        sb.AppendLine("/// Descriptor for a site-specific gRPC service. Generated inline to avoid");
+        sb.AppendLine("/// external assembly reference issues in source generator context.");
+        sb.AppendLine("/// Compatible with GeneratedSiteGrpcServiceDescriptor.");
+        sb.AppendLine("/// </summary>");
+        sb.AppendLine("public sealed record GeneratedSiteGrpcServiceDescriptor(");
+        sb.AppendLine("    string SiteId, System.Type ServiceType, string? Reason = null);");
         sb.AppendLine();
         sb.AppendLine("/// <summary>");
         sb.AppendLine("/// Registry of all gRPC service types discovered from [SiteGrpcService] attributes.");
@@ -424,11 +431,11 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
         sb.AppendLine("    /// Returns all site-specific gRPC services discovered from [SiteGrpcService] attributes.");
         sb.AppendLine("    /// AOT-safe — no runtime reflection. Call from MapSiteGrpcServices() at startup.");
         sb.AppendLine("    /// </summary>");
-        sb.AppendLine("    public static System.Collections.Generic.IReadOnlyList<Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor> GetAllSiteGrpcServices()");
+        sb.AppendLine("    public static System.Collections.Generic.IReadOnlyList<GeneratedSiteGrpcServiceDescriptor> GetAllSiteGrpcServices()");
 
         if (services.IsDefaultOrEmpty)
         {
-            sb.AppendLine("        => System.Array.Empty<Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor>();");
+            sb.AppendLine("        => System.Array.Empty<GeneratedSiteGrpcServiceDescriptor>();");
         }
         else
         {
@@ -440,11 +447,11 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
 
             if (distinctServices.Count == 0)
             {
-                sb.AppendLine("        => System.Array.Empty<Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor>();");
+                sb.AppendLine("        => System.Array.Empty<GeneratedSiteGrpcServiceDescriptor>();");
             }
             else
             {
-                sb.AppendLine("        => new Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor[]");
+                sb.AppendLine("        => new GeneratedSiteGrpcServiceDescriptor[]");
                 sb.AppendLine("        {");
                 foreach (var (symbol, siteId, reason) in distinctServices)
                 {
@@ -453,11 +460,11 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
                     if (reason is not null)
                     {
                         string reasonLiteral = EscapeStringLiteral(reason);
-                        sb.AppendLine($"            new Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor(\"{siteIdLiteral}\", typeof({fullName}), \"{reasonLiteral}\"),");
+                        sb.AppendLine($"            new GeneratedSiteGrpcServiceDescriptor(\"{siteIdLiteral}\", typeof({fullName}), \"{reasonLiteral}\"),");
                     }
                     else
                     {
-                        sb.AppendLine($"            new Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor(\"{siteIdLiteral}\", typeof({fullName})),");
+                        sb.AppendLine($"            new GeneratedSiteGrpcServiceDescriptor(\"{siteIdLiteral}\", typeof({fullName})),");
                     }
                 }
                 sb.AppendLine("        };");

@@ -118,4 +118,41 @@ public static class SiteGrpcEndpointExtensions
 
         return mapped;
     }
+
+    /// <summary>
+    /// AOT-safe overload accepting source-generated descriptors.
+    /// The source generator emits <c>GeneratedSiteGrpcServiceDescriptor</c> inline
+    /// to avoid external assembly reference issues in the generator context.
+    /// This overload bridges the generated type to the runtime mapping logic.
+    /// <example>
+    /// <code>
+    /// app.MapSiteGrpcServices(SiteGrpcServiceRegistry.GetAllSiteGrpcServices);
+    /// </code>
+    /// </example>
+    /// </summary>
+    public static IReadOnlyList<(string SiteId, Type ServiceType)> MapSiteGrpcServices<TDescriptor>(
+        this IEndpointRouteBuilder app,
+        Func<IReadOnlyList<TDescriptor>> registryProvider)
+        where TDescriptor : class
+    {
+        ArgumentNullException.ThrowIfNull(registryProvider);
+
+        IReadOnlyList<TDescriptor> descriptors = registryProvider();
+        List<(string SiteId, Type ServiceType)> mapped = new(descriptors.Count);
+
+        foreach (TDescriptor descriptor in descriptors)
+        {
+            // Use duck-typing via reflection to read SiteId and ServiceType properties
+            // from the generated record type (which has identical shape to SiteGrpcServiceDescriptor)
+            Type descType = descriptor.GetType();
+            string siteId = (string)descType.GetProperty("SiteId")!.GetValue(descriptor)!;
+            Type serviceType = (Type)descType.GetProperty("ServiceType")!.GetValue(descriptor)!;
+
+            MethodInfo genericMethod = MapGrpcServiceMethod.MakeGenericMethod(serviceType);
+            genericMethod.Invoke(null, [app]);
+            mapped.Add((siteId, serviceType));
+        }
+
+        return mapped;
+    }
 }
