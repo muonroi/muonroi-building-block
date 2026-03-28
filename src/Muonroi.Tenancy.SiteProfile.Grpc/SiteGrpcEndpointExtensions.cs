@@ -86,4 +86,36 @@ public static class SiteGrpcEndpointExtensions
 
         return mapped;
     }
+
+    /// <summary>
+    /// Maps per-site gRPC services using an AOT-safe registry delegate instead of reflection.
+    /// Use with the source-generated <c>SiteGrpcServiceRegistry.GetAllSiteGrpcServices()</c>:
+    /// <code>
+    /// app.MapSiteGrpcServices(SiteGrpcServiceRegistry.GetAllSiteGrpcServices);
+    /// </code>
+    /// </summary>
+    /// <param name="app">The endpoint route builder (typically WebApplication).</param>
+    /// <param name="registryProvider">
+    /// Delegate returning the list of site gRPC service descriptors.
+    /// Typically <c>SiteGrpcServiceRegistry.GetAllSiteGrpcServices</c> from source-generated code.
+    /// </param>
+    /// <returns>List of (SiteId, ServiceType) pairs that were mapped.</returns>
+    public static IReadOnlyList<(string SiteId, Type ServiceType)> MapSiteGrpcServices(
+        this IEndpointRouteBuilder app,
+        Func<IReadOnlyList<SiteGrpcServiceDescriptor>> registryProvider)
+    {
+        ArgumentNullException.ThrowIfNull(registryProvider);
+
+        IReadOnlyList<SiteGrpcServiceDescriptor> descriptors = registryProvider();
+        List<(string SiteId, Type ServiceType)> mapped = new(descriptors.Count);
+
+        foreach (SiteGrpcServiceDescriptor descriptor in descriptors)
+        {
+            MethodInfo genericMethod = MapGrpcServiceMethod.MakeGenericMethod(descriptor.ServiceType);
+            genericMethod.Invoke(null, [app]);
+            mapped.Add((descriptor.SiteId, descriptor.ServiceType));
+        }
+
+        return mapped;
+    }
 }
