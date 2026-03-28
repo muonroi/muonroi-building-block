@@ -52,18 +52,61 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
             static (spc, types) => EmitSiteDbContextTypeRegistry(types, spc));
 
         // --- Pipeline 3: [SiteGrpcService] gRPC service type discovery ---
-        // Scan for classes with [SiteGrpcService] attribute and emit SiteGrpcServiceRegistry.g.cs
-        IncrementalValuesProvider<(INamedTypeSymbol Symbol, string SiteId, string? Reason)> grpcServiceTypes =
+        // Scans BOTH local source code AND referenced assemblies for [SiteGrpcService].
+        // This is critical for Host projects that reference site assemblies (e.g., Sites.TCI.dll)
+        // where [SiteGrpcService] lives in a compiled dependency, not in local source.
+
+        // 3a. Local source scan (catches [SiteGrpcService] in current compilation)
+        IncrementalValuesProvider<(INamedTypeSymbol Symbol, string SiteId, string? Reason)> localGrpcServices =
             context.SyntaxProvider
                 .CreateSyntaxProvider(
                     predicate: static (s, _) => s is ClassDeclarationSyntax cls && cls.AttributeLists.Count > 0,
                     transform: static (ctx, _) => GetSiteGrpcServiceInfo(ctx))
                 .Where(static s => s.Symbol is not null)!;
 
-        IncrementalValueProvider<ImmutableArray<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>> collectedGrpcServices =
-            grpcServiceTypes.Collect();
+        // 3b. Referenced assembly scan (catches [SiteGrpcService] in compiled site projects)
+        IncrementalValueProvider<ImmutableArray<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>> referencedGrpcServices =
+            context.CompilationProvider.Select(static (compilation, ct) =>
+            {
+                var results = ImmutableArray.CreateBuilder<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>();
+                // Resolve the [SiteGrpcService] attribute type from compilation
+                INamedTypeSymbol? attrType = compilation.GetTypeByMetadataName("Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceAttribute");
+                if (attrType is null) return results.ToImmutable();
 
-        context.RegisterSourceOutput(collectedGrpcServices,
+                foreach (var reference in compilation.References)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assemblySymbol)
+                        continue;
+
+                    // Skip well-known framework/runtime assemblies
+                    string? assemblyName = assemblySymbol.Name;
+                    if (assemblyName.StartsWith("System", StringComparison.Ordinal) ||
+                        assemblyName.StartsWith("Microsoft", StringComparison.Ordinal) ||
+                        assemblyName.StartsWith("Grpc", StringComparison.Ordinal) ||
+                        assemblyName.StartsWith("Google", StringComparison.Ordinal) ||
+                        assemblyName.StartsWith("Muonroi", StringComparison.Ordinal) ||
+                        assemblyName.StartsWith("netstandard", StringComparison.Ordinal))
+                        continue;
+
+                    ScanNamespaceForSiteGrpcService(assemblySymbol.GlobalNamespace, attrType, results, ct);
+                }
+
+                return results.ToImmutable();
+            });
+
+        // 3c. Merge local + referenced into single collection
+        IncrementalValueProvider<ImmutableArray<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>> allGrpcServices =
+            localGrpcServices.Collect().Combine(referencedGrpcServices)
+                .Select(static (pair, _) =>
+                {
+                    var builder = ImmutableArray.CreateBuilder<(INamedTypeSymbol, string, string?)>();
+                    builder.AddRange(pair.Left);
+                    builder.AddRange(pair.Right);
+                    return builder.ToImmutable();
+                });
+
+        context.RegisterSourceOutput(allGrpcServices,
             static (spc, services) => EmitSiteGrpcServiceRegistry(services, spc));
     }
 
@@ -349,6 +392,48 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
     // -----------------------------------------------------------------------
     // Pipeline 3 helpers: [SiteGrpcService] gRPC service type discovery
     // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Recursively scans a namespace for types with [SiteGrpcService] attribute.
+    /// Used by Pipeline 3b to discover services in referenced assemblies.
+    /// </summary>
+    private static void ScanNamespaceForSiteGrpcService(
+        INamespaceSymbol ns,
+        INamedTypeSymbol attrType,
+        ImmutableArray<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>.Builder results,
+        System.Threading.CancellationToken ct)
+    {
+        foreach (var member in ns.GetMembers())
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (member is INamespaceSymbol childNs)
+            {
+                ScanNamespaceForSiteGrpcService(childNs, attrType, results, ct);
+            }
+            else if (member is INamedTypeSymbol typeSymbol && typeSymbol.TypeKind == TypeKind.Class && !typeSymbol.IsAbstract)
+            {
+                foreach (var attr in typeSymbol.GetAttributes())
+                {
+                    if (attr.AttributeClass is null) continue;
+                    if (!SymbolEqualityComparer.Default.Equals(attr.AttributeClass, attrType)) continue;
+
+                    if (attr.ConstructorArguments.Length < 1) continue;
+                    if (attr.ConstructorArguments[0].Value is not string siteId) continue;
+
+                    string? reason = null;
+                    foreach (var namedArg in attr.NamedArguments)
+                    {
+                        if (namedArg.Key == "Reason" && namedArg.Value.Value is string r)
+                            reason = r;
+                    }
+
+                    results.Add((typeSymbol, siteId, reason));
+                    break;
+                }
+            }
+        }
+    }
 
     /// <summary>
     /// Extracts (symbol, siteId, reason?) from a class with [SiteGrpcService("siteId")] attribute.
