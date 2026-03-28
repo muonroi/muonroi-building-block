@@ -20,4 +20,9 @@
     <PackageReference Include="Grpc.AspNetCore.Server" />
     <PackageReference Include="Grpc.Net.ClientFactory" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Pack .targets file into NuGet build/ folder.
+         NuGet convention: build/{PackageId}.targets is auto-imported by all consumers on restore. -->
+    <None Include="build\Muonroi.Tenancy.SiteProfile.Grpc.targets" Pack="true" PackagePath="build\" />
+  </ItemGroup>
 </Project>
