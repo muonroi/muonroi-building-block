@@ -119,6 +119,7 @@ jobs:
             "src/Muonroi.Diagnostics"
             "src/Muonroi.Services.Abstractions"
             "src/Muonroi.Rules"
+            "src/Muonroi.Tenancy.SiteProfile.Grpc"
           )
 
           for proj in "${OSS_PROJECTS[@]}"; do
@@ -129,6 +130,14 @@ jobs:
             echo "Packing $proj..."
             dotnet pack "$proj" $PACK_ARGS
           done
+
+          # Template pack (PackageType=Template — separate from library packages)
+          TEMPLATE_PACK_ARGS="-c Release -o $ARTIFACTS_DIR"
+          if [ -n "${PACKAGE_VERSION:-}" ]; then
+            TEMPLATE_PACK_ARGS="$TEMPLATE_PACK_ARGS -p:PackageVersion=$PACKAGE_VERSION"
+          fi
+          echo "Packing Host.Tenant.Templates..."
+          dotnet pack "templates/Muonroi.Templates.csproj" $TEMPLATE_PACK_ARGS
 
       - name: List artifacts
         run: ls -la ./artifacts/oss/

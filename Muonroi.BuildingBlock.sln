@@ -270,6 +270,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Data.EntityFramewor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.AspNetCore.RuleEngine", "src\Muonroi.AspNetCore.RuleEngine\Muonroi.AspNetCore.RuleEngine.csproj", "{CF988E56-F403-4C57-831C-096906837A0C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Tenancy.SiteProfile.Grpc", "src\Muonroi.Tenancy.SiteProfile.Grpc\Muonroi.Tenancy.SiteProfile.Grpc.csproj", "{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1768,6 +1770,18 @@ Global
 		{CF988E56-F403-4C57-831C-096906837A0C}.Release|x64.Build.0 = Release|Any CPU
 		{CF988E56-F403-4C57-831C-096906837A0C}.Release|x86.ActiveCfg = Release|Any CPU
 		{CF988E56-F403-4C57-831C-096906837A0C}.Release|x86.Build.0 = Release|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Debug|x64.Build.0 = Debug|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Debug|x86.Build.0 = Debug|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Release|x64.ActiveCfg = Release|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Release|x64.Build.0 = Release|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Release|x86.ActiveCfg = Release|Any CPU
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1899,6 +1913,7 @@ Global
 		{3F8F3825-7565-437C-AB4D-D1494D6BEBAD} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{AF25B904-F8F7-4B74-822B-E8F6FCF7B00E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{CF988E56-F403-4C57-831C-096906837A0C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{8296A500-8ADD-407E-B96D-CC6DC4EA9C71} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70FB77B9-3FAF-4A3C-A497-CEE99524EEC5}

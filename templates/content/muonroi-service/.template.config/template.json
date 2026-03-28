@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Muonroi",
+  "classifications": ["Muonroi", "Multi-Site", "Tenant", "Service", "gRPC"],
+  "identity": "Host.Tenant.Service",
+  "groupIdentity": "Host.Tenant",
+  "name": "Tenant Multi-Site Service",
+  "shortName": "tenant-service",
+  "sourceName": "MuonroiService",
+  "preferNameDirectory": true,
+  "defaultName": "MyService",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "guids": [
+    "A1B2C3D4-E5F6-7890-ABCD-111111111111",
+    "A1B2C3D4-E5F6-7890-ABCD-222222222222",
+    "A1B2C3D4-E5F6-7890-ABCD-333333333333",
+    "A1B2C3D4-E5F6-7890-ABCD-444444444444"
+  ],
+  "symbols": {
+    "dataAccess": {
+      "type": "parameter",
+      "datatype": "choice",
+      "description": "Data access pattern",
+      "defaultValue": "ef",
+      "choices": [
+        { "choice": "ef", "description": "Entity Framework Core (per-site DbContext)" },
+        { "choice": "dapper", "description": "Dapper (per-site Repository via Autofac)" }
+      ]
+    },
+    "protoMode": {
+      "type": "parameter",
+      "datatype": "choice",
+      "description": "Proto architecture: shared (1 proto, optional fields) or perSite (each site has own proto)",
+      "defaultValue": "shared",
+      "choices": [
+        { "choice": "shared", "description": "One shared .proto in Host. Site differences via optional fields 100+. Recommended for similar sites." },
+        { "choice": "perSite", "description": "Each site project has its own .proto. Use when sites have completely different RPC contracts." }
+      ]
+    },
+    "siteCodeKey": {
+      "type": "parameter",
+      "datatype": "string",
+      "description": "gRPC metadata key for SiteCode extraction (e.g., SiteCode, x-site-code)",
+      "defaultValue": "SiteCode",
+      "replaces": "SITE_CODE_METADATA_KEY"
+    },
+    "isEf": {
+      "type": "computed",
+      "value": "(dataAccess == \"ef\")"
+    },
+    "isDapper": {
+      "type": "computed",
+      "value": "(dataAccess == \"dapper\")"
+    },
+    "isSharedProto": {
+      "type": "computed",
+      "value": "(protoMode == \"shared\")"
+    },
+    "isPerSiteProto": {
+      "type": "computed",
+      "value": "(protoMode == \"perSite\")"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(dataAccess != \"ef\")",
+          "exclude": [
+            "**/ContextBase.cs",
+            "**/*OrderContext.cs",
+            "**/EntityConfigurations/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "primaryOutputs": [
+    { "path": "src/MuonroiService.Host/MuonroiService.Host.csproj" },
+    { "path": "src/MuonroiService.Core/MuonroiService.Core.csproj" },
+    { "path": "src/MuonroiService.Sites.Default/MuonroiService.Sites.Default.csproj" }
+  ],
+  "postActions": [
+    {
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "description": "Restore NuGet packages",
+      "continueOnError": true,
+      "manualInstructions": [
+        { "text": "Run 'dotnet restore'" }
+      ]
+    }
+  ]
+}

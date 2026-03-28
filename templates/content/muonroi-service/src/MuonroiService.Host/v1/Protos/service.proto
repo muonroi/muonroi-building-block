@@ -1,0 +1,69 @@
+// Shared proto: single service definition for all sites.
+// Site-specific fields use optional fields starting at 100+.
+// Business logic differences are at C# service level (inheritance), NOT proto level.
+//
+// Proto modes:
+//   shared   — This file only. Sites differ by optional fields + C# overrides.
+//   perSite  — Each site has its own .proto (see Sites/Tci/Protos/ for example).
+
+syntax = "proto3";
+
+option csharp_namespace = "MuonroiService.Host.v1.Protos";
+
+package MuonroiService.v1;
+
+service ServiceRpc {
+  rpc Create (CreateRequest) returns (CreateReply);
+  rpc GetById (GetByIdRequest) returns (GetByIdReply);
+  rpc GetList (GetListRequest) returns (GetListReply);
+}
+
+// ── Request messages ────────────────────────────────────────────────
+
+message CreateRequest {
+  string name = 1;
+  string description = 2;
+  string liner_code = 3;
+  string agent = 4;
+
+  // Site-specific extension fields (100+)
+  // Sites that need them populate; others leave empty (default value).
+  // optional string tci_booking_number = 100;
+  // optional string ctl_customs_ref_code = 101;
+}
+
+message GetByIdRequest {
+  int64 id = 1;
+}
+
+message GetListRequest {
+  string liner_code = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+// ── Reply messages ──────────────────────────────────────────────────
+
+message CreateReply {
+  bool success = 1;
+  string message = 2;
+  repeated OrderDetailInfo details = 3;
+}
+
+message OrderDetailInfo {
+  string order_detail_no = 1;
+  string container_no = 2;
+  string id = 3;
+}
+
+message GetByIdReply {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  string site_id = 4;
+}
+
+message GetListReply {
+  repeated GetByIdReply items = 1;
+  int32 total = 2;
+}

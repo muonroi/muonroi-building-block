@@ -1,0 +1,51 @@
+// Per-site proto for SITE_ID_UPPER.
+// This site has completely different RPC contract from the shared proto.
+// Compiled by this site project only — not by Host.
+//
+// Callers reference this proto to talk to SITE_ID_UPPER-specific endpoints.
+// Register via: app.MapSiteGrpcServices(typeof(SiteTemplateGrpcService).Assembly);
+
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "MuonroiService.Sites.SiteTemplate.Protos";
+
+package MuonroiService.Sites.SiteTemplate.v1;
+
+service SiteTemplateMuonroiServiceRpc {
+  // SITE_ID_UPPER-specific RPCs — different from shared proto
+  rpc CreateWithValidation (SiteTemplateCreateRequest) returns (SiteTemplateCreateReply);
+  rpc GetDetails (SiteTemplateGetDetailsRequest) returns (SiteTemplateGetDetailsReply);
+}
+
+message SiteTemplateCreateRequest {
+  int32 order_id = 1;
+  // Add SITE_ID_UPPER-specific fields here
+  repeated SiteTemplateDetailItem details = 2;
+}
+
+message SiteTemplateDetailItem {
+  string container_no = 1;
+  string iso_code = 2;
+}
+
+message SiteTemplateCreateReply {
+  bool success = 1;
+  string message = 2;
+}
+
+message SiteTemplateGetDetailsRequest {
+  string bill_no = 1;
+  string liner_code = 2;
+}
+
+message SiteTemplateGetDetailsReply {
+  repeated SiteTemplateDetailReplyItem items = 1;
+}
+
+message SiteTemplateDetailReplyItem {
+  string order_detail_no = 1;
+  string container_no = 2;
+  google.protobuf.Timestamp created_date = 3;
+}

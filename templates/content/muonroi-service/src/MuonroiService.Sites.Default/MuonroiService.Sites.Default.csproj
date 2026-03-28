@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.SourceGenerators" Version="1.0.0-alpha.7" />
+<!--#if (isEf) -->
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.Web" Version="1.0.0-alpha.7" />
+<!--#endif -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MuonroiService.Core\MuonroiService.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>
