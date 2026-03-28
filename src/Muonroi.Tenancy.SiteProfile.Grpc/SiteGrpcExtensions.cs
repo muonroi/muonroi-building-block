@@ -122,8 +122,7 @@ public static class SiteGrpcExtensions
             return registry;
         });
 
-        // TODO(plan-02): Uncomment after SiteGrpcClientFactory implementation is created.
-        // services.AddScoped<ISiteGrpcClientFactory, SiteGrpcClientFactory>();
+        services.AddScoped<ISiteGrpcClientFactory, SiteGrpcClientFactory>();
         return services;
     }
 }
