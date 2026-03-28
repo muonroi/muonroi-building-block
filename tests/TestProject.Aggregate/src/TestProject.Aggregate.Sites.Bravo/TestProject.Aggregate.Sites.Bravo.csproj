@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Not a test project — disable test SDK injection from Directory.Build.props -->
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+    <!-- Override MuonroiSharedProtoDir so the .targets resolves shared.proto correctly.
+         Path: src/Sites.Bravo/ -> ../../ = TestProject.Aggregate/ -> v1/Protos/ -->
+    <MuonroiSharedProtoDir>$(MSBuildProjectDirectory)\..\..\v1\Protos\</MuonroiSharedProtoDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile" />
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.Grpc" />
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.SourceGenerators">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Grpc.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestProject.Aggregate.Core\TestProject.Aggregate.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Per-site proto: imports "shared.proto" via MuonroiSharedProtoDir set above -->
+    <Protobuf Include="Protos\service.bravo.proto" GrpcServices="Server" />
+    <!-- Also compile shared.proto to generate SharedContainerInfo C# class in this assembly -->
+    <Protobuf Include="$(MuonroiSharedProtoDir)shared.proto" GrpcServices="None" Link="Protos\shared.proto" />
+  </ItemGroup>
+
+</Project>

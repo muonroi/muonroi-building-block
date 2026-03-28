@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Not a test project — disable test SDK injection from Directory.Build.props -->
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile" />
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.SourceGenerators">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestProject.Aggregate.Core\TestProject.Aggregate.Core.csproj" />
+  </ItemGroup>
+
+</Project>
