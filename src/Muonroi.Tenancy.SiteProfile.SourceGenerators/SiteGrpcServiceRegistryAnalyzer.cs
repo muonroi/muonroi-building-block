@@ -74,7 +74,7 @@ public sealed class SiteGrpcServiceRegistryAnalyzer : DiagnosticAnalyzer
 
             // 3. Resolve SiteGrpcServiceRegistry type (may be null if Phase 58 not yet run)
             var registryType = compilation
-                .GetTypeByMetadataName("Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceRegistry");
+                .GetTypeByMetadataName("Muonroi.Tenancy.SiteProfile.Generated.SiteGrpcServiceRegistry");
 
             if (registryType is null)
             {
