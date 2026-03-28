@@ -424,11 +424,11 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
         sb.AppendLine("    /// Returns all site-specific gRPC services discovered from [SiteGrpcService] attributes.");
         sb.AppendLine("    /// AOT-safe — no runtime reflection. Call from MapSiteGrpcServices() at startup.");
         sb.AppendLine("    /// </summary>");
-        sb.AppendLine("    public static IReadOnlyList<SiteGrpcServiceDescriptor> GetAllSiteGrpcServices()");
+        sb.AppendLine("    public static System.Collections.Generic.IReadOnlyList<Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor> GetAllSiteGrpcServices()");
 
         if (services.IsDefaultOrEmpty)
         {
-            sb.AppendLine("        => System.Array.Empty<SiteGrpcServiceDescriptor>();");
+            sb.AppendLine("        => System.Array.Empty<Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor>();");
         }
         else
         {
@@ -440,11 +440,11 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
 
             if (distinctServices.Count == 0)
             {
-                sb.AppendLine("        => System.Array.Empty<SiteGrpcServiceDescriptor>();");
+                sb.AppendLine("        => System.Array.Empty<Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor>();");
             }
             else
             {
-                sb.AppendLine("        => new SiteGrpcServiceDescriptor[]");
+                sb.AppendLine("        => new Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor[]");
                 sb.AppendLine("        {");
                 foreach (var (symbol, siteId, reason) in distinctServices)
                 {
@@ -453,11 +453,11 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
                     if (reason is not null)
                     {
                         string reasonLiteral = EscapeStringLiteral(reason);
-                        sb.AppendLine($"            new SiteGrpcServiceDescriptor(\"{siteIdLiteral}\", typeof({fullName}), \"{reasonLiteral}\"),");
+                        sb.AppendLine($"            new Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor(\"{siteIdLiteral}\", typeof({fullName}), \"{reasonLiteral}\"),");
                     }
                     else
                     {
-                        sb.AppendLine($"            new SiteGrpcServiceDescriptor(\"{siteIdLiteral}\", typeof({fullName})),");
+                        sb.AppendLine($"            new Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceDescriptor(\"{siteIdLiteral}\", typeof({fullName})),");
                     }
                 }
                 sb.AppendLine("        };");
