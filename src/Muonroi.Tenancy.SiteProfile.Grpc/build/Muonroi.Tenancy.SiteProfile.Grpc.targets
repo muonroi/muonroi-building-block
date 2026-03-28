@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+
+  <!--
+    Muonroi.Tenancy.SiteProfile.Grpc — Proto Import Targets
+    Auto-imported by NuGet on restore (NuGet convention: build/{PackageId}.targets).
+
+    Sets AdditionalImportDirs on all Protobuf items so that site projects can write:
+      import "fullcontainerdelivery.proto";
+    without manually configuring the import path.
+
+    Property: MuonroiSharedProtoDir
+      Default: $(MSBuildProjectDirectory)\..\..\v1\Protos\
+      Consumers can override in their .csproj:
+        <MuonroiSharedProtoDir>$(MSBuildProjectDirectory)\..\..\custom\protos\</MuonroiSharedProtoDir>
+
+    This target runs before GrpcCompileProtos (Grpc.Tools build target).
+    It APPENDS to AdditionalImportDirs — does not overwrite values the consumer already set.
+  -->
+
+  <PropertyGroup>
+    <!-- Default: two levels up from the consumer project to v1/Protos.
+         Convention: consumer project lives at src/SiteName/... and shared protos at ../../v1/Protos. -->
+    <MuonroiSharedProtoDir Condition="'$(MuonroiSharedProtoDir)' == ''">$(MSBuildProjectDirectory)\..\..\v1\Protos\</MuonroiSharedProtoDir>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <!--
+      Append MuonroiSharedProtoDir to every Protobuf item's AdditionalImportDirs.
+      Using %(Protobuf.AdditionalImportDirs) preserves any value the consumer set per-item.
+      The semicolon separator is safe even when the existing value is empty.
+    -->
+    <Protobuf>
+      <AdditionalImportDirs>%(Protobuf.AdditionalImportDirs);$(MuonroiSharedProtoDir)</AdditionalImportDirs>
+    </Protobuf>
+  </ItemDefinitionGroup>
+
+</Project>
