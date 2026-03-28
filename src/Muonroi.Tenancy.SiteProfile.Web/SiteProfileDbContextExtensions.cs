@@ -144,6 +144,37 @@ public static class SiteProfileDbContextExtensions
         where TContext : DbContext
         => AddSiteDbContext<TContext>(services);
 
+    /// <summary>
+    /// Registers the site migration runner that auto-discovers all site DbContext types
+    /// (via the source-generated <c>SiteDbContextTypeRegistry.GetAllSiteDbContextTypes()</c>)
+    /// and runs EF Core migrations at startup. Call after <see cref="AddSiteDbInfrastructure"/>.
+    ///
+    /// <example>
+    /// <code>
+    /// services.AddSiteMigrationRunner(); // defaults: AutoMigrate + unbounded parallelism
+    ///
+    /// services.AddSiteMigrationRunner(o =>
+    /// {
+    ///     o.Strategy = MigrationStrategy.ValidateOnly; // prod: check only, don't apply
+    ///     o.MaxParallelism = 4;                        // limit concurrent migrations
+    /// });
+    /// </code>
+    /// </example>
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configure">Optional configuration delegate for <see cref="SiteMigrationRunnerOptions"/>.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddSiteMigrationRunner(
+        this IServiceCollection services,
+        Action<SiteMigrationRunnerOptions>? configure = null)
+    {
+        var options = new SiteMigrationRunnerOptions();
+        configure?.Invoke(options);
+        services.AddSingleton(options);
+        services.AddHostedService<SiteMigrationRunner>();
+        return services;
+    }
+
     // -----------------------------------------------------------------------
     // Internal adapter types — minimal implementations of ecosystem interfaces
     // that delegate to consumer-provided resolvers.
