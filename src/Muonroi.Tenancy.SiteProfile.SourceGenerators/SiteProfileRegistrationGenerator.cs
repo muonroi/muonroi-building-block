@@ -73,21 +73,32 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
                 INamedTypeSymbol? attrType = compilation.GetTypeByMetadataName("Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceAttribute");
                 if (attrType is null) return results.ToImmutable();
 
+                // Scan only assemblies that reference the Grpc package (contain SiteGrpcServiceAttribute usage).
+                // This avoids scanning hundreds of framework/runtime assemblies.
+                IAssemblySymbol? grpcAssembly = attrType.ContainingAssembly;
+
                 foreach (var reference in compilation.References)
                 {
                     ct.ThrowIfCancellationRequested();
                     if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assemblySymbol)
                         continue;
 
-                    // Skip well-known framework/runtime assemblies
-                    string? assemblyName = assemblySymbol.Name;
-                    if (assemblyName.StartsWith("System", StringComparison.Ordinal) ||
-                        assemblyName.StartsWith("Microsoft", StringComparison.Ordinal) ||
-                        assemblyName.StartsWith("Grpc", StringComparison.Ordinal) ||
-                        assemblyName.StartsWith("Google", StringComparison.Ordinal) ||
-                        assemblyName.StartsWith("Muonroi", StringComparison.Ordinal) ||
-                        assemblyName.StartsWith("netstandard", StringComparison.Ordinal))
-                        continue;
+                    // Only scan assemblies that have a module-level reference to the Grpc assembly
+                    // (i.e., they actually reference Muonroi.Tenancy.SiteProfile.Grpc where [SiteGrpcService] lives)
+                    bool referencesGrpcAssembly = false;
+                    foreach (var referencedModule in assemblySymbol.Modules)
+                    {
+                        foreach (var referencedAssembly in referencedModule.ReferencedAssemblySymbols)
+                        {
+                            if (SymbolEqualityComparer.Default.Equals(referencedAssembly, grpcAssembly))
+                            {
+                                referencesGrpcAssembly = true;
+                                break;
+                            }
+                        }
+                        if (referencesGrpcAssembly) break;
+                    }
+                    if (!referencesGrpcAssembly) continue;
 
                     ScanNamespaceForSiteGrpcService(assemblySymbol.GlobalNamespace, attrType, results, ct);
                 }
