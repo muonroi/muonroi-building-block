@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- This is a runnable host app, not a test project — disable test SDK injection from Directory.Build.props -->
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+    <!-- Set shared proto dir so that Host service.proto can import "shared.proto" -->
+    <MuonroiSharedProtoDir>$(MSBuildProjectDirectory)\..\..\v1\Protos\</MuonroiSharedProtoDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" />
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile" />
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.Grpc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestProject.Aggregate.Core\TestProject.Aggregate.Core.csproj" />
+    <ProjectReference Include="..\TestProject.Aggregate.Sites.Default\TestProject.Aggregate.Sites.Default.csproj" />
+    <ProjectReference Include="..\TestProject.Aggregate.Sites.Alpha\TestProject.Aggregate.Sites.Alpha.csproj" />
+    <ProjectReference Include="..\TestProject.Aggregate.Sites.Bravo\TestProject.Aggregate.Sites.Bravo.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shared service proto — imports shared.proto (AdditionalImportDirs auto-set via .targets) -->
+    <Protobuf Include="v1\Protos\service.proto" GrpcServices="Server" />
+  </ItemGroup>
+
+</Project>
