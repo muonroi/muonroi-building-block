@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.Tenancy.SiteProfile.Web\Muonroi.Tenancy.SiteProfile.Web.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Logging\Muonroi.Logging.csproj" />
+    <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Default\TestProject.Service.Sites.Default.csproj" />
+    <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Alpha\TestProject.Service.Sites.Alpha.csproj" />
+    <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Bravo\TestProject.Service.Sites.Bravo.csproj" />
+    <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Core\TestProject.Service.Core.csproj" />
+  </ItemGroup>
+</Project>
