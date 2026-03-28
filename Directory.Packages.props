@@ -90,8 +90,13 @@
     <PackageVersion Include="ModelContextProtocol" Version="1.1.0" />
     <PackageVersion Include="MongoDB.Driver" Version="3.4.0" />
     <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="Muonroi.Data.EntityFrameworkCore" Version="1.0.0-alpha.8" />
     <PackageVersion Include="Muonroi.Governance.Abstractions" Version="1.0.0-alpha.1" />
     <PackageVersion Include="Muonroi.RuleEngine.Abstractions" Version="1.0.0-alpha.1" />
+    <PackageVersion Include="Muonroi.Tenancy.SiteProfile" Version="1.0.0-alpha.8" />
+    <PackageVersion Include="Muonroi.Tenancy.SiteProfile.Grpc" Version="1.0.0-alpha.8" />
+    <PackageVersion Include="Muonroi.Tenancy.SiteProfile.SourceGenerators" Version="1.0.0-alpha.8" />
+    <PackageVersion Include="Muonroi.Tenancy.SiteProfile.Web" Version="1.0.0-alpha.8" />
     <PackageVersion Include="Muonroi.RuleEngine.Core" Version="1.0.0-alpha.1" />
     <PackageVersion Include="Muonroi.RuleEngine.DecisionTable.Web" Version="1.0.0-alpha.1" />
     <PackageVersion Include="Muonroi.RuleEngine.Runtime" Version="1.0.0-alpha.1" />
