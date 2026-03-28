@@ -11,6 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Muonroi.Tenancy.SiteProfile" />
     <PackageReference Include="Muonroi.Tenancy.SiteProfile.Grpc" />
+    <PackageReference Include="Muonroi.Mediator" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
   </ItemGroup>
 

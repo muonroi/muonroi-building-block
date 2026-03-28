@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Mediator.Mediator.Interfaces;
 using TestProject.Service.Core.Constants;
 using TestProject.Service.Core.Contracts;
 
@@ -11,5 +12,8 @@ public partial class AlphaSiteProfile
     {
         // Register Alpha site-specific keyed services
         services.AddKeyedScoped<IOrderService, AlphaOrderService>(SiteIds.ALPHA);
+
+        // Register Alpha keyed command handler for MSiteCommandHandler keyed dispatch (SRVC-03)
+        services.AddKeyedScoped<IRequestHandler<CreateOrderCommand, CreateOrderResponse>, AlphaCreateOrderHandler>(SiteIds.ALPHA);
     }
 }

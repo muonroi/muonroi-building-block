@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Mediator.Mediator.Interfaces;
 using TestProject.Service.Core.Constants;
 using TestProject.Service.Core.Contracts;
 
@@ -11,5 +12,8 @@ public partial class BravoSiteProfile
     {
         // Register Bravo site-specific keyed services
         services.AddKeyedScoped<IOrderService, BravoOrderService>(SiteIds.BRAVO);
+
+        // Register Bravo keyed command handler for MSiteCommandHandler keyed dispatch (SRVC-03)
+        services.AddKeyedScoped<IRequestHandler<CreateOrderCommand, CreateOrderResponse>, BravoCreateOrderHandler>(SiteIds.BRAVO);
     }
 }
