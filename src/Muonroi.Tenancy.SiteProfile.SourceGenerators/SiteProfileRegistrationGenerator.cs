@@ -365,12 +365,12 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
         sb.AppendLine("    /// Returns all site DbContext types discovered from [GenerateSiteProfile] attributes.");
         sb.AppendLine("    /// AOT-safe — no reflection. Used by SiteMigrationRunner at startup.");
         sb.AppendLine("    /// </summary>");
-        sb.AppendLine("    public static IReadOnlyList<Type> GetAllSiteDbContextTypes()");
+        sb.AppendLine("    public static IReadOnlyList<System.Type> GetAllSiteDbContextTypes()");
 
         if (dbContextTypes.IsDefaultOrEmpty)
         {
             // No [GenerateSiteProfile] attributes found — emit empty array
-            sb.AppendLine("        => Array.Empty<Type>();");
+            sb.AppendLine("        => System.Array.Empty<System.Type>();");
         }
         else
         {
@@ -382,11 +382,11 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
 
             if (distinctTypes.Count == 0)
             {
-                sb.AppendLine("        => Array.Empty<Type>();");
+                sb.AppendLine("        => System.Array.Empty<System.Type>();");
             }
             else
             {
-                sb.AppendLine("        => new Type[]");
+                sb.AppendLine("        => new System.Type[]");
                 sb.AppendLine("        {");
                 foreach (var dbContextType in distinctTypes)
                 {
