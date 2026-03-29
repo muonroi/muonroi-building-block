@@ -16,11 +16,13 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Tenancy.SiteProfile.Web\Muonroi.Tenancy.SiteProfile.Web.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Logging\Muonroi.Logging.csproj" />
     <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Default\TestProject.Service.Sites.Default.csproj" />
     <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Alpha\TestProject.Service.Sites.Alpha.csproj" />
     <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Bravo\TestProject.Service.Sites.Bravo.csproj" />
+    <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Charlie\TestProject.Service.Sites.Charlie.csproj" />
     <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Core\TestProject.Service.Core.csproj" />
   </ItemGroup>
 </Project>
