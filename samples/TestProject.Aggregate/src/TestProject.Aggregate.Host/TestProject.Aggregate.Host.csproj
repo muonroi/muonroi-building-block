@@ -25,7 +25,7 @@
 
   <ItemGroup>
     <!-- Shared service proto — imports shared.proto (AdditionalImportDirs auto-set via .targets) -->
-    <Protobuf Include="v1\Protos\service.proto" GrpcServices="Server" />
+    <Protobuf Include="v1\Protos\service.proto" GrpcServices="Server" AdditionalImportDirs="$(MuonroiSharedProtoDir)" />
   </ItemGroup>
 
 </Project>

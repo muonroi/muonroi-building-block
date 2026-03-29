@@ -31,7 +31,7 @@
 
   <ItemGroup>
     <!-- Per-site proto: imports "shared.proto" via MuonroiSharedProtoDir set above -->
-    <Protobuf Include="Protos\service.bravo.proto" GrpcServices="Server" />
+    <Protobuf Include="Protos\service.bravo.proto" GrpcServices="Server" AdditionalImportDirs="$(MuonroiSharedProtoDir)" />
     <!-- Also compile shared.proto to generate SharedContainerInfo C# class in this assembly -->
     <Protobuf Include="$(MuonroiSharedProtoDir)shared.proto" GrpcServices="None" Link="Protos\shared.proto" />
   </ItemGroup>
