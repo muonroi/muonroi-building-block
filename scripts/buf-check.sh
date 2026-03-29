@@ -6,7 +6,7 @@ if ! command -v buf >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! find . -type f -name '*.proto' -not -path './**/bin/*' -not -path './**/obj/*' -not -path './templates/*' | grep -q .; then
+if ! find . -type f -name '*.proto' -not -path './**/bin/*' -not -path './**/obj/*' -not -path './templates/*' -not -path './samples/*' | grep -q .; then
   echo "No .proto files found. Skipping Buf lint/breaking checks."
   exit 0
 fi

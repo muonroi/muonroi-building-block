@@ -3,6 +3,7 @@ modules:
   - path: .
     excludes:
       - templates
+      - samples
 lint:
   use:
     - STANDARD
