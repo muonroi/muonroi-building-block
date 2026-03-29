@@ -12,12 +12,12 @@ namespace Muonroi.Tenancy.SiteProfile;
 ///
 /// <example>
 /// <code>
-/// // CTL reuses all DEFAULT keyed services — zero boilerplate
+/// // SiteB reuses all DEFAULT keyed services — zero boilerplate
 /// [SiteProfileAlias("DEFAULT")]
-/// [GenerateSiteProfile("CTL", typeof(DefaultOrderContext))]
-/// public partial class CtlSiteProfile : ISiteProfile
+/// [GenerateSiteProfile("SiteB", typeof(DefaultDbContext))]
+/// public partial class SiteBProfile : ISiteProfile
 /// {
-///     public string SiteId => "CTL";
+///     public string SiteId => "SiteB";
 /// }
 /// </code>
 /// </example>

@@ -12,9 +12,9 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity;
 ///
 /// Usage:
 /// <code>
-/// public class Sg01Context : MDbContextBase&lt;Sg01Context&gt;
+/// public class MySiteContext : MDbContextBase&lt;MySiteContext&gt;
 /// {
-///     public DbSet&lt;OrderDetailSg01&gt; OrderDetails =&gt; Set&lt;OrderDetailSg01&gt;();
+///     public DbSet&lt;MyEntity&gt; MyEntities =&gt; Set&lt;MyEntity&gt;();
 ///     protected override void ConfigureSiteSpecific(ModelBuilder b) { ... }
 /// }
 /// </code>

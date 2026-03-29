@@ -214,13 +214,13 @@ public static class SiteProfileDbContextExtensions
     /// // Program.cs — register the dispatcher factory once:
     /// services.AddSiteCommandHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;();
     ///
-    /// // TciSiteProfile.RegisterServices() — register the TCI implementation:
+    /// // SiteASiteProfile.RegisterServices() — register the SiteA implementation:
     /// services.AddKeyedScoped&lt;IRequestHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;,
-    ///     TciCreateOrderHandler&gt;("TCI");
+    ///     SiteACreateOrderHandler&gt;("SiteA");
     ///
-    /// // EportSiteProfile.RegisterServices() — register the ePort implementation:
+    /// // SiteBSiteProfile.RegisterServices() — register the SiteB implementation:
     /// services.AddKeyedScoped&lt;IRequestHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;,
-    ///     EportCreateOrderHandler&gt;("EPORT");
+    ///     SiteBCreateOrderHandler&gt;("SiteB");
     /// </code>
     /// </example>
     /// </summary>

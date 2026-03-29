@@ -39,37 +39,37 @@ public sealed record ValidationResult(bool IsValid, string? Error = null)
 /// <para><b>Usage example:</b></para>
 /// <example>
 /// <code>
-/// // Per-site handler — TCI terminal
-/// public class TciCreateHandler : MSiteCommandHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;
+/// // Per-site handler — MySite
+/// public class MySiteHandler : MSiteCommandHandler&lt;MyCommand, MyResponse&gt;
 /// {
-///     public TciCreateHandler(ISiteProfileResolver siteResolver, ISiteConfiguration siteConfig)
+///     public MySiteHandler(ISiteProfileResolver siteResolver, ISiteConfiguration siteConfig)
 ///         : base(siteResolver, siteConfig) { }
 ///
 ///     protected override async Task&lt;ValidationResult&gt; ValidateAsync(
-///         CreateOrderCommand request, CancellationToken cancellationToken)
+///         MyCommand request, CancellationToken cancellationToken)
 ///     {
-///         // TCI-specific: validate berth date window
-///         if (request.BerthDate &lt; DateTime.UtcNow)
-///             return ValidationResult.Failure("BerthDate must be in the future.");
+///         // Site-specific: validate date window
+///         if (request.TargetDate &lt; DateTime.UtcNow)
+///             return ValidationResult.Failure("TargetDate must be in the future.");
 ///         return ValidationResult.Success;
 ///     }
 ///
-///     protected override async Task&lt;CreateOrderResponse&gt; ExecuteAsync(
-///         CreateOrderCommand request, CancellationToken cancellationToken)
+///     protected override async Task&lt;MyResponse&gt; ExecuteAsync(
+///         MyCommand request, CancellationToken cancellationToken)
 ///     {
 ///         var siteCode = SiteResolver.Current.SiteCode;
-///         var maxSlots = SiteConfig.GetValue&lt;int&gt;("MaxBerthSlots", defaultValue: 10);
-///         // ... TCI business logic using siteCode and maxSlots
-///         return new CreateOrderResponse { ... };
+///         var maxSlots = SiteConfig.GetValue&lt;int&gt;("MaxSlots", defaultValue: 10);
+///         // ... site-specific business logic using siteCode and maxSlots
+///         return new MyResponse { ... };
 ///     }
 /// }
 ///
-/// // Registration (TciSiteProfile.RegisterServices):
-/// services.AddKeyedScoped&lt;IRequestHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;,
-///     TciCreateHandler&gt;("TCI");
+/// // Registration (MySiteSiteProfile.RegisterServices):
+/// services.AddKeyedScoped&lt;IRequestHandler&lt;MyCommand, MyResponse&gt;,
+///     MySiteHandler&gt;("MySite");
 ///
 /// // Program.cs:
-/// services.AddSiteCommandHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;();
+/// services.AddSiteCommandHandler&lt;MyCommand, MyResponse&gt;();
 /// </code>
 /// </example>
 /// </summary>

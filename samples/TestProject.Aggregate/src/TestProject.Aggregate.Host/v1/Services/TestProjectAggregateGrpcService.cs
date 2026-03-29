@@ -1,8 +1,4 @@
-using Grpc.Core;
-using Microsoft.Extensions.DependencyInjection;
-using TestProject.Aggregate.Core.Contracts;
-using TestProject.Aggregate.Host.v1.Protos;
-using Google.Protobuf.WellKnownTypes;
+
 
 namespace TestProject.Aggregate.Host.v1.Services;
 
@@ -10,27 +6,22 @@ namespace TestProject.Aggregate.Host.v1.Services;
 /// Shared gRPC service implementation for the Aggregate host.
 /// Dispatches to the site-specific IContainerHandler keyed service.
 /// </summary>
-public class TestProjectAggregateGrpcService : AggregateRpc.AggregateRpcBase
+public class TestProjectAggregateGrpcService(
+    IServiceProvider serviceProvider,
+    ISiteCodeHolder siteCodeHolder) : AggregateRpc.AggregateRpcBase
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ISiteCodeHolder _siteCodeHolder;
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
+    private readonly ISiteCodeHolder _siteCodeHolder = siteCodeHolder;
 
-    public TestProjectAggregateGrpcService(
-        IServiceProvider serviceProvider,
-        ISiteCodeHolder siteCodeHolder)
-    {
-        _serviceProvider = serviceProvider;
-        _siteCodeHolder = siteCodeHolder;
-    }
-
+    /// <inheritdoc/>
     public override async Task<HandleContainerReply> HandleContainer(
         HandleContainerRequest request, ServerCallContext context)
     {
         string siteCode = _siteCodeHolder.SiteCode ?? "DEFAULT";
-        var handler = _serviceProvider.GetKeyedService<IContainerHandler>(siteCode)
+        IContainerHandler handler = _serviceProvider.GetKeyedService<IContainerHandler>(siteCode)
             ?? _serviceProvider.GetRequiredService<IContainerHandler>();
 
-        var result = await handler.HandleAsync(request.ContainerNo, request.IsoCode, context.CancellationToken);
+        ContainerResult result = await handler.HandleAsync(request.ContainerNo, request.IsoCode, context.CancellationToken);
         return new HandleContainerReply
         {
             Success = result.Success,
@@ -38,16 +29,17 @@ public class TestProjectAggregateGrpcService : AggregateRpc.AggregateRpcBase
         };
     }
 
+    /// <inheritdoc/>
     public override async Task<ListContainersReply> ListContainers(
         ListContainersRequest request, ServerCallContext context)
     {
         string siteCode = _siteCodeHolder.SiteCode ?? "DEFAULT";
-        var handler = _serviceProvider.GetKeyedService<IContainerHandler>(siteCode)
+        IContainerHandler handler = _serviceProvider.GetKeyedService<IContainerHandler>(siteCode)
             ?? _serviceProvider.GetRequiredService<IContainerHandler>();
 
-        var result = await handler.ListAsync(request.BillNo, context.CancellationToken);
+        ContainerListResult result = await handler.ListAsync(request.BillNo, context.CancellationToken);
         var reply = new ListContainersReply { Total = result.Total };
-        foreach (var item in result.Items)
+        foreach (ContainerItem item in result.Items)
         {
             reply.Items.Add(new SharedContainerInfo
             {

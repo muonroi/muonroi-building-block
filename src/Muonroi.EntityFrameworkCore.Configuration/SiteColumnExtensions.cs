@@ -73,7 +73,7 @@ public static class SiteColumnExtensions
 
     /// <summary>
     /// Converts a PascalCase property name to UPPER_SNAKE_CASE for use as a database column name.
-    /// Examples: "BookingNo" → "BOOKING_NO", "ContainerNumber" → "CONTAINER_NUMBER", "Id" → "ID".
+    /// Examples: "MyProperty" → "MY_PROPERTY", "ContainerNumber" → "CONTAINER_NUMBER", "Id" → "ID".
     /// </summary>
     /// <param name="pascalCase">The PascalCase property name to convert.</param>
     /// <returns>The UPPER_SNAKE_CASE column name.</returns>

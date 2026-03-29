@@ -13,9 +13,9 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Dapper;
 /// // Inject per-site builder from DI:
 /// // services.AddScoped&lt;SiteSqlBuilder&gt;(); // resolved after ISiteColumnMap via site DI
 ///
-/// string sql = builder.SelectFrom("bookings", "BookingNo", "ContainerNo", "CreatedAt");
-/// // → "SELECT BOOKING_NO AS BookingNo, CONTAINER_NO AS ContainerNo, CREATED_AT AS CreatedAt FROM bookings"
-/// var results = await dapper.QueryAsync&lt;BookingDto&gt;(sql, parameters);
+/// string sql = builder.SelectFrom("my_table", "MyProperty", "MyOtherProperty", "CreatedAt");
+/// // → "SELECT MY_PROPERTY AS MyProperty, MY_OTHER_PROPERTY AS MyOtherProperty, CREATED_AT AS CreatedAt FROM my_table"
+/// var results = await dapper.QueryAsync&lt;MyDto&gt;(sql, parameters);
 /// </code>
 /// </summary>
 public sealed class SiteSqlBuilder

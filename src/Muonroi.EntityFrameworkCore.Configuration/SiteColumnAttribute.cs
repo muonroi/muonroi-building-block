@@ -15,7 +15,7 @@ public sealed class SiteColumnAttribute : Attribute
 {
     /// <summary>
     /// Override the database column name. When null, UPPER_SNAKE_CASE convention applies.
-    /// Example: Name = "BOOKING_NUMBER" → HasColumnName("BOOKING_NUMBER")
+    /// Example: Name = "CUSTOM_COLUMN_NAME" → HasColumnName("CUSTOM_COLUMN_NAME")
     /// </summary>
     public string? Name { get; set; }
 

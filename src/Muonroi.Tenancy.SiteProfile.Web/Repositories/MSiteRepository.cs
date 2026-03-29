@@ -9,24 +9,24 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Repositories;
 /// <para>
 /// Consumers derive from this class and get automatic per-site DbContext binding:
 /// <code>
-/// public class OrderRepository : MSiteRepository&lt;TciOrderContext, Order&gt;
+/// public class MyEntityRepository : MSiteRepository&lt;MySiteContext, MyEntity&gt;
 /// {
-///     public OrderRepository(
-///         TciOrderContext siteContext,
+///     public MyEntityRepository(
+///         MySiteContext siteContext,
 ///         ISiteProfileResolver siteResolver,
 ///         IAuthenticateInfoContext authContext,
 ///         ILicenseGuard licenseGuard,
 ///         IMDateTimeService dateTimeService)
 ///         : base(siteContext, siteResolver, authContext, licenseGuard, dateTimeService) { }
 ///
-///     public async Task&lt;Order?&gt; FindByCodeAsync(string code) =>
-///         await SiteContext.Orders.FirstOrDefaultAsync(o => o.Code == code);
+///     public async Task&lt;MyEntity?&gt; FindByCodeAsync(string code) =>
+///         await SiteContext.MyEntities.FirstOrDefaultAsync(e => e.Code == code);
 /// }
 /// </code>
 /// </para>
 /// </summary>
 /// <typeparam name="TContext">
-/// The per-site DbContext type (e.g., <c>TciOrderContext</c>).
+/// The per-site DbContext type (e.g., <c>MySiteContext</c>).
 /// Must inherit from <see cref="MDbContext"/> so it can be passed to <see cref="MRepository{T}"/>'s constructor.
 /// The <typeparamref name="TContext"/> instance is resolved from DI — registered via
 /// <see cref="SiteProfileDbContextExtensions.AddSiteDbContext{TContext}"/>.

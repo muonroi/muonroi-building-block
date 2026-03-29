@@ -6,8 +6,8 @@ namespace Muonroi.Tenancy.SiteProfile;
 /// <summary>
 /// Site profile contract — each deployment variant creates one ISiteProfile.
 /// RegisterServices wires the correct DbContext subclass, service overrides, and mappers.
-/// Consumer creates: class Sg01Profile : ISiteProfile { ... }
-/// Program.cs: services.AddSiteProfile&lt;Sg01Profile&gt;(config)
+/// Consumer creates: class MySiteProfile : ISiteProfile { ... }
+/// Program.cs: services.AddSiteProfile&lt;MySiteProfile&gt;(config)
 /// </summary>
 public interface ISiteProfile
 {

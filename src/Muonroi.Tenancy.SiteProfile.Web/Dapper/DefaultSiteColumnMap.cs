@@ -9,10 +9,10 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Dapper;
 ///
 /// Sites that differ only in a few column names subclass this and override just those columns:
 /// <code>
-/// public class BravoColumnMap : DefaultSiteColumnMap
+/// public class MySiteColumnMap : DefaultSiteColumnMap
 /// {
 ///     public override string Column(string propertyName)
-///         => propertyName == "BookingNo" ? "BOOKING_NUMBER" : base.Column(propertyName);
+///         => propertyName == "PropertyName" ? "COLUMN_NAME" : base.Column(propertyName);
 /// }
 /// </code>
 /// </summary>
@@ -24,7 +24,7 @@ public class DefaultSiteColumnMap : ISiteColumnMap
 
     /// <summary>
     /// Converts a PascalCase string to UPPER_SNAKE_CASE.
-    /// Examples: "BookingNo" → "BOOKING_NO", "Id" → "ID", "FullContainerDelivery" → "FULL_CONTAINER_DELIVERY".
+    /// Examples: "MyProperty" → "MY_PROPERTY", "Id" → "ID", "MyEntity" → "MY_ENTITY".
     /// </summary>
     protected static string ToUpperSnakeCase(string pascalCase)
     {
