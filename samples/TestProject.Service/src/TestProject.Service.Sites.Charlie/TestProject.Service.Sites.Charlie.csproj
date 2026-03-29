@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Muonroi.Tenancy.SiteProfile" />
     <PackageReference Include="Muonroi.Tenancy.SiteProfile.SourceGenerators">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -21,9 +20,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Core contracts and ContextBase (Charlie uses its own CharlieOrderContext extending ContextBase) -->
     <ProjectReference Include="..\TestProject.Service.Core\TestProject.Service.Core.csproj" />
+    <!-- SiteProfile source project provides ISiteProfile, SiteProfileAliasAttribute, GenerateSiteProfile -->
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
+    <!-- SiteProfile.Web provides pipeline + DI extensions -->
     <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Web\Muonroi.Tenancy.SiteProfile.Web.csproj" />
-    <ProjectReference Include="..\..\..\..\src\Muonroi.EntityFrameworkCore.Configuration\Muonroi.EntityFrameworkCore.Configuration.csproj" />
   </ItemGroup>
 
 </Project>
