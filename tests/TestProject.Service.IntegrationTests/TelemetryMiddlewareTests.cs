@@ -11,7 +11,9 @@ namespace TestProject.Service.IntegrationTests;
 
 /// <summary>
 /// BTEL-04: Tests for UseSiteProfileTelemetry middleware — Activity tag enrichment and IMLog scope enrichment.
+/// Placed in the same collection as OTelMeterTests to prevent parallel meter listener interference.
 /// </summary>
+[Collection("OTelMeter")]
 public sealed class TelemetryMiddlewareTests
 {
     /// <summary>
