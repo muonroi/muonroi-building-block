@@ -16,6 +16,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- gRPC client stubs for shared AggregateRpc service (GrpcServices=Client) -->
+    <Protobuf Include="..\TestProject.Aggregate\src\TestProject.Aggregate.Host\v1\Protos\service.proto"
+              GrpcServices="Client"
+              AdditionalImportDirs="..\TestProject.Aggregate\v1\Protos\" />
+    <!-- shared.proto needed for SharedContainerInfo message (no code gen, just import resolution) -->
+    <Protobuf Include="..\TestProject.Aggregate\v1\Protos\shared.proto"
+              GrpcServices="None" />
+    <!-- gRPC client stubs for per-site Bravo BravoAggregateRpc service (GrpcServices=Client) -->
+    <Protobuf Include="..\TestProject.Aggregate\src\TestProject.Aggregate.Sites.Bravo\Protos\service.bravo.proto"
+              GrpcServices="Client"
+              AdditionalImportDirs="..\TestProject.Aggregate\v1\Protos\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\TestProject.Aggregate\src\TestProject.Aggregate.Host\TestProject.Aggregate.Host.csproj" />
     <ProjectReference Include="..\TestProject.Aggregate\src\TestProject.Aggregate.Sites.Default\TestProject.Aggregate.Sites.Default.csproj" />
     <ProjectReference Include="..\TestProject.Aggregate\src\TestProject.Aggregate.Sites.Alpha\TestProject.Aggregate.Sites.Alpha.csproj" />

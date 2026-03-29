@@ -34,3 +34,6 @@ app.MapGrpcService<TestProjectAggregateGrpcService>();
 app.MapSiteGrpcServices(typeof(BravoGrpcService).Assembly);
 
 await app.RunAsync();
+
+// Required for WebApplicationFactory<Program> in integration tests
+public partial class Program { }
