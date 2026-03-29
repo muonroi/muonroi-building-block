@@ -1,0 +1,440 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Muonroi.Logging.Abstractions;
+using Muonroi.RuleEngine.Abstractions;
+using Muonroi.Tenancy.SiteProfile;
+using Muonroi.Tenancy.SiteProfile.Web.Pipeline;
+using NSubstitute;
+
+namespace Muonroi.Tenancy.SiteProfile.Web.Tests.Pipeline;
+
+/// <summary>
+/// Unit tests for MSitePipeline: verifies Before/After/Replace hook semantics,
+/// FactBag shared state, ExecutionMode behavior, and logging.
+/// </summary>
+public class MSitePipelineTests
+{
+    // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
+
+    private const string TestSiteId = "test-site-01";
+    private const string TestStepName = "SaveStep";
+
+    /// <summary>
+    /// Minimal IMLog<T> implementation for testing (NSubstitute cannot proxy ILogger<T>).
+    /// </summary>
+    private sealed class FakeLog<T> : IMLog<T>
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => false;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) { }
+        public IMLogContextScope BeginProperty(string key, object? value) => NullLogScope.Instance;
+        public void Info(string messageTemplate, params object?[] args) { }
+        public void Warn(string messageTemplate, params object?[] args) { }
+        public void Error(Exception? ex, string messageTemplate, params object?[] args) { }
+        public void Debug(string messageTemplate, params object?[] args) { }
+        public void InfoTrace(string messageTemplate, params object?[] args) { }
+
+        private sealed class NullLogScope : IMLogContextScope
+        {
+            public static readonly NullLogScope Instance = new();
+            public void Dispose() { }
+        }
+    }
+
+    private static ISiteProfileResolver CreateResolver(string siteId = TestSiteId)
+    {
+        ISiteProfile profile = Substitute.For<ISiteProfile>();
+        profile.SiteId.Returns(siteId);
+        ISiteProfileResolver resolver = Substitute.For<ISiteProfileResolver>();
+        resolver.Current.Returns(profile);
+        return resolver;
+    }
+
+    private static IMLog<MSitePipeline<TestService>> CreateLog()
+        => new FakeLog<MSitePipeline<TestService>>();
+
+    private static MSitePipeline<TestService> CreatePipeline(
+        SitePipelineHookRegistry? registry = null,
+        ISiteProfileResolver? resolver = null,
+        IServiceProvider? serviceProvider = null,
+        IMLog<MSitePipeline<TestService>>? log = null)
+    {
+        return new MSitePipeline<TestService>(
+            registry ?? new SitePipelineHookRegistry(),
+            resolver ?? CreateResolver(),
+            serviceProvider ?? Substitute.For<IServiceProvider>(),
+            log ?? CreateLog());
+    }
+
+    // Fake hook that records execution order and optionally throws
+    private sealed class TrackingHook(List<string> executionLog, string label, Exception? throwException = null) : ISiteStepHook
+    {
+        public Task ExecuteAsync(FactBag facts, CancellationToken cancellationToken = default)
+        {
+            if (throwException != null) throw throwException;
+            executionLog.Add(label);
+            return Task.CompletedTask;
+        }
+    }
+
+    // Fake hook that mutates FactBag
+    private sealed class FactWriterHook(string key, string value) : ISiteStepHook
+    {
+        public Task ExecuteAsync(FactBag facts, CancellationToken cancellationToken = default)
+        {
+            facts.Set(key, value);
+            return Task.CompletedTask;
+        }
+    }
+
+    // Marker class for the service name (TContext = TestService → serviceName = "TestService")
+    private sealed class TestService;
+
+    // -----------------------------------------------------------------------
+    // PIPE-01: No hooks — executes defaultImpl
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_NoHooks_ExecutesDefaultImpl()
+    {
+        // Arrange
+        MSitePipeline<TestService> pipeline = CreatePipeline();
+        var defaultExecuted = false;
+        var facts = new FactBag();
+
+        // Act
+        await pipeline.RunStep(TestStepName, facts, (_, _) =>
+        {
+            defaultExecuted = true;
+            return Task.CompletedTask;
+        });
+
+        // Assert
+        defaultExecuted.Should().BeTrue();
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-02: Before hook executes BEFORE defaultImpl
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_WithBeforeHook_ExecutesBeforeThenDefault()
+    {
+        // Arrange
+        var log = new List<string>();
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.Before,
+            _ => new TrackingHook(log, "before"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+
+        // Act
+        await pipeline.RunStep(TestStepName, facts, (_, _) =>
+        {
+            log.Add("default");
+            return Task.CompletedTask;
+        });
+
+        // Assert
+        log.Should().ContainInOrder("before", "default");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-03: After hook executes AFTER defaultImpl
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_WithAfterHook_ExecutesDefaultThenAfter()
+    {
+        // Arrange
+        var log = new List<string>();
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.After,
+            _ => new TrackingHook(log, "after"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+
+        // Act
+        await pipeline.RunStep(TestStepName, facts, (_, _) =>
+        {
+            log.Add("default");
+            return Task.CompletedTask;
+        });
+
+        // Assert
+        log.Should().ContainInOrder("default", "after");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-04: Replace hook skips defaultImpl
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_WithReplaceHook_SkipsDefaultImpl()
+    {
+        // Arrange
+        var log = new List<string>();
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.Replace,
+            _ => new TrackingHook(log, "replace"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+        var defaultCalled = false;
+
+        // Act
+        await pipeline.RunStep(TestStepName, facts, (_, _) =>
+        {
+            defaultCalled = true;
+            return Task.CompletedTask;
+        });
+
+        // Assert
+        defaultCalled.Should().BeFalse("Replace hook should skip defaultImpl");
+        log.Should().Contain("replace");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-05: Before + After = Before → default → After
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_WithBeforeAndAfterHooks_ExecutesInOrder()
+    {
+        // Arrange
+        var log = new List<string>();
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.Before,
+            _ => new TrackingHook(log, "before"));
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.After,
+            _ => new TrackingHook(log, "after"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+
+        // Act
+        await pipeline.RunStep(TestStepName, facts, (_, _) =>
+        {
+            log.Add("default");
+            return Task.CompletedTask;
+        });
+
+        // Assert
+        log.Should().ContainInOrder("before", "default", "after");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-06: FactBag is shared between hooks and defaultImpl
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_FactBagSharedAcrossHooksAndDefault()
+    {
+        // Arrange
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.Before,
+            _ => new FactWriterHook("beforeKey", "fromBefore"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+        string? seenInDefault = null;
+
+        // Act
+        await pipeline.RunStep(TestStepName, facts, (bag, _) =>
+        {
+            seenInDefault = bag.Get<string>("beforeKey");
+            bag.Set("defaultKey", "fromDefault");
+            return Task.CompletedTask;
+        });
+
+        // Assert
+        seenInDefault.Should().Be("fromBefore", "Before hook value visible in defaultImpl");
+        facts.Get<string>("defaultKey").Should().Be("fromDefault", "defaultImpl value visible after pipeline");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-07: AllOrNothing — hook failure stops execution
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_AllOrNothing_FirstHookFailurePropagatesImmediately()
+    {
+        // Arrange
+        var log = new List<string>();
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.Before,
+            _ => new TrackingHook(log, "before-fail", new InvalidOperationException("hook failed")));
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.After,
+            _ => new TrackingHook(log, "after-should-not-run"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+        var defaultCalled = false;
+
+        // Act & Assert
+        Func<Task> act = () => pipeline.RunStep(TestStepName, facts, (_, _) =>
+        {
+            defaultCalled = true;
+            return Task.CompletedTask;
+        }, executionMode: ExecutionMode.AllOrNothing);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("hook failed");
+        defaultCalled.Should().BeFalse("default should not run after AllOrNothing failure");
+        log.Should().NotContain("after-should-not-run");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-08: BestEffort — continues after hook failure, aggregates errors
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_BestEffort_ContinuesAfterFailureAndAggregates()
+    {
+        // Arrange
+        var log = new List<string>();
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.Before,
+            _ => new TrackingHook(log, "before-fail", new InvalidOperationException("hook1 failed")));
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.After,
+            _ => new TrackingHook(log, "after-runs"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+        var defaultCalled = false;
+
+        // Act & Assert
+        Func<Task> act = () => pipeline.RunStep(TestStepName, facts, (_, _) =>
+        {
+            defaultCalled = true;
+            log.Add("default");
+            return Task.CompletedTask;
+        }, executionMode: ExecutionMode.BestEffort);
+
+        AggregateException aggEx = (await act.Should().ThrowAsync<AggregateException>()).Which;
+        aggEx.InnerExceptions.Should().HaveCount(1);
+        aggEx.InnerExceptions[0].Message.Should().Be("hook1 failed");
+
+        // Default and after hooks should still have run
+        defaultCalled.Should().BeTrue("BestEffort continues past failed hooks");
+        log.Should().Contain("default");
+        log.Should().Contain("after-runs");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-09: CompensateOnFailure throws NotSupportedException
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_CompensateOnFailure_ThrowsNotSupportedException()
+    {
+        // Arrange
+        MSitePipeline<TestService> pipeline = CreatePipeline();
+        var facts = new FactBag();
+
+        // Act & Assert
+        Func<Task> act = () => pipeline.RunStep(
+            TestStepName, facts, (_, _) => Task.CompletedTask,
+            executionMode: ExecutionMode.CompensateOnFailure);
+
+        await act.Should().ThrowAsync<NotSupportedException>();
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-10: Registry.GetHooks returns empty list when no hooks registered
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Registry_GetHookFactories_ReturnsEmptyWhenNotRegistered()
+    {
+        // Arrange
+        var registry = new SitePipelineHookRegistry();
+
+        // Act
+        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> result =
+            registry.GetHookFactories("nonexistent", "SomeService", "SomeStep", SiteStepHookPhase.Before);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-11: Registry stores and retrieves by exact composite key
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Registry_Register_StoresAndRetrievesHookByCompositeKey()
+    {
+        // Arrange
+        var registry = new SitePipelineHookRegistry();
+        ISiteStepHook expectedHook = Substitute.For<ISiteStepHook>();
+
+        registry.Register(TestSiteId, "MyService", "MyStep", SiteStepHookPhase.Before,
+            _ => expectedHook);
+
+        // Act
+        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> factories =
+            registry.GetHookFactories(TestSiteId, "MyService", "MyStep", SiteStepHookPhase.Before);
+
+        // Assert
+        factories.Should().HaveCount(1);
+        ISiteStepHook resolved = factories[0](Substitute.For<IServiceProvider>());
+        resolved.Should().BeSameAs(expectedHook);
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-12: Multiple hooks for same key are all returned
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Registry_Register_MultipleHooksForSameKey_AllReturned()
+    {
+        // Arrange
+        var registry = new SitePipelineHookRegistry();
+        ISiteStepHook hook1 = Substitute.For<ISiteStepHook>();
+        ISiteStepHook hook2 = Substitute.For<ISiteStepHook>();
+
+        registry.Register(TestSiteId, "MyService", "MyStep", SiteStepHookPhase.After, _ => hook1);
+        registry.Register(TestSiteId, "MyService", "MyStep", SiteStepHookPhase.After, _ => hook2);
+
+        // Act
+        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> factories =
+            registry.GetHookFactories(TestSiteId, "MyService", "MyStep", SiteStepHookPhase.After);
+
+        // Assert
+        factories.Should().HaveCount(2);
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-13: Different site does NOT get hooks for another site
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_HooksForDifferentSite_NotApplied()
+    {
+        // Arrange
+        var log = new List<string>();
+        var registry = new SitePipelineHookRegistry();
+        // Register hook for "other-site", but pipeline resolves "test-site-01"
+        registry.Register("other-site", nameof(TestService), TestStepName, SiteStepHookPhase.Before,
+            _ => new TrackingHook(log, "other-site-hook"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+        var defaultCalled = false;
+
+        // Act
+        await pipeline.RunStep(TestStepName, facts, (_, _) =>
+        {
+            defaultCalled = true;
+            return Task.CompletedTask;
+        });
+
+        // Assert
+        defaultCalled.Should().BeTrue();
+        log.Should().BeEmpty("hooks for other sites must not run");
+    }
+}

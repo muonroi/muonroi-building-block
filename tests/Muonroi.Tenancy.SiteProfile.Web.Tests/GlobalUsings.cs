@@ -1,5 +1,7 @@
 global using Xunit;
 global using Moq;
+global using FluentAssertions;
+global using NSubstitute;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.Configuration.Memory;
 global using Microsoft.Extensions.DependencyInjection;
