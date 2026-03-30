@@ -38,6 +38,42 @@ public static class SiteProfileWebExtensions
     }
 
     /// <summary>
+    /// Registers ASP.NET Core ApplicationParts from site assemblies so that controllers
+    /// defined in Core or per-site projects are discovered by the MVC framework.
+    /// Mirrors the <c>MapSiteGrpcServices()</c> pattern for REST controllers.
+    ///
+    /// <para>
+    /// Call AFTER <c>AddControllers()</c> / <c>AddApplication()</c> in Program.cs.
+    /// Controllers in site assemblies will be automatically routed alongside host controllers.
+    /// </para>
+    ///
+    /// <code>
+    /// // Program.cs — after AddApplication:
+    /// services.AddSiteControllers(
+    ///     typeof(TciSiteProfile).Assembly,      // Sites/TCI — TCI-specific controllers
+    ///     typeof(DefaultSiteProfile).Assembly,   // Sites/Default
+    ///     typeof(CoreHandlers).Assembly);         // Core — shared controllers
+    /// </code>
+    /// </summary>
+    /// <param name="services">The service collection (must have MVC already registered).</param>
+    /// <param name="siteAssemblies">
+    /// Assemblies containing controllers to discover. Typically the assembly of each ISiteProfile
+    /// and the Core project assembly.
+    /// </param>
+    /// <returns>The <see cref="IMvcBuilder"/> for further chaining.</returns>
+    public static IMvcBuilder AddSiteControllers(
+        this IServiceCollection services,
+        params Assembly[] siteAssemblies)
+    {
+        var mvcBuilder = services.AddControllers();
+        foreach (Assembly asm in siteAssemblies.Distinct())
+        {
+            mvcBuilder.AddApplicationPart(asm);
+        }
+        return mvcBuilder;
+    }
+
+    /// <summary>
     /// Adds middleware that enriches each request with site-scoped observability:
     /// Activity.Current site.id tag, IMLog SiteId scope, and site_profile_requests_total counter.
     ///

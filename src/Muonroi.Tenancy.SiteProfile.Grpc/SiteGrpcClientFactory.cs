@@ -1,6 +1,4 @@
-using System.Reflection;
 using Grpc.Core;
-using Grpc.Net.ClientFactory;
 
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
@@ -14,7 +12,7 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 internal sealed class SiteGrpcClientFactory(
     ISiteProfileResolver resolver,
     SiteGrpcClientRegistry registry,
-    GrpcClientFactory grpcClientFactory,
+    GrpcClientFactoryAccessor grpcClientFactoryAccessor,
     IServiceProvider serviceProvider) : ISiteGrpcClientFactory
 {
     /// <inheritdoc />
@@ -44,15 +42,15 @@ internal sealed class SiteGrpcClientFactory(
                 $"and services.AddGrpcClient<TClient>() is also registered.");
         }
 
-        // GrpcClientFactory.CreateClient<TClient>(string) is generic — invoke via reflection
-        // using descriptor.ClientType so no static type parameter is needed at call site.
-        // The name must match what was passed to services.AddGrpcClient<TClient>(name, ...).
-        // When AddGrpcClient<TClient>() is called without an explicit name, the default is typeof(TClient).FullName.
-        MethodInfo createClientMethod = typeof(GrpcClientFactory)
-            .GetMethod(nameof(GrpcClientFactory.CreateClient))!
-            .MakeGenericMethod(descriptor.ClientType);
-
-        object client = createClientMethod.Invoke(grpcClientFactory, [descriptor.ClientType.FullName!])!;
+        // Create client with correct Type using cached CallInvoker
+        object? client = grpcClientFactoryAccessor.CreateClient(descriptor.ClientType, serviceName);
+        if (client is null)
+        {
+            throw new InvalidOperationException(
+                $"No gRPC client cached for site '{siteId}' service '{serviceName}' " +
+                $"(type: {descriptor.ClientType.Name}). " +
+                $"Ensure app.InitializeSiteGrpcClients() is called in Program.cs.");
+        }
 
         if (client is not TBase typedClient)
         {

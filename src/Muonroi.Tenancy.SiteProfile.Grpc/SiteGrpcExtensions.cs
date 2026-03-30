@@ -1,3 +1,5 @@
+using GrpcClientFactory = global::Grpc.Net.ClientFactory.GrpcClientFactory;
+
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>
@@ -122,8 +124,41 @@ public static class SiteGrpcExtensions
             return registry;
         });
 
+        // Accessor for root-level GrpcClientFactory — works around Autofac scoped resolution issue
+        services.AddSingleton<GrpcClientFactoryAccessor>();
+
         services.AddScoped<ISiteGrpcClientFactory, SiteGrpcClientFactory>();
         return services;
+    }
+
+    /// <summary>
+    /// Captures the root-level <see cref="GrpcClientFactory"/> from <c>WebApplication.Services</c>
+    /// (the MS DI root) so that Autofac-scoped resolution can use it.
+    /// <para>
+    /// <b>MUST</b> be called in Program.cs after <c>builder.Build()</c> and before <c>app.Run()</c>.
+    /// </para>
+    /// <code>
+    /// WebApplication app = builder.Build();
+    /// app.InitializeSiteGrpcClients(); // &lt;-- required for Autofac compatibility
+    /// app.Run();
+    /// </code>
+    /// </summary>
+    /// <param name="app">The built web application.</param>
+    /// <returns>The same <see cref="WebApplication"/> for chaining.</returns>
+    public static Microsoft.AspNetCore.Builder.WebApplication InitializeSiteGrpcClients(
+        this Microsoft.AspNetCore.Builder.WebApplication app)
+    {
+        var accessor = app.Services.GetService<GrpcClientFactoryAccessor>();
+        if (accessor is null) return app; // AddSiteGrpcClientFactory() not called — no-op
+
+        var factory = app.Services.GetService<GrpcClientFactory>();
+        var registry = app.Services.GetService<SiteGrpcClientRegistry>();
+        if (factory is not null && registry is not null)
+        {
+            accessor.Initialize(factory, registry);
+        }
+
+        return app;
     }
 
     /// <summary>
@@ -221,11 +256,29 @@ public static class SiteGrpcExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(siteId);
         ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
 
-        // Key pattern: facade:{serviceName}:{siteId}
-        // Resolved by ISiteGrpcClientFactory.CreateFacadeForCurrentSite
-        services.AddKeyedScoped<TFacade, TImpl>($"facade:{serviceName}:{siteId}");
+        services.AddKeyedScoped<TFacade>($"facade:{serviceName}:{siteId}", (sp, _) =>
+        {
+            var accessor = sp.GetRequiredService<GrpcClientFactoryAccessor>();
+
+            var ctor = typeof(TImpl).GetConstructors()[0];
+            var ctorParams = ctor.GetParameters();
+            var args = new object[ctorParams.Length];
+            for (int i = 0; i < ctorParams.Length; i++)
+            {
+                var paramType = ctorParams[i].ParameterType;
+                // CreateClient produces correct Type from the requesting assembly's proto
+                args[i] = accessor.CreateClient(paramType, serviceName)
+                    ?? sp.GetService(paramType)
+                    ?? throw new InvalidOperationException(
+                        $"Cannot resolve gRPC client '{paramType.Name}' for facade '{typeof(TImpl).Name}'. " +
+                        $"Ensure AddGrpcClient<{paramType.Name}>() is registered and " +
+                        $"app.InitializeSiteGrpcClients() is called in Program.cs.");
+            }
+            return (TFacade)ctor.Invoke(args);
+        });
         return services;
     }
+
 
     /// <summary>
     /// Registers <see cref="SiteGrpcDispatchHelper{TServiceBase}"/> as a scoped service for the

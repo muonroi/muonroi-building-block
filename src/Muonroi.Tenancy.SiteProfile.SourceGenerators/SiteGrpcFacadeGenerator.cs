@@ -102,6 +102,10 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
         string interfaceName = ifaceSymbol.Name; // e.g., "ITciFcdClient"
         string facadeClassName = BuildFacadeClassName(interfaceName); // e.g., "TciFcdClientFacade"
 
+        // Detect base facade interfaces — collect method names already declared by parent
+        // so the emitted partial interface skips them (avoids CS0108 hiding warnings).
+        HashSet<string> inheritedMethodNames = CollectInheritedFacadeMethodNames(ifaceSymbol);
+
         // Extract RPC methods from shared client
         List<RpcMethodModel> sharedMethods = ExtractRpcMethods(sharedClientSymbol, "shared");
 
@@ -126,15 +130,83 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
             .Select(m => m.MethodName)
             .ToList();
 
+        // Split shared methods into inherited (skip in interface) vs own (emit in interface)
+        // The facade impl still generates ALL methods — only the interface skips inherited ones.
+        List<RpcMethodModel> ownSharedMethods = filteredShared
+            .Where(m => !inheritedMethodNames.Contains(m.MethodName))
+            .ToList();
+        List<RpcMethodModel> ownExtendMethods = extendMethods
+            .Where(m => !inheritedMethodNames.Contains(m.MethodName))
+            .ToList();
+
         return new FacadeModel(
             interfaceName,
             ns,
             facadeClassName,
             filteredShared,
             extendMethods,
+            ownSharedMethods,
+            ownExtendMethods,
             sharedClientSymbol.ToDisplayString(),
             extendClientSymbols.Select(s => s.ToDisplayString()).ToList(),
             collisions);
+    }
+
+    // -----------------------------------------------------------------------
+    // Base facade interface detection
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Walks the interface's base interface list. For each base that is also decorated with
+    /// [GenerateSiteGrpcFacade], computes the RPC methods it would emit and returns their names.
+    /// This allows the derived interface to skip re-declaring those methods (avoiding CS0108).
+    /// </summary>
+    private static HashSet<string> CollectInheritedFacadeMethodNames(INamedTypeSymbol ifaceSymbol)
+    {
+        var inherited = new HashSet<string>();
+
+        foreach (INamedTypeSymbol baseIface in ifaceSymbol.Interfaces)
+        {
+            AttributeData? baseAttr = FindAttribute(baseIface, AttributeShortName);
+            if (baseAttr is null)
+                continue;
+
+            // Extract SharedClient from base's attribute
+            INamedTypeSymbol? baseShared = null;
+            List<INamedTypeSymbol> baseExtends = new List<INamedTypeSymbol>();
+
+            foreach (var namedArg in baseAttr.NamedArguments)
+            {
+                if (namedArg.Key == "SharedClient")
+                    baseShared = namedArg.Value.Value as INamedTypeSymbol;
+                else if (namedArg.Key == "ExtendClients" && !namedArg.Value.IsNull && namedArg.Value.Kind == TypedConstantKind.Array)
+                {
+                    foreach (TypedConstant item in namedArg.Value.Values)
+                    {
+                        if (item.Value is INamedTypeSymbol extSym)
+                            baseExtends.Add(extSym);
+                    }
+                }
+            }
+
+            if (baseShared is not null)
+            {
+                foreach (RpcMethodModel m in ExtractRpcMethods(baseShared, "inherited"))
+                    inherited.Add(m.MethodName);
+            }
+
+            foreach (INamedTypeSymbol ext in baseExtends)
+            {
+                foreach (RpcMethodModel m in ExtractRpcMethods(ext, "inherited"))
+                    inherited.Add(m.MethodName);
+            }
+
+            // Recurse: base interface may itself inherit from another facade interface
+            foreach (string name in CollectInheritedFacadeMethodNames(baseIface))
+                inherited.Add(name);
+        }
+
+        return inherited;
     }
 
     // -----------------------------------------------------------------------
@@ -286,8 +358,10 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
         sb.AppendLine($"public partial interface {model.InterfaceName}");
         sb.AppendLine("{");
 
-        AppendRpcSignatures(sb, model.SharedMethods, "// Shared gRPC client methods");
-        AppendRpcSignatures(sb, model.ExtendMethods, "// Per-site extend client methods");
+        // Emit only methods NOT already declared in base facade interfaces.
+        // Inherited methods are available via interface inheritance — no re-declaration needed.
+        AppendRpcSignatures(sb, model.OwnSharedMethods, "// Shared gRPC client methods");
+        AppendRpcSignatures(sb, model.OwnExtendMethods, "// Per-site extend client methods");
 
         sb.AppendLine("}");
         return sb.ToString();
@@ -339,14 +413,19 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
         }
         sb.AppendLine();
 
-        // Constructor — takes GrpcChannel
-        sb.AppendLine("    /// <summary>Creates the facade by instantiating all inner gRPC clients from the supplied channel.</summary>");
-        sb.AppendLine("    public " + model.FacadeClassName + "(global::Grpc.Core.ChannelBase channel)");
-        sb.AppendLine("    {");
-        sb.AppendLine($"        _shared = new {model.SharedClientFullName}(channel);");
+        // Constructor — takes pre-resolved gRPC client instances (injected by AddSiteGrpcFacadeClient factory delegate)
+        sb.AppendLine("    /// <summary>Creates the facade from pre-resolved gRPC client instances.</summary>");
+        sb.Append($"    public {model.FacadeClassName}({model.SharedClientFullName} shared");
         for (int i = 0; i < model.ExtendClientFullNames.Count; i++)
         {
-            sb.AppendLine($"        _extend{i} = new {model.ExtendClientFullNames[i]}(channel);");
+            sb.Append($", {model.ExtendClientFullNames[i]} extend{i}");
+        }
+        sb.AppendLine(")");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        _shared = shared;");
+        for (int i = 0; i < model.ExtendClientFullNames.Count; i++)
+        {
+            sb.AppendLine($"        _extend{i} = extend{i};");
         }
         sb.AppendLine("    }");
         sb.AppendLine();
@@ -457,8 +536,14 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
         public string InterfaceName { get; }
         public string Namespace { get; }
         public string FacadeClassName { get; }
+        /// <summary>All shared methods — used by facade impl (must implement all).</summary>
         public IReadOnlyList<RpcMethodModel> SharedMethods { get; }
+        /// <summary>All extend methods — used by facade impl (must implement all).</summary>
         public IReadOnlyList<RpcMethodModel> ExtendMethods { get; }
+        /// <summary>Shared methods NOT inherited from base facade interfaces — emitted in interface only.</summary>
+        public IReadOnlyList<RpcMethodModel> OwnSharedMethods { get; }
+        /// <summary>Extend methods NOT inherited from base facade interfaces — emitted in interface only.</summary>
+        public IReadOnlyList<RpcMethodModel> OwnExtendMethods { get; }
         public string SharedClientFullName { get; }
         public IReadOnlyList<string> ExtendClientFullNames { get; }
         public IReadOnlyList<string> Collisions { get; }
@@ -469,6 +554,8 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
             string facadeClassName,
             IReadOnlyList<RpcMethodModel> sharedMethods,
             IReadOnlyList<RpcMethodModel> extendMethods,
+            IReadOnlyList<RpcMethodModel> ownSharedMethods,
+            IReadOnlyList<RpcMethodModel> ownExtendMethods,
             string sharedClientFullName,
             IReadOnlyList<string> extendClientFullNames,
             IReadOnlyList<string> collisions)
@@ -478,6 +565,8 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
             FacadeClassName = facadeClassName;
             SharedMethods = sharedMethods;
             ExtendMethods = extendMethods;
+            OwnSharedMethods = ownSharedMethods;
+            OwnExtendMethods = ownExtendMethods;
             SharedClientFullName = sharedClientFullName;
             ExtendClientFullNames = extendClientFullNames;
             Collisions = collisions;
