@@ -93,26 +93,24 @@
         {
           "condition": "(!isEf)",
           "exclude": [
-            "**/Persistence/ContextBase.cs",
-            "**/*OrderContext.cs",
-            "**/Persistence/Configurations/**",
-            "**/Infrastructure/ContextBase.cs",
-            "**/Infrastructure/EntityConfigurations/**"
+            "src/MuonroiService.Core/Persistence/ContextBase.cs",
+            "src/MuonroiService.Sites.Default/DefaultOrderContext.cs",
+            "src/MuonroiService.Core/Persistence/Configurations/**"
           ]
         },
         {
           "condition": "(isAggregate)",
           "exclude": [
-            "**/Host/Grpc/**"
+            "src/MuonroiService.Host/Grpc/**"
           ]
         },
         {
           "condition": "(!isAggregate)",
           "exclude": [
-            "**/Host/Controllers/**",
-            "**/Core/Commands/**",
-            "**/Core/Handlers/**",
-            "**/Core/Validators/**"
+            "src/MuonroiService.Host/Controllers/**",
+            "src/MuonroiService.Core/Commands/**",
+            "src/MuonroiService.Core/Handlers/**",
+            "src/MuonroiService.Core/Validators/**"
           ]
         }
       ]
