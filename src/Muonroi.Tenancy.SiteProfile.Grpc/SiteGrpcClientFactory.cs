@@ -14,7 +14,8 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 internal sealed class SiteGrpcClientFactory(
     ISiteProfileResolver resolver,
     SiteGrpcClientRegistry registry,
-    GrpcClientFactory grpcClientFactory) : ISiteGrpcClientFactory
+    GrpcClientFactory grpcClientFactory,
+    IServiceProvider serviceProvider) : ISiteGrpcClientFactory
 {
     /// <inheritdoc />
     public TBase CreateForCurrentSite<TBase>(string serviceName)
@@ -62,5 +63,36 @@ internal sealed class SiteGrpcClientFactory(
         }
 
         return typedClient;
+    }
+
+    /// <inheritdoc />
+    public TFacade CreateFacadeForCurrentSite<TFacade>(string serviceName)
+        where TFacade : class
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
+
+        string siteId = resolver.Current.SiteId;
+
+        // Key pattern: facade:{serviceName}:{siteId}
+        // 1. Try site-specific facade
+        string siteKey = $"facade:{serviceName}:{siteId}";
+        TFacade? facade = serviceProvider.GetKeyedService<TFacade>(siteKey);
+
+        // 2. Fall back to "default"
+        if (facade is null)
+        {
+            string defaultKey = $"facade:{serviceName}:default";
+            facade = serviceProvider.GetKeyedService<TFacade>(defaultKey);
+        }
+
+        if (facade is null)
+        {
+            throw new InvalidOperationException(
+                $"No gRPC facade registered for site '{siteId}' (or 'default') with service name '{serviceName}'. " +
+                $"Ensure Program.cs calls: services.AddSiteGrpcFacadeClient<TFacade, TImpl>(\"{siteId}\", \"{serviceName}\") " +
+                $"and services.AddSiteGrpcFacadeClient<TFacade, TImpl>(\"default\", \"{serviceName}\") as fallback.");
+        }
+
+        return facade;
     }
 }
