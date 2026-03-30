@@ -13,7 +13,6 @@
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" />
     <PackageReference Include="Muonroi.Tenancy.SiteProfile" />
-    <PackageReference Include="Muonroi.Tenancy.SiteProfile.Grpc" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,6 +20,8 @@
     <ProjectReference Include="..\TestProject.Aggregate.Sites.Default\TestProject.Aggregate.Sites.Default.csproj" />
     <ProjectReference Include="..\TestProject.Aggregate.Sites.Alpha\TestProject.Aggregate.Sites.Alpha.csproj" />
     <ProjectReference Include="..\TestProject.Aggregate.Sites.Bravo\TestProject.Aggregate.Sites.Bravo.csproj" />
+    <!-- Direct reference to Grpc library source for Wave 1 dispatch helper (SiteGrpcDispatchHelper, AddSiteGrpcHandler) -->
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Grpc\Muonroi.Tenancy.SiteProfile.Grpc.csproj" />
   </ItemGroup>
 
   <ItemGroup>
