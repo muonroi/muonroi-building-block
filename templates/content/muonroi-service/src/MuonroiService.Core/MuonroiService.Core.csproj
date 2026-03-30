@@ -7,8 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Muonroi.Tenancy.SiteProfile" Version="1.0.0-alpha.7" />
-    <PackageReference Include="Muonroi.Tenancy.SiteProfile.Grpc" Version="1.0.0-alpha.7" />
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile" Version="1.0.0-alpha.9" />
+<!--#if (isService || isTos) -->
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.Grpc" Version="1.0.0-alpha.9" />
+<!--#endif -->
 <!--#if (isEf) -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.*" />
 <!--#endif -->

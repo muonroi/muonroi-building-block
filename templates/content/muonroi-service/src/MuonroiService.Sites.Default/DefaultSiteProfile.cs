@@ -1,7 +1,7 @@
 using Muonroi.Tenancy.SiteProfile;
 using MuonroiService.Core.Constants;
 #if (isEf)
-using MuonroiService.Core.Infrastructure;
+using MuonroiService.Core.Persistence;
 #endif
 
 namespace MuonroiService.Sites.Default;

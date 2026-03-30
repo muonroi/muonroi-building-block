@@ -20,10 +20,33 @@
     "A1B2C3D4-E5F6-7890-ABCD-444444444444"
   ],
   "symbols": {
+    "projectType": {
+      "type": "parameter",
+      "datatype": "choice",
+      "description": "Project architecture type: aggregate (REST controllers + gRPC client), service (gRPC server + EF/Dapper), tos (gRPC server + Dapper only)",
+      "defaultValue": "service",
+      "choices": [
+        { "choice": "aggregate", "description": "Aggregate service (REST controllers, gRPC client to downstream services)" },
+        { "choice": "service", "description": "Domain service (gRPC server, EF/Dapper persistence)" },
+        { "choice": "tos", "description": "Read-focused TOS service (gRPC server, Dapper-only, no EF)" }
+      ]
+    },
+    "isAggregate": {
+      "type": "computed",
+      "value": "(projectType == \"aggregate\")"
+    },
+    "isService": {
+      "type": "computed",
+      "value": "(projectType == \"service\")"
+    },
+    "isTos": {
+      "type": "computed",
+      "value": "(projectType == \"tos\")"
+    },
     "dataAccess": {
       "type": "parameter",
       "datatype": "choice",
-      "description": "Data access pattern",
+      "description": "Data access pattern (ignored for aggregate and tos — tos always uses dapper, aggregate uses no local DB)",
       "defaultValue": "ef",
       "choices": [
         { "choice": "ef", "description": "Entity Framework Core (per-site DbContext)" },
@@ -49,11 +72,11 @@
     },
     "isEf": {
       "type": "computed",
-      "value": "(dataAccess == \"ef\")"
+      "value": "(dataAccess == \"ef\" && projectType != \"tos\" && projectType != \"aggregate\")"
     },
     "isDapper": {
       "type": "computed",
-      "value": "(dataAccess == \"dapper\")"
+      "value": "(dataAccess == \"dapper\" || projectType == \"tos\")"
     },
     "isSharedProto": {
       "type": "computed",
@@ -68,11 +91,28 @@
     {
       "modifiers": [
         {
-          "condition": "(dataAccess != \"ef\")",
+          "condition": "(!isEf)",
           "exclude": [
-            "**/ContextBase.cs",
+            "**/Persistence/ContextBase.cs",
             "**/*OrderContext.cs",
-            "**/EntityConfigurations/**"
+            "**/Persistence/Configurations/**",
+            "**/Infrastructure/ContextBase.cs",
+            "**/Infrastructure/EntityConfigurations/**"
+          ]
+        },
+        {
+          "condition": "(isAggregate)",
+          "exclude": [
+            "**/Host/Grpc/**"
+          ]
+        },
+        {
+          "condition": "(!isAggregate)",
+          "exclude": [
+            "**/Host/Controllers/**",
+            "**/Core/Commands/**",
+            "**/Core/Handlers/**",
+            "**/Core/Validators/**"
           ]
         }
       ]

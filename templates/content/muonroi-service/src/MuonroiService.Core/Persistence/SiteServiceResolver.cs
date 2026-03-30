@@ -8,7 +8,7 @@ using Muonroi.Tenancy.SiteProfile.Grpc;
 using Autofac;
 #endif
 
-namespace MuonroiService.Core.Infrastructure;
+namespace MuonroiService.Core.Persistence;
 
 /// <summary>
 /// Registers all site profiles and their services into the DI container.

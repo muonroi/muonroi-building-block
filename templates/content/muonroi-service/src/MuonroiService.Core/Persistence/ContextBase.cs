@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace MuonroiService.Core.Infrastructure;
+namespace MuonroiService.Core.Persistence;
 
 /// <summary>
 /// Base DbContext for all site-specific contexts.

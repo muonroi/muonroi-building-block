@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using MuonroiService.Core.Infrastructure;
+using MuonroiService.Core.Persistence;
 
 namespace MuonroiService.Sites.Default;
 

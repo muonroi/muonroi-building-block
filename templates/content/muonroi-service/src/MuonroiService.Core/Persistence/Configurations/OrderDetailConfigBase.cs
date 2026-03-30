@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace MuonroiService.Core.Infrastructure.EntityConfigurations;
+namespace MuonroiService.Core.Persistence.Configurations;
 
 /// <summary>
 /// Base entity configuration for the OrderDetail entity.

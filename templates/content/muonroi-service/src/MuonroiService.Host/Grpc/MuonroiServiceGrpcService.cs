@@ -4,7 +4,7 @@ using MuonroiService.Core.Contracts;
 using MuonroiService.Host.v1.Protos;
 using Muonroi.Tenancy.SiteProfile.Grpc;
 
-namespace MuonroiService.Host.v1.Services;
+namespace MuonroiService.Host.Grpc;
 
 /// <summary>
 /// gRPC service routing — dispatches to site-resolved IOrderService.
