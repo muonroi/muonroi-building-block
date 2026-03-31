@@ -1,3 +1,6 @@
+using FluentValidation;
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.AspNetCore.Middleware;
 
 /// <summary>
@@ -34,33 +37,78 @@ public class MExceptionMiddleware(
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "An unhandled exception occurred.");
             await HandleExceptionAsync(context, ex);
         }
     }
 
-    private Task HandleExceptionAsync(HttpContext context, Exception? ex)
+    private Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
-        if (ex is null)
+        context.Response.ContentType = "application/json";
+
+        // Branch 1 — MException (per D-08, D-09)
+        if (ex is MException mex)
         {
-            return Task.FromException(new NullReferenceException());
+            // Log level by category (per D-08)
+            if (mex.Category is MExceptionCategory.Validation or MExceptionCategory.Domain)
+                _logger.Warn("Domain/Validation exception: {ErrorCode}. Message: {Message}", mex.ErrorCode, mex.Message);
+            else
+                _logger.Error(mex, "Infrastructure/Security exception: {ErrorCode}", mex.ErrorCode);
+
+            context.Response.StatusCode = mex.HttpStatusCode;
+
+            // Special handling for MValidationException (per D-10)
+            if (mex is MValidationException validationEx)
+            {
+                var body = new
+                {
+                    statusCode = 400,
+                    errorCode = "VALIDATION_FAILED",
+                    traceId = Activity.Current?.Id ?? context.TraceIdentifier,
+                    errors = validationEx.Errors.Select(e => new { field = e.Field, message = e.Message, attemptedValue = _environment.IsDevelopment() ? e.AttemptedValue : null })
+                };
+                return context.Response.WriteAsync(_serializeService.Serialize(body));
+            }
+
+            // General MException response (per D-09)
+            var response = new
+            {
+                statusCode = mex.HttpStatusCode,
+                errorCode = mex.ErrorCode,
+                traceId = Activity.Current?.Id ?? context.TraceIdentifier,
+                message = mex.Message,
+                details = _environment.IsDevelopment() ? mex.Details : null
+            };
+            return context.Response.WriteAsync(_serializeService.Serialize(response));
         }
 
-        context.Response.ContentType = "application/json";
+        // Branch 2 — FluentValidation.ValidationException (per D-10)
+        if (ex is FluentValidation.ValidationException fluentEx)
+        {
+            _logger.Warn("Validation exception from FluentValidation. Message: {Message}", fluentEx.Message);
+            context.Response.StatusCode = 400;
+
+            var body = new
+            {
+                statusCode = 400,
+                errorCode = "VALIDATION_FAILED",
+                traceId = Activity.Current?.Id ?? context.TraceIdentifier,
+                errors = fluentEx.Errors.Select(e => new { field = e.PropertyName, message = e.ErrorMessage, attemptedValue = _environment.IsDevelopment() ? e.AttemptedValue : null })
+            };
+            return context.Response.WriteAsync(_serializeService.Serialize(body));
+        }
+
+        // Branch 3 — Fallback (untyped Exception):
+        _logger.Error(ex, "An unhandled exception occurred.");
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-        var response = new
+        var fallback = new
         {
-            context.Response.StatusCode,
-            error = new
-            {
-                code = nameof(SystemEnum.UnhandledException),
-                message = MVoidMethodResult.GetErrorMessage(nameof(SystemEnum.UnhandledException), _authContext.Language),
-                details = _environment.IsDevelopment() ? ex.Message : null
-            }
+            statusCode = 500,
+            errorCode = "UNHANDLED_EXCEPTION",
+            traceId = Activity.Current?.Id ?? context.TraceIdentifier,
+            message = _environment.IsDevelopment() ? ex.Message : MVoidMethodResult.GetErrorMessage(nameof(SystemEnum.UnhandledException), _authContext.Language)
         };
-
-        return context.Response.WriteAsync(_serializeService.Serialize(response));
+        return context.Response.WriteAsync(_serializeService.Serialize(fallback));
     }
 
 }

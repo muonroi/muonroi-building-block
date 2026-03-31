@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Quota.Abstractions;
 using Muonroi.Tenancy.SiteProfile;
 
@@ -8,7 +9,7 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Behaviors;
 /// <summary>
 /// Thrown when a per-site quota limit is exceeded.
 /// </summary>
-public sealed class SiteQuotaExceededException : Exception
+public sealed class SiteQuotaExceededException : MException
 {
     /// <summary>The site that exhausted its quota.</summary>
     public string SiteId { get; }
@@ -23,14 +24,16 @@ public sealed class SiteQuotaExceededException : Exception
     /// Initializes a new instance of <see cref="SiteQuotaExceededException"/>.
     /// </summary>
     public SiteQuotaExceededException(string siteId, QuotaType quotaType, int requestedAmount)
-        : base($"Quota '{quotaType}' exceeded for site '{siteId}' (requested: {requestedAmount}).")
+        : base("SITE_QUOTA_EXCEEDED", $"Quota '{quotaType}' exceeded for site '{siteId}' (requested: {requestedAmount}).", MExceptionCategory.Domain, 429)
     {
         SiteId = siteId;
         QuotaType = quotaType;
         RequestedAmount = requestedAmount;
+        Details["SiteId"] = siteId;
+        Details["QuotaType"] = quotaType;
+        Details["RequestedAmount"] = requestedAmount;
     }
 }
-
 /// <summary>
 /// Per-site quota enforcer. Checks quota via ITenantQuotaTracker and increments on success;
 /// throws <see cref="SiteQuotaExceededException"/> when the limit is reached.

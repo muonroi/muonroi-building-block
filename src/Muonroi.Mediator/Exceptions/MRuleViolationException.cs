@@ -1,9 +1,11 @@
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.Mediator.Exceptions;
 
 /// <summary>
 /// Thrown when pre-handler rule engine validation fails.
 /// </summary>
-public sealed class MRuleViolationException : Exception
+public sealed class MRuleViolationException : MException
 {
     /// <summary>
     /// Gets the Errors.
@@ -18,9 +20,11 @@ public sealed class MRuleViolationException : Exception
     /// Initializes a new instance of MRuleViolationException.
     /// </summary>
     public MRuleViolationException(string ruleCode, IReadOnlyList<string> errors)
-        : base($"Rule '{ruleCode}' failed: {string.Join("; ", errors)}")
+        : base("RULE_VIOLATION", $"Rule '{ruleCode}' failed: {string.Join("; ", errors)}", MExceptionCategory.Domain, 422)
     {
         RuleCode = ruleCode;
         Errors = errors;
+        Details["RuleCode"] = ruleCode;
+        Details["Errors"] = errors;
     }
 }

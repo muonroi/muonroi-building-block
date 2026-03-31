@@ -1,9 +1,11 @@
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.Mediator.Exceptions;
 
 /// <summary>
 /// Thrown when the current user lacks the required roles or permissions to execute a request.
 /// </summary>
-public sealed class MForbiddenException : Exception
+public sealed class MForbiddenException : MException
 {
     /// <summary>
     /// Gets the Required Roles.
@@ -18,10 +20,12 @@ public sealed class MForbiddenException : Exception
     /// Initializes a new instance of MForbiddenException.
     /// </summary>
     public MForbiddenException(IReadOnlyList<string> requiredRoles, IReadOnlyList<string> requiredPermissions)
-        : base(BuildMessage(requiredRoles, requiredPermissions))
+        : base("FORBIDDEN", BuildMessage(requiredRoles, requiredPermissions), MExceptionCategory.Security, 403)
     {
         RequiredRoles = requiredRoles;
         RequiredPermissions = requiredPermissions;
+        Details["RequiredRoles"] = requiredRoles;
+        Details["RequiredPermissions"] = requiredPermissions;
     }
 
     private static string BuildMessage(IReadOnlyList<string> roles, IReadOnlyList<string> permissions)

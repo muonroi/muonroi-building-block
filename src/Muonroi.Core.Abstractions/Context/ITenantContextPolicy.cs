@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.Core.Abstractions.Context;
 
 /// <summary>
@@ -105,13 +107,14 @@ public sealed class DefaultTenantContextPolicy(IContextResolver resolver) : ITen
 /// <summary>
 /// Exception thrown when tenant context is missing but required by the policy.
 /// </summary>
-public sealed class MissingTenantContextException : InvalidOperationException
+public sealed class MissingTenantContextException : MException
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="MissingTenantContextException"/> class.
     /// </summary>
     /// <param name="message">The error message.</param>
-    public MissingTenantContextException(string message) : base(message)
+    public MissingTenantContextException(string message)
+        : base("MISSING_TENANT_CONTEXT", message, MExceptionCategory.Security, 400)
     {
     }
 }
@@ -119,13 +122,14 @@ public sealed class MissingTenantContextException : InvalidOperationException
 /// <summary>
 /// Exception thrown when user context is missing but required by the policy.
 /// </summary>
-public sealed class MissingUserContextException : InvalidOperationException
+public sealed class MissingUserContextException : MException
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="MissingUserContextException"/> class.
     /// </summary>
     /// <param name="message">The error message.</param>
-    public MissingUserContextException(string message) : base(message)
+    public MissingUserContextException(string message)
+        : base("MISSING_USER_CONTEXT", message, MExceptionCategory.Security, 400)
     {
     }
 }
