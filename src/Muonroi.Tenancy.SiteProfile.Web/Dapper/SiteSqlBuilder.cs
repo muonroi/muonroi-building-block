@@ -43,7 +43,13 @@ public sealed partial class SiteSqlBuilder
         if (propertyNames.Length == 0)
             throw new ArgumentException("At least one property name required.", nameof(propertyNames));
 
-        return string.Join(", ", propertyNames.Select(p => $"{_columnMap.Column(p)} AS {p}"));
+        var filtered = propertyNames.Where(p => _columnMap.HasColumn(p)).ToArray();
+        if (filtered.Length == 0)
+            throw new ArgumentException(
+                "All property names were filtered out by HasColumn. At least one column must be selectable.",
+                nameof(propertyNames));
+
+        return string.Join(", ", filtered.Select(p => $"{_columnMap.Column(p)} AS {p}"));
     }
 
     /// <summary>
@@ -54,6 +60,47 @@ public sealed partial class SiteSqlBuilder
     /// <returns>Complete SQL SELECT statement.</returns>
     public string SelectFrom(string tableName, params string[] propertyNames)
         => $"SELECT {Select(propertyNames)} FROM {tableName}";
+
+    /// <summary>
+    /// Generates a comma-separated column list that includes both base properties (filtered
+    /// by <see cref="ISiteColumnMap.HasColumn"/>) and site-specific extra columns from
+    /// <see cref="ISiteColumnMap.ExtraColumns"/>.
+    ///
+    /// Use this when the site may have additional columns not present in the base entity.
+    /// </summary>
+    /// <param name="propertyNames">The base C# property names to select.</param>
+    /// <returns>SQL column list including extras, e.g. "BOOKING_NO AS BookingNo, TRACKING_REF AS TrackingRef".</returns>
+    /// <exception cref="ArgumentException">Thrown when no columns remain after filtering and no extras are defined.</exception>
+    public string SelectWithExtras(params string[] propertyNames)
+    {
+        if (propertyNames.Length == 0)
+            throw new ArgumentException("At least one property name required.", nameof(propertyNames));
+
+        var baseCols = propertyNames
+            .Where(p => _columnMap.HasColumn(p))
+            .Select(p => $"{_columnMap.Column(p)} AS {p}");
+
+        var extraCols = _columnMap.ExtraColumns
+            .Select(e => $"{e.ColumnName} AS {e.PropertyName}");
+
+        var all = baseCols.Concat(extraCols).ToArray();
+        if (all.Length == 0)
+            throw new ArgumentException(
+                "No columns available: all base properties filtered and no extra columns defined.",
+                nameof(propertyNames));
+
+        return string.Join(", ", all);
+    }
+
+    /// <summary>
+    /// Generates a full <c>SELECT columns FROM tableName</c> statement including
+    /// site-specific extra columns.
+    /// </summary>
+    /// <param name="tableName">The database table name.</param>
+    /// <param name="propertyNames">The base C# property names to select.</param>
+    /// <returns>Complete SQL SELECT statement with extras.</returns>
+    public string SelectFromWithExtras(string tableName, params string[] propertyNames)
+        => $"SELECT {SelectWithExtras(propertyNames)} FROM {tableName}";
 
     /// <summary>
     /// Returns the site-specific column name for a C# property.

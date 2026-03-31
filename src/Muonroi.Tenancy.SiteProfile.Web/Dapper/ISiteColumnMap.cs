@@ -19,4 +19,22 @@ public interface ISiteColumnMap
     /// <param name="propertyName">The C# property name (e.g., "MyProperty").</param>
     /// <returns>The database column name (e.g., "COLUMN_NAME").</returns>
     string Column(string propertyName);
+
+    /// <summary>
+    /// Indicates whether the given property maps to a column that exists in this site's schema.
+    /// Returns <c>false</c> for columns that should be excluded from queries for this site.
+    ///
+    /// Default: <c>true</c> (all columns exist) — backward compatible.
+    /// </summary>
+    /// <param name="propertyName">The C# property name to check.</param>
+    /// <returns><c>true</c> if the column exists for this site; <c>false</c> to exclude it from queries.</returns>
+    bool HasColumn(string propertyName) => true;
+
+    /// <summary>
+    /// Returns extra columns that exist only for this site and are not part of the base entity.
+    /// These columns are appended to queries via <see cref="SiteSqlBuilder.SelectWithExtras"/>.
+    ///
+    /// Default: empty list — backward compatible.
+    /// </summary>
+    IReadOnlyList<SiteExtraColumn> ExtraColumns => [];
 }

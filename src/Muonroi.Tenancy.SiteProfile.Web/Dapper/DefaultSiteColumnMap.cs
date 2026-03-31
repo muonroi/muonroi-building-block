@@ -22,6 +22,12 @@ public class DefaultSiteColumnMap : ISiteColumnMap
     public virtual string Column(string propertyName)
         => ToUpperSnakeCase(propertyName);
 
+    /// <inheritdoc cref="ISiteColumnMap.HasColumn"/>
+    public virtual bool HasColumn(string propertyName) => true;
+
+    /// <inheritdoc cref="ISiteColumnMap.ExtraColumns"/>
+    public virtual IReadOnlyList<SiteExtraColumn> ExtraColumns => [];
+
     /// <summary>
     /// Converts a PascalCase string to UPPER_SNAKE_CASE.
     /// Examples: "MyProperty" → "MY_PROPERTY", "Id" → "ID", "MyEntity" → "MY_ENTITY".

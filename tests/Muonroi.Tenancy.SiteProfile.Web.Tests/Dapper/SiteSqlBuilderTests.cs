@@ -320,6 +320,148 @@ public class SiteSqlBuilderTests
     }
 
     // -----------------------------------------------------------------------
+    // HasColumn — column removal per site
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void DefaultSiteColumnMap_HasColumn_ReturnsTrue()
+    {
+        var sut = new DefaultSiteColumnMap();
+        Assert.True(sut.HasColumn("AnyProperty"));
+    }
+
+    [Fact]
+    public void DefaultSiteColumnMap_ExtraColumns_ReturnsEmpty()
+    {
+        var sut = new DefaultSiteColumnMap();
+        Assert.Empty(sut.ExtraColumns);
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_Select_SkipsColumnsWhereHasColumnFalse()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+
+        // ContainerNo is removed by HasColumn override
+        string result = builder.Select("BookingNo", "ContainerNo", "SiteCode");
+
+        Assert.Equal("BOOKING_NO AS BookingNo, SITE_CODE AS SiteCode", result);
+        Assert.DoesNotContain("ContainerNo", result);
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_Select_AllColumnsFilteredOut_ThrowsArgumentException()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+
+        // Only ContainerNo provided, which is removed
+        Assert.Throws<ArgumentException>(() => builder.Select("ContainerNo"));
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_SelectFrom_SkipsRemovedColumns()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+
+        string result = builder.SelectFrom("orders", "BookingNo", "ContainerNo");
+
+        Assert.Equal("SELECT BOOKING_NO AS BookingNo FROM orders", result);
+    }
+
+    // -----------------------------------------------------------------------
+    // ExtraColumns — column addition per site
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void SiteSqlBuilder_SelectWithExtras_AppendsExtraColumns()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithExtraColumnsMap());
+
+        string result = builder.SelectWithExtras("BookingNo", "ContainerNo");
+
+        Assert.Equal("BOOKING_NO AS BookingNo, CONTAINER_NO AS ContainerNo, TRACKING_REF AS TrackingRef", result);
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_SelectFromWithExtras_GeneratesFullStatement()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithExtraColumnsMap());
+
+        string result = builder.SelectFromWithExtras("orders", "BookingNo");
+
+        Assert.Equal("SELECT BOOKING_NO AS BookingNo, TRACKING_REF AS TrackingRef FROM orders", result);
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_SelectWithExtras_RemovedBaseButHasExtras_ReturnsExtrasOnly()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithBothMap());
+
+        // ContainerNo removed, but TrackingRef extra exists
+        string result = builder.SelectWithExtras("ContainerNo");
+
+        Assert.Equal("TRACKING_REF AS TrackingRef", result);
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_SelectWithExtras_CombinesFilteredBaseAndExtras()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithBothMap());
+
+        string result = builder.SelectWithExtras("BookingNo", "ContainerNo", "SiteCode");
+
+        // ContainerNo removed, BookingNo + SiteCode kept, TrackingRef extra appended
+        Assert.Equal("BOOKING_NO AS BookingNo, SITE_CODE AS SiteCode, TRACKING_REF AS TrackingRef", result);
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_SelectWithExtras_NoSurvivingColumnsNoExtras_ThrowsArgumentException()
+    {
+        // SiteWithRemovedColumnMap removes ContainerNo but has NO extras
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+
+        Assert.Throws<ArgumentException>(() => builder.SelectWithExtras("ContainerNo"));
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_SelectWithExtras_EmptyPropertyList_ThrowsArgumentException()
+    {
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+
+        Assert.Throws<ArgumentException>(() => builder.SelectWithExtras());
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_SelectWithExtras_DefaultMap_NoExtras_BehavesLikeSelect()
+    {
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+
+        string selectResult = builder.Select("BookingNo", "ContainerNo");
+        string extrasResult = builder.SelectWithExtras("BookingNo", "ContainerNo");
+
+        // No extras on default map → identical output
+        Assert.Equal(selectResult, extrasResult);
+    }
+
+    // -----------------------------------------------------------------------
+    // SiteExtraColumn record
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void SiteExtraColumn_DefaultIsNullable_IsTrue()
+    {
+        var col = new SiteExtraColumn("Prop", "COL", typeof(string));
+        Assert.True(col.IsNullable);
+    }
+
+    [Fact]
+    public void SiteExtraColumn_ExplicitIsNullableFalse_Works()
+    {
+        var col = new SiteExtraColumn("Prop", "COL", typeof(int), IsNullable: false);
+        Assert.False(col.IsNullable);
+    }
+
+    // -----------------------------------------------------------------------
     // Helper test implementations
     // -----------------------------------------------------------------------
 
@@ -336,5 +478,40 @@ public class SiteSqlBuilderTests
     {
         public override string Column(string propertyName)
             => propertyName == "BookingNo" ? "TCI_BOOKING_EXT" : base.Column(propertyName);
+    }
+
+    /// <summary>
+    /// Site that removes ContainerNo from queries (column doesn't exist in this site's schema).
+    /// </summary>
+    private sealed class SiteWithRemovedColumnMap : DefaultSiteColumnMap
+    {
+        public override bool HasColumn(string propertyName) => propertyName != "ContainerNo";
+    }
+
+    /// <summary>
+    /// Site that adds an extra TrackingRef column not in the base entity.
+    /// </summary>
+    private sealed class SiteWithExtraColumnsMap : DefaultSiteColumnMap
+    {
+        private static readonly SiteExtraColumn[] s_extras =
+        [
+            new("TrackingRef", "TRACKING_REF", typeof(string)),
+        ];
+
+        public override IReadOnlyList<SiteExtraColumn> ExtraColumns => s_extras;
+    }
+
+    /// <summary>
+    /// Site that removes ContainerNo AND adds extra TrackingRef.
+    /// </summary>
+    private sealed class SiteWithBothMap : DefaultSiteColumnMap
+    {
+        private static readonly SiteExtraColumn[] s_extras =
+        [
+            new("TrackingRef", "TRACKING_REF", typeof(string)),
+        ];
+
+        public override bool HasColumn(string propertyName) => propertyName != "ContainerNo";
+        public override IReadOnlyList<SiteExtraColumn> ExtraColumns => s_extras;
     }
 }
