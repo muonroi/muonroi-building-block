@@ -1,5 +1,7 @@
 using Dapper.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Tenancy.SiteProfile;
+using Muonroi.Tenancy.SiteProfile.Web.Dapper;
 
 namespace Muonroi.Tenancy.SiteProfile.Web;
 
@@ -60,6 +62,7 @@ public static class SiteProfileDapperExtensions
     /// public MyRepo(IDapper dapper, IDapperRead dapperRead) { ... }
     /// </code>
     /// </example>
+    /// <seealso cref="AddSiteSqlBuilder"/>
     /// </summary>
     public static IServiceCollection AddSiteDapperInfrastructure(
         this IServiceCollection services,
@@ -136,6 +139,41 @@ public static class SiteProfileDapperExtensions
                 "SiteDapper:ConnectionStringTransform",
                 options.ConnectionStringTransform);
         }
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers SiteSqlBuilder infrastructure:
+    /// <list type="bullet">
+    ///   <item><see cref="DefaultSiteColumnMap"/> as keyed singleton with key <c>"default"</c> —
+    ///     fallback for sites without custom column maps (PascalCase to UPPER_SNAKE_CASE).</item>
+    ///   <item><see cref="ISiteColumnMap"/> via <see cref="SiteProfileExtensions.AddSiteResolvedService{TService}"/> —
+    ///     resolves the keyed ISiteColumnMap by current site ID, falls back to <c>"default"</c>.</item>
+    ///   <item><see cref="SiteSqlBuilder"/> as scoped — receives the site-resolved ISiteColumnMap.</item>
+    /// </list>
+    ///
+    /// Sites override column mappings by registering their custom map in
+    /// <see cref="ISiteProfile.RegisterServices"/>:
+    /// <code>
+    /// services.AddKeyedSingleton&lt;ISiteColumnMap, MySiteColumnMap&gt;("SITE_CODE");
+    /// </code>
+    ///
+    /// Call once in Program.cs after <c>AddMultiSiteProfiles()</c>.
+    /// This is an opt-in call, separate from <see cref="AddSiteDapperInfrastructure"/>.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddSiteSqlBuilder(this IServiceCollection services)
+    {
+        // Default column map — PascalCase to UPPER_SNAKE_CASE (fallback for all sites)
+        services.AddKeyedSingleton<ISiteColumnMap, DefaultSiteColumnMap>("default");
+
+        // Per-site resolution — tries exact site key, falls back to "default"
+        services.AddSiteResolvedService<ISiteColumnMap>();
+
+        // SiteSqlBuilder scoped — receives site-resolved ISiteColumnMap
+        services.AddScoped<SiteSqlBuilder>();
 
         return services;
     }
