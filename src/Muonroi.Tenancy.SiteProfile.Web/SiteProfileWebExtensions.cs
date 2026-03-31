@@ -74,6 +74,77 @@ public static class SiteProfileWebExtensions
     }
 
     /// <summary>
+    /// One-call setup for the entire multi-site infrastructure. Replaces 5-7 individual ecosystem calls
+    /// that every consumer copy-pastes. Consumer only provides what's project-specific via options.
+    ///
+    /// <para>
+    /// Internally calls: <c>AddMultiSiteProfiles</c>, <c>AddSiteConfiguration</c>,
+    /// <c>AddSiteControllers</c> (if enabled), <c>SkipSiteProfileStartupValidation</c> (if enabled).
+    /// </para>
+    ///
+    /// <code>
+    /// // Before — 7 individual calls per consumer:
+    /// services.AddMultiSiteProfiles(config, accessor, assemblies);
+    /// services.AddSiteConfiguration();
+    /// services.AddSiteControllers(assemblies);
+    /// services.SkipSiteProfileStartupValidation();
+    ///
+    /// // After — 1 call:
+    /// services.AddSiteInfrastructure(configuration, options =>
+    /// {
+    ///     options.SiteCodeAccessor = sp => sp.GetRequiredService&lt;IWorkContextAccessor&gt;().WorkContext?.SiteCode;
+    ///     options.SiteAssemblies = [typeof(TciSiteProfile).Assembly, typeof(DefaultSiteProfile).Assembly];
+    ///     options.EnableControllerDiscovery = true;  // aggregate projects
+    ///     options.SkipStartupValidation = true;      // no DbContext validation
+    /// });
+    /// </code>
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">Application configuration (forwarded to site profiles).</param>
+    /// <param name="configure">Configure project-specific options.</param>
+    /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
+    public static IServiceCollection AddSiteInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Action<SiteInfrastructureOptions> configure)
+    {
+        var options = new SiteInfrastructureOptions();
+        configure(options);
+
+        if (options.SiteCodeAccessor is null)
+            throw new InvalidOperationException(
+                "SiteCodeAccessor is required. Set it in AddSiteInfrastructure options.");
+
+        if (options.SiteAssemblies.Length == 0)
+            throw new InvalidOperationException(
+                "SiteAssemblies is required. Provide at least one assembly containing ISiteProfile implementations.");
+
+        // 1. Register all site profiles with per-request resolution
+        services.AddMultiSiteProfiles(
+            configuration,
+            options.SiteCodeAccessor,
+            diagnosticLog: null,
+            options.SiteAssemblies);
+
+        // 2. Per-site configuration overlay (reads Sites:{SiteId}:* from appsettings)
+        services.AddSiteConfiguration();
+
+        // 3. Controller discovery from site assemblies (aggregate projects)
+        if (options.EnableControllerDiscovery)
+        {
+            services.AddSiteControllers(options.SiteAssemblies);
+        }
+
+        // 4. Skip startup validation (aggregate projects without DbContext)
+        if (options.SkipStartupValidation)
+        {
+            services.SkipSiteProfileStartupValidation();
+        }
+
+        return services;
+    }
+
+    /// <summary>
     /// Adds middleware that enriches each request with site-scoped observability:
     /// Activity.Current site.id tag, IMLog SiteId scope, and site_profile_requests_total counter.
     ///
