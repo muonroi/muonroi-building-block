@@ -50,8 +50,8 @@ jobs:
       - name: Build Release
         run: dotnet build Muonroi.BuildingBlock.sln -c Release --no-restore
 
-      - name: Test (exclude Commercial-only tests)
-        run: dotnet test Muonroi.BuildingBlock.sln -c Release --no-build --filter "Category!=Commercial&FullyQualifiedName!~WorkflowCacheTelemetryTests" --verbosity minimal
+      - name: Test (exclude Commercial-only and Integration tests)
+        run: dotnet test Muonroi.BuildingBlock.sln -c Release --no-build --filter "Category!=Commercial&Category!=Integration&FullyQualifiedName!~WorkflowCacheTelemetryTests" --verbosity minimal
 
   # ─────────────────────────────────────────────
   # 2. Pack every project, push everywhere
