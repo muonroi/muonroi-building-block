@@ -17,6 +17,8 @@ namespace TestProject.Service.IntegrationTests;
 /// (PendingMigrationContext) that has a defined EF migration class but which has never
 /// been applied to the database. ValidateOnly must detect this and throw.
 /// </summary>
+[Trait("Category", "Integration")]
+[Trait("Requires", "PostgreSQL")]
 public sealed class ValidateOnlyMigrationTests
 {
     private const string DefaultConnStr =

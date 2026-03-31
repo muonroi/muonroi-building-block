@@ -1,4 +1,7 @@
-name: Publish Commercial NuGet Packages
+# DEPRECATED: This workflow is superseded by publish-all.yml
+# which publishes ALL packages (OSS + Commercial) with a single unified version.
+# Kept for reference only. Use tag prefix "v*" with publish-all.yml instead of "pro-v*".
+name: "[DEPRECATED] Publish Commercial NuGet Packages"
 
 on:
   push:

@@ -24,19 +24,20 @@ public class InfrastructureExtensionsTests
         {
             ["LicenseConfigs:ProjectSeed"] = "12345678901234567890",
             ["LicenseConfigs:Mode"] = "Offline",
-            ["EnableEncryption"] = "false"
+            ["EnableEncryption"] = "false",
+            ["MultiTenantConfigs:Enabled"] = "false"
         };
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(configDict)
             .Build();
-        
+
         _services = new ServiceCollection();
         _services.AddSingleton(_configuration);
-        
+
         var env = Substitute.For<IHostEnvironment>();
         env.EnvironmentName.Returns("Development");
         _services.AddSingleton(env);
-        
+
         _services.AddLogging();
     }
 
@@ -59,7 +60,13 @@ public class InfrastructureExtensionsTests
     [Fact]
     public void AddValidateBearerToken_RegistersAuth()
     {
-        _services.AddSingleton(new MTokenInfo());
+        _services.AddSingleton(new MTokenInfo
+        {
+            UseRsa = false,
+            SymmetricSecretKey = "ThisIsATestSecretKeyWith32Chars!",
+            Issuer = "test-issuer",
+            Audience = "test-audience"
+        });
         _services.AddValidateBearerToken<TestDbContext, TestPerm>(_configuration);
 
         var sp = _services.BuildServiceProvider();

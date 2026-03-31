@@ -12,6 +12,8 @@ namespace TestProject.Service.IntegrationTests;
 /// Bravo's connection string points to a non-existent database, while Alpha and Default
 /// use real PostgreSQL databases. The test suite proves per-site isolation.
 /// </summary>
+[Trait("Category", "Integration")]
+[Trait("Requires", "PostgreSQL")]
 public sealed class FailureScenario_DbIsolationTests
 {
     // Per-site connection strings:

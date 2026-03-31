@@ -1,12 +1,12 @@
-# DEPRECATED: This workflow is superseded by publish-all.yml
-# which publishes ALL packages (OSS + Commercial) with a single unified version.
-# Kept for reference only. Use tag prefix "v*" with publish-all.yml instead of "oss-v*".
-name: "[DEPRECATED] Publish OSS NuGet Packages"
+# Unified publish workflow — replaces publish-oss.yml and publish-commercial.yml
+# Ensures ALL packages are published with the SAME version in a single run,
+# eliminating version drift between OSS and Commercial feeds.
+name: Publish All NuGet Packages
 
 on:
   push:
     tags:
-      - 'oss-v*'
+      - 'v*'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -23,7 +23,14 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
+  # ─────────────────────────────────────────────
+  # 1. Validate: boundary check + build + test
+  # ─────────────────────────────────────────────
   validate:
     name: Validate Boundary + Build + Test
     runs-on: ubuntu-latest
@@ -46,8 +53,11 @@ jobs:
       - name: Test (exclude Commercial-only tests)
         run: dotnet test Muonroi.BuildingBlock.sln -c Release --no-build --filter "Category!=Commercial&FullyQualifiedName!~WorkflowCacheTelemetryTests" --verbosity minimal
 
+  # ─────────────────────────────────────────────
+  # 2. Pack every project, push everywhere
+  # ─────────────────────────────────────────────
   pack-and-push:
-    name: Pack & Push OSS
+    name: Pack & Push All Packages
     needs: validate
     runs-on: ubuntu-latest
     steps:
@@ -63,22 +73,28 @@ jobs:
       - name: Build Release
         run: dotnet build Muonroi.BuildingBlock.sln -c Release --no-restore
 
+      # ── Determine version ──────────────────────
       - name: Set version from tag (if triggered by tag push)
-        if: startsWith(github.ref, 'refs/tags/oss-v')
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          TAG_VERSION="${GITHUB_REF#refs/tags/oss-v}"
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
           echo "PACKAGE_VERSION=$TAG_VERSION" >> "$GITHUB_ENV"
 
       - name: Set version from input override (if manual trigger)
         if: github.event_name == 'workflow_dispatch' && inputs.version_override != ''
         run: echo "PACKAGE_VERSION=${{ inputs.version_override }}" >> "$GITHUB_ENV"
 
-      - name: Pack OSS packages
+      # ── Pack ALL projects (deduplicated) ───────
+      - name: Pack all packages
         run: |
-          ARTIFACTS_DIR="./artifacts/oss"
+          ARTIFACTS_DIR="./artifacts/all"
           mkdir -p "$ARTIFACTS_DIR"
 
-          OSS_PROJECTS=(
+          # ────────────────────────────────────────
+          # Deduplicated union of OSS + Commercial
+          # ────────────────────────────────────────
+          # OSS-only projects
+          ALL_PROJECTS=(
             "src/Muonroi.Core.Abstractions"
             "src/Muonroi.Core"
             "src/Muonroi.Governance.Abstractions"
@@ -124,6 +140,7 @@ jobs:
             "src/Muonroi.Rules"
             "src/Muonroi.Tenancy.SiteProfile.Grpc"
             "src/Muonroi.AspNetCore.RuleEngine"
+            # Shared projects (in both OSS and Commercial)
             "src/Muonroi.BackgroundJobs.Hangfire"
             "src/Muonroi.BackgroundJobs.Quartz"
             "src/Muonroi.Bff"
@@ -142,9 +159,14 @@ jobs:
             "src/Muonroi.RuleEngine.Proliferation"
             "src/Muonroi.RuleEngine.Proliferation.Persistence"
             "src/Muonroi.UiEngine.Catalog"
+            # Commercial-only projects
+            "src/Muonroi.Governance.Enterprise"
+            "src/Muonroi.AuthZ"
+            "src/Muonroi.Integration.Connectors"
+            "src/Muonroi.Integration.Persistence"
           )
 
-          for proj in "${OSS_PROJECTS[@]}"; do
+          for proj in "${ALL_PROJECTS[@]}"; do
             PACK_ARGS="-c Release -o $ARTIFACTS_DIR"
             if [ -n "${PACKAGE_VERSION:-}" ]; then
               PACK_ARGS="$PACK_ARGS -p:Version=$PACKAGE_VERSION"
@@ -162,19 +184,63 @@ jobs:
           dotnet pack "templates/Muonroi.Templates.csproj" $TEMPLATE_PACK_ARGS
 
       - name: List artifacts
-        run: ls -la ./artifacts/oss/
+        run: ls -la ./artifacts/all/
 
+      # ── Push to NuGet.org (ALL packages) ───────
       - name: Push to NuGet.org
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run == false }}
         run: |
-          dotnet nuget push "./artifacts/oss/*.nupkg" \
+          dotnet nuget push "./artifacts/all/*.nupkg" \
             --api-key "${{ secrets.NUGET_ORG_API_KEY }}" \
             --source "https://api.nuget.org/v3/index.json" \
             --skip-duplicate
 
+      # ── Push commercial packages to GitHub Packages ──
+      - name: Push commercial packages to GitHub Packages
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run == false }}
+        run: |
+          # Commercial packages that also go to the private GitHub Packages feed
+          COMMERCIAL_PACKAGES=(
+            "Muonroi.Governance.Enterprise"
+            "Muonroi.AuthZ"
+            "Muonroi.Caching.Redis"
+            "Muonroi.Messaging.MassTransit"
+            "Muonroi.BackgroundJobs.Hangfire"
+            "Muonroi.BackgroundJobs.Quartz"
+            "Muonroi.SignalR"
+            "Muonroi.Grpc"
+            "Muonroi.Secrets"
+            "Muonroi.Bff"
+            "Muonroi.ServiceDiscovery.Consul"
+            "Muonroi.RuleEngine.Runtime"
+            "Muonroi.RuleEngine.Runtime.Web"
+            "Muonroi.RuleEngine.DecisionTable.Web"
+            "Muonroi.RuleEngine.Proliferation"
+            "Muonroi.RuleEngine.Proliferation.Persistence"
+            "Muonroi.Integration.Connectors"
+            "Muonroi.Integration.Persistence"
+            "Muonroi.Kubernetes"
+            "Muonroi.UiEngine.Catalog"
+            "Muonroi.BuildingBlock.All"
+          )
+
+          for pkg in "${COMMERCIAL_PACKAGES[@]}"; do
+            # Match all .nupkg files whose filename starts with the package name
+            for nupkg in ./artifacts/all/${pkg}.*.nupkg; do
+              if [ -f "$nupkg" ]; then
+                echo "Pushing $nupkg to GitHub Packages..."
+                dotnet nuget push "$nupkg" \
+                  --api-key "${{ secrets.GITHUB_TOKEN }}" \
+                  --source "https://nuget.pkg.github.com/muonroi/index.json" \
+                  --skip-duplicate
+              fi
+            done
+          done
+
+      # ── Dry-run artifact upload ────────────────
       - name: Upload artifacts (dry run)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         uses: actions/upload-artifact@v4
         with:
-          name: oss-packages-dryrun
-          path: ./artifacts/oss/*.nupkg
+          name: all-packages-dryrun
+          path: ./artifacts/all/*.nupkg

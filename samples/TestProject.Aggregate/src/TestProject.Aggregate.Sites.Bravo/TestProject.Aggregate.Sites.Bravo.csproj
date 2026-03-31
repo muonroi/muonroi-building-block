@@ -12,12 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Muonroi.Tenancy.SiteProfile" />
-    <PackageReference Include="Muonroi.Tenancy.SiteProfile.Grpc" />
-    <PackageReference Include="Muonroi.Tenancy.SiteProfile.SourceGenerators">
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Grpc\Muonroi.Tenancy.SiteProfile.Grpc.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.SourceGenerators\Muonroi.Tenancy.SiteProfile.SourceGenerators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    </ProjectReference>
     <PackageReference Include="Grpc.AspNetCore" />
   </ItemGroup>
 
@@ -30,10 +31,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Per-site proto: imports "shared.proto" via MuonroiSharedProtoDir set above -->
-    <Protobuf Include="Protos\service.bravo.proto" GrpcServices="Server" AdditionalImportDirs="$(MuonroiSharedProtoDir)" />
+    <!-- Per-site proto: imports "shared.proto" via MuonroiSharedProtoDir.
+         Import dirs are auto-configured by the .targets file (TOOL-01). -->
+    <Protobuf Include="Protos\service.bravo.proto" GrpcServices="Server" />
     <!-- Also compile shared.proto to generate SharedContainerInfo C# class in this assembly -->
     <Protobuf Include="$(MuonroiSharedProtoDir)shared.proto" GrpcServices="None" Link="Protos\shared.proto" />
   </ItemGroup>
+
+  <!-- Import .targets manually because ProjectReference does not auto-import build/ targets (NuGet convention only). -->
+  <Import Project="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Grpc\build\Muonroi.Tenancy.SiteProfile.Grpc.targets" />
 
 </Project>
