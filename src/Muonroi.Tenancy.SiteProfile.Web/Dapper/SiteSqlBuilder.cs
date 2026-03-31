@@ -93,6 +93,10 @@ public sealed partial class SiteSqlBuilder
     /// </summary>
     /// <param name="rawSql">The raw SQL string to interpolate. Must not be null.</param>
     /// <returns>The SQL string with column names replaced per the current site's column map.</returns>
+    /// <remarks>
+    /// This method is obsolete. Use <see cref="InterpolateMarkers"/> with <c>[[PropertyName]]</c> markers instead.
+    /// </remarks>
+    [Obsolete("Use InterpolateMarkers with [[PropertyName]] markers instead. Interpolate() rewrites alias.COLUMN AS Property patterns which is fragile for complex queries.")]
     public string Interpolate(string rawSql)
     {
         ArgumentNullException.ThrowIfNull(rawSql);
@@ -112,7 +116,7 @@ public sealed partial class SiteSqlBuilder
     }
 
     /// <summary>
-    /// Interpolates a raw SQL string by replacing <c>{{PropertyName}}</c> markers with the
+    /// Interpolates a raw SQL string by replacing <c>[[PropertyName]]</c> markers with the
     /// site-specific column name from <see cref="ISiteColumnMap"/>.
     ///
     /// <para>
@@ -121,19 +125,29 @@ public sealed partial class SiteSqlBuilder
     /// SQL fragment that does not follow the <c>alias.COLUMN AS Property</c> pattern.
     /// </para>
     ///
+    /// <para>
+    /// The <c>[[]]</c> syntax is preferred over the legacy <c>{{}}</c> syntax because
+    /// double-braces have special meaning in C# interpolated strings ($"..."), requiring ugly
+    /// <c>{{{{PropertyName}}}}</c> escaping. Square brackets have no special meaning in C#,
+    /// raw strings, or T-SQL, making them developer-friendly in any string context.
+    /// </para>
+    ///
     /// Usage:
     /// <code>
-    /// // Raw SQL with explicit markers:
-    /// const string sql = "WHERE od.{{SiteCode}} = @siteCode AND {{BookingNo}} = @bookingNo";
+    /// // Raw string literal (no escaping needed):
+    /// const string sql = """SELECT [[BookingNo]] FROM orders""";
     ///
-    /// // Interpolated — markers resolved per site:
+    /// // Interpolated string combining markers with runtime values:
+    /// string sql = $"WHERE [[BookingNo]] = @bookingNo AND od.{someVar}";
+    ///
+    /// // Markers resolved per site:
     /// string siteSql = builder.InterpolateMarkers(sql);
-    /// // Default site: "WHERE od.SITE_CODE = @siteCode AND BOOKING_NO = @bookingNo"
-    /// // TCI site:     "WHERE od.SITE_CODE = @siteCode AND TCI_BOOKING_EXT = @bookingNo"
+    /// // Default site: "SELECT BOOKING_NO FROM orders"
+    /// // TCI site:     "SELECT TCI_BOOKING_EXT FROM orders"
     /// </code>
     /// </summary>
-    /// <param name="rawSql">The raw SQL string containing <c>{{PropertyName}}</c> markers. Must not be null.</param>
-    /// <returns>The SQL string with all <c>{{PropertyName}}</c> markers replaced by site-specific column names.</returns>
+    /// <param name="rawSql">The raw SQL string containing <c>[[PropertyName]]</c> markers. Must not be null.</param>
+    /// <returns>The SQL string with all <c>[[PropertyName]]</c> markers replaced by site-specific column names.</returns>
     public string InterpolateMarkers(string rawSql)
     {
         ArgumentNullException.ThrowIfNull(rawSql);
@@ -153,10 +167,10 @@ public sealed partial class SiteSqlBuilder
         System.Text.RegularExpressions.RegexOptions.Compiled)]
     private static partial System.Text.RegularExpressions.Regex InterpolateRegex();
 
-    // Matches: {{PropertyName}} markers
+    // Matches: [[PropertyName]] markers
     // Group 1: property name (e.g., "SiteCode", "BookingNo")
     [System.Text.RegularExpressions.GeneratedRegex(
-        @"\{\{(\w+)\}\}",
+        @"\[\[(\w+)\]\]",
         System.Text.RegularExpressions.RegexOptions.Compiled)]
     private static partial System.Text.RegularExpressions.Regex MarkerRegex();
 }
