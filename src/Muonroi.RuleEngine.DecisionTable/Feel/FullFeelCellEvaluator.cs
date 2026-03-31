@@ -1,4 +1,3 @@
-using Muonroi.Rules.Feel;
 using System.Text.RegularExpressions;
 
 namespace Muonroi.RuleEngine.DecisionTable.Feel;

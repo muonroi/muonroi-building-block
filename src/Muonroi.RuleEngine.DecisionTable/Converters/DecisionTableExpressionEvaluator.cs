@@ -1,6 +1,7 @@
-using System.Text.RegularExpressions;
-using Muonroi.RuleEngine.DecisionTable.Models;
-using Muonroi.Rules.Feel;
+
+
+
+using Muonroi.RuleEngine.DecisionTable.Feel;
 
 namespace Muonroi.RuleEngine.DecisionTable.Converters;
 
@@ -41,12 +42,7 @@ internal static partial class DecisionTableExpressionEvaluator
         }
 
         Match op = OperatorRegex().Match(expression);
-        if (op.Success)
-        {
-            return Compare(actualValue, op.Groups["op"].Value, op.Groups["value"].Value);
-        }
-
-        return Compare(actualValue, "=", expression);
+        return op.Success ? Compare(actualValue, op.Groups["op"].Value, op.Groups["value"].Value) : Compare(actualValue, "=", expression);
     }
 
     public static bool IsExpressionValid(string expression)
@@ -67,7 +63,7 @@ internal static partial class DecisionTableExpressionEvaluator
             return true;
         }
 
-        int quoteCount = expression.Count(x => x == '\'' || x == '"');
+        int quoteCount = expression.Count(x => x is '\'' or '"');
         if (quoteCount % 2 != 0)
         {
             return false;
@@ -75,12 +71,7 @@ internal static partial class DecisionTableExpressionEvaluator
 
         int openParens = expression.Count(x => x == '(');
         int closeParens = expression.Count(x => x == ')');
-        if (openParens != closeParens)
-        {
-            return false;
-        }
-
-        return expression.Length > 0;
+        return openParens == closeParens && expression.Length > 0;
     }
 
     public static object? EvaluateOutput(
@@ -104,10 +95,7 @@ internal static partial class DecisionTableExpressionEvaluator
         }
 
         object? output = FeelEvaluator.EvaluateValue(normalized, feelVariables);
-        if (output is null)
-        {
-            output = ParseLiteral(normalized);
-        }
+        output ??= ParseLiteral(normalized);
 
         return CoerceOutput(output, columnDataType);
     }
@@ -213,20 +201,17 @@ internal static partial class DecisionTableExpressionEvaluator
             };
         }
 
-        if (TryParseListValues(expression, out IReadOnlyList<string>? values))
-        {
-            return new CellExpression
+        return TryParseListValues(expression, out IReadOnlyList<string>? values)
+            ? new CellExpression
             {
                 Raw = expression,
                 Values = values
+            }
+            : new CellExpression
+            {
+                Raw = expression,
+                Values = [expression]
             };
-        }
-
-        return new CellExpression
-        {
-            Raw = expression,
-            Values = [expression]
-        };
     }
 
     private static bool TryEvaluateRange(object? actualValue, string expression, out bool result)
@@ -337,12 +322,7 @@ internal static partial class DecisionTableExpressionEvaluator
     private static bool TryAsDouble(object? value, out double result)
     {
         result = default;
-        if (value is null)
-        {
-            return false;
-        }
-
-        return double.TryParse(
+        return value is not null && double.TryParse(
             Convert.ToString(value, CultureInfo.InvariantCulture),
             NumberStyles.Float,
             CultureInfo.InvariantCulture,
@@ -373,12 +353,7 @@ internal static partial class DecisionTableExpressionEvaluator
             return number;
         }
 
-        if (string.Equals(raw, "null", StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        return raw;
+        return string.Equals(raw, "null", StringComparison.OrdinalIgnoreCase) ? null : (object)raw;
     }
 
     private static object? CoerceOutput(object? output, string? columnDataType)
