@@ -19,9 +19,7 @@ namespace TestProject.Service.IntegrationTests;
 /// </summary>
 public sealed class MigrationRunnerTests
 {
-    // Use testproject_default for all 3 contexts — migration testing validates discovery + log chain
-    private const string DefaultConnStr =
-        "Host=localhost;Port=5432;Database=testproject_default;Username=postgres;Password=0967442142";
+    private const string DefaultConnStr = "Data Source=:memory:";
 
     private static readonly Type[] ThreeContextTypes =
     [
@@ -50,12 +48,17 @@ public sealed class MigrationRunnerTests
             b.AddMuonroiLogging();
         });
 
-        // Infrastructure: all 3 DbContexts point at testproject_default for migration tests
+        // Infrastructure: all 3 DbContexts point at SQLite memory for migration tests
         services.AddSiteDbInfrastructure(o =>
         {
             o.TenantId = _ => "DEFAULT";
             o.ConnectionString = _ => DefaultConnStr;
-            o.ConfigureDbContext = (b, cs) => b.UseNpgsql(cs);
+            o.ConfigureDbContext = (b, cs) => 
+            {
+                var conn = new Microsoft.Data.Sqlite.SqliteConnection(cs);
+                conn.Open(); // Keep connection open for memory DB to persist
+                b.UseSqlite(conn);
+            };
         });
 
         services.AddSiteDbContext<DefaultOrderContext>();
