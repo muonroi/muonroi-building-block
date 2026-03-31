@@ -146,6 +146,169 @@ public class SiteSqlBuilderTests
     }
 
     // -----------------------------------------------------------------------
+    // SiteSqlBuilder.Col — wraps ISiteColumnMap.Column directly
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void SiteSqlBuilder_Col_ReturnsColumnName()
+    {
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        Assert.Equal("SITE_CODE", builder.Col("SiteCode"));
+    }
+
+    // -----------------------------------------------------------------------
+    // SiteSqlBuilder.Interpolate — alias.COLUMN AS Property regression
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void SiteSqlBuilder_Interpolate_DefaultMap_ReplacesColumnNames()
+    {
+        // Interpolate replaces the literal column in SQL with _columnMap.Column(propertyName)
+        // DefaultSiteColumnMap: "ContainerNo" → "CONTAINER_NO", "BookingNo" → "BOOKING_NO"
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        const string sql = "SELECT od.ITEM_NO AS ContainerNo, od.BOOKING_NO AS BookingNo FROM ORDER_DETAIL od";
+
+        string result = builder.Interpolate(sql);
+
+        // Columns replaced with site-specific names derived from property names:
+        // "ContainerNo" → CONTAINER_NO, "BookingNo" → BOOKING_NO
+        Assert.Equal("SELECT od.CONTAINER_NO AS ContainerNo, od.BOOKING_NO AS BookingNo FROM ORDER_DETAIL od", result);
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_Interpolate_CustomMap_ReplacesColumn()
+    {
+        var builder = new SiteSqlBuilder(new TciSiteColumnMap());
+        const string sql = "SELECT od.BOOKING_NO AS BookingNo FROM ORDER_DETAIL od";
+
+        string result = builder.Interpolate(sql);
+
+        // TciSiteColumnMap overrides "BookingNo" → "TCI_BOOKING_EXT"
+        Assert.Equal("SELECT od.TCI_BOOKING_EXT AS BookingNo FROM ORDER_DETAIL od", result);
+    }
+
+    // -----------------------------------------------------------------------
+    // SiteSqlBuilder.InterpolateMarkers — {{PropertyName}} marker syntax
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void InterpolateMarkers_SingleMarker_WhereClause_ReplacesCorrectly()
+    {
+        // Test 1: single marker in WHERE clause
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        const string sql = "WHERE od.{{SiteCode}} = @siteCode";
+
+        string result = builder.InterpolateMarkers(sql);
+
+        Assert.Equal("WHERE od.SITE_CODE = @siteCode", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkers_MultipleMarkers_JoinOn_ReplacesAll()
+    {
+        // Test 2: multiple markers in JOIN ON clause
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        const string sql = "JOIN details d ON d.{{BookingNo}} = h.{{SiteCode}}";
+
+        string result = builder.InterpolateMarkers(sql);
+
+        Assert.Equal("JOIN details d ON d.BOOKING_NO = h.SITE_CODE", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkers_CaseExpression_ResolvesMarker()
+    {
+        // Test 3: marker inside CASE expression
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        const string sql = "CASE WHEN {{BookingNo}} = '' THEN 0 END";
+
+        string result = builder.InterpolateMarkers(sql);
+
+        Assert.Equal("CASE WHEN BOOKING_NO = '' THEN 0 END", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkers_Ctebody_ResolvesAllMarkers()
+    {
+        // Test 4: CTE body containing multiple markers
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        const string sql = "WITH cte AS (SELECT {{SiteCode}}, {{BookingNo}} FROM orders)";
+
+        string result = builder.InterpolateMarkers(sql);
+
+        Assert.Equal("WITH cte AS (SELECT SITE_CODE, BOOKING_NO FROM orders)", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkers_CustomColumnMap_ProducesSiteSpecificColumn()
+    {
+        // Test 5: custom ISiteColumnMap overrides "BookingNo" to "TCI_BOOKING_EXT"
+        var builder = new SiteSqlBuilder(new TciSiteColumnMap());
+        const string sql = "WHERE {{BookingNo}} = @bookingNo";
+
+        string result = builder.InterpolateMarkers(sql);
+
+        Assert.Equal("WHERE TCI_BOOKING_EXT = @bookingNo", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkers_NoMarkers_ReturnsSqlUnchanged()
+    {
+        // Test 6: passthrough when no markers present
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        const string sql = "SELECT * FROM orders WHERE status = @status";
+
+        string result = builder.InterpolateMarkers(sql);
+
+        Assert.Equal(sql, result);
+    }
+
+    [Fact]
+    public void InterpolateMarkers_NullInput_ThrowsArgumentNullException()
+    {
+        // Test 7: null input throws ArgumentNullException
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+
+        Assert.Throws<ArgumentNullException>(() => builder.InterpolateMarkers(null!));
+    }
+
+    [Fact]
+    public void InterpolateMarkers_PreservesNonMarkerContent()
+    {
+        // Test 8: whitespace, keywords, literals, parameters preserved unchanged
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        const string sql = "SELECT   id, {{ContainerNo}}, @param, 'literal' FROM t WHERE x = 1";
+
+        string result = builder.InterpolateMarkers(sql);
+
+        Assert.Equal("SELECT   id, CONTAINER_NO, @param, 'literal' FROM t WHERE x = 1", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkers_GroupBy_ResolvesBothMarkers()
+    {
+        // Test 10: GROUP BY with multiple markers
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        const string sql = "GROUP BY {{SiteCode}}, {{BookingNo}}";
+
+        string result = builder.InterpolateMarkers(sql);
+
+        Assert.Equal("GROUP BY SITE_CODE, BOOKING_NO", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkers_CustomMap_FallsBackToDefaultForNonOverridden()
+    {
+        // Custom map only overrides BookingNo; SiteCode should still use default convention
+        var builder = new SiteSqlBuilder(new TciSiteColumnMap());
+        const string sql = "WHERE {{SiteCode}} = @s AND {{BookingNo}} = @b";
+
+        string result = builder.InterpolateMarkers(sql);
+
+        Assert.Equal("WHERE SITE_CODE = @s AND TCI_BOOKING_EXT = @b", result);
+    }
+
+    // -----------------------------------------------------------------------
     // Helper test implementations
     // -----------------------------------------------------------------------
 
@@ -153,5 +316,14 @@ public class SiteSqlBuilderTests
     {
         public override string Column(string propertyName)
             => propertyName == "BookingNo" ? "BOOKING_NUMBER" : base.Column(propertyName);
+    }
+
+    /// <summary>
+    /// Simulates a site-specific column map that overrides "BookingNo" to a non-default name.
+    /// </summary>
+    private sealed class TciSiteColumnMap : DefaultSiteColumnMap
+    {
+        public override string Column(string propertyName)
+            => propertyName == "BookingNo" ? "TCI_BOOKING_EXT" : base.Column(propertyName);
     }
 }
