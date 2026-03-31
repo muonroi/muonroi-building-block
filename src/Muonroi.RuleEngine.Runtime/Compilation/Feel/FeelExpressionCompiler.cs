@@ -1,4 +1,4 @@
-using Muonroi.Rules.Feel;
+using Muonroi.RuleEngine.DecisionTable.Feel;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Linq.Expressions;
