@@ -2,6 +2,12 @@
 
 
 
+
+
+
+
+
+
 namespace Muonroi.Logging;
 
 /// <summary>
@@ -114,7 +120,7 @@ internal sealed class MLogNonGeneric(
         ITraceSession? session = traceContext?.Current;
         if (session is { IsActive: true })
         {
-            var message = string.Format(template.Replace("{", "{{").Replace("}", "}}"), args);
+            string message = string.Format(template.Replace("{", "{{").Replace("}", "}}"), args);
             if (ex != null)
             {
                 message += $" | Exception: {ex.Message}";
