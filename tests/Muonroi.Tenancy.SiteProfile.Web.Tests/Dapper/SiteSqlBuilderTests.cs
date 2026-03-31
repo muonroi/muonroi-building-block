@@ -188,7 +188,7 @@ public class SiteSqlBuilderTests
     }
 
     // -----------------------------------------------------------------------
-    // SiteSqlBuilder.InterpolateMarkers — {{PropertyName}} marker syntax
+    // SiteSqlBuilder.InterpolateMarkers — [[PropertyName]] marker syntax
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -196,7 +196,7 @@ public class SiteSqlBuilderTests
     {
         // Test 1: single marker in WHERE clause
         var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
-        const string sql = "WHERE od.{{SiteCode}} = @siteCode";
+        const string sql = "WHERE od.[[SiteCode]] = @siteCode";
 
         string result = builder.InterpolateMarkers(sql);
 
@@ -208,7 +208,7 @@ public class SiteSqlBuilderTests
     {
         // Test 2: multiple markers in JOIN ON clause
         var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
-        const string sql = "JOIN details d ON d.{{BookingNo}} = h.{{SiteCode}}";
+        const string sql = "JOIN details d ON d.[[BookingNo]] = h.[[SiteCode]]";
 
         string result = builder.InterpolateMarkers(sql);
 
@@ -220,7 +220,7 @@ public class SiteSqlBuilderTests
     {
         // Test 3: marker inside CASE expression
         var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
-        const string sql = "CASE WHEN {{BookingNo}} = '' THEN 0 END";
+        const string sql = "CASE WHEN [[BookingNo]] = '' THEN 0 END";
 
         string result = builder.InterpolateMarkers(sql);
 
@@ -232,7 +232,7 @@ public class SiteSqlBuilderTests
     {
         // Test 4: CTE body containing multiple markers
         var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
-        const string sql = "WITH cte AS (SELECT {{SiteCode}}, {{BookingNo}} FROM orders)";
+        const string sql = "WITH cte AS (SELECT [[SiteCode]], [[BookingNo]] FROM orders)";
 
         string result = builder.InterpolateMarkers(sql);
 
@@ -244,7 +244,7 @@ public class SiteSqlBuilderTests
     {
         // Test 5: custom ISiteColumnMap overrides "BookingNo" to "TCI_BOOKING_EXT"
         var builder = new SiteSqlBuilder(new TciSiteColumnMap());
-        const string sql = "WHERE {{BookingNo}} = @bookingNo";
+        const string sql = "WHERE [[BookingNo]] = @bookingNo";
 
         string result = builder.InterpolateMarkers(sql);
 
@@ -277,7 +277,7 @@ public class SiteSqlBuilderTests
     {
         // Test 8: whitespace, keywords, literals, parameters preserved unchanged
         var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
-        const string sql = "SELECT   id, {{ContainerNo}}, @param, 'literal' FROM t WHERE x = 1";
+        const string sql = "SELECT   id, [[ContainerNo]], @param, 'literal' FROM t WHERE x = 1";
 
         string result = builder.InterpolateMarkers(sql);
 
@@ -289,7 +289,7 @@ public class SiteSqlBuilderTests
     {
         // Test 10: GROUP BY with multiple markers
         var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
-        const string sql = "GROUP BY {{SiteCode}}, {{BookingNo}}";
+        const string sql = "GROUP BY [[SiteCode]], [[BookingNo]]";
 
         string result = builder.InterpolateMarkers(sql);
 
@@ -301,11 +301,22 @@ public class SiteSqlBuilderTests
     {
         // Custom map only overrides BookingNo; SiteCode should still use default convention
         var builder = new SiteSqlBuilder(new TciSiteColumnMap());
-        const string sql = "WHERE {{SiteCode}} = @s AND {{BookingNo}} = @b";
+        const string sql = "WHERE [[SiteCode]] = @s AND [[BookingNo]] = @b";
 
         string result = builder.InterpolateMarkers(sql);
 
         Assert.Equal("WHERE SITE_CODE = @s AND TCI_BOOKING_EXT = @b", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkers_OldDoubleBraceSyntax_NotResolved()
+    {
+        // Regression: old {{}} syntax should pass through unchanged (not resolved)
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        const string sql = "WHERE {{BookingNo}} = @b";
+        string result = builder.InterpolateMarkers(sql);
+        // Old {{}} syntax should pass through unchanged
+        Assert.Equal(sql, result);
     }
 
     // -----------------------------------------------------------------------
