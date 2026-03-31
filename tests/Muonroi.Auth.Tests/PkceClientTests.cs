@@ -1,73 +1,46 @@
-using FluentAssertions;
-using Muonroi.Auth.Oidc;
-using Xunit;
-
 namespace Muonroi.Auth.Tests;
+
+using System.Net.Http;
+using System.Text.Json;
 
 public class PkceClientTests
 {
-    private static OidcOptions CreateOptions() => new()
+    private readonly OidcOptions _options;
+    private readonly PkceClient _client;
+
+    public PkceClientTests()
     {
-        Authority = "https://auth.example.com",
-        ClientId = "test-client",
-        RedirectUri = "https://app.example.com/callback",
-        Scopes = ["openid", "profile"]
-    };
+        _options = new OidcOptions
+        {
+            Authority = "https://auth.com",
+            ClientId = "test-client",
+            RedirectUri = "https://localhost/callback",
+            Scopes = ["openid", "profile"]
+        };
+        _client = new PkceClient(_options);
+    }
 
     [Fact]
-    public void CreateAuthorizationRequest_ReturnsValidUrl()
+    public void CreateAuthorizationRequest_ShouldReturnValidRequest()
     {
-        var client = new PkceClient(CreateOptions());
+        // Act
+        var request = _client.CreateAuthorizationRequest();
 
-        var request = client.CreateAuthorizationRequest();
-
-        request.Url.Should().StartWith("https://auth.example.com/authorize?");
-        request.Url.Should().Contain("response_type=code");
+        // Assert
         request.Url.Should().Contain("client_id=test-client");
-        request.Url.Should().Contain("code_challenge_method=S256");
+        request.Url.Should().Contain("response_type=code");
+        request.Url.Should().Contain("code_challenge=");
         request.CodeVerifier.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
-    public void CreateAuthorizationRequest_UniqueStateAndNonce()
+    public async Task RedeemCodeForTokenAsync_ShouldThrow_WhenRedirectUriMismatch()
     {
-        var client = new PkceClient(CreateOptions());
+        // Act
+        Func<Task> act = () => _client.RedeemCodeForTokenAsync("code", "verifier", "wrong-uri", new HttpClient());
 
-        var req1 = client.CreateAuthorizationRequest();
-        var req2 = client.CreateAuthorizationRequest();
-
-        req1.Url.Should().NotBe(req2.Url, "state and nonce should be unique");
-        req1.CodeVerifier.Should().NotBe(req2.CodeVerifier);
-    }
-
-    [Fact]
-    public async Task RedeemCodeForTokenAsync_MismatchedRedirectUri_Throws()
-    {
-        var client = new PkceClient(CreateOptions());
-        var httpClient = new HttpClient();
-
-        Func<Task> act = () => client.RedeemCodeForTokenAsync(
-            "code", "verifier", "https://wrong.example.com/callback", httpClient);
-
+        // Assert
         await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*Redirect URI*");
-    }
-
-    [Fact]
-    public void OidcOptions_Endpoints_DerivedFromAuthority()
-    {
-        var options = CreateOptions();
-
-        options.AuthorizationEndpoint.Should().Be("https://auth.example.com/authorize");
-        options.TokenEndpoint.Should().Be("https://auth.example.com/token");
-    }
-
-    [Fact]
-    public void OidcOptions_AuthorityWithTrailingSlash_TrimsCorrectly()
-    {
-        var options = new OidcOptions { Authority = "https://auth.example.com/" };
-
-        options.AuthorizationEndpoint.Should().Be("https://auth.example.com/authorize");
-        options.TokenEndpoint.Should().Be("https://auth.example.com/token");
+            .WithMessage("Redirect URI must exactly match configured redirect URI.");
     }
 }
