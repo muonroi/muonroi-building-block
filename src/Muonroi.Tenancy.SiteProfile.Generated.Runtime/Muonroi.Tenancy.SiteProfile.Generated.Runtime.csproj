@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>Muonroi.Tenancy.SiteProfile.Generated.Runtime</PackageId>
+    <Authors>Muon Roi</Authors>
+    <Description>Runtime execution logic for AOT source-generated SiteProfile manifests. Contains DI registration, resolver, and per-site bootstrap logic extracted from generators.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../Muonroi.Tenancy.SiteProfile/Muonroi.Tenancy.SiteProfile.csproj" />
+    <ProjectReference Include="../Muonroi.Tenancy.SiteProfile.Web/Muonroi.Tenancy.SiteProfile.Web.csproj" />
+  </ItemGroup>
+</Project>
