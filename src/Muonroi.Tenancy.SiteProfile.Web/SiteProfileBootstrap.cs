@@ -2,9 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Logging.Abstractions;
-using Muonroi.Tenancy.SiteProfile.Web;
-
-namespace Muonroi.Tenancy.SiteProfile.Generated.Runtime;
+namespace Muonroi.Tenancy.SiteProfile.Web;
 
 /// <summary>
 /// Per-site service registration logic extracted from the scaffolding generator.
