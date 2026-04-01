@@ -16,6 +16,11 @@ public static class SiteProfileExtensions
     private static readonly SiteProfileRegistrationTracker s_tracker = new();
 
     /// <summary>
+    /// Reset the tracker for testing.
+    /// </summary>
+    internal static void ResetTracker() => s_tracker.Clear();
+
+    /// <summary>
     /// Configures SiteProfile options including strict mode for site resolution.
     /// </summary>
     public static IServiceCollection ConfigureSiteProfile(this IServiceCollection services, Action<SiteProfileOptions> configure)

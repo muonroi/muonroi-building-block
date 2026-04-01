@@ -8,6 +8,9 @@
     <Description>JWT authentication infrastructure: token validation, DPoP binding, claim extraction, and Muonroi auth middleware.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Muonroi.Tenancy.SiteProfile.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>

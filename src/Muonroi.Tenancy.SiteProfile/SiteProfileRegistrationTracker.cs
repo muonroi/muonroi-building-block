@@ -40,4 +40,15 @@ internal sealed class SiteProfileRegistrationTracker
 
     /// <summary>Disable startup validation. Call via SkipSiteProfileStartupValidation() extension.</summary>
     public void SetSkipValidation() => _skipValidation = true;
+
+    /// <summary>
+    /// Clear all tracked data. USE FOR TESTING ONLY.
+    /// </summary>
+    internal void Clear()
+    {
+        _siteIds.Clear();
+        _resolvedServiceTypes.Clear();
+        while (_failures.TryTake(out _));
+        _skipValidation = false;
+    }
 }

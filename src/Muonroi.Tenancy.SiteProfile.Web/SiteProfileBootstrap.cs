@@ -64,14 +64,22 @@ public static class SiteProfileBootstrap
         {
             foreach (var behaviorType in behaviorTypes)
             {
-                if (Activator.CreateInstance(behaviorType) is ISiteProfileBehavior behavior)
+                try
                 {
-                    behavior.Apply(services, configuration, siteId);
-                    log?.Info("[SiteProfile-AOT] Applied behavior: {BehaviorType}", behaviorType.FullName);
+                    if (Activator.CreateInstance(behaviorType) is ISiteProfileBehavior behavior)
+                    {
+                        behavior.Apply(services, configuration, siteId);
+                        log?.Info("[SiteProfile-AOT] Applied behavior: {BehaviorType}", behaviorType.FullName);
+                    }
+                    else
+                    {
+                        log?.Warn("[SiteProfile-AOT] Failed to create behavior instance (not ISiteProfileBehavior): {BehaviorType}", behaviorType.FullName);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    log?.Warn("[SiteProfile-AOT] Failed to create behavior instance: {BehaviorType}", behaviorType.FullName);
+                    log?.Error(ex, "[SiteProfile-AOT] Failed to create behavior instance: {BehaviorType}", 
+                        behaviorType.FullName);
                 }
             }
         }
