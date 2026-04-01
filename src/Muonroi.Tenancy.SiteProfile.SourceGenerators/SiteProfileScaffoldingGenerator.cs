@@ -180,8 +180,8 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
         sb.AppendLine("    /// <inheritdoc/>");
         sb.AppendLine("    public void RegisterServices(IServiceCollection services, IConfiguration configuration)");
         sb.AppendLine("    {");
-        sb.AppendLine($"        const string TraceCategory = \"Muonroi.SiteProfile.AOT\";");
-        sb.AppendLine($"        System.Diagnostics.Trace.WriteLine(\"[SiteProfile-AOT] {model.ClassName}.RegisterServices — begin (site: {EscapeStringLiteral(model.SiteId)})\", TraceCategory);");
+        sb.AppendLine($"        var log = services.BuildServiceProvider().GetService<Muonroi.Logging.Abstractions.IMLogFactory>()?.CreateLogger(\"Muonroi.SiteProfile.AOT.{model.ClassName}\");");
+        sb.AppendLine($"        log?.Info(\"[SiteProfile-AOT] {model.ClassName}.RegisterServices — begin (site: {EscapeStringLiteral(model.SiteId)})\");");
 
         // DbContext registration (skipped when SkipDbContextRegistration = true)
         if (!model.SkipDbContextRegistration)
@@ -190,13 +190,13 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
             sb.AppendLine($"        // Ecosystem: registers DbContextOptions<T> only (no non-generic) — prevents Autofac conflict");
             sb.AppendLine($"        // with EFCoreStoreDbContext<TenantInfo>. Safe for multiple site DbContexts in the same container.");
             sb.AppendLine($"        Muonroi.Tenancy.SiteProfile.Web.SiteProfileDbContextExtensions.AddSiteDbContext<{model.DbContextTypeName}>(services);");
-            sb.AppendLine($"        System.Diagnostics.Trace.WriteLine(\"[SiteProfile-AOT] {model.ClassName} — registered DbContext: {EscapeStringLiteral(model.DbContextTypeName)}\", TraceCategory);");
+            sb.AppendLine($"        log?.Info(\"[SiteProfile-AOT] {model.ClassName} — registered DbContext: {{DbContextType}}\", \"{EscapeStringLiteral(model.DbContextTypeName)}\");");
         }
         else
         {
             sb.AppendLine($"        // DbContext registration SKIPPED for site \"{model.SiteId}\" (SkipDbContextRegistration = true)");
             sb.AppendLine($"        // Consumer registers DbContext via its own infrastructure (e.g., AddInternalInfrastructure)");
-            sb.AppendLine($"        System.Diagnostics.Trace.WriteLine(\"[SiteProfile-AOT] {model.ClassName} — DbContext registration skipped (SkipDbContextRegistration=true)\", TraceCategory);");
+            sb.AppendLine($"        log?.Debug(\"[SiteProfile-AOT] {model.ClassName} — DbContext registration skipped (SkipDbContextRegistration=true)\");");
         }
 
         // Behavior Apply() calls
@@ -207,7 +207,7 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
             foreach (var behaviorTypeName in model.BehaviorTypeNames)
             {
                 sb.AppendLine($"        new {behaviorTypeName}().Apply(services, configuration, \"{EscapeStringLiteral(model.SiteId)}\");");
-                sb.AppendLine($"        System.Diagnostics.Trace.WriteLine(\"[SiteProfile-AOT] {model.ClassName} — applied behavior: {EscapeStringLiteral(behaviorTypeName)}\", TraceCategory);");
+                sb.AppendLine($"        log?.Info(\"[SiteProfile-AOT] {model.ClassName} — applied behavior: {{BehaviorType}}\", \"{EscapeStringLiteral(behaviorTypeName)}\");");
             }
         }
 
@@ -215,7 +215,7 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine("        // Consumer extensibility: implement partial void RegisterAdditionalServices() in a separate partial file");
         sb.AppendLine("        RegisterAdditionalServices(services, configuration);");
-        sb.AppendLine($"        System.Diagnostics.Trace.WriteLine(\"[SiteProfile-AOT] {model.ClassName}.RegisterServices — complete (site: {EscapeStringLiteral(model.SiteId)})\", TraceCategory);");
+        sb.AppendLine($"        log?.Info(\"[SiteProfile-AOT] {model.ClassName}.RegisterServices — complete (site: {EscapeStringLiteral(model.SiteId)})\");");
         sb.AppendLine("    }");
         sb.AppendLine();
 

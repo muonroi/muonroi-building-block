@@ -196,7 +196,8 @@ public sealed class SiteProfileAliasGenerator : IIncrementalGenerator
         sb.AppendLine("    /// <param name=\"services\">The service collection.</param>");
         sb.AppendLine($"    partial void RegisterAliasServices(IServiceCollection services)");
         sb.AppendLine("    {");
-        sb.AppendLine($"        System.Diagnostics.Trace.WriteLine(\"[SiteProfile-AOT] {model.ClassName}.RegisterAliasServices — aliasing '{EscapeStringLiteral(model.AliasSiteId ?? model.ClassName)}' → '{EscapeStringLiteral(model.TargetSiteId)}'\", \"Muonroi.SiteProfile.AOT\");");
+        sb.AppendLine($"        var log = services.BuildServiceProvider().GetService<Muonroi.Logging.Abstractions.IMLogFactory>()?.CreateLogger(\"Muonroi.SiteProfile.AOT.Alias\");");
+        sb.AppendLine($"        log?.Info(\"[SiteProfile-AOT] {model.ClassName}.RegisterAliasServices — aliasing '{{AliasSite}}' → '{{TargetSite}}'\", \"{EscapeStringLiteral(model.AliasSiteId ?? model.ClassName)}\", \"{EscapeStringLiteral(model.TargetSiteId)}\");");
         sb.AppendLine($"        // Alias site \"{EscapeStringLiteral(model.AliasSiteId ?? model.ClassName)}\" forwards all keyed service");
         sb.AppendLine($"        // requests to target site \"{EscapeStringLiteral(model.TargetSiteId)}\".");
         sb.AppendLine("        //");

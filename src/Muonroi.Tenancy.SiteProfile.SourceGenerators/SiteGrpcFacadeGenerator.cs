@@ -411,6 +411,7 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
         {
             sb.AppendLine($"    private readonly {model.ExtendClientFullNames[i]} _extend{i};");
         }
+        sb.AppendLine($"    private readonly Muonroi.Logging.Abstractions.IMLog? _log;");
         sb.AppendLine();
 
         // Constructor — takes pre-resolved gRPC client instances (injected by AddSiteGrpcFacadeClient factory delegate)
@@ -420,16 +421,17 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
         {
             sb.Append($", {model.ExtendClientFullNames[i]} extend{i}");
         }
-        sb.AppendLine(")");
+        sb.AppendLine($", Muonroi.Logging.Abstractions.IMLogFactory? logFactory = null)");
         sb.AppendLine("    {");
         sb.AppendLine($"        _shared = shared;");
         for (int i = 0; i < model.ExtendClientFullNames.Count; i++)
         {
             sb.AppendLine($"        _extend{i} = extend{i};");
         }
-        sb.AppendLine($"        System.Diagnostics.Trace.WriteLine(\"[SiteProfile-AOT] {model.FacadeClassName} constructed — shared: {model.SharedClientFullName}" +
+        sb.AppendLine($"        _log = logFactory?.CreateLogger(\"Muonroi.SiteProfile.AOT.{model.FacadeClassName}\");");
+        sb.AppendLine($"        _log?.Info(\"[SiteProfile-AOT] {model.FacadeClassName} constructed — shared: {model.SharedClientFullName}" +
             (model.ExtendClientFullNames.Count > 0 ? $", extend clients: {model.ExtendClientFullNames.Count}" : "") +
-            "\", \"Muonroi.SiteProfile.AOT\");");
+            "\");");
         sb.AppendLine("    }");
         sb.AppendLine();
 
