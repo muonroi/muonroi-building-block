@@ -462,6 +462,167 @@ public class SiteSqlBuilderTests
     }
 
     // -----------------------------------------------------------------------
+    // SiteSqlBuilder.HasColumn — wrapper
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void SiteSqlBuilder_HasColumn_DefaultMap_ReturnsTrue()
+    {
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        Assert.True(builder.HasColumn("AnyProperty"));
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_HasColumn_RemovedColumn_ReturnsFalse()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+        Assert.False(builder.HasColumn("ContainerNo"));
+        Assert.True(builder.HasColumn("BookingNo"));
+    }
+
+    // -----------------------------------------------------------------------
+    // SiteSqlBuilder.ColOrNull
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void SiteSqlBuilder_ColOrNull_ExistingColumn_ReturnsColumnName()
+    {
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        Assert.Equal("BOOKING_NO", builder.ColOrNull("BookingNo"));
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_ColOrNull_RemovedColumn_ReturnsNull()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+        Assert.Null(builder.ColOrNull("ContainerNo"));
+    }
+
+    [Fact]
+    public void SiteSqlBuilder_ColOrNull_CustomMap_ResolvesCorrectly()
+    {
+        var builder = new SiteSqlBuilder(new TciSiteColumnMap());
+        Assert.Equal("TCI_BOOKING_EXT", builder.ColOrNull("BookingNo"));
+    }
+
+    // -----------------------------------------------------------------------
+    // InterpolateMarkers — fail-fast on removed columns
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void InterpolateMarkers_RemovedColumn_ThrowsInvalidOperationException()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+        const string sql = "WHERE [[ContainerNo]] = @c";
+
+        var ex = Assert.Throws<InvalidOperationException>(() => builder.InterpolateMarkers(sql));
+        Assert.Contains("ContainerNo", ex.Message);
+        Assert.Contains("InterpolateMarkersSafe", ex.Message);
+    }
+
+    [Fact]
+    public void InterpolateMarkers_MixedExistingAndRemoved_ThrowsOnFirstRemoved()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+        // BookingNo exists, ContainerNo removed
+        const string sql = "SELECT [[BookingNo]], [[ContainerNo]] FROM orders";
+
+        Assert.Throws<InvalidOperationException>(() => builder.InterpolateMarkers(sql));
+    }
+
+    [Fact]
+    public void InterpolateMarkers_AllColumnsExist_WorksUnchanged()
+    {
+        // Regression: existing behavior unchanged when all columns exist
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+        const string sql = "WHERE [[BookingNo]] = @b AND [[SiteCode]] = @s";
+
+        string result = builder.InterpolateMarkers(sql);
+
+        Assert.Equal("WHERE BOOKING_NO = @b AND SITE_CODE = @s", result);
+    }
+
+    // -----------------------------------------------------------------------
+    // InterpolateMarkersSafe — fallback for removed columns
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void InterpolateMarkersSafe_RemovedColumn_DefaultFallback_ReplacesWithNull()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+        const string sql = "SELECT [[BookingNo]], [[ContainerNo]] FROM orders";
+
+        string result = builder.InterpolateMarkersSafe(sql);
+
+        Assert.Equal("SELECT BOOKING_NO, NULL FROM orders", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkersSafe_RemovedColumn_CustomFallback()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+        const string sql = "SELECT [[ContainerNo]] FROM orders";
+
+        string result = builder.InterpolateMarkersSafe(sql, "'N/A'");
+
+        Assert.Equal("SELECT 'N/A' FROM orders", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkersSafe_AllColumnsExist_BehavesLikeInterpolateMarkers()
+    {
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        const string sql = "WHERE [[BookingNo]] = @b";
+
+        string strict = builder.InterpolateMarkers(sql);
+        string safe = builder.InterpolateMarkersSafe(sql);
+
+        Assert.Equal(strict, safe);
+    }
+
+    [Fact]
+    public void InterpolateMarkersSafe_WhereClause_RemovedColumn_FallbackInPredicate()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+        // WHERE with removed column → NULL = @c → always false, effectively skips condition
+        const string sql = "WHERE [[ContainerNo]] = @c AND [[BookingNo]] = @b";
+
+        string result = builder.InterpolateMarkersSafe(sql);
+
+        Assert.Equal("WHERE NULL = @c AND BOOKING_NO = @b", result);
+    }
+
+    [Fact]
+    public void InterpolateMarkersSafe_NullInput_ThrowsArgumentNullException()
+    {
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+        Assert.Throws<ArgumentNullException>(() => builder.InterpolateMarkersSafe(null!));
+    }
+
+    [Fact]
+    public void InterpolateMarkersSafe_NoMarkers_ReturnsSqlUnchanged()
+    {
+        var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
+        const string sql = "SELECT * FROM orders";
+
+        string result = builder.InterpolateMarkersSafe(sql);
+
+        Assert.Equal(sql, result);
+    }
+
+    [Fact]
+    public void InterpolateMarkersSafe_MultipleRemovedColumns_AllReplacedWithFallback()
+    {
+        // Site that removes both ContainerNo and LegacyField
+        var builder = new SiteSqlBuilder(new SiteWithMultiRemovedMap());
+        const string sql = "SELECT [[BookingNo]], [[ContainerNo]], [[LegacyField]] FROM orders";
+
+        string result = builder.InterpolateMarkersSafe(sql, "0");
+
+        Assert.Equal("SELECT BOOKING_NO, 0, 0 FROM orders", result);
+    }
+
+    // -----------------------------------------------------------------------
     // Helper test implementations
     // -----------------------------------------------------------------------
 
@@ -513,5 +674,14 @@ public class SiteSqlBuilderTests
 
         public override bool HasColumn(string propertyName) => propertyName != "ContainerNo";
         public override IReadOnlyList<SiteExtraColumn> ExtraColumns => s_extras;
+    }
+
+    /// <summary>
+    /// Site that removes multiple columns (ContainerNo and LegacyField).
+    /// </summary>
+    private sealed class SiteWithMultiRemovedMap : DefaultSiteColumnMap
+    {
+        public override bool HasColumn(string propertyName)
+            => propertyName is not ("ContainerNo" or "LegacyField");
     }
 }

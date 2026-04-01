@@ -112,6 +112,29 @@ public sealed partial class SiteSqlBuilder
     public string Col(string propertyName) => _columnMap.Column(propertyName);
 
     /// <summary>
+    /// Returns the site-specific column name if the column exists for this site,
+    /// or <c>null</c> if the column has been removed via <see cref="ISiteColumnMap.HasColumn"/>.
+    ///
+    /// Use this to conditionally include columns in WHERE/JOIN clauses:
+    /// <code>
+    /// var col = builder.ColOrNull("ContainerNo");
+    /// string where = col is not null ? $"AND {col} = @containerNo" : "";
+    /// </code>
+    /// </summary>
+    /// <param name="propertyName">The C# property name to check.</param>
+    /// <returns>The database column name, or <c>null</c> if the column doesn't exist for this site.</returns>
+    public string? ColOrNull(string propertyName)
+        => _columnMap.HasColumn(propertyName) ? _columnMap.Column(propertyName) : null;
+
+    /// <summary>
+    /// Checks whether a column exists for the current site.
+    /// Convenience wrapper for <see cref="ISiteColumnMap.HasColumn"/>.
+    /// </summary>
+    /// <param name="propertyName">The C# property name to check.</param>
+    /// <returns><c>true</c> if the column exists; <c>false</c> if it has been removed for this site.</returns>
+    public bool HasColumn(string propertyName) => _columnMap.HasColumn(propertyName);
+
+    /// <summary>
     /// Interpolates a raw SQL string by replacing column names in <c>[alias.]COLUMN AS Property</c>
     /// patterns with the site-specific column name from <see cref="ISiteColumnMap"/>.
     ///
@@ -195,13 +218,55 @@ public sealed partial class SiteSqlBuilder
     /// </summary>
     /// <param name="rawSql">The raw SQL string containing <c>[[PropertyName]]</c> markers. Must not be null.</param>
     /// <returns>The SQL string with all <c>[[PropertyName]]</c> markers replaced by site-specific column names.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when a <c>[[PropertyName]]</c> marker references a column that does not exist
+    /// for this site (i.e., <see cref="ISiteColumnMap.HasColumn"/> returns <c>false</c>).
+    /// Use <see cref="InterpolateMarkersSafe"/> to replace removed columns with a fallback value instead.
+    /// </exception>
     public string InterpolateMarkers(string rawSql)
     {
         ArgumentNullException.ThrowIfNull(rawSql);
         return MarkerRegex().Replace(rawSql, match =>
         {
             string propertyName = match.Groups[1].Value;
+            if (!_columnMap.HasColumn(propertyName))
+                throw new InvalidOperationException(
+                    $"Column '{propertyName}' is not available for this site. " +
+                    $"Use InterpolateMarkersSafe() or check HasColumn(\"{propertyName}\") before using this marker.");
             return _columnMap.Column(propertyName);
+        });
+    }
+
+    /// <summary>
+    /// Interpolates <c>[[PropertyName]]</c> markers like <see cref="InterpolateMarkers"/>,
+    /// but replaces markers for removed columns with a fallback value instead of throwing.
+    ///
+    /// <para>
+    /// When <see cref="ISiteColumnMap.HasColumn"/> returns <c>false</c> for a marker's property,
+    /// the entire <c>[[PropertyName]]</c> marker is replaced with <paramref name="fallback"/>.
+    /// </para>
+    ///
+    /// Usage:
+    /// <code>
+    /// // Site where ContainerNo is removed:
+    /// string sql = builder.InterpolateMarkersSafe("SELECT [[BookingNo]], [[ContainerNo]] FROM orders");
+    /// // → "SELECT BOOKING_NO, NULL FROM orders"
+    ///
+    /// // With custom fallback:
+    /// string sql = builder.InterpolateMarkersSafe("SELECT [[ContainerNo]] FROM orders", "'N/A'");
+    /// // → "SELECT 'N/A' FROM orders"
+    /// </code>
+    /// </summary>
+    /// <param name="rawSql">The raw SQL string containing <c>[[PropertyName]]</c> markers.</param>
+    /// <param name="fallback">The SQL literal to use for removed columns. Defaults to <c>"NULL"</c>.</param>
+    /// <returns>The SQL string with markers resolved or replaced with fallback.</returns>
+    public string InterpolateMarkersSafe(string rawSql, string fallback = "NULL")
+    {
+        ArgumentNullException.ThrowIfNull(rawSql);
+        return MarkerRegex().Replace(rawSql, match =>
+        {
+            string propertyName = match.Groups[1].Value;
+            return _columnMap.HasColumn(propertyName) ? _columnMap.Column(propertyName) : fallback;
         });
     }
 
