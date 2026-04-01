@@ -49,7 +49,12 @@ public sealed partial class SiteSqlBuilder
                 "All property names were filtered out by HasColumn. At least one column must be selectable.",
                 nameof(propertyNames));
 
-        return string.Join(", ", filtered.Select(p => $"{_columnMap.Column(p)} AS {p}"));
+        return string.Join(", ", filtered.Select(p =>
+        {
+            string columnName = _columnMap.Column(p);
+            ColumnNameValidator.EnsureValidIdentifier(columnName, p);
+            return $"{columnName} AS {p}";
+        }));
     }
 
     /// <summary>
@@ -78,10 +83,19 @@ public sealed partial class SiteSqlBuilder
 
         var baseCols = propertyNames
             .Where(p => _columnMap.HasColumn(p))
-            .Select(p => $"{_columnMap.Column(p)} AS {p}");
+            .Select(p =>
+            {
+                string columnName = _columnMap.Column(p);
+                ColumnNameValidator.EnsureValidIdentifier(columnName, p);
+                return $"{columnName} AS {p}";
+            });
 
         var extraCols = _columnMap.ExtraColumns
-            .Select(e => $"{e.ColumnName} AS {e.PropertyName}");
+            .Select(e =>
+            {
+                ColumnNameValidator.EnsureValidIdentifier(e.ColumnName, e.PropertyName);
+                return $"{e.ColumnName} AS {e.PropertyName}";
+            });
 
         var all = baseCols.Concat(extraCols).ToArray();
         if (all.Length == 0)
@@ -109,7 +123,12 @@ public sealed partial class SiteSqlBuilder
     /// </summary>
     /// <param name="propertyName">The C# property name (e.g., "BookingNo").</param>
     /// <returns>The database column name (e.g., "BOOKING_NO" or site-specific override).</returns>
-    public string Col(string propertyName) => _columnMap.Column(propertyName);
+    public string Col(string propertyName)
+    {
+        string columnName = _columnMap.Column(propertyName);
+        ColumnNameValidator.EnsureValidIdentifier(columnName, propertyName);
+        return columnName;
+    }
 
     /// <summary>
     /// Returns the site-specific column name if the column exists for this site,
@@ -124,7 +143,14 @@ public sealed partial class SiteSqlBuilder
     /// <param name="propertyName">The C# property name to check.</param>
     /// <returns>The database column name, or <c>null</c> if the column doesn't exist for this site.</returns>
     public string? ColOrNull(string propertyName)
-        => _columnMap.HasColumn(propertyName) ? _columnMap.Column(propertyName) : null;
+    {
+        if (!_columnMap.HasColumn(propertyName))
+            return null;
+
+        string columnName = _columnMap.Column(propertyName);
+        ColumnNameValidator.EnsureValidIdentifier(columnName, propertyName);
+        return columnName;
+    }
 
     /// <summary>
     /// Checks whether a column exists for the current site.
@@ -180,7 +206,10 @@ public sealed partial class SiteSqlBuilder
         {
             string tableAlias = match.Groups[1].Value; // e.g., "od."
             string propertyName = match.Groups[3].Value; // e.g., "ContainerNo"
+            if (!_columnMap.HasColumn(propertyName))
+                return match.Value; // Leave original SQL unchanged for unmapped properties
             string siteColumn = _columnMap.Column(propertyName);
+            ColumnNameValidator.EnsureValidIdentifier(siteColumn, propertyName);
             return $"{tableAlias}{siteColumn} AS {propertyName}";
         });
     }
@@ -233,7 +262,9 @@ public sealed partial class SiteSqlBuilder
                 throw new InvalidOperationException(
                     $"Column '{propertyName}' is not available for this site. " +
                     $"Use InterpolateMarkersSafe() or check HasColumn(\"{propertyName}\") before using this marker.");
-            return _columnMap.Column(propertyName);
+            string columnName = _columnMap.Column(propertyName);
+            ColumnNameValidator.EnsureValidIdentifier(columnName, propertyName);
+            return columnName;
         });
     }
 
@@ -266,7 +297,11 @@ public sealed partial class SiteSqlBuilder
         return MarkerRegex().Replace(rawSql, match =>
         {
             string propertyName = match.Groups[1].Value;
-            return _columnMap.HasColumn(propertyName) ? _columnMap.Column(propertyName) : fallback;
+            if (!_columnMap.HasColumn(propertyName))
+                return fallback;
+            string columnName = _columnMap.Column(propertyName);
+            ColumnNameValidator.EnsureValidIdentifier(columnName, propertyName);
+            return columnName;
         });
     }
 
