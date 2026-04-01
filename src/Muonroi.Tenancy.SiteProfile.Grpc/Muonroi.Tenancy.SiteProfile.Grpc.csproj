@@ -13,6 +13,9 @@
     <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Muonroi.Tenancy.SiteProfile.Grpc.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
   </ItemGroup>
