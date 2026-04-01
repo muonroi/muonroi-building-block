@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
     <!-- SiteProfile.Web provides pipeline + DI extensions -->
     <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Web\Muonroi.Tenancy.SiteProfile.Web.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Generated.Runtime\Muonroi.Tenancy.SiteProfile.Generated.Runtime.csproj" />
   </ItemGroup>
 
 </Project>

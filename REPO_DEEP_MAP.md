@@ -219,6 +219,13 @@
 | SiteProfileRegistrationTracker.cs | `SiteProfileRegistrationTracker` | Validates all sites registered correctly at startup |
 | SiteProfileStartupValidator.cs | `SiteProfileStartupValidator` | IHostedService: validates + logs failures |
 
+### Tenancy.SiteProfile.Generated.Runtime (`src/Muonroi.Tenancy.SiteProfile.Generated.Runtime/`)
+
+| File | Class | Purpose |
+|------|-------|---------|
+| SiteProfileManifestRunner.cs | `SiteProfileManifestRunner` | `Register()` — DI registration, ISiteProfileResolver wiring, logging. Called by generated manifest code. |
+| SiteProfileBootstrap.cs | `SiteProfileBootstrap` | `RegisterSiteServices()` — per-site DbContext + behavior registration via MakeGenericMethod. Called by generated partial classes. |
+
 ### Tenancy.SiteProfile.Web (`src/Muonroi.Tenancy.SiteProfile.Web/`)
 
 | File | Class/Interface | Purpose |
