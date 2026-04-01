@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Tenancy.SiteProfile;
@@ -13,6 +14,15 @@ public static class SiteProfileExtensions
 {
     // Static tracker — populated during DI setup (single-threaded), consumed read-only at startup.
     private static readonly SiteProfileRegistrationTracker s_tracker = new();
+
+    /// <summary>
+    /// Configures SiteProfile options including strict mode for site resolution.
+    /// </summary>
+    public static IServiceCollection ConfigureSiteProfile(this IServiceCollection services, Action<SiteProfileOptions> configure)
+    {
+        services.Configure(configure);
+        return services;
+    }
 
     /// <summary>
     /// Register all services for a specific site profile.
@@ -86,6 +96,8 @@ public static class SiteProfileExtensions
     {
         ArgumentNullException.ThrowIfNull(siteCodeAccessor);
 
+        services.Configure<SiteProfileOptions>(_ => { }); // Register with defaults if not already configured
+
         var profiles = new Dictionary<string, ISiteProfile>(StringComparer.OrdinalIgnoreCase);
 
         // Scan assemblies for ISiteProfile implementations
@@ -145,9 +157,27 @@ public static class SiteProfileExtensions
             if (profiles.TryGetValue(siteCode, out var match))
                 return new SiteProfileResolver(match);
 
-            // Fallback: try "default" profile
+            // Site code not found — check strict mode
+            var options = sp.GetService<IOptions<SiteProfileOptions>>()?.Value;
+            if (options?.StrictMode == true)
+            {
+                throw new InvalidOperationException(
+                    $"[SITE-SAFETY] No ISiteProfile registered for site '{siteCode}'. " +
+                    $"StrictMode is enabled — no fallback to 'default'. " +
+                    $"Available: [{string.Join(", ", profiles.Keys)}]");
+            }
+
+            // Non-strict: fallback to "default" with warning
             if (profiles.TryGetValue("default", out var fallback))
+            {
+                var logger = sp.GetService<IMLog<SiteProfileResolver>>();
+                logger?.Warn(
+                    "[SITE-SAFETY] Site '{SiteCode}' not found, falling back to 'default' profile. " +
+                    "Enable SiteProfileOptions.StrictMode to make this an error.",
+                    siteCode);
                 return new SiteProfileResolver(fallback);
+            }
+
 
             throw new InvalidOperationException(
                 $"No ISiteProfile registered for site '{siteCode}'. " +

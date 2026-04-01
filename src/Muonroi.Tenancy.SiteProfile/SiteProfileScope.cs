@@ -17,6 +17,29 @@ namespace Muonroi.Tenancy.SiteProfile;
 /// The override is propagated via <see cref="AsyncLocal{T}"/> — it is visible in
 /// child async tasks but not in sibling or parent async contexts.
 /// </summary>
+/// <remarks>
+/// <para><b>ASYNC SAFETY WARNING:</b></para>
+/// <para>
+/// AsyncLocal values flow DOWN into child tasks but changes in child tasks do NOT
+/// propagate back to the parent. This means:
+/// </para>
+/// <list type="bullet">
+/// <item>SAFE: Using within a single async method with <c>using</c> statement</item>
+/// <item>SAFE: Using in test setup that runs before test body</item>
+/// <item>CAUTION: Background jobs (IHostedService, Hangfire, etc.) should set
+/// TenantContext.CurrentTenantId explicitly instead of relying on SiteProfileScope,
+/// because the scope's AsyncLocal value may not be available in the job's execution context.</item>
+/// <item>CAUTION: Do NOT use across thread pool boundaries (ThreadPool.QueueUserWorkItem)
+/// unless ExecutionContext flow is explicitly preserved.</item>
+/// </list>
+/// <para>
+/// For background job scenarios, prefer:
+/// <code>
+/// TenantContext.CurrentTenantId = capturedTenantId;
+/// SiteProfileScope.ForSite(capturedProfile);
+/// </code>
+/// </para>
+/// </remarks>
 public sealed class SiteProfileScope : IDisposable
 {
     private static readonly AsyncLocal<ISiteProfile?> s_current = new();
@@ -42,6 +65,10 @@ public sealed class SiteProfileScope : IDisposable
     /// <param name="profile">The site profile to use within the scope.</param>
     /// <returns>A disposable scope that restores the previous profile on dispose.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="profile"/> is null.</exception>
+    /// <remarks>
+    /// Always use within a <c>using</c> block or statement to ensure proper cleanup.
+    /// For background jobs, see class-level remarks about AsyncLocal limitations.
+    /// </remarks>
     public static SiteProfileScope ForSite(ISiteProfile profile)
     {
         ArgumentNullException.ThrowIfNull(profile);
