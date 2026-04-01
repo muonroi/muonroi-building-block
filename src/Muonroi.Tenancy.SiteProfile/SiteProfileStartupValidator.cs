@@ -32,8 +32,12 @@ internal sealed class SiteProfileStartupValidator(
         {
             foreach (var serviceType in tracker.ResolvedServiceTypes)
             {
+                if (serviceType == null) continue;
+
                 foreach (var siteId in tracker.SiteIds)
                 {
+                    if (string.IsNullOrWhiteSpace(siteId)) continue;
+
                     var resolved = keyedProvider.GetKeyedService(serviceType, siteId);
                     if (resolved is null)
                     {

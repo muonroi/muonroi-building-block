@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Not a test project — disable test SDK injection from Directory.Build.props -->
     <IsMuonroiTestProject>false</IsMuonroiTestProject>
+      <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

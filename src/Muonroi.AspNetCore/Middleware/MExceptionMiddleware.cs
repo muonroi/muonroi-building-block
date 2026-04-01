@@ -1,5 +1,7 @@
 using FluentValidation;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Response;
+using Muonroi.Observability.OpenTelemetry;
 
 namespace Muonroi.AspNetCore.Middleware;
 
@@ -43,7 +45,18 @@ public class MExceptionMiddleware(
 
     private Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
+        ArgumentNullException.ThrowIfNull(ex);
+
         context.Response.ContentType = "application/json";
+        var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
+
+        // D-03: Track exception metric
+        if (ex is MException mexTrack)
+        {
+            MuonroiMetrics.ExceptionCount.Add(1, 
+                new KeyValuePair<string, object?>("category", mexTrack.Category.ToString()),
+                new KeyValuePair<string, object?>("error_code", mexTrack.ErrorCode));
+        }
 
         // Branch 1 — MException (per D-08, D-09)
         if (ex is MException mex)
@@ -56,28 +69,27 @@ public class MExceptionMiddleware(
 
             context.Response.StatusCode = mex.HttpStatusCode;
 
+            var response = new MErrorResponse
+            {
+                StatusCode = mex.HttpStatusCode,
+                ErrorCode = mex.ErrorCode,
+                TraceId = traceId,
+                Message = mex.Message,
+                Details = _environment.IsDevelopment() ? mex.Details : null
+            };
+
             // Special handling for MValidationException (per D-10)
             if (mex is MValidationException validationEx)
             {
-                var body = new
+                response.ErrorCode = "VALIDATION_FAILED";
+                response.Errors = validationEx.Errors.Select(e => new MErrorDetail
                 {
-                    statusCode = 400,
-                    errorCode = "VALIDATION_FAILED",
-                    traceId = Activity.Current?.Id ?? context.TraceIdentifier,
-                    errors = validationEx.Errors.Select(e => new { field = e.Field, message = e.Message, attemptedValue = _environment.IsDevelopment() ? e.AttemptedValue : null })
-                };
-                return context.Response.WriteAsync(_serializeService.Serialize(body));
+                    Field = e.Field,
+                    Message = e.Message,
+                    AttemptedValue = _environment.IsDevelopment() ? e.AttemptedValue : null
+                }).ToList();
             }
 
-            // General MException response (per D-09)
-            var response = new
-            {
-                statusCode = mex.HttpStatusCode,
-                errorCode = mex.ErrorCode,
-                traceId = Activity.Current?.Id ?? context.TraceIdentifier,
-                message = mex.Message,
-                details = _environment.IsDevelopment() ? mex.Details : null
-            };
             return context.Response.WriteAsync(_serializeService.Serialize(response));
         }
 
@@ -87,28 +99,33 @@ public class MExceptionMiddleware(
             _logger.Warn("Validation exception from FluentValidation. Message: {Message}", fluentEx.Message);
             context.Response.StatusCode = 400;
 
-            var body = new
+            var response = new MErrorResponse
             {
-                statusCode = 400,
-                errorCode = "VALIDATION_FAILED",
-                traceId = Activity.Current?.Id ?? context.TraceIdentifier,
-                errors = fluentEx.Errors.Select(e => new { field = e.PropertyName, message = e.ErrorMessage, attemptedValue = _environment.IsDevelopment() ? e.AttemptedValue : null })
+                StatusCode = 400,
+                ErrorCode = "VALIDATION_FAILED",
+                TraceId = traceId,
+                Message = "One or more validation failures have occurred.",
+                Errors = fluentEx.Errors.Select(e => new MErrorDetail
+                {
+                    Field = e.PropertyName,
+                    Message = e.ErrorMessage,
+                    AttemptedValue = _environment.IsDevelopment() ? e.AttemptedValue : null
+                }).ToList()
             };
-            return context.Response.WriteAsync(_serializeService.Serialize(body));
+            return context.Response.WriteAsync(_serializeService.Serialize(response));
         }
 
         // Branch 3 — Fallback (untyped Exception):
         _logger.Error(ex, "An unhandled exception occurred.");
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-        var fallback = new
+        var fallback = new MErrorResponse
         {
-            statusCode = 500,
-            errorCode = "UNHANDLED_EXCEPTION",
-            traceId = Activity.Current?.Id ?? context.TraceIdentifier,
-            message = _environment.IsDevelopment() ? ex.Message : MVoidMethodResult.GetErrorMessage(nameof(SystemEnum.UnhandledException), _authContext.Language)
+            StatusCode = 500,
+            ErrorCode = "UNHANDLED_EXCEPTION",
+            TraceId = traceId,
+            Message = _environment.IsDevelopment() ? ex.Message : MVoidMethodResult.GetErrorMessage(nameof(SystemEnum.UnhandledException), _authContext.Language)
         };
         return context.Response.WriteAsync(_serializeService.Serialize(fallback));
     }
-
 }

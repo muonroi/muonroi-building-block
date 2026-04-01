@@ -8,6 +8,7 @@
     <IsMuonroiTestProject>false</IsMuonroiTestProject>
     <!-- Set shared proto dir so that Host service.proto can import "shared.proto" -->
     <MuonroiSharedProtoDir>$(MSBuildProjectDirectory)\..\..\v1\Protos\</MuonroiSharedProtoDir>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

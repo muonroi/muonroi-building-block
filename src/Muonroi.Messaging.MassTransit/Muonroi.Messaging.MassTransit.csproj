@@ -16,7 +16,9 @@
     <ProjectReference Include="..\Muonroi.Messaging.Abstractions\Muonroi.Messaging.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Governance.Abstractions\Muonroi.Governance.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Tenancy.Core\Muonroi.Tenancy.Core.csproj" />
-    <ProjectReference Include="..\Muonroi.AspNetCore\Muonroi.AspNetCore.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.Events\Muonroi.Data.EntityFrameworkCore.Events.csproj" />
+    <ProjectReference Include="..\Muonroi.Auth\Muonroi.Auth.csproj" />
     <ProjectReference Include="..\Muonroi.Observability\Muonroi.Observability.csproj" />
     <ProjectReference Include="..\Muonroi.Caching.Redis\Muonroi.Caching.Redis.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Runtime\Muonroi.RuleEngine.Runtime.csproj" />

@@ -2,11 +2,15 @@ using Muonroi.Core.Abstractions.Constants;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Governance.License;
 using Muonroi.Grpc.Grpc;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Observability.OpenTelemetry;
 using Polly;
-using Polly.CircuitBreaker;
 using Polly.Retry;
+using Polly.CircuitBreaker;
 using Polly.Timeout;
-using Polly.Wrap;
+using System.Diagnostics;
+using Microsoft.Extensions.Options;
+using Grpc.Core;
 namespace Muonroi.Grpc.Services;
 
 /// <summary>
@@ -75,23 +79,39 @@ public abstract class BaseGrpcService(
         Metadata metadata = CreateMetadata();
         GrpcMethodPolicyConfig resolvedPolicy = ResolvePolicy(policy);
 
-        AsyncRetryPolicy<MResponse> retryPolicy = Policy<MResponse>
-            .Handle<RpcException>(ex => ex.StatusCode is StatusCode.Unavailable or StatusCode.DeadlineExceeded)
-            .WaitAndRetryAsync(
-                Math.Max(0, resolvedPolicy.RetryCount ?? _clientDefaults.RetryCount),
-                retryAttempt =>
-                    TimeSpan.FromSeconds(Math.Min(
-                        Math.Pow(2, retryAttempt) * Math.Max(1, resolvedPolicy.InitialBackoffSeconds ?? _clientDefaults.InitialBackoffSeconds),
-                        Math.Max(1, resolvedPolicy.MaxBackoffSeconds ?? _clientDefaults.MaxBackoffSeconds))));
+        // Polly v8 Resilience Pipeline (D-04)
+        var pipeline = new ResiliencePipelineBuilder<MResponse>()
+            .AddRetry(new RetryStrategyOptions<MResponse>
+            {
+                // D-05: Handle transient errors
+                ShouldHandle = new PredicateBuilder<MResponse>()
+                    .Handle<MTransientException>()
+                    .Handle<RpcException>(ex => ex.StatusCode is StatusCode.Unavailable or StatusCode.DeadlineExceeded)
+                    .Handle<HttpRequestException>(),
+                BackoffType = DelayBackoffType.Exponential,
+                UseJitter = true,
+                MaxRetryAttempts = Math.Max(0, resolvedPolicy.RetryCount ?? _clientDefaults.RetryCount),
+                Delay = TimeSpan.FromSeconds(Math.Max(1, resolvedPolicy.InitialBackoffSeconds ?? _clientDefaults.InitialBackoffSeconds)),
+                OnRetry = args =>
+                {
+                    // Track retry attempt (D-03)
+                    MuonroiMetrics.RetryAttemptCount.Add(1, 
+                        new KeyValuePair<string, object?>("grpc.method", methodName),
+                        new KeyValuePair<string, object?>("exception.type", args.Outcome.Exception?.GetType().Name));
+                    return default;
+                }
+            })
+            .AddCircuitBreaker(new CircuitBreakerStrategyOptions<MResponse>
+            {
+                ShouldHandle = new PredicateBuilder<MResponse>().Handle<Exception>(),
+                FailureRatio = 0.5,
+                SamplingDuration = TimeSpan.FromSeconds(30),
+                MinimumThroughput = 5,
+                BreakDuration = TimeSpan.FromSeconds(30)
+            })
+            .AddTimeout(TimeSpan.FromSeconds(Math.Max(1, resolvedPolicy.TimeoutSeconds ?? _clientDefaults.TimeoutSeconds)))
+            .Build();
 
-        int timeoutSeconds = Math.Max(1, resolvedPolicy.TimeoutSeconds ?? _clientDefaults.TimeoutSeconds);
-        AsyncTimeoutPolicy<MResponse> timeoutPolicy = global::Polly.Policy.TimeoutAsync<MResponse>(TimeSpan.FromSeconds(timeoutSeconds));
-
-        AsyncCircuitBreakerPolicy<MResponse> circuitBreakerPolicy = Policy<MResponse>
-            .Handle<RpcException>()
-            .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
-
-        AsyncPolicyWrap<MResponse> policyWrap = global::Polly.Policy.WrapAsync(retryPolicy, timeoutPolicy, circuitBreakerPolicy);
         Stopwatch sw = Stopwatch.StartNew();
         string? tenantId = ResolveTenantId();
         using Activity? activity = GrpcRuntimeTelemetry.ActivitySource.StartActivity(methodName, ActivityKind.Client);
@@ -102,18 +122,29 @@ public abstract class BaseGrpcService(
         StatusCode statusCode = StatusCode.OK;
         try
         {
-            return await policyWrap.ExecuteAsync(() => grpcCall(metadata));
+            return await pipeline.ExecuteAsync(async ct => await grpcCall(metadata));
         }
         catch (RpcException rpcEx)
         {
             statusCode = rpcEx.StatusCode;
             activity?.SetStatus(ActivityStatusCode.Error, rpcEx.Status.Detail);
+            MuonroiTraceProcessor.TagException(activity, rpcEx); // D-02
             throw;
         }
         catch (Exception ex)
         {
             statusCode = StatusCode.Unknown;
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            MuonroiTraceProcessor.TagException(activity, ex); // D-02
+            
+            // Track exception count (D-03)
+            if (ex is MException mex)
+            {
+                MuonroiMetrics.ExceptionCount.Add(1, 
+                    new KeyValuePair<string, object?>("category", mex.Category.ToString()),
+                    new KeyValuePair<string, object?>("error_code", mex.ErrorCode));
+            }
+            
             throw;
         }
         finally

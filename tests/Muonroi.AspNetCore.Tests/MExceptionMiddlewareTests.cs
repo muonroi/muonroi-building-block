@@ -56,7 +56,7 @@ public class MExceptionMiddlewareTests
 
         context.Response.Body.Position = 0;
         string body = await new StreamReader(context.Response.Body).ReadToEndAsync();
-        Assert.Contains("UnhandledException", body);
+        Assert.Contains("UNHANDLED_EXCEPTION", body);
         Assert.Equal(StatusCodes.Status500InternalServerError, context.Response.StatusCode);
     }
 
@@ -71,7 +71,8 @@ public class MExceptionMiddlewareTests
             new MAuthenticateInfoContext(false),
             new FakeEnvironment());
 
-        await Assert.ThrowsAsync<NullReferenceException>(() => InvokeHandle(middleware, context, null));
+        var ex = await Assert.ThrowsAsync<TargetInvocationException>(() => InvokeHandle(middleware, context, null));
+        Assert.IsType<ArgumentNullException>(ex.InnerException);
     }
 
     [Fact]
@@ -96,7 +97,7 @@ public class MExceptionMiddlewareTests
 
         context.Response.Body.Position = 0;
         string body = await new StreamReader(context.Response.Body).ReadToEndAsync();
-        Assert.Contains("UnhandledException", body);
+        Assert.Contains("UNHANDLED_EXCEPTION", body);
         Assert.Equal(StatusCodes.Status500InternalServerError, context.Response.StatusCode);
     }
 }

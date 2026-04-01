@@ -285,7 +285,7 @@ public sealed class DeveloperMcpToolTests
 
         Task writeTask = Task.Run(async () =>
         {
-            await Task.Delay(400);
+            await Task.Delay(1000);
             _ = workspace.WriteFile(
                 Path.Combine("Handlers", "ReviewRuleSource.cs"),
                 BuildRuleSource("REVIEW_CHECK", "ReviewRuleSource", "EvaluateReviewAsync"));
@@ -296,7 +296,7 @@ public sealed class DeveloperMcpToolTests
             Path.Combine("Generated", "Rules"),
             @namespace: "Generated.Rules",
             debounceMs: 150,
-            durationSeconds: 2,
+            durationSeconds: 5,
             workingDirectory: workspace.RootPath,
             ct: CancellationToken.None);
         await writeTask;

@@ -11,6 +11,8 @@ using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 using Muonroi.Observability.Logging;
 using Muonroi.Governance.Abstractions.License;
+using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.Observability.OpenTelemetry;
 
 namespace Muonroi.Observability;
 
@@ -39,6 +41,17 @@ public static class OtelSetup
         OpenTelemetryConfigs configs = new();
         configuration.GetSection(OpenTelemetryConfigs.SectionName).Bind(configs);
 
+        // Discovery pattern for telemetry descriptors (D-01)
+        var descriptors = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(a => a.GetTypes())
+            .Where(t => typeof(ITelemetryDescriptor).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false })
+            .Select(Activator.CreateInstance)
+            .Cast<ITelemetryDescriptor>()
+            .ToList();
+
+        var activitySources = descriptors.SelectMany(d => d.ActivitySourceNames).Distinct().ToList();
+        var meters = descriptors.SelectMany(d => d.MeterNames).Distinct().ToList();
+
         services.AddOpenTelemetry()
             .ConfigureResource(rb => rb
                 .AddService(configs.ServiceName ?? "MuonroiService"))
@@ -52,8 +65,16 @@ public static class OtelSetup
                     .AddSource("BackgroundJob")
                     .AddSource(GrpcActivitySourceName)
                     .AddSource(MessageBusActivitySourceName)
-                    .AddSource(DistributedCacheActivitySourceName)
-                    .AddProcessor(sp => new TenantActivityEnricher(sp));
+                    .AddSource(DistributedCacheActivitySourceName);
+
+                // Add discovered sources
+                foreach (var source in activitySources)
+                {
+                    tracer.AddSource(source);
+                }
+
+                tracer.AddProcessor(sp => new TenantActivityEnricher(sp))
+                      .AddProcessor(new MuonroiTraceProcessor()); // D-02 helper
 
                 if (!string.IsNullOrWhiteSpace(configs.OtlpEndpoint))
                 {
@@ -69,7 +90,14 @@ public static class OtelSetup
                     .AddMeter("MassTransit")
                     .AddMeter(GrpcMeterName)
                     .AddMeter(MessageBusMeterName)
-                    .AddMeter(DistributedCacheMeterName);
+                    .AddMeter(DistributedCacheMeterName)
+                    .AddMeter(MuonroiMetrics.Meter.Name); // D-03 central meter
+
+                // Add discovered meters
+                foreach (var meter in meters)
+                {
+                    metrics.AddMeter(meter);
+                }
 
                 if (!string.IsNullOrWhiteSpace(configs.OtlpEndpoint))
                 {

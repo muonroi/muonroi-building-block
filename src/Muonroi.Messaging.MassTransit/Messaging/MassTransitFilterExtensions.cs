@@ -59,6 +59,14 @@ public static class MassTransitFilterExtensions
     }
 
     /// <summary>
+    /// Enables the Muonroi inbox pattern for consumer deduplication.
+    /// </summary>
+    public static void UseMuonroiInbox(this IConsumePipeConfigurator configurator, IRegistrationContext context)
+    {
+        configurator.UseConsumeFilter(typeof(MuonroiInboxFilter<,>), context);
+    }
+
+    /// <summary>
     /// Executes the Apply Runtime Policies operation.
     /// </summary>
     public static void ApplyRuntimePolicies(this IBusRegistrationConfigurator configurator, MessageBusRuntimeConfigs runtime)

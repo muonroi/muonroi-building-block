@@ -1,4 +1,6 @@
 using Microsoft.OpenApi.Models;
+using Microsoft.Net.Http.Headers;
+using Muonroi.AspNetCore.OpenApi;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Helpers;
 using Muonroi.Mapper.Mapper;
@@ -120,6 +122,8 @@ public static class ApplicationExtensions
         _ = services.AddSwaggerGen(config =>
         {
             config.SwaggerDoc("v1", new OpenApiInfo { Title = serviceName, Version = "v1" });
+
+            config.OperationFilter<MErrorResponseFilter>(); // D-11: Standardized error documentation
 
             config.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {

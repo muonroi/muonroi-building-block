@@ -6,6 +6,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <IsMuonroiTestProject>true</IsMuonroiTestProject>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,20 +16,6 @@
     <PackageReference Include="Grpc.AspNetCore" />
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- gRPC client stubs for shared AggregateRpc service (GrpcServices=Client) -->
-    <Protobuf Include="..\TestProject.Aggregate\src\TestProject.Aggregate.Host\v1\Protos\service.proto"
-              GrpcServices="Client"
-              AdditionalImportDirs="..\TestProject.Aggregate\v1\Protos\" />
-    <!-- shared.proto needed for SharedContainerInfo message (no code gen, just import resolution) -->
-    <Protobuf Include="..\TestProject.Aggregate\v1\Protos\shared.proto"
-              GrpcServices="None" />
-    <!-- gRPC client stubs for per-site Bravo BravoAggregateRpc service (GrpcServices=Client) -->
-    <Protobuf Include="..\TestProject.Aggregate\src\TestProject.Aggregate.Sites.Bravo\Protos\service.bravo.proto"
-              GrpcServices="Client"
-              AdditionalImportDirs="..\TestProject.Aggregate\v1\Protos\" />
   </ItemGroup>
 
   <ItemGroup>

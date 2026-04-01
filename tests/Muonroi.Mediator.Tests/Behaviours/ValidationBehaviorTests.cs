@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Muonroi.Mediator.Behaviours;
 using Muonroi.Mediator.Mediator.Interfaces;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Mediator.Tests.Behaviours;
 
@@ -61,7 +62,7 @@ public class ValidationBehaviorTests
             () => Task.FromResult("OK"),
             CancellationToken.None);
 
-        await act.Should().ThrowAsync<ValidationException>();
+        await act.Should().ThrowAsync<MValidationException>();
     }
 
     [Fact]
@@ -77,7 +78,7 @@ public class ValidationBehaviorTests
             () => Task.FromResult("OK"),
             CancellationToken.None);
 
-        var exception = await act.Should().ThrowAsync<ValidationException>();
+        var exception = await act.Should().ThrowAsync<MValidationException>();
         exception.Which.Errors.Should().HaveCountGreaterThanOrEqualTo(2);
     }
 
