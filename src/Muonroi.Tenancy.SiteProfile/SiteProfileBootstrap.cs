@@ -2,24 +2,39 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Logging.Abstractions;
-namespace Muonroi.Tenancy.SiteProfile.Web;
+
+namespace Muonroi.Tenancy.SiteProfile;
 
 /// <summary>
 /// Per-site service registration logic extracted from the scaffolding generator.
 /// Called by generated partial RegisterServices() methods — handles DbContext registration
 /// and behavior composition via runtime code instead of generated StringBuilder.
 ///
-/// Uses MakeGenericMethod for AddSiteDbContext&lt;T&gt; — acceptable at startup (not hot path).
-/// The key AOT win is that the manifest array creation (new() calls) happens in generated code.
+/// Uses reflection for AddSiteDbContext&lt;T&gt; to avoid a hard dependency on the Web/EF Core package
+/// while still supporting it if present in the consumer project.
 /// </summary>
 public static class SiteProfileBootstrap
 {
-    private static readonly MethodInfo s_addSiteDbContextMethod =
-        typeof(SiteProfileDbContextExtensions)
-            .GetMethod(nameof(SiteProfileDbContextExtensions.AddSiteDbContext), 1, [typeof(IServiceCollection)])
-        ?? throw new MissingMethodException(
-            nameof(SiteProfileDbContextExtensions),
-            nameof(SiteProfileDbContextExtensions.AddSiteDbContext));
+    private static readonly MethodInfo? s_addSiteDbContextMethod;
+
+    static SiteProfileBootstrap()
+    {
+        // Resolve AddSiteDbContext<TContext>(IServiceCollection) via reflection to avoid hard dependency on Web package.
+        // It's in Muonroi.Tenancy.SiteProfile.Web.SiteProfileDbContextExtensions.
+        try
+        {
+            Type? extensionsType = Type.GetType("Muonroi.Tenancy.SiteProfile.Web.SiteProfileDbContextExtensions, Muonroi.Tenancy.SiteProfile.Web");
+            if (extensionsType != null)
+            {
+                s_addSiteDbContextMethod = extensionsType.GetMethod("AddSiteDbContext", 1, new[] { typeof(IServiceCollection) });
+            }
+        }
+        catch
+        {
+            // Fallback: Web package not present or different version
+            s_addSiteDbContextMethod = null;
+        }
+    }
 
     /// <summary>
     /// Registers per-site services: DbContext (via AddSiteDbContext&lt;T&gt;) and behavior composition.
@@ -48,10 +63,18 @@ public static class SiteProfileBootstrap
         // DbContext registration
         if (!skipDbContext && dbContextType is not null)
         {
-            // Call AddSiteDbContext<TContext>(services) via MakeGenericMethod — startup-only, not hot path
-            MethodInfo genericMethod = s_addSiteDbContextMethod.MakeGenericMethod(dbContextType);
-            genericMethod.Invoke(null, [services]);
-            log?.Info("[SiteProfile-AOT] Registered DbContext: {DbContextType}", dbContextType.FullName);
+            if (s_addSiteDbContextMethod != null)
+            {
+                // Call AddSiteDbContext<TContext>(services) via MakeGenericMethod — startup-only, not hot path
+                MethodInfo genericMethod = s_addSiteDbContextMethod.MakeGenericMethod(dbContextType);
+                genericMethod.Invoke(null, new object[] { services });
+                log?.Info("[SiteProfile-AOT] Registered DbContext: {DbContextType}", dbContextType.FullName);
+            }
+            else
+            {
+                log?.Error(null, "[SiteProfile-AOT] DbContext registration requested for {DbContextType} but AddSiteDbContext extension method was not found. Ensure Muonroi.Tenancy.SiteProfile.Web is referenced.", 
+                    dbContextType.FullName);
+            }
         }
         else
         {

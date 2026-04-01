@@ -14,7 +14,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Generated.Runtime\Muonroi.Tenancy.SiteProfile.Generated.Runtime.csproj" />
   </ItemGroup>
 
   <ItemGroup>

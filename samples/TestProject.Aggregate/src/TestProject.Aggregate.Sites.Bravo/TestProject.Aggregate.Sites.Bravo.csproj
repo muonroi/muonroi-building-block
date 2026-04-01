@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
-    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Generated.Runtime\Muonroi.Tenancy.SiteProfile.Generated.Runtime.csproj" />
     <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Grpc\Muonroi.Tenancy.SiteProfile.Grpc.csproj" />
     <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.SourceGenerators\Muonroi.Tenancy.SiteProfile.SourceGenerators.csproj"
                       OutputItemType="Analyzer"

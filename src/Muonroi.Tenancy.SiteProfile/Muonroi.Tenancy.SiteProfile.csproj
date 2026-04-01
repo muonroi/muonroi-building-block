@@ -8,7 +8,6 @@
     <Description>Per-site DI registration pattern for schema-divergent multi-tenancy. Wire correct DbContext, services, and mappers per site deployment.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="Muonroi.Tenancy.SiteProfile.Generated.Runtime" />
     <InternalsVisibleTo Include="Muonroi.Tenancy.SiteProfile.Tests" />
   </ItemGroup>
   <ItemGroup>

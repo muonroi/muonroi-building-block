@@ -177,7 +177,6 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Tenancy.SiteProfile;
-using Muonroi.Tenancy.SiteProfile.Web;
 
 {nsDecl}
 public partial class {model.ClassName}
