@@ -167,6 +167,7 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
         sb.AppendLine("using Microsoft.Extensions.Configuration;");
         sb.AppendLine("using Microsoft.Extensions.DependencyInjection;");
         sb.AppendLine("using Muonroi.Tenancy.SiteProfile;");
+        sb.AppendLine("using Muonroi.Tenancy.SiteProfile.Generated.Runtime;");
         sb.AppendLine();
 
         if (!string.IsNullOrEmpty(model.NamespaceName))
@@ -180,42 +181,27 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
         sb.AppendLine("    /// <inheritdoc/>");
         sb.AppendLine("    public void RegisterServices(IServiceCollection services, IConfiguration configuration)");
         sb.AppendLine("    {");
-        sb.AppendLine($"        var log = services.BuildServiceProvider().GetService<Muonroi.Logging.Abstractions.IMLogFactory>()?.CreateLogger(\"Muonroi.SiteProfile.AOT.{model.ClassName}\");");
-        sb.AppendLine($"        log?.Info(\"[SiteProfile-AOT] {model.ClassName}.RegisterServices — begin (site: {EscapeStringLiteral(model.SiteId)})\");");
 
-        // DbContext registration (skipped when SkipDbContextRegistration = true)
-        if (!model.SkipDbContextRegistration)
-        {
-            sb.AppendLine($"        // DbContext registration for site \"{model.SiteId}\"");
-            sb.AppendLine($"        // Ecosystem: registers DbContextOptions<T> only (no non-generic) — prevents Autofac conflict");
-            sb.AppendLine($"        // with EFCoreStoreDbContext<TenantInfo>. Safe for multiple site DbContexts in the same container.");
-            sb.AppendLine($"        Muonroi.Tenancy.SiteProfile.Web.SiteProfileDbContextExtensions.AddSiteDbContext<{model.DbContextTypeName}>(services);");
-            sb.AppendLine($"        log?.Info(\"[SiteProfile-AOT] {model.ClassName} — registered DbContext: {{DbContextType}}\", \"{EscapeStringLiteral(model.DbContextTypeName)}\");");
-        }
-        else
-        {
-            sb.AppendLine($"        // DbContext registration SKIPPED for site \"{model.SiteId}\" (SkipDbContextRegistration = true)");
-            sb.AppendLine($"        // Consumer registers DbContext via its own infrastructure (e.g., AddInternalInfrastructure)");
-            sb.AppendLine($"        log?.Debug(\"[SiteProfile-AOT] {model.ClassName} — DbContext registration skipped (SkipDbContextRegistration=true)\");");
-        }
+        // DbContext type — null when SkipDbContextRegistration
+        string dbContextArg = model.SkipDbContextRegistration
+            ? "null"
+            : $"typeof({model.DbContextTypeName})";
 
-        // Behavior Apply() calls
-        if (model.BehaviorTypeNames.Count > 0)
-        {
-            sb.AppendLine();
-            sb.AppendLine("        // Behavior composition (per [SiteProfileBehavior] attributes)");
-            foreach (var behaviorTypeName in model.BehaviorTypeNames)
-            {
-                sb.AppendLine($"        new {behaviorTypeName}().Apply(services, configuration, \"{EscapeStringLiteral(model.SiteId)}\");");
-                sb.AppendLine($"        log?.Info(\"[SiteProfile-AOT] {model.ClassName} — applied behavior: {{BehaviorType}}\", \"{EscapeStringLiteral(behaviorTypeName)}\");");
-            }
-        }
+        // Behavior types — null when no behaviors
+        string behaviorArg = model.BehaviorTypeNames.Count == 0
+            ? "null"
+            : $"new System.Type[] {{ {string.Join(", ", model.BehaviorTypeNames.Select(b => $"typeof({b})"))} }}";
+
+        sb.AppendLine($"        SiteProfileBootstrap.RegisterSiteServices(");
+        sb.AppendLine($"            \"{EscapeStringLiteral(model.SiteId)}\",");
+        sb.AppendLine($"            {dbContextArg},");
+        sb.AppendLine($"            {behaviorArg},");
+        sb.AppendLine($"            services,");
+        sb.AppendLine($"            configuration,");
+        sb.AppendLine($"            skipDbContext: {(model.SkipDbContextRegistration ? "true" : "false")});");
 
         // Consumer extensibility hook
-        sb.AppendLine();
-        sb.AppendLine("        // Consumer extensibility: implement partial void RegisterAdditionalServices() in a separate partial file");
         sb.AppendLine("        RegisterAdditionalServices(services, configuration);");
-        sb.AppendLine($"        log?.Info(\"[SiteProfile-AOT] {model.ClassName}.RegisterServices — complete (site: {EscapeStringLiteral(model.SiteId)})\");");
         sb.AppendLine("    }");
         sb.AppendLine();
 
@@ -224,8 +210,6 @@ public sealed class SiteProfileScaffoldingGenerator : IIncrementalGenerator
         sb.AppendLine("    /// Override point for consumer-specific DI registrations beyond generated scaffolding.");
         sb.AppendLine("    /// Implement this in a separate partial file — not in the generated file.");
         sb.AppendLine("    /// </summary>");
-        sb.AppendLine("    /// <param name=\"services\">The service collection.</param>");
-        sb.AppendLine("    /// <param name=\"configuration\">Application configuration.</param>");
         sb.AppendLine("    partial void RegisterAdditionalServices(IServiceCollection services, IConfiguration configuration);");
         sb.AppendLine("}");
 
