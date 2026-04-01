@@ -1,11 +1,19 @@
+using Muonroi.Tenancy.Abstractions;
+
 namespace Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 
 /// <summary>
 /// Stores WebAuthn credential metadata for a user.
 /// </summary>
 [Table("MWebAuthnCredentials")]
-public class MWebAuthnCredential : MEntity
+public class MWebAuthnCredential : MEntity, ITenantScoped
 {
+    /// <summary>
+    /// Gets or sets the unique identifier of the tenant this object belongs to.
+    /// </summary>
+    [StringLength(128)]
+    public string? TenantId { get; set; }
+
     /// <summary>Gets or sets the user identifier.</summary>
     public Guid UserId { get; set; }
     /// <summary>Gets or sets the credential identifier bytes.</summary>

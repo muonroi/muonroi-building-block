@@ -3,6 +3,7 @@ using Fido2NetLib.Objects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
+using Muonroi.Tenancy.Core;
 
 namespace Muonroi.Auth.Mfa.WebAuthenticate;
 
@@ -36,7 +37,7 @@ public class WebAuthenticateService(
         List<PublicKeyCredentialDescriptor> existingCredentials = await context.WebAuthnCredentials
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.TenantId == TenantContext.CurrentTenantId && x.UserId == userId)
             .Select(x => new PublicKeyCredentialDescriptor(x.CredentialId))
             .ToListAsync(ct);
 
@@ -91,6 +92,7 @@ public class WebAuthenticateService(
 
         MWebAuthnCredential credential = new()
         {
+            TenantId = TenantContext.CurrentTenantId,
             UserId = userId,
             CredentialId = result.Id,
             PublicKey = result.PublicKey,
@@ -122,7 +124,7 @@ public class WebAuthenticateService(
         List<PublicKeyCredentialDescriptor> allowedCredentials = await context.WebAuthnCredentials
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.TenantId == TenantContext.CurrentTenantId && x.UserId == userId)
             .Select(x => new PublicKeyCredentialDescriptor(x.CredentialId))
             .ToListAsync(ct);
 
@@ -156,7 +158,7 @@ public class WebAuthenticateService(
 
         List<MWebAuthnCredential> credentials = await context.WebAuthnCredentials
             .IgnoreQueryFilters()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.TenantId == TenantContext.CurrentTenantId && x.UserId == userId)
             .ToListAsync(ct);
         MWebAuthnCredential? credential = credentials.FirstOrDefault(x => x.CredentialId.SequenceEqual(credentialId))
             ?? throw new InvalidOperationException("Credential not found for user.");
@@ -218,6 +220,7 @@ public class WebAuthenticateService(
         List<byte[]> existingIds = await context.WebAuthnCredentials
             .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(x => x.TenantId == TenantContext.CurrentTenantId)
             .Select(x => x.CredentialId)
             .ToListAsync(ct);
         return existingIds.All(x => !x.SequenceEqual(input.CredentialId));
@@ -228,6 +231,7 @@ public class WebAuthenticateService(
         List<MWebAuthnCredential> credentials = await context.WebAuthnCredentials
             .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(x => x.TenantId == TenantContext.CurrentTenantId)
             .ToListAsync(ct);
 
         MWebAuthnCredential? credential = credentials.FirstOrDefault(x => x.CredentialId.SequenceEqual(input.CredentialId));
