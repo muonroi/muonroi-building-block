@@ -8,6 +8,9 @@
     <Description>Composable EF Core entity configuration with template method pattern for schema-divergent multi-tenancy.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
   </ItemGroup>

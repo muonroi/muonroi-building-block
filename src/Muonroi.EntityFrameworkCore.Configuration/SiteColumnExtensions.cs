@@ -1,6 +1,6 @@
 using System.Reflection;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Muonroi.Core.Abstractions.Helpers;
 
 namespace Muonroi.EntityFrameworkCore.Configuration;
 
@@ -73,25 +73,9 @@ public static class SiteColumnExtensions
 
     /// <summary>
     /// Converts a PascalCase property name to UPPER_SNAKE_CASE for use as a database column name.
-    /// Examples: "MyProperty" → "MY_PROPERTY", "ContainerNumber" → "CONTAINER_NUMBER", "Id" → "ID".
+    /// Delegates to <see cref="ColumnNamingConvention.ToUpperSnakeCase"/> — the single source of truth
+    /// shared with the Dapper/ISiteColumnMap layer.
     /// </summary>
-    /// <param name="pascalCase">The PascalCase property name to convert.</param>
-    /// <returns>The UPPER_SNAKE_CASE column name.</returns>
     internal static string ToUpperSnakeCase(string pascalCase)
-    {
-        var sb = new StringBuilder(pascalCase.Length + 8);
-        for (int i = 0; i < pascalCase.Length; i++)
-        {
-            char c = pascalCase[i];
-            // Insert underscore before an uppercase letter that follows a lowercase letter
-            if (i > 0 && char.IsUpper(c) && !char.IsUpper(pascalCase[i - 1]))
-            {
-                sb.Append('_');
-            }
-
-            sb.Append(char.ToUpperInvariant(c));
-        }
-
-        return sb.ToString();
-    }
+        => ColumnNamingConvention.ToUpperSnakeCase(pascalCase);
 }
