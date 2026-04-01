@@ -115,16 +115,28 @@ public static class SiteProfileWebExtensions
             throw new InvalidOperationException(
                 "SiteCodeAccessor is required. Set it in AddSiteInfrastructure options.");
 
-        if (options.SiteAssemblies.Length == 0)
+        if (options.ManifestProfiles is null && options.SiteAssemblies.Length == 0)
             throw new InvalidOperationException(
-                "SiteAssemblies is required. Provide at least one assembly containing ISiteProfile implementations.");
+                "Either ManifestProfiles (AOT) or SiteAssemblies (reflection) is required.");
 
         // 1. Register all site profiles with per-request resolution
-        services.AddMultiSiteProfiles(
-            configuration,
-            options.SiteCodeAccessor,
-            diagnosticLog: null,
-            options.SiteAssemblies);
+        if (options.ManifestProfiles is not null)
+        {
+            // AOT path — profiles pre-instantiated by generated SiteProfileManifest.CreateAll()
+            services.AddMultiSiteProfilesCore(
+                configuration,
+                options.SiteCodeAccessor,
+                options.ManifestProfiles);
+        }
+        else
+        {
+            // Reflection path — scan assemblies for ISiteProfile implementations
+            services.AddMultiSiteProfiles(
+                configuration,
+                options.SiteCodeAccessor,
+                diagnosticLog: null,
+                options.SiteAssemblies);
+        }
 
         // 2. Per-site configuration overlay (reads Sites:{SiteId}:* from appsettings)
         services.AddSiteConfiguration();
