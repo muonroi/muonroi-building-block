@@ -429,9 +429,15 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         ParameterExpression parameter = Expression.Parameter(entityType, "e");
         MemberExpression propertyAccess = Expression.Property(parameter, tenantProp);
         MemberExpression currentTenant = Expression.Property(null, typeof(TenantContext), nameof(TenantContext.CurrentTenantId));
-        BinaryExpression isCurrentNull = Expression.Equal(currentTenant, Expression.Constant(null, typeof(string)));
+
+        // Read AllowCrossTenantAccess flag
+        MemberExpression allowCrossTenant = Expression.Property(null, typeof(TenantContext), nameof(TenantContext.AllowCrossTenantAccess));
+
+        // e.TenantId == CurrentTenantId (fail-closed: null == null is false in SQL)
         BinaryExpression isMatch = Expression.Equal(propertyAccess, currentTenant);
-        BinaryExpression body = Expression.OrElse(isMatch, isCurrentNull);
+
+        // AllowCrossTenantAccess == true bypasses filter (for admin operations)
+        BinaryExpression body = Expression.OrElse(isMatch, allowCrossTenant);
         return Expression.Lambda(body, parameter);
     }
 
@@ -441,12 +447,17 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         MemberExpression propAccess = Expression.Property(parameter, creatorProp);
         MemberExpression currentUserId = Expression.Property(null, typeof(UserContext), nameof(UserContext.CurrentUserGuid));
 
+        // Read AllowCrossTenantAccess flag (also used for bypassing creator filters in admin mode)
+        MemberExpression allowCrossTenant = Expression.Property(null, typeof(TenantContext), nameof(TenantContext.AllowCrossTenantAccess));
+
         MethodInfo? toString = typeof(Guid).GetMethod("ToString", Type.EmptyTypes);
         MethodCallExpression guidString = Expression.Call(propAccess, toString!);
 
-        BinaryExpression isNull = Expression.Equal(currentUserId, Expression.Constant(null, typeof(string)));
+        // e.CreatorUserId == CurrentUserId (fail-closed: null == null is false in SQL)
         BinaryExpression isEqual = Expression.Equal(guidString, currentUserId);
-        BinaryExpression body = Expression.OrElse(isNull, isEqual);
+
+        // AllowCrossTenantAccess == true bypasses filter
+        BinaryExpression body = Expression.OrElse(isEqual, allowCrossTenant);
         return Expression.Lambda(body, parameter);
     }
 

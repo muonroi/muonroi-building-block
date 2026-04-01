@@ -1,3 +1,4 @@
+using Muonroi.Logging.Abstractions;
 using Muonroi.Tenancy.SiteProfile;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.Repositories;
@@ -63,6 +64,7 @@ public class MSiteRepository<TContext, T> : MRepository<T>, IMSiteRepository<TCo
     /// <param name="authContext">Authentication context for current user resolution.</param>
     /// <param name="licenseGuard">License guard for feature enforcement.</param>
     /// <param name="dateTimeService">Date-time service for consistent UTC timestamps.</param>
+    /// <param name="logger">The logger for the repository.</param>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="siteContext"/> or <paramref name="siteResolver"/> is null.
     /// </exception>
@@ -71,8 +73,9 @@ public class MSiteRepository<TContext, T> : MRepository<T>, IMSiteRepository<TCo
         ISiteProfileResolver siteResolver,
         IAuthenticateInfoContext authContext,
         ILicenseGuard licenseGuard,
-        IMDateTimeService dateTimeService)
-        : base(siteContext, authContext, licenseGuard, dateTimeService)
+        IMDateTimeService dateTimeService,
+        IMLog<MSiteRepository<TContext, T>>? logger = null)
+        : base(siteContext, authContext, licenseGuard, dateTimeService, logger)
     {
         SiteContext = siteContext ?? throw new ArgumentNullException(nameof(siteContext));
         SiteResolver = siteResolver ?? throw new ArgumentNullException(nameof(siteResolver));
