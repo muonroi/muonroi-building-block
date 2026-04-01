@@ -191,7 +191,10 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
         sb.AppendLine("    {");
         sb.AppendLine("        ArgumentNullException.ThrowIfNull(siteCodeAccessor);");
         sb.AppendLine();
+        sb.AppendLine("        const string TraceCategory = \"Muonroi.SiteProfile.AOT\";");
         sb.AppendLine("        var profiles = new Dictionary<string, ISiteProfile>(StringComparer.OrdinalIgnoreCase);");
+        sb.AppendLine();
+        sb.AppendLine("        System.Diagnostics.Trace.WriteLine(\"[SiteProfile-AOT] AddGeneratedSiteProfiles — begin registration\", TraceCategory);");
         sb.AppendLine();
         sb.AppendLine("        // Explicit instantiation — no Activator.CreateInstance, AOT-safe");
 
@@ -199,9 +202,12 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
         {
             var profile = profiles[i];
             string fullName = profile.ToDisplayString();
+            string escapedName = EscapeStringLiteral(fullName);
             sb.AppendLine($"        var profile{i} = new {fullName}();");
             sb.AppendLine($"        profiles[profile{i}.SiteId] = profile{i};");
+            sb.AppendLine($"        System.Diagnostics.Trace.WriteLine($\"[SiteProfile-AOT] Instantiated {{profile{i}.SiteId}} ({{typeof({fullName}).Name}})\", TraceCategory);");
             sb.AppendLine($"        profile{i}.RegisterServices(services, configuration);");
+            sb.AppendLine($"        System.Diagnostics.Trace.WriteLine($\"[SiteProfile-AOT] Registered services for {{profile{i}.SiteId}}\", TraceCategory);");
             sb.AppendLine();
         }
 
@@ -209,22 +215,32 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
         sb.AppendLine("        foreach (var p in profiles.Values)");
         sb.AppendLine("            services.AddSingleton<ISiteProfile>(p);");
         sb.AppendLine();
+        sb.AppendLine($"        System.Diagnostics.Trace.WriteLine($\"[SiteProfile-AOT] Registered {{profiles.Count}} profile(s) as singletons: [{{string.Join(\", \", profiles.Keys)}}]\", TraceCategory);");
+        sb.AppendLine();
         sb.AppendLine("        // Register ISiteProfileResolver — per-request, resolves correct profile by SiteCode");
         sb.AppendLine("        services.AddScoped<ISiteProfileResolver>(sp =>");
         sb.AppendLine("        {");
         sb.AppendLine("            var siteCode = siteCodeAccessor(sp) ?? \"default\";");
         sb.AppendLine("            if (profiles.TryGetValue(siteCode, out var match))");
+        sb.AppendLine("            {");
+        sb.AppendLine("                System.Diagnostics.Trace.WriteLine($\"[SiteProfile-AOT] Resolved site '{siteCode}' → {match.SiteId}\", TraceCategory);");
         sb.AppendLine("                return new SiteProfileResolver(match);");
+        sb.AppendLine("            }");
         sb.AppendLine();
         sb.AppendLine("            // Fallback: try \"default\" profile");
         sb.AppendLine("            if (profiles.TryGetValue(\"default\", out var fallback))");
+        sb.AppendLine("            {");
+        sb.AppendLine("                System.Diagnostics.Trace.WriteLine($\"[SiteProfile-AOT] WARNING: site '{siteCode}' not found, falling back to 'default'\", TraceCategory);");
         sb.AppendLine("                return new SiteProfileResolver(fallback);");
+        sb.AppendLine("            }");
         sb.AppendLine();
+        sb.AppendLine("            System.Diagnostics.Trace.TraceError($\"[SiteProfile-AOT] FATAL: No ISiteProfile for site '{siteCode}'. Available: [{string.Join(\", \", profiles.Keys)}]\");");
         sb.AppendLine("            throw new InvalidOperationException(");
         sb.AppendLine("                $\"No ISiteProfile for site '{siteCode}'. \" +");
         sb.AppendLine("                $\"Available: [{string.Join(\", \", profiles.Keys)}]\");");
         sb.AppendLine("        });");
         sb.AppendLine();
+        sb.AppendLine("        System.Diagnostics.Trace.WriteLine(\"[SiteProfile-AOT] AddGeneratedSiteProfiles — registration complete\", TraceCategory);");
         sb.AppendLine("        return services;");
         sb.AppendLine("    }");
         sb.AppendLine("}");

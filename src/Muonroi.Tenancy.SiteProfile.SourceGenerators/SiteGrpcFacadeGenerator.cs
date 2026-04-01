@@ -427,6 +427,9 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
         {
             sb.AppendLine($"        _extend{i} = extend{i};");
         }
+        sb.AppendLine($"        System.Diagnostics.Trace.WriteLine(\"[SiteProfile-AOT] {model.FacadeClassName} constructed — shared: {model.SharedClientFullName}" +
+            (model.ExtendClientFullNames.Count > 0 ? $", extend clients: {model.ExtendClientFullNames.Count}" : "") +
+            "\", \"Muonroi.SiteProfile.AOT\");");
         sb.AppendLine("    }");
         sb.AppendLine();
 
