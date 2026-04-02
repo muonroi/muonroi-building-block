@@ -1,3 +1,9 @@
+using Hangfire;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.BackgroundJobs.Abstractions;
+
 namespace Muonroi.BackgroundJobs.Hangfire.Hangfire;
 
 /// <summary>
@@ -38,6 +44,8 @@ public static class BackgroundJobHandler
             x.UseFilter(serviceProvider.GetRequiredService<JobContextActivatorFilter>());
         });
         services.AddHangfireServer();
+
+        services.TryAddScoped<IBackgroundJobScheduler, HangfireJobScheduler>();
 
         return services;
     }

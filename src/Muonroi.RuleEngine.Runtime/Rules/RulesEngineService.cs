@@ -685,7 +685,7 @@ public sealed class RulesEngineService(
         {
             if (WorkflowCache.Count <= MaxWorkflowCacheEntries) return; // Double-checked after acquiring lock
 
-            string[] toEvict = WorkflowCache
+            string[] toEvict = WorkflowCache.ToArray()
                 .OrderBy(kv => kv.Value.LastAccessedUtc)
                 .Take(MaxWorkflowCacheEntries / 4) // 512 entries = 25%
                 .Select(kv => kv.Key)

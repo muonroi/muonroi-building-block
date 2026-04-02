@@ -13,6 +13,7 @@ namespace Muonroi.Tenancy.SiteProfile.SourceGenerators;
 /// and emits:
 ///   1. AddGeneratedSiteProfiles() extension method — AOT-safe, no reflection
 ///   2. SiteIds static class with const string per profile — compile-time safety
+///   3. SiteDbContextTypeRegistry.g.cs with GetAllSiteDbContextTypes() — AOT-safe migration runner support
 ///
 /// Generated output replaces reflection-based AddMultiSiteProfiles(Assembly[]) with
 /// explicit new TProfile() instantiation for NativeAOT compatibility.
@@ -23,6 +24,7 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        // --- Pipeline 1: ISiteProfile scan (existing) ---
         // Scan for non-abstract, non-interface classes implementing ISiteProfile
         IncrementalValuesProvider<INamedTypeSymbol> profileClasses = context.SyntaxProvider
             .CreateSyntaxProvider(
@@ -34,6 +36,88 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
             profileClasses.Collect();
 
         context.RegisterSourceOutput(collectedProfiles, static (spc, profiles) => Execute(profiles, spc));
+
+        // --- Pipeline 2: [GenerateSiteProfile] DbContext type discovery (new) ---
+        // Scan for classes with attributes, extract DbContext type from [GenerateSiteProfile] arg[1]
+        IncrementalValuesProvider<INamedTypeSymbol> dbContextTypes = context.SyntaxProvider
+            .CreateSyntaxProvider(
+                predicate: static (s, _) => s is ClassDeclarationSyntax cls && cls.AttributeLists.Count > 0,
+                transform: static (ctx, _) => GetDbContextTypeFromGenerateSiteProfile(ctx))
+            .Where(static s => s is not null)!;
+
+        IncrementalValueProvider<ImmutableArray<INamedTypeSymbol>> collectedDbContextTypes =
+            dbContextTypes.Collect();
+
+        context.RegisterSourceOutput(collectedDbContextTypes,
+            static (spc, types) => EmitSiteDbContextTypeRegistry(types, spc));
+
+        // --- Pipeline 3: [SiteGrpcService] gRPC service type discovery ---
+        // Scans BOTH local source code AND referenced assemblies for [SiteGrpcService].
+        // This is critical for Host projects that reference site assemblies (e.g., Sites.TCI.dll)
+        // where [SiteGrpcService] lives in a compiled dependency, not in local source.
+
+        // 3a. Local source scan (catches [SiteGrpcService] in current compilation)
+        IncrementalValuesProvider<(INamedTypeSymbol Symbol, string SiteId, string? Reason)> localGrpcServices =
+            context.SyntaxProvider
+                .CreateSyntaxProvider(
+                    predicate: static (s, _) => s is ClassDeclarationSyntax cls && cls.AttributeLists.Count > 0,
+                    transform: static (ctx, _) => GetSiteGrpcServiceInfo(ctx))
+                .Where(static s => s.Symbol is not null)!;
+
+        // 3b. Referenced assembly scan (catches [SiteGrpcService] in compiled site projects)
+        IncrementalValueProvider<ImmutableArray<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>> referencedGrpcServices =
+            context.CompilationProvider.Select(static (compilation, ct) =>
+            {
+                var results = ImmutableArray.CreateBuilder<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>();
+
+                INamedTypeSymbol? attrType = compilation.GetTypeByMetadataName("Muonroi.Tenancy.SiteProfile.Grpc.SiteGrpcServiceAttribute");
+                if (attrType is null) return results.ToImmutable();
+
+                string grpcAssemblyName = attrType.ContainingAssembly.Name;
+
+                foreach (var reference in compilation.References)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assemblySymbol)
+                        continue;
+
+                    if (string.Equals(assemblySymbol.Name, grpcAssemblyName, StringComparison.Ordinal))
+                        continue;
+
+                    bool referencesGrpc = false;
+                    foreach (var module in assemblySymbol.Modules)
+                    {
+                        foreach (var refAsm in module.ReferencedAssemblySymbols)
+                        {
+                            if (string.Equals(refAsm.Name, grpcAssemblyName, StringComparison.Ordinal))
+                            {
+                                referencesGrpc = true;
+                                break;
+                            }
+                        }
+                        if (referencesGrpc) break;
+                    }
+                    if (!referencesGrpc) continue;
+
+                    ScanNamespaceForSiteGrpcService(assemblySymbol.GlobalNamespace, attrType, results, ct);
+                }
+
+                return results.ToImmutable();
+            });
+
+        // 3c. Merge local + referenced into single collection
+        IncrementalValueProvider<ImmutableArray<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>> allGrpcServices =
+            localGrpcServices.Collect().Combine(referencedGrpcServices)
+                .Select(static (pair, _) =>
+                {
+                    var builder = ImmutableArray.CreateBuilder<(INamedTypeSymbol, string, string?)>();
+                    builder.AddRange(pair.Left);
+                    builder.AddRange(pair.Right);
+                    return builder.ToImmutable();
+                });
+
+        context.RegisterSourceOutput(allGrpcServices,
+            static (spc, services) => EmitSiteGrpcServiceRegistry(services, spc));
     }
 
     private static INamedTypeSymbol? GetSiteProfileSymbol(GeneratorSyntaxContext context)
@@ -80,98 +164,72 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
         List<INamedTypeSymbol> profiles,
         SourceProductionContext context)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("// <auto-generated />");
-        sb.AppendLine("// This file was generated by Muonroi.Tenancy.SiteProfile.SourceGenerators.");
-        sb.AppendLine("// Do not edit manually.");
-        sb.AppendLine("#nullable enable");
-        sb.AppendLine("using System;");
-        sb.AppendLine("using System.Collections.Generic;");
-        sb.AppendLine("using Microsoft.Extensions.Configuration;");
-        sb.AppendLine("using Microsoft.Extensions.DependencyInjection;");
-        sb.AppendLine("using Muonroi.Tenancy.SiteProfile;");
-        sb.AppendLine();
-        sb.AppendLine("namespace Muonroi.Tenancy.SiteProfile.Generated;");
-        sb.AppendLine();
-        sb.AppendLine("public static class SiteProfileRegistrationExtensions");
-        sb.AppendLine("{");
-        sb.AppendLine("    /// <summary>");
-        sb.AppendLine("    /// AOT-safe alternative to AddMultiSiteProfiles with Assembly[] params.");
-        sb.AppendLine("    /// Registers all discovered ISiteProfile implementations without reflection.");
-        sb.AppendLine("    /// Generated by Muonroi.Tenancy.SiteProfile.SourceGenerators.");
-        sb.AppendLine("    /// </summary>");
-        sb.AppendLine("    public static IServiceCollection AddGeneratedSiteProfiles(");
-        sb.AppendLine("        this IServiceCollection services,");
-        sb.AppendLine("        IConfiguration configuration,");
-        sb.AppendLine("        Func<IServiceProvider, string?> siteCodeAccessor)");
-        sb.AppendLine("    {");
-        sb.AppendLine("        ArgumentNullException.ThrowIfNull(siteCodeAccessor);");
-        sb.AppendLine();
-        sb.AppendLine("        var profiles = new Dictionary<string, ISiteProfile>(StringComparer.OrdinalIgnoreCase);");
-        sb.AppendLine();
-        sb.AppendLine("        // Explicit instantiation — no Activator.CreateInstance, AOT-safe");
+        string profileInstantiations = string.Join("\n",
+            profiles.Select(p => $"        new {p.ToDisplayString()}(),"));
 
-        for (int i = 0; i < profiles.Count; i++)
-        {
-            var profile = profiles[i];
-            string fullName = profile.ToDisplayString();
-            sb.AppendLine($"        var profile{i} = new {fullName}();");
-            sb.AppendLine($"        profiles[profile{i}.SiteId] = profile{i};");
-            sb.AppendLine($"        profile{i}.RegisterServices(services, configuration);");
-            sb.AppendLine();
-        }
+        string source = $@"// <auto-generated />
+#nullable enable
+using Muonroi.Tenancy.SiteProfile;
+using Muonroi.Logging.Abstractions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 
-        sb.AppendLine("        // Register all profiles as singletons (for diagnostics / enumeration)");
-        sb.AppendLine("        foreach (var p in profiles.Values)");
-        sb.AppendLine("            services.AddSingleton<ISiteProfile>(p);");
-        sb.AppendLine();
-        sb.AppendLine("        // Register ISiteProfileResolver — per-request, resolves correct profile by SiteCode");
-        sb.AppendLine("        services.AddScoped<ISiteProfileResolver>(sp =>");
-        sb.AppendLine("        {");
-        sb.AppendLine("            var siteCode = siteCodeAccessor(sp) ?? \"default\";");
-        sb.AppendLine("            if (profiles.TryGetValue(siteCode, out var match))");
-        sb.AppendLine("                return new SiteProfileResolver(match);");
-        sb.AppendLine();
-        sb.AppendLine("            // Fallback: try \"default\" profile");
-        sb.AppendLine("            if (profiles.TryGetValue(\"default\", out var fallback))");
-        sb.AppendLine("                return new SiteProfileResolver(fallback);");
-        sb.AppendLine();
-        sb.AppendLine("            throw new InvalidOperationException(");
-        sb.AppendLine("                $\"No ISiteProfile for site '{siteCode}'. \" +");
-        sb.AppendLine("                $\"Available: [{string.Join(\", \", profiles.Keys)}]\");");
-        sb.AppendLine("        });");
-        sb.AppendLine();
-        sb.AppendLine("        return services;");
-        sb.AppendLine("    }");
-        sb.AppendLine("}");
+namespace Muonroi.Tenancy.SiteProfile.Generated;
 
-        context.AddSource("SiteProfileRegistrationExtensions.g.cs", sb.ToString());
+/// <summary>
+/// AOT-safe manifest of all discovered ISiteProfile implementations.
+/// Each profile is instantiated via new() — no Activator.CreateInstance.
+/// </summary>
+internal static class SiteProfileManifest
+{{
+    public static ISiteProfile[] CreateAll() => new ISiteProfile[]
+    {{
+{profileInstantiations}
+    }};
+}}
+
+/// <summary>
+/// AOT-safe alternative to AddMultiSiteProfiles — delegates to AddMultiSiteProfilesCore
+/// which reuses ALL existing ecosystem logic (tracker, validator, strict mode, error handling).
+/// </summary>
+internal static class SiteProfileRegistrationExtensions
+{{
+    public static IServiceCollection AddGeneratedSiteProfiles(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Func<IServiceProvider, string?> siteCodeAccessor,
+        IMLog? diagnosticLog = null)
+        => services.AddMultiSiteProfilesCore(
+            configuration, siteCodeAccessor, SiteProfileManifest.CreateAll(), diagnosticLog);
+}}
+";
+        context.AddSource("SiteProfileRegistrationExtensions.g.cs", source);
     }
 
     private static void EmitEmptyRegistrationExtensions(SourceProductionContext context)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("// <auto-generated />");
-        sb.AppendLine("// No ISiteProfile implementations found in this compilation.");
-        sb.AppendLine("#nullable enable");
-        sb.AppendLine("using System;");
-        sb.AppendLine("using Microsoft.Extensions.Configuration;");
-        sb.AppendLine("using Microsoft.Extensions.DependencyInjection;");
-        sb.AppendLine("using Muonroi.Tenancy.SiteProfile;");
-        sb.AppendLine();
-        sb.AppendLine("namespace Muonroi.Tenancy.SiteProfile.Generated;");
-        sb.AppendLine();
-        sb.AppendLine("public static class SiteProfileRegistrationExtensions");
-        sb.AppendLine("{");
-        sb.AppendLine("    /// <summary>No ISiteProfile implementations found — AddGeneratedSiteProfiles is a no-op.</summary>");
-        sb.AppendLine("    public static IServiceCollection AddGeneratedSiteProfiles(");
-        sb.AppendLine("        this IServiceCollection services,");
-        sb.AppendLine("        IConfiguration configuration,");
-        sb.AppendLine("        Func<IServiceProvider, string?> siteCodeAccessor)");
-        sb.AppendLine("        => services;");
-        sb.AppendLine("}");
+        const string source = @"// <auto-generated />
+// No ISiteProfile implementations found in this compilation.
+#nullable enable
+using System;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Tenancy.SiteProfile;
 
-        context.AddSource("SiteProfileRegistrationExtensions.g.cs", sb.ToString());
+namespace Muonroi.Tenancy.SiteProfile.Generated;
+
+internal static class SiteProfileRegistrationExtensions
+{
+    /// <summary>No ISiteProfile implementations found — AddGeneratedSiteProfiles is a no-op.</summary>
+    public static IServiceCollection AddGeneratedSiteProfiles(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Func<IServiceProvider, string?> siteCodeAccessor)
+        => services;
+}
+";
+        context.AddSource("SiteProfileRegistrationExtensions.g.cs", source);
     }
 
     // -----------------------------------------------------------------------
@@ -182,41 +240,33 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
         ImmutableArray<INamedTypeSymbol> profiles,
         SourceProductionContext context)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("// <auto-generated />");
-        sb.AppendLine("// Compile-time SiteId constants — use instead of string literals.");
-        sb.AppendLine("// Generated by Muonroi.Tenancy.SiteProfile.SourceGenerators.");
-        sb.AppendLine();
-        sb.AppendLine("namespace Muonroi.Tenancy.SiteProfile.Generated;");
-        sb.AppendLine();
-        sb.AppendLine("/// <summary>");
-        sb.AppendLine("/// Compile-time SiteId constants — use instead of string literals.");
-        sb.AppendLine("/// Typo becomes compile error per MSP001 analyzer.");
-        sb.AppendLine("/// </summary>");
-        sb.AppendLine("public static class SiteIds");
-        sb.AppendLine("{");
-
+        string constants = "";
         if (!profiles.IsDefaultOrEmpty)
         {
-            var distinctProfiles = profiles
+            constants = string.Join("\n", profiles
                 .Distinct(SymbolEqualityComparer.Default)
-                .Cast<INamedTypeSymbol>();
-
-            foreach (var profile in distinctProfiles)
-            {
-                string? siteIdValue = ExtractSiteIdValue(profile);
-                if (siteIdValue is null) continue;
-
-                // Constant name: sanitize value to valid C# identifier (uppercase)
-                string constantName = SanitizeIdentifier(siteIdValue);
-                sb.AppendLine($"    /// <summary>SiteId constant for {profile.Name} — value: \"{siteIdValue}\"</summary>");
-                sb.AppendLine($"    public const string {constantName} = \"{EscapeStringLiteral(siteIdValue)}\";");
-            }
+                .Cast<INamedTypeSymbol>()
+                .Select(p => (Profile: p, SiteId: ExtractSiteIdValue(p)))
+                .Where(x => x.SiteId is not null)
+                .Select(x =>
+                    $"    /// <summary>SiteId constant for {x.Profile.Name} — value: \"{x.SiteId}\"</summary>\n" +
+                    $"    internal const string {SanitizeIdentifier(x.SiteId!)} = \"{EscapeStringLiteral(x.SiteId!)}\";"));
         }
 
-        sb.AppendLine("}");
+        string source = $@"// <auto-generated />
+// Compile-time SiteId constants — use instead of string literals.
 
-        context.AddSource("SiteIds.g.cs", sb.ToString());
+namespace Muonroi.Tenancy.SiteProfile.Generated;
+
+/// <summary>
+/// Compile-time SiteId constants — typo becomes compile error per MSP001 analyzer.
+/// </summary>
+internal static class SiteIds
+{{
+{constants}
+}}
+";
+        context.AddSource("SiteIds.g.cs", source);
     }
 
     /// <summary>
@@ -281,4 +331,250 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
     /// </summary>
     private static string EscapeStringLiteral(string value)
         => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+    // -----------------------------------------------------------------------
+    // Pipeline 2 helpers: [GenerateSiteProfile] DbContext type discovery
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Extracts the DbContext type symbol from [GenerateSiteProfile("siteId", typeof(DbContext))].
+    /// Returns null if class has no [GenerateSiteProfile] attribute or arg[1] is not a type.
+    /// </summary>
+    private static INamedTypeSymbol? GetDbContextTypeFromGenerateSiteProfile(GeneratorSyntaxContext context)
+    {
+        var classDecl = (ClassDeclarationSyntax)context.Node;
+        if (context.SemanticModel.GetDeclaredSymbol(classDecl) is not INamedTypeSymbol classSymbol)
+            return null;
+
+        // Find [GenerateSiteProfile] or [GenerateSiteProfileAttribute]
+        foreach (var attr in classSymbol.GetAttributes())
+        {
+            if (attr.AttributeClass is null) continue;
+            string name = attr.AttributeClass.Name;
+            if (name != "GenerateSiteProfile" && name != "GenerateSiteProfileAttribute")
+                continue;
+
+            // Must have at least 2 constructor args: siteId (string) + dbContextType (Type)
+            if (attr.ConstructorArguments.Length < 2)
+                return null;
+
+            if (attr.ConstructorArguments[1].Value is INamedTypeSymbol dbContextSymbol)
+                return dbContextSymbol;
+        }
+
+        return null;
+    }
+
+    // -----------------------------------------------------------------------
+    // Pipeline 3 helpers: [SiteGrpcService] gRPC service type discovery
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Recursively scans a namespace for types with [SiteGrpcService] attribute.
+    /// Used by Pipeline 3b to discover services in referenced assemblies.
+    /// </summary>
+    private static void ScanNamespaceForSiteGrpcService(
+        INamespaceSymbol ns,
+        INamedTypeSymbol attrType,
+        ImmutableArray<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>.Builder results,
+        System.Threading.CancellationToken ct)
+    {
+        foreach (var member in ns.GetMembers())
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (member is INamespaceSymbol childNs)
+            {
+                ScanNamespaceForSiteGrpcService(childNs, attrType, results, ct);
+            }
+            else if (member is INamedTypeSymbol typeSymbol && typeSymbol.TypeKind == TypeKind.Class && !typeSymbol.IsAbstract)
+            {
+                foreach (var attr in typeSymbol.GetAttributes())
+                {
+                    if (attr.AttributeClass is null) continue;
+                    if (!SymbolEqualityComparer.Default.Equals(attr.AttributeClass, attrType)) continue;
+
+                    if (attr.ConstructorArguments.Length < 1) continue;
+                    if (attr.ConstructorArguments[0].Value is not string siteId) continue;
+
+                    string? reason = null;
+                    foreach (var namedArg in attr.NamedArguments)
+                    {
+                        if (namedArg.Key == "Reason" && namedArg.Value.Value is string r)
+                            reason = r;
+                    }
+
+                    results.Add((typeSymbol, siteId, reason));
+                    break;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Extracts (symbol, siteId, reason?) from a class with [SiteGrpcService("siteId")] attribute.
+    /// Returns default tuple with null Symbol when attribute is absent.
+    /// </summary>
+    private static (INamedTypeSymbol? Symbol, string SiteId, string? Reason) GetSiteGrpcServiceInfo(
+        GeneratorSyntaxContext context)
+    {
+        var classDecl = (ClassDeclarationSyntax)context.Node;
+        if (context.SemanticModel.GetDeclaredSymbol(classDecl) is not INamedTypeSymbol classSymbol)
+            return default;
+
+        foreach (var attr in classSymbol.GetAttributes())
+        {
+            if (attr.AttributeClass is null) continue;
+            string name = attr.AttributeClass.Name;
+            if (name != "SiteGrpcService" && name != "SiteGrpcServiceAttribute")
+                continue;
+
+            // ConstructorArguments[0] = siteId (string, required)
+            if (attr.ConstructorArguments.Length < 1)
+                continue;
+            if (attr.ConstructorArguments[0].Value is not string siteId)
+                continue;
+
+            // Named argument Reason (optional)
+            string? reason = null;
+            foreach (var namedArg in attr.NamedArguments)
+            {
+                if (namedArg.Key == "Reason" && namedArg.Value.Value is string r)
+                    reason = r;
+            }
+
+            return (classSymbol, siteId, reason);
+        }
+
+        return default;
+    }
+
+    // -----------------------------------------------------------------------
+    // Generator 4: SiteGrpcServiceRegistry.g.cs
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Emits SiteGrpcServiceRegistry.g.cs with:
+    ///   - SiteGrpcServiceDescriptor record (SiteId, ServiceType, Reason)
+    ///   - SiteGrpcServiceRegistry static class with GetAllSiteGrpcServices()
+    /// AOT-safe — no reflection at runtime.
+    /// </summary>
+    private static void EmitSiteGrpcServiceRegistry(
+        ImmutableArray<(INamedTypeSymbol Symbol, string SiteId, string? Reason)> services,
+        SourceProductionContext context)
+    {
+        string arrayBody;
+        if (services.IsDefaultOrEmpty)
+        {
+            arrayBody = "        => System.Array.Empty<GeneratedSiteGrpcServiceDescriptor>();";
+        }
+        else
+        {
+            var distinctServices = services
+                .Where(s => s.Symbol is not null)
+                .GroupBy(s => s.Symbol.ToDisplayString(), StringComparer.Ordinal)
+                .Select(g => g.First())
+                .ToList();
+
+            if (distinctServices.Count == 0)
+            {
+                arrayBody = "        => System.Array.Empty<GeneratedSiteGrpcServiceDescriptor>();";
+            }
+            else
+            {
+                string entries = string.Join("\n", distinctServices.Select(x =>
+                {
+                    string fullName = x.Symbol.ToDisplayString();
+                    string sid = EscapeStringLiteral(x.SiteId);
+                    return x.Reason is not null
+                        ? $"            new GeneratedSiteGrpcServiceDescriptor(\"{sid}\", typeof({fullName}), \"{EscapeStringLiteral(x.Reason)}\"),"
+                        : $"            new GeneratedSiteGrpcServiceDescriptor(\"{sid}\", typeof({fullName})),";
+                }));
+                arrayBody = $@"        => new GeneratedSiteGrpcServiceDescriptor[]
+        {{
+{entries}
+        }};";
+            }
+        }
+
+        string source = $@"// <auto-generated />
+#nullable enable
+using System;
+using System.Collections.Generic;
+
+namespace Muonroi.Tenancy.SiteProfile.Generated;
+
+internal sealed record GeneratedSiteGrpcServiceDescriptor(
+    string SiteId, System.Type ServiceType, string? Reason = null);
+
+/// <summary>
+/// Registry of all gRPC service types from [SiteGrpcService]. AOT-safe.
+/// </summary>
+internal static class SiteGrpcServiceRegistry
+{{
+    public static IReadOnlyList<GeneratedSiteGrpcServiceDescriptor> GetAllSiteGrpcServices()
+{arrayBody}
+}}
+";
+        context.AddSource("SiteGrpcServiceRegistry.g.cs", source);
+    }
+
+    // -----------------------------------------------------------------------
+    // Generator 3: SiteDbContextTypeRegistry.g.cs
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Emits SiteDbContextTypeRegistry.g.cs with GetAllSiteDbContextTypes() method.
+    /// Returns all DbContext types discovered from [GenerateSiteProfile] attributes.
+    /// AOT-safe — no reflection. Used by SiteMigrationRunner at startup.
+    /// </summary>
+    private static void EmitSiteDbContextTypeRegistry(
+        ImmutableArray<INamedTypeSymbol> dbContextTypes,
+        SourceProductionContext context)
+    {
+        string arrayBody;
+        if (dbContextTypes.IsDefaultOrEmpty)
+        {
+            arrayBody = "        => System.Array.Empty<System.Type>();";
+        }
+        else
+        {
+            var distinctTypes = dbContextTypes
+                .Distinct(SymbolEqualityComparer.Default)
+                .Cast<INamedTypeSymbol>()
+                .ToList();
+
+            if (distinctTypes.Count == 0)
+            {
+                arrayBody = "        => System.Array.Empty<System.Type>();";
+            }
+            else
+            {
+                string entries = string.Join("\n",
+                    distinctTypes.Select(t => $"            typeof({t.ToDisplayString()}),"));
+                arrayBody = $@"        => new System.Type[]
+        {{
+{entries}
+        }};";
+            }
+        }
+
+        string source = $@"// <auto-generated />
+#nullable enable
+using System;
+using System.Collections.Generic;
+
+namespace Muonroi.Tenancy.SiteProfile.Generated;
+
+/// <summary>
+/// Registry of all site DbContext types from [GenerateSiteProfile]. AOT-safe.
+/// </summary>
+internal static class SiteDbContextTypeRegistry
+{{
+    public static IReadOnlyList<System.Type> GetAllSiteDbContextTypes()
+{arrayBody}
+}}
+";
+        context.AddSource("SiteDbContextTypeRegistry.g.cs", source);
+    }
 }

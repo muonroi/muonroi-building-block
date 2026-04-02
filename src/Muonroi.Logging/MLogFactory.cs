@@ -1,8 +1,12 @@
-using Microsoft.Extensions.Logging;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Logging.Abstractions;
+
+
+
+
+
+
+
+
+
 
 namespace Muonroi.Logging;
 
@@ -58,17 +62,23 @@ internal sealed class MLogNonGeneric(
     }
 
     /// <inheritdoc />
-    public bool IsEnabled(LogLevel logLevel) => _inner.IsEnabled(logLevel);
+    public bool IsEnabled(LogLevel logLevel)
+    {
+        return _inner.IsEnabled(logLevel);
+    }
 
     /// <inheritdoc />
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        using var scope = BeginExecutionScope();
+        using IDisposable? scope = BeginExecutionScope();
         _inner.Log(logLevel, eventId, state, exception, formatter);
     }
 
     /// <inheritdoc />
-    public IMLogContextScope BeginProperty(string key, object? value) => _logContext.PushProperty(key, value);
+    public IMLogContextScope BeginProperty(string key, object? value)
+    {
+        return _logContext.PushProperty(key, value);
+    }
 
     /// <inheritdoc />
     public void Info(string messageTemplate, params object?[] args)
@@ -107,23 +117,30 @@ internal sealed class MLogNonGeneric(
 
     private void RecordTrace(string level, string template, object?[] args, Exception? ex = null)
     {
-        var session = traceContext?.Current;
+        ITraceSession? session = traceContext?.Current;
         if (session is { IsActive: true })
         {
-            var message = string.Format(template.Replace("{", "{{").Replace("}", "}}"), args);
-            if (ex != null) message += $" | Exception: {ex.Message}";
+            string message = string.Format(template.Replace("{", "{{").Replace("}", "}}"), args);
+            if (ex != null)
+            {
+                message += $" | Exception: {ex.Message}";
+            }
+
             session.Record($"[{level}] {message}");
         }
     }
 
     private IDisposable? BeginExecutionScope()
     {
-        var context = _accessor.Get();
-        if (context == null || context == SystemExecutionContext.Empty) return null;
+        ISystemExecutionContext context = _accessor.Get();
+        if (context == null || context == SystemExecutionContext.Empty)
+        {
+            return null;
+        }
 
-        var t = _logContext.PushProperty(LogPropertyConventions.TenantId, context.TenantId);
-        var u = _logContext.PushProperty(LogPropertyConventions.UserId, context.UserId);
-        var c = _logContext.PushProperty(LogPropertyConventions.CorrelationId, context.CorrelationId);
+        IMLogContextScope t = _logContext.PushProperty(LogPropertyConventions.TenantId, context.TenantId);
+        IMLogContextScope u = _logContext.PushProperty(LogPropertyConventions.UserId, context.UserId);
+        IMLogContextScope c = _logContext.PushProperty(LogPropertyConventions.CorrelationId, context.CorrelationId);
         return new CombinedScope(t, new CombinedScope(u, c));
     }
 

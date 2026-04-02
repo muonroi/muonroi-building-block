@@ -1,0 +1,18 @@
+// Shared messages reusable across all site protos.
+// Place this file at the canonical location: tests/TestProject.Service/v1/Protos/
+// The .targets auto-resolves AdditionalImportDirs to this directory from any site project.
+
+syntax = "proto3";
+
+option csharp_namespace = "TestProject.Service.Host.v1.Protos";
+
+package TestProject.Service.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message SharedContainerInfo {
+  string container_no = 1;
+  string iso_code = 2;
+  string status = 3;
+  google.protobuf.Timestamp created_date = 4;
+}

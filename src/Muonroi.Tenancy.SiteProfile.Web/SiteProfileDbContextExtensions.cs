@@ -1,3 +1,7 @@
+using Muonroi.Mediator.Mediator.Interfaces;
+using Muonroi.Tenancy.SiteProfile.Web.Configuration;
+using Muonroi.Tenancy.SiteProfile.Web.Handlers;
+
 namespace Muonroi.Tenancy.SiteProfile.Web;
 
 /// <summary>
@@ -143,6 +147,94 @@ public static class SiteProfileDbContextExtensions
         IConfiguration configuration)
         where TContext : DbContext
         => AddSiteDbContext<TContext>(services);
+
+    /// <summary>
+    /// Registers the site migration runner that auto-discovers all site DbContext types
+    /// (via the source-generated <c>SiteDbContextTypeRegistry.GetAllSiteDbContextTypes()</c>)
+    /// and runs EF Core migrations at startup. Call after <see cref="AddSiteDbInfrastructure"/>.
+    ///
+    /// <example>
+    /// <code>
+    /// services.AddSiteMigrationRunner(); // defaults: AutoMigrate + unbounded parallelism
+    ///
+    /// services.AddSiteMigrationRunner(o =>
+    /// {
+    ///     o.Strategy = MigrationStrategy.ValidateOnly; // prod: check only, don't apply
+    ///     o.MaxParallelism = 4;                        // limit concurrent migrations
+    /// });
+    /// </code>
+    /// </example>
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configure">Optional configuration delegate for <see cref="SiteMigrationRunnerOptions"/>.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddSiteMigrationRunner(
+        this IServiceCollection services,
+        Action<SiteMigrationRunnerOptions>? configure = null)
+    {
+        var options = new SiteMigrationRunnerOptions();
+        configure?.Invoke(options);
+        services.AddSingleton(options);
+        services.AddHostedService<SiteMigrationRunner>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers <see cref="ISiteConfiguration"/> as a scoped service that reads per-site
+    /// configuration from the "Sites:{SiteId}:*" section of appsettings.json.
+    ///
+    /// The current SiteId is resolved automatically via <see cref="ISiteProfileResolver"/>.
+    /// Hot-reload is transparent — values re-read from IConfiguration on each call.
+    ///
+    /// Call after <see cref="AddSiteDbInfrastructure"/> (which registers ISiteProfileResolver).
+    /// </summary>
+    public static IServiceCollection AddSiteConfiguration(this IServiceCollection services)
+    {
+        services.AddScoped<ISiteConfiguration, SiteConfiguration>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers a per-site MediatR command handler so the ecosystem keyed DI system can dispatch
+    /// <typeparamref name="TCmd"/> to the correct site-specific handler at runtime.
+    ///
+    /// <para>
+    /// Under the hood this delegates to <c>AddSiteResolvedService&lt;IRequestHandler&lt;TCmd, TResp&gt;&gt;()</c>,
+    /// which registers a scoped factory that resolves the correct keyed handler by the current
+    /// <c>SiteId</c> (with a <c>"default"</c> fallback if no site-specific key is found).
+    /// </para>
+    ///
+    /// <para>
+    /// Each site-specific handler must be registered separately inside its
+    /// <c>ISiteProfile.RegisterServices()</c> implementation using a keyed registration:
+    /// </para>
+    ///
+    /// <example>
+    /// <code>
+    /// // Program.cs — register the dispatcher factory once:
+    /// services.AddSiteCommandHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;();
+    ///
+    /// // SiteASiteProfile.RegisterServices() — register the SiteA implementation:
+    /// services.AddKeyedScoped&lt;IRequestHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;,
+    ///     SiteACreateOrderHandler&gt;("SiteA");
+    ///
+    /// // SiteBSiteProfile.RegisterServices() — register the SiteB implementation:
+    /// services.AddKeyedScoped&lt;IRequestHandler&lt;CreateOrderCommand, CreateOrderResponse&gt;,
+    ///     SiteBCreateOrderHandler&gt;("SiteB");
+    /// </code>
+    /// </example>
+    /// </summary>
+    /// <typeparam name="TCmd">The command/request type implementing <see cref="IRequest{TResp}"/>.</typeparam>
+    /// <typeparam name="TResp">The response type returned by the handler.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddSiteCommandHandler<TCmd, TResp>(
+        this IServiceCollection services)
+        where TCmd : IRequest<TResp>
+    {
+        services.AddSiteResolvedService<IRequestHandler<TCmd, TResp>>();
+        return services;
+    }
 
     // -----------------------------------------------------------------------
     // Internal adapter types — minimal implementations of ecosystem interfaces

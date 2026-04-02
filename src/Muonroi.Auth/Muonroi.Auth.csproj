@@ -8,6 +8,9 @@
     <Description>JWT authentication infrastructure: token validation, DPoP binding, claim extraction, and Muonroi auth middleware.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Muonroi.Tenancy.SiteProfile.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
@@ -18,6 +21,7 @@
     <ProjectReference Include="..\Muonroi.Caching.Abstractions\Muonroi.Caching.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="Fido2" />
     <PackageReference Include="Fido2.AspNet" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />

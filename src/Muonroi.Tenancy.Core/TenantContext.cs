@@ -6,6 +6,18 @@ namespace Muonroi.Tenancy.Core;
 public class TenantContext : ITenantContext
 {
     private static readonly AsyncLocal<string?> Current = new();
+    private static readonly AsyncLocal<bool> _allowCrossTenant = new();
+
+    /// <summary>
+    /// When true, EF global query filters for ITenantScoped entities are bypassed.
+    /// Use only for admin/system operations that legitimately need cross-tenant access.
+    /// Default: false (fail-closed).
+    /// </summary>
+    public static bool AllowCrossTenantAccess
+    {
+        get => _allowCrossTenant.Value;
+        set => _allowCrossTenant.Value = value;
+    }
 
     /// <inheritdoc />
     public string? TenantId

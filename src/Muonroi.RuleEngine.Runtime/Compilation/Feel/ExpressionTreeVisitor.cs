@@ -307,7 +307,7 @@ internal static class ExpressionTreeVisitor
         {
             Dictionary<string, object> scopedVars = new(vars, StringComparer.OrdinalIgnoreCase);
             if (item is not null) scopedVars[variable] = item;
-            bool result = Muonroi.Rules.Feel.FeelEvaluator.Evaluate(predicateExpression, scopedVars);
+            bool result = Muonroi.RuleEngine.DecisionTable.Feel.FeelEvaluator.Evaluate(predicateExpression, scopedVars);
             if (result) return true;
         }
         return false;
@@ -320,7 +320,7 @@ internal static class ExpressionTreeVisitor
         {
             Dictionary<string, object> scopedVars = new(vars, StringComparer.OrdinalIgnoreCase);
             if (item is not null) scopedVars[variable] = item;
-            bool result = Muonroi.Rules.Feel.FeelEvaluator.Evaluate(predicateExpression, scopedVars);
+            bool result = Muonroi.RuleEngine.DecisionTable.Feel.FeelEvaluator.Evaluate(predicateExpression, scopedVars);
             if (!result) return false;
         }
         return true;
@@ -334,7 +334,7 @@ internal static class ExpressionTreeVisitor
         {
             Dictionary<string, object> scopedVars = new(vars, StringComparer.OrdinalIgnoreCase);
             if (item is not null) scopedVars[variable] = item;
-            object? result = Muonroi.Rules.Feel.FeelEvaluator.EvaluateValue(bodyExpression, scopedVars);
+            object? result = Muonroi.RuleEngine.DecisionTable.Feel.FeelEvaluator.EvaluateValue(bodyExpression, scopedVars);
             results.Add(result);
         }
         return results;

@@ -1,4 +1,6 @@
 ﻿using Muonroi.Bff;
+using Muonroi.Caching.Abstractions.Distributed;
+using NSubstitute;
 
 namespace Muonroi.Bff.Tests;
 
@@ -54,6 +56,7 @@ public class BffAuthenticationExtensionsTests
         ServiceCollection services = [];
         services.AddLogging();
         services.AddDistributedMemoryCache();
+        services.AddSingleton(Substitute.For<IMCacheService>());
         services.AddBffAuthentication(useRedisTokenStore: true);
 
         using ServiceProvider provider = services.BuildServiceProvider();

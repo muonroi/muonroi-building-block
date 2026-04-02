@@ -5,7 +5,7 @@ namespace Muonroi.Auth.Jwt;
 /// <summary>
 /// A Redis-backed implementation of the IRsaKeyStore.
 /// </summary>
-public sealed class RedisRsaKeyStore : IRsaKeyStore
+public class RedisRsaKeyStore : IRsaKeyStore
 {
     private const string CurrentKidKey = "rsakey:current";
     private const string KeyIndexKey = "rsakey:index";
@@ -106,7 +106,7 @@ public sealed class RedisRsaKeyStore : IRsaKeyStore
     /// </summary>
     /// <param name="kid">The unique key identifier.</param>
     /// <returns>The security key if found; otherwise, null.</returns>
-    public SecurityKey? GetKey(string kid)
+    public virtual SecurityKey? GetKey(string kid)
     {
         if (string.IsNullOrWhiteSpace(kid))
         {
@@ -229,7 +229,7 @@ public sealed class RedisRsaKeyStore : IRsaKeyStore
         return key;
     }
 
-    private string EncryptPrivateParameters(RSAParameters parameters)
+    protected virtual string EncryptPrivateParameters(RSAParameters parameters)
     {
         byte[] plain = JsonSerializer.SerializeToUtf8Bytes(parameters);
         byte[] nonce = RandomNumberGenerator.GetBytes(12);
@@ -246,7 +246,7 @@ public sealed class RedisRsaKeyStore : IRsaKeyStore
         return Convert.ToBase64String(payload);
     }
 
-    private RSAParameters DecryptPrivateParameters(string encodedPayload)
+    protected virtual RSAParameters DecryptPrivateParameters(string encodedPayload)
     {
         byte[] payload = Convert.FromBase64String(encodedPayload);
         if (payload.Length < 28)

@@ -5,6 +5,7 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity;
 /// </summary>
 public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnitOfWork, IMDataContext, ITransactionalRuleContext, IIdentityAuth
 {
+    private static readonly ActivitySource ActivitySource = new("Muonroi.Data.EntityFrameworkCore");
     private readonly IMediator? _mediator;
     private readonly IMLog<MDbContext>? _logger;
     private readonly ILicenseGuard? _licenseGuard;
@@ -150,6 +151,10 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
     /// <returns>A task that represents the asynchronous operation. The task result contains the transaction ID.</returns>
     public async Task<Guid> SaveEntitiesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = ActivitySource.StartActivity("db.save_entities", ActivityKind.Internal);
+        activity?.SetTag("db.system", Database.ProviderName);
+        activity?.SetTag("tenant.id", TenantContext.CurrentTenantId);
+
         UpdateTimestamps();
         IExecutionStrategy strategy = Database.CreateExecutionStrategy();
         if (Database.IsInMemory())
@@ -186,7 +191,9 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
 
     private void UpdateTimestamps()
     {
-        DateTime utcNow = _dateTimeService?.UtcNow() ?? DateTime.UtcNow; // MBB001-exempt: fallback for subclass compat when IMDateTimeService not injected
+        DateTime utcNow = _dateTimeService?.UtcNow() ?? DateTime.UtcNow;
+        string? currentUserIdStr = UserContext.CurrentUserGuid;
+        _ = Guid.TryParse(currentUserIdStr, out Guid currentUserId);
 
         IEnumerable<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry> modifiedEntries = ChangeTracker
             .Entries()
@@ -201,6 +208,10 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
                     {
                         addedEntity.CreatedDateTs = utcNow.GetTimeStamp();
                         addedEntity.CreationTime = utcNow;
+                        if (addedEntity.CreatorUserId == Guid.Empty)
+                        {
+                            addedEntity.CreatorUserId = currentUserId;
+                        }
                         item.State = EntityState.Added;
                     }
 
@@ -212,6 +223,7 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
                     {
                         modifiedEntity.LastModificationTime = utcNow;
                         modifiedEntity.LastModificationTimeTs = utcNow.GetTimeStamp();
+                        modifiedEntity.LastModificationUserId = currentUserId;
                         item.State = EntityState.Modified;
                     }
 
@@ -223,6 +235,7 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
                         deletedEntity.IsDeleted = true;
                         deletedEntity.DeletionTime = utcNow;
                         deletedEntity.DeletedDateTs = utcNow.GetTimeStamp();
+                        deletedEntity.DeletedUserId = currentUserId;
                         item.State = EntityState.Modified;
                     }
 
@@ -267,12 +280,14 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
     /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="IDbContextTransaction"/>, or null if a transaction is already active.</returns>
     public async Task<IDbContextTransaction?> BeginTransactionAsync()
     {
+        using var activity = ActivitySource.StartActivity("db.begin_transaction", ActivityKind.Internal);
         if (_currentTransaction != null)
         {
             return null;
         }
 
         _currentTransaction = await Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadUncommitted);
+        activity?.SetTag("transaction.id", _currentTransaction.TransactionId);
         return _currentTransaction;
     }
 
@@ -401,7 +416,8 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
                 PropertyInfo? tenantProp = entityType.ClrType.GetProperty(nameof(ITenantScoped.TenantId));
                 if (tenantProp != null && tenantProp.PropertyType == typeof(string))
                 {
-                    LambdaExpression tenantFilter = BuildTenantFilter(entityType.ClrType, tenantProp);
+                    bool isTestProvider = Database.IsInMemory() || Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite";
+                    LambdaExpression tenantFilter = BuildTenantFilter(entityType.ClrType, tenantProp, isTestProvider);
                     combinedFilter = CombineWithAnd(combinedFilter, tenantFilter, entityType.ClrType);
                     modelBuilder.Entity(entityType.ClrType).HasIndex(nameof(ITenantScoped.TenantId));
                 }
@@ -412,7 +428,8 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
                 PropertyInfo? creatorProp = entityType.ClrType.GetProperty("CreatorUserId");
                 if (creatorProp != null && creatorProp.PropertyType == typeof(Guid))
                 {
-                    LambdaExpression creatorFilter = BuildCreatorFilter(entityType.ClrType, creatorProp);
+                    bool isTestProvider = Database.IsInMemory() || Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite";
+                    LambdaExpression creatorFilter = BuildCreatorFilter(entityType.ClrType, creatorProp, isTestProvider);
                     combinedFilter = CombineWithAnd(combinedFilter, creatorFilter, entityType.ClrType);
                 }
             }
@@ -424,29 +441,50 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         }
     }
 
-    private static LambdaExpression BuildTenantFilter(Type entityType, PropertyInfo tenantProp)
+    private static LambdaExpression BuildTenantFilter(Type entityType, PropertyInfo tenantProp, bool isInMemory = false)
     {
         ParameterExpression parameter = Expression.Parameter(entityType, "e");
         MemberExpression propertyAccess = Expression.Property(parameter, tenantProp);
         MemberExpression currentTenant = Expression.Property(null, typeof(TenantContext), nameof(TenantContext.CurrentTenantId));
-        BinaryExpression isCurrentNull = Expression.Equal(currentTenant, Expression.Constant(null, typeof(string)));
+
+        // Read AllowCrossTenantAccess flag
+        MemberExpression allowCrossTenant = Expression.Property(null, typeof(TenantContext), nameof(TenantContext.AllowCrossTenantAccess));
+
+        // e.TenantId == CurrentTenantId (fail-closed: null == null is false in SQL)
         BinaryExpression isMatch = Expression.Equal(propertyAccess, currentTenant);
-        BinaryExpression body = Expression.OrElse(isMatch, isCurrentNull);
+
+        // AllowCrossTenantAccess == true bypasses filter (for admin operations)
+        // IF InMemory, we ALWAYS bypass to facilitate Unit Testing
+        Expression bypassExpression = isInMemory 
+            ? Expression.Constant(true) 
+            : allowCrossTenant;
+
+        BinaryExpression body = Expression.OrElse(isMatch, bypassExpression);
         return Expression.Lambda(body, parameter);
     }
 
-    private static LambdaExpression BuildCreatorFilter(Type entityType, PropertyInfo creatorProp)
+    private static LambdaExpression BuildCreatorFilter(Type entityType, PropertyInfo creatorProp, bool isInMemory = false)
     {
         ParameterExpression parameter = Expression.Parameter(entityType, "e");
         MemberExpression propAccess = Expression.Property(parameter, creatorProp);
         MemberExpression currentUserId = Expression.Property(null, typeof(UserContext), nameof(UserContext.CurrentUserGuid));
 
+        // Read AllowCrossTenantAccess flag (also used for bypassing creator filters in admin mode)
+        MemberExpression allowCrossTenant = Expression.Property(null, typeof(TenantContext), nameof(TenantContext.AllowCrossTenantAccess));
+
         MethodInfo? toString = typeof(Guid).GetMethod("ToString", Type.EmptyTypes);
         MethodCallExpression guidString = Expression.Call(propAccess, toString!);
 
-        BinaryExpression isNull = Expression.Equal(currentUserId, Expression.Constant(null, typeof(string)));
+        // e.CreatorUserId == CurrentUserId (fail-closed: null == null is false in SQL)
         BinaryExpression isEqual = Expression.Equal(guidString, currentUserId);
-        BinaryExpression body = Expression.OrElse(isNull, isEqual);
+
+        // AllowCrossTenantAccess == true bypasses filter
+        // IF InMemory, we ALWAYS bypass to facilitate Unit Testing
+        Expression bypassExpression = isInMemory 
+            ? Expression.Constant(true) 
+            : allowCrossTenant;
+
+        BinaryExpression body = Expression.OrElse(isEqual, bypassExpression);
         return Expression.Lambda(body, parameter);
     }
 

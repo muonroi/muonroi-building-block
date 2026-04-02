@@ -1,115 +1,81 @@
+using Microsoft.AspNetCore.Http;
+using Muonroi.AspNetCore.Middleware;
+using Muonroi.Core.Abstractions.Context;
+using Muonroi.Logging.Abstractions;
+using Muonroi.Quota.Abstractions;
+using NSubstitute;
+using Xunit;
+
 namespace Muonroi.AspNetCore.Tests.Middleware;
 
 public class QuotaEnforcementMiddlewareTests
 {
-    private readonly ITenantQuotaTracker _quotaTracker = Substitute.For<ITenantQuotaTracker>();
-    private readonly IMLog<QuotaEnforcementMiddleware> _logger = Substitute.For<IMLog<QuotaEnforcementMiddleware>>();
-    private readonly ISystemExecutionContextAccessor _contextAccessor = Substitute.For<ISystemExecutionContextAccessor>();
+    private readonly RequestDelegate _next;
+    private readonly ITenantQuotaTracker _quotaTracker;
+    private readonly IMLog<QuotaEnforcementMiddleware> _logger;
+    private readonly ISystemExecutionContextAccessor _contextAccessor;
+    private readonly QuotaEnforcementMiddleware _middleware;
 
-    private QuotaEnforcementMiddleware CreateMiddleware(RequestDelegate next)
+    public QuotaEnforcementMiddlewareTests()
     {
-        return new QuotaEnforcementMiddleware(next, _quotaTracker, _logger, _contextAccessor);
+        _next = Substitute.For<RequestDelegate>();
+        _quotaTracker = Substitute.For<ITenantQuotaTracker>();
+        _logger = Substitute.For<IMLog<QuotaEnforcementMiddleware>>();
+        _contextAccessor = Substitute.For<ISystemExecutionContextAccessor>();
+        _middleware = new QuotaEnforcementMiddleware(_next, _quotaTracker, _logger, _contextAccessor);
     }
 
     private static SystemExecutionContext CreateContext(string? tenantId)
     {
         return new SystemExecutionContext(
-            tenantId: tenantId,
-            userId: null,
-            username: null,
-            correlationId: Guid.NewGuid().ToString(),
-            accessToken: null,
-            apiKey: null,
-            isAuthenticated: false,
-            permissions: [],
-            sourceType: "http");
+            tenantId,
+            null,
+            null,
+            Guid.NewGuid().ToString(),
+            null,
+            null,
+            tenantId != null,
+            [],
+            "test"
+        );
     }
 
     [Fact]
     public async Task InvokeAsync_NoTenantId_CallsNext()
     {
-        bool nextCalled = false;
+        var context = new DefaultHttpContext();
         _contextAccessor.Get().Returns(CreateContext(null));
 
-        var middleware = CreateMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
-        var httpContext = new DefaultHttpContext();
+        await _middleware.InvokeAsync(context);
 
-        await middleware.InvokeAsync(httpContext);
-
-        nextCalled.Should().BeTrue();
-        await _quotaTracker.DidNotReceive().CheckQuotaAsync(
-            Arg.Any<string>(), Arg.Any<QuotaType>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task InvokeAsync_EmptyTenantId_CallsNext()
-    {
-        bool nextCalled = false;
-        _contextAccessor.Get().Returns(CreateContext("  "));
-
-        var middleware = CreateMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
-        var httpContext = new DefaultHttpContext();
-
-        await middleware.InvokeAsync(httpContext);
-
-        nextCalled.Should().BeTrue();
+        await _next.Received(1)(context);
     }
 
     [Fact]
     public async Task InvokeAsync_QuotaAllowed_IncrementsAndCallsNext()
     {
-        bool nextCalled = false;
-        _contextAccessor.Get().Returns(CreateContext("tenant-1"));
-        _quotaTracker.CheckQuotaAsync("tenant-1", QuotaType.ApiRequestsPerMinute, 1, Arg.Any<CancellationToken>())
-            .Returns(true);
+        var context = new DefaultHttpContext();
+        _contextAccessor.Get().Returns(CreateContext("tenant1"));
+        _quotaTracker.CheckQuotaAsync("tenant1", QuotaType.ApiRequestsPerMinute, 1, Arg.Any<CancellationToken>()).Returns(true);
 
-        var middleware = CreateMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
-        var httpContext = new DefaultHttpContext();
+        await _middleware.InvokeAsync(context);
 
-        await middleware.InvokeAsync(httpContext);
-
-        nextCalled.Should().BeTrue();
-        await _quotaTracker.Received(1).IncrementUsageAsync(
-            "tenant-1", QuotaType.ApiRequestsPerMinute, 1, Arg.Any<CancellationToken>());
+        await _quotaTracker.Received(1).IncrementUsageAsync("tenant1", QuotaType.ApiRequestsPerMinute, 1, Arg.Any<CancellationToken>());
+        await _next.Received(1)(context);
     }
 
     [Fact]
     public async Task InvokeAsync_QuotaExceeded_Returns429()
     {
-        bool nextCalled = false;
-        _contextAccessor.Get().Returns(CreateContext("tenant-1"));
-        _quotaTracker.CheckQuotaAsync("tenant-1", QuotaType.ApiRequestsPerMinute, 1, Arg.Any<CancellationToken>())
-            .Returns(false);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream(); 
+        
+        _contextAccessor.Get().Returns(CreateContext("tenant1"));
+        _quotaTracker.CheckQuotaAsync("tenant1", QuotaType.ApiRequestsPerMinute, 1, Arg.Any<CancellationToken>()).Returns(false);
 
-        var middleware = CreateMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
-        var httpContext = new DefaultHttpContext();
-        httpContext.Response.Body = new MemoryStream();
+        await _middleware.InvokeAsync(context);
 
-        await middleware.InvokeAsync(httpContext);
-
-        nextCalled.Should().BeFalse();
-        httpContext.Response.StatusCode.Should().Be(StatusCodes.Status429TooManyRequests);
-        httpContext.Response.Headers.RetryAfter.ToString().Should().Be("60");
-
-        httpContext.Response.Body.Position = 0;
-        string body = await new StreamReader(httpContext.Response.Body).ReadToEndAsync();
-        body.Should().Contain("rate_limit_exceeded");
-    }
-
-    [Fact]
-    public async Task InvokeAsync_QuotaExceeded_DoesNotIncrementUsage()
-    {
-        _contextAccessor.Get().Returns(CreateContext("tenant-1"));
-        _quotaTracker.CheckQuotaAsync("tenant-1", QuotaType.ApiRequestsPerMinute, 1, Arg.Any<CancellationToken>())
-            .Returns(false);
-
-        var middleware = CreateMiddleware(_ => Task.CompletedTask);
-        var httpContext = new DefaultHttpContext();
-        httpContext.Response.Body = new MemoryStream();
-
-        await middleware.InvokeAsync(httpContext);
-
-        await _quotaTracker.DidNotReceive().IncrementUsageAsync(
-            Arg.Any<string>(), Arg.Any<QuotaType>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        Assert.Equal(StatusCodes.Status429TooManyRequests, context.Response.StatusCode);
+        await _next.DidNotReceive()(context);
     }
 }

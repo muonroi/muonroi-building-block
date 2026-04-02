@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Not a test project — disable test SDK injection from Directory.Build.props -->
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+    <!-- Override MuonroiSharedProtoDir so the .targets resolves shared.proto correctly.
+         Path: src/Sites.Bravo/ -> ../../ = TestProject.Aggregate/ -> v1/Protos/ -->
+    <MuonroiSharedProtoDir>$(MSBuildProjectDirectory)\..\..\v1\Protos\</MuonroiSharedProtoDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Grpc\Muonroi.Tenancy.SiteProfile.Grpc.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.SourceGenerators\Muonroi.Tenancy.SiteProfile.SourceGenerators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false">
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
+    <PackageReference Include="Grpc.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestProject.Aggregate.Core\TestProject.Aggregate.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Per-site proto: imports "shared.proto" via MuonroiSharedProtoDir.
+         Import dirs are auto-configured by the .targets file (TOOL-01). -->
+    <Protobuf Include="Protos\service.bravo.proto" GrpcServices="Both" />
+    <!-- Also compile shared.proto to generate SharedContainerInfo C# class in this assembly -->
+    <Protobuf Include="$(MuonroiSharedProtoDir)shared.proto" GrpcServices="None" Link="Protos\shared.proto" />
+  </ItemGroup>
+
+  <!-- Import .targets manually because ProjectReference does not auto-import build/ targets (NuGet convention only). -->
+  <Import Project="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Grpc\build\Muonroi.Tenancy.SiteProfile.Grpc.targets" />
+
+</Project>

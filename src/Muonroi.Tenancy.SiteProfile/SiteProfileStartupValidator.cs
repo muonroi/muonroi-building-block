@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Muonroi.Tenancy.SiteProfile;
 
@@ -32,17 +33,38 @@ internal sealed class SiteProfileStartupValidator(
         {
             foreach (var serviceType in tracker.ResolvedServiceTypes)
             {
+                if (serviceType == null) continue;
+
                 foreach (var siteId in tracker.SiteIds)
                 {
+                    if (string.IsNullOrWhiteSpace(siteId)) continue;
+
                     var resolved = keyedProvider.GetKeyedService(serviceType, siteId);
                     if (resolved is null)
                     {
                         // Check "default" fallback before reporting as missing
                         var fallback = keyedProvider.GetKeyedService(serviceType, "default");
-                        if (fallback is null)
+                        if (fallback is not null)
+                        {
+                            // Site-specific missing but "default" exists — warn
+                            logger.LogWarning(
+                                "[SITE-SAFETY] Site '{SiteId}' has no keyed registration for '{ServiceType}', " +
+                                "using 'default' fallback. Register a site-specific service to suppress this warning.",
+                                siteId, serviceType.Name);
+
+                            // In strict mode, treat fallback as error
+                            var options = serviceProvider.GetService<IOptions<SiteProfileOptions>>()?.Value;
+                            if (options?.StrictMode == true)
+                            {
+                                missing.Add(
+                                    $"  - Site '{siteId}' x Service '{serviceType.Name}': " +
+                                    $"no site-specific registration (StrictMode rejects 'default' fallback)");
+                            }
+                        }
+                        else
                         {
                             missing.Add(
-                                $"  - Site '{siteId}' \u00d7 Service '{serviceType.Name}': " +
+                                $"  - Site '{siteId}' x Service '{serviceType.Name}': " +
                                 $"no keyed registration for key \"{siteId}\" or \"default\"");
                         }
                     }

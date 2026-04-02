@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Not a test project — disable test SDK injection from Directory.Build.props -->
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.SourceGenerators">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Core contracts and ContextBase (Charlie uses its own CharlieOrderContext extending ContextBase) -->
+    <ProjectReference Include="..\TestProject.Service.Core\TestProject.Service.Core.csproj" />
+    <!-- SiteProfile source project provides ISiteProfile, SiteProfileAliasAttribute, GenerateSiteProfile -->
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
+    <!-- SiteProfile.Web provides pipeline + DI extensions -->
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile.Web\Muonroi.Tenancy.SiteProfile.Web.csproj" />
+  </ItemGroup>
+
+</Project>

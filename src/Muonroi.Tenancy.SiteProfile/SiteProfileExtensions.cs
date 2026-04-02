@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Tenancy.SiteProfile;
@@ -13,6 +14,20 @@ public static class SiteProfileExtensions
 {
     // Static tracker — populated during DI setup (single-threaded), consumed read-only at startup.
     private static readonly SiteProfileRegistrationTracker s_tracker = new();
+
+    /// <summary>
+    /// Reset the tracker for testing.
+    /// </summary>
+    internal static void ResetTracker() => s_tracker.Clear();
+
+    /// <summary>
+    /// Configures SiteProfile options including strict mode for site resolution.
+    /// </summary>
+    public static IServiceCollection ConfigureSiteProfile(this IServiceCollection services, Action<SiteProfileOptions> configure)
+    {
+        services.Configure(configure);
+        return services;
+    }
 
     /// <summary>
     /// Register all services for a specific site profile.
@@ -60,22 +75,8 @@ public static class SiteProfileExtensions
     /// Register ALL site profiles from assemblies + per-request resolution.
     /// Use when 1 binary = N sites (shared binary, switch per request).
     ///
-    /// Scans assemblies for ISiteProfile implementations, calls RegisterServices on each,
-    /// then registers ISiteProfileResolver as scoped — resolves the correct profile per-request
-    /// based on siteCodeAccessor (e.g., WorkContext.SiteCode).
-    ///
-    /// If one site's RegisterServices throws, registration continues for remaining sites.
-    /// All failures are collected and thrown as an AggregateException at the end.
-    /// Individual failures are also tracked in SiteProfileRegistrationTracker for post-DI reporting.
-    ///
-    /// Usage:
-    /// <code>
-    /// services.AddMultiSiteProfiles(
-    ///     configuration,
-    ///     siteCodeAccessor: sp => sp.GetRequiredService&lt;IWorkContextAccessor&gt;().WorkContext?.SiteCode,
-    ///     typeof(TciSiteProfile).Assembly
-    /// );
-    /// </code>
+    /// Scans assemblies for ISiteProfile implementations via reflection,
+    /// then delegates to the core registration method.
     /// </summary>
     public static IServiceCollection AddMultiSiteProfiles(
         this IServiceCollection services,
@@ -86,12 +87,8 @@ public static class SiteProfileExtensions
     {
         ArgumentNullException.ThrowIfNull(siteCodeAccessor);
 
-        var profiles = new Dictionary<string, ISiteProfile>(StringComparer.OrdinalIgnoreCase);
-
-        // Scan assemblies for ISiteProfile implementations
-        // Capture errors per site; continue registering remaining sites even if one fails.
-        var errors = new List<(string siteId, Exception ex)>();
-
+        // Scan assemblies for ISiteProfile implementations (reflection-based discovery)
+        var discoveredProfiles = new List<ISiteProfile>();
         foreach (var assembly in assemblies)
         {
             var profileTypes = assembly.GetTypes()
@@ -101,34 +98,72 @@ public static class SiteProfileExtensions
 
             foreach (var type in profileTypes)
             {
-                var profile = (ISiteProfile)Activator.CreateInstance(type)!;
-                profiles[profile.SiteId] = profile;
+                discoveredProfiles.Add((ISiteProfile)Activator.CreateInstance(type)!);
+            }
+        }
 
-                // Each profile registers its own services (DbContext, services, strategies)
+        return AddMultiSiteProfilesCore(services, configuration, siteCodeAccessor,
+            discoveredProfiles.ToArray(), diagnosticLog);
+    }
+
+    /// <summary>
+    /// Register ALL site profiles from an explicit array + per-request resolution.
+    /// AOT-safe overload — profiles are pre-instantiated (no reflection).
+    /// Called by generated <c>AddGeneratedSiteProfiles()</c> with manifest array.
+    ///
+    /// <code>
+    /// // Generated code calls:
+    /// SiteProfileExtensions.AddMultiSiteProfilesCore(
+    ///     services, configuration, siteCodeAccessor, SiteProfileManifest.CreateAll(), logFactory);
+    /// </code>
+    /// </summary>
+    public static IServiceCollection AddMultiSiteProfilesCore(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Func<IServiceProvider, string?> siteCodeAccessor,
+        ISiteProfile[] profiles,
+        IMLog? diagnosticLog = null)
+    {
+        ArgumentNullException.ThrowIfNull(siteCodeAccessor);
+
+        services.Configure<SiteProfileOptions>(_ => { }); // Register with defaults if not already configured
+
+        var profileMap = new Dictionary<string, ISiteProfile>(StringComparer.OrdinalIgnoreCase);
+        var errors = new List<(string siteId, Exception ex)>();
+
+        // Set ambient logger for SiteProfileBootstrap (called inside RegisterServices).
+        // Avoids BuildServiceProvider() anti-pattern — DI registration is single-threaded.
+        var previousLog = SiteProfileBootstrap.CurrentLog;
+        SiteProfileBootstrap.CurrentLog = diagnosticLog;
+        try
+        {
+            foreach (var profile in profiles)
+            {
+                profileMap[profile.SiteId] = profile;
+
                 try
                 {
                     profile.RegisterServices(services, configuration);
                 }
                 catch (Exception ex)
                 {
-                    // Log individual failure via IMLog if available (ecosystem convention per CLAUDE.md)
                     diagnosticLog?.Warn(
                         "[SiteProfile] Site '{SiteId}' failed to register services: {Message}",
                         profile.SiteId, ex.Message);
-
-                    // Record in tracker so SiteProfileStartupValidator can report all failures
-                    // after DI is built and IMLog is available
                     s_tracker.RecordRegistrationFailure(profile.SiteId, ex);
                     errors.Add((profile.SiteId, ex));
                 }
 
-                // Track site ID for startup validation (even failed sites are tracked)
                 s_tracker.RecordSiteId(profile.SiteId);
             }
         }
+        finally
+        {
+            SiteProfileBootstrap.CurrentLog = previousLog;
+        }
 
         // Register all profiles as singletons (for diagnostics / enumeration)
-        foreach (var profile in profiles.Values)
+        foreach (var profile in profileMap.Values)
         {
             services.AddSingleton<ISiteProfile>(profile);
         }
@@ -142,16 +177,33 @@ public static class SiteProfileExtensions
                 return new SiteProfileResolver(scopeOverride);
 
             var siteCode = siteCodeAccessor(sp) ?? "default";
-            if (profiles.TryGetValue(siteCode, out var match))
+            if (profileMap.TryGetValue(siteCode, out var match))
                 return new SiteProfileResolver(match);
 
-            // Fallback: try "default" profile
-            if (profiles.TryGetValue("default", out var fallback))
+            // Site code not found — check strict mode
+            var options = sp.GetService<IOptions<SiteProfileOptions>>()?.Value;
+            if (options?.StrictMode == true)
+            {
+                throw new InvalidOperationException(
+                    $"[SITE-SAFETY] No ISiteProfile registered for site '{siteCode}'. " +
+                    $"StrictMode is enabled — no fallback to 'default'. " +
+                    $"Available: [{string.Join(", ", profileMap.Keys)}]");
+            }
+
+            // Non-strict: fallback to "default" with warning
+            if (profileMap.TryGetValue("default", out var fallback))
+            {
+                var logger = sp.GetService<IMLog<SiteProfileResolver>>();
+                logger?.Warn(
+                    "[SITE-SAFETY] Site '{SiteCode}' not found, falling back to 'default' profile. " +
+                    "Enable SiteProfileOptions.StrictMode to make this an error.",
+                    siteCode);
                 return new SiteProfileResolver(fallback);
+            }
 
             throw new InvalidOperationException(
                 $"No ISiteProfile registered for site '{siteCode}'. " +
-                $"Available: [{string.Join(", ", profiles.Keys)}]");
+                $"Available: [{string.Join(", ", profileMap.Keys)}]");
         });
 
         // Register startup validator (once)

@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
 
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.RuleEngine.Runtime.Adapters;
 
 /// <summary>
@@ -8,7 +10,7 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// </summary>
 internal static class SubFlowCallStack
 {
-    // MBB004-exempt: adapter-internal scope — AsyncLocal stays within Runtime package, not Abstractions
+    // MBB004-exempt: adapter-internal scope â€” AsyncLocal stays within Runtime package, not Abstractions
     private static readonly AsyncLocal<ImmutableStack<string>?> _stack = new();
 
     public static ImmutableStack<string> Current
@@ -43,9 +45,10 @@ internal static class SubFlowCallStack
 }
 
 /// <summary>Thrown when a sub-flow execution would create a circular dependency.</summary>
-public sealed class SubFlowCycleException : InvalidOperationException
+public sealed class SubFlowCycleException : MException
 {
     /// <summary>Initializes a new instance of the <see cref="SubFlowCycleException"/> class.</summary>
     /// <param name="message">Error message describing the cycle.</param>
-    public SubFlowCycleException(string message) : base(message) { }
+    public SubFlowCycleException(string message)
+        : base("SUBFLOW_CYCLE", message, MExceptionCategory.Domain, 400) { }
 }

@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Muonroi",
+  "classifications": ["Muonroi", "Multi-Site", "Tenant", "Site Module"],
+  "identity": "Host.Tenant.SiteModule",
+  "groupIdentity": "Host.Tenant.Site",
+  "name": "Tenant Site Module",
+  "shortName": "tenant-site-module",
+  "sourceName": "MuonroiService.Sites.SiteTemplate",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "symbols": {
+    "siteId": {
+      "type": "parameter",
+      "datatype": "string",
+      "description": "Site identifier (e.g., Hph, Ctl, Dnai). Used as class prefix and in filenames.",
+      "defaultValue": "NewSite",
+      "replaces": "SiteTemplate",
+      "fileRename": "SiteTemplate"
+    },
+    "siteIdUpper": {
+      "type": "derived",
+      "valueSource": "siteId",
+      "valueTransform": "upperCaseInvariant",
+      "replaces": "SITE_ID_UPPER"
+    },
+    "siteIdLower": {
+      "type": "derived",
+      "valueSource": "siteId",
+      "valueTransform": "lowerCaseInvariant",
+      "replaces": "SITE_ID_LOWER"
+    },
+    "dataAccess": {
+      "type": "parameter",
+      "datatype": "choice",
+      "description": "Data access pattern",
+      "defaultValue": "ef",
+      "choices": [
+        { "choice": "ef", "description": "Entity Framework Core (per-site DbContext)" },
+        { "choice": "dapper", "description": "Dapper (per-site Repository via Autofac)" }
+      ]
+    },
+    "protoMode": {
+      "type": "parameter",
+      "datatype": "choice",
+      "description": "Proto architecture for this site",
+      "defaultValue": "shared",
+      "choices": [
+        { "choice": "shared", "description": "Uses shared proto from Host. No site-specific proto file." },
+        { "choice": "perSite", "description": "Site has its own .proto with different RPCs. Includes [SiteGrpcService] attribute + proto file." }
+      ]
+    },
+    "isEf": {
+      "type": "computed",
+      "value": "(dataAccess == \"ef\")"
+    },
+    "isDapper": {
+      "type": "computed",
+      "value": "(dataAccess == \"dapper\")"
+    },
+    "isPerSiteProto": {
+      "type": "computed",
+      "value": "(protoMode == \"perSite\")"
+    }
+  },
+  "forms": {
+    "lowerCaseInvariant": {
+      "identifier": "lowerCase"
+    },
+    "upperCaseInvariant": {
+      "identifier": "upperCase"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(dataAccess != \"ef\")",
+          "exclude": [
+            "**/*OrderContext.cs"
+          ]
+        },
+        {
+          "condition": "(protoMode != \"perSite\")",
+          "exclude": [
+            "**/Protos/**",
+            "**/*GrpcService.cs"
+          ]
+        }
+      ]
+    }
+  ],
+  "primaryOutputs": [
+    { "path": "MuonroiService.Sites.SiteTemplate/MuonroiService.Sites.SiteTemplate.csproj" }
+  ],
+  "postActions": [
+    {
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "description": "Restore NuGet packages",
+      "continueOnError": true,
+      "manualInstructions": [
+        { "text": "Run 'dotnet restore'" }
+      ]
+    }
+  ]
+}

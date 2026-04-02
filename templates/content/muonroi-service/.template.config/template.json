@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Muonroi",
+  "classifications": ["Muonroi", "Multi-Site", "Tenant", "Service", "gRPC"],
+  "identity": "Host.Tenant.Service",
+  "groupIdentity": "Host.Tenant",
+  "name": "Tenant Multi-Site Service",
+  "shortName": "tenant-service",
+  "sourceName": "MuonroiService",
+  "preferNameDirectory": true,
+  "defaultName": "MyService",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "guids": [
+    "A1B2C3D4-E5F6-7890-ABCD-111111111111",
+    "A1B2C3D4-E5F6-7890-ABCD-222222222222",
+    "A1B2C3D4-E5F6-7890-ABCD-333333333333",
+    "A1B2C3D4-E5F6-7890-ABCD-444444444444"
+  ],
+  "symbols": {
+    "projectType": {
+      "type": "parameter",
+      "datatype": "choice",
+      "description": "Project architecture type: aggregate (REST controllers + gRPC client), service (gRPC server + EF/Dapper), tos (gRPC server + Dapper only)",
+      "defaultValue": "service",
+      "choices": [
+        { "choice": "aggregate", "description": "Aggregate service (REST controllers, gRPC client to downstream services)" },
+        { "choice": "service", "description": "Domain service (gRPC server, EF/Dapper persistence)" },
+        { "choice": "tos", "description": "Read-focused TOS service (gRPC server, Dapper-only, no EF)" }
+      ]
+    },
+    "isAggregate": {
+      "type": "computed",
+      "value": "(projectType == \"aggregate\")"
+    },
+    "isService": {
+      "type": "computed",
+      "value": "(projectType == \"service\")"
+    },
+    "isTos": {
+      "type": "computed",
+      "value": "(projectType == \"tos\")"
+    },
+    "dataAccess": {
+      "type": "parameter",
+      "datatype": "choice",
+      "description": "Data access pattern (ignored for aggregate and tos — tos always uses dapper, aggregate uses no local DB)",
+      "defaultValue": "ef",
+      "choices": [
+        { "choice": "ef", "description": "Entity Framework Core (per-site DbContext)" },
+        { "choice": "dapper", "description": "Dapper (per-site Repository via Autofac)" }
+      ]
+    },
+    "protoMode": {
+      "type": "parameter",
+      "datatype": "choice",
+      "description": "Proto architecture: shared (1 proto, optional fields) or perSite (each site has own proto)",
+      "defaultValue": "shared",
+      "choices": [
+        { "choice": "shared", "description": "One shared .proto in Host. Site differences via optional fields 100+. Recommended for similar sites." },
+        { "choice": "perSite", "description": "Each site project has its own .proto. Use when sites have completely different RPC contracts." }
+      ]
+    },
+    "siteCodeKey": {
+      "type": "parameter",
+      "datatype": "string",
+      "description": "gRPC metadata key for SiteCode extraction (e.g., SiteCode, x-site-code)",
+      "defaultValue": "SiteCode",
+      "replaces": "SITE_CODE_METADATA_KEY"
+    },
+    "isEf": {
+      "type": "computed",
+      "value": "(dataAccess == \"ef\" && projectType != \"tos\" && projectType != \"aggregate\")"
+    },
+    "isDapper": {
+      "type": "computed",
+      "value": "(dataAccess == \"dapper\" || projectType == \"tos\")"
+    },
+    "isSharedProto": {
+      "type": "computed",
+      "value": "(protoMode == \"shared\")"
+    },
+    "isPerSiteProto": {
+      "type": "computed",
+      "value": "(protoMode == \"perSite\")"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!isEf)",
+          "exclude": [
+            "src/MuonroiService.Core/Persistence/ContextBase.cs",
+            "src/MuonroiService.Sites.Default/DefaultOrderContext.cs",
+            "src/MuonroiService.Core/Persistence/Configurations/**"
+          ]
+        },
+        {
+          "condition": "(isAggregate)",
+          "exclude": [
+            "src/MuonroiService.Host/Grpc/**"
+          ]
+        },
+        {
+          "condition": "(!isAggregate)",
+          "exclude": [
+            "src/MuonroiService.Host/Controllers/**",
+            "src/MuonroiService.Core/Commands/**",
+            "src/MuonroiService.Core/Handlers/**",
+            "src/MuonroiService.Core/Validators/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "primaryOutputs": [
+    { "path": "src/MuonroiService.Host/MuonroiService.Host.csproj" },
+    { "path": "src/MuonroiService.Core/MuonroiService.Core.csproj" },
+    { "path": "src/MuonroiService.Sites.Default/MuonroiService.Sites.Default.csproj" }
+  ],
+  "postActions": [
+    {
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "description": "Restore NuGet packages",
+      "continueOnError": true,
+      "manualInstructions": [
+        { "text": "Run 'dotnet restore'" }
+      ]
+    }
+  ]
+}

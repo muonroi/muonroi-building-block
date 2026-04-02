@@ -15,10 +15,11 @@ public sealed class SubFlowCycleExceptionTests
     }
 
     [Fact]
-    public void IsInvalidOperationException()
+    public void IsDomainException()
     {
         SubFlowCycleException ex = new("msg");
 
-        ex.Should().BeAssignableTo<InvalidOperationException>();
+        ex.Should().BeAssignableTo<Muonroi.Core.Abstractions.Exceptions.MException>();
+        ex.Category.Should().Be(Muonroi.Core.Abstractions.Exceptions.MExceptionCategory.Domain);
     }
 }

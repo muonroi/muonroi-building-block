@@ -8,6 +8,16 @@ public class TenantContext : ITenantContext
     private static readonly AsyncLocal<string?> _currentTenantId = new();
 
     /// <summary>
+    /// When true, EF global query filters for ITenantScoped entities are bypassed.
+    /// Delegates to the main TenantContext.AllowCrossTenantAccess.
+    /// </summary>
+    public static bool AllowCrossTenantAccess
+    {
+        get => Muonroi.Tenancy.Core.TenantContext.AllowCrossTenantAccess;
+        set => Muonroi.Tenancy.Core.TenantContext.AllowCrossTenantAccess = value;
+    }
+
+    /// <summary>
     /// Gets or sets the tenant identifier for the current asynchronous flow.
     /// </summary>
     public string? TenantId

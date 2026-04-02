@@ -7,10 +7,10 @@ namespace Muonroi.Tenancy.SiteProfile;
 /// The generator emits DbContext registration and behavior Apply() calls.
 /// Consumer can add additional registrations via the generated partial void RegisterAdditionalServices().
 /// <code>
-/// [GenerateSiteProfile("TCI", typeof(TciOrderContext))]
-/// public partial class TciSiteProfile : ISiteProfile
+/// [GenerateSiteProfile("SiteA", typeof(SiteADbContext))]
+/// public partial class SiteASiteProfile : ISiteProfile
 /// {
-///     public string SiteId => "TCI";
+///     public string SiteId => "SiteA";
 ///     // RegisterServices() is generated — add custom registrations in another partial file
 /// }
 /// </code>
@@ -36,7 +36,7 @@ public sealed class GenerateSiteProfileAttribute : Attribute
     /// <summary>
     /// Creates a GenerateSiteProfile attribute.
     /// </summary>
-    /// <param name="siteId">Site identifier string (e.g., "TCI").</param>
+    /// <param name="siteId">Site identifier string (e.g., "SiteA").</param>
     /// <param name="dbContextType">DbContext type for this site.</param>
     public GenerateSiteProfileAttribute(string siteId, Type dbContextType)
     {

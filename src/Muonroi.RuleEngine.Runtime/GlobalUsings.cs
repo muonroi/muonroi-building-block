@@ -20,7 +20,7 @@ global using Muonroi.RuleEngine.Core.Tracing;
 global using Muonroi.RuleEngine.DecisionTable;
 global using Muonroi.RuleEngine.DecisionTable.Stores;
 global using Muonroi.RuleEngine.Runtime.Adapters;
-global using Muonroi.Rules.Feel;
+global using Muonroi.RuleEngine.DecisionTable.Feel;
 global using DecisionTableModel = Muonroi.RuleEngine.DecisionTable.Models.DecisionTable;
 global using System.Collections.Immutable;
 global using RulesEngine.Models;

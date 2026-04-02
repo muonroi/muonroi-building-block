@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <IsMuonroiTestProject>true</IsMuonroiTestProject>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Tenancy.SiteProfile.Web\Muonroi.Tenancy.SiteProfile.Web.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Logging\Muonroi.Logging.csproj" />
+    <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Default\TestProject.Service.Sites.Default.csproj" />
+    <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Alpha\TestProject.Service.Sites.Alpha.csproj" />
+    <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Bravo\TestProject.Service.Sites.Bravo.csproj" />
+    <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Sites.Charlie\TestProject.Service.Sites.Charlie.csproj" />
+    <ProjectReference Include="..\TestProject.Service\src\TestProject.Service.Core\TestProject.Service.Core.csproj" />
+  </ItemGroup>
+</Project>

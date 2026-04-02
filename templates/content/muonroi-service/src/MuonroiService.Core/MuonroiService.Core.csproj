@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile" Version="1.0.0-alpha.9" />
+<!--#if (isService || isTos) -->
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.Grpc" Version="1.0.0-alpha.9" />
+<!--#endif -->
+<!--#if (isEf) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.*" />
+<!--#endif -->
+<!--#if (isDapper) -->
+    <PackageReference Include="Autofac" Version="8.2.0" />
+<!--#endif -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>

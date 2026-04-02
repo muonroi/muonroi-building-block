@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
+using Muonroi.Caching.Abstractions.Distributed;
 
 namespace Muonroi.Bff.Tests;
 
@@ -25,7 +26,7 @@ public class RedisTokenStoreTests
     [Fact]
     public async Task StoreRefreshTokenAsync_ShouldUseConfiguredTtlAndTrimmedKey()
     {
-        TestDistributedCache cache = new();
+        TestCacheService cache = new();
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -36,14 +37,18 @@ public class RedisTokenStoreTests
 
         await store.StoreRefreshTokenAsync("  subject-a  ", "token-1");
 
+        // The RedisTokenStore implementation passes "subject-a" as key and "bff:refresh" as namespace
+        // Our TestCacheService joins them as "bff:refresh:subject-a"
+        Assert.True(cache.Values.ContainsKey("bff:refresh:subject-a"), $"Key not found. Available keys: {string.Join(", ", cache.Values.Keys)}");
         Assert.Equal("token-1", cache.Values["bff:refresh:subject-a"]);
+        Assert.Equal("bff:refresh", cache.LastOptions?.KeyNamespace);
         Assert.Equal(TimeSpan.FromMinutes(5), cache.LastOptions?.AbsoluteExpirationRelativeToNow);
     }
 
     [Fact]
     public async Task GetAndRemoveRefreshTokenAsync_ShouldHandleBlankSubjects()
     {
-        TestDistributedCache cache = new();
+        TestCacheService cache = new();
         RedisTokenStore store = new(cache);
 
         string? missing = await store.GetRefreshTokenAsync(" ");
@@ -56,29 +61,36 @@ public class RedisTokenStoreTests
     [Fact]
     public async Task StoreRefreshTokenAsync_WithBlankSubject_ShouldThrow()
     {
-        RedisTokenStore store = new(new TestDistributedCache());
+        RedisTokenStore store = new(new TestCacheService());
 
         await Assert.ThrowsAsync<ArgumentException>(() => store.StoreRefreshTokenAsync(" ", "token"));
     }
 
-    private sealed class TestDistributedCache : IDistributedCache
+    private sealed class TestCacheService : IMCacheService
     {
-        public Dictionary<string, string> Values { get; } = new(StringComparer.Ordinal);
-        public DistributedCacheEntryOptions? LastOptions { get; private set; }
+        public Dictionary<string, object> Values { get; } = new(StringComparer.Ordinal);
+        public CacheEntryOptions? LastOptions { get; private set; }
         public string? LastRemovedKey { get; private set; }
 
-        public byte[]? Get(string key)
+        public Task<T?> GetAsync<T>(string key, CancellationToken token = default)
         {
-            return Values.TryGetValue(key, out string? value) ? System.Text.Encoding.UTF8.GetBytes(value) : null;
+            if (Values.TryGetValue(key, out var value)) return Task.FromResult((T?)value);
+            return Task.FromResult<T?>(default);
         }
 
-        public Task<byte[]?> GetAsync(string key, CancellationToken token = default)
+        public Task SetAsync<T>(string key, T value, CacheEntryOptions? options = null, CancellationToken token = default)
         {
-            return Task.FromResult(Get(key));
+            LastOptions = options;
+            string finalKey = string.IsNullOrEmpty(options?.KeyNamespace) ? key : $"{options.KeyNamespace}:{key}";
+            Values[finalKey] = value!;
+            return Task.CompletedTask;
         }
 
-        public void Refresh(string key)
+        public Task RemoveAsync(string key, CancellationToken token = default)
         {
+            LastRemovedKey = key;
+            Values.Remove(key);
+            return Task.CompletedTask;
         }
 
         public Task RefreshAsync(string key, CancellationToken token = default)
@@ -86,28 +98,9 @@ public class RedisTokenStoreTests
             return Task.CompletedTask;
         }
 
-        public void Remove(string key)
+        public Task<T?> GetOrSetAsync<T>(string key, Func<Task<T?>> factory, CacheEntryOptions? options = null, CancellationToken token = default) where T : class
         {
-            LastRemovedKey = key;
-            Values.Remove(key);
-        }
-
-        public Task RemoveAsync(string key, CancellationToken token = default)
-        {
-            Remove(key);
-            return Task.CompletedTask;
-        }
-
-        public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
-        {
-            Values[key] = System.Text.Encoding.UTF8.GetString(value);
-            LastOptions = options;
-        }
-
-        public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default)
-        {
-            Set(key, value, options);
-            return Task.CompletedTask;
+            return factory();
         }
     }
 }

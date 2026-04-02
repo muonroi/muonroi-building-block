@@ -25,6 +25,7 @@
     <ProjectReference Include="..\Muonroi.Governance.Abstractions\Muonroi.Governance.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Governance\Muonroi.Governance.csproj" />
     <ProjectReference Include="..\Muonroi.Http\Muonroi.Http.csproj" />
+    <ProjectReference Include="..\Muonroi.AspNetCore.OpenApi\Muonroi.AspNetCore.OpenApi.csproj" />
     <ProjectReference Include="..\Muonroi.BackgroundJobs.Abstractions\Muonroi.BackgroundJobs.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>

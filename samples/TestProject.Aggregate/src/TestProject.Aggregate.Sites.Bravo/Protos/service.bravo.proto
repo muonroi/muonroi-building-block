@@ -1,0 +1,37 @@
+// Per-site proto for Bravo.
+// Bravo has completely different RPC contract using per-site proto pattern.
+// Imports shared.proto for reusable SharedContainerInfo message.
+// The .targets file (Muonroi.Tenancy.SiteProfile.Grpc.targets) auto-sets AdditionalImportDirs.
+
+syntax = "proto3";
+
+import "shared.proto";
+
+option csharp_namespace = "TestProject.Aggregate.Sites.Bravo.Protos";
+
+package TestProject.Aggregate.Sites.Bravo.v1;
+
+service BravoAggregateRpc {
+  rpc HandleWithValidation (BravoHandleRequest) returns (BravoHandleReply);
+  rpc GetBravoContainers (BravoListRequest) returns (BravoListReply);
+}
+
+message BravoHandleRequest {
+  string container_no = 1;
+  string iso_code = 2;
+  string customs_ref = 3;
+}
+
+message BravoHandleReply {
+  bool success = 1;
+  string message = 2;
+}
+
+message BravoListRequest {
+  string bill_no = 1;
+}
+
+message BravoListReply {
+  repeated TestProject.Aggregate.v1.SharedContainerInfo items = 1;
+  int32 total = 2;
+}

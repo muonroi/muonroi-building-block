@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Not a test project — disable test SDK injection from Directory.Build.props -->
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+    <!-- Set shared proto dir so that Host service.proto can import "shared.proto" -->
+    <MuonroiSharedProtoDir>$(MSBuildProjectDirectory)\..\..\v1\Protos\</MuonroiSharedProtoDir>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" />
+    <PackageReference Include="Muonroi.Tenancy.SiteProfile.Grpc" />
+    <PackageReference Include="Muonroi.Data.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestProject.Service.Core\TestProject.Service.Core.csproj" />
+    <ProjectReference Include="..\TestProject.Service.Sites.Default\TestProject.Service.Sites.Default.csproj" />
+    <ProjectReference Include="..\TestProject.Service.Sites.Alpha\TestProject.Service.Sites.Alpha.csproj" />
+    <ProjectReference Include="..\TestProject.Service.Sites.Bravo\TestProject.Service.Sites.Bravo.csproj" />
+    <ProjectReference Include="..\TestProject.Service.Sites.Charlie\TestProject.Service.Sites.Charlie.csproj" />
+    <!-- Source project reference needed because Charlie uses [SiteProfileAlias] added in plan 04 (not yet in NuGet) -->
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shared service proto — imports shared.proto (AdditionalImportDirs auto-set via .targets) -->
+    <Protobuf Include="v1\Protos\service.proto" GrpcServices="Server" />
+  </ItemGroup>
+
+</Project>

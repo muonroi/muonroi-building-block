@@ -83,7 +83,7 @@
   <!-- Package version: single source of truth — bump here to release all packages -->
   <PropertyGroup>
     <VersionPrefix>1.0.0</VersionPrefix>
-    <VersionSuffix>alpha.7</VersionSuffix>
+    <VersionSuffix>alpha.9</VersionSuffix>
   </PropertyGroup>
 
   <!-- Version governance: TFM-conditional versions for framework-coupled packages -->

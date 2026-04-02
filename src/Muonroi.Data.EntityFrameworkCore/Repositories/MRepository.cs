@@ -11,6 +11,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
     private readonly IAuthenticateInfoContext _authContext;
     private readonly ILicenseGuard _licenseGuard;
     private readonly IMDateTimeService _dateTimeService;
+    private readonly IMLog<MRepository<T>>? _logger;
     /// <summary>
     /// The base database context.
     /// </summary>
@@ -61,13 +62,15 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
     /// <param name="authContext">The authentication information context.</param>
     /// <param name="licenseGuard">The license guard.</param>
     /// <param name="dateTimeService">The date time service.</param>
+    /// <param name="logger">The logger.</param>
     /// <exception cref="ArgumentNullException">Thrown when any of the parameters are null.</exception>
-    public MRepository(MDbContext dbContext, IAuthenticateInfoContext authContext, ILicenseGuard licenseGuard, IMDateTimeService dateTimeService)
+    public MRepository(MDbContext dbContext, IAuthenticateInfoContext authContext, ILicenseGuard licenseGuard, IMDateTimeService dateTimeService, IMLog<MRepository<T>>? logger = null)
     {
         _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
         DbBaseContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _licenseGuard = licenseGuard ?? throw new ArgumentNullException(nameof(licenseGuard));
         _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+        _logger = logger;
         DbSet = DbBaseContext.Set<T>();
     }
 
@@ -551,11 +554,17 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
     /// <param name="parameters">The parameters for the stored procedure.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the number of rows affected.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="storedProcedureName"/> is null or empty.</exception>
+    [Obsolete("Raw SQL bypasses EF tenant query filters. Use the overload with explicit tenantId parameter, or ensure TenantContext.CurrentTenantId is set.")]
     public virtual async Task<int> ExecuteStoredProcedureAsync(string storedProcedureName, params object[] parameters)
     {
         if (string.IsNullOrWhiteSpace(storedProcedureName))
         {
             throw new ArgumentException("Stored procedure name is not null or empty.", nameof(storedProcedureName));
+        }
+
+        if (string.IsNullOrEmpty(TenantContext.CurrentTenantId) && !TenantContext.AllowCrossTenantAccess)
+        {
+            _logger?.LogWarning("[SAFE-10] Raw SQL execution '{StoredProcedureName}' without TenantContext. Set CurrentTenantId or AllowCrossTenantAccess.", storedProcedureName);
         }
 
         string commandText = $"EXEC {storedProcedureName}";
@@ -572,12 +581,18 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
     /// <param name="parameters">The parameters for the stored procedure.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the scalar value returned by the stored procedure.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="storedProcedureName"/> is null or empty.</exception>
+    [Obsolete("Raw SQL bypasses EF tenant query filters. Use the overload with explicit tenantId parameter, or ensure TenantContext.CurrentTenantId is set.")]
     public virtual async Task<TResult> ExecuteStoredProcedureScalarAsync<TResult>(string storedProcedureName,
         params object[]? parameters)
     {
         if (string.IsNullOrWhiteSpace(storedProcedureName))
         {
             throw new ArgumentException("Stored procedure name is not null or empty.", nameof(storedProcedureName));
+        }
+
+        if (string.IsNullOrEmpty(TenantContext.CurrentTenantId) && !TenantContext.AllowCrossTenantAccess)
+        {
+            _logger?.LogWarning("[SAFE-10] Raw SQL scalar execution '{StoredProcedureName}' without TenantContext. Set CurrentTenantId or AllowCrossTenantAccess.", storedProcedureName);
         }
 
         using System.Data.Common.DbCommand command = DbBaseContext.Database.GetDbConnection().CreateCommand();

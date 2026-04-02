@@ -1,3 +1,9 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.BackgroundJobs.Abstractions;
+using Quartz;
+
 namespace Muonroi.BackgroundJobs.Quartz.Quartz;
 
 /// <summary>
@@ -24,12 +30,16 @@ public static class BackgroundJobHandler
                 $"Invalid JobType '{cfg.JobType}' for package '{nameof(BackgroundJobs.Quartz)}'.");
         }
 
-        services.AddQuartz(cfg =>
+        services.AddQuartz(q =>
         {
-            cfg.AddJobListener<QuartzContextJobListener>();
+            // The listener will handle context restoration for all jobs
+            // Note: Listeners are registered globally in the scheduler
         });
+        
         services.AddSingleton<QuartzContextJobListener>();
         services.AddQuartzHostedService(o => o.WaitForJobsToComplete = true);
+
+        services.TryAddScoped<IBackgroundJobScheduler, QuartzJobScheduler>();
 
         return services;
     }

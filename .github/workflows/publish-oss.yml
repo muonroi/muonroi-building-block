@@ -1,4 +1,7 @@
-name: Publish OSS NuGet Packages
+# DEPRECATED: This workflow is superseded by publish-all.yml
+# which publishes ALL packages (OSS + Commercial) with a single unified version.
+# Kept for reference only. Use tag prefix "v*" with publish-all.yml instead of "oss-v*".
+name: "[DEPRECATED] Publish OSS NuGet Packages"
 
 on:
   push:
@@ -119,6 +122,26 @@ jobs:
             "src/Muonroi.Diagnostics"
             "src/Muonroi.Services.Abstractions"
             "src/Muonroi.Rules"
+            "src/Muonroi.Tenancy.SiteProfile.Grpc"
+            "src/Muonroi.AspNetCore.RuleEngine"
+            "src/Muonroi.BackgroundJobs.Hangfire"
+            "src/Muonroi.BackgroundJobs.Quartz"
+            "src/Muonroi.Bff"
+            "src/Muonroi.BuildingBlock.All"
+            "src/Muonroi.Caching.Redis"
+            "src/Muonroi.Data.EntityFrameworkCore.Events"
+            "src/Muonroi.Grpc"
+            "src/Muonroi.Kubernetes"
+            "src/Muonroi.Messaging.MassTransit"
+            "src/Muonroi.Secrets"
+            "src/Muonroi.ServiceDiscovery.Consul"
+            "src/Muonroi.SignalR"
+            "src/Muonroi.RuleEngine.DecisionTable.Web"
+            "src/Muonroi.RuleEngine.Runtime"
+            "src/Muonroi.RuleEngine.Runtime.Web"
+            "src/Muonroi.RuleEngine.Proliferation"
+            "src/Muonroi.RuleEngine.Proliferation.Persistence"
+            "src/Muonroi.UiEngine.Catalog"
           )
 
           for proj in "${OSS_PROJECTS[@]}"; do
@@ -129,6 +152,14 @@ jobs:
             echo "Packing $proj..."
             dotnet pack "$proj" $PACK_ARGS
           done
+
+          # Template pack (PackageType=Template — separate from library packages)
+          TEMPLATE_PACK_ARGS="-c Release -o $ARTIFACTS_DIR"
+          if [ -n "${PACKAGE_VERSION:-}" ]; then
+            TEMPLATE_PACK_ARGS="$TEMPLATE_PACK_ARGS -p:PackageVersion=$PACKAGE_VERSION"
+          fi
+          echo "Packing Host.Tenant.Templates..."
+          dotnet pack "templates/Muonroi.Templates.csproj" $TEMPLATE_PACK_ARGS
 
       - name: List artifacts
         run: ls -la ./artifacts/oss/

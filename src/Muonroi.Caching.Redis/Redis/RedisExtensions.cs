@@ -1,7 +1,17 @@
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.Caching.Abstractions.Distributed;
 using Muonroi.Caching.Redis.Routing;
 using Muonroi.Core.Abstractions.Configuration;
 using Muonroi.Governance.Abstractions.License;
+using Muonroi.Tenancy.Core;
+using StackExchange.Redis;
 
 namespace Muonroi.Caching.Redis.Redis;
 
@@ -17,7 +27,7 @@ public static class RedisExtensions
     private const string layerDistributed = "distributed";
 
     /// <summary>
-    /// Registers Redis distributed cache services.
+    /// Registers Redis distributed cache services and the integrated <see cref="IMCacheService"/>.
     /// </summary>
     /// <param name="services">Service collection to update.</param>
     /// <param name="configuration">Configuration source.</param>
@@ -84,6 +94,9 @@ public static class RedisExtensions
             option.ConfigurationOptions = configurationOptions;
         });
         services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(configurationOptions));
+        
+        // Register the ecosystem-integrated cache service
+        services.TryAddSingleton<IMCacheService, RedisCacheService>();
 
         return services;
     }

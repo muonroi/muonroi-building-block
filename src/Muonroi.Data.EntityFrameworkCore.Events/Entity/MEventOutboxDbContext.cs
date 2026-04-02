@@ -23,6 +23,11 @@ public class MEventOutboxDbContext(
     /// </summary>
     public DbSet<EventOutbox> OutboxEvents => Set<EventOutbox>();
 
+    /// <summary>
+    /// Gets the message inbox set.
+    /// </summary>
+    public DbSet<MessageInbox> MessageInbox => Set<MessageInbox>();
+
     IQueryable<EventOutbox> IEventOutboxStore.EventOutboxes => OutboxEvents.AsQueryable();
 
     /// <summary>
@@ -56,6 +61,13 @@ public class MEventOutboxDbContext(
             entity.Property(x => x.EventContent).HasColumnType("nvarchar(max)");
             entity.HasIndex(x => x.Status);
             entity.HasIndex(x => x.CreationTime);
+        });
+
+        modelBuilder.Entity<MessageInbox>(entity =>
+        {
+            entity.ToTable("MessageInbox");
+            entity.HasKey(x => x.MessageId);
+            entity.Property(x => x.ConsumerName).HasMaxLength(256);
         });
     }
 }

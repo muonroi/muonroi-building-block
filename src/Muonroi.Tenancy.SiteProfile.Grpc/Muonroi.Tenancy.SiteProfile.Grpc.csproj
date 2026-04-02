@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>Muonroi.Tenancy.SiteProfile.Grpc</PackageId>
+    <Authors>Muon Roi</Authors>
+    <Description>gRPC site resolution interceptor for multi-site services. Extracts SiteCode from gRPC metadata and resolves ISiteProfile per request.</Description>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Muonroi.Tenancy.SiteProfile.Grpc.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Muonroi.Tenancy.SiteProfile\Muonroi.Tenancy.SiteProfile.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore.Server" />
+    <PackageReference Include="Grpc.Net.ClientFactory" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Pack .targets file into NuGet build/ folder.
+         NuGet convention: build/{PackageId}.targets is auto-imported by all consumers on restore. -->
+    <None Include="build\Muonroi.Tenancy.SiteProfile.Grpc.targets" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+</Project>

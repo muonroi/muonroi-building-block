@@ -1,11 +1,10 @@
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using Muonroi.Logging.Abstractions;
+global using Muonroi.Observability.OpenTelemetry;
 global using Polly;
-global using Polly.Retry;
 global using Polly.CircuitBreaker;
-global using Polly.Timeout;
+global using Polly.Retry;
 global using System;
 global using System.Collections.Generic;
-global using System.Linq;
-global using System.Threading;
-global using System.Threading.Tasks;
