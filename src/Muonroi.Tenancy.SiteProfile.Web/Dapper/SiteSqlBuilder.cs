@@ -64,7 +64,24 @@ public sealed partial class SiteSqlBuilder
     /// <param name="propertyNames">The C# property names to select. Must not be empty.</param>
     /// <returns>Complete SQL SELECT statement.</returns>
     public string SelectFrom(string tableName, params string[] propertyNames)
-        => $"SELECT {Select(propertyNames)} FROM {tableName}";
+    {
+        if (propertyNames.Length == 0)
+            throw new ArgumentException("At least one property name required.", nameof(propertyNames));
+
+        var filtered = propertyNames.Where(p => _columnMap.HasColumn(p)).ToArray();
+        if (filtered.Length == 0)
+            throw new ArgumentException(
+                "All property names were filtered out by HasColumn. At least one column must be selectable.",
+                nameof(propertyNames));
+
+        var cols = string.Join(", ", filtered.Select(p =>
+        {
+            string columnName = _columnMap.Column(p, tableName);
+            ColumnNameValidator.EnsureValidIdentifier(columnName, p);
+            return $"{columnName} AS {p}";
+        }));
+        return $"SELECT {cols} FROM {tableName}";
+    }
 
     /// <summary>
     /// Generates a comma-separated column list that includes both base properties (filtered
@@ -114,11 +131,38 @@ public sealed partial class SiteSqlBuilder
     /// <param name="propertyNames">The base C# property names to select.</param>
     /// <returns>Complete SQL SELECT statement with extras.</returns>
     public string SelectFromWithExtras(string tableName, params string[] propertyNames)
-        => $"SELECT {SelectWithExtras(propertyNames)} FROM {tableName}";
+    {
+        if (propertyNames.Length == 0)
+            throw new ArgumentException("At least one property name required.", nameof(propertyNames));
+
+        var baseCols = propertyNames
+            .Where(p => _columnMap.HasColumn(p))
+            .Select(p =>
+            {
+                string columnName = _columnMap.Column(p, tableName);
+                ColumnNameValidator.EnsureValidIdentifier(columnName, p);
+                return $"{columnName} AS {p}";
+            });
+
+        var extraCols = _columnMap.ExtraColumns
+            .Select(e =>
+            {
+                ColumnNameValidator.EnsureValidIdentifier(e.ColumnName, e.PropertyName);
+                return $"{e.ColumnName} AS {e.PropertyName}";
+            });
+
+        var all = baseCols.Concat(extraCols).ToArray();
+        if (all.Length == 0)
+            throw new ArgumentException(
+                "No columns available: all base properties filtered and no extra columns defined.",
+                nameof(propertyNames));
+
+        return $"SELECT {string.Join(", ", all)} FROM {tableName}";
+    }
 
     /// <summary>
     /// Returns the site-specific column name for a C# property.
-    /// Convenience wrapper for <see cref="ISiteColumnMap.Column"/> — useful in
+    /// Convenience wrapper for <see cref="ISiteColumnMap.Column(string)"/> — useful in
     /// WHERE/JOIN clauses where <see cref="Interpolate"/> cannot auto-detect columns.
     /// </summary>
     /// <param name="propertyName">The C# property name (e.g., "BookingNo").</param>
@@ -126,6 +170,36 @@ public sealed partial class SiteSqlBuilder
     public string Col(string propertyName)
     {
         string columnName = _columnMap.Column(propertyName);
+        ColumnNameValidator.EnsureValidIdentifier(columnName, propertyName);
+        return columnName;
+    }
+
+    /// <summary>
+    /// Returns the site-specific column name for a C# property within a specific table.
+    /// Use when the same property maps differently across tables.
+    /// </summary>
+    /// <param name="propertyName">The C# property name (e.g., "BookingNo").</param>
+    /// <param name="tableName">The database table name providing context for the mapping.</param>
+    /// <returns>The database column name for this property in this specific table.</returns>
+    public string Col(string propertyName, string tableName)
+    {
+        string columnName = _columnMap.Column(propertyName, tableName);
+        ColumnNameValidator.EnsureValidIdentifier(columnName, propertyName);
+        return columnName;
+    }
+
+    /// <summary>
+    /// Returns the site-specific column name within a table context if the column exists,
+    /// or <c>null</c> if removed via <see cref="ISiteColumnMap.HasColumn"/>.
+    /// </summary>
+    /// <param name="propertyName">The C# property name to check.</param>
+    /// <param name="tableName">The database table name providing context for the mapping.</param>
+    /// <returns>The database column name, or <c>null</c> if the column doesn't exist for this site.</returns>
+    public string? ColOrNull(string propertyName, string tableName)
+    {
+        if (!_columnMap.HasColumn(propertyName))
+            return null;
+        string columnName = _columnMap.Column(propertyName, tableName);
         ColumnNameValidator.EnsureValidIdentifier(columnName, propertyName);
         return columnName;
     }

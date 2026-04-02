@@ -623,8 +623,109 @@ public class SiteSqlBuilderTests
     }
 
     // -----------------------------------------------------------------------
+    // Per-entity column resolution — Column(propertyName, tableName)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void SelectFrom_WithPerEntityMap_UsesTableSpecificColumn()
+    {
+        var builder = new SiteSqlBuilder(new PerEntityColumnMap());
+
+        string result = builder.SelectFrom("ORDER_DETAIL", "BookingNo");
+
+        Assert.Equal("SELECT TCI_BOOKING_EXT AS BookingNo FROM ORDER_DETAIL", result);
+    }
+
+    [Fact]
+    public void SelectFrom_WithPerEntityMap_DifferentTable_UsesGlobalFallback()
+    {
+        var builder = new SiteSqlBuilder(new PerEntityColumnMap());
+
+        string result = builder.SelectFrom("CHART_DATA", "BookingNo");
+
+        // Global fallback: BookingNo → BOOKING_NO (default convention)
+        Assert.Equal("SELECT BOOKING_NO AS BookingNo FROM CHART_DATA", result);
+    }
+
+    [Fact]
+    public void SelectFrom_WithDefaultMap_StillWorks()
+    {
+        // Backward compatibility regression test
+        var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
+
+        string result = builder.SelectFrom("MY_TABLE", "BookingNo");
+
+        Assert.Equal("SELECT BOOKING_NO AS BookingNo FROM MY_TABLE", result);
+    }
+
+    [Fact]
+    public void Col_WithTableName_UsesPerEntityResolution()
+    {
+        var builder = new SiteSqlBuilder(new PerEntityColumnMap());
+
+        string result = builder.Col("BookingNo", "ORDER_DETAIL");
+
+        Assert.Equal("TCI_BOOKING_EXT", result);
+    }
+
+    [Fact]
+    public void ColOrNull_WithTableName_UsesPerEntityResolution()
+    {
+        var builder = new SiteSqlBuilder(new PerEntityColumnMap());
+
+        Assert.Equal("TCI_BOOKING_EXT", builder.ColOrNull("BookingNo", "ORDER_DETAIL"));
+        Assert.Null(builder.ColOrNull("NonExistent", "ORDER_DETAIL"));
+    }
+
+    [Fact]
+    public void SelectFromWithExtras_WithPerEntityMap_PassesTableName()
+    {
+        var builder = new SiteSqlBuilder(new PerEntityWithExtrasColumnMap());
+
+        string result = builder.SelectFromWithExtras("ORDER_DETAIL", "BookingNo");
+
+        Assert.Equal("SELECT TCI_BOOKING_EXT AS BookingNo, TRACKING_REF AS TrackingRef FROM ORDER_DETAIL", result);
+    }
+
+    // -----------------------------------------------------------------------
     // Helper test implementations
     // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Per-entity column map: BookingNo in ORDER_DETAIL → TCI_BOOKING_EXT,
+    /// all other tables fall back to global convention (BOOKING_NO).
+    /// </summary>
+    private sealed class PerEntityColumnMap : DefaultSiteColumnMap
+    {
+        public override string Column(string propertyName, string tableName)
+            => (propertyName, tableName) switch
+            {
+                ("BookingNo", "ORDER_DETAIL") => "TCI_BOOKING_EXT",
+                _ => base.Column(propertyName)
+            };
+
+        public override bool HasColumn(string propertyName) => propertyName != "NonExistent";
+    }
+
+    /// <summary>
+    /// Per-entity map with extra columns for SelectFromWithExtras tests.
+    /// </summary>
+    private sealed class PerEntityWithExtrasColumnMap : DefaultSiteColumnMap
+    {
+        private static readonly SiteExtraColumn[] s_extras =
+        [
+            new("TrackingRef", "TRACKING_REF", typeof(string)),
+        ];
+
+        public override string Column(string propertyName, string tableName)
+            => (propertyName, tableName) switch
+            {
+                ("BookingNo", "ORDER_DETAIL") => "TCI_BOOKING_EXT",
+                _ => base.Column(propertyName)
+            };
+
+        public override IReadOnlyList<SiteExtraColumn> ExtraColumns => s_extras;
+    }
 
     private sealed class CustomBookingColumnMap : DefaultSiteColumnMap
     {

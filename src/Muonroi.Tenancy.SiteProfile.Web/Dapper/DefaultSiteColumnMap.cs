@@ -22,6 +22,10 @@ public class DefaultSiteColumnMap : ISiteColumnMap
     public virtual string Column(string propertyName)
         => ToUpperSnakeCase(propertyName);
 
+    /// <inheritdoc cref="ISiteColumnMap.Column(string, string)"/>
+    public virtual string Column(string propertyName, string tableName)
+        => Column(propertyName);
+
     /// <inheritdoc cref="ISiteColumnMap.HasColumn"/>
     public virtual bool HasColumn(string propertyName) => true;
 

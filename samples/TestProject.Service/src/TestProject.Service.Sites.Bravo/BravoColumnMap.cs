@@ -31,6 +31,16 @@ public sealed class BravoColumnMap : DefaultSiteColumnMap
     };
 
     /// <inheritdoc />
+    public override string Column(string propertyName, string tableName)
+        => (propertyName, tableName) switch
+        {
+            // BRAVO stores BookingNo differently in ORDER_DETAIL vs other tables
+            ("BookingNo", "ORDER_DETAIL") => "BRAVO_ORDER_BKG",
+            ("BookingNo", _) => "BOOKING_NUMBER",  // global BRAVO override
+            _ => base.Column(propertyName)
+        };
+
+    /// <inheritdoc />
     public override bool HasColumn(string propertyName) => propertyName != "LegacyField";
 
     /// <inheritdoc />
