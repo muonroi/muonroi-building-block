@@ -131,24 +131,35 @@ public static class SiteProfileExtensions
         var profileMap = new Dictionary<string, ISiteProfile>(StringComparer.OrdinalIgnoreCase);
         var errors = new List<(string siteId, Exception ex)>();
 
-        foreach (var profile in profiles)
+        // Set ambient logger for SiteProfileBootstrap (called inside RegisterServices).
+        // Avoids BuildServiceProvider() anti-pattern — DI registration is single-threaded.
+        var previousLog = SiteProfileBootstrap.CurrentLog;
+        SiteProfileBootstrap.CurrentLog = diagnosticLog;
+        try
         {
-            profileMap[profile.SiteId] = profile;
-
-            try
+            foreach (var profile in profiles)
             {
-                profile.RegisterServices(services, configuration);
-            }
-            catch (Exception ex)
-            {
-                diagnosticLog?.Warn(
-                    "[SiteProfile] Site '{SiteId}' failed to register services: {Message}",
-                    profile.SiteId, ex.Message);
-                s_tracker.RecordRegistrationFailure(profile.SiteId, ex);
-                errors.Add((profile.SiteId, ex));
-            }
+                profileMap[profile.SiteId] = profile;
 
-            s_tracker.RecordSiteId(profile.SiteId);
+                try
+                {
+                    profile.RegisterServices(services, configuration);
+                }
+                catch (Exception ex)
+                {
+                    diagnosticLog?.Warn(
+                        "[SiteProfile] Site '{SiteId}' failed to register services: {Message}",
+                        profile.SiteId, ex.Message);
+                    s_tracker.RecordRegistrationFailure(profile.SiteId, ex);
+                    errors.Add((profile.SiteId, ex));
+                }
+
+                s_tracker.RecordSiteId(profile.SiteId);
+            }
+        }
+        finally
+        {
+            SiteProfileBootstrap.CurrentLog = previousLog;
         }
 
         // Register all profiles as singletons (for diagnostics / enumeration)

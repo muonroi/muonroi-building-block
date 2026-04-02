@@ -17,6 +17,14 @@ public static class SiteProfileBootstrap
 {
     private static readonly MethodInfo? s_addSiteDbContextMethod;
 
+    /// <summary>
+    /// Ambient logger set by <see cref="SiteProfileExtensions.AddMultiSiteProfilesCore"/> before
+    /// calling <c>RegisterServices()</c> on each profile. Avoids <c>BuildServiceProvider()</c>
+    /// anti-pattern inside DI registration. Null-safe — if not set, no logging occurs.
+    /// <para>Thread-safe: DI registration is single-threaded by design.</para>
+    /// </summary>
+    internal static IMLog? CurrentLog { get; set; }
+
     static SiteProfileBootstrap()
     {
         // Resolve AddSiteDbContext<TContext>(IServiceCollection) via reflection to avoid hard dependency on Web package.
@@ -39,6 +47,11 @@ public static class SiteProfileBootstrap
     /// <summary>
     /// Registers per-site services: DbContext (via AddSiteDbContext&lt;T&gt;) and behavior composition.
     /// Called from generated partial RegisterServices() method.
+    /// <para>
+    /// Logging uses <see cref="CurrentLog"/> (set by AddMultiSiteProfilesCore before calling RegisterServices).
+    /// Does NOT call <c>BuildServiceProvider()</c> — avoids the anti-pattern of creating temporary
+    /// ServiceProvider instances during DI registration.
+    /// </para>
     /// </summary>
     /// <param name="siteId">The site identifier.</param>
     /// <param name="dbContextType">The DbContext type, or null if SkipDbContextRegistration.</param>
@@ -54,9 +67,7 @@ public static class SiteProfileBootstrap
         IConfiguration configuration,
         bool skipDbContext = false)
     {
-        var log = services.BuildServiceProvider()
-            .GetService<IMLogFactory>()
-            ?.CreateLogger($"Muonroi.SiteProfile.AOT.Bootstrap.{siteId}");
+        var log = CurrentLog;
 
         log?.Info("[SiteProfile-AOT] RegisterSiteServices — begin (site: {SiteId})", siteId);
 
