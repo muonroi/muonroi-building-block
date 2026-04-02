@@ -2,6 +2,7 @@ namespace Muonroi.BackgroundJobs.Abstractions;
 
 /// <summary>
 /// Base class for background jobs that executes inside a canonical Muonroi system context.
+/// Relies on <see cref="ISystemExecutionContextAccessor"/> and automated filters to restore state.
 /// </summary>
 /// <param name="executionContextAccessor">Accessor for the ambient execution context.</param>
 /// <param name="tenantContextPolicy">Policy used to validate tenant context.</param>
@@ -9,8 +10,8 @@ public abstract class TenantAwareJobBase(
     ISystemExecutionContextAccessor executionContextAccessor,
     ITenantContextPolicy tenantContextPolicy)
 {
-    private readonly ISystemExecutionContextAccessor _executionContextAccessor = executionContextAccessor;
-    private readonly ITenantContextPolicy _tenantContextPolicy = tenantContextPolicy;
+    protected readonly ISystemExecutionContextAccessor ExecutionContextAccessor = executionContextAccessor;
+    protected readonly ITenantContextPolicy TenantContextPolicy = tenantContextPolicy;
 
     /// <summary>
     /// Executes the job logic.
@@ -19,27 +20,28 @@ public abstract class TenantAwareJobBase(
     protected abstract Task ExecuteAsync();
 
     /// <summary>
-    /// Entry point for background schedulers. Context is restored before execution.
+    /// Entry point for background schedulers. Context is automatically restored by engine-specific filters.
+    /// This method ensures a safe execution scope is present if not already established.
     /// </summary>
     /// <param name="executionContext">The job execution context.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    protected async Task RunAsync(IMuonroiJobExecutionContext executionContext)
+    public virtual async Task RunAsync(IMuonroiJobExecutionContext executionContext)
     {
         _ = executionContext ?? throw new ArgumentNullException(nameof(executionContext));
-        ISystemExecutionContext resolved = _tenantContextPolicy.ResolveAndValidate(executionContext);
-        try
+
+        // If context is already restored by a filter (e.g. Hangfire/Quartz Listener), 
+        // we just execute. Otherwise, we establish a local scope.
+        var currentContext = ExecutionContextAccessor.Get();
+        if (currentContext != null && 
+            currentContext.CorrelationId == executionContext.CorrelationId)
         {
-            using SystemExecutionContextScope scope = new(_executionContextAccessor, resolved);
-            TenantContext.CurrentTenantId = resolved.TenantId;
-            UserContext.CurrentUserGuid = resolved.UserId;
-            UserContext.CurrentUsername = resolved.Username;
             await ExecuteAsync();
+            return;
         }
-        finally
-        {
-            TenantContext.CurrentTenantId = null;
-            UserContext.CurrentUserGuid = null;
-            UserContext.CurrentUsername = null;
-        }
+
+        ISystemExecutionContext resolved = TenantContextPolicy.ResolveAndValidate(executionContext);
+        using SystemExecutionContextScope scope = new(ExecutionContextAccessor, resolved);
+        
+        await ExecuteAsync();
     }
 }

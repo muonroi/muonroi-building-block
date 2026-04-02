@@ -24,6 +24,7 @@ public class AuthServiceTests
     private readonly IAuthenticateInfoContext _authContext;
     private readonly IAuthenticateRepository _authRepository;
     private readonly IMDateTimeService _dateTimeService;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly AuthService<TestPerm, TestDbContext> _service;
 
     public AuthServiceTests()
@@ -35,11 +36,24 @@ public class AuthServiceTests
         _authContext = Substitute.For<IAuthenticateInfoContext>();
         _authRepository = Substitute.For<IAuthenticateRepository>();
         _dateTimeService = Substitute.For<IMDateTimeService>();
+        _passwordHasher = Substitute.For<IPasswordHasher>();
+        
+        // Setup default mock behaviors
+        _passwordHasher.HashPassword(Arg.Any<string>(), out Arg.Any<string?>())
+            .Returns(x => { x[1] = "salt"; return "hashed"; });
+        
+        _authRepository.Login(Arg.Any<LoginRequestModel>(), Arg.Any<CancellationToken>())
+            .Returns(new MResponse<LoginResponseModel> { Result = new LoginResponseModel() });
+
         _service = new AuthService<TestPerm, TestDbContext>(
             _dbContext,
             _authContext,
             _authRepository,
-            _dateTimeService);
+            _dateTimeService,
+            _passwordHasher);
+            
+        // Enable cross-tenant access for unit tests to bypass global query filters
+        Muonroi.Tenancy.Core.TenantContext.AllowCrossTenantAccess = true;
     }
 
     [Fact]
@@ -74,8 +88,9 @@ public class AuthServiceTests
         var result = await _service.LogoutAsync(CancellationToken.None);
 
         Assert.True(result.IsOk);
-        Assert.True(token.IsRevoked);
-        Assert.Equal("Logout", token.ReasonRevoked);
+        var updatedToken = await _dbContext.Set<MRefreshToken>().FirstAsync();
+        Assert.True(updatedToken.IsRevoked);
+        Assert.Equal("Logout", updatedToken.ReasonRevoked);
     }
 
     [Fact]
@@ -117,7 +132,8 @@ public class AuthServiceTests
         var result = await _service.LogoutAllAsync(CancellationToken.None);
 
         Assert.True(result.IsOk);
-        Assert.All(tokens, t => Assert.True(t.IsRevoked));
+        var updatedTokens = await _dbContext.Set<MRefreshToken>().ToListAsync();
+        Assert.All(updatedTokens, t => Assert.True(t.IsRevoked));
     }
 
     [Fact]
@@ -146,17 +162,10 @@ public class AuthServiceTests
             Surname = "User"
         };
 
-        var loginResponse = new MResponse<LoginResponseModel>
-        {
-            Result = new LoginResponseModel()
-        };
-        _authRepository.Login(Arg.Any<LoginRequestModel>(), Arg.Any<CancellationToken>())
-            .Returns(loginResponse);
-
         var result = await _service.RegisterAsync(request, CancellationToken.None);
 
         Assert.True(result.IsOk);
-        Assert.NotNull(_dbContext.Set<MUser>().FirstOrDefault(u => u.UserName == request.UserName));
+        Assert.NotNull(await _dbContext.Set<MUser>().FirstOrDefaultAsync(u => u.UserName == request.UserName));
     }
 
     [Fact]
@@ -165,7 +174,7 @@ public class AuthServiceTests
         var request = new LoginRequestModel { Username = "u", Password = "p" };
         var tokenInfo = new MTokenInfo();
         var signer = Substitute.For<ITokenSigner>();
-        var tokenHelper = Substitute.For<MAuthenticateTokenHelper<TestPerm>>(
+        var tokenHelper = new MAuthenticateTokenHelper<TestPerm>(
             tokenInfo,
             signer,
             _dateTimeService,
@@ -184,7 +193,7 @@ public class AuthServiceTests
         var request = new RefreshTokenRequestModel();
         var tokenInfo = new MTokenInfo();
         var signer = Substitute.For<ITokenSigner>();
-        var tokenHelper = Substitute.For<MAuthenticateTokenHelper<TestPerm>>(
+        var tokenHelper = new MAuthenticateTokenHelper<TestPerm>(
             tokenInfo,
             signer,
             _dateTimeService,

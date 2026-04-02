@@ -1,9 +1,8 @@
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using Muonroi.Core.Abstractions.Interfaces;
 
 // MBB001-exempt: static extension method class — cannot inject IMDateTimeService; DI boundary is at the MDbContext call site.
-#pragma warning disable MBB001
-
 namespace Muonroi.Data.EntityFrameworkCore.Auth;
 
 /// <summary>
@@ -200,6 +199,7 @@ public static class AuthorizeInternal
         IMultiLevelCacheService cacheService,
         string lang,
         List<Claim>? claims,
+        IPasswordHasher passwordHasher,
         CancellationToken cancellationToken)
         where TDbContext : MDbContext
         where TPermission : Enum
@@ -221,7 +221,7 @@ public static class AuthorizeInternal
                 .ConfigureAwait(false);
         }
 
-        if (!MPasswordHelper.VerifyPassword(request.Password, existedUser.Password))
+        if (!passwordHasher.VerifyPassword(request.Password, existedUser.Password))
         {
             await HandleFailedLoginAttempt(existedUser, loginAttemptHistory, dbContext, cancellationToken)
                 .ConfigureAwait(false);

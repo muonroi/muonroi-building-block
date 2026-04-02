@@ -21,6 +21,7 @@
     <ProjectReference Include="..\Muonroi.Caching.Abstractions\Muonroi.Caching.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="Fido2" />
     <PackageReference Include="Fido2.AspNet" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />

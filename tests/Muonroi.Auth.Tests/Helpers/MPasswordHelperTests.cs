@@ -1,4 +1,4 @@
-namespace Muonroi.Core.Tests;
+namespace Muonroi.Auth.Tests.Helpers;
 
 public class MPasswordHelperTests
 {

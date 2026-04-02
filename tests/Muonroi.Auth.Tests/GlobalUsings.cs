@@ -21,7 +21,7 @@ global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Logging.Abstractions;
 global using Muonroi.Caching.Memory.MultiLevel;
 global using Muonroi.Data.EntityFrameworkCore.Entity;
-global using Muonroi.Core.Helpers;
+global using Muonroi.Auth.Helpers;
 global using NSubstitute;
 global using System;
 global using System.Collections.Generic;

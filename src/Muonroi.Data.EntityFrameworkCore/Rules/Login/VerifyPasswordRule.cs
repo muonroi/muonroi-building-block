@@ -1,6 +1,6 @@
 namespace Muonroi.Data.EntityFrameworkCore.Rules.Login;
 
-internal sealed class VerifyPasswordRule<TPermission, TDbContext> : IRule<LoginContext<TPermission, TDbContext>>
+internal sealed class VerifyPasswordRule<TPermission, TDbContext>(IPasswordHasher passwordHasher) : IRule<LoginContext<TPermission, TDbContext>>
     where TPermission : Enum
     where TDbContext : MDbContext
 {
@@ -24,7 +24,7 @@ internal sealed class VerifyPasswordRule<TPermission, TDbContext> : IRule<LoginC
             return;
         }
 
-        if (!MPasswordHelper.VerifyPassword(context.Request.Password, context.User.Password))
+        if (!passwordHasher.VerifyPassword(context.Request.Password, context.User.Password))
         {
             await AuthorizeInternal.HandleFailedLoginAttempt(context.User, context.LoginAttempt, context.DbContext, cancellationToken).ConfigureAwait(false);
             context.Result.AddError(nameof(SystemEnum.InvalidCredentials), context.Lang);

@@ -3,13 +3,16 @@ namespace Muonroi.AuthZ.HotReload;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Logging.Abstractions;
+using Muonroi.Tenancy.Abstractions;
 
 /// <summary>
 /// Background service that listens for authorization rule changes from Control Plane.
+/// Automatically scopes to the ambient tenant context.
 /// </summary>
 public sealed class AuthRuleHotReloadClient(
     AuthRuleHotReloadOptions options,
     IAuthRuleChangeHandler changeHandler,
+    ITenantContext tenantContext,
     IMLog<AuthRuleHotReloadClient>? logger = null) : BackgroundService
 {
     /// <summary>
@@ -93,13 +96,19 @@ public sealed class AuthRuleHotReloadClient(
 
     private async Task SubscribeTenantGroupAsync(HubConnection connection, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(options.TenantId))
+        // Use manual TenantId if provided, otherwise fallback to ambient ITenantContext
+        string? tenantId = !string.IsNullOrWhiteSpace(options.TenantId) 
+            ? options.TenantId 
+            : tenantContext.TenantId;
+
+        if (string.IsNullOrWhiteSpace(tenantId))
         {
+            logger?.Warn("[AuthZ] Hot-reload subscription skipped - No TenantId provided or resolved from context.");
             return;
         }
 
-        await connection.InvokeAsync("Subscribe", options.TenantId, cancellationToken);
-        logger?.Debug("[AuthZ] Subscribed auth-rule hot-reload client to tenant {TenantId}.", options.TenantId);
+        await connection.InvokeAsync("Subscribe", tenantId, cancellationToken);
+        logger?.Debug("[AuthZ] Subscribed auth-rule hot-reload client to tenant {TenantId}.", tenantId);
     }
 
     private async Task DelayBeforeRetryAsync(CancellationToken stoppingToken)

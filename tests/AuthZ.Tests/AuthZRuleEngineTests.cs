@@ -4,6 +4,7 @@ using Muonroi.AuthZ.Authorization;
 using Muonroi.AuthZ.Extensions;
 using Muonroi.AuthZ.HotReload;
 using Muonroi.AuthZ.RowSecurity;
+using Muonroi.Tenancy.Abstractions;
 
 namespace Muonroi.AuthZ.Tests;
 
@@ -34,6 +35,7 @@ public class AuthZRuleEngineTests
     {
         ServiceCollection services = [];
         services.AddSingleton<IAuthRuleChangeHandler, RecordingAuthRuleChangeHandler>();
+        services.AddSingleton<ITenantContext, FakeTenantContext>();
 
         services.AddMAuthorizationHotReload(options =>
         {
@@ -54,7 +56,7 @@ public class AuthZRuleEngineTests
     public async Task AuthRuleHotReloadClient_WithoutControlPlaneUrl_CompletesWithoutInvokingHandler()
     {
         RecordingAuthRuleChangeHandler handler = new();
-        AuthRuleHotReloadClient client = new(new AuthRuleHotReloadOptions(), handler);
+        AuthRuleHotReloadClient client = new(new AuthRuleHotReloadOptions(), handler, new FakeTenantContext());
 
         await client.StartAsync(CancellationToken.None);
         await client.StopAsync(CancellationToken.None);
@@ -71,5 +73,12 @@ public class AuthZRuleEngineTests
             RuleSetIds.Add(ruleSetId);
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FakeTenantContext : ITenantContext
+    {
+        public string? TenantId { get; set; }
+        public string? Language { get; set; }
+        public bool AllowCrossTenantAccess { get; set; }
     }
 }

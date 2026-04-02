@@ -10,12 +10,14 @@ namespace Muonroi.Data.EntityFrameworkCore.Repositories;
 /// <param name="authContext">Authentication context for the current request.</param>
 /// <param name="mTokenInfo">Token configuration information.</param>
 /// <param name="cacheService">Cache service for token/session state.</param>
+/// <param name="passwordHasher">The password hasher service.</param>
 public class AuthenticateRepository<TDbContext, TPermission>(
     MAuthenticateTokenHelper<TPermission> tokenHelper,
     TDbContext dbContext,
     MAuthenticateInfoContext authContext,
     MTokenInfo mTokenInfo,
-    IMultiLevelCacheService cacheService) : IAuthenticateRepository
+    IMultiLevelCacheService cacheService,
+    IPasswordHasher passwordHasher) : IAuthenticateRepository
     where TDbContext : MDbContext
     where TPermission : Enum
 {
@@ -43,6 +45,7 @@ public class AuthenticateRepository<TDbContext, TPermission>(
                 cacheService,
                 _authContext.Language,
                 claims: null,
+                passwordHasher,
                 cancellationToken);
         }
 

@@ -1,4 +1,4 @@
-namespace Muonroi.Core.Helpers;
+namespace Muonroi.Auth.Helpers;
 
 /// <summary>
 /// Provides helper methods for hashing and verifying passwords.

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.Auth.Helpers;
 
 namespace Muonroi.Auth;
 
@@ -22,6 +23,7 @@ public static class AuthServiceCollectionExtensions
         services.TryAddSingleton<IRsaKeyStore, InMemoryRsaKeyStore>();
         services.TryAddSingleton<ITokenRevocationStore, TokenRevocationStore>();
         RegisterJwtService(services);
+        services.TryAddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         return services;
     }
 
@@ -45,6 +47,7 @@ public static class AuthServiceCollectionExtensions
                 sp.GetRequiredService<IMJsonSerializeService>()));
         services.TryAddSingleton<ITokenRevocationStore, RedisTokenRevocationStore>();
         RegisterJwtService(services);
+        services.TryAddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         return services;
     }
 

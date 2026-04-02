@@ -27,3 +27,4 @@ global using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 global using Fido2NetLib;
 global using Microsoft.Extensions.Caching.Distributed;
 global using Microsoft.EntityFrameworkCore;
+global using BCrypts = BCrypt.Net.BCrypt;

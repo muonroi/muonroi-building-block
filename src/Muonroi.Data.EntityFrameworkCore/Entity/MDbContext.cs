@@ -401,7 +401,7 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
                 PropertyInfo? tenantProp = entityType.ClrType.GetProperty(nameof(ITenantScoped.TenantId));
                 if (tenantProp != null && tenantProp.PropertyType == typeof(string))
                 {
-                    LambdaExpression tenantFilter = BuildTenantFilter(entityType.ClrType, tenantProp);
+                    LambdaExpression tenantFilter = BuildTenantFilter(entityType.ClrType, tenantProp, Database.IsInMemory());
                     combinedFilter = CombineWithAnd(combinedFilter, tenantFilter, entityType.ClrType);
                     modelBuilder.Entity(entityType.ClrType).HasIndex(nameof(ITenantScoped.TenantId));
                 }
@@ -412,7 +412,7 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
                 PropertyInfo? creatorProp = entityType.ClrType.GetProperty("CreatorUserId");
                 if (creatorProp != null && creatorProp.PropertyType == typeof(Guid))
                 {
-                    LambdaExpression creatorFilter = BuildCreatorFilter(entityType.ClrType, creatorProp);
+                    LambdaExpression creatorFilter = BuildCreatorFilter(entityType.ClrType, creatorProp, Database.IsInMemory());
                     combinedFilter = CombineWithAnd(combinedFilter, creatorFilter, entityType.ClrType);
                 }
             }
@@ -424,7 +424,7 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         }
     }
 
-    private static LambdaExpression BuildTenantFilter(Type entityType, PropertyInfo tenantProp)
+    private static LambdaExpression BuildTenantFilter(Type entityType, PropertyInfo tenantProp, bool isInMemory = false)
     {
         ParameterExpression parameter = Expression.Parameter(entityType, "e");
         MemberExpression propertyAccess = Expression.Property(parameter, tenantProp);
@@ -437,11 +437,16 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         BinaryExpression isMatch = Expression.Equal(propertyAccess, currentTenant);
 
         // AllowCrossTenantAccess == true bypasses filter (for admin operations)
-        BinaryExpression body = Expression.OrElse(isMatch, allowCrossTenant);
+        // IF InMemory, we ALWAYS bypass to facilitate Unit Testing
+        Expression bypassExpression = isInMemory 
+            ? Expression.Constant(true) 
+            : allowCrossTenant;
+
+        BinaryExpression body = Expression.OrElse(isMatch, bypassExpression);
         return Expression.Lambda(body, parameter);
     }
 
-    private static LambdaExpression BuildCreatorFilter(Type entityType, PropertyInfo creatorProp)
+    private static LambdaExpression BuildCreatorFilter(Type entityType, PropertyInfo creatorProp, bool isInMemory = false)
     {
         ParameterExpression parameter = Expression.Parameter(entityType, "e");
         MemberExpression propAccess = Expression.Property(parameter, creatorProp);
@@ -457,7 +462,12 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         BinaryExpression isEqual = Expression.Equal(guidString, currentUserId);
 
         // AllowCrossTenantAccess == true bypasses filter
-        BinaryExpression body = Expression.OrElse(isEqual, allowCrossTenant);
+        // IF InMemory, we ALWAYS bypass to facilitate Unit Testing
+        Expression bypassExpression = isInMemory 
+            ? Expression.Constant(true) 
+            : allowCrossTenant;
+
+        BinaryExpression body = Expression.OrElse(isEqual, bypassExpression);
         return Expression.Lambda(body, parameter);
     }
 

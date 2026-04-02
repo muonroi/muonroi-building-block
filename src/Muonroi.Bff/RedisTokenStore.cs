@@ -1,29 +1,34 @@
-using Microsoft.Extensions.Caching.Distributed;
+using Muonroi.Caching.Abstractions.Distributed;
+using Muonroi.Core.Abstractions.Interfaces;
 using Microsoft.Extensions.Configuration;
 
 namespace Muonroi.Bff;
 
 /// <summary>
-/// Distributed refresh token store backed by IDistributedCache (Redis recommended).
+/// Distributed refresh token store backed by <see cref="IMCacheService"/> (Redis recommended).
+/// Integrated with Muonroi ecosystem for automatic tenant-scoping and license enforcement.
 /// </summary>
-/// <param name="cache">The distributed cache to store tokens in.</param>
+/// <param name="cache">The ecosystem integrated cache service.</param>
 /// <param name="configuration">Optional configuration to resolve TTL.</param>
-public sealed class RedisTokenStore(IDistributedCache cache, IConfiguration? configuration = null) : ITokenStore
+public sealed class RedisTokenStore(IMCacheService cache, IConfiguration? configuration = null) : ITokenStore
 {
+    private const string CacheNamespace = "bff:refresh";
     private readonly TimeSpan _ttl = ResolveTtl(configuration);
 
     /// <inheritdoc />
-    public Task StoreRefreshTokenAsync(string subject, string refreshToken)
+    public async Task StoreRefreshTokenAsync(string subject, string refreshToken)
     {
         if (string.IsNullOrWhiteSpace(subject))
         {
             throw new ArgumentException("Subject is required.", nameof(subject));
         }
 
-        string key = BuildKey(subject);
-        return cache.SetStringAsync(key, refreshToken, new DistributedCacheEntryOptions
+        string trimmedSubject = subject.Trim();
+        await cache.SetAsync(trimmedSubject, refreshToken, new CacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = _ttl
+            AbsoluteExpirationRelativeToNow = _ttl,
+            KeyNamespace = CacheNamespace,
+            TenantScoped = true // Ensure tokens are scoped to the current tenant
         });
     }
 
@@ -35,8 +40,7 @@ public sealed class RedisTokenStore(IDistributedCache cache, IConfiguration? con
             return Task.FromResult<string?>(null);
         }
 
-        string key = BuildKey(subject);
-        return cache.GetStringAsync(key);
+        return cache.GetAsync<string>(subject.Trim());
     }
 
     /// <inheritdoc />
@@ -47,13 +51,7 @@ public sealed class RedisTokenStore(IDistributedCache cache, IConfiguration? con
             return Task.CompletedTask;
         }
 
-        string key = BuildKey(subject);
-        return cache.RemoveAsync(key);
-    }
-
-    private static string BuildKey(string subject)
-    {
-        return $"bff:refresh:{subject.Trim()}";
+        return cache.RemoveAsync(subject.Trim());
     }
 
     private static TimeSpan ResolveTtl(IConfiguration? configuration)
