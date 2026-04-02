@@ -1,3 +1,7 @@
+using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.Tenancy.Core;
+
 namespace Muonroi.BackgroundJobs.Abstractions;
 
 /// <summary>
@@ -30,18 +34,24 @@ public abstract class TenantAwareJobBase(
         _ = executionContext ?? throw new ArgumentNullException(nameof(executionContext));
 
         // If context is already restored by a filter (e.g. Hangfire/Quartz Listener), 
-        // we just execute. Otherwise, we establish a local scope.
+        // we just execute. 
         var currentContext = ExecutionContextAccessor.Get();
         if (currentContext != null && 
+            !string.IsNullOrWhiteSpace(currentContext.CorrelationId) &&
             currentContext.CorrelationId == executionContext.CorrelationId)
         {
             await ExecuteAsync();
             return;
         }
 
+        // Fallback: Manually restore context if not already established (typical in Unit Tests)
         ISystemExecutionContext resolved = TenantContextPolicy.ResolveAndValidate(executionContext);
         using SystemExecutionContextScope scope = new(ExecutionContextAccessor, resolved);
         
-        await ExecuteAsync();
+        // Better Together: Ensure static contexts are also populated during manual run
+        using (ContextMirrorScope.Apply(resolved))
+        {
+            await ExecuteAsync();
+        }
     }
 }
