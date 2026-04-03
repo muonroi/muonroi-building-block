@@ -26,6 +26,7 @@
     <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.Events\Muonroi.Data.EntityFrameworkCore.Events.csproj" />
     <ProjectReference Include="..\Muonroi.Data.Dapper\Muonroi.Data.Dapper.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Core\Muonroi.RuleEngine.Core.csproj" />
+    <ProjectReference Include="..\Muonroi.RuleEngine.EntityFrameworkCore\Muonroi.RuleEngine.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Runtime.Web\Muonroi.RuleEngine.Runtime.Web.csproj" />
     <ProjectReference Include="..\Muonroi.Governance\Muonroi.Governance.csproj" />
     <ProjectReference Include="..\Muonroi.Messaging.MassTransit\Muonroi.Messaging.MassTransit.csproj" />
