@@ -306,4 +306,60 @@ public static class MGuard
 
         return value;
     }
+
+    /// <summary>
+    /// Asserts an internal state invariant. Throws <see cref="MInternalException"/> when the condition is false.
+    /// Use for "should never happen" checks and internal assertions.
+    /// </summary>
+    /// <param name="condition">The condition that must be true.</param>
+    /// <param name="errorMessage">The error message if the condition is false.</param>
+    /// <param name="errorCode">Optional specific error code (defaults to INTERNAL_ERROR).</param>
+    /// <exception cref="MInternalException">Thrown when the condition is false.</exception>
+    public static void State(
+        bool condition,
+        string errorMessage,
+        string? errorCode = null)
+    {
+        if (!condition)
+        {
+            throw new MInternalException(errorMessage, errorCode);
+        }
+    }
+
+    /// <summary>
+    /// Ensures a required configuration value is present.
+    /// Throws <see cref="MConfigurationException"/> when the value is null.
+    /// </summary>
+    /// <typeparam name="T">The type of the configuration value.</typeparam>
+    /// <param name="value">The configuration value to check.</param>
+    /// <param name="configKey">The configuration key or description for diagnostics.</param>
+    /// <returns>The non-null configuration value.</returns>
+    /// <exception cref="MConfigurationException">Thrown when the value is null.</exception>
+    public static T Configured<T>(T? value, string configKey) where T : class
+    {
+        if (value is null)
+        {
+            throw new MConfigurationException($"Required configuration '{configKey}' is missing or null.", configKey);
+        }
+
+        return value;
+    }
+
+    /// <summary>
+    /// Ensures a required configuration string is present and not empty.
+    /// Throws <see cref="MConfigurationException"/> when the value is null or whitespace.
+    /// </summary>
+    /// <param name="value">The configuration string to check.</param>
+    /// <param name="configKey">The configuration key or description for diagnostics.</param>
+    /// <returns>The non-empty configuration string.</returns>
+    /// <exception cref="MConfigurationException">Thrown when the value is null or whitespace.</exception>
+    public static string Configured(string? value, string configKey)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new MConfigurationException($"Required configuration '{configKey}' is missing or empty.", configKey);
+        }
+
+        return value;
+    }
 }
