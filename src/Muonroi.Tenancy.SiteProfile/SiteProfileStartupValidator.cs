@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -24,6 +26,8 @@ internal sealed class SiteProfileStartupValidator(
         if (tracker.SkipValidation)
         {
             logger.LogInformation("SiteProfile startup validation skipped (SkipStartupValidation enabled)");
+            // gRPC client validation is independent of SkipValidation — always run it.
+            ValidateSiteGrpcClientRegistrations();
             return Task.CompletedTask;
         }
 
@@ -88,8 +92,115 @@ internal sealed class SiteProfileStartupValidator(
             tracker.SiteIds.Count,
             tracker.ResolvedServiceTypes.Count);
 
+        // Validate gRPC client registrations (non-blocking — warns but does not throw)
+        ValidateSiteGrpcClientRegistrations();
+
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    /// <summary>
+    /// Validates that every site gRPC service entry has a matching keyed client registration.
+    /// Discovers the registry type via AppDomain reflection — no-op when no registry type is found
+    /// (i.e., when the project does not use gRPC, per D-14).
+    ///
+    /// Logs a warning for each missing client registration (per D-13 — warning, not exception).
+    /// </summary>
+    private void ValidateSiteGrpcClientRegistrations()
+    {
+        // Discover registry type: look for any type whose name contains "SiteGrpcServiceRegistry"
+        // (production: SiteGrpcServiceRegistry, tests: SiteGrpcServiceRegistryStub).
+        // This is an AppDomain scan — runs once at startup, not on the hot path.
+        Type? registryType = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(a =>
+            {
+                try { return a.GetTypes(); }
+                catch { return []; }
+            })
+            .FirstOrDefault(t => t.Name.Contains("SiteGrpcServiceRegistry", StringComparison.Ordinal)
+                && !t.IsAbstract
+                && !t.IsInterface);
+
+        if (registryType is null)
+        {
+            // No registry type found — project does not use gRPC. No-op per D-14.
+            return;
+        }
+
+        // Try to resolve an instance from the DI container first (test scenario: stub registered in DI).
+        // Fall back to creating a new instance via reflection if not in DI.
+        object? registryInstance = serviceProvider.GetService(registryType);
+        if (registryInstance is null)
+        {
+            try
+            {
+                registryInstance = Activator.CreateInstance(registryType);
+            }
+            catch
+            {
+                // Cannot instantiate registry — skip gRPC validation
+                return;
+            }
+        }
+
+        // Discover the method to get all entries.
+        // Production: GetAllSiteGrpcServices() on static class — try as instance method first, then static.
+        // Test stub: GetAllEntries() on instance.
+        MethodInfo? getAllMethod = registryType.GetMethod("GetAllSiteGrpcServices",
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+            ?? registryType.GetMethod("GetAllEntries",
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+
+        if (getAllMethod is null)
+        {
+            // Registry type found but no known method — skip
+            return;
+        }
+
+        IEnumerable? entries;
+        try
+        {
+            entries = getAllMethod.IsStatic
+                ? getAllMethod.Invoke(null, null) as IEnumerable
+                : getAllMethod.Invoke(registryInstance, null) as IEnumerable;
+        }
+        catch
+        {
+            return;
+        }
+
+        if (entries is null)
+            return;
+
+        if (serviceProvider is not IKeyedServiceProvider keyedProvider)
+            return;
+
+        foreach (var entry in entries)
+        {
+            if (entry is null) continue;
+
+            var entryType = entry.GetType();
+
+            // Read SiteId and ClientType via reflection (entry is either SiteGrpcServiceEntry or SiteGrpcEntryStub)
+            var siteIdProp = entryType.GetProperty("SiteId");
+            var clientTypeProp = entryType.GetProperty("ClientType");
+
+            if (siteIdProp is null || clientTypeProp is null) continue;
+
+            var siteId = siteIdProp.GetValue(entry) as string;
+            var clientType = clientTypeProp.GetValue(entry) as Type;
+
+            if (string.IsNullOrWhiteSpace(siteId) || clientType is null) continue;
+
+            var resolved = keyedProvider.GetKeyedService(clientType, siteId);
+            if (resolved is null)
+            {
+                logger.LogWarning(
+                    "[SITE-GRPC] Site '{SiteId}' has no gRPC client registration for '{ClientType}'. " +
+                    "Verify AddSiteGrpcClient<{ClientType}>(\"{SiteId}\") was called.",
+                    siteId, clientType.Name, clientType.Name, siteId);
+            }
+        }
+    }
 }
