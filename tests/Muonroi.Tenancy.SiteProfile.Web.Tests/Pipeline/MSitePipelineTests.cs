@@ -510,4 +510,127 @@ public class MSitePipelineTests
         defaultCalled.Should().BeTrue();
         log.Should().BeEmpty("hooks for other sites must not run");
     }
+
+    // -----------------------------------------------------------------------
+    // PIPE-14: Wrap hook can call default impl (decorator pattern)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_WithWrapHook_CallsDefaultInsideWrapper()
+    {
+        // Arrange — Wrap hook modifies input, calls default, modifies output
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.Wrap,
+            _ => new TestWrapperHook());
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+
+        // Act
+        await pipeline.RunStep(TestStepName, facts, (f, _) =>
+        {
+            // Default: reads pre-set value from wrapper, writes its own
+            string preValue = f.Get<string>("wrap.pre") ?? "missing";
+            f.Set("default.ran", true);
+            f.Set("default.saw_pre", preValue);
+            return Task.CompletedTask;
+        });
+
+        // Assert — wrapper ran (pre + post), default ran inside wrapper
+        facts.Get<string>("wrap.pre").Should().Be("before-default", "wrapper set pre value");
+        facts.Get<bool>("default.ran").Should().BeTrue("default impl ran inside wrapper");
+        facts.Get<string>("default.saw_pre").Should().Be("before-default", "default saw wrapper's pre value");
+        facts.Get<string>("wrap.post").Should().Be("after-default", "wrapper set post value");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-15: Wrap hook can skip default impl entirely
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_WithWrapHook_CanSkipDefault()
+    {
+        // Arrange — Wrap hook does NOT call next()
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(TestSiteId, nameof(TestService), TestStepName, SiteStepHookPhase.Wrap,
+            _ => new SkipDefaultWrapperHook());
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+        var defaultCalled = false;
+
+        // Act
+        await pipeline.RunStep(TestStepName, facts, (_, _) =>
+        {
+            defaultCalled = true;
+            return Task.CompletedTask;
+        });
+
+        // Assert
+        defaultCalled.Should().BeFalse("wrapper skipped default by not calling next()");
+        facts.Get<string>("wrap.custom").Should().Be("replaced", "wrapper provided its own value");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-16: FactKey<T> provides compile-time type-safe FactBag access
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void FactKey_TypedAccess_PreventsMismatchAndTypo()
+    {
+        // Arrange
+        var key = new FactKey<int>("order.count");
+        var stringKey = new FactKey<string>("order.name");
+        var facts = new FactBag();
+
+        // Act
+        facts.Set(key, 42);
+        facts.Set(stringKey, "test-order");
+
+        // Assert — typed Get returns correct type
+        facts.Get(key).Should().Be(42);
+        facts.Get(stringKey).Should().Be("test-order");
+
+        // Implicit string conversion for backward compat
+        string rawKey = key;
+        rawKey.Should().Be("order.count");
+
+        // TryGet works with typed key
+        facts.TryGet(key, out int? value).Should().BeTrue();
+        value.Should().Be(42);
+
+        // Remove works with typed key
+        facts.Remove(key).Should().BeTrue();
+        facts.Get(key).Should().Be(0); // default(int)
+    }
+
+    // -----------------------------------------------------------------------
+    // Test helpers for Wrap hooks
+    // -----------------------------------------------------------------------
+
+    private sealed class TestWrapperHook : ISiteWrapperHook
+    {
+        public Task ExecuteAsync(FactBag facts, CancellationToken cancellationToken = default)
+            => Task.CompletedTask; // ISiteStepHook fallback — not used when Wrap phase is active
+
+        public async Task WrapAsync(FactBag facts, Func<FactBag, CancellationToken, Task> next, CancellationToken cancellationToken = default)
+        {
+            facts.Set("wrap.pre", "before-default");
+            await next(facts, cancellationToken);  // call default
+            facts.Set("wrap.post", "after-default");
+        }
+    }
+
+    private sealed class SkipDefaultWrapperHook : ISiteWrapperHook
+    {
+        public Task ExecuteAsync(FactBag facts, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task WrapAsync(FactBag facts, Func<FactBag, CancellationToken, Task> next, CancellationToken cancellationToken = default)
+        {
+            // Intentionally skip next() — provide custom value instead
+            facts.Set("wrap.custom", "replaced");
+            return Task.CompletedTask;
+        }
+    }
 }

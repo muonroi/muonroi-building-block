@@ -83,21 +83,42 @@ public class MSitePipeline<TContext>
             rules.Add(new SiteStepHookRuleAdapter(hook, SiteStepHookPhase.Before, stepName, index++));
         }
 
-        // Check for Replace hooks — if any exist, they substitute the default impl
+        // Check for Replace hooks — if any exist, they substitute the default impl entirely
         IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> replaceFactories =
             _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.Replace);
 
+        // Check for Wrap hooks — they compose around the default impl (decorator pattern)
+        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> wrapFactories =
+            _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.Wrap);
+
         if (replaceFactories.Count > 0)
         {
+            // Replace takes priority — Wrap hooks ignored when Replace is registered
             foreach (Func<IServiceProvider, ISiteStepHook> factory in replaceFactories)
             {
                 ISiteStepHook hook = factory(_serviceProvider);
                 rules.Add(new SiteStepHookRuleAdapter(hook, SiteStepHookPhase.Replace, stepName, index++));
             }
         }
+        else if (wrapFactories.Count > 0)
+        {
+            // Wrap hooks compose around defaultImpl (innermost = default, outermost = last wrapper)
+            // Build the chain: wrapper3( wrapper2( wrapper1( defaultImpl ) ) )
+            Func<FactBag, CancellationToken, Task> composed = defaultImpl;
+            foreach (Func<IServiceProvider, ISiteStepHook> factory in wrapFactories)
+            {
+                ISiteStepHook hook = factory(_serviceProvider);
+                if (hook is ISiteWrapperHook wrapper)
+                {
+                    Func<FactBag, CancellationToken, Task> inner = composed; // capture for closure
+                    composed = (f, ct2) => wrapper.WrapAsync(f, inner, ct2);
+                }
+            }
+            rules.Add(new DefaultImplRuleAdapter(composed, stepName));
+        }
         else
         {
-            // No Replace hooks — add default impl as a rule at Order=0
+            // No Replace or Wrap hooks — add default impl as a rule at Order=0
             rules.Add(new DefaultImplRuleAdapter(defaultImpl, stepName));
         }
 
