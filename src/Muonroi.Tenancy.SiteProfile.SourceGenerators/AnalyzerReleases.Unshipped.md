@@ -10,3 +10,4 @@ MSP023 | Muonroi.SiteProfile | Info | MSP023: Site gRPC service could inherit fr
 MSP030 | Muonroi.Tenancy.SiteProfile | Warning | MSP030: [SiteProfileAlias] used with [SiteProfileBehavior] — behaviors may not apply to aliased profiles
 MSP031 | Muonroi.Tenancy.SiteProfile | Error | MSP031: [SiteProfileAlias] requires [GenerateSiteProfile] on the same class
 MSP040 | Muonroi.SiteProfile | Warning | MSP040: ISiteColumnMap missing Column() mapping for entity property
+MSP041 | Muonroi.SiteProfile | Info | MSP041: ISiteProfile in external assembly may not be discovered
