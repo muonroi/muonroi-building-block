@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
@@ -17,30 +18,29 @@ public static class RuleEngineServiceCollectionExtensions
     /// Registers <see cref="IRuleSetStore"/> backed by the filesystem and the <see cref="RulesEngineService"/>.
     /// Configure storage via the "RuleStore" and "RuleControlPlane" configuration sections.
     /// </summary>
-    public static IServiceCollection AddRuleEngineStore(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddRuleEngineStore(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Action<RuleStoreConfigs>? configure = null,
+        Action<RuleControlPlaneOptions>? configureControlPlane = null)
     {
         MGuard.NotNull(services);
         MGuard.NotNull(configuration);
         // File-backed store is available in all tiers (Free, Licensed, Enterprise).
-        // EnsureFeatureOrThrow is reserved for Postgres/Redis-backed stores (AddMRuleEngineWithPostgres).
 
-        RuleStoreConfigs storeConfigs = new();
-        configuration.GetSection(RuleStoreConfigs.SectionName).Bind(storeConfigs);
+        services.Configure<RuleStoreConfigs>(configuration.GetSection(RuleStoreConfigs.SectionName));
+        services.Configure<RuleControlPlaneOptions>(configuration.GetSection(RuleControlPlaneOptions.SectionName));
 
-        RuleControlPlaneOptions controlPlaneOptions = new();
-        configuration.GetSection(RuleControlPlaneOptions.SectionName).Bind(controlPlaneOptions);
-        if (storeConfigs.RequireApproval)
+        if (configure is not null)
         {
-            controlPlaneOptions.RequireApproval = true;
+            services.Configure(configure);
         }
 
-        if (!storeConfigs.NotifyOnStateChange)
+        if (configureControlPlane is not null)
         {
-            controlPlaneOptions.NotifyOnStateChange = false;
+            services.Configure(configureControlPlane);
         }
 
-        ReplaceSingleton(services, storeConfigs);
-        ReplaceSingleton(services, controlPlaneOptions);
         services.TryAddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
         services.TryAddSingleton<IRuleSetDefinitionValidator, RuleSetDefinitionValidator>();
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
@@ -54,7 +54,7 @@ public static class RuleEngineServiceCollectionExtensions
         services.TryAddSingleton<IRuleSetChangeNotifier>(sp =>
         {
             IConnectionMultiplexer? redis = sp.GetService<IConnectionMultiplexer>();
-            RuleStoreConfigs cfg = sp.GetRequiredService<RuleStoreConfigs>();
+            RuleStoreConfigs cfg = sp.GetRequiredService<IOptions<RuleStoreConfigs>>().Value;
             IMJsonSerializeService serializer = sp.GetRequiredService<IMJsonSerializeService>();
             if (redis is not null)
             {
@@ -64,81 +64,37 @@ public static class RuleEngineServiceCollectionExtensions
             return new InMemoryRuleSetChangeNotifier();
         });
 
-        if (storeConfigs.EnableRuntimeCache)
+        services.TryAddSingleton<IRuleSetRuntimeCache>(sp =>
         {
-            services.TryAddSingleton<IRuleSetRuntimeCache, RuleSetRuntimeCache>();
-        }
+            RuleStoreConfigs cfg = sp.GetRequiredService<IOptions<RuleStoreConfigs>>().Value;
+            if (cfg.EnableRuntimeCache)
+            {
+                return new RuleSetRuntimeCache(
+                    sp.GetRequiredService<IMemoryCache>(),
+                    sp.GetRequiredService<IOptions<RuleStoreConfigs>>(),
+                    sp.GetService<IRuleSetChangeNotifier>());
+            }
+            return null!;
+        });
 
         services.TryAddSingleton<IRuleSetStore>(sp =>
         {
             IHostEnvironment? env = sp.GetService<IHostEnvironment>();
-            string rootPath = ResolveRootPath(storeConfigs, env);
+            RuleStoreConfigs cfg = sp.GetRequiredService<IOptions<RuleStoreConfigs>>().Value;
+            string rootPath = ResolveRootPath(cfg, env);
             IRuleSetSigner? signer = sp.GetService<IRuleSetSigner>();
             ISystemExecutionContextAccessor executionContextAccessor = sp.GetRequiredService<ISystemExecutionContextAccessor>();
-            return new FileRuleSetStore(rootPath, signer, storeConfigs, executionContextAccessor);
+            return new FileRuleSetStore(rootPath, signer, sp.GetRequiredService<IOptions<RuleStoreConfigs>>(), executionContextAccessor);
         });
         services.TryAddSingleton<IRuleSetAuditStore>(sp =>
         {
             IHostEnvironment? env = sp.GetService<IHostEnvironment>();
-            string rootPath = ResolveRootPath(storeConfigs, env);
+            RuleStoreConfigs cfg = sp.GetRequiredService<IOptions<RuleStoreConfigs>>().Value;
+            string rootPath = ResolveRootPath(cfg, env);
             IMJsonSerializeService serializer = sp.GetRequiredService<IMJsonSerializeService>();
             ISystemExecutionContextAccessor executionContextAccessor = sp.GetRequiredService<ISystemExecutionContextAccessor>();
             return new FileRuleSetAuditStore(rootPath, serializer, executionContextAccessor);
         });
-        services.TryAddScoped<RulesEngineService>();
-
-        return services;
-    }
-
-    /// <summary>
-    /// Registers Postgres-backed ruleset storage, audit, approval, and canary services.
-    /// </summary>
-    public static IServiceCollection AddMRuleEngineWithPostgres(
-        this IServiceCollection services,
-        string connectionString,
-        Action<RuleControlPlaneOptions>? configureOptions = null)
-    {
-        MGuard.NotNull(services);
-        MGuard.NotEmpty(connectionString);
-        services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.RuleEngine);
-
-        RuleStoreConfigs storeConfigs = GetOrCreateRuleStoreConfigs(services);
-        RuleControlPlaneOptions controlPlaneOptions = GetOrCreateControlPlaneOptions(services);
-        configureOptions?.Invoke(controlPlaneOptions);
-        ReplaceSingleton(services, storeConfigs);
-        ReplaceSingleton(services, controlPlaneOptions);
-
-        services.TryAddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
-        services.TryAddSingleton<IRuleSetDefinitionValidator, RuleSetDefinitionValidator>();
-        services.TryAddSingleton<IMemoryCache, MemoryCache>();
-        services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
-        services.TryAddSingleton<IRuleSetAuditSigner>(_ => CreateAuditSigner(controlPlaneOptions));
-
-        // Graph parser and context adapters for flow graph execution
-        services.TryAddSingleton<RuleGraphParser>();
-        services.TryAddSingleton(typeof(IContextProjector<>), typeof(ReflectionContextProjector<>));
-        services.TryAddSingleton(typeof(IContextFactory<>), typeof(ReflectionContextFactory<>));
-        services.TryAddSingleton<IRuleSetChangeNotifier, InMemoryRuleSetChangeNotifier>();
-
-        // Register RLS interceptor as a singleton so it can be injected into DbContext options.
-        services.AddOptions<MultiTenantOptions>().BindConfiguration(MultiTenantOptions.SectionName);
-        services.TryAddSingleton<TenantRlsConnectionInterceptor>(sp =>
-            new TenantRlsConnectionInterceptor(sp.GetRequiredService<IOptions<MultiTenantOptions>>()));
-
-        services.AddDbContext<RuleEngineDbContext>((sp, options) =>
-        {
-            options.UseNpgsql(connectionString);
-            MultiTenantOptions multiTenantOptions = sp.GetRequiredService<IOptions<MultiTenantOptions>>().Value;
-            if (multiTenantOptions.EnableRowLevelSecurity)
-            {
-                options.AddInterceptors(sp.GetRequiredService<TenantRlsConnectionInterceptor>());
-            }
-        });
-
-        services.Replace(ServiceDescriptor.Scoped<IRuleSetStore, PostgresRuleSetStore>());
-        services.Replace(ServiceDescriptor.Scoped<IRuleSetAuditStore, PostgresRuleSetAuditStore>());
-        services.TryAddScoped<IRuleSetApprovalService, RuleSetApprovalService>();
-        services.TryAddScoped<ICanaryRolloutService, CanaryRolloutService>();
         services.TryAddScoped<RulesEngineService>();
 
         return services;
@@ -154,43 +110,13 @@ public static class RuleEngineServiceCollectionExtensions
         MGuard.NotNull(services);
         MGuard.NotEmpty(redisConnectionString);
 
-        RuleStoreConfigs configs = GetOrCreateRuleStoreConfigs(services);
-        ReplaceSingleton(services, configs);
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
         services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
         services.Replace(ServiceDescriptor.Singleton<IRuleSetChangeNotifier>(sp =>
             new RedisRuleSetChangeNotifier(
                 sp.GetRequiredService<IConnectionMultiplexer>(),
-                configs.RuleChangeChannel,
+                sp.GetRequiredService<IOptions<RuleStoreConfigs>>().Value.RuleChangeChannel,
                 sp.GetRequiredService<IMJsonSerializeService>())));
-        return services;
-    }
-
-    /// <summary>
-    /// Enables maker-checker approval workflow for rulesets.
-    /// </summary>
-    public static IServiceCollection AddMRuleEngineApprovalWorkflow(this IServiceCollection services)
-    {
-        MGuard.NotNull(services);
-
-        RuleControlPlaneOptions options = GetOrCreateControlPlaneOptions(services);
-        options.RequireApproval = true;
-        ReplaceSingleton(services, options);
-        services.TryAddScoped<IRuleSetApprovalService, RuleSetApprovalService>();
-        return services;
-    }
-
-    /// <summary>
-    /// Enables tenant-targeted canary rollout services.
-    /// </summary>
-    public static IServiceCollection AddMCanaryRollout(this IServiceCollection services)
-    {
-        MGuard.NotNull(services);
-
-        RuleControlPlaneOptions options = GetOrCreateControlPlaneOptions(services);
-        options.EnableCanary = true;
-        ReplaceSingleton(services, options);
-        services.TryAddScoped<ICanaryRolloutService, CanaryRolloutService>();
         return services;
     }
 
@@ -205,7 +131,7 @@ public static class RuleEngineServiceCollectionExtensions
     ///   <item>Registers <see cref="RuleExecutionEventPublisher"/> as a singleton.</item>
     ///   <item>Registers <see cref="EventDrivenRuleEvaluator"/> as scoped (needs tenant context per request).</item>
     /// </list>
-    /// Call this method after <see cref="AddRuleEngineStore"/> or <see cref="AddMRuleEngineWithPostgres"/>.
+    /// Call this method after <see cref="AddRuleEngineStore"/>.
     /// </summary>
     public static IServiceCollection AddRuleEventBridge(this IServiceCollection services)
         => services.AddRuleEngineEventBridge();
@@ -287,50 +213,4 @@ public static class RuleEngineServiceCollectionExtensions
 
         return Path.GetFullPath(rootPath);
     }
-
-    private static IRuleSetAuditSigner CreateAuditSigner(RuleControlPlaneOptions options)
-    {
-        if (!string.IsNullOrWhiteSpace(options.AuditPrivateKeyPem))
-        {
-            return RsaRuleSetAuditSigner.FromPrivateKeyPem(options.AuditPrivateKeyPem, options.AuditSignerKeyId);
-        }
-
-        if (!string.IsNullOrWhiteSpace(options.AuditPrivateKeyPemPath))
-        {
-            return RsaRuleSetAuditSigner.FromPrivateKeyFile(options.AuditPrivateKeyPemPath, options.AuditSignerKeyId);
-        }
-
-        return RsaRuleSetAuditSigner.CreateEphemeral(options.AuditSignerKeyId);
-    }
-
-    private static RuleStoreConfigs GetOrCreateRuleStoreConfigs(IServiceCollection services)
-    {
-        RuleStoreConfigs? existing = services
-            .LastOrDefault(x => x.ServiceType == typeof(RuleStoreConfigs))
-            ?.ImplementationInstance as RuleStoreConfigs;
-        return existing ?? new RuleStoreConfigs();
-    }
-
-    private static RuleControlPlaneOptions GetOrCreateControlPlaneOptions(IServiceCollection services)
-    {
-        RuleControlPlaneOptions? existing = services
-            .LastOrDefault(x => x.ServiceType == typeof(RuleControlPlaneOptions))
-            ?.ImplementationInstance as RuleControlPlaneOptions;
-        return existing ?? new RuleControlPlaneOptions();
-    }
-
-    private static void ReplaceSingleton<TService>(IServiceCollection services, TService instance)
-        where TService : class
-    {
-        for (int i = services.Count - 1; i >= 0; i--)
-        {
-            if (services[i].ServiceType == typeof(TService))
-            {
-                services.RemoveAt(i);
-            }
-        }
-
-        services.AddSingleton(instance);
-    }
 }
-
