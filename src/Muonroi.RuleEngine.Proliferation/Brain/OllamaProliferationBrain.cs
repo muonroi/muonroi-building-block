@@ -125,7 +125,7 @@ public sealed class OllamaProliferationBrain(
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(options.AiTimeoutSeconds));
 
             HttpClient client = httpClientFactory.CreateClient("OllamaProliferation");
-            string endpoint = $"{options.OllamaEndpoint.TrimEnd('/')}/api/generate";
+            string endpoint = EndpointValidator.ValidateLocal(options.OllamaEndpoint, "/api/generate");
 
             var requestBody = new
             {

@@ -96,7 +96,7 @@ public sealed class InfraHealthMonitor : IInfraHealthMonitor
 
     private async Task<InfraHealthStatus> ProbeOllamaAsync(CancellationToken ct)
     {
-        string endpoint = $"{_options.OllamaEndpoint.TrimEnd('/')}/api/tags";
+        string endpoint = EndpointValidator.ValidateLocal(_options.OllamaEndpoint, "/api/tags");
         Stopwatch sw = Stopwatch.StartNew();
 
         try
