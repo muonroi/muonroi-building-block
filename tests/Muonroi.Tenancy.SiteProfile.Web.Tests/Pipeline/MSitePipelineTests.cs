@@ -633,4 +633,87 @@ public class MSitePipelineTests
             return Task.CompletedTask;
         }
     }
+
+    // -----------------------------------------------------------------------
+    // PIPE-17: Fallback hooks apply when site has no override
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_FallbackHook_AppliesWhenSiteHasNoOverride()
+    {
+        // Arrange — register fallback hook with "*", no hook for test-site-01
+        var log = new List<string>();
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(SitePipelineHookRegistry.FallbackSiteId, nameof(TestService), TestStepName,
+            SiteStepHookPhase.Before, _ => new TrackingHook(log, "fallback-before"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+
+        // Act — site "test-site-01" has no hooks → falls back to "*"
+        await pipeline.RunStep(TestStepName, facts, (_, _) => Task.CompletedTask);
+
+        // Assert
+        log.Should().Contain("fallback-before", "fallback hook should run for site without override");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-18: Site-specific hook overrides fallback
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_SiteHook_OverridesFallback()
+    {
+        // Arrange — register both fallback and site-specific Before hook
+        var log = new List<string>();
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(SitePipelineHookRegistry.FallbackSiteId, nameof(TestService), TestStepName,
+            SiteStepHookPhase.Before, _ => new TrackingHook(log, "fallback-before"));
+        registry.Register(TestSiteId, nameof(TestService), TestStepName,
+            SiteStepHookPhase.Before, _ => new TrackingHook(log, "site-before"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+
+        // Act — site "test-site-01" HAS its own hook → fallback NOT used
+        await pipeline.RunStep(TestStepName, facts, (_, _) => Task.CompletedTask);
+
+        // Assert
+        log.Should().Contain("site-before", "site-specific hook should run");
+        log.Should().NotContain("fallback-before", "fallback should NOT run when site has override");
+    }
+
+    // -----------------------------------------------------------------------
+    // PIPE-19: Fallback Replace hook used as default step implementation
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task RunStep_FallbackReplace_ServesAsDefaultStepForAllSites()
+    {
+        // Arrange — register fallback Replace (acts as "default step for all sites")
+        var log = new List<string>();
+        var registry = new SitePipelineHookRegistry();
+        registry.Register(SitePipelineHookRegistry.FallbackSiteId, nameof(TestService), TestStepName,
+            SiteStepHookPhase.Replace, _ => new TrackingHook(log, "default-step"));
+
+        // Also register site-specific Before hook (should combine with fallback Replace)
+        registry.Register(TestSiteId, nameof(TestService), TestStepName,
+            SiteStepHookPhase.Before, _ => new TrackingHook(log, "site-before"));
+
+        MSitePipeline<TestService> pipeline = CreatePipeline(registry: registry);
+        var facts = new FactBag();
+
+        // Act — site has Before hook but no Replace → fallback Replace used as main impl
+        await pipeline.RunStep(TestStepName, facts, (_, _) =>
+        {
+            log.Add("defaultImpl-should-not-run");
+            return Task.CompletedTask;
+        });
+
+        // Assert — site Before runs, fallback Replace runs (replaces defaultImpl), defaultImpl skipped
+        log.Should().Contain("site-before");
+        log.Should().Contain("default-step");
+        log.Should().NotContain("defaultImpl-should-not-run",
+            "fallback Replace should substitute defaultImpl");
+    }
 }
