@@ -1,3 +1,6 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Core.Abstractions.Context;
 
 /// <summary>
@@ -43,10 +46,10 @@ public sealed class SystemExecutionContextAccessor : ISystemExecutionContextAcce
     /// Sets the current system execution context.
     /// </summary>
     /// <param name="context">The context to set.</param>
-    /// <exception cref="ArgumentNullException">Thrown if context is null.</exception>
+    /// <exception cref="MArgumentException">Thrown if context is null.</exception>
     public void Set(ISystemExecutionContext context)
     {
-        Current.Value = context ?? throw new ArgumentNullException(nameof(context));
+        Current.Value = MGuard.NotNull(context);
     }
 
     /// <summary>

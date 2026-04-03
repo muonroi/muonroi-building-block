@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Extensions;
 
 namespace Muonroi.AspNetCore.Extensions;
@@ -8,10 +9,7 @@ public static class MCookieAuthExtension
 /// <inheritdoc />
     public static void AppendAuthCookie(this HttpResponse response, string token, MTokenInfo info)
     {
-        if (string.IsNullOrEmpty(token))
-        {
-            throw new ArgumentException("Token cannot be null or empty", nameof(token));
-        }
+        MGuard.NotEmpty(token);
 
         if (!info.EnableCookieAuth)
         {

@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Governance.Operations;
 
 /// <summary>
@@ -128,6 +130,7 @@ public sealed class MEnterpriseSloPresetService : IMEnterpriseSloPresetService
             return preset;
         }
 
-        throw new ArgumentOutOfRangeException(nameof(presetName), $"Unknown SLO preset '{presetName}'.");
+        MGuard.Against(true, $"Unknown SLO preset '{presetName}'.");
+        return default!; // unreachable — MGuard.Against always throws when condition is true
     }
 }

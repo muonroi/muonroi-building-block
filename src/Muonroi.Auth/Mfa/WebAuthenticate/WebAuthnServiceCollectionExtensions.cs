@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Auth.Mfa.WebAuthenticate;
 
 /// <summary>
@@ -10,7 +12,7 @@ public static class WebAuthnServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddWebAuthn(this IServiceCollection services, IConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(configuration);
 
         HashSet<string> origins =
             configuration.GetSection("WebAuthn:Origins").Get<HashSet<string>>() ??

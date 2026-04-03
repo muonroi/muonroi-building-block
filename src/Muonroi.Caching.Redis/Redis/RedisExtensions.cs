@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -36,7 +38,7 @@ public static class RedisExtensions
     public static IServiceCollection AddRedis(this IServiceCollection services, IConfiguration configuration,
         RedisConfigs redisConfigs)
     {
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(configuration);
         services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.DistributedCache);
 
         // Skip Redis setup if disabled
@@ -73,8 +75,8 @@ public static class RedisExtensions
         // Only Host and Port are required - Password is optional for Redis instances without authentication
         if (string.IsNullOrEmpty(redisConfigs.Host) || string.IsNullOrEmpty(redisConfigs.Port))
         {
-            throw new InvalidOperationException(
-                $"Invalid {RedisConfigs.DefaultSectionName}: Host and Port are required");
+            throw new MConfigurationException(
+                $"Invalid {RedisConfigs.DefaultSectionName}: Host and Port are required", RedisConfigs.DefaultSectionName);
         }
 
         ConfigurationOptions configurationOptions = new()
@@ -111,7 +113,7 @@ public static class RedisExtensions
         this IServiceCollection services,
         Action<RedisRoutingTableOptions>? configure = null)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        MGuard.NotNull(services);
 
         services.AddOptions<RedisRoutingTableOptions>();
         if (configure != null)
@@ -137,8 +139,8 @@ public static class RedisExtensions
         ILicenseGuard? licenseGuard = null,
         CancellationToken token = default)
     {
-        ArgumentNullException.ThrowIfNull(distributedCache);
-        ArgumentException.ThrowIfNullOrEmpty(key);
+        MGuard.NotNull(distributedCache);
+        MGuard.NotEmpty(key);
         EnsureDistributedCacheLicensed(distributedCache, licenseState, licenseGuard);
 
         string cacheKey = DistributedCacheKeyBuilder.Build(key);
@@ -188,8 +190,8 @@ public static class RedisExtensions
         ILicenseGuard? licenseGuard = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(distributedCache);
-        ArgumentException.ThrowIfNullOrEmpty(key);
+        MGuard.NotNull(distributedCache);
+        MGuard.NotEmpty(key);
         EnsureDistributedCacheLicensed(distributedCache, licenseState, licenseGuard);
 
         string cacheKey = DistributedCacheKeyBuilder.Build(key);
@@ -247,8 +249,8 @@ public static class RedisExtensions
         ILicenseGuard? licenseGuard = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(distributedCache);
-        ArgumentException.ThrowIfNullOrEmpty(key);
+        MGuard.NotNull(distributedCache);
+        MGuard.NotEmpty(key);
         EnsureDistributedCacheLicensed(distributedCache, licenseState, licenseGuard);
         string cacheKey = DistributedCacheKeyBuilder.Build(key);
         string? tenantId = DistributedCacheKeyBuilder.NormalizeTenantId(TenantContext.CurrentTenantId);
@@ -308,8 +310,8 @@ public static class RedisExtensions
         ILicenseGuard? licenseGuard = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(distributedCache);
-        ArgumentException.ThrowIfNullOrEmpty(key);
+        MGuard.NotNull(distributedCache);
+        MGuard.NotEmpty(key);
         EnsureDistributedCacheLicensed(distributedCache, licenseState, licenseGuard);
         string cacheKey = DistributedCacheKeyBuilder.Build(key);
         string? tenantId = DistributedCacheKeyBuilder.NormalizeTenantId(TenantContext.CurrentTenantId);
@@ -359,8 +361,8 @@ public static class RedisExtensions
         ILicenseGuard? licenseGuard = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(distributedCache);
-        ArgumentException.ThrowIfNullOrEmpty(key);
+        MGuard.NotNull(distributedCache);
+        MGuard.NotEmpty(key);
         EnsureDistributedCacheLicensed(distributedCache, licenseState, licenseGuard);
         string cacheKey = DistributedCacheKeyBuilder.Build(key);
         string? tenantId = DistributedCacheKeyBuilder.NormalizeTenantId(TenantContext.CurrentTenantId);
@@ -419,9 +421,9 @@ public static class RedisExtensions
        )
         where T : class
     {
-        ArgumentNullException.ThrowIfNull(distributedCache);
-        ArgumentException.ThrowIfNullOrEmpty(key);
-        ArgumentNullException.ThrowIfNull(cacheData);
+        MGuard.NotNull(distributedCache);
+        MGuard.NotEmpty(key);
+        MGuard.NotNull(cacheData);
         EnsureDistributedCacheLicensed(distributedCache, licenseState, licenseGuard);
 
         string? tenantId = DistributedCacheKeyBuilder.NormalizeTenantId(TenantContext.CurrentTenantId);
@@ -507,7 +509,7 @@ public static class RedisExtensions
             return;
         }
 
-        throw new InvalidOperationException(
+        throw new MInternalException(
             "[LICENSE] Feature 'distributed-cache' is not available under your current license.");
     }
 

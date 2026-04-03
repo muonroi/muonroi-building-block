@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Governance.License;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.Tenancy.Core;
@@ -106,7 +107,7 @@ public sealed class RulesEngineService(
             Dictionary<string, List<IRule<TContext>>> rulesByCode = ResolveRulesByCode<TContext>(codes);
             if (rulesByCode.Count == 0)
             {
-                throw new InvalidDataException("Ruleset uses code-based workflow but no rule implementations were discovered.");
+                throw new MConfigurationException("Ruleset uses code-based workflow but no rule implementations were discovered.");
             }
 
             List<string> missingCodes = [];
@@ -132,7 +133,7 @@ public sealed class RulesEngineService(
 
             if (missingCodes.Count > 0)
             {
-                throw new InvalidDataException(
+                throw new MConfigurationException(
                     $"Ruleset references unknown rule code(s): {string.Join(", ", missingCodes.Distinct(StringComparer.OrdinalIgnoreCase))}.");
             }
 
@@ -140,7 +141,7 @@ public sealed class RulesEngineService(
             {
                 string detail = string.Join(" | ",
                     ambiguousCodes.Select(kv => $"{kv.Key} => [{string.Join(", ", kv.Value)}]"));
-                throw new InvalidDataException($"Ruleset contains ambiguous rule code mappings: {detail}.");
+                throw new MConfigurationException($"Ruleset contains ambiguous rule code mappings: {detail}.");
             }
 
             RuleEngine<TContext> orchestrator = new(licenseGuard: _licenseGuard);
@@ -228,12 +229,12 @@ public sealed class RulesEngineService(
     {
         if (string.IsNullOrWhiteSpace(workflowName))
         {
-            throw new InvalidDataException("Workflow name is required.");
+            throw new MConfigurationException("Workflow name is required.");
         }
 
         if (string.IsNullOrWhiteSpace(json))
         {
-            throw new InvalidDataException("Ruleset payload is empty.");
+            throw new MConfigurationException("Ruleset payload is empty.");
         }
 
         JsonElement root;
@@ -244,12 +245,12 @@ public sealed class RulesEngineService(
         }
         catch (JsonException ex)
         {
-            throw new InvalidDataException("Ruleset payload is not valid JSON.", ex);
+            throw new MConfigurationException($"Ruleset payload is not valid JSON: {ex.Message}");
         }
 
         if (root.ValueKind is not JsonValueKind.Array and not JsonValueKind.Object)
         {
-            throw new InvalidDataException("Ruleset payload must be a JSON object or array.");
+            throw new MConfigurationException("Ruleset payload must be a JSON object or array.");
         }
 
         JsonElement workflow = root.ValueKind == JsonValueKind.Array
@@ -257,7 +258,7 @@ public sealed class RulesEngineService(
             : root;
         if (workflow.ValueKind != JsonValueKind.Object)
         {
-            throw new InvalidDataException("Ruleset workflow definition is invalid.");
+            throw new MConfigurationException("Ruleset workflow definition is invalid.");
         }
 
         if (workflow.TryGetProperty("WorkflowName", out JsonElement wfNameEl) &&
@@ -266,7 +267,7 @@ public sealed class RulesEngineService(
             string? workflowNameFromPayload = wfNameEl.GetString();
             if (!string.Equals(workflowNameFromPayload, workflowName, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidDataException(
+                throw new MConfigurationException(
                     $"WorkflowName mismatch. Expected '{workflowName}', payload has '{workflowNameFromPayload}'.");
             }
         }
@@ -275,7 +276,7 @@ public sealed class RulesEngineService(
         {
             if (rulesEl.ValueKind != JsonValueKind.Array || rulesEl.GetArrayLength() == 0)
             {
-                throw new InvalidDataException("Rules collection must be a non-empty array.");
+                throw new MConfigurationException("Rules collection must be a non-empty array.");
             }
         }
     }

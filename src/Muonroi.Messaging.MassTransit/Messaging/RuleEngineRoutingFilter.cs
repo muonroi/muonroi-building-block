@@ -3,6 +3,7 @@ using System.Reflection;
 using Microsoft.Extensions.Options;
 using Muonroi.Caching.Redis.Routing;
 using Muonroi.Core.Abstractions.Constants;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Messaging.Abstractions.Contracts;
 using Muonroi.RuleEngine.Runtime.Compilation.Feel;
@@ -53,10 +54,10 @@ public sealed class RuleEngineRoutingFilter<T> : IFilter<ConsumeContext<T>>
         ISystemExecutionContextAccessor? executionContextAccessor = null,
         IRedisRoutingTableStore? redisRoutingTableStore = null)
     {
-        _routers = routers ?? throw new ArgumentNullException(nameof(routers));
-        _legacyRoutingRules = legacyRoutingRules ?? throw new ArgumentNullException(nameof(legacyRoutingRules));
-        _sendEndpointProvider = sendEndpointProvider ?? throw new ArgumentNullException(nameof(sendEndpointProvider));
-        _configs = (configs ?? throw new ArgumentNullException(nameof(configs))).Value;
+        _routers = MGuard.NotNull(routers);
+        _legacyRoutingRules = MGuard.NotNull(legacyRoutingRules);
+        _sendEndpointProvider = MGuard.NotNull(sendEndpointProvider);
+        _configs = MGuard.NotNull(configs).Value;
         _executionContextAccessor = executionContextAccessor;
         _redisRoutingTableStore = redisRoutingTableStore;
     }
@@ -261,7 +262,7 @@ public sealed class RuleEngineRoutingFilter<T> : IFilter<ConsumeContext<T>>
         /// <param name="rule">The legacy routing rule.</param>
         public LegacyRoutingRuleAdapter(IMessageRoutingRule<T> rule)
         {
-            _rule = rule ?? throw new ArgumentNullException(nameof(rule));
+            _rule = MGuard.NotNull(rule);
         }
 
         /// <inheritdoc />
@@ -295,7 +296,7 @@ public sealed class RuleEngineRoutingFilter<T> : IFilter<ConsumeContext<T>>
         /// <param name="context">The routing context used to build FEEL variables.</param>
         public RedisRoutingTableRouter(RoutingTableEntry entry, T message, IRoutingContext context)
         {
-            _entry = entry ?? throw new ArgumentNullException(nameof(entry));
+            _entry = MGuard.NotNull(entry);
             _predicate = string.IsNullOrWhiteSpace(entry.FeelExpression) ? null : FeelExpressionCompiler.Compile(entry.FeelExpression);
             _variables = BuildFeelVariables(message, context);
         }

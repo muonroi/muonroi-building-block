@@ -1,4 +1,5 @@
 using System.Threading;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Tenancy.SiteProfile;
 
@@ -71,7 +72,7 @@ public sealed class SiteProfileScope : IDisposable
     /// </remarks>
     public static SiteProfileScope ForSite(ISiteProfile profile)
     {
-        ArgumentNullException.ThrowIfNull(profile);
+        MGuard.NotNull(profile);
         return new SiteProfileScope(profile);
     }
 

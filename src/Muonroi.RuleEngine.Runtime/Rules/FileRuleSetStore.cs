@@ -1,3 +1,6 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
@@ -24,19 +27,17 @@ public sealed class FileRuleSetStore : IRuleSetStore
         RuleStoreConfigs? configs = null,
         ISystemExecutionContextAccessor? executionContextAccessor = null)
     {
-        if (string.IsNullOrWhiteSpace(rootPath))
-            throw new ArgumentException("Root path must not be empty.", nameof(rootPath));
+        MGuard.NotEmpty(rootPath);
 
         _configs = configs ?? new RuleStoreConfigs();
-        if (_configs.MaxRuleSetSizeBytes <= 0)
-            throw new ArgumentOutOfRangeException(nameof(configs), "MaxRuleSetSizeBytes must be greater than zero.");
+        MGuard.Against(_configs.MaxRuleSetSizeBytes <= 0, "MaxRuleSetSizeBytes must be greater than zero.");
 
         _rootPath = Path.GetFullPath(rootPath);
         Directory.CreateDirectory(_rootPath);
 
         _signer = signer;
         if (_configs.RequireSignature && _signer is null)
-            throw new InvalidOperationException("RuleStore requires signature but no IRuleSetSigner is configured.");
+            throw new MConfigurationException("RuleStore requires signature but no IRuleSetSigner is configured.", "RequireSignature");
 
         string pattern = string.IsNullOrWhiteSpace(_configs.AllowedPathSegmentPattern)
             ? "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
@@ -66,7 +67,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SaveAsync(string workflowName, string json, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(json);
+        MGuard.NotNull(json);
         EnsureRuleSetSize(json);
         string dir = GetWorkflowDirectory(workflowName);
         Directory.CreateDirectory(dir);
@@ -112,23 +113,23 @@ public sealed class FileRuleSetStore : IRuleSetStore
 
         FileInfo fileInfo = new(path);
         if (fileInfo.Length > _configs.MaxRuleSetSizeBytes)
-            throw new InvalidDataException(
+            throw new MConfigurationException(
                 $"Ruleset exceeds MaxRuleSetSizeBytes ({_configs.MaxRuleSetSizeBytes}). Workflow={workflowName}, Version={ver}.");
 
         string content = await File.ReadAllTextAsync(path, cancellationToken);
         EnsureRuleSetSize(content);
 
         if (_configs.RequireSignature && _signer is null)
-            throw new InvalidDataException("Ruleset signature is required but no signer is configured.");
+            throw new MConfigurationException("Ruleset signature is required but no signer is configured.", "RequireSignature");
 
         if (_signer is not null)
         {
             string sigPath = EnsureUnderRoot(Path.Combine(dir, $"v{ver}.sig"));
-            if (!File.Exists(sigPath)) throw new InvalidDataException("Signature file missing.");
+            if (!File.Exists(sigPath)) throw new MConfigurationException("Signature file missing.");
 
             string signature = await File.ReadAllTextAsync(sigPath, cancellationToken);
             if (!_signer.Verify(content, signature))
-                throw new InvalidDataException("Ruleset signature validation failed.");
+                throw new MConfigurationException("Ruleset signature validation failed.");
         }
 
         return content;
@@ -141,7 +142,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
     public async Task SetActiveVersionAsync(string workflowName, int version,
         CancellationToken cancellationToken = default)
     {
-        if (version <= 0) throw new ArgumentOutOfRangeException(nameof(version), "Version must be greater than zero.");
+        MGuard.Against(version <= 0, "Version must be greater than zero.");
 
         string dir = GetWorkflowDirectory(workflowName);
         string path = EnsureUnderRoot(Path.Combine(dir, $"v{version}.json"));
@@ -297,17 +298,17 @@ public sealed class FileRuleSetStore : IRuleSetStore
     {
         int size = Encoding.UTF8.GetByteCount(json);
         if (size > _configs.MaxRuleSetSizeBytes)
-            throw new InvalidDataException(
+            throw new MConfigurationException(
                 $"Ruleset size ({size} bytes) exceeds MaxRuleSetSizeBytes ({_configs.MaxRuleSetSizeBytes}).");
     }
 
     private string SanitizeSegment(string segment, string paramName)
     {
         if (string.IsNullOrWhiteSpace(segment))
-            throw new InvalidDataException($"{paramName} cannot be empty.");
+            throw new MConfigurationException($"{paramName} cannot be empty.");
 
         if (!_segmentRegex.IsMatch(segment))
-            throw new InvalidDataException($"{paramName} contains invalid characters: '{segment}'.");
+            throw new MConfigurationException($"{paramName} contains invalid characters: '{segment}'.");
 
         return segment;
     }
@@ -321,7 +322,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
         if (!fullPath.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(fullPath, _rootPath, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidDataException("Resolved path escapes ruleset root path.");
+            throw new MConfigurationException("Resolved path escapes ruleset root path.");
         }
 
         return fullPath;

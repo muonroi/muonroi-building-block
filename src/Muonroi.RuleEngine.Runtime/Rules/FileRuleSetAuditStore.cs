@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
@@ -11,9 +13,7 @@ public sealed class FileRuleSetAuditStore(
     ISystemExecutionContextAccessor? executionContextAccessor = null)
     : IRuleSetAuditStore
 {
-    private readonly string _rootPath = Path.GetFullPath(string.IsNullOrWhiteSpace(rootPath)
-        ? throw new ArgumentException("Root path must not be empty.", nameof(rootPath))
-        : rootPath);
+    private readonly string _rootPath = Path.GetFullPath(MGuard.NotEmpty(rootPath));
 
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> FileLocks =
         new(StringComparer.OrdinalIgnoreCase);
@@ -25,7 +25,7 @@ public sealed class FileRuleSetAuditStore(
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task AppendAsync(RuleSetAuditEntry entry, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(entry);
+        MGuard.NotNull(entry);
         string filePath = GetAuditPath(entry.TenantId);
         string line = jsonSerializeService.Serialize(entry);
 
@@ -135,7 +135,7 @@ public sealed class FileRuleSetAuditStore(
         string segment = value.Trim();
         if (!Regex.IsMatch(segment, "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$", RegexOptions.CultureInvariant))
         {
-            throw new InvalidDataException($"Invalid tenant segment: '{segment}'.");
+            throw new MConfigurationException($"Invalid tenant segment: '{segment}'.");
         }
 
         return segment;

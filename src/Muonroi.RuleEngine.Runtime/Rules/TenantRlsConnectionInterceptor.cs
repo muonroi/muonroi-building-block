@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Tenancy.Abstractions;
 using Muonroi.Tenancy.Core;
 using System.Data.Common;
@@ -23,8 +24,7 @@ public sealed class TenantRlsConnectionInterceptor : DbConnectionInterceptor
     /// <param name="options">Multi-tenant configuration options.</param>
     public TenantRlsConnectionInterceptor(IOptions<MultiTenantOptions> options)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        _options = options;
+        _options = MGuard.NotNull(options);
     }
 
     /// <inheritdoc />

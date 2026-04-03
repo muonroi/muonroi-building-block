@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Microsoft.EntityFrameworkCore;
 using Muonroi.Tenancy.SiteProfile.Web.Dapper;
 
@@ -20,9 +21,9 @@ internal sealed class MSiteDataAccess<TContext> : IMSiteDataAccess<TContext>
         ISiteQueryExecutor queryExecutor,
         SiteSqlBuilder sqlBuilder)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-        _queryExecutor = queryExecutor ?? throw new ArgumentNullException(nameof(queryExecutor));
-        _sqlBuilder = sqlBuilder ?? throw new ArgumentNullException(nameof(sqlBuilder));
+        _context = MGuard.NotNull(context);
+        _queryExecutor = MGuard.NotNull(queryExecutor);
+        _sqlBuilder = MGuard.NotNull(sqlBuilder);
     }
 
     // --- Escape hatches (D-04) ---

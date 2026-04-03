@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Data.EntityFrameworkCore.Repositories;
 
 /// <summary>
@@ -57,7 +59,7 @@ public class MQuery<T> : IMQueries<T> where T : MEntity
     {
         DbBaseContext = dbContext;
         AuthContext = authContext;
-        _licenseGuard = licenseGuard ?? throw new ArgumentNullException(nameof(licenseGuard));
+        _licenseGuard = MGuard.NotNull(licenseGuard);
         DbSet = DbBaseContext.Set<T>();
     }
 

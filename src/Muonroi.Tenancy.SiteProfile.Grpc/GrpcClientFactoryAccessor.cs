@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>
@@ -26,8 +27,8 @@ public sealed class GrpcClientFactoryAccessor
     /// </summary>
     internal void Initialize(GrpcClientFactory factory, SiteGrpcClientRegistry registry)
     {
-        ArgumentNullException.ThrowIfNull(factory);
-        ArgumentNullException.ThrowIfNull(registry);
+        MGuard.NotNull(factory);
+        MGuard.NotNull(registry);
 
         foreach (SiteGrpcClientDescriptor desc in registry.Descriptors)
         {

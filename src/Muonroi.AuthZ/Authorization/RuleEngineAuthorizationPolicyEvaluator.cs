@@ -1,5 +1,6 @@
 namespace Muonroi.AuthZ.Authorization;
 
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Caching.Abstractions.Distributed;
@@ -21,7 +22,7 @@ internal sealed class RuleEngineAuthorizationPolicyEvaluator(
         AuthorizationRuleContext context,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        MGuard.NotNull(context);
 
         string cacheKey = $"{context.UserId}:{context.Resource}:{context.Action}";
         

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Grpc.Grpc;
 
@@ -15,7 +16,7 @@ public sealed class GrpcRateLimiter
     /// </summary>
     public bool TryConsume(string? apiKey, string? tenantId, GrpcRateLimitConfig config, out string? exceededScope)
     {
-        ArgumentNullException.ThrowIfNull(config);
+        MGuard.NotNull(config);
 
         exceededScope = null;
         if (!config.Enabled)

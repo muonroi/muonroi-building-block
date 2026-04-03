@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Core;
@@ -32,9 +34,9 @@ public class MSitePipeline<TContext>
         IServiceProvider serviceProvider,
         IMLog<MSitePipeline<TContext>>? log = null)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-        _siteResolver = siteResolver ?? throw new ArgumentNullException(nameof(siteResolver));
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _registry = MGuard.NotNull(registry);
+        _siteResolver = MGuard.NotNull(siteResolver);
+        _serviceProvider = MGuard.NotNull(serviceProvider);
         _log = log;
         _serviceName = typeof(TContext).Name;
     }
@@ -61,9 +63,9 @@ public class MSitePipeline<TContext>
         CancellationToken ct = default,
         ExecutionMode executionMode = ExecutionMode.AllOrNothing)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(stepName);
-        ArgumentNullException.ThrowIfNull(facts);
-        ArgumentNullException.ThrowIfNull(defaultImpl);
+        MGuard.NotEmpty(stepName);
+        MGuard.NotNull(facts);
+        MGuard.NotNull(defaultImpl);
 
         string siteId = _siteResolver.Current.SiteId;
 
@@ -155,7 +157,7 @@ public class MSitePipeline<TContext>
             string firstError = result.Errors.Count > 0
                 ? result.Errors[0]
                 : "Unknown pipeline error";
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"[Pipeline:{_serviceName}] Step '{stepName}' failed: {firstError}");
         }
 

@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.Tenancy.Core.Legacy;
 
 /// <summary>
@@ -56,17 +58,17 @@ public static class TenantServiceCollectionExtensions
         ITenantLicenseFeatureGate? licenseFeatureGate = provider.GetService<ITenantLicenseFeatureGate>();
         if (licenseFeatureGate is null)
         {
-            throw new InvalidOperationException(
+            throw new MConfigurationException(
                 "[Muonroi] ITenantLicenseFeatureGate is not registered. " +
                 "Call AddLicenseProtection() before AddTenantContext(). " +
                 "Example:\n" +
                 "  services.AddLicenseProtection(config);\n" +
-                "  services.AddTenantContext(config);");
+                "  services.AddTenantContext(config);", "LicenseConfigs");
         }
 
         if (!licenseFeatureGate.HasFeature(TenantLicenseFeatures.Premium.MultiTenant))
         {
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 "[LICENSE] Feature 'multi-tenant' is not available under the current license tier.");
         }
     }

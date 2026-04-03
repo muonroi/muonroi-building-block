@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.RuleEngine.Proliferation.Brain;
 
@@ -18,14 +19,12 @@ internal static class EndpointValidator
     {
         string raw = $"{baseEndpoint.TrimEnd('/')}{path}";
 
-        if (!Uri.TryCreate(raw, UriKind.Absolute, out Uri? uri))
-            throw new ArgumentException($"Invalid endpoint URI: {raw}");
+        MGuard.Against(!Uri.TryCreate(raw, UriKind.Absolute, out Uri? uri), $"Invalid endpoint URI: {raw}");
 
-        if (!string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException($"External AI endpoints must use HTTPS. Got: {uri.Scheme}");
+        MGuard.Against(!string.Equals(uri!.Scheme, "https", StringComparison.OrdinalIgnoreCase),
+            $"External AI endpoints must use HTTPS. Got: {uri.Scheme}");
 
-        if (IsBlockedHost(uri.Host))
-            throw new ArgumentException($"Endpoint host is not allowed: {uri.Host}");
+        MGuard.Against(IsBlockedHost(uri.Host), $"Endpoint host is not allowed: {uri.Host}");
 
         return uri.AbsoluteUri;
     }
@@ -38,11 +37,9 @@ internal static class EndpointValidator
     {
         string raw = $"{baseEndpoint.TrimEnd('/')}{path}";
 
-        if (!Uri.TryCreate(raw, UriKind.Absolute, out Uri? uri))
-            throw new ArgumentException($"Invalid endpoint URI: {raw}");
+        MGuard.Against(!Uri.TryCreate(raw, UriKind.Absolute, out Uri? uri), $"Invalid endpoint URI: {raw}");
 
-        if (IsMetadataEndpoint(uri.Host))
-            throw new ArgumentException($"Cloud metadata endpoints are not allowed: {uri.Host}");
+        MGuard.Against(IsMetadataEndpoint(uri!.Host), $"Cloud metadata endpoints are not allowed: {uri.Host}");
 
         return uri.AbsoluteUri;
     }

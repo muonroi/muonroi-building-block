@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Tenancy.SiteProfile;
 
@@ -77,7 +78,7 @@ public class MSiteRepository<TContext, T> : MRepository<T>, IMSiteRepository<TCo
         IMLog<MSiteRepository<TContext, T>>? logger = null)
         : base(siteContext, authContext, licenseGuard, dateTimeService, logger)
     {
-        SiteContext = siteContext ?? throw new ArgumentNullException(nameof(siteContext));
-        SiteResolver = siteResolver ?? throw new ArgumentNullException(nameof(siteResolver));
+        SiteContext = MGuard.NotNull(siteContext);
+        SiteResolver = MGuard.NotNull(siteResolver);
     }
 }

@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Governance.Compliance;
 
 /// <summary>
@@ -12,7 +14,7 @@ public static class MComplianceEndpointExtensions
         this IEndpointRouteBuilder endpoints,
         string basePath = "/api/v1/compliance")
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
+        MGuard.NotNull(endpoints);
 
         RouteGroupBuilder group = endpoints.MapGroup(basePath).WithTags("Muonroi Enterprise Compliance");
 

@@ -3,6 +3,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Muonroi.Core.Abstractions.Exceptions;
 using Microsoft.Extensions.Options;
 
 namespace Muonroi.Tenancy.SiteProfile;
@@ -87,7 +88,7 @@ internal sealed class SiteProfileStartupValidator(
                 $"Ensure each ISiteProfile.RegisterServices() calls " +
                 $"services.AddKeyed*<TService, TImpl>(siteId) for every " +
                 $"AddSiteResolvedService<TService>() in Program.cs.";
-            throw new InvalidOperationException(message);
+            throw new MInternalException(message);
         }
 
         logger.LogInformation(

@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Mediator.Mediator.Attributes;
 
 /// <summary>
@@ -12,7 +14,7 @@ public sealed class MEmitOnPassAttribute : Attribute
     /// <param name="notificationType">The notification type to publish when the rule passes.</param>
     public MEmitOnPassAttribute(Type notificationType)
     {
-        NotificationType = notificationType ?? throw new ArgumentNullException(nameof(notificationType));
+        NotificationType = MGuard.NotNull(notificationType);
     }
 
     /// <summary>

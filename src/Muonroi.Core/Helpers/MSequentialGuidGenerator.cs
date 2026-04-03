@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Extensions;
 
 namespace Muonroi.Core.Helpers;
@@ -51,7 +52,7 @@ public class MSequentialGuidGenerator : IGuidGenerator
             SequentialGuidDatabaseType.Oracle => Create(SequentialGuidType.SequentialAsBinary),
             SequentialGuidDatabaseType.MySql => Create(SequentialGuidType.SequentialAsString),
             SequentialGuidDatabaseType.PostgreSql => Create(SequentialGuidType.SequentialAsString),
-            _ => throw new InvalidOperationException()
+            _ => throw new MInternalException($"Unsupported database type: {databaseType}")
         };
     }
 

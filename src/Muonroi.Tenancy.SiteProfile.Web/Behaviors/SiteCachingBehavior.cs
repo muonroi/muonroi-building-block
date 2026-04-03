@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Tenancy.SiteProfile;
@@ -27,7 +28,7 @@ internal sealed class SiteCacheKeyPrefix : ISiteCacheKeyPrefix
 {
     public SiteCacheKeyPrefix(string siteId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(siteId);
+        MGuard.NotEmpty(siteId);
         Prefix = $"site:{siteId}:";
     }
 

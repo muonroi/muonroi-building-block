@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Core.Events;
@@ -27,8 +28,7 @@ public sealed class EventDrivenRuleEvaluator : IEventDrivenRuleEvaluator
         RuleExecutionEventPublisher? eventPublisher = null,
         IMLog<EventDrivenRuleEvaluator>? log = null)
     {
-        ArgumentNullException.ThrowIfNull(rulesEngine);
-        _rulesEngine = rulesEngine;
+        _rulesEngine = MGuard.NotNull(rulesEngine);
         _eventPublisher = eventPublisher;
         _log = log;
     }
@@ -36,7 +36,7 @@ public sealed class EventDrivenRuleEvaluator : IEventDrivenRuleEvaluator
     /// <inheritdoc />
     public async Task<EventEvaluationResult> HandleEventAsync(CloudEvent cloudEvent, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(cloudEvent);
+        MGuard.NotNull(cloudEvent);
 
         // Extract workflowName and inputFacts from the event data
         if (!TryExtractEventData(cloudEvent.Data, out string? workflowName, out Dictionary<string, object?> inputFacts))

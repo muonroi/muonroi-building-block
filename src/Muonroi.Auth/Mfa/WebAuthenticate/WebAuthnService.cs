@@ -2,6 +2,8 @@ using Fido2NetLib;
 using Fido2NetLib.Objects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 using Muonroi.Tenancy.Core;
 
@@ -31,8 +33,8 @@ public class WebAuthenticateService(
         string displayName,
         CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(userName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+        MGuard.NotEmpty(userName);
+        MGuard.NotEmpty(displayName);
 
         List<PublicKeyCredentialDescriptor> existingCredentials = await context.WebAuthnCredentials
             .IgnoreQueryFilters()
@@ -78,7 +80,7 @@ public class WebAuthenticateService(
         AuthenticatorAttestationRawResponse response,
         CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(response);
+        MGuard.NotNull(response);
 
         CredentialCreateOptions options = await GetRequiredRegistrationOptionsAsync(userId, ct);
         RegisteredPublicKeyCredential result = await fido2.MakeNewCredentialAsync(
@@ -151,7 +153,7 @@ public class WebAuthenticateService(
         AuthenticatorAssertionRawResponse response,
         CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(response);
+        MGuard.NotNull(response);
 
         AssertionOptions options = await GetRequiredAuthenticationOptionsAsync(userId, ct);
         byte[] credentialId = ExtractCredentialId(response);
@@ -161,7 +163,7 @@ public class WebAuthenticateService(
             .Where(x => x.TenantId == TenantContext.CurrentTenantId && x.UserId == userId)
             .ToListAsync(ct);
         MWebAuthnCredential? credential = credentials.FirstOrDefault(x => x.CredentialId.SequenceEqual(credentialId))
-            ?? throw new InvalidOperationException("Credential not found for user.");
+            ?? throw new MInternalException("Credential not found for user.");
         VerifyAssertionResult verificationResult = await fido2.MakeAssertionAsync(
             new MakeAssertionParams
             {
@@ -195,11 +197,11 @@ public class WebAuthenticateService(
         string? raw = await challengeCache.GetStringAsync(key, ct);
         if (string.IsNullOrWhiteSpace(raw))
         {
-            throw new InvalidOperationException("Registration challenge not found or expired.");
+            throw new MInternalException("Registration challenge not found or expired.");
         }
 
         CredentialCreateOptions? options = jsonService.Deserialize<CredentialCreateOptions>(raw);
-        return options ?? throw new InvalidOperationException("Registration challenge payload is invalid.");
+        return options ?? throw new MInternalException("Registration challenge payload is invalid.");
     }
 
     private async Task<AssertionOptions> GetRequiredAuthenticationOptionsAsync(Guid userId, CancellationToken ct)
@@ -208,11 +210,11 @@ public class WebAuthenticateService(
         string? raw = await challengeCache.GetStringAsync(key, ct);
         if (string.IsNullOrWhiteSpace(raw))
         {
-            throw new InvalidOperationException("Authentication challenge not found or expired.");
+            throw new MInternalException("Authentication challenge not found or expired.");
         }
 
         AssertionOptions? options = jsonService.Deserialize<AssertionOptions>(raw);
-        return options ?? throw new InvalidOperationException("Authentication challenge payload is invalid.");
+        return options ?? throw new MInternalException("Authentication challenge payload is invalid.");
     }
 
     private async Task<bool> IsCredentialIdUniqueToUserAsync(IsCredentialIdUniqueToUserParams input, CancellationToken ct)
@@ -263,7 +265,7 @@ public class WebAuthenticateService(
             return Base64UrlEncoder.DecodeBytes(response.Id);
         }
 
-        throw new InvalidOperationException("Assertion response does not contain credential id.");
+        throw new MInternalException("Assertion response does not contain credential id.");
     }
 
     private static string? TryEncodeUserHandle(byte[]? userHandle)

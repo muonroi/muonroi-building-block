@@ -1,3 +1,6 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
@@ -19,12 +22,9 @@ public sealed class RuleSetApprovalService(
         string submittedBy,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(submittedBy);
-        if (version <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(version), "Version must be greater than zero.");
-        }
+        MGuard.NotEmpty(workflowName);
+        MGuard.NotEmpty(submittedBy);
+        MGuard.Against(version <= 0, "Version must be greater than zero.");
 
         string tenantId = ResolveTenantId();
         string workflow = workflowName.Trim();
@@ -35,12 +35,11 @@ public sealed class RuleSetApprovalService(
             .FirstOrDefaultAsync(
                 x => x.TenantId == tenantId && x.WorkflowName == workflow && x.Version == version,
                 cancellationToken)
-            ?? throw new InvalidOperationException(
-                $"Ruleset version '{version}' for workflow '{workflow}' was not found.");
+            ?? throw new MNotFoundException("RuleSetVersion", $"{workflow}/v{version}");
 
         if (record.Status is not RuleSetStatus.Draft and not RuleSetStatus.Rejected)
         {
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"Ruleset '{workflow}' v{version} cannot be submitted from status '{record.Status}'.");
         }
 
@@ -82,12 +81,9 @@ public sealed class RuleSetApprovalService(
         string approvedBy,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(approvedBy);
-        if (version <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(version), "Version must be greater than zero.");
-        }
+        MGuard.NotEmpty(workflowName);
+        MGuard.NotEmpty(approvedBy);
+        MGuard.Against(version <= 0, "Version must be greater than zero.");
 
         string tenantId = ResolveTenantId();
         string workflow = workflowName.Trim();
@@ -98,19 +94,18 @@ public sealed class RuleSetApprovalService(
             .FirstOrDefaultAsync(
                 x => x.TenantId == tenantId && x.WorkflowName == workflow && x.Version == version,
                 cancellationToken)
-            ?? throw new InvalidOperationException(
-                $"Ruleset version '{version}' for workflow '{workflow}' was not found.");
+            ?? throw new MNotFoundException("RuleSetVersion", $"{workflow}/v{version}");
 
         if (record.Status != RuleSetStatus.PendingApproval)
         {
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"Ruleset '{workflow}' v{version} cannot be approved from status '{record.Status}'.");
         }
 
         if (!string.IsNullOrWhiteSpace(record.SubmittedBy) &&
             string.Equals(record.SubmittedBy, actor, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("Maker-checker violation: submitter cannot approve their own ruleset.");
+            throw new MInternalException("Maker-checker violation: submitter cannot approve their own ruleset.");
         }
 
         record.Status = RuleSetStatus.Approved;
@@ -152,13 +147,10 @@ public sealed class RuleSetApprovalService(
         string reason,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(rejectedBy);
-        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
-        if (version <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(version), "Version must be greater than zero.");
-        }
+        MGuard.NotEmpty(workflowName);
+        MGuard.NotEmpty(rejectedBy);
+        MGuard.NotEmpty(reason);
+        MGuard.Against(version <= 0, "Version must be greater than zero.");
 
         string tenantId = ResolveTenantId();
         string workflow = workflowName.Trim();
@@ -169,12 +161,11 @@ public sealed class RuleSetApprovalService(
             .FirstOrDefaultAsync(
                 x => x.TenantId == tenantId && x.WorkflowName == workflow && x.Version == version,
                 cancellationToken)
-            ?? throw new InvalidOperationException(
-                $"Ruleset version '{version}' for workflow '{workflow}' was not found.");
+            ?? throw new MNotFoundException("RuleSetVersion", $"{workflow}/v{version}");
 
         if (record.Status != RuleSetStatus.PendingApproval)
         {
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"Ruleset '{workflow}' v{version} cannot be rejected from status '{record.Status}'.");
         }
 

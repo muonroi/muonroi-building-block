@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore.Storage;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
@@ -17,8 +19,8 @@ public sealed class PostgresRuleSetStore(
     /// <inheritdoc />
     public async Task SaveAsync(string workflowName, string json, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
-        ArgumentNullException.ThrowIfNull(json);
+        MGuard.NotEmpty(workflowName);
+        MGuard.NotNull(json);
 
         string tenantId = ResolveTenantId();
         string normalizedWorkflow = workflowName.Trim();
@@ -79,7 +81,7 @@ public sealed class PostgresRuleSetStore(
         int? version = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
+        MGuard.NotEmpty(workflowName);
 
         string tenantId = ResolveTenantId();
         string normalizedWorkflow = workflowName.Trim();
@@ -110,11 +112,8 @@ public sealed class PostgresRuleSetStore(
         int version,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
-        if (version <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(version), "Version must be greater than zero.");
-        }
+        MGuard.NotEmpty(workflowName);
+        MGuard.Against(version <= 0, "Version must be greater than zero.");
 
         string tenantId = ResolveTenantId();
         string normalizedWorkflow = workflowName.Trim();
@@ -128,14 +127,13 @@ public sealed class PostgresRuleSetStore(
                 cancellationToken);
         if (target is null)
         {
-            throw new InvalidOperationException(
-                $"Ruleset version '{version}' was not found for workflow '{normalizedWorkflow}'.");
+            throw new MNotFoundException("RuleSetVersion", $"{normalizedWorkflow}/v{version}");
         }
 
         if (_options.RequireApproval &&
             target.Status is RuleSetStatus.Draft or RuleSetStatus.PendingApproval or RuleSetStatus.Rejected)
         {
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 "Only approved ruleset versions can be activated when approval workflow is enabled.");
         }
 
@@ -172,7 +170,7 @@ public sealed class PostgresRuleSetStore(
     /// <inheritdoc />
     public async Task<int[]> GetVersionsAsync(string workflowName, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
+        MGuard.NotEmpty(workflowName);
         string tenantId = ResolveTenantId();
         string normalizedWorkflow = workflowName.Trim();
 
@@ -189,7 +187,7 @@ public sealed class PostgresRuleSetStore(
     public async Task<IReadOnlyList<(int Version, string Status, bool IsActive, DateTimeOffset CreatedAt)>> GetVersionDetailsAsync(
         string workflowName, int limit = 10, int offset = 0, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
+        MGuard.NotEmpty(workflowName);
         string tenantId = ResolveTenantId();
         string normalizedWorkflow = workflowName.Trim();
 
@@ -208,7 +206,7 @@ public sealed class PostgresRuleSetStore(
     /// <inheritdoc />
     public async Task<int?> GetActiveVersionAsync(string workflowName, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
+        MGuard.NotEmpty(workflowName);
         string tenantId = ResolveTenantId();
         string normalizedWorkflow = workflowName.Trim();
 

@@ -1,4 +1,5 @@
 using System;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Tenancy.SiteProfile;
 
@@ -36,6 +37,6 @@ public sealed class SiteProfileAliasAttribute : Attribute
     /// <param name="targetSiteId">The SiteId to alias (e.g., "DEFAULT").</param>
     public SiteProfileAliasAttribute(string targetSiteId)
     {
-        TargetSiteId = targetSiteId ?? throw new ArgumentNullException(nameof(targetSiteId));
+        TargetSiteId = MGuard.NotNull(targetSiteId);
     }
 }

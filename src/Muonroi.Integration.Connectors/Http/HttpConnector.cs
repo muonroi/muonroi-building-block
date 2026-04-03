@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Integration.Abstractions;
 
 namespace Muonroi.Integration.Connectors.Http;
@@ -48,7 +49,7 @@ public sealed class HttpConnector : IServiceTaskConnector
         Stopwatch sw = Stopwatch.StartNew();
         JsonElement root = context.Config.RootElement;
 
-        string url = root.GetProperty("url").GetString() ?? throw new InvalidOperationException("url is required");
+        string url = root.GetProperty("url").GetString() ?? throw new MInternalException("url is required");
         string method = root.TryGetProperty("method", out JsonElement m) ? m.GetString() ?? "GET" : "GET";
         int timeout = root.TryGetProperty("timeout", out JsonElement t) ? t.GetInt32() : 30;
 

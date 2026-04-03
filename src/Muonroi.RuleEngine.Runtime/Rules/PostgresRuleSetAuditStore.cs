@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
@@ -15,7 +17,7 @@ public sealed class PostgresRuleSetAuditStore(
     /// <inheritdoc />
     public async Task AppendAsync(RuleSetAuditEntry entry, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(entry);
+        MGuard.NotNull(entry);
 
         string tenantId = string.IsNullOrWhiteSpace(entry.TenantId) ? ResolveTenantId() : entry.TenantId.Trim();
         DateTimeOffset occurredAt = entry.TimestampUtc == default ? DateTimeOffset.UtcNow : entry.TimestampUtc;

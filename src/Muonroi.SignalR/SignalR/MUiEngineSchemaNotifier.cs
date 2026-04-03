@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.SignalR.SignalR;
@@ -20,7 +21,7 @@ public sealed class MUiEngineSchemaNotifier(
         MUiEngineSchemaVersion schemaVersion,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(schemaVersion);
+        MGuard.NotNull(schemaVersion);
 
         IHubContext<MUiEngineHub>? hubContext = serviceProvider.GetService<IHubContext<MUiEngineHub>>();
         if (hubContext is null)

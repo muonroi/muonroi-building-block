@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Data.Abstractions.Entities;
 using Muonroi.Mapping.Abstractions;
 
@@ -37,8 +38,8 @@ public abstract class MServiceBase<TEntity, TDto>
     /// </summary>
     protected MServiceBase(DbContext context, IEntityMapper<TEntity, TDto> mapper)
     {
-        Context = context ?? throw new ArgumentNullException(nameof(context));
-        Mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        Context = MGuard.NotNull(context);
+        Mapper = MGuard.NotNull(mapper);
     }
 
     /// <summary>

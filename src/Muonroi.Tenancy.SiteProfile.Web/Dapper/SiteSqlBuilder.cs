@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 namespace Muonroi.Tenancy.SiteProfile.Web.Dapper;
 
 /// <summary>
@@ -28,7 +30,7 @@ public sealed partial class SiteSqlBuilder
     /// <param name="columnMap">The column map for the current site. Cannot be null.</param>
     public SiteSqlBuilder(ISiteColumnMap columnMap)
     {
-        ArgumentNullException.ThrowIfNull(columnMap);
+        MGuard.NotNull(columnMap);
         _columnMap = columnMap;
     }
 
@@ -41,13 +43,11 @@ public sealed partial class SiteSqlBuilder
     public string Select(params string[] propertyNames)
     {
         if (propertyNames.Length == 0)
-            throw new ArgumentException("At least one property name required.", nameof(propertyNames));
+            MGuard.Against(propertyNames.Length == 0, "At least one property name required.");
 
         var filtered = propertyNames.Where(p => _columnMap.HasColumn(p)).ToArray();
         if (filtered.Length == 0)
-            throw new ArgumentException(
-                "All property names were filtered out by HasColumn. At least one column must be selectable.",
-                nameof(propertyNames));
+            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(propertyNames), "All property names were filtered out by HasColumn. At least one column must be selectable.");
 
         return string.Join(", ", filtered.Select(p =>
         {
@@ -66,13 +66,11 @@ public sealed partial class SiteSqlBuilder
     public string SelectFrom(string tableName, params string[] propertyNames)
     {
         if (propertyNames.Length == 0)
-            throw new ArgumentException("At least one property name required.", nameof(propertyNames));
+            MGuard.Against(propertyNames.Length == 0, "At least one property name required.");
 
         var filtered = propertyNames.Where(p => _columnMap.HasColumn(p)).ToArray();
         if (filtered.Length == 0)
-            throw new ArgumentException(
-                "All property names were filtered out by HasColumn. At least one column must be selectable.",
-                nameof(propertyNames));
+            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(propertyNames), "All property names were filtered out by HasColumn. At least one column must be selectable.");
 
         var cols = string.Join(", ", filtered.Select(p =>
         {
@@ -96,7 +94,7 @@ public sealed partial class SiteSqlBuilder
     public string SelectWithExtras(params string[] propertyNames)
     {
         if (propertyNames.Length == 0)
-            throw new ArgumentException("At least one property name required.", nameof(propertyNames));
+            MGuard.Against(propertyNames.Length == 0, "At least one property name required.");
 
         var baseCols = propertyNames
             .Where(p => _columnMap.HasColumn(p))
@@ -116,9 +114,7 @@ public sealed partial class SiteSqlBuilder
 
         var all = baseCols.Concat(extraCols).ToArray();
         if (all.Length == 0)
-            throw new ArgumentException(
-                "No columns available: all base properties filtered and no extra columns defined.",
-                nameof(propertyNames));
+            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(propertyNames), "No columns available: all base properties filtered and no extra columns defined.");
 
         return string.Join(", ", all);
     }
@@ -133,7 +129,7 @@ public sealed partial class SiteSqlBuilder
     public string SelectFromWithExtras(string tableName, params string[] propertyNames)
     {
         if (propertyNames.Length == 0)
-            throw new ArgumentException("At least one property name required.", nameof(propertyNames));
+            MGuard.Against(propertyNames.Length == 0, "At least one property name required.");
 
         var baseCols = propertyNames
             .Where(p => _columnMap.HasColumn(p))
@@ -153,9 +149,7 @@ public sealed partial class SiteSqlBuilder
 
         var all = baseCols.Concat(extraCols).ToArray();
         if (all.Length == 0)
-            throw new ArgumentException(
-                "No columns available: all base properties filtered and no extra columns defined.",
-                nameof(propertyNames));
+            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(propertyNames), "No columns available: all base properties filtered and no extra columns defined.");
 
         return $"SELECT {string.Join(", ", all)} FROM {tableName}";
     }
@@ -269,7 +263,7 @@ public sealed partial class SiteSqlBuilder
     [Obsolete("Use InterpolateMarkers with [[PropertyName]] markers instead. Interpolate() rewrites alias.COLUMN AS Property patterns which is fragile for complex queries.")]
     public string Interpolate(string rawSql)
     {
-        ArgumentNullException.ThrowIfNull(rawSql);
+        MGuard.NotNull(rawSql);
 
         // Pattern: [tableAlias.]COLUMN_NAME AS PropertyName
         // - Requires table alias prefix to avoid false matches on CASE...END, functions, literals
@@ -328,12 +322,12 @@ public sealed partial class SiteSqlBuilder
     /// </exception>
     public string InterpolateMarkers(string rawSql)
     {
-        ArgumentNullException.ThrowIfNull(rawSql);
+        MGuard.NotNull(rawSql);
         return MarkerRegex().Replace(rawSql, match =>
         {
             string propertyName = match.Groups[1].Value;
             if (!_columnMap.HasColumn(propertyName))
-                throw new InvalidOperationException(
+                throw new MInternalException(
                     $"Column '{propertyName}' is not available for this site. " +
                     $"Use InterpolateMarkersSafe() or check HasColumn(\"{propertyName}\") before using this marker.");
             string columnName = _columnMap.Column(propertyName);
@@ -367,7 +361,7 @@ public sealed partial class SiteSqlBuilder
     /// <returns>The SQL string with markers resolved or replaced with fallback.</returns>
     public string InterpolateMarkersSafe(string rawSql, string fallback = "NULL")
     {
-        ArgumentNullException.ThrowIfNull(rawSql);
+        MGuard.NotNull(rawSql);
         return MarkerRegex().Replace(rawSql, match =>
         {
             string propertyName = match.Groups[1].Value;

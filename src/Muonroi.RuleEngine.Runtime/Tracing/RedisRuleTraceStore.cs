@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.RuleEngine.Core.Tracing;
 
@@ -13,14 +14,14 @@ public sealed class RedisRuleTraceStore(
     ITraceRedactor? redactor = null) : IRuleTraceStore
 {
     private readonly IConnectionMultiplexer _connectionMultiplexer =
-        connectionMultiplexer ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
+        MGuard.NotNull(connectionMultiplexer);
     private readonly RuleTracingOptions _options = options?.Value ?? new RuleTracingOptions();
     private readonly ITraceRedactor? _redactor = redactor;
 
     /// <summary>Saves a trace entry with the specified TTL.</summary>
     public async ValueTask SaveAsync(RuleTraceEntry entry, TimeSpan ttl, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(entry);
+        MGuard.NotNull(entry);
         ct.ThrowIfCancellationRequested();
 
         // Apply PII redaction before serializing (if a redactor is registered)
@@ -52,7 +53,7 @@ public sealed class RedisRuleTraceStore(
         DateTimeOffset? from,
         CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
+        MGuard.NotEmpty(tenantId);
         ct.ThrowIfCancellationRequested();
 
         StackExchange.Redis.IDatabase db = _connectionMultiplexer.GetDatabase(_options.Database);

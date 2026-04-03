@@ -1,5 +1,7 @@
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Diagnostics;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Mediator.Exceptions;
 using Muonroi.Mediator.Mediator.Attributes;
@@ -227,7 +229,7 @@ public sealed class MRuleEngineBehavior<TRequest, TResponse>(
                 return builtNotification;
             }
 
-            throw new InvalidOperationException($"Rule '{ResolvedRuleCode(rule)}' returned an invalid notification instance.");
+            throw new MInternalException($"Rule '{ResolvedRuleCode(rule)}' returned an invalid notification instance.");
         }
 
         object? notification = Activator.CreateInstance(attribute.NotificationType);
@@ -236,7 +238,7 @@ public sealed class MRuleEngineBehavior<TRequest, TResponse>(
             return typedNotification;
         }
 
-        throw new InvalidOperationException($"Notification type '{attribute.NotificationType.FullName}' must implement INotification.");
+        throw new MInternalException($"Notification type '{attribute.NotificationType.FullName}' must implement INotification.");
     }
 
     /// <summary>
@@ -363,7 +365,7 @@ public sealed class MRuleEngineBehavior<TRequest, TResponse>(
         /// <returns>The resolved rule metadata.</returns>
         public static ResolvedRule FromRule(object rule)
         {
-            ArgumentNullException.ThrowIfNull(rule);
+            MGuard.NotNull(rule);
             Type type = rule.GetType();
             return new ResolvedRule(
                 Rule: rule,

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>
@@ -49,6 +50,6 @@ public sealed class SiteGrpcServiceAttribute : Attribute
     /// <param name="siteId">Site identifier matching <see cref="ISiteProfile.SiteId"/>.</param>
     public SiteGrpcServiceAttribute(string siteId)
     {
-        SiteId = siteId ?? throw new ArgumentNullException(nameof(siteId));
+        SiteId = MGuard.NotNull(siteId);
     }
 }

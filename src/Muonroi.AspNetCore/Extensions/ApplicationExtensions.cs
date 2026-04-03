@@ -2,6 +2,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.Net.Http.Headers;
 using Muonroi.AspNetCore.OpenApi;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Helpers;
 using Muonroi.Mapper.Mapper;
 using Muonroi.Mediator.Mediator;
@@ -46,7 +47,7 @@ public static class ApplicationExtensions
 /// <inheritdoc />
     public static IServiceCollection AddConfigureHttpJson(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        MGuard.NotNull(services);
         _ = services.ConfigureHttpJsonOptions(options =>
         {
             options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;

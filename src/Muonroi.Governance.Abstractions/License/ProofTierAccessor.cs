@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Governance.License;
 
 /// <summary>
@@ -5,8 +7,8 @@ namespace Muonroi.Governance.License;
 /// </summary>
 public sealed class ProofTierAccessor(LicenseState state, LicenseRuntimeStatus runtimeStatus)
 {
-    private readonly LicenseState _state = state ?? throw new ArgumentNullException(nameof(state));
-    private readonly LicenseRuntimeStatus _runtimeStatus = runtimeStatus ?? throw new ArgumentNullException(nameof(runtimeStatus));
+    private readonly LicenseState _state = MGuard.NotNull(state);
+    private readonly LicenseRuntimeStatus _runtimeStatus = MGuard.NotNull(runtimeStatus);
 
     /// <summary>
     /// Executes the Get Effective Tier operation.

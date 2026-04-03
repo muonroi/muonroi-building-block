@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.BackgroundJobs.Abstractions;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BackgroundJobs.Hangfire.Hangfire;
 
@@ -26,8 +27,8 @@ public static class BackgroundJobHandler
 
         if (cfg.JobType != JobType.Hangfire)
         {
-            throw new InvalidOperationException(
-                $"Invalid JobType '{cfg.JobType}' for package '{nameof(BackgroundJobs.Hangfire)}'.");
+            throw new MConfigurationException(
+                $"Invalid JobType '{cfg.JobType}' for package '{nameof(BackgroundJobs.Hangfire)}'.", "BackgroundJobs:JobType");
         }
 
         services.AddSingleton<JobContextActivatorFilter>();

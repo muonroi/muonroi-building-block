@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
@@ -29,7 +30,7 @@ public static class MassTransitHandler
         {
             BusType.RabbitMq => new RabbitMqBusConfigurator(),
             BusType.Kafka => new KafkaBusConfigurator(),
-            _ => throw new InvalidOperationException("Unsupported bus type")
+            _ => throw new MInternalException("Unsupported bus type")
         };
 
         _ = services.AddMassTransit(x =>

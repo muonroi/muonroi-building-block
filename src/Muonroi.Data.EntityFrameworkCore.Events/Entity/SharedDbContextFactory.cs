@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Mediator.Mediator;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
@@ -28,7 +29,7 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
         DatabaseConfigs? databaseConfigs = configuration.GetSection("DatabaseConfigs").Get<DatabaseConfigs>();
         if (databaseConfigs == null || string.IsNullOrEmpty(databaseConfigs.DbType))
         {
-            throw new InvalidOperationException("Database configuration is not properly set.");
+            throw new MConfigurationException("Database configuration is not properly set.", "DatabaseConfigs");
         }
 
         DbContextOptionsBuilder<TContext> builder = new();
@@ -38,12 +39,12 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
             nameof(DbTypes.MySql) => databaseConfigs.ConnectionStrings?.MySqlConnectionString,
             nameof(DbTypes.PostgreSql) => databaseConfigs.ConnectionStrings?.PostgreSqlConnectionString,
             nameof(DbTypes.Sqlite) => databaseConfigs.ConnectionStrings?.SqliteConnectionString,
-            _ => throw new InvalidOperationException("Unsupported database type: " + databaseConfigs.DbType)
-        } ?? throw new InvalidOperationException("Connection string is not provided or is empty.");
+            _ => throw new MConfigurationException("Unsupported database type: " + databaseConfigs.DbType, "DatabaseConfigs:DbType")
+        } ?? throw new MConfigurationException("Connection string is not provided or is empty.", "DatabaseConfigs:ConnectionStrings");
 
         connectionString =
             MStringExtension.DecryptConfigurationValue(configuration, connectionString, true, string.Empty)
-            ?? throw new InvalidOperationException("Connection string is not provided or is empty.");
+            ?? throw new MConfigurationException("Connection string is not provided or is empty.", "DatabaseConfigs:ConnectionStrings");
 
         _ = databaseConfigs.DbType switch
         {
@@ -52,7 +53,7 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
                 Microsoft.EntityFrameworkCore.ServerVersion.AutoDetect(connectionString)),
             nameof(DbTypes.PostgreSql) => builder.UseNpgsql(connectionString),
             nameof(DbTypes.Sqlite) => builder.UseSqlite(connectionString),
-            _ => throw new InvalidOperationException("Unsupported database type: " + databaseConfigs.DbType)
+            _ => throw new MConfigurationException("Unsupported database type: " + databaseConfigs.DbType, "DatabaseConfigs:DbType")
         };
 
         // Try to create with design-time compatible constructor
@@ -111,7 +112,7 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
             }
         }
 
-        throw new InvalidOperationException(
+        throw new MInternalException(
             $"Could not find a suitable constructor for {contextType.Name}. " +
             "Ensure it has a constructor accepting DbContextOptions.");
     }

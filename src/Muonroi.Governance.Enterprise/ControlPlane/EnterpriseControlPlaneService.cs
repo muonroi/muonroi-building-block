@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Policy;
 
 namespace Muonroi.Governance.ControlPlane;
@@ -29,20 +31,17 @@ public sealed class MEnterpriseControlPlaneService(
     private static readonly string[] EnterpriseDefaultEntitlements = ["*"];
     private readonly object _stateLock = new();
 
-    private readonly IMControlPlaneStore _store = store ?? throw new ArgumentNullException(nameof(store));
-    private readonly IMControlPlaneSigner _signer = signer ?? throw new ArgumentNullException(nameof(signer));
+    private readonly IMControlPlaneStore _store = MGuard.NotNull(store);
+    private readonly IMControlPlaneSigner _signer = MGuard.NotNull(signer);
 
     /// <summary>
     /// Executes the Issue License operation.
     /// </summary>
     public MIssueLicenseResult IssueLicense(MIssueLicenseRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        MGuard.NotNull(request);
 
-        if (string.IsNullOrWhiteSpace(request.OrganizationName))
-        {
-            throw new ArgumentException("OrganizationName is required.", nameof(request));
-        }
+        MGuard.Against(string.IsNullOrWhiteSpace(request.OrganizationName), "OrganizationName is required.");
 
         string actor = NormalizeActor(request.RequestedBy);
         DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -117,11 +116,8 @@ public sealed class MEnterpriseControlPlaneService(
     /// </summary>
     public MControlPlaneLicenseRecord RevokeLicense(MRevokeLicenseRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.LicenseId))
-        {
-            throw new ArgumentException(LicenseIdMessage, nameof(request));
-        }
+        MGuard.NotNull(request);
+        MGuard.Against(string.IsNullOrWhiteSpace(request.LicenseId), LicenseIdMessage);
 
         string actor = NormalizeActor(request.RequestedBy);
         string reason = string.IsNullOrWhiteSpace(request.Reason) ? "Revoked by control-plane operator" : request.Reason.Trim();
@@ -131,7 +127,7 @@ public sealed class MEnterpriseControlPlaneService(
         {
             MControlPlaneRegistry registry = _store.Load();
             MControlPlaneLicenseRecord? record = FindLicense(registry, request.LicenseId)
-                ?? throw new InvalidOperationException($"License '{request.LicenseId}' was not found.");
+                ?? throw new MInternalException($"License '{request.LicenseId}' was not found.");
             if (record.Status != MManagedLicenseStatus.Revoked)
             {
                 record.Status = MManagedLicenseStatus.Revoked;
@@ -163,11 +159,8 @@ public sealed class MEnterpriseControlPlaneService(
     /// </summary>
     public MControlPlaneLicenseRecord AssignTenants(MAssignTenantsRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.LicenseId))
-        {
-            throw new ArgumentException(LicenseIdMessage, nameof(request));
-        }
+        MGuard.NotNull(request);
+        MGuard.Against(string.IsNullOrWhiteSpace(request.LicenseId), LicenseIdMessage);
 
         string[] normalizedTenants = NormalizeDistinct(request.TenantIds);
         string actor = NormalizeActor(request.RequestedBy);
@@ -175,7 +168,7 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlaneLicenseRecord? record = FindLicense(registry, request.LicenseId) ?? throw new InvalidOperationException($"License '{request.LicenseId}' was not found.");
+            MControlPlaneLicenseRecord? record = FindLicense(registry, request.LicenseId) ?? throw new MInternalException($"License '{request.LicenseId}' was not found.");
             record.TenantAssignments = normalizedTenants;
             if (record.Payload != null)
             {
@@ -207,11 +200,8 @@ public sealed class MEnterpriseControlPlaneService(
     /// </summary>
     public MControlPlanePolicyBundleRecord CreatePolicyDraft(MCreatePolicyDraftRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.LicenseId))
-        {
-            throw new ArgumentException(LicenseIdMessage, nameof(request));
-        }
+        MGuard.NotNull(request);
+        MGuard.Against(string.IsNullOrWhiteSpace(request.LicenseId), LicenseIdMessage);
 
         string actor = NormalizeActor(request.RequestedBy);
         DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -219,10 +209,10 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlaneLicenseRecord? license = FindLicense(registry, request.LicenseId) ?? throw new InvalidOperationException($"License '{request.LicenseId}' was not found.");
+            MControlPlaneLicenseRecord? license = FindLicense(registry, request.LicenseId) ?? throw new MInternalException($"License '{request.LicenseId}' was not found.");
             if (license.Status != MManagedLicenseStatus.Active)
             {
-                throw new InvalidOperationException($"License '{request.LicenseId}' is not active.");
+                throw new MInternalException($"License '{request.LicenseId}' is not active.");
             }
 
             int nextVersion = registry.PolicyBundles
@@ -277,11 +267,8 @@ public sealed class MEnterpriseControlPlaneService(
     /// </summary>
     public MControlPlanePolicyBundleRecord ApprovePolicyBundle(MApprovePolicyBundleRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.BundleId))
-        {
-            throw new ArgumentException("BundleId is required.", nameof(request));
-        }
+        MGuard.NotNull(request);
+        MGuard.Against(string.IsNullOrWhiteSpace(request.BundleId), "BundleId is required.");
 
         string actor = NormalizeActor(request.RequestedBy);
         DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -289,10 +276,10 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlanePolicyBundleRecord? bundle = FindBundle(registry, request.BundleId) ?? throw new InvalidOperationException($"Policy bundle '{request.BundleId}' was not found.");
+            MControlPlanePolicyBundleRecord? bundle = FindBundle(registry, request.BundleId) ?? throw new MInternalException($"Policy bundle '{request.BundleId}' was not found.");
             if (bundle.Status != MPolicyBundleStatus.Draft)
             {
-                throw new InvalidOperationException(
+                throw new MInternalException(
                     $"Bundle '{request.BundleId}' cannot be approved from status '{bundle.Status}'.");
             }
 
@@ -324,11 +311,8 @@ public sealed class MEnterpriseControlPlaneService(
     /// </summary>
     public MControlPlanePolicyBundleRecord ActivatePolicyBundle(MActivatePolicyBundleRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.BundleId))
-        {
-            throw new ArgumentException("BundleId is required.", nameof(request));
-        }
+        MGuard.NotNull(request);
+        MGuard.Against(string.IsNullOrWhiteSpace(request.BundleId), "BundleId is required.");
 
         string actor = NormalizeActor(request.RequestedBy);
         DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -336,11 +320,11 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlanePolicyBundleRecord? bundle = FindBundle(registry, request.BundleId) ?? throw new InvalidOperationException($"Policy bundle '{request.BundleId}' was not found.");
+            MControlPlanePolicyBundleRecord? bundle = FindBundle(registry, request.BundleId) ?? throw new MInternalException($"Policy bundle '{request.BundleId}' was not found.");
             if (bundle.Status is not MPolicyBundleStatus.Approved and
                 not MPolicyBundleStatus.Activated)
             {
-                throw new InvalidOperationException(
+                throw new MInternalException(
                     $"Bundle '{request.BundleId}' cannot be activated from status '{bundle.Status}'.");
             }
 
@@ -387,16 +371,10 @@ public sealed class MEnterpriseControlPlaneService(
     /// </summary>
     public MControlPlanePolicyBundleRecord RollbackPolicyBundle(MRollbackPolicyBundleRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.LicenseId))
-        {
-            throw new ArgumentException(LicenseIdMessage, nameof(request));
-        }
+        MGuard.NotNull(request);
+        MGuard.Against(string.IsNullOrWhiteSpace(request.LicenseId), LicenseIdMessage);
 
-        if (request.TargetVersion <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(request.TargetVersion), "TargetVersion must be greater than zero.");
-        }
+        MGuard.Against(request.TargetVersion <= 0, "TargetVersion must be greater than zero.");
 
         string actor = NormalizeActor(request.RequestedBy);
         string reason = string.IsNullOrWhiteSpace(request.Reason) ? "Rollback requested by operator" : request.Reason.Trim();
@@ -405,17 +383,17 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlaneLicenseRecord? license = FindLicense(registry, request.LicenseId) ?? throw new InvalidOperationException($"License '{request.LicenseId}' was not found.");
+            MControlPlaneLicenseRecord? license = FindLicense(registry, request.LicenseId) ?? throw new MInternalException($"License '{request.LicenseId}' was not found.");
             MControlPlanePolicyBundleRecord? currentActive = registry.PolicyBundles
                 .Where(x =>
                     x.LicenseId.Equals(request.LicenseId, StringComparison.OrdinalIgnoreCase) &&
                     x.Status == MPolicyBundleStatus.Activated)
                 .OrderByDescending(x => x.Version)
-                .FirstOrDefault() ?? throw new InvalidOperationException(
+                .FirstOrDefault() ?? throw new MInternalException(
                     $"No active policy bundle exists for license '{request.LicenseId}'.");
             MControlPlanePolicyBundleRecord? targetBundle = registry.PolicyBundles
                 .Where(x => x.LicenseId.Equals(request.LicenseId, StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefault(x => x.Version == request.TargetVersion) ?? throw new InvalidOperationException(
+                .FirstOrDefault(x => x.Version == request.TargetVersion) ?? throw new MInternalException(
                     $"Target version '{request.TargetVersion}' was not found for license '{request.LicenseId}'.");
             if (targetBundle.BundleId.Equals(currentActive.BundleId, StringComparison.OrdinalIgnoreCase))
             {
@@ -424,7 +402,7 @@ public sealed class MEnterpriseControlPlaneService(
 
             if (targetBundle.Status == MPolicyBundleStatus.Draft)
             {
-                throw new InvalidOperationException("Rollback target cannot be a draft bundle.");
+                throw new MInternalException("Rollback target cannot be a draft bundle.");
             }
 
             if (string.IsNullOrWhiteSpace(targetBundle.Policy.Signature))

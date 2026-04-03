@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.RuleEngine.Proliferation.Models;
 
 namespace Muonroi.RuleEngine.Proliferation.Auth;
@@ -67,8 +68,8 @@ public sealed class AuthStrategyResolver : IAuthStrategyResolver
     private async Task<AuthResult> ResolveOAuth2Async(ExternalProjectConfig config, CancellationToken ct)
     {
         if (config.OAuth2 == null)
-            throw new InvalidOperationException(
-                $"ExternalProjectConfig.OAuth2 is required when AuthStrategy is OAuth2ClientCredentials (ProjectId={config.ProjectId})");
+            throw new MConfigurationException(
+                $"ExternalProjectConfig.OAuth2 is required when AuthStrategy is OAuth2ClientCredentials (ProjectId={config.ProjectId})", "OAuth2");
 
         string accessToken = await _oauth2Provider.GetAccessTokenAsync(config.OAuth2, ct);
 
@@ -85,8 +86,8 @@ public sealed class AuthStrategyResolver : IAuthStrategyResolver
     private AuthResult ResolveMutualTls(ExternalProjectConfig config)
     {
         if (config.Mtls == null)
-            throw new InvalidOperationException(
-                $"ExternalProjectConfig.Mtls is required when AuthStrategy is MutualTls (ProjectId={config.ProjectId})");
+            throw new MConfigurationException(
+                $"ExternalProjectConfig.Mtls is required when AuthStrategy is MutualTls (ProjectId={config.ProjectId})", "Mtls");
 
         HttpClient customClient = _mtlsFactory.CreateClient(config.ProjectId, config.Mtls);
 

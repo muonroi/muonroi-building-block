@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -46,9 +48,9 @@ public sealed class SiteSchemaValidator : IHostedService
         IOptions<SiteSchemaValidationOptions> options,
         IMLog<SiteSchemaValidator> log)
     {
-        ArgumentNullException.ThrowIfNull(sp);
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(log);
+        MGuard.NotNull(sp);
+        MGuard.NotNull(options);
+        MGuard.NotNull(log);
 
         _sp = sp;
         _options = options.Value;
@@ -89,7 +91,7 @@ public sealed class SiteSchemaValidator : IHostedService
             string message =
                 $"[SiteSchemaValidator] Schema validation FAILED — {allMismatches.Count} mismatch(es) found:\n" +
                 string.Join("\n", allMismatches);
-            throw new InvalidOperationException(message);
+            throw new MInternalException(message);
         }
         else
         {

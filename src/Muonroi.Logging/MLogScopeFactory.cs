@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Logging;
 
 /// <summary>
@@ -6,8 +8,7 @@ namespace Muonroi.Logging;
 /// <param name="loggerFactory">The logger factory used to create loggers for the scopes.</param>
 public sealed class MLogScopeFactory(ILoggerFactory loggerFactory) : ILogScopeFactory
 {
-    private readonly ILogger _logger =
-        (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger("Muonroi.Scope");
+    private readonly ILogger _logger = MGuard.NotNull(loggerFactory).CreateLogger("Muonroi.Scope");
 
     /// <inheritdoc />
     public IDisposable? BeginScope(IReadOnlyDictionary<string, object?> properties)

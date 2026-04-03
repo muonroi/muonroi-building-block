@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.Tenancy.SiteProfile.Web.Dapper;
@@ -152,7 +153,7 @@ public static class SiteDataAccessExtensions
         if (descriptor.ImplementationInstance is not null)
             return (TService)descriptor.ImplementationInstance;
 
-        throw new InvalidOperationException(
+        throw new MInternalException(
             $"ServiceDescriptor for {typeof(TService).Name} has no factory, type, or instance.");
     }
 }

@@ -1,4 +1,4 @@
-using Muonroi.Mapper.Interfaces;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Mapper.Mapper;
 
@@ -10,10 +10,10 @@ public sealed class SimpleMapper(MappingConfiguration configuration) : IMapper
     /// <inheritdoc/>
     public TDestination Map<TDestination>(object source)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        MGuard.NotNull(source);
 
         TDestination destination = Activator.CreateInstance<TDestination>()!;
-        Action<object, object> action = configuration.GetOrAdd(source.GetType(), typeof(TDestination));   
+        Action<object, object> action = configuration.GetOrAdd(source.GetType(), typeof(TDestination));
         action(source, destination);
         return destination;
     }
@@ -21,10 +21,10 @@ public sealed class SimpleMapper(MappingConfiguration configuration) : IMapper
     /// <inheritdoc/>
     public TDestination Map<TSource, TDestination>(TSource source, TDestination destination)
     {
-        if (source is null) throw new ArgumentNullException(nameof(source));
-        if (destination is null) throw new ArgumentNullException(nameof(destination));
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(destination);
 
-        Action<object, object> action = configuration.GetOrAdd(typeof(TSource), typeof(TDestination));    
+        Action<object, object> action = configuration.GetOrAdd(typeof(TSource), typeof(TDestination));
         action(source, destination);
         return destination;
     }
@@ -32,10 +32,10 @@ public sealed class SimpleMapper(MappingConfiguration configuration) : IMapper
     /// <inheritdoc/>
     public object Map(object source, object destination)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(destination);
+        MGuard.NotNull(source);
+        MGuard.NotNull(destination);
 
-        Action<object, object> action = configuration.GetOrAdd(source.GetType(), destination.GetType());  
+        Action<object, object> action = configuration.GetOrAdd(source.GetType(), destination.GetType());
         action(source, destination);
         return destination;
     }

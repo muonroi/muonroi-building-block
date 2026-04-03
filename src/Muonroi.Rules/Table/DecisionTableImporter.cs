@@ -1,4 +1,6 @@
 ﻿using System.Globalization;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Rules.Table;
 
@@ -87,32 +89,29 @@ public static partial class DecisionTableImporter
     /// <exception cref="InvalidDataException">Thrown when the CSV content is malformed.</exception>
     public static DecisionTable ImportCsv(string csvContent)
     {
-        if (string.IsNullOrWhiteSpace(csvContent))
-        {
-            throw new ArgumentException("Empty content", nameof(csvContent));
-        }
+        MGuard.NotEmpty(csvContent);
 
         string[] lines = csvContent.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 3)
         {
-            throw new InvalidDataException("Table must contain hit policy, headers and at least one rule");
+            throw new MConfigurationException("Table must contain hit policy, headers and at least one rule");
         }
 
         string[] hitParts = lines[0].Split(',');
         if (hitParts.Length < 2 || !hitParts[0].Equals("HitPolicy", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidDataException("Missing HitPolicy declaration");
+            throw new MConfigurationException("Missing HitPolicy declaration");
         }
 
         if (!Enum.TryParse(hitParts[1], true, out HitPolicy policy))
         {
-            throw new InvalidDataException($"Invalid hit policy {hitParts[1]}");
+            throw new MConfigurationException($"Invalid hit policy {hitParts[1]}");
         }
 
         string[] headers = lines[1].Split(',');
         if (headers.Length < 2)
         {
-            throw new InvalidDataException("Decision table requires at least one input and one output column");
+            throw new MConfigurationException("Decision table requires at least one input and one output column");
         }
 
         DecisionTable table = new()
@@ -130,7 +129,7 @@ public static partial class DecisionTableImporter
             string[] cols = lines[rowIndex].Split(',');
             if (cols.Length != headers.Length)
             {
-                throw new InvalidDataException($"Row {rowIndex - 1} has incorrect number of columns");
+                throw new MConfigurationException($"Row {rowIndex - 1} has incorrect number of columns");
             }
 
             Dictionary<string, string> inputs = new()

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Proliferation.Models;
 
@@ -83,7 +84,7 @@ public sealed class CachingOAuth2TokenProvider : IOAuth2TokenProvider
         using JsonDocument doc = JsonDocument.Parse(json);
 
         string accessToken = doc.RootElement.GetProperty("access_token").GetString()
-            ?? throw new InvalidOperationException("OAuth2 token response missing 'access_token'");
+            ?? throw new MConfigurationException("OAuth2 token response missing 'access_token'", "access_token");
 
         // Parse expires_in (default to 3600s if missing)
         int expiresIn = doc.RootElement.TryGetProperty("expires_in", out JsonElement expiresElem)

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -104,7 +105,7 @@ public static class SiteGrpcEndpointExtensions
         this IEndpointRouteBuilder app,
         Func<IReadOnlyList<SiteGrpcServiceDescriptor>> registryProvider)
     {
-        ArgumentNullException.ThrowIfNull(registryProvider);
+        MGuard.NotNull(registryProvider);
 
         IReadOnlyList<SiteGrpcServiceDescriptor> descriptors = registryProvider();
         List<(string SiteId, Type ServiceType)> mapped = new(descriptors.Count);
@@ -135,7 +136,7 @@ public static class SiteGrpcEndpointExtensions
         Func<IReadOnlyList<TDescriptor>> registryProvider)
         where TDescriptor : class
     {
-        ArgumentNullException.ThrowIfNull(registryProvider);
+        MGuard.NotNull(registryProvider);
 
         IReadOnlyList<TDescriptor> descriptors = registryProvider();
         List<(string SiteId, Type ServiceType)> mapped = new(descriptors.Count);

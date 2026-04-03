@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.License;
 
 namespace Muonroi.Governance.Abstractions.License;
@@ -15,8 +16,8 @@ public static class LicenseGuardExtensions
         this IServiceCollection services,
         string featureName)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentException.ThrowIfNullOrEmpty(featureName);
+        MGuard.NotNull(services);
+        MGuard.NotEmpty(featureName);
 
         // NOTE: intentionally NOT using `using` here.
         // BuildServiceProvider shares singleton instances (e.g. IMLogFactory / Serilog) with the

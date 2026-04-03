@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Grpc.Grpc;
 
 /// <summary>
@@ -247,7 +249,7 @@ internal static class GrpcServicesConfigBinding
 {
     public static GrpcServicesConfig Bind(IConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(configuration);
 
         GrpcServicesConfig config = new();
 

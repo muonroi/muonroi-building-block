@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Core.Timing;
 
 /// <summary>
@@ -12,7 +14,7 @@ public static class Clock
     public static IClockProvider Provider
     {
         get => _provider;
-        set => _provider = value ?? throw new ArgumentNullException(nameof(value), "Can not set Clock.Provider to null!");
+        set => _provider = MGuard.NotNull(value);
     }
 
     private static IClockProvider _provider = ClockProviders.Unspecified;

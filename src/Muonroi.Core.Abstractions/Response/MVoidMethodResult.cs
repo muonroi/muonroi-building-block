@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Core.Abstractions.Response;
 
 /// <summary>
@@ -122,7 +124,7 @@ public class MVoidMethodResult
     /// <param name="errorCode">The error code.</param>
     public void AddError(string errorCode)
     {
-        ArgumentNullException.ThrowIfNull(errorCode);
+        MGuard.NotNull(errorCode);
         AddErrorMessage(errorCode, null, []);
     }
 
@@ -134,7 +136,7 @@ public class MVoidMethodResult
     /// <param name="arguments">The arguments.</param>
     public void AddError(string errorCode, string lang, params string[] arguments)
     {
-        ArgumentNullException.ThrowIfNull(errorCode);
+        MGuard.NotNull(errorCode);
         AddErrorMessage(errorCode, GetErrorMessage(errorCode, lang), arguments);
     }
 
@@ -145,7 +147,7 @@ public class MVoidMethodResult
     /// <param name="arguments">The arguments.</param>
     public void AddError(string errorCode, params string[] arguments)
     {
-        ArgumentNullException.ThrowIfNull(errorCode);
+        MGuard.NotNull(errorCode);
         AddErrorMessage(errorCode, null, arguments);
     }
 

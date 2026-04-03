@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Adapters;
@@ -124,7 +125,7 @@ public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
         if (_parsedTemplate.HasErrors)
         {
             string errors = string.Join("; ", _parsedTemplate.Messages);
-            throw new InvalidOperationException($"Scriban parse error: {errors}");
+            throw new MInternalException($"Scriban parse error: {errors}");
         }
 
         ScribanFactBagScriptObject scriptObject = new(variables);

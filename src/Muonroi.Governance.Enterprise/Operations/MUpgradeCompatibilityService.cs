@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.Operations;
 using Muonroi.Logging.Abstractions;
@@ -22,7 +23,7 @@ public sealed class MUpgradeCompatibilityService(
     /// </summary>
     public MUpgradeCompatibilityResult Evaluate(MUpgradeCompatibilityRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        MGuard.NotNull(request);
 
         List<MUpgradeCompatibilityIssue> issues = [];
 
@@ -51,7 +52,7 @@ public sealed class MUpgradeCompatibilityService(
     /// </summary>
     public MUpgradeCompatibilityResult EvaluateFromFiles(MUpgradeCompatibilityFileRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        MGuard.NotNull(request);
 
         MUpgradeCompatibilityRequest model = new()
         {

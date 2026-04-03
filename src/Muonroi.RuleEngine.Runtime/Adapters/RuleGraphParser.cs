@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Interfaces;
 
 namespace Muonroi.RuleEngine.Runtime.Adapters;
@@ -29,7 +30,7 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
     {
         if (!TryExtractGraph(graphJson, out RuleFlowGraph? graph) || graph is null)
         {
-            throw new InvalidOperationException("Invalid or empty graph JSON.");
+            throw new MConfigurationException("Invalid or empty graph JSON.");
         }
 
         List<RuleFlowNode> executableNodes = [.. graph.Nodes.Where(n => ExecutableTypes.Contains(n.Type))];

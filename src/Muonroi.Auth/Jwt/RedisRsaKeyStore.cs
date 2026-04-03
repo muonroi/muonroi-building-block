@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Distributed;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Auth.Jwt;
 
@@ -46,7 +47,7 @@ public class RedisRsaKeyStore : IRsaKeyStore
 
         if (string.IsNullOrWhiteSpace(kid))
         {
-            throw new InvalidOperationException("Unable to resolve current RSA key id.");
+            throw new MInternalException("Unable to resolve current RSA key id.");
         }
 
         SecurityKey? key = GetKey(kid);
@@ -56,7 +57,7 @@ public class RedisRsaKeyStore : IRsaKeyStore
             key = GetKey(_cache.GetString(CurrentKidKey)!);
             if (key is not RsaSecurityKey fallbackKey)
             {
-                throw new InvalidOperationException("Unable to resolve current RSA signing key.");
+                throw new MInternalException("Unable to resolve current RSA signing key.");
             }
 
             rsaKey = fallbackKey;
@@ -217,13 +218,13 @@ public class RedisRsaKeyStore : IRsaKeyStore
         string? raw = configuration["Auth:RsaMasterKey"];
         if (string.IsNullOrWhiteSpace(raw))
         {
-            throw new InvalidOperationException("Missing configuration Auth:RsaMasterKey (base64, 32 bytes).");
+            throw new MConfigurationException("Missing configuration Auth:RsaMasterKey (base64, 32 bytes).", "Auth:RsaMasterKey");
         }
 
         byte[] key = Convert.FromBase64String(raw);
         if (key.Length != 32)
         {
-            throw new InvalidOperationException("Auth:RsaMasterKey must be a base64-encoded 32-byte key.");
+            throw new MConfigurationException("Auth:RsaMasterKey must be a base64-encoded 32-byte key.", "Auth:RsaMasterKey");
         }
 
         return key;

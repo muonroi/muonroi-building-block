@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Core.Events;
 
@@ -23,8 +24,7 @@ public sealed class RuleExecutionEventPublisher
         IEventSink eventSink,
         IMLog<RuleExecutionEventPublisher>? log = null)
     {
-        ArgumentNullException.ThrowIfNull(eventSink);
-        _eventSink = eventSink;
+        _eventSink = MGuard.NotNull(eventSink);
         _log = log;
     }
 

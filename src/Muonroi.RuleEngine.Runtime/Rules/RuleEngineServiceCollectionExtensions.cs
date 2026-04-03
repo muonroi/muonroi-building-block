@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Governance.Abstractions.License;
@@ -18,8 +19,8 @@ public static class RuleEngineServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddRuleEngineStore(this IServiceCollection services, IConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(services);
+        MGuard.NotNull(configuration);
         // File-backed store is available in all tiers (Free, Licensed, Enterprise).
         // EnsureFeatureOrThrow is reserved for Postgres/Redis-backed stores (AddMRuleEngineWithPostgres).
 
@@ -97,8 +98,8 @@ public static class RuleEngineServiceCollectionExtensions
         string connectionString,
         Action<RuleControlPlaneOptions>? configureOptions = null)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+        MGuard.NotNull(services);
+        MGuard.NotEmpty(connectionString);
         services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.RuleEngine);
 
         RuleStoreConfigs storeConfigs = GetOrCreateRuleStoreConfigs(services);
@@ -150,8 +151,8 @@ public static class RuleEngineServiceCollectionExtensions
         this IServiceCollection services,
         string redisConnectionString)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentException.ThrowIfNullOrWhiteSpace(redisConnectionString);
+        MGuard.NotNull(services);
+        MGuard.NotEmpty(redisConnectionString);
 
         RuleStoreConfigs configs = GetOrCreateRuleStoreConfigs(services);
         ReplaceSingleton(services, configs);
@@ -170,7 +171,7 @@ public static class RuleEngineServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddMRuleEngineApprovalWorkflow(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        MGuard.NotNull(services);
 
         RuleControlPlaneOptions options = GetOrCreateControlPlaneOptions(services);
         options.RequireApproval = true;
@@ -184,7 +185,7 @@ public static class RuleEngineServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddMCanaryRollout(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        MGuard.NotNull(services);
 
         RuleControlPlaneOptions options = GetOrCreateControlPlaneOptions(services);
         options.EnableCanary = true;
@@ -219,7 +220,7 @@ public static class RuleEngineServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddRuleEngineEventBridge(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        MGuard.NotNull(services);
 
         // Register InMemoryEventSink as default IEventSink if none registered
         services.TryAddSingleton<IEventSink, InMemoryEventSink>();

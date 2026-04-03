@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
@@ -46,7 +48,7 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
                 string currentJson = entry.CurrentValues.GetValue<string>(nameof(RuleSetRecord.Json));
                 if (!string.Equals(originalJson, currentJson, StringComparison.Ordinal))
                 {
-                    throw new InvalidOperationException(
+                    throw new MInternalException(
                         $"Cannot modify Json of ruleset version with status '{originalStatus}'. Published versions are immutable.");
                 }
             }
@@ -55,7 +57,7 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
             RuleSetStatus newStatus = entry.CurrentValues.GetValue<RuleSetStatus>(nameof(RuleSetRecord.Status));
             if (newStatus != originalStatus && !IsAllowedTransition(originalStatus, newStatus))
             {
-                throw new InvalidOperationException(
+                throw new MInternalException(
                     $"Invalid status transition from '{originalStatus}' to '{newStatus}' for ruleset version.");
             }
         }

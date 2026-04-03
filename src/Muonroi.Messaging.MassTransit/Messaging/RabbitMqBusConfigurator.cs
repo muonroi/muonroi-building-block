@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>
@@ -10,7 +12,7 @@ public class RabbitMqBusConfigurator : IBusConfigurator
     /// </summary>
     public void Configure(IBusRegistrationConfigurator configurator, MessageBusConfigs configs)
     {
-        RabbitMqConfigs rabbit = configs.RabbitMq ?? throw new InvalidDataException("RabbitMQ configuration missing");
+        RabbitMqConfigs rabbit = configs.RabbitMq ?? throw new MConfigurationException("RabbitMQ configuration missing", "MessageBus:RabbitMq");
         if (!string.IsNullOrWhiteSpace(configs.Runtime.EndpointPrefix))
         {
             configurator.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(configs.Runtime.EndpointPrefix, false));

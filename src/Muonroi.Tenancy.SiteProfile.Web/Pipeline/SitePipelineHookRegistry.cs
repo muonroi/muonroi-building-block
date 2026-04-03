@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Options;
 
@@ -23,7 +24,7 @@ public sealed class SitePipelineHookRegistry
     /// </summary>
     public SitePipelineHookRegistry(IOptions<SitePipelineHookOptions> options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        MGuard.NotNull(options);
         foreach (HookRegistration reg in options.Value.Hooks)
         {
             Register(reg.SiteId, reg.ServiceName, reg.StepName, reg.Phase, reg.Factory);
@@ -40,10 +41,10 @@ public sealed class SitePipelineHookRegistry
         SiteStepHookPhase phase,
         Func<IServiceProvider, ISiteStepHook> factory)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(siteId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(stepName);
-        ArgumentNullException.ThrowIfNull(factory);
+        MGuard.NotEmpty(siteId);
+        MGuard.NotEmpty(serviceName);
+        MGuard.NotEmpty(stepName);
+        MGuard.NotNull(factory);
 
         var key = (siteId, serviceName, stepName, phase);
         _hooks.AddOrUpdate(key,

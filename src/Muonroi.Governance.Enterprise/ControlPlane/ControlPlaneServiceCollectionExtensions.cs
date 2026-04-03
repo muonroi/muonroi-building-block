@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Governance.ControlPlane;
 
 /// <summary>
@@ -13,8 +15,8 @@ public static class MControlPlaneServiceCollectionExtensions
         string registryPath,
         IMControlPlaneSigner signer)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(signer);
+        MGuard.NotNull(services);
+        MGuard.NotNull(signer);
 
         services.AddSingleton<IMControlPlaneStore>(sp =>
             new MFileControlPlaneStore(registryPath, sp.GetRequiredService<IMJsonSerializeService>()));

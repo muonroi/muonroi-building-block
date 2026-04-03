@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Tenancy.SiteProfile.Web.Dapper;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.DataAccess;
@@ -22,7 +23,7 @@ internal sealed class SiteQueryExecutor(
     /// <inheritdoc />
     public async Task<IEnumerable<T>> QueryAsync<T>(string markerSql, object? param = null, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(markerSql);
+        MGuard.NotNull(markerSql);
         string resolvedSql = _sqlBuilder.InterpolateMarkers(markerSql);
         return await _dapperRead.QueryAsync<T>(resolvedSql, param);
     }
@@ -30,7 +31,7 @@ internal sealed class SiteQueryExecutor(
     /// <inheritdoc />
     public async Task<T?> QueryFirstOrDefaultAsync<T>(string markerSql, object? param = null, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(markerSql);
+        MGuard.NotNull(markerSql);
         string resolvedSql = _sqlBuilder.InterpolateMarkers(markerSql);
         return await _dapperRead.QueryFirstOrDefaultAsync<T>(resolvedSql, param);
     }
@@ -38,7 +39,7 @@ internal sealed class SiteQueryExecutor(
     /// <inheritdoc />
     public async Task<int> ExecuteAsync(string markerSql, object? param = null, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(markerSql);
+        MGuard.NotNull(markerSql);
         string resolvedSql = _sqlBuilder.InterpolateMarkers(markerSql);
         return await _dapperRead.ExecuteAsync(resolvedSql, param);
     }

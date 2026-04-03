@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Core.Events;
 using Muonroi.RuleEngine.Runtime.Rules;
@@ -27,11 +28,8 @@ public sealed class CloudEventPublishingNotifier : IRuleSetChangeNotifier
         IEventSink eventSink,
         IMLog<CloudEventPublishingNotifier>? log = null)
     {
-        ArgumentNullException.ThrowIfNull(inner);
-        ArgumentNullException.ThrowIfNull(eventSink);
-
-        _inner = inner;
-        _eventSink = eventSink;
+        _inner = MGuard.NotNull(inner);
+        _eventSink = MGuard.NotNull(eventSink);
         _log = log;
     }
 

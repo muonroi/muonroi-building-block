@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
@@ -31,6 +33,6 @@ public sealed class RuleSetValidationResult
         }
 
         string message = string.Join("; ", Errors.Select(x => x.Message));
-        throw new InvalidDataException(message);
+        throw new MConfigurationException(message);
     }
 }

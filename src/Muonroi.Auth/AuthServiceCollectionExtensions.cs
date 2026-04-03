@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Auth.Helpers;
 
@@ -35,7 +36,7 @@ public static class AuthServiceCollectionExtensions
     /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddRedisRsaKeyStore(this IServiceCollection services, IConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(configuration);
 
         services.RemoveAll<IRsaKeyStore>();
         services.RemoveAll<ITokenRevocationStore>();

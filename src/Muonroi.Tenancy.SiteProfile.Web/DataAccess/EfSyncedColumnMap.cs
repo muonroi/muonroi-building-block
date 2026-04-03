@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Tenancy.SiteProfile.Web.Dapper;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.DataAccess;
@@ -18,8 +19,8 @@ internal sealed class EfSyncedColumnMap : ISiteColumnMap
         ISiteColumnMap inner,
         IReadOnlyDictionary<string, SyncedColumnInfo> syncedEntries)
     {
-        _inner = inner ?? throw new ArgumentNullException(nameof(inner));
-        _syncedEntries = syncedEntries ?? throw new ArgumentNullException(nameof(syncedEntries));
+        _inner = MGuard.NotNull(inner);
+        _syncedEntries = MGuard.NotNull(syncedEntries);
     }
 
     public string Column(string propertyName)

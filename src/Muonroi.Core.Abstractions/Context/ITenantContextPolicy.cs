@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Core.Abstractions.Context;
 
@@ -34,7 +35,7 @@ public interface ITenantContextPolicy
 /// <param name="resolver">The context resolver.</param>
 public sealed class DefaultTenantContextPolicy(IContextResolver resolver) : ITenantContextPolicy
 {
-    private readonly IContextResolver _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
+    private readonly IContextResolver _resolver = MGuard.NotNull(resolver);
     private static readonly bool TenancyInstalled = IsAssemblyLoaded("Muonroi.Tenancy");
     private static readonly bool AuthInstalled = IsAssemblyLoaded("Muonroi.Auth");
 
@@ -53,12 +54,12 @@ public sealed class DefaultTenantContextPolicy(IContextResolver resolver) : ITen
     /// </summary>
     /// <param name="context">The context to resolve and validate.</param>
     /// <returns>The resolved and validated context.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if context is null.</exception>
+    /// <exception cref="MArgumentException">Thrown if context is null.</exception>
     /// <exception cref="MissingTenantContextException">Thrown if tenant context is missing but required.</exception>
     /// <exception cref="MissingUserContextException">Thrown if user context is missing but required.</exception>
     public ISystemExecutionContext ResolveAndValidate(ISystemExecutionContext context)
     {
-        _ = context ?? throw new ArgumentNullException(nameof(context));
+        MGuard.NotNull(context);
         if (context is not SystemExecutionContext concrete)
         {
             concrete = new SystemExecutionContext(

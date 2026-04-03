@@ -1,5 +1,6 @@
 using FluentValidation;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Response;
 using Muonroi.Observability.OpenTelemetry;
 
@@ -20,11 +21,11 @@ public class MExceptionMiddleware(
     MAuthenticateInfoContext authContext,
     IHostEnvironment environment)
 {
-    private readonly RequestDelegate _next = next ?? throw new ArgumentNullException(nameof(next));
-    private readonly IMLog<MExceptionMiddleware> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly IMJsonSerializeService _serializeService = serializeService ?? throw new ArgumentNullException(nameof(serializeService));
-    private readonly MAuthenticateInfoContext _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
-    private readonly IHostEnvironment _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+    private readonly RequestDelegate _next = MGuard.NotNull(next);
+    private readonly IMLog<MExceptionMiddleware> _logger = MGuard.NotNull(logger);
+    private readonly IMJsonSerializeService _serializeService = MGuard.NotNull(serializeService);
+    private readonly MAuthenticateInfoContext _authContext = MGuard.NotNull(authContext);
+    private readonly IHostEnvironment _environment = MGuard.NotNull(environment);
 
     /// <summary>
     /// Invokes the middleware.
@@ -45,7 +46,7 @@ public class MExceptionMiddleware(
 
     private Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
-        ArgumentNullException.ThrowIfNull(ex);
+        MGuard.NotNull(ex);
 
         context.Response.ContentType = "application/json";
         var traceId = Activity.Current?.Id ?? context.TraceIdentifier;

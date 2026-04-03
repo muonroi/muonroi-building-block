@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.License;
 using Muonroi.Mediator.Mediator.Interfaces;
 using Muonroi.Messaging.Abstractions.Events;
@@ -38,7 +39,7 @@ public class MEventOutboxDbContext(
     /// <returns>A task that represents the asynchronous operation.</returns>
     public Task AddAsync(EventOutbox outbox, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(outbox);
+        MGuard.NotNull(outbox);
         return OutboxEvents.AddAsync(outbox, cancellationToken).AsTask();
     }
 

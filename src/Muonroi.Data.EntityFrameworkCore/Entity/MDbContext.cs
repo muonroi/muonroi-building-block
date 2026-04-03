@@ -1,3 +1,6 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
 
 /// <summary>
@@ -300,11 +303,11 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
     /// <exception cref="InvalidOperationException">Thrown when <paramref name="transaction"/> is not the current transaction.</exception>
     public async Task CommitTransactionAsync(IDbContextTransaction transaction)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        MGuard.NotNull(transaction);
 
         if (transaction != _currentTransaction)
         {
-            throw new InvalidOperationException($"Transaction {transaction.TransactionId} is not current");
+            throw new MInternalException($"Transaction {transaction.TransactionId} is not current");
         }
 
         try

@@ -3,6 +3,8 @@ using Grpc.Net.Client.Configuration;
 using Grpc.Net.ClientFactory;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.License;
@@ -21,7 +23,7 @@ public static class GrpcHandler
     /// <param name="configuration">The optional configuration source.</param>
     public static void AddGrpcServer(this IServiceCollection services, IConfiguration? configuration = null)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        MGuard.NotNull(services);
         services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.Grpc);
 
         GrpcServicesConfig grpcConfig = configuration is null ? new GrpcServicesConfig() : GrpcServicesConfigBinding.Bind(configuration);
@@ -62,7 +64,7 @@ public static class GrpcHandler
     public static IHttpClientBuilder AddGrpcClient<TClient>(this IServiceCollection services, string serviceUri)
         where TClient : class
     {
-        _ = services ?? throw new ArgumentNullException(nameof(services));
+        MGuard.NotNull(services);
         GrpcServiceConfig config = new()
         {
             Uri = serviceUri
@@ -82,8 +84,8 @@ public static class GrpcHandler
         IConfiguration configuration,
         Dictionary<string, Type> clients)
     {
-        _ = services ?? throw new ArgumentNullException(nameof(services));
-        _ = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        MGuard.NotNull(services);
+        MGuard.NotNull(configuration);
         _ = clients ?? throw new NullReferenceException(nameof(clients));
 
         GrpcServicesConfig grpcServicesConfig = GrpcServicesConfigBinding.Bind(configuration);
@@ -112,7 +114,7 @@ public static class GrpcHandler
     /// <returns>The application builder.</returns>
     public static IApplicationBuilder UseGrpcTransport(this IApplicationBuilder app, IConfiguration? configuration = null)
     {
-        ArgumentNullException.ThrowIfNull(app);
+        MGuard.NotNull(app);
         if (configuration is null)
         {
             return app;
@@ -152,7 +154,7 @@ public static class GrpcHandler
     private static IHttpClientBuilder AddGrpcClient(this IServiceCollection services, Type clientType,
         string serviceUri)
     {
-        _ = services ?? throw new ArgumentNullException(nameof(services));
+        MGuard.NotNull(services);
         _ = new Uri(serviceUri);
 
         MethodInfo method = typeof(GrpcHandler)
@@ -162,7 +164,7 @@ public static class GrpcHandler
         object? result = method.Invoke(null, [services, serviceUri, new GrpcClientDefaultsConfig(), null]);
 
         return result as IHttpClientBuilder
-               ?? throw new InvalidOperationException("Failed to create the gRPC client builder.");
+               ?? throw new MInternalException("Failed to create the gRPC client builder.");
     }
 
     private static IHttpClientBuilder AddGrpcClientConfigured(
@@ -171,9 +173,9 @@ public static class GrpcHandler
         GrpcServiceConfig serviceConfig,
         GrpcClientDefaultsConfig defaults)
     {
-        _ = services ?? throw new ArgumentNullException(nameof(services));
-        _ = serviceConfig ?? throw new ArgumentNullException(nameof(serviceConfig));
-        _ = defaults ?? throw new ArgumentNullException(nameof(defaults));
+        MGuard.NotNull(services);
+        MGuard.NotNull(serviceConfig);
+        MGuard.NotNull(defaults);
         _ = new Uri(serviceConfig.Uri);
 
         MethodInfo method = typeof(GrpcHandler)
@@ -182,7 +184,7 @@ public static class GrpcHandler
 
         object? result = method.Invoke(null, [services, serviceConfig.Uri, defaults, serviceConfig]);
         return result as IHttpClientBuilder
-               ?? throw new InvalidOperationException("Failed to create the gRPC client builder.");
+               ?? throw new MInternalException("Failed to create the gRPC client builder.");
     }
 
     private static IHttpClientBuilder AddGrpcClientGeneric<TClient>(

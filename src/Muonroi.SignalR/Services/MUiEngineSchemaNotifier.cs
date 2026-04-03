@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.SignalR.Services;
 
 /// <summary>
@@ -45,7 +47,7 @@ public sealed class MUiEngineSchemaNotifier(
         MUiEngineSchemaVersion schemaVersion,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(schemaVersion);
+        MGuard.NotNull(schemaVersion);
 
         await hubContext.Clients
             .Group(MUiEngineHub.MSchemaWatcherGroup)
