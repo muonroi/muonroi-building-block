@@ -260,15 +260,18 @@ public static class SiteGrpcExtensions
         {
             var accessor = sp.GetRequiredService<GrpcClientFactoryAccessor>();
 
-            var ctor = typeof(TImpl).GetConstructors()[0];
+            // Generated facades have ClientBase-only constructors.
+            var ctors = typeof(TImpl).GetConstructors();
+            var ctor = ctors.FirstOrDefault(c => c.GetParameters()
+                    .All(p => typeof(ClientBase).IsAssignableFrom(p.ParameterType)))
+                  ?? ctors[0];
+
             var ctorParams = ctor.GetParameters();
             var args = new object[ctorParams.Length];
             for (int i = 0; i < ctorParams.Length; i++)
             {
                 var paramType = ctorParams[i].ParameterType;
-                // CreateClient produces correct Type from the requesting assembly's proto
                 args[i] = accessor.CreateClient(paramType, serviceName)
-                    ?? sp.GetService(paramType)
                     ?? throw new InvalidOperationException(
                         $"Cannot resolve gRPC client '{paramType.Name}' for facade '{typeof(TImpl).Name}'. " +
                         $"Ensure AddGrpcClient<{paramType.Name}>() is registered and " +

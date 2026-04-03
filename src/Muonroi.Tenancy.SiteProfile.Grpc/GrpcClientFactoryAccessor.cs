@@ -1,8 +1,3 @@
-using System.Collections.Concurrent;
-using System.Reflection;
-using Grpc.Core;
-using GrpcClientFactory = global::Grpc.Net.ClientFactory.GrpcClientFactory;
-
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>
@@ -37,8 +32,11 @@ public sealed class GrpcClientFactoryAccessor
         foreach (SiteGrpcClientDescriptor desc in registry.Descriptors)
         {
             string fullName = desc.ClientType.FullName!;
-            var key = (fullName, desc.ServiceName);
-            if (_invokers.ContainsKey(key)) continue;
+            (string fullName, string ServiceName) key = (fullName, desc.ServiceName);
+            if (_invokers.ContainsKey(key))
+            {
+                continue;
+            }
 
             string[] names = [desc.ServiceName, fullName, desc.ClientType.Name];
             MethodInfo createMethod = typeof(GrpcClientFactory)
@@ -50,9 +48,7 @@ public sealed class GrpcClientFactoryAccessor
                 try
                 {
                     object client = createMethod.Invoke(factory, [name])!;
-                    // Extract CallInvoker from the gRPC client via reflection
-                    // ClientBase has a protected property CallInvoker
-                    var invokerProp = typeof(ClientBase).GetProperty(
+                    PropertyInfo? invokerProp = typeof(ClientBase).GetProperty(
                         "CallInvoker", BindingFlags.NonPublic | BindingFlags.Instance);
                     if (invokerProp?.GetValue(client) is CallInvoker invoker)
                     {
@@ -77,12 +73,23 @@ public sealed class GrpcClientFactoryAccessor
     internal object? CreateClient(Type clientType, string serviceName)
     {
         string fullName = clientType.FullName!;
-        if (!_invokers.TryGetValue((fullName, serviceName), out CallInvoker? invoker))
-            return null;
 
-        // Create client instance: new TClient(CallInvoker)
-        // All gRPC clients have a constructor that takes CallInvoker
-        ConstructorInfo? ctor = clientType.GetConstructor([typeof(CallInvoker)]);
-        return ctor?.Invoke([invoker]);
+        // Primary lookup: exact (fullName, serviceName) match
+        if (_invokers.TryGetValue((fullName, serviceName), out CallInvoker? invoker))
+        {
+            ConstructorInfo? ctor = clientType.GetConstructor([typeof(CallInvoker)]);
+            return ctor?.Invoke([invoker]);
+        }
+
+        // Fallback: type match across any service name
+        // Handles facade constructors that take both shared + site-specific gRPC clients
+        KeyValuePair<(string fullName, string serviceName), CallInvoker> fallback = _invokers.FirstOrDefault(kv => kv.Key.fullName == fullName);
+        if (fallback.Value is not null)
+        {
+            ConstructorInfo? ctor = clientType.GetConstructor([typeof(CallInvoker)]);
+            return ctor?.Invoke([fallback.Value]);
+        }
+
+        return null;
     }
 }

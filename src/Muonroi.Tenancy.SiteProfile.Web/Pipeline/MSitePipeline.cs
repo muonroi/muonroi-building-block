@@ -17,7 +17,7 @@ public class MSitePipeline<TContext>
     private readonly SitePipelineHookRegistry _registry;
     private readonly ISiteProfileResolver _siteResolver;
     private readonly IServiceProvider _serviceProvider;
-    private readonly IMLog<MSitePipeline<TContext>> _log;
+    private readonly IMLog<MSitePipeline<TContext>>? _log;
     private readonly string _serviceName;
 
     /// <summary>
@@ -27,12 +27,12 @@ public class MSitePipeline<TContext>
         SitePipelineHookRegistry registry,
         ISiteProfileResolver siteResolver,
         IServiceProvider serviceProvider,
-        IMLog<MSitePipeline<TContext>> log)
+        IMLog<MSitePipeline<TContext>>? log = null)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _siteResolver = siteResolver ?? throw new ArgumentNullException(nameof(siteResolver));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _log = log;
         _serviceName = typeof(TContext).Name;
     }
 
@@ -69,7 +69,7 @@ public class MSitePipeline<TContext>
 
         string siteId = _siteResolver.Current.SiteId;
 
-        _log.Info(
+        _log?.Info(
             "[Pipeline:{ServiceName}] Step '{StepName}' started for site '{SiteId}'",
             _serviceName, stepName, siteId);
 
@@ -82,7 +82,7 @@ public class MSitePipeline<TContext>
             await RunStepAllOrNothing(stepName, facts, defaultImpl, siteId, ct);
         }
 
-        _log.Info(
+        _log?.Info(
             "[Pipeline:{ServiceName}] Step '{StepName}' completed for site '{SiteId}'",
             _serviceName, stepName, siteId);
     }
@@ -101,7 +101,7 @@ public class MSitePipeline<TContext>
         foreach (Func<IServiceProvider, ISiteStepHook> factory in beforeFactories)
         {
             ISiteStepHook hook = factory(_serviceProvider);
-            _log.Info(
+            _log?.Info(
                 "[Pipeline:{ServiceName}] Hook 'Before' for step '{StepName}' on site '{SiteId}'",
                 _serviceName, stepName, siteId);
             await hook.ExecuteAsync(facts, ct);
@@ -116,7 +116,7 @@ public class MSitePipeline<TContext>
             foreach (Func<IServiceProvider, ISiteStepHook> factory in replaceFactories)
             {
                 ISiteStepHook hook = factory(_serviceProvider);
-                _log.Info(
+                _log?.Info(
                     "[Pipeline:{ServiceName}] Hook 'Replace' for step '{StepName}' on site '{SiteId}'",
                     _serviceName, stepName, siteId);
                 await hook.ExecuteAsync(facts, ct);
@@ -135,7 +135,7 @@ public class MSitePipeline<TContext>
         foreach (Func<IServiceProvider, ISiteStepHook> factory in afterFactories)
         {
             ISiteStepHook hook = factory(_serviceProvider);
-            _log.Info(
+            _log?.Info(
                 "[Pipeline:{ServiceName}] Hook 'After' for step '{StepName}' on site '{SiteId}'",
                 _serviceName, stepName, siteId);
             await hook.ExecuteAsync(facts, ct);
@@ -160,7 +160,7 @@ public class MSitePipeline<TContext>
             try
             {
                 ISiteStepHook hook = factory(_serviceProvider);
-                _log.Info(
+                _log?.Info(
                     "[Pipeline:{ServiceName}] Hook 'Before' for step '{StepName}' on site '{SiteId}'",
                     _serviceName, stepName, siteId);
                 await hook.ExecuteAsync(facts, ct);
@@ -182,7 +182,7 @@ public class MSitePipeline<TContext>
                 try
                 {
                     ISiteStepHook hook = factory(_serviceProvider);
-                    _log.Info(
+                    _log?.Info(
                         "[Pipeline:{ServiceName}] Hook 'Replace' for step '{StepName}' on site '{SiteId}'",
                         _serviceName, stepName, siteId);
                     await hook.ExecuteAsync(facts, ct);
@@ -214,7 +214,7 @@ public class MSitePipeline<TContext>
             try
             {
                 ISiteStepHook hook = factory(_serviceProvider);
-                _log.Info(
+                _log?.Info(
                     "[Pipeline:{ServiceName}] Hook 'After' for step '{StepName}' on site '{SiteId}'",
                     _serviceName, stepName, siteId);
                 await hook.ExecuteAsync(facts, ct);

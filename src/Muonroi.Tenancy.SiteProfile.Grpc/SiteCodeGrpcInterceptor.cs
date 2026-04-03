@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Options;
+
 
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
@@ -88,7 +88,16 @@ public sealed class SiteCodeGrpcInterceptor : Interceptor
         UnaryServerMethod<TRequest, TResponse> continuation)
     {
         ResolveSiteCode(context);
-        return await continuation(request, context);
+        try
+        {
+            TResponse result = await continuation(request, context);
+            return result;
+        }
+        catch (Exception)
+        {
+            // Name not registered — try next
+            throw;
+        }
     }
 
     /// <inheritdoc />

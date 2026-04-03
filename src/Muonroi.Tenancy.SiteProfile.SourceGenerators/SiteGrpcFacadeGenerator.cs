@@ -35,15 +35,73 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        IncrementalValuesProvider<FacadeModel?> candidates = context.SyntaxProvider
+        IncrementalValuesProvider<(FacadeModel? Model, string? Diag)> candidates = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: static (s, _) => IsInterfaceWithAttributes(s),
-                transform: static (ctx, _) => GetFacadeModel(ctx))
-            .Where(static m => m is not null);
+                transform: static (ctx, _) => GetFacadeModelWithDiag(ctx))
+            .Where(static m => m.Model is not null || m.Diag is not null);
 
-        IncrementalValueProvider<ImmutableArray<FacadeModel?>> collected = candidates.Collect();
+        IncrementalValueProvider<ImmutableArray<(FacadeModel? Model, string? Diag)>> collected = candidates.Collect();
 
-        context.RegisterSourceOutput(collected, static (spc, models) => Execute(models, spc));
+        context.RegisterSourceOutput(collected, static (spc, models) =>
+        {
+            // Emit diagnostics as a generated file for debugging
+            var diagLines = new List<string>();
+            var validModels = ImmutableArray.CreateBuilder<FacadeModel?>();
+            foreach (var (model, diag) in models)
+            {
+                if (diag is not null) diagLines.Add(diag);
+                if (model is not null) validModels.Add(model);
+            }
+            if (diagLines.Count > 0)
+            {
+                spc.AddSource("__SiteGrpcFacadeGenerator.Diag.g.cs",
+                    "// SiteGrpcFacadeGenerator diagnostics:\n" +
+                    string.Join("\n", diagLines.Select(d => "// " + d)));
+            }
+            Execute(validModels.ToImmutable(), spc);
+        });
+    }
+
+    private static (FacadeModel? Model, string? Diag) GetFacadeModelWithDiag(GeneratorSyntaxContext context)
+    {
+        var ifaceDecl = (InterfaceDeclarationSyntax)context.Node;
+        string ifaceName = ifaceDecl.Identifier.Text;
+
+        if (context.SemanticModel.GetDeclaredSymbol(ifaceDecl) is not INamedTypeSymbol ifaceSymbol)
+            return (null, $"[{ifaceName}] Could not get declared symbol");
+
+        AttributeData? attr = FindAttribute(ifaceSymbol, AttributeShortName);
+        if (attr is null)
+        {
+            // Check all attributes for debugging
+            var attrNames = string.Join(", ", ifaceSymbol.GetAttributes().Select(a =>
+                a.AttributeClass?.ToDisplayString() ?? "null"));
+            return (null, $"[{ifaceName}] No {AttributeShortName} attribute found. Has: [{attrNames}]");
+        }
+
+        INamedTypeSymbol? sharedClientSymbol = null;
+        List<INamedTypeSymbol> extendClientSymbols = new List<INamedTypeSymbol>();
+
+        foreach (var namedArg in attr.NamedArguments)
+        {
+            if (namedArg.Key == "SharedClient")
+                sharedClientSymbol = namedArg.Value.Value as INamedTypeSymbol;
+            else if (namedArg.Key == "ExtendClients" && !namedArg.Value.IsNull && namedArg.Value.Kind == TypedConstantKind.Array)
+            {
+                foreach (TypedConstant item in namedArg.Value.Values)
+                {
+                    if (item.Value is INamedTypeSymbol extSym)
+                        extendClientSymbols.Add(extSym);
+                }
+            }
+        }
+
+        if (sharedClientSymbol is null)
+            return (null, $"[{ifaceName}] SharedClient is null. Attr class: {attr.AttributeClass?.ToDisplayString()}. Named args: {string.Join(", ", attr.NamedArguments.Select(a => $"{a.Key}={a.Value}"))}");
+
+        // Call original logic for successful case
+        return (GetFacadeModel(context), null);
     }
 
     // -----------------------------------------------------------------------
@@ -405,33 +463,28 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
         sb.AppendLine($"public sealed class {model.FacadeClassName} : {model.InterfaceName}");
         sb.AppendLine("{");
 
-        // Fields
+        // Fields — only gRPC clients, no logging dependency
         sb.AppendLine($"    private readonly {model.SharedClientFullName} _shared;");
         for (int i = 0; i < model.ExtendClientFullNames.Count; i++)
         {
             sb.AppendLine($"    private readonly {model.ExtendClientFullNames[i]} _extend{i};");
         }
-        sb.AppendLine($"    private readonly Muonroi.Logging.Abstractions.IMLog? _log;");
         sb.AppendLine();
 
-        // Constructor — takes pre-resolved gRPC client instances (injected by AddSiteGrpcFacadeClient factory delegate)
+        // Constructor — only ClientBase params (factory resolves these via GrpcClientFactoryAccessor)
         sb.AppendLine("    /// <summary>Creates the facade from pre-resolved gRPC client instances.</summary>");
         sb.Append($"    public {model.FacadeClassName}({model.SharedClientFullName} shared");
         for (int i = 0; i < model.ExtendClientFullNames.Count; i++)
         {
             sb.Append($", {model.ExtendClientFullNames[i]} extend{i}");
         }
-        sb.AppendLine($", Muonroi.Logging.Abstractions.IMLogFactory? logFactory = null)");
+        sb.AppendLine(")");
         sb.AppendLine("    {");
         sb.AppendLine($"        _shared = shared;");
         for (int i = 0; i < model.ExtendClientFullNames.Count; i++)
         {
             sb.AppendLine($"        _extend{i} = extend{i};");
         }
-        sb.AppendLine($"        _log = logFactory?.CreateLogger(\"Muonroi.SiteProfile.AOT.{model.FacadeClassName}\");");
-        sb.AppendLine($"        _log?.Info(\"[SiteProfile-AOT] {model.FacadeClassName} constructed — shared: {model.SharedClientFullName}" +
-            (model.ExtendClientFullNames.Count > 0 ? $", extend clients: {model.ExtendClientFullNames.Count}" : "") +
-            "\");");
         sb.AppendLine("    }");
         sb.AppendLine();
 
