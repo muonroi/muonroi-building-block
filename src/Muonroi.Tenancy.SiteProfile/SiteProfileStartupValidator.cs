@@ -23,6 +23,9 @@ internal sealed class SiteProfileStartupValidator(
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        // Validate SiteAssemblies discovery first (non-blocking — warns but does not throw)
+        ValidateSiteAssemblyDiscovery();
+
         if (tracker.SkipValidation)
         {
             logger.LogInformation("SiteProfile startup validation skipped (SkipStartupValidation enabled)");
@@ -99,6 +102,65 @@ internal sealed class SiteProfileStartupValidator(
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    /// <summary>
+    /// Validates that all ISiteProfile implementations from <see cref="SiteProfileOptions.SiteAssemblies"/>
+    /// were actually discovered during registration. Logs a warning for each undiscovered profile
+    /// so operators can detect misconfigured assembly lists without failing startup (per D-15).
+    ///
+    /// Non-blocking: warnings only. Does not throw.
+    /// </summary>
+    private void ValidateSiteAssemblyDiscovery()
+    {
+        var options = serviceProvider.GetService<IOptions<SiteProfileOptions>>()?.Value;
+
+        if (options?.SiteAssemblies is not { Length: > 0 } siteAssemblies)
+            return;
+
+        foreach (var assembly in siteAssemblies)
+        {
+            IEnumerable<Type> types;
+            try
+            {
+                types = assembly.GetTypes()
+                    .Where(t => !t.IsAbstract && !t.IsInterface && typeof(ISiteProfile).IsAssignableFrom(t));
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                // Partial load — use the types that loaded successfully
+                types = (ex.Types ?? [])
+                    .Where(t => t is not null && !t.IsAbstract && !t.IsInterface && typeof(ISiteProfile).IsAssignableFrom(t))!;
+            }
+
+            foreach (var profileType in types)
+            {
+                ISiteProfile? instance;
+                try
+                {
+                    instance = Activator.CreateInstance(profileType) as ISiteProfile;
+                }
+                catch
+                {
+                    // Cannot instantiate to get SiteId — skip discovery check for this profile
+                    continue;
+                }
+
+                if (instance is null) continue;
+
+                var siteId = instance.SiteId;
+
+                if (!tracker.SiteIds.Contains(siteId))
+                {
+                    logger.LogWarning(
+                        "[SITE-ASSEMBLY] ISiteProfile '{ProfileType}' in assembly '{Assembly}' with SiteId '{SiteId}' " +
+                        "was not discovered during registration. Ensure AddMultiSiteProfiles includes this assembly.",
+                        profileType.Name,
+                        assembly.GetName().Name,
+                        siteId);
+                }
+            }
+        }
+    }
 
     /// <summary>
     /// Validates that every site gRPC service entry has a matching keyed client registration.
