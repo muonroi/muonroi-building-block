@@ -1,3 +1,6 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.RuleEngine.CEP.Builder;
 
 /// <summary>
@@ -171,12 +174,7 @@ public sealed class CepConfigBuilder(string name)
 
     private static string NormalizeRequired(string? value, string paramName)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new ArgumentException("Value is required.", paramName);
-        }
-
-        return value.Trim();
+        return MGuard.NotEmpty(value, paramName).Trim();
     }
 
     private static string? NormalizeOptional(string? value)
@@ -215,7 +213,7 @@ public sealed class CepWindowRuntimeBuilder<TPayload>(CepConfig config)
     {
         if (_keySelector is null)
         {
-            throw new InvalidOperationException("A correlation key selector must be provided.");
+            throw new MInternalException("A correlation key selector must be provided.");
         }
 
         return new CepWindow<TPayload>(_config, _keySelector);

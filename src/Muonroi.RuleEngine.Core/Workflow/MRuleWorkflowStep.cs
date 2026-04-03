@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.RuleEngine.Core.Workflow;
 
 /// <summary>
@@ -31,15 +33,12 @@ public sealed class MRuleWorkflowStep<TContext>
         MRuleWorkflowStepType stepType,
         Func<MRuleWorkflowExecutionContext<TContext>, CancellationToken, Task<string?>> execute)
     {
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            throw new ArgumentException("Step id is required.", nameof(id));
-        }
+        MGuard.NotEmpty(id, nameof(id));
 
         Id = id;
         Name = string.IsNullOrWhiteSpace(name) ? id : name;
         StepType = stepType;
-        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+        _execute = MGuard.NotNull(execute, nameof(execute));
     }
 
     /// <summary>

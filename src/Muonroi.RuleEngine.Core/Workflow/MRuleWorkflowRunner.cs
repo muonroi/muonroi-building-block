@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.RuleEngine.Core.Workflow;
@@ -34,13 +35,13 @@ public sealed class MRuleWorkflowRunner<TContext>(
             executedCount++;
             if (executedCount > maxSteps)
             {
-                throw new InvalidOperationException(
+                throw new MInternalException(
                     $"Workflow '{workflow.Name}' exceeded max steps ({maxSteps}). Possible cyclic transition.");
             }
 
             if (!workflow.Steps.TryGetValue(currentStepId, out MRuleWorkflowStep<TContext>? step))
             {
-                throw new InvalidOperationException(
+                throw new MInternalException(
                     $"Workflow '{workflow.Name}' references unknown step '{currentStepId}'.");
             }
 

@@ -1,5 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
-
 namespace Muonroi.ServiceDiscovery.Consul.Consul;
 
 /// <summary>
@@ -120,7 +120,7 @@ public static class ConsulHandler
 
         if (string.IsNullOrWhiteSpace(address) || port == 0)
         {
-            throw new InvalidOperationException("Service address or port could not be determined.");
+            throw new MConfigurationException("Service address or port could not be determined.", "Consul:ServiceAddress");
         }
 
         AgentServiceRegistration registration = new()

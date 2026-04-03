@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleEngine.DecisionTable.Feel;
 
@@ -759,7 +760,7 @@ public static partial class FeelEvaluator
         {
             if (Current.Kind != TokenKind.End)
             {
-                throw new InvalidOperationException("Unexpected token at end of expression.");
+                throw new MInternalException("Unexpected token at end of expression.", "FEEL_PARSE_ERROR");
             }
         }
 
@@ -877,7 +878,7 @@ public static partial class FeelEvaluator
                         return new RangeValue(min, max, true, false);
                     }
 
-                    throw new InvalidOperationException("Expected range closing bracket '] or )'.");
+                    throw new MInternalException("Expected range closing bracket '] or )'.", "FEEL_PARSE_ERROR");
                 }
 
                 List<object?> list = [min];
@@ -911,7 +912,7 @@ public static partial class FeelEvaluator
                         return new RangeValue(min, max, false, true);
                     }
 
-                    throw new InvalidOperationException("Expected range closing bracket '] or )'.");
+                    throw new MInternalException("Expected range closing bracket '] or )'.", "FEEL_PARSE_ERROR");
                 }
 
                 List<object?> list = [min];
@@ -1058,7 +1059,7 @@ public static partial class FeelEvaluator
                 return _scope.ContainsKey(root) ? null : identifier;
             }
 
-            throw new InvalidOperationException("Unexpected token.");
+            throw new MInternalException("Unexpected token.", "FEEL_PARSE_ERROR");
         }
 
         private object? ParseListLiteral()
@@ -1114,7 +1115,7 @@ public static partial class FeelEvaluator
                 }
                 else
                 {
-                    throw new InvalidOperationException("Expected context key.");
+                    throw new MInternalException("Expected context key.", "FEEL_PARSE_ERROR");
                 }
 
                 Expect(TokenKind.Colon);
@@ -1154,7 +1155,7 @@ public static partial class FeelEvaluator
             return name.ToLowerInvariant() switch
             {
                 "round" => Math.Round(AsDouble(args.ElementAtOrDefault(0)), (int)AsDouble(args.ElementAtOrDefault(1))),
-                _ => throw new InvalidOperationException($"Unsupported function '{name}'.")
+                _ => throw new MInternalException($"Unsupported function '{name}'.", "FEEL_PARSE_ERROR")
             };
         }
 
@@ -1168,7 +1169,7 @@ public static partial class FeelEvaluator
 
             if (Current.Kind != TokenKind.Identifier)
             {
-                throw new InvalidOperationException("Expected variable name after 'for'.");
+                throw new MInternalException("Expected variable name after 'for'.", "FEEL_PARSE_ERROR");
             }
 
             string varName = Current.Text;
@@ -1183,7 +1184,7 @@ public static partial class FeelEvaluator
             if (Current.Kind != TokenKind.Identifier ||
                 !Current.Text.Equals("return", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("Expected 'return' in for expression.");
+                throw new MInternalException("Expected 'return' in for expression.", "FEEL_PARSE_ERROR");
             }
 
             Next(); // consume "return"
@@ -1284,7 +1285,7 @@ public static partial class FeelEvaluator
 
             if (Current.Kind != TokenKind.Identifier)
             {
-                throw new InvalidOperationException($"Expected variable name after '{quantifier}'.");
+                throw new MInternalException($"Expected variable name after '{quantifier}'.", "FEEL_PARSE_ERROR");
             }
 
             string varName = Current.Text;
@@ -1299,7 +1300,7 @@ public static partial class FeelEvaluator
             if (Current.Kind != TokenKind.Identifier ||
                 !Current.Text.Equals("satisfies", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException($"Expected 'satisfies' in {quantifier} expression.");
+                throw new MInternalException($"Expected 'satisfies' in {quantifier} expression.", "FEEL_PARSE_ERROR");
             }
 
             Next(); // consume "satisfies"
@@ -1391,7 +1392,7 @@ public static partial class FeelEvaluator
                 {
                     if (Current.Kind != TokenKind.Identifier)
                     {
-                        throw new InvalidOperationException("Expected function parameter name.");
+                        throw new MInternalException("Expected function parameter name.", "FEEL_PARSE_ERROR");
                     }
 
                     parameters.Add(Current.Text);
@@ -1404,7 +1405,7 @@ public static partial class FeelEvaluator
             string body = ReadFunctionBody();
             if (string.IsNullOrWhiteSpace(body))
             {
-                throw new InvalidOperationException("Function body is required.");
+                throw new MInternalException("Function body is required.", "FEEL_PARSE_ERROR");
             }
 
             Dictionary<string, object> closure = new(_scope, StringComparer.OrdinalIgnoreCase);
@@ -1657,7 +1658,7 @@ public static partial class FeelEvaluator
         {
             if (!Match(kind))
             {
-                throw new InvalidOperationException($"Expected token '{kind}'.");
+                throw new MInternalException($"Expected token '{kind}'.", "FEEL_PARSE_ERROR");
             }
         }
 
@@ -1737,7 +1738,7 @@ public static partial class FeelEvaluator
 
                     if (i == start + 1 && input[start] == '.')
                     {
-                        throw new InvalidOperationException("Invalid numeric token.");
+                        throw new MInternalException("Invalid numeric token.", "FEEL_PARSE_ERROR");
                     }
 
                     if (i < input.Length && input[i] == '.')
@@ -1822,7 +1823,7 @@ public static partial class FeelEvaluator
                     '=' => new Token(TokenKind.Equal, "="),
                     '>' => new Token(TokenKind.Greater, ">"),
                     '<' => new Token(TokenKind.Less, "<"),
-                    _ => throw new InvalidOperationException($"Unsupported token '{c}'.")
+                    _ => throw new MInternalException($"Unsupported token '{c}'.", "FEEL_PARSE_ERROR")
                 });
                 i++;
             }
