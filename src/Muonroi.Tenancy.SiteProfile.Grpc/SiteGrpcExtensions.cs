@@ -1,5 +1,3 @@
-using GrpcClientFactory = global::Grpc.Net.ClientFactory.GrpcClientFactory;
-
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>
