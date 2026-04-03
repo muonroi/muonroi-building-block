@@ -11,11 +11,15 @@ namespace Muonroi.RuleEngine.Core;
 public static class ServiceCollectionExtensions
 {
     /// <summary>Registers the rule orchestrator.</summary>
-    public static IServiceCollection AddRuleEngine(this IServiceCollection services)
+    public static IServiceCollection AddRuleEngine(this IServiceCollection services, Action<MRuleEngineOptions>? configure = null)
     {
         services.AddScoped(typeof(RuleOrchestrator<>));
         services.AddScoped(typeof(IRuleFactory<>), typeof(DefaultRuleFactory<>));
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IUiEngineManifestContributor, RuleFlowManifestContributor>());
+        if (configure != null)
+        {
+            services.Configure(configure);
+        }
         return services;
     }
 
@@ -27,11 +31,7 @@ public static class ServiceCollectionExtensions
         Action<MRuleEngineOptions>? configure = null)
     {
         services.AddLogging();
-        services.AddRuleEngine();
-        if (configure is not null)
-        {
-            services.Configure(configure);
-        }
+        services.AddRuleEngine(configure);
 
         services.AddScoped<IMRuleExecutionRouter<TContext>, MRuleExecutionRouter<TContext>>();
         services.AddScoped<IMRuleWorkflowRunner<TContext>, MRuleWorkflowRunner<TContext>>();
