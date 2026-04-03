@@ -1,5 +1,6 @@
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
+using Muonroi.RuleEngine.Core;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.Pipeline;
 
@@ -7,6 +8,8 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Pipeline;
 /// Named-step pipeline runner that lets developers write service functions as named steps.
 /// Sites can hook into ANY step via Before/After/Replace — eliminating the need for virtual overrides.
 /// This is an ALTERNATIVE to virtual override pattern, not a replacement.
+/// Internally delegates to <see cref="RuleOrchestrator{TContext}"/> for DFS topo-sort ordering,
+/// execution tracing, and compensation support.
 /// </summary>
 /// <typeparam name="TContext">
 /// The service context type (e.g., the calling service class).
@@ -38,6 +41,8 @@ public class MSitePipeline<TContext>
 
     /// <summary>
     /// Executes a named pipeline step with hook interception.
+    /// Internally constructs a <see cref="RuleOrchestrator{TContext}"/> from adapted hooks
+    /// and delegates execution, gaining DFS topo-sort ordering, tracing, and compensation.
     /// </summary>
     /// <param name="stepName">The logical name of the step (used as registry key).</param>
     /// <param name="facts">The shared fact bag — passed to defaultImpl and all hooks.</param>
@@ -47,7 +52,7 @@ public class MSitePipeline<TContext>
     /// Controls failure behavior:
     /// - AllOrNothing: first hook failure propagates immediately.
     /// - BestEffort: all hooks run, errors aggregated in AggregateException.
-    /// - CompensateOnFailure: not supported in v1 (throws NotSupportedException).
+    /// - CompensateOnFailure: hooks implementing ISiteCompensatableStepHook are compensated in LIFO order.
     /// </param>
     public async Task RunStep(
         string stepName,
@@ -60,176 +65,81 @@ public class MSitePipeline<TContext>
         ArgumentNullException.ThrowIfNull(facts);
         ArgumentNullException.ThrowIfNull(defaultImpl);
 
-        if (executionMode == ExecutionMode.CompensateOnFailure)
-        {
-            throw new NotSupportedException(
-                "ExecutionMode.CompensateOnFailure is not supported by MSitePipeline in v1. " +
-                "Use AllOrNothing or BestEffort.");
-        }
-
         string siteId = _siteResolver.Current.SiteId;
 
         _log?.Info(
             "[Pipeline:{ServiceName}] Step '{StepName}' started for site '{SiteId}'",
             _serviceName, stepName, siteId);
 
-        if (executionMode == ExecutionMode.BestEffort)
+        // Build rule list from registry hooks + defaultImpl
+        var rules = new List<IRule<FactBag>>();
+        int index = 0;
+
+        // Add Before hooks as rules
+        foreach (Func<IServiceProvider, ISiteStepHook> factory in
+            _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.Before))
         {
-            await RunStepBestEffort(stepName, facts, defaultImpl, siteId, ct);
+            ISiteStepHook hook = factory(_serviceProvider);
+            rules.Add(new SiteStepHookRuleAdapter(hook, SiteStepHookPhase.Before, stepName, index++));
+        }
+
+        // Check for Replace hooks — if any exist, they substitute the default impl
+        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> replaceFactories =
+            _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.Replace);
+
+        if (replaceFactories.Count > 0)
+        {
+            foreach (Func<IServiceProvider, ISiteStepHook> factory in replaceFactories)
+            {
+                ISiteStepHook hook = factory(_serviceProvider);
+                rules.Add(new SiteStepHookRuleAdapter(hook, SiteStepHookPhase.Replace, stepName, index++));
+            }
         }
         else
         {
-            await RunStepAllOrNothing(stepName, facts, defaultImpl, siteId, ct);
+            // No Replace hooks — add default impl as a rule at Order=0
+            rules.Add(new DefaultImplRuleAdapter(defaultImpl, stepName));
+        }
+
+        // Add After hooks as rules
+        foreach (Func<IServiceProvider, ISiteStepHook> factory in
+            _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.After))
+        {
+            ISiteStepHook hook = factory(_serviceProvider);
+            rules.Add(new SiteStepHookRuleAdapter(hook, SiteStepHookPhase.After, stepName, index++));
+        }
+
+        // Create orchestrator and execute
+        var orchestrator = new RuleOrchestrator<FactBag>(
+            rules: rules,
+            hooks: Array.Empty<IHookHandler<FactBag>>(),
+            logger: null);
+
+        OrchestratorResult result = await orchestrator.ExecuteWithResultAsync(
+            context: facts,
+            executionMode: executionMode,
+            cancellationToken: ct);
+
+        // Handle failure — preserve existing exception behavior
+        if (!result.IsSuccess)
+        {
+            if (executionMode == ExecutionMode.BestEffort)
+            {
+                throw new AggregateException(
+                    $"[Pipeline:{_serviceName}] Step '{stepName}' encountered {result.Errors.Count} hook failure(s) in BestEffort mode.",
+                    result.Errors.Select(e => new InvalidOperationException(e)));
+            }
+
+            // AllOrNothing / CompensateOnFailure — propagate first error
+            string firstError = result.Errors.Count > 0
+                ? result.Errors[0]
+                : "Unknown pipeline error";
+            throw new InvalidOperationException(
+                $"[Pipeline:{_serviceName}] Step '{stepName}' failed: {firstError}");
         }
 
         _log?.Info(
             "[Pipeline:{ServiceName}] Step '{StepName}' completed for site '{SiteId}'",
             _serviceName, stepName, siteId);
-    }
-
-    private async Task RunStepAllOrNothing(
-        string stepName,
-        FactBag facts,
-        Func<FactBag, CancellationToken, Task> defaultImpl,
-        string siteId,
-        CancellationToken ct)
-    {
-        // Execute Before hooks
-        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> beforeFactories =
-            _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.Before);
-
-        foreach (Func<IServiceProvider, ISiteStepHook> factory in beforeFactories)
-        {
-            ISiteStepHook hook = factory(_serviceProvider);
-            _log?.Info(
-                "[Pipeline:{ServiceName}] Hook 'Before' for step '{StepName}' on site '{SiteId}'",
-                _serviceName, stepName, siteId);
-            await hook.ExecuteAsync(facts, ct);
-        }
-
-        // Check for Replace hooks — if any exist, skip defaultImpl
-        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> replaceFactories =
-            _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.Replace);
-
-        if (replaceFactories.Count > 0)
-        {
-            foreach (Func<IServiceProvider, ISiteStepHook> factory in replaceFactories)
-            {
-                ISiteStepHook hook = factory(_serviceProvider);
-                _log?.Info(
-                    "[Pipeline:{ServiceName}] Hook 'Replace' for step '{StepName}' on site '{SiteId}'",
-                    _serviceName, stepName, siteId);
-                await hook.ExecuteAsync(facts, ct);
-            }
-        }
-        else
-        {
-            // No Replace hooks — execute default implementation
-            await defaultImpl(facts, ct);
-        }
-
-        // Execute After hooks
-        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> afterFactories =
-            _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.After);
-
-        foreach (Func<IServiceProvider, ISiteStepHook> factory in afterFactories)
-        {
-            ISiteStepHook hook = factory(_serviceProvider);
-            _log?.Info(
-                "[Pipeline:{ServiceName}] Hook 'After' for step '{StepName}' on site '{SiteId}'",
-                _serviceName, stepName, siteId);
-            await hook.ExecuteAsync(facts, ct);
-        }
-    }
-
-    private async Task RunStepBestEffort(
-        string stepName,
-        FactBag facts,
-        Func<FactBag, CancellationToken, Task> defaultImpl,
-        string siteId,
-        CancellationToken ct)
-    {
-        var errors = new List<Exception>();
-
-        // Execute Before hooks
-        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> beforeFactories =
-            _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.Before);
-
-        foreach (Func<IServiceProvider, ISiteStepHook> factory in beforeFactories)
-        {
-            try
-            {
-                ISiteStepHook hook = factory(_serviceProvider);
-                _log?.Info(
-                    "[Pipeline:{ServiceName}] Hook 'Before' for step '{StepName}' on site '{SiteId}'",
-                    _serviceName, stepName, siteId);
-                await hook.ExecuteAsync(facts, ct);
-            }
-            catch (Exception ex)
-            {
-                errors.Add(ex);
-            }
-        }
-
-        // Check for Replace hooks — if any exist, skip defaultImpl
-        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> replaceFactories =
-            _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.Replace);
-
-        if (replaceFactories.Count > 0)
-        {
-            foreach (Func<IServiceProvider, ISiteStepHook> factory in replaceFactories)
-            {
-                try
-                {
-                    ISiteStepHook hook = factory(_serviceProvider);
-                    _log?.Info(
-                        "[Pipeline:{ServiceName}] Hook 'Replace' for step '{StepName}' on site '{SiteId}'",
-                        _serviceName, stepName, siteId);
-                    await hook.ExecuteAsync(facts, ct);
-                }
-                catch (Exception ex)
-                {
-                    errors.Add(ex);
-                }
-            }
-        }
-        else
-        {
-            try
-            {
-                await defaultImpl(facts, ct);
-            }
-            catch (Exception ex)
-            {
-                errors.Add(ex);
-            }
-        }
-
-        // Execute After hooks
-        IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> afterFactories =
-            _registry.GetHookFactories(siteId, _serviceName, stepName, SiteStepHookPhase.After);
-
-        foreach (Func<IServiceProvider, ISiteStepHook> factory in afterFactories)
-        {
-            try
-            {
-                ISiteStepHook hook = factory(_serviceProvider);
-                _log?.Info(
-                    "[Pipeline:{ServiceName}] Hook 'After' for step '{StepName}' on site '{SiteId}'",
-                    _serviceName, stepName, siteId);
-                await hook.ExecuteAsync(facts, ct);
-            }
-            catch (Exception ex)
-            {
-                errors.Add(ex);
-            }
-        }
-
-        if (errors.Count > 0)
-        {
-            throw new AggregateException(
-                $"[Pipeline:{_serviceName}] Step '{stepName}' encountered {errors.Count} hook failure(s) in BestEffort mode.",
-                errors);
-        }
     }
 }
