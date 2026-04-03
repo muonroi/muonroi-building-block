@@ -21,6 +21,11 @@ public static class SiteProfileExtensions
     internal static void ResetTracker() => s_tracker.Clear();
 
     /// <summary>
+    /// Shared tracker instance — accessed by SiteProfileConventionExtensions for convention registration tracking.
+    /// </summary>
+    internal static SiteProfileRegistrationTracker SharedTracker => s_tracker;
+
+    /// <summary>
     /// Configures SiteProfile options including strict mode for site resolution.
     /// </summary>
     public static IServiceCollection ConfigureSiteProfile(this IServiceCollection services, Action<SiteProfileOptions> configure)
