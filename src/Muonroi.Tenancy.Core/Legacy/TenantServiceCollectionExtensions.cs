@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Tenancy.Core.Legacy;
@@ -32,6 +33,7 @@ public static class TenantServiceCollectionExtensions
 
         if (enabled)
         {
+            services.GetOrCreateRegistry().Register(MCapability.MultiTenant);
             EnsureMultiTenantLicensed(services);
             services.TryAddSingleton<ITenantContext, TenantContext>();
             services.TryAddScoped<ITenantIdResolver, DefaultTenantIdResolver>();

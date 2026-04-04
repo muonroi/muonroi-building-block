@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Logging;
@@ -15,6 +16,8 @@ public static class MLogServiceCollectionExtensions
     public static ILoggingBuilder AddMuonroiLogging(this ILoggingBuilder builder)
     {
         MGuard.NotNull(builder);
+
+        builder.Services.GetOrCreateRegistry().Register(MCapability.Logging);
 
         builder.Services.AddSingleton<IMLogContext, MLogContext>();
         builder.Services.AddSingleton(typeof(IMLog<>), typeof(MLog<>));

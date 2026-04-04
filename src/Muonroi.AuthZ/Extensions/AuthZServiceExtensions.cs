@@ -11,6 +11,7 @@ using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
+using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.RuleEngine.Core;
 
 /// <summary>
@@ -27,6 +28,8 @@ public static class AuthZServiceExtensions
         this IServiceCollection services)
     {
         MGuard.NotNull(services);
+
+        services.GetOrCreateRegistry().Register(MCapability.Auth);
 
         // Register orchestrator for AuthorizationRuleContext so the DI chain resolves.
         // Wraps RuleOrchestrator<AuthorizationRuleContext> which has no IRuleContext constraint.

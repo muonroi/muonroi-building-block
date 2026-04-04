@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.RuleEngine.Core.Workflow;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.Core.Abstractions.Interfaces;
@@ -30,6 +31,7 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         Action<MRuleEngineOptions>? configure = null)
     {
+        services.GetOrCreateRegistry().Register(MCapability.RuleEngine);
         services.AddLogging();
         services.AddRuleEngine(configure);
 
