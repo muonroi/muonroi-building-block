@@ -19,7 +19,8 @@ public sealed class RulesEngineService(
     ICanaryRolloutService? canaryRolloutService = null,
     ISystemExecutionContextAccessor? executionContextAccessor = null,
     RuleGraphParser? graphParser = null,
-    IMLog<RulesEngineService>? log = null)
+    IMLog<RulesEngineService>? log = null,
+    MRuleContextJsonRegistry? contextRegistry = null)
 {
     private readonly ReSettings _settings = settings ?? new ReSettings();
     private readonly ILicenseGuard? _licenseGuard = licenseGuard;
@@ -36,6 +37,10 @@ public sealed class RulesEngineService(
         graphParser ??
         serviceProvider?.GetService<RuleGraphParser>();
     private readonly IMLog<RulesEngineService>? _log = log;
+    private readonly MRuleContextJsonRegistry _contextRegistry =
+        contextRegistry ??
+        serviceProvider?.GetService<MRuleContextJsonRegistry>() ??
+        new MRuleContextJsonRegistry();
 
     private static readonly ConcurrentDictionary<string, CachedWorkflowDefinition> WorkflowCache =
         new(StringComparer.OrdinalIgnoreCase);
@@ -265,13 +270,7 @@ public sealed class RulesEngineService(
                     "Graph-based dry-run requires 'contextType' (assembly-qualified name or full type name).");
             }
 
-            Type resolvedGraphContext = ResolveContextType(contextType);
-            object? graphContext = JsonSerializer.Deserialize(context.GetRawText(), resolvedGraphContext, // MBB002-exempt: requires Type-based overload with custom options not available in wrapper
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (graphContext is null)
-            {
-                throw new MConfigurationException("Dry-run context payload could not be deserialized to the requested contextType.");
-            }
+            object graphContext = _contextRegistry.DeserializeContext(contextType, context.GetRawText());
 
             return await ExecuteFlowGraphDynamicAsync(workflowName, json, graphContext, cancellationToken);
         }
@@ -285,13 +284,7 @@ public sealed class RulesEngineService(
                     "Code-based ruleset dry-run requires 'contextType' (assembly-qualified name or full type name).");
             }
 
-            Type resolved = ResolveContextType(contextType);
-            object? contextValue = JsonSerializer.Deserialize(context.GetRawText(), resolved, // MBB002-exempt: requires Type-based overload with custom options not available in wrapper
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (contextValue is null)
-            {
-                throw new MConfigurationException("Dry-run context payload could not be deserialized to the requested contextType.");
-            }
+            object contextValue = _contextRegistry.DeserializeContext(contextType, context.GetRawText());
 
             return await ExecuteCodeWorkflowDynamicAsync(
                 definition.RuleCodes,
@@ -566,34 +559,6 @@ public sealed class RulesEngineService(
         };
     }
 
-    private static Type ResolveContextType(string contextTypeName)
-    {
-        Type? resolved = Type.GetType(contextTypeName, throwOnError: false, ignoreCase: true);
-        if (resolved is not null)
-        {
-            return resolved;
-        }
-
-        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            resolved = assembly.GetType(contextTypeName, throwOnError: false, ignoreCase: true);
-            if (resolved is not null)
-            {
-                return resolved;
-            }
-
-            resolved = GetLoadableTypes(assembly).FirstOrDefault(x =>
-                string.Equals(x.FullName, contextTypeName, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(x.Name, contextTypeName, StringComparison.OrdinalIgnoreCase));
-            if (resolved is not null)
-            {
-                return resolved;
-            }
-        }
-
-        throw new MConfigurationException($"Cannot resolve contextType '{contextTypeName}'.");
-    }
-
     private static object? ConvertJsonElement(JsonElement element)
     {
         return element.ValueKind switch
@@ -739,8 +704,8 @@ public sealed class RulesEngineService(
 
             Workflow[] workflows = rawRoot.ValueKind switch
             {
-                JsonValueKind.Array => JsonSerializer.Deserialize<Workflow[]>(json) ?? [], // MBB002-exempt: static workflow parsing — Workflow type requires direct JsonSerializer
-                JsonValueKind.Object => JsonSerializer.Deserialize<Workflow>(json) is Workflow single ? [single] : [], // MBB002-exempt: static workflow parsing
+                JsonValueKind.Array => JsonSerializer.Deserialize<Workflow[]>(json) ?? [],
+                JsonValueKind.Object => JsonSerializer.Deserialize<Workflow>(json) is Workflow single ? [single] : [],
                 _ => []
             };
             return new CachedWorkflowDefinition(json, null, workflows, ParseExecutionMode(root));

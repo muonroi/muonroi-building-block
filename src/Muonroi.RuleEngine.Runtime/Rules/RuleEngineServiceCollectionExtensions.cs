@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
@@ -45,6 +46,13 @@ public static class RuleEngineServiceCollectionExtensions
         services.TryAddSingleton<IRuleSetDefinitionValidator, RuleSetDefinitionValidator>();
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
+
+        // Type-safe context registry — replaces unsafe Type.GetType() + Deserialize(json, type) pattern
+        services.TryAddSingleton<MRuleContextJsonRegistry>(sp =>
+        {
+            IMEcosystemRegistry? ecosystemRegistry = sp.GetService<IMEcosystemRegistry>();
+            return new MRuleContextJsonRegistry(ecosystemRegistry);
+        });
 
         // Graph parser and context adapters for flow graph execution
         services.TryAddSingleton<RuleGraphParser>();
