@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Guards;
+using Muonroi.Core.Abstractions.Security;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
@@ -35,12 +36,7 @@ public sealed class RsaRuleSetAuditSigner(RSA rsa, string keyId = "ruleset-contr
     public static RsaRuleSetAuditSigner FromPrivateKeyFile(string path, string keyId = "ruleset-control-plane")
     {
         MGuard.NotEmpty(path);
-        if (!File.Exists(path))
-        {
-            throw new FileNotFoundException("Audit signer private key was not found.", path);
-        }
-
-        return FromPrivateKeyPem(File.ReadAllText(path), keyId);
+        return FromPrivateKeyPem(MSecureFileReader.ReadKeyFile(path), keyId);
     }
 
     /// <summary>Creates an ephemeral signer with a new RSA keypair.</summary>

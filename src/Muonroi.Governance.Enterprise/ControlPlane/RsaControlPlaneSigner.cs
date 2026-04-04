@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Guards;
+using Muonroi.Core.Abstractions.Security;
 
 namespace Muonroi.Governance.ControlPlane;
 
@@ -36,12 +37,7 @@ public sealed class MRsaControlPlaneSigner(RSA rsa, string keyId = "control-plan
     public static MRsaControlPlaneSigner FromPrivateKeyFile(string path, string keyId = "control-plane")
     {
         MGuard.NotEmpty(path);
-        if (!File.Exists(path))
-        {
-            throw new FileNotFoundException("Private key file was not found.", path);
-        }
-
-        string pem = File.ReadAllText(path);
+        string pem = MSecureFileReader.ReadKeyFile(path);
         return FromPrivateKeyPem(pem, keyId);
     }
 

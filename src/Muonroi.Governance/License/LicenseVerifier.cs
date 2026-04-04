@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Security;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 
@@ -165,12 +166,21 @@ public sealed class LicenseVerifier(
         }
 
         string? keyPath = ResolvePath(configs.PublicKeyPath, environment);
-        if (string.IsNullOrWhiteSpace(keyPath) || !File.Exists(keyPath))
+        if (string.IsNullOrWhiteSpace(keyPath))
         {
             return false;
         }
 
-        string publicKey = File.ReadAllText(keyPath);
+        string publicKey;
+        try
+        {
+            publicKey = MSecureFileReader.ReadKeyFile(keyPath);
+        }
+        catch
+        {
+            return false;
+        }
+
         using RSA rsa = RSA.Create();
         rsa.ImportFromPem(publicKey.ToCharArray());
 
@@ -200,12 +210,21 @@ public sealed class LicenseVerifier(
         }
 
         string? keyPath = ResolvePath(configs.PublicKeyPath, environment);
-        if (string.IsNullOrWhiteSpace(keyPath) || !File.Exists(keyPath))
+        if (string.IsNullOrWhiteSpace(keyPath))
         {
             return "Activation proof public key not found.";
         }
 
-        string publicKey = File.ReadAllText(keyPath);
+        string publicKey;
+        try
+        {
+            publicKey = MSecureFileReader.ReadKeyFile(keyPath);
+        }
+        catch
+        {
+            return "Activation proof public key not found.";
+        }
+
         using RSA rsa = RSA.Create();
         rsa.ImportFromPem(publicKey.ToCharArray());
 
