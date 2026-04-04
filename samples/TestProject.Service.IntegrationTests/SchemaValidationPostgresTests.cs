@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging;
 using Muonroi.Tenancy.SiteProfile.Web.Validation;
 using Npgsql;
@@ -43,12 +44,9 @@ public sealed class SchemaValidationPostgresTests : IDisposable
     // Test-only DbContext subclass — minimal EF model mapping to order_details table.
     // Receives schema name via SchemaTestOptions injected from DI.
     // ---------------------------------------------------------------------------
-    private sealed class SchemaTestContext : DbContext
+    private sealed class SchemaTestContext(DbContextOptions<SchemaValidationPostgresTests.SchemaTestContext> options, SchemaValidationPostgresTests.SchemaTestOptions schemaOpts) : DbContext(options)
     {
-        private readonly string _schema;
-
-        public SchemaTestContext(DbContextOptions<SchemaTestContext> options, SchemaTestOptions schemaOpts)
-            : base(options) => _schema = schemaOpts.Schema;
+        private readonly string _schema = schemaOpts.Schema;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -235,11 +233,11 @@ public sealed class SchemaValidationPostgresTests : IDisposable
     }
 
     // ===========================================================================
-    // Test 2: FailOnMissing — missing column throws InvalidOperationException
+    // Test 2: FailOnMissing — missing column throws MInternalException
     // ===========================================================================
 
     [Fact]
-    public async Task FailOnMissing_MissingColumn_ThrowsInvalidOperationException()
+    public async Task FailOnMissing_MissingColumn_ThrowsMInternalException()
     {
         // [TEST:BREAKPOINT] SchemaValidationPostgresTests - FailOnMissing
         if (!TryConnect())
@@ -273,9 +271,9 @@ public sealed class SchemaValidationPostgresTests : IDisposable
         var exception = await Record.ExceptionAsync(
             () => validator.StartAsync(CancellationToken.None));
 
-        // Assert: exception is InvalidOperationException
+        // Assert: exception is MInternalException
         Assert.NotNull(exception);
-        var ioex = Assert.IsType<InvalidOperationException>(exception);
+        var ioex = Assert.IsType<MInternalException>(exception);
 
         // Assert: message contains "Schema validation FAILED" (per SiteSchemaValidator source)
         Assert.Contains("Schema validation FAILED", ioex.Message, StringComparison.OrdinalIgnoreCase);
