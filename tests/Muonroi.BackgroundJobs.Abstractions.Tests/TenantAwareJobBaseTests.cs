@@ -131,11 +131,13 @@ public class TenantAwareJobBaseTests
     }
 }
 
-public class BackgroundJobHandlerTests
+public class BackgroundJobHandlerLegacyTests
 {
     [Fact]
-    public void AddBackgroundJobs_With_Unsupported_Type_Should_Throw()
+    public void AddBackgroundJobs_With_Unsupported_Type_Should_Throw_MConfigurationException()
     {
+        // SEC-02: Unknown job type now throws MConfigurationException (not MInternalException).
+        // This replaces the unsafe Type.GetType reflection-based dispatch.
         var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
         var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -145,6 +147,6 @@ public class BackgroundJobHandlerTests
             .Build();
 
         Action act = () => BackgroundJobHandler.AddBackgroundJobs(services, config);
-        act.Should().Throw<MInternalException>();
+        act.Should().Throw<MConfigurationException>();
     }
 }

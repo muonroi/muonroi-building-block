@@ -6,8 +6,11 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-<PackageReference Include="Moq" />
-</ItemGroup>
+    <PackageReference Include="Moq" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.BackgroundJobs.Abstractions\Muonroi.BackgroundJobs.Abstractions.csproj" />
   </ItemGroup>
