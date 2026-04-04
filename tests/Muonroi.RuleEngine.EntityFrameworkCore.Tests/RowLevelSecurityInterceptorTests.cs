@@ -239,7 +239,7 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
     /// <summary>
     /// Minimal fake <see cref="DbCommand"/> that captures command text and first parameter value on execution.
     /// </summary>
-    private sealed class FakeDbCommand(List<RowLevelSecurityInterceptorTests.ExecutedCommandInfo> log) : DbCommand
+    private sealed class FakeDbCommand(List<ExecutedCommandInfo> log) : DbCommand
     {
         private readonly List<ExecutedCommandInfo> _log = log;
         private readonly FakeDbParameterCollection _parameters = new();

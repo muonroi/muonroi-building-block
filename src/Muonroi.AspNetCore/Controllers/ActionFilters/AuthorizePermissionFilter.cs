@@ -81,8 +81,8 @@ public class AuthorizePermissionFilter<TDbContext>(
 
         IServiceProvider? services = context.HttpContext.RequestServices;
         services?.GetService<ILicenseGuard>()?.EnsureFeature(FreeTierFeatures.Premium.AdvancedAuth);
-        Muonroi.Tenancy.Core.Legacy.MultiTenantConfigs? multiTenantOptions =
-            services?.GetService<IOptions<Muonroi.Tenancy.Core.Legacy.MultiTenantConfigs>>()?.Value;
+        Tenancy.Core.Legacy.MultiTenantConfigs? multiTenantOptions =
+            services?.GetService<IOptions<Tenancy.Core.Legacy.MultiTenantConfigs>>()?.Value;
 
         string? userIdString = context.HttpContext.User.FindFirst(ClaimConstants.UserIdentifier)?.Value;
         if (!Guid.TryParse(userIdString, out Guid userId))

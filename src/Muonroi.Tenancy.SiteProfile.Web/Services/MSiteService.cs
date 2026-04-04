@@ -1,7 +1,6 @@
-using Muonroi.Core.Abstractions.Guards;
 using Dapper.Extensions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Response;
-using Muonroi.Tenancy.SiteProfile;
 using Muonroi.Tenancy.SiteProfile.Web.Repositories;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.Services;
@@ -33,7 +32,6 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Services;
 ///
 /// <para>
 /// The <see cref="WriteContext"/> exposes the site-specific EF Core DbContext registered via
-/// <see cref="SiteProfileDbContextExtensions.AddSiteDbContext{TContext}"/>.
 /// The <see cref="ReadContext"/> exposes the site-resolved <see cref="IDapper"/> instance
 /// registered via <see cref="SiteProfileDapperExtensions.AddSiteDapperInfrastructure"/>.
 /// </para>
@@ -54,7 +52,6 @@ public abstract class MSiteService<TContext, TEntity> : IMSiteService<TContext, 
 
     /// <summary>
     /// Gets the site-specific EF Core DbContext for write operations.
-    /// Resolved from DI via <see cref="SiteProfileDbContextExtensions.AddSiteDbContext{TContext}"/>.
     /// </summary>
     protected TContext WriteContext { get; }
 
@@ -135,7 +132,10 @@ public abstract class MSiteService<TContext, TEntity> : IMSiteService<TContext, 
     /// }
     /// </code>
     /// </example>
-    protected virtual TEntity MapCreate(TEntity entity) => entity;
+    protected virtual TEntity MapCreate(TEntity entity)
+    {
+        return entity;
+    }
 
     /// <summary>
     /// Override to transform the entity before it is updated.
@@ -143,7 +143,10 @@ public abstract class MSiteService<TContext, TEntity> : IMSiteService<TContext, 
     /// </summary>
     /// <param name="entity">The entity to transform.</param>
     /// <returns>The (optionally modified) entity to persist.</returns>
-    protected virtual TEntity MapUpdate(TEntity entity) => entity;
+    protected virtual TEntity MapUpdate(TEntity entity)
+    {
+        return entity;
+    }
 
     // -----------------------------------------------------------------------
     // IMSiteService<TContext, TEntity> implementation

@@ -55,7 +55,7 @@ public abstract class MServiceBase<TEntity, TDto>(DbContext context, IEntityMapp
         var entities = await Context.Set<TEntity>()
             .Where(predicate)
             .ToListAsync(ct);
-        return entities.Select(Mapper.ToDto).ToList();
+        return [.. entities.Select(Mapper.ToDto)];
     }
 
     /// <summary>

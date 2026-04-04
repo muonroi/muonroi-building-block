@@ -1,7 +1,7 @@
 namespace Muonroi.Mediator.Mediator.Interfaces;
 
 /// <summary>
-/// Controls how notification handlers are invoked by <see cref="Muonroi.Mediator.Mediator.MMediator"/>.
+/// Controls how notification handlers are invoked by <see cref="MMediator"/>.
 /// </summary>
 public enum MNotificationStrategy
 {

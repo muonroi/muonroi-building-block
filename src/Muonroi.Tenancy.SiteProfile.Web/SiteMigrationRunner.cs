@@ -147,7 +147,7 @@ internal sealed class SiteMigrationRunner(
                     IEnumerable<string> pending =
                         await dbContext.Database.GetPendingMigrationsAsync(ct).ConfigureAwait(false);
 
-                    string[] pendingArray = pending.ToArray();
+                    string[] pendingArray = [.. pending];
                     if (pendingArray.Length > 0)
                     {
                         string names = string.Join(", ", pendingArray);

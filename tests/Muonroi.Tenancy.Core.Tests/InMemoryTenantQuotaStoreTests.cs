@@ -8,7 +8,7 @@ namespace Muonroi.Tenancy.Core.Tests;
 
 public class InMemoryTenantQuotaStoreTests
 {
-    private static Muonroi.Tenancy.Core.Shared.InMemoryTenantQuotaStore CreateStore()
+    private static Shared.InMemoryTenantQuotaStore CreateStore()
     {
         IMDateTimeService dateTimeService = Substitute.For<IMDateTimeService>();
         dateTimeService.UtcNow().Returns(new DateTime(2026, 3, 21, 12, 0, 0, DateTimeKind.Utc));
@@ -26,13 +26,13 @@ public class InMemoryTenantQuotaStoreTests
             return System.Text.Json.JsonSerializer.Deserialize<TenantQuota>(json);
         });
 
-        return new Muonroi.Tenancy.Core.Shared.InMemoryTenantQuotaStore(dateTimeService, jsonService);
+        return new Shared.InMemoryTenantQuotaStore(dateTimeService, jsonService);
     }
 
     [Fact]
     public async Task GetQuotaAsync_Returns_Null_When_No_Quota_Saved()
     {
-        Muonroi.Tenancy.Core.Shared.InMemoryTenantQuotaStore store = CreateStore();
+        Shared.InMemoryTenantQuotaStore store = CreateStore();
 
         TenantQuota? result = await store.GetQuotaAsync("unknown-tenant");
 
@@ -42,7 +42,7 @@ public class InMemoryTenantQuotaStoreTests
     [Fact]
     public async Task SaveQuotaAsync_And_GetQuotaAsync_Roundtrip()
     {
-        Muonroi.Tenancy.Core.Shared.InMemoryTenantQuotaStore store = CreateStore();
+        Shared.InMemoryTenantQuotaStore store = CreateStore();
         TenantQuota quota = new() { MaxRuleExecutionsPerDay = 500 };
 
         await store.SaveQuotaAsync("tenant-1", quota);
@@ -56,7 +56,7 @@ public class InMemoryTenantQuotaStoreTests
     [Fact]
     public async Task RecordUsageAsync_Accumulates_Usage()
     {
-        Muonroi.Tenancy.Core.Shared.InMemoryTenantQuotaStore store = CreateStore();
+        Shared.InMemoryTenantQuotaStore store = CreateStore();
 
         await store.RecordUsageAsync("tenant-1", QuotaType.RuleExecutionsPerDay, 5);
         await store.RecordUsageAsync("tenant-1", QuotaType.RuleExecutionsPerDay, 3);
@@ -68,7 +68,7 @@ public class InMemoryTenantQuotaStoreTests
     [Fact]
     public async Task GetUsageAsync_Uses_Free_Tier_Limits_When_No_Quota_Configured()
     {
-        Muonroi.Tenancy.Core.Shared.InMemoryTenantQuotaStore store = CreateStore();
+        Shared.InMemoryTenantQuotaStore store = CreateStore();
 
         QuotaUsage usage = await store.GetUsageAsync("new-tenant");
 
@@ -79,7 +79,7 @@ public class InMemoryTenantQuotaStoreTests
     [Fact]
     public async Task ResetDailyCountersAsync_Clears_All_Usage()
     {
-        Muonroi.Tenancy.Core.Shared.InMemoryTenantQuotaStore store = CreateStore();
+        Shared.InMemoryTenantQuotaStore store = CreateStore();
         await store.RecordUsageAsync("tenant-1", QuotaType.RuleExecutionsPerDay, 10);
 
         await store.ResetDailyCountersAsync();
@@ -91,7 +91,7 @@ public class InMemoryTenantQuotaStoreTests
     [Fact]
     public async Task SaveQuotaAsync_Sets_TenantId_On_Quota()
     {
-        Muonroi.Tenancy.Core.Shared.InMemoryTenantQuotaStore store = CreateStore();
+        Shared.InMemoryTenantQuotaStore store = CreateStore();
         TenantQuota quota = new() { TenantId = "wrong-id" };
 
         await store.SaveQuotaAsync("correct-id", quota);

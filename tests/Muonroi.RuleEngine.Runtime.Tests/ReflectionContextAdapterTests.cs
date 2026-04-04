@@ -65,7 +65,7 @@ public sealed class ReflectionContextAdapterTests
 
     private static object CreateClosedGeneric(string typeName, Type genericArg)
     {
-        Assembly assembly = typeof(Muonroi.RuleEngine.Runtime.Rules.RulesEngineService).Assembly;
+        Assembly assembly = typeof(RulesEngineService).Assembly;
         Type openGeneric = assembly.GetType(typeName, throwOnError: true)!;
         Type closed = openGeneric.MakeGenericType(genericArg);
         return Activator.CreateInstance(closed, nonPublic: true)!;

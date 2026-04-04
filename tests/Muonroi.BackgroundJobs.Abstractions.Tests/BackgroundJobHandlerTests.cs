@@ -133,7 +133,7 @@ public class BackgroundJobHandlerTests
 
         IServiceCollection services = new ServiceCollection();
         // Register the mock registry as implementation instance so it's found at registration time
-        services.AddSingleton<IMEcosystemRegistry>(registryMock.Object);
+        services.AddSingleton(registryMock.Object);
 
         IConfiguration config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>

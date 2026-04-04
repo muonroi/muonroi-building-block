@@ -349,7 +349,7 @@ public class PermissionServiceUiEngineManifestTests
 
         await db.SaveChangesAsync();
 
-        Muonroi.Quota.Abstractions.InMemoryTenantQuotaStore quotaStore = new(new FakeDateTimeService(), new FakeJsonSerializeService());
+        Quota.Abstractions.InMemoryTenantQuotaStore quotaStore = new(new FakeDateTimeService(), new FakeJsonSerializeService());
         await quotaStore.SaveQuotaAsync(TenantContext.CurrentTenantId, TenantQuotaPresets.Free);
         PermissionService<TestPerm, TestDbContext> service = CreateService(db, new MAuthenticateInfoContext(false), quotaStore: quotaStore);
         MResponse<MUiEngineManifest> freeResponse = await service.GetUiEngineManifestAsync(user.EntityId, CancellationToken.None);

@@ -1,15 +1,17 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.OpenApi.Models;
 using Muonroi.Core.Abstractions.Response;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Muonroi.AspNetCore.OpenApi;
+namespace Muonroi.AspNetCore.OpenApi.OpenApi;
 
 /// <summary>
 /// Swagger operation filter that automatically adds MErrorResponse documentation to all endpoints.
 /// </summary>
 public class MErrorResponseFilter : IOperationFilter
 {
+    /// <summary>
+    /// Applies the filter to the given operation, adding 400 and 500 response documentation if not already present.
+    /// </summary>
+    /// <param name="operation"></param>
+    /// <param name="context"></param>
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         // Add 400 Bad Request

@@ -245,7 +245,7 @@ internal static class ProliferateCommand
     private sealed class FileRuleSetStore(string workflowName, string json) : IRuleSetStore
     {
         public Task<string?> GetAsync(string wf, int? version = null, CancellationToken ct = default)
-            => Task.FromResult<string?>(
+            => Task.FromResult(
                 string.Equals(wf, workflowName, StringComparison.OrdinalIgnoreCase) ? json : null);
 
         public Task SaveAsync(string wf, string j, CancellationToken ct = default)

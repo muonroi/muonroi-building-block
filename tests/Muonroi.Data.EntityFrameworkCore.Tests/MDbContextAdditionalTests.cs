@@ -223,7 +223,7 @@ public class MDbContextAdditionalTests
         hash1.Should().Be(hash2);
     }
 
-    private sealed class TestDomainEvent : Muonroi.Core.Abstractions.SeedWorks.IMDomainEvent, INotification
+    private sealed class TestDomainEvent : Core.Abstractions.SeedWorks.IMDomainEvent, INotification
     {
     }
 }

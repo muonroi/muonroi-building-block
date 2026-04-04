@@ -5,7 +5,7 @@ public class AmqpContextMiddlewareTests
     [Fact]
     public void AddHeaders_And_GetHeaderByKey_ReturnsStringValue()
     {
-        var context = new Muonroi.AspNetCore.Middleware.AmqpContext();
+        var context = new AspNetCore.Middleware.AmqpContext();
         context.AddHeaders(new Dictionary<string, object>
         {
             ["key1"] = "value1",
@@ -19,7 +19,7 @@ public class AmqpContextMiddlewareTests
     [Fact]
     public void GetHeaderByKey_ByteArray_ReturnsDecodedString()
     {
-        var context = new Muonroi.AspNetCore.Middleware.AmqpContext();
+        var context = new AspNetCore.Middleware.AmqpContext();
         byte[] bytes = Encoding.Default.GetBytes("hello-bytes");
         context.AddHeaders(new Dictionary<string, object> { ["key"] = bytes });
 
@@ -29,14 +29,14 @@ public class AmqpContextMiddlewareTests
     [Fact]
     public void GetHeaderByKey_NonExistentKey_ReturnsNull()
     {
-        var context = new Muonroi.AspNetCore.Middleware.AmqpContext();
+        var context = new AspNetCore.Middleware.AmqpContext();
         context.GetHeaderByKey("missing").Should().BeNull();
     }
 
     [Fact]
     public void GetHeaderByKey_ObjectValue_ReturnsToString()
     {
-        var context = new Muonroi.AspNetCore.Middleware.AmqpContext();
+        var context = new AspNetCore.Middleware.AmqpContext();
         context.AddHeaders(new Dictionary<string, object> { ["num"] = 42 });
 
         context.GetHeaderByKey("num").Should().Be("42");
@@ -45,7 +45,7 @@ public class AmqpContextMiddlewareTests
     [Fact]
     public void ClearHeaders_RemovesAllHeaders()
     {
-        var context = new Muonroi.AspNetCore.Middleware.AmqpContext();
+        var context = new AspNetCore.Middleware.AmqpContext();
         context.AddHeaders(new Dictionary<string, object> { ["key"] = "value" });
 
         context.ClearHeaders();
@@ -56,7 +56,7 @@ public class AmqpContextMiddlewareTests
     [Fact]
     public void AddHeaders_OverwritesExistingKey()
     {
-        var context = new Muonroi.AspNetCore.Middleware.AmqpContext();
+        var context = new AspNetCore.Middleware.AmqpContext();
         context.AddHeaders(new Dictionary<string, object> { ["key"] = "v1" });
         context.AddHeaders(new Dictionary<string, object> { ["key"] = "v2" });
 

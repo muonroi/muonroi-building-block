@@ -18,7 +18,7 @@ public class QuartzContextJobListenerTests
         policy.ResolveAndValidate(Arg.Any<ISystemExecutionContext>())
             .Returns(call => call.Arg<ISystemExecutionContext>());
 
-        Muonroi.BackgroundJobs.Quartz.Quartz.QuartzContextJobListener listener = new(accessor, policy);
+        Quartz.QuartzContextJobListener listener = new(accessor, policy);
         JobDataMap jobDataMap = new();
         jobDataMap["muonroi_execution_context"] = new MuonroiJobExecutionContext(
             tenantId: "tenant-a",
@@ -53,7 +53,7 @@ public class QuartzContextJobListenerTests
     [Fact]
     public async Task JobExecutionVetoed_ShouldDisposeExistingScope()
     {
-        Muonroi.BackgroundJobs.Quartz.Quartz.QuartzContextJobListener listener = new();
+        Quartz.QuartzContextJobListener listener = new();
         JobDataMap jobDataMap = new();
         TestDisposable disposable = new();
         jobDataMap["muonroi_execution_context_scope"] = disposable;

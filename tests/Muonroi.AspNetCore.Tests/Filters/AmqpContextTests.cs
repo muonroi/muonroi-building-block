@@ -5,7 +5,7 @@ public class AmqpContextTests
     [Fact]
     public void AddHeaders_And_GetHeaderByKey_ReturnsStringValue()
     {
-        var context = new Muonroi.AspNetCore.Filters.AmqpContext();
+        var context = new AspNetCore.Filters.AmqpContext();
         context.AddHeaders(new Dictionary<string, object>
         {
             ["correlation-id"] = "abc-123",
@@ -19,7 +19,7 @@ public class AmqpContextTests
     [Fact]
     public void GetHeaderByKey_ByteArray_DecodesCorrectly()
     {
-        var context = new Muonroi.AspNetCore.Filters.AmqpContext();
+        var context = new AspNetCore.Filters.AmqpContext();
         byte[] bytes = Encoding.Default.GetBytes("encoded-value");
         context.AddHeaders(new Dictionary<string, object> { ["data"] = bytes });
 
@@ -29,14 +29,14 @@ public class AmqpContextTests
     [Fact]
     public void GetHeaderByKey_MissingKey_ReturnsNull()
     {
-        var context = new Muonroi.AspNetCore.Filters.AmqpContext();
+        var context = new AspNetCore.Filters.AmqpContext();
         context.GetHeaderByKey("nonexistent").Should().BeNull();
     }
 
     [Fact]
     public void GetHeaderByKey_NumericValue_ReturnsToString()
     {
-        var context = new Muonroi.AspNetCore.Filters.AmqpContext();
+        var context = new AspNetCore.Filters.AmqpContext();
         context.AddHeaders(new Dictionary<string, object> { ["count"] = 99 });
 
         context.GetHeaderByKey("count").Should().Be("99");
@@ -45,7 +45,7 @@ public class AmqpContextTests
     [Fact]
     public void ClearHeaders_ClearsAllEntries()
     {
-        var context = new Muonroi.AspNetCore.Filters.AmqpContext();
+        var context = new AspNetCore.Filters.AmqpContext();
         context.AddHeaders(new Dictionary<string, object> { ["a"] = "1", ["b"] = "2" });
 
         context.ClearHeaders();
@@ -57,7 +57,7 @@ public class AmqpContextTests
     [Fact]
     public void GetHeaderByKey_NullValue_ReturnsNull()
     {
-        var context = new Muonroi.AspNetCore.Filters.AmqpContext();
+        var context = new AspNetCore.Filters.AmqpContext();
         context.AddHeaders(new Dictionary<string, object> { ["key"] = null! });
 
         context.GetHeaderByKey("key").Should().BeNull();

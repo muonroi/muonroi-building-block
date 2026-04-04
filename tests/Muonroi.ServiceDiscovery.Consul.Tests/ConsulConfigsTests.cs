@@ -65,13 +65,13 @@ public class ConsulConfigsTests
         };
         IConfiguration config = new ConfigurationBuilder().AddInMemoryCollection(configDict).Build();
 
-        Mock<Microsoft.AspNetCore.Hosting.IWebHostEnvironment> envMock = new();
+        Mock<IWebHostEnvironment> envMock = new();
         envMock.Setup(x => x.EnvironmentName).Returns("Production");
 
         services.AddServiceDiscovery(config, envMock.Object);
         ServiceProvider provider = services.BuildServiceProvider();
 
-        provider.GetService<global::Consul.IConsulClient>().Should().BeNull();
+        provider.GetService<IConsulClient>().Should().BeNull();
     }
 
     [Fact]
@@ -87,13 +87,13 @@ public class ConsulConfigsTests
         };
         IConfiguration config = new ConfigurationBuilder().AddInMemoryCollection(configDict).Build();
 
-        Mock<Microsoft.AspNetCore.Hosting.IWebHostEnvironment> envMock = new();
+        Mock<IWebHostEnvironment> envMock = new();
         envMock.Setup(x => x.EnvironmentName).Returns("Development");
 
         services.AddServiceDiscovery(config, envMock.Object);
         ServiceProvider provider = services.BuildServiceProvider();
 
-        provider.GetService<global::Consul.IConsulClient>().Should().BeNull();
+        provider.GetService<IConsulClient>().Should().BeNull();
     }
 
     [Fact]
@@ -108,12 +108,12 @@ public class ConsulConfigsTests
         };
         IConfiguration config = new ConfigurationBuilder().AddInMemoryCollection(configDict).Build();
 
-        Mock<Microsoft.AspNetCore.Hosting.IWebHostEnvironment> envMock = new();
+        Mock<IWebHostEnvironment> envMock = new();
         envMock.Setup(x => x.EnvironmentName).Returns("Production");
 
         services.AddServiceDiscovery(config, envMock.Object);
         ServiceProvider provider = services.BuildServiceProvider();
 
-        provider.GetService<global::Consul.IConsulClient>().Should().BeNull();
+        provider.GetService<IConsulClient>().Should().BeNull();
     }
 }

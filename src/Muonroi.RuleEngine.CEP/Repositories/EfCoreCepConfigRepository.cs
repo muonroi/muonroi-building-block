@@ -129,7 +129,7 @@ internal sealed class EfCoreCepConfigRepository(
             TenantId = entity.TenantId,
             Name = entity.Name,
             Description = entity.Description,
-            WindowType = Enum.TryParse<WindowType>(entity.WindowType, true, out WindowType windowType) ? windowType : WindowType.Sliding,
+            WindowType = Enum.TryParse(entity.WindowType, true, out WindowType windowType) ? windowType : WindowType.Sliding,
             WindowSize = TimeSpan.FromSeconds(entity.WindowSizeSeconds),
             TimeToLive = TimeSpan.FromSeconds(entity.TimeToLiveSeconds),
             CorrelationKey = entity.CorrelationKey,

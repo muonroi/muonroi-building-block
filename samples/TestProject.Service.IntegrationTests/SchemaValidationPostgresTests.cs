@@ -44,7 +44,7 @@ public sealed class SchemaValidationPostgresTests : IDisposable
     // Test-only DbContext subclass — minimal EF model mapping to order_details table.
     // Receives schema name via SchemaTestOptions injected from DI.
     // ---------------------------------------------------------------------------
-    private sealed class SchemaTestContext(DbContextOptions<SchemaValidationPostgresTests.SchemaTestContext> options, SchemaValidationPostgresTests.SchemaTestOptions schemaOpts) : DbContext(options)
+    private sealed class SchemaTestContext(DbContextOptions<SchemaTestContext> options, SchemaTestOptions schemaOpts) : DbContext(options)
     {
         private readonly string _schema = schemaOpts.Schema;
 

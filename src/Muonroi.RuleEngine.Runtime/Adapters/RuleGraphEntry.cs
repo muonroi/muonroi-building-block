@@ -72,7 +72,7 @@ public sealed class RuleGraphEntry
     public string? ConnectorType { get; init; }
 
     /// <summary>Gets the connector configuration payload.</summary>
-    public System.Text.Json.JsonElement? ConnectorConfig { get; init; }
+    public JsonElement? ConnectorConfig { get; init; }
 
     /// <summary>Gets the credential identifier for the connector.</summary>
     public string? CredentialId { get; init; }

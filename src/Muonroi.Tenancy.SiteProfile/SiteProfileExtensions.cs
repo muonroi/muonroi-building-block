@@ -68,7 +68,7 @@ public static class SiteProfileExtensions
         IConfiguration configuration)
     {
         MGuard.NotNull(profile);
-        services.AddSingleton<ISiteProfile>(profile);
+        services.AddSingleton(profile);
         profile.RegisterServices(services, configuration);
 
         // Track site ID for startup validation
@@ -110,7 +110,7 @@ public static class SiteProfileExtensions
         }
 
         return AddMultiSiteProfilesCore(services, configuration, siteCodeAccessor,
-            discoveredProfiles.ToArray(), diagnosticLog);
+            [.. discoveredProfiles], diagnosticLog);
     }
 
     /// <summary>
@@ -172,7 +172,7 @@ public static class SiteProfileExtensions
         // Register all profiles as singletons (for diagnostics / enumeration)
         foreach (var profile in profileMap.Values)
         {
-            services.AddSingleton<ISiteProfile>(profile);
+            services.AddSingleton(profile);
         }
 
         // Register ISiteProfileResolver — per-request, resolves correct profile by SiteCode
@@ -251,7 +251,7 @@ public static class SiteProfileExtensions
         // Track service type for startup validation
         s_tracker.RecordResolvedServiceType(typeof(TService));
 
-        services.AddScoped<TService>(sp =>
+        services.AddScoped(sp =>
         {
             var resolver = sp.GetRequiredService<ISiteProfileResolver>();
             var siteId = resolver.Current.SiteId;

@@ -26,7 +26,7 @@ public class MConnectorCatalogController(IServiceProvider serviceProvider) : Con
     public IActionResult ListConnectorCatalog()
     {
         // Resolve IConnectorRegistry optionally — not all consumer apps register connectors
-        Type? registryType = typeof(Muonroi.Integration.Abstractions.IConnectorRegistry);
+        Type? registryType = typeof(Integration.Abstractions.IConnectorRegistry);
         object? registry = _serviceProvider.GetService(registryType);
 
         if (registry is null)

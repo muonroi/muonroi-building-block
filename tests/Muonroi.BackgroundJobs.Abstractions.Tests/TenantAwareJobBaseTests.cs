@@ -139,7 +139,7 @@ public class BackgroundJobHandlerLegacyTests
         // SEC-02: Unknown job type now throws MConfigurationException (not MInternalException).
         // This replaces the unsafe Type.GetType reflection-based dispatch.
         var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
-        var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
+        var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["BackgroundJobConfigs:JobType"] = "999"

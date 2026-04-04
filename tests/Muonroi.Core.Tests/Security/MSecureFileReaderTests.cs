@@ -91,13 +91,13 @@ public class MSecureFileReaderTests : IDisposable
     public void ReadKeyFile_WithLoggingCapability_LogsAuditEntry()
     {
         // Capture console output to verify audit logging
-        using var sw = new System.IO.StringWriter();
+        using var sw = new StringWriter();
         Console.SetOut(sw);
 
         var registry = new FakeEcosystemRegistry(MCapability.Logging);
         string content = MSecureFileReader.ReadKeyFile(_tempFile, null, registry);
 
-        Console.SetOut(new System.IO.StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true });
+        Console.SetOut(new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true });
 
         string output = sw.ToString();
         Assert.Contains("AUDIT", output, StringComparison.OrdinalIgnoreCase);

@@ -412,11 +412,11 @@ public sealed class RulesEngineService(
         IEnumerable<IHookHandler<TContext>> hooks = _serviceProvider?.GetServices<IHookHandler<TContext>>() ?? [];
         IEnumerable<IRuleEventListener<TContext>> listeners =
             _serviceProvider?.GetServices<IRuleEventListener<TContext>>() ?? [];
-        IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>? logger =
-            _serviceProvider?.GetService<IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>>();
+        IMLog<Core.RuleOrchestrator<TContext>>? logger =
+            _serviceProvider?.GetService<IMLog<Core.RuleOrchestrator<TContext>>>();
         ITenantQuotaTracker? quotaTracker = _serviceProvider?.GetService<ITenantQuotaTracker>();
         IRuleExecutionTracer? tracer = _serviceProvider?.GetService<IRuleExecutionTracer>();
-        Muonroi.RuleEngine.Core.RuleOrchestrator<TContext> orchestrator =
+        Core.RuleOrchestrator<TContext> orchestrator =
             new(resolvedRules, hooks, logger, listeners, quotaTracker, tracer, _executionContext);
         return await orchestrator.ExecuteWithResultAsync(
             context,
@@ -653,11 +653,10 @@ public sealed class RulesEngineService(
         {
             if (WorkflowCache.Count <= MaxWorkflowCacheEntries) return; // Double-checked after acquiring lock
 
-            string[] toEvict = WorkflowCache.ToArray()
+            string[] toEvict = [.. WorkflowCache.ToArray()
                 .OrderBy(kv => kv.Value.LastAccessedUtc)
                 .Take(MaxWorkflowCacheEntries / 4) // 512 entries = 25%
-                .Select(kv => kv.Key)
-                .ToArray();
+                .Select(kv => kv.Key)];
 
             foreach (string key in toEvict)
             {
@@ -1003,12 +1002,12 @@ public sealed class RulesEngineService(
         IEnumerable<IHookHandler<TContext>> hooks = _serviceProvider?.GetServices<IHookHandler<TContext>>() ?? [];
         IEnumerable<IRuleEventListener<TContext>> listeners =
             _serviceProvider?.GetServices<IRuleEventListener<TContext>>() ?? [];
-        IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>? logger =
-            _serviceProvider?.GetService<IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>>();
+        IMLog<Core.RuleOrchestrator<TContext>>? logger =
+            _serviceProvider?.GetService<IMLog<Core.RuleOrchestrator<TContext>>>();
         ITenantQuotaTracker? quotaTracker = _serviceProvider?.GetService<ITenantQuotaTracker>();
         IRuleExecutionTracer? tracer = _serviceProvider?.GetService<IRuleExecutionTracer>();
 
-        Muonroi.RuleEngine.Core.RuleOrchestrator<TContext> orchestrator =
+        Core.RuleOrchestrator<TContext> orchestrator =
             new(rules, hooks, logger, listeners, quotaTracker, tracer, _executionContext);
 
         return await orchestrator.ExecuteWithResultAsync(
@@ -1168,10 +1167,10 @@ public sealed class RulesEngineService(
         // Type B-5: Connector
         if (!string.IsNullOrEmpty(entry.ConnectorType) && _serviceProvider is not null)
         {
-            Muonroi.Integration.Abstractions.IConnectorRegistry? registry =
-                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorRegistry>();
-            Muonroi.Integration.Abstractions.IConnectorCredentialStore? credStore =
-                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorCredentialStore>();
+            Integration.Abstractions.IConnectorRegistry? registry =
+                _serviceProvider.GetService<Integration.Abstractions.IConnectorRegistry>();
+            Integration.Abstractions.IConnectorCredentialStore? credStore =
+                _serviceProvider.GetService<Integration.Abstractions.IConnectorCredentialStore>();
             IMLog<ConnectorRuleAdapter<TContext>>? connLog =
                 _serviceProvider.GetService<IMLog<ConnectorRuleAdapter<TContext>>>();
 
@@ -1271,11 +1270,11 @@ public sealed class RulesEngineService(
 
         IEnumerable<IHookHandler<FactBagRuleContext>> hooks =
             _serviceProvider?.GetServices<IHookHandler<FactBagRuleContext>>() ?? [];
-        IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<FactBagRuleContext>>? logger =
-            _serviceProvider?.GetService<IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<FactBagRuleContext>>>();
+        IMLog<Core.RuleOrchestrator<FactBagRuleContext>>? logger =
+            _serviceProvider?.GetService<IMLog<Core.RuleOrchestrator<FactBagRuleContext>>>();
         IRuleExecutionTracer? tracer = _serviceProvider?.GetService<IRuleExecutionTracer>();
 
-        Muonroi.RuleEngine.Core.RuleOrchestrator<FactBagRuleContext> orchestrator =
+        Core.RuleOrchestrator<FactBagRuleContext> orchestrator =
             new(rules, hooks, logger, [], null, tracer, _executionContext);
 
         FactBagRuleContext ctx = new(inputFacts);
@@ -1418,10 +1417,10 @@ public sealed class RulesEngineService(
         // Type B-5: Connector
         if (!string.IsNullOrEmpty(entry.ConnectorType) && _serviceProvider is not null)
         {
-            Muonroi.Integration.Abstractions.IConnectorRegistry? registry =
-                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorRegistry>();
-            Muonroi.Integration.Abstractions.IConnectorCredentialStore? credStore =
-                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorCredentialStore>();
+            Integration.Abstractions.IConnectorRegistry? registry =
+                _serviceProvider.GetService<Integration.Abstractions.IConnectorRegistry>();
+            Integration.Abstractions.IConnectorCredentialStore? credStore =
+                _serviceProvider.GetService<Integration.Abstractions.IConnectorCredentialStore>();
             IMLog<ConnectorRuleAdapter<FactBagRuleContext>>? log =
                 _serviceProvider.GetService<IMLog<ConnectorRuleAdapter<FactBagRuleContext>>>();
 

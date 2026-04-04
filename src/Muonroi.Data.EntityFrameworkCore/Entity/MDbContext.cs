@@ -6,7 +6,7 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity;
 /// <summary>
 /// Represents the base database context for the Muonroi application, providing audit, soft-delete, and multi-tenancy support.
 /// </summary>
-public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnitOfWork, IMDataContext, ITransactionalRuleContext, IIdentityAuth
+public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactionalRuleContext, IIdentityAuth
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.Data.EntityFrameworkCore");
     private readonly IMediator? _mediator;

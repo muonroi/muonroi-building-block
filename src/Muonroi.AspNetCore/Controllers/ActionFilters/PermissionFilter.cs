@@ -24,8 +24,8 @@ public class PermissionFilter<TPermission>(IMLog<PermissionFilter<TPermission>> 
 
         IServiceProvider? services = context.HttpContext.RequestServices;
         services?.GetService<ILicenseGuard>()?.EnsureFeature(FreeTierFeatures.Premium.AdvancedAuth);
-        Muonroi.Tenancy.Core.Legacy.MultiTenantConfigs? multiTenantOptions =
-            services?.GetService<IOptions<Muonroi.Tenancy.Core.Legacy.MultiTenantConfigs>>()?.Value;
+        Tenancy.Core.Legacy.MultiTenantConfigs? multiTenantOptions =
+            services?.GetService<IOptions<Tenancy.Core.Legacy.MultiTenantConfigs>>()?.Value;
 
         long? userPermissionsBitmask = GetPermissionsFromToken(context.HttpContext.User);
 

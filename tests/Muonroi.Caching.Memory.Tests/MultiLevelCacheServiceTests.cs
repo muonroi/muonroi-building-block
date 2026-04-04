@@ -222,7 +222,7 @@ public class MultiLevelCacheServiceTests
         MultiLevelCacheService service = new(memory, distributed);
 
         await Assert.ThrowsAsync<MArgumentException>(() =>
-            service.GetOrSetAsync<string>(null!, () => Task.FromResult<string?>("v")));
+            service.GetOrSetAsync(null!, () => Task.FromResult<string?>("v")));
     }
 
     [Fact]

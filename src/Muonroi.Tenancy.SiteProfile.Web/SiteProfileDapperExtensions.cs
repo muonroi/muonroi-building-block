@@ -73,7 +73,7 @@ public static class SiteProfileDapperExtensions
         configure(options);
 
         if (options.WriteConnectionString is null)
-            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(configure), "SiteDapperInfrastructureOptions.WriteConnectionString resolver is required.");
+            throw new MArgumentException(nameof(configure), "SiteDapperInfrastructureOptions.WriteConnectionString resolver is required.");
 
         // Store options as singleton for downstream use by IConnectionStringProvider
         services.AddSingleton(options);
@@ -91,7 +91,7 @@ public static class SiteProfileDapperExtensions
         // Register IDapper (write) as scoped — resolved by site key from ISiteProfileResolver.
         // Each ISiteProfile.RegisterServices() must register:
         //   services.AddKeyedScoped<IDapper, TImpl>("SITE_CODE")
-        services.AddScoped<IDapper>(sp =>
+        services.AddScoped(sp =>
         {
             var resolver = sp.GetRequiredService<ISiteProfileResolver>();
             string siteId = resolver.Current.SiteId;
@@ -107,7 +107,7 @@ public static class SiteProfileDapperExtensions
         // Register IDapperRead (read replica) as scoped — resolved by site key from ISiteProfileResolver.
         // Falls back to the write IDapper if it also implements IDapperRead,
         // or throws if neither keyed IDapperRead nor a compatible IDapper is available.
-        services.AddScoped<IDapperRead>(sp =>
+        services.AddScoped(sp =>
         {
             var resolver = sp.GetRequiredService<ISiteProfileResolver>();
             string siteId = resolver.Current.SiteId;

@@ -144,7 +144,7 @@ public sealed class GrpcClientTelemetryInterceptor(
 
         if (!_licenseState.HasFeature(FreeTierFeatures.Premium.Grpc))
         {
-            throw new RpcException(new global::Grpc.Core.Status(
+            throw new RpcException(new Status(
                 StatusCode.PermissionDenied,
                 "[LICENSE] Feature 'grpc' is not available under your current license."));
         }

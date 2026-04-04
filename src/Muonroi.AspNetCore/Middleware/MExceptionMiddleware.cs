@@ -96,19 +96,19 @@ public class MExceptionMiddleware(
             if (mex is MValidationException validationEx)
             {
                 response.ErrorCode = "VALIDATION_FAILED";
-                response.Errors = validationEx.Errors.Select(e => new MErrorDetail
+                response.Errors = [.. validationEx.Errors.Select(e => new MErrorDetail
                 {
                     Field = e.Field,
                     Message = e.Message,
                     AttemptedValue = _environment.IsDevelopment() ? e.AttemptedValue : null
-                }).ToList();
+                })];
             }
 
             return context.Response.WriteAsync(_serializeService.Serialize(response));
         }
 
         // Branch 2 — FluentValidation.ValidationException (per D-10)
-        if (ex is FluentValidation.ValidationException fluentEx)
+        if (ex is ValidationException fluentEx)
         {
             _logger.Warn("Validation exception from FluentValidation. Message: {Message}", fluentEx.Message);
             context.Response.StatusCode = 400;
@@ -119,12 +119,12 @@ public class MExceptionMiddleware(
                 ErrorCode = "VALIDATION_FAILED",
                 TraceId = traceId,
                 Message = "One or more validation failures have occurred.",
-                Errors = fluentEx.Errors.Select(e => new MErrorDetail
+                Errors = [.. fluentEx.Errors.Select(e => new MErrorDetail
                 {
                     Field = e.PropertyName,
                     Message = e.ErrorMessage,
                     AttemptedValue = _environment.IsDevelopment() ? e.AttemptedValue : null
-                }).ToList()
+                })]
             };
             return context.Response.WriteAsync(_serializeService.Serialize(response));
         }

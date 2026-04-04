@@ -10,6 +10,11 @@ public sealed class ReflectionContextFactory<TContext>
     : IContextFactory<TContext>
     where TContext : new()
 {
+    /// <summary>
+    /// Creates a <typeparamref name="TContext"/> instance by matching fact keys to writable properties.
+    /// </summary>
+    /// <param name="facts"></param>
+    /// <returns></returns>
     public TContext Create(FactBag facts)
     {
         TContext ctx = new();
@@ -18,10 +23,9 @@ public sealed class ReflectionContextFactory<TContext>
             .Where(p => p.CanWrite))
         {
             // try exact name first, then camelCase
-            object? value = null;
-            if (!facts.TryGet<object>(prop.Name, out value))
+            if (!facts.TryGet(prop.Name, out object? value))
             {
-                facts.TryGet<object>(ToCamelCase(prop.Name), out value);
+                facts.TryGet(ToCamelCase(prop.Name), out value);
             }
 
             if (value is null)
@@ -44,5 +48,7 @@ public sealed class ReflectionContextFactory<TContext>
     }
 
     private static string ToCamelCase(string s)
-        => string.IsNullOrEmpty(s) ? s : char.ToLowerInvariant(s[0]) + s.Substring(1);
+    {
+        return string.IsNullOrEmpty(s) ? s : char.ToLowerInvariant(s[0]) + s[1..];
+    }
 }

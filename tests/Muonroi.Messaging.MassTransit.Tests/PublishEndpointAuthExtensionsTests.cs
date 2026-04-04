@@ -129,7 +129,7 @@ public class PublishEndpointAuthExtensionsTests
         SystemExecutionContext context = SystemExecutionContext.Empty;
 
         MArgumentException ex = await Assert.ThrowsAsync<MArgumentException>(
-            () => PublishEndpointAuthExtensions.PublishWithContext<TestMessage>(
+            () => PublishEndpointAuthExtensions.PublishWithContext(
                 null!,
                 new TestMessage("x"),
                 context,

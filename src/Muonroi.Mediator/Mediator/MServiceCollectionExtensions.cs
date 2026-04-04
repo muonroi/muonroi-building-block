@@ -57,7 +57,7 @@ public static class ServiceCollectionExtensions
 
         // ── Core ─────────────────────────────────────────────────────────────────
         services.AddSingleton<IMediator, MMediator>();
-        services.AddTransient<ServiceFactory>(sp => new ServiceFactory(sp.GetService));
+        services.AddTransient(sp => new ServiceFactory(sp.GetService));
         services.AddScoped<IRequestContextBag, MRequestContextBag>();
 
         // ── Scan assemblies ──────────────────────────────────────────────────────

@@ -8,6 +8,9 @@ namespace Muonroi.Observability.OpenTelemetry;
 public static class MuonroiMetrics
 {
     private const string MeterName = "Muonroi.Ecosystem.Core";
+    /// <summary>
+    /// The central meter instance for all Muonroi metrics, ensuring consistent naming and configuration across the ecosystem.
+    /// </summary>
     public static readonly Meter Meter = new(MeterName);
 
     /// <summary>

@@ -271,7 +271,7 @@ public static class GrpcHandler
 
         if (retryCount > 0)
         {
-            methodConfig.RetryPolicy = new global::Grpc.Net.Client.Configuration.RetryPolicy
+            methodConfig.RetryPolicy = new RetryPolicy
             {
                 MaxAttempts = Math.Max(2, retryCount + 1),
                 InitialBackoff = TimeSpan.FromSeconds(Math.Max(1, initialBackoffSeconds)),

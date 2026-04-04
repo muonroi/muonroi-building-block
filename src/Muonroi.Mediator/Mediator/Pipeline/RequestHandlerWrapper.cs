@@ -73,7 +73,7 @@ internal abstract class NotificationHandlerWrapperBase
         object notification,
         ServiceFactory serviceFactory,
         CancellationToken cancellationToken,
-        Interfaces.MNotificationStrategy strategy);
+        MNotificationStrategy strategy);
 }
 
 /// <summary>
@@ -86,7 +86,7 @@ internal sealed class NotificationHandlerWrapperImpl<TNotification> : Notificati
         object notification,
         ServiceFactory serviceFactory,
         CancellationToken cancellationToken,
-        Interfaces.MNotificationStrategy strategy)
+        MNotificationStrategy strategy)
     {
         IEnumerable<INotificationHandler<TNotification>>? handlers =
             serviceFactory(typeof(IEnumerable<INotificationHandler<TNotification>>))

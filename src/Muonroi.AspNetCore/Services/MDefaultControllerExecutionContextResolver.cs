@@ -88,7 +88,7 @@ public sealed class MDefaultControllerExecutionContextResolver(IConfiguration co
 
     private static string? ReadHeader(HttpContext httpContext, string key)
     {
-        if (!httpContext.Request.Headers.TryGetValue(key, out Microsoft.Extensions.Primitives.StringValues values))
+        if (!httpContext.Request.Headers.TryGetValue(key, out StringValues values))
         {
             return null;
         }

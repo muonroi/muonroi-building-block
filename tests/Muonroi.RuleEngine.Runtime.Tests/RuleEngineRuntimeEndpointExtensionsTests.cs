@@ -33,10 +33,9 @@ public sealed class RuleEngineRuntimeEndpointExtensionsTests
         await app.StartAsync();
 
         EndpointDataSource dataSource = app.Services.GetRequiredService<EndpointDataSource>();
-        string[] patterns = dataSource.Endpoints
+        string[] patterns = [.. dataSource.Endpoints
             .OfType<RouteEndpoint>()
-            .Select(endpoint => endpoint.RoutePattern.RawText ?? string.Empty)
-            .ToArray();
+            .Select(endpoint => endpoint.RoutePattern.RawText ?? string.Empty)];
 
         patterns.Should().Contain("api/v1/rule-engine/rule-contracts/{sourceType}/{sourceCode}");
         patterns.Should().Contain("/muonroi/rule-debugger/{tenantId}/enable");

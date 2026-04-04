@@ -1,6 +1,6 @@
 global using FluentAssertions;
-global using global::Grpc.Core;
-global using global::Grpc.Core.Interceptors;
+global using Grpc.Core;
+global using Grpc.Core.Interceptors;
 global using Grpc.AspNetCore.Server;
 global using Grpc.Net.ClientFactory;
 global using Microsoft.Extensions.Configuration;

@@ -94,21 +94,4 @@ public interface IMRepository<T> where T : MEntity
     /// <param name="entities">The collection of entities to insert.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     Task BulkInsertAsync(IEnumerable<T> entities);
-
-    /// <summary>
-    /// Asynchronously executes a stored procedure.
-    /// </summary>
-    /// <param name="storedProcedureName">The name of the stored procedure.</param>
-    /// <param name="parameters">The parameters for the stored procedure.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the number of rows affected.</returns>
-    Task<int> ExecuteStoredProcedureAsync(string storedProcedureName, params object[] parameters);
-
-    /// <summary>
-    /// Asynchronously executes a stored procedure and returns a scalar result.
-    /// </summary>
-    /// <typeparam name="TResult">The type of the result.</typeparam>
-    /// <param name="storedProcedureName">The name of the stored procedure.</param>
-    /// <param name="parameters">The parameters for the stored procedure.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the scalar result of the stored procedure.</returns>
-    Task<TResult> ExecuteStoredProcedureScalarAsync<TResult>(string storedProcedureName, params object[] parameters);
 }

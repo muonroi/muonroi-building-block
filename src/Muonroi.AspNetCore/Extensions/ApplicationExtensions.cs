@@ -1,6 +1,5 @@
 using Microsoft.OpenApi.Models;
 using Microsoft.Net.Http.Headers;
-using Muonroi.AspNetCore.OpenApi;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Helpers;
@@ -8,6 +7,7 @@ using Muonroi.Mapper.Mapper;
 using Muonroi.Mediator.Mediator;
 using Muonroi.Mediator.Mediator.Interfaces;
 using System.Text.Json.Serialization;
+using Muonroi.AspNetCore.OpenApi.OpenApi;
 
 namespace Muonroi.AspNetCore.Extensions;
 

@@ -181,7 +181,7 @@ public class RedisExtensionsTests
     {
         InMemoryDistributedCache cache = new();
 
-        string? result = await cache.GetOrSetAsync<string>("null-key", () => Task.FromResult<string?>(null));
+        string? result = await cache.GetOrSetAsync("null-key", () => Task.FromResult<string?>(null));
         string? cached = await cache.GetCacheAsync<string>("null-key");
 
         result.Should().BeNull();

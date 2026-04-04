@@ -391,7 +391,7 @@ internal static class SiteIds
         INamespaceSymbol ns,
         INamedTypeSymbol attrType,
         ImmutableArray<(INamedTypeSymbol Symbol, string SiteId, string? Reason)>.Builder results,
-        System.Threading.CancellationToken ct)
+        CancellationToken ct)
     {
         foreach (var member in ns.GetMembers())
         {

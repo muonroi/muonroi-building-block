@@ -163,7 +163,7 @@ public static class SiteProfileWebExtensions
     /// Activity.Current site.id tag, IMLog SiteId scope, and site_profile_requests_total counter.
     ///
     /// Place after <see cref="UseSiteProfileStateMiddleware"/> in the pipeline.
-    /// Requires <see cref="Muonroi.Tenancy.SiteProfile.ISiteProfileResolver"/> to be registered (via AddMultiSiteProfiles).
+    /// Requires <see cref="ISiteProfileResolver"/> to be registered (via AddMultiSiteProfiles).
     /// When resolver is absent, the middleware is a no-op passthrough.
     /// </summary>
     public static IApplicationBuilder UseSiteProfileTelemetry(this IApplicationBuilder app)

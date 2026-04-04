@@ -47,7 +47,7 @@ public sealed partial class SiteSqlBuilder
 
         var filtered = propertyNames.Where(p => _columnMap.HasColumn(p)).ToArray();
         if (filtered.Length == 0)
-            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(propertyNames), "All property names were filtered out by HasColumn. At least one column must be selectable.");
+            throw new MArgumentException(nameof(propertyNames), "All property names were filtered out by HasColumn. At least one column must be selectable.");
 
         return string.Join(", ", filtered.Select(p =>
         {
@@ -70,7 +70,7 @@ public sealed partial class SiteSqlBuilder
 
         var filtered = propertyNames.Where(p => _columnMap.HasColumn(p)).ToArray();
         if (filtered.Length == 0)
-            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(propertyNames), "All property names were filtered out by HasColumn. At least one column must be selectable.");
+            throw new MArgumentException(nameof(propertyNames), "All property names were filtered out by HasColumn. At least one column must be selectable.");
 
         var cols = string.Join(", ", filtered.Select(p =>
         {
@@ -114,7 +114,7 @@ public sealed partial class SiteSqlBuilder
 
         var all = baseCols.Concat(extraCols).ToArray();
         if (all.Length == 0)
-            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(propertyNames), "No columns available: all base properties filtered and no extra columns defined.");
+            throw new MArgumentException(nameof(propertyNames), "No columns available: all base properties filtered and no extra columns defined.");
 
         return string.Join(", ", all);
     }
@@ -149,7 +149,7 @@ public sealed partial class SiteSqlBuilder
 
         var all = baseCols.Concat(extraCols).ToArray();
         if (all.Length == 0)
-            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(propertyNames), "No columns available: all base properties filtered and no extra columns defined.");
+            throw new MArgumentException(nameof(propertyNames), "No columns available: all base properties filtered and no extra columns defined.");
 
         return $"SELECT {string.Join(", ", all)} FROM {tableName}";
     }

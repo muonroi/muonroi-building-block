@@ -619,7 +619,7 @@ internal static class RuleGenPromptService
         public string Hint { get; } = hint;
     }
 
-    private sealed class ProcessingDialogScope(RuleGenPromptService.ProcessingDialogForm form) : IDisposable
+    private sealed class ProcessingDialogScope(ProcessingDialogForm form) : IDisposable
     {
         private readonly ProcessingDialogForm _form = form;
 

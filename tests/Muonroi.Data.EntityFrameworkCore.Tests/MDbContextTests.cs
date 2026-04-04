@@ -64,7 +64,7 @@ public class MDbContextTests
     {
     }
 
-    private sealed class TestDomainEvent : Muonroi.Core.Abstractions.SeedWorks.IMDomainEvent, INotification
+    private sealed class TestDomainEvent : Core.Abstractions.SeedWorks.IMDomainEvent, INotification
     {
     }
 

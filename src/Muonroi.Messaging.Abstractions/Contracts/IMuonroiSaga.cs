@@ -5,7 +5,7 @@ namespace Muonroi.Messaging.Abstractions.Contracts;
 /// <summary>
 /// Represents the IMuonroi Saga.
 /// </summary>
-public interface IMuonroiSaga : global::MassTransit.ISaga, ITenantScoped
+public interface IMuonroiSaga : MassTransit.ISaga, ITenantScoped
 {
     /// <summary>
     /// Gets or sets the Tenant Id.

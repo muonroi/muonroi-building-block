@@ -54,7 +54,7 @@ public class DefaultAuthContextFactoryTests
     [Fact]
     public void Create_WithAmqpContext_ReturnsAuthenticated()
     {
-        var amqpContext = Substitute.For<Muonroi.Core.Abstractions.Interfaces.IAmqpContext>();
+        var amqpContext = Substitute.For<Core.Abstractions.Interfaces.IAmqpContext>();
         amqpContext.GetHeaderByKey(ClaimConstants.AccessToken).Returns("some-token");
         var factory = new DefaultAuthContextFactory(_httpContextAccessor, _resourceSetting, _configuration, _dbContext, amqpContext);
         _httpContextAccessor.HttpContext.Returns((HttpContext)null!);

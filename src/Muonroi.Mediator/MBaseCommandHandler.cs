@@ -121,7 +121,7 @@ public abstract class MBaseCommandHandler(
     /// Executes the Publish Async{TNotification} operation.
     /// </summary>
     protected async Task PublishAsync<TNotification>(TNotification notification, CancellationToken cancellationToken)
-        where TNotification : Mediator.Interfaces.INotification
+        where TNotification : INotification
     {
         await Mediator.Publish(notification, cancellationToken);
     }

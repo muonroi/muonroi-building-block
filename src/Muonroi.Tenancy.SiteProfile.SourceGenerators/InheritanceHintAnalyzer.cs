@@ -160,7 +160,7 @@ public sealed class InheritanceHintAnalyzer : DiagnosticAnalyzer
 
                     // Convert to array for count check (ConcurrentBag may have duplicates from
                     // multiple syntax trees — deduplicate by symbol identity)
-                    var uniqueCandidates = new System.Collections.Generic.HashSet<INamedTypeSymbol>(
+                    var uniqueCandidates = new HashSet<INamedTypeSymbol>(
                         SymbolEqualityComparer.Default);
                     foreach (var c in candidates)
                         uniqueCandidates.Add(c);

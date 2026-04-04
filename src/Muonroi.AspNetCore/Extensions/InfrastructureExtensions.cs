@@ -287,7 +287,7 @@ public static class InfrastructureExtensions
             return new HmacTokenSigner(configs.SymmetricSecretKey);
         });
         services.TryAddScoped<MAuthenticateTokenHelper<TPermission>>();
-        services.TryAddScoped<IRefreshTokenValidator, Muonroi.Data.EntityFrameworkCore.Auth.DefaultRefreshTokenValidator<TDbContext, TPermission>>();
+        services.TryAddScoped<IRefreshTokenValidator, DefaultRefreshTokenValidator<TDbContext, TPermission>>();
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

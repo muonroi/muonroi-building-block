@@ -61,7 +61,7 @@ internal sealed class InMemoryCatalogSnapshotStore(
                 .Select(item => CatalogSnapshotStoreHelper.CloneSnapshot(item, jsonSerializeService))
                 .FirstOrDefault();
 
-            return Task.FromResult<MUiEngineCatalogSnapshot?>(snapshot);
+            return Task.FromResult(snapshot);
         }
     }
 

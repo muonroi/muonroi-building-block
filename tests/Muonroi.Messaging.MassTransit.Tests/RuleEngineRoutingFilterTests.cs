@@ -264,7 +264,7 @@ public class RuleEngineRoutingFilterTests
     /// <param name="code">The router code.</param>
     /// <param name="order">The router order.</param>
     /// <param name="decisionFactory">The decision factory delegate.</param>
-    private sealed class DelegateRouter(string code, int order, Func<RuleEngineRoutingFilterTests.TestMessage, IRoutingDecision> decisionFactory) : IMessageRouter<TestMessage>
+    private sealed class DelegateRouter(string code, int order, Func<TestMessage, IRoutingDecision> decisionFactory) : IMessageRouter<TestMessage>
     {
         private readonly Func<TestMessage, IRoutingDecision> _decisionFactory = decisionFactory ?? throw new ArgumentNullException(nameof(decisionFactory));
 

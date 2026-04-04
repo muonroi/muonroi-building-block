@@ -144,12 +144,14 @@ public static class SiteGrpcExtensions
     /// </code>
     /// </summary>
     /// <param name="app">The built web application.</param>
-    /// <returns>The same <see cref="WebApplication"/> for chaining.</returns>
     public static Microsoft.AspNetCore.Builder.WebApplication InitializeSiteGrpcClients(
         this Microsoft.AspNetCore.Builder.WebApplication app)
     {
         var accessor = app.Services.GetService<GrpcClientFactoryAccessor>();
-        if (accessor is null) return app; // AddSiteGrpcClientFactory() not called — no-op
+        if (accessor is null)
+        {
+            return app; // AddSiteGrpcClientFactory() not called — no-op
+        }
 
         var factory = app.Services.GetService<GrpcClientFactory>();
         var registry = app.Services.GetService<SiteGrpcClientRegistry>();
@@ -256,7 +258,7 @@ public static class SiteGrpcExtensions
         MGuard.NotEmpty(siteId);
         MGuard.NotEmpty(serviceName);
 
-        services.AddKeyedScoped<TFacade>($"facade:{serviceName}:{siteId}", (sp, _) =>
+        services.AddKeyedScoped($"facade:{serviceName}:{siteId}", (sp, _) =>
         {
             var accessor = sp.GetRequiredService<GrpcClientFactoryAccessor>();
 

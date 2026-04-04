@@ -119,7 +119,7 @@ public sealed class AssemblyIsolationHintAnalyzer : DiagnosticAnalyzer
     /// Recursively enumerates all named type symbols within a namespace symbol,
     /// including nested types.
     /// </summary>
-    private static System.Collections.Generic.IEnumerable<INamedTypeSymbol> GetAllTypes(
+    private static IEnumerable<INamedTypeSymbol> GetAllTypes(
         INamespaceSymbol namespaceSymbol)
     {
         foreach (var member in namespaceSymbol.GetMembers())
@@ -143,7 +143,7 @@ public sealed class AssemblyIsolationHintAnalyzer : DiagnosticAnalyzer
     /// <summary>
     /// Recursively enumerates nested type symbols within a named type.
     /// </summary>
-    private static System.Collections.Generic.IEnumerable<INamedTypeSymbol> GetAllNestedTypes(
+    private static IEnumerable<INamedTypeSymbol> GetAllNestedTypes(
         INamedTypeSymbol typeSymbol)
     {
         foreach (var member in typeSymbol.GetTypeMembers())

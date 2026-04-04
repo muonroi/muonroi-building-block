@@ -30,7 +30,7 @@ public class DiagnosticsE2ETests
         // 1. Core infrastructure
         _services.AddLogging(builder => builder.AddMuonroiLogging());
         _services.AddSingleton<IMJsonSerializeService, MJsonSerializeService>();
-        _services.AddSingleton<ISystemExecutionContextAccessor>(sp => {
+        _services.AddSingleton(sp => {
             var mock = new Mock<ISystemExecutionContextAccessor>();
             mock.Setup(x => x.Get()).Returns(new SystemExecutionContext(
                 tenantId: "tenant-777",
@@ -65,7 +65,7 @@ public class DiagnosticsE2ETests
         var context = new DefaultHttpContext();
         context.Request.Headers["X-Muonroi-Trace"] = "deep";
         mockHttp.Setup(x => x.HttpContext).Returns(context);
-        _services.AddSingleton<IHttpContextAccessor>(mockHttp.Object);
+        _services.AddSingleton(mockHttp.Object);
 
         // 6. Handler
         _services.AddTransient<IRequestHandler<OrderRequest, string>, OrderHandler>();

@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Muonroi.AspNetCore.Services;
 
 /// <summary>
@@ -22,6 +20,11 @@ public class AuthService<TPermission, TDbContext>(
     private readonly IMDateTimeService _dateTimeService = dateTimeService;
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
+    /// <summary>
+    /// Logs out the current user by revoking their active refresh token asynchronously.
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async Task<MResponse<object>> LogoutAsync(CancellationToken cancellationToken)
     {
         MResponse<object> result = new();
@@ -43,8 +46,11 @@ public class AuthService<TPermission, TDbContext>(
                     .SetProperty(rt => rt.IsRevoked, true)
                     .SetProperty(rt => rt.RevokedDate, _dateTimeService.UtcNow())
                     .SetProperty(rt => rt.ReasonRevoked, "Logout"), cancellationToken);
-            
-            if (rowsAffected > 0) return result;
+
+            if (rowsAffected > 0)
+            {
+                return result;
+            }
         }
         catch (Exception)
         {
@@ -75,6 +81,7 @@ public class AuthService<TPermission, TDbContext>(
         return result;
     }
 
+    /// <inheritdoc/>
     public async Task<MResponse<object>> LogoutAllAsync(CancellationToken cancellationToken)
     {
         MResponse<object> result = new();
@@ -112,6 +119,7 @@ public class AuthService<TPermission, TDbContext>(
         return result;
     }
 
+    /// <inheritdoc/>
     public async Task<MResponse<LoginResponseModel>> RegisterAsync(RegisterRequestModel request,
         CancellationToken cancellationToken)
     {
@@ -166,6 +174,7 @@ public class AuthService<TPermission, TDbContext>(
         return result;
     }
 
+    /// <inheritdoc/>
     public async Task<MResponse<LoginResponseModel>> LoginAsync(LoginRequestModel request,
         MTokenInfo tokenInfo,
         MAuthenticateTokenHelper<TPermission> tokenHelper,
@@ -182,6 +191,7 @@ public class AuthService<TPermission, TDbContext>(
         return await _authenticateRepository.Login(request, cancellationToken);
     }
 
+    /// <inheritdoc/>
     public async Task<MResponse<RefreshTokenResponseModel>> RefreshTokenAsync(RefreshTokenRequestModel request,
         MTokenInfo tokenInfo,
         MAuthenticateTokenHelper<TPermission> tokenHelper,

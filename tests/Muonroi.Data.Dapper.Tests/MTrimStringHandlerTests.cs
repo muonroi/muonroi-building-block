@@ -43,14 +43,14 @@ public class MDapperCommandBuildTests
     [Fact]
     public void Build_Should_Create_CommandDefinition()
     {
-        Muonroi.Data.Dapper.Dapper.MDapperCommand cmd = new()
+        MDapperCommand cmd = new()
         {
             CommandText = "SELECT 1",
             Parameters = new { Id = 1 },
             CommandType = System.Data.CommandType.Text
         };
 
-        global::Dapper.CommandDefinition definition = cmd.Build(CancellationToken.None);
+        CommandDefinition definition = cmd.Build(CancellationToken.None);
 
         definition.CommandText.Should().Be("SELECT 1");
         definition.CommandType.Should().Be(System.Data.CommandType.Text);
@@ -59,7 +59,7 @@ public class MDapperCommandBuildTests
     [Fact]
     public void Default_CommandFlag_Should_Be_Buffered()
     {
-        Muonroi.Data.Dapper.Dapper.MDapperCommand cmd = new();
+        MDapperCommand cmd = new();
 
         cmd.CommandFlag.Should().Be(global::Dapper.CommandFlags.Buffered);
     }
@@ -67,7 +67,7 @@ public class MDapperCommandBuildTests
     [Fact]
     public void Default_Properties_Should_Be_Empty_Or_Null()
     {
-        Muonroi.Data.Dapper.Dapper.MDapperCommand cmd = new();
+        MDapperCommand cmd = new();
 
         cmd.CommandText.Should().BeEmpty();
         cmd.Parameters.Should().BeNull();

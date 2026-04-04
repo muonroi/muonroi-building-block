@@ -1,7 +1,4 @@
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.BackgroundJobs.Abstractions;
 
 namespace Muonroi.BackgroundJobs.Hangfire;
 

@@ -25,7 +25,7 @@ public class BravoGrpcService : BravoAggregateRpc.BravoAggregateRpcBase
         BravoListRequest request, ServerCallContext context)
     {
         var reply = new BravoListReply { Total = 1 };
-        reply.Items.Add(new TestProject.Aggregate.Host.v1.Protos.SharedContainerInfo
+        reply.Items.Add(new Host.v1.Protos.SharedContainerInfo
         {
             ContainerNo = "BRAVO001",
             IsoCode = "22G1",

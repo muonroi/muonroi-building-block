@@ -4,7 +4,7 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Pipeline;
 
 /// <summary>
 /// Extends <see cref="ISiteStepHook"/> with compensation support.
-/// When a pipeline step uses <see cref="Muonroi.RuleEngine.Abstractions.ExecutionMode.CompensateOnFailure"/>,
+/// When a pipeline step uses <see cref="ExecutionMode.CompensateOnFailure"/>,
 /// hooks implementing this interface will have <see cref="CompensateAsync"/> called in LIFO order
 /// if a subsequent hook or step fails.
 /// </summary>

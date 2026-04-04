@@ -1,6 +1,5 @@
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
-using Muonroi.Tenancy.SiteProfile;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.Repositories;
 
@@ -31,7 +30,6 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Repositories;
 /// The per-site DbContext type (e.g., <c>MySiteContext</c>).
 /// Must inherit from <see cref="MDbContext"/> so it can be passed to <see cref="MRepository{T}"/>'s constructor.
 /// The <typeparamref name="TContext"/> instance is resolved from DI — registered via
-/// <see cref="SiteProfileDbContextExtensions.AddSiteDbContext{TContext}"/>.
 /// </typeparam>
 /// <typeparam name="T">
 /// The entity type managed by this repository. Must inherit from <see cref="MEntity"/>.

@@ -6,7 +6,20 @@ namespace TestProject.Aggregate.Core.Contracts;
 /// </summary>
 public interface IContainerHandler
 {
+    /// <summary>
+    /// Handles container-related operations, such as validation or status updates, based on the provided container number and ISO code.
+    /// </summary>
+    /// <param name="containerNo"></param>
+    /// <param name="isoCode"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     Task<ContainerResult> HandleAsync(string containerNo, string isoCode, CancellationToken ct = default);
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="billNo"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     Task<ContainerListResult> ListAsync(string billNo, CancellationToken ct = default);
 }
 

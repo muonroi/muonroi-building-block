@@ -48,7 +48,7 @@ public static class RuleEngineServiceCollectionExtensions
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
 
         // Type-safe context registry — replaces unsafe Type.GetType() + Deserialize(json, type) pattern
-        services.TryAddSingleton<MRuleContextJsonRegistry>(sp =>
+        services.TryAddSingleton(sp =>
         {
             IMEcosystemRegistry? ecosystemRegistry = sp.GetService<IMEcosystemRegistry>();
             return new MRuleContextJsonRegistry(ecosystemRegistry);

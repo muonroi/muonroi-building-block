@@ -113,7 +113,7 @@ public sealed class DecisionTableRuleAdapter<TContext>(
         foreach (DecisionTableColumn col in table.InputColumns)
         {
             // FactBag takes priority over context projection
-            if (facts.TryGet<object>(col.Name, out object? factVal))
+            if (facts.TryGet(col.Name, out object? factVal))
             {
                 inputs[col.Name] = factVal;
             }

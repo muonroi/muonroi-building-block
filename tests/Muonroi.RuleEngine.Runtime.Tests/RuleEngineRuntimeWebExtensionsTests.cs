@@ -33,7 +33,7 @@ public sealed class RuleEngineRuntimeWebExtensionsTests
             services.AddSingleton(state);
             services.AddSingleton(new LicenseRuntimeStatus());
             services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
-            services.AddSingleton<IOptions<MemoryCacheOptions>>(Options.Create(new MemoryCacheOptions()));
+            services.AddSingleton(Options.Create(new MemoryCacheOptions()));
 
             IConfiguration configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?>

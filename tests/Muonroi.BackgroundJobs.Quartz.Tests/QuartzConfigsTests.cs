@@ -1,9 +1,9 @@
 using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BackgroundJobs.Quartz.Tests;
 
-using QuartzConfigs = Muonroi.BackgroundJobs.Quartz.Quartz.BackgroundJobConfigs;
-using QuartzHandler = Muonroi.BackgroundJobs.Quartz.Quartz.BackgroundJobHandler;
-using QuartzContextJobListener = Muonroi.BackgroundJobs.Quartz.Quartz.QuartzContextJobListener;
+using QuartzConfigs = Quartz.BackgroundJobConfigs;
+using QuartzHandler = Quartz.BackgroundJobHandler;
+using QuartzContextJobListener = Quartz.QuartzContextJobListener;
 using Muonroi.BackgroundJobs.Abstractions;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;

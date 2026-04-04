@@ -162,7 +162,7 @@ public sealed class InMemoryDecisionTableStoreTests
             DataType = "string"
         };
 
-        List<DecisionTableRow> rows = rowIds
+        List<DecisionTableRow> rows = [.. rowIds
             .Select((rowId, index) => new DecisionTableRow
             {
                 Id = rowId,
@@ -184,8 +184,7 @@ public sealed class InMemoryDecisionTableStoreTests
                         Expression = $"Level{index + 1}"
                     }
                 ]
-            })
-            .ToList();
+            })];
 
         return new DecisionTableModel
         {

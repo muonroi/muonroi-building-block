@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Tenancy.SiteProfile;
 
 namespace Muonroi.Tenancy.SiteProfile.Web;
 
@@ -18,6 +16,11 @@ public sealed class SiteProfileStateMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = next;
 
+    /// <summary>
+    /// Checks the current site's enabled state and short-circuits with 503 if disabled.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <returns></returns>
     public async Task InvokeAsync(HttpContext context)
     {
         var resolver = context.RequestServices.GetService<ISiteProfileResolver>();

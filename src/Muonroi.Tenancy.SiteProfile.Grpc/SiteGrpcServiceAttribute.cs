@@ -3,7 +3,6 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>
 /// Marks a gRPC service implementation as site-specific.
-/// Used by <see cref="SiteGrpcEndpointExtensions.MapSiteGrpcServices"/> to auto-discover
 /// and register per-site gRPC endpoints.
 ///
 /// <para>
@@ -18,28 +17,14 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 /// </list>
 /// </para>
 ///
-/// <example>
-/// <code>
-/// // Per-site proto: TCI has its own service definition
-/// [SiteGrpcService("TCI")]
-/// public class TciFcdGrpcService : TciFullContainerDelivery.TciFullContainerDeliveryBase
-/// {
-///     // Implements TCI-specific RPCs from tci.fcd.proto
-/// }
-///
-/// // In Program.cs:
-/// app.MapSiteGrpcServices(typeof(TciFcdGrpcService).Assembly);
-/// </code>
-/// </example>
-/// </summary>
-/// <remarks>
-/// Creates a new site gRPC service marker.
-/// </remarks>
 /// <param name="siteId">Site identifier matching <see cref="ISiteProfile.SiteId"/>.</param>
+/// </summary>
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class SiteGrpcServiceAttribute(string siteId) : Attribute
 {
-    /// <summary>Site identifier (e.g., "TCI", "CTL").</summary>
+    /// <summary>
+    /// Gets the site identifier that this gRPC service is associated with.
+    /// </summary>
     public string SiteId { get; } = MGuard.NotNull(siteId);
 
     /// <summary>
