@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Messaging.MassTransit.Tests;
 
 public class RabbitMqBusConfiguratorTests
@@ -8,11 +9,10 @@ public class RabbitMqBusConfiguratorTests
         RabbitMqBusConfigurator configurator = new();
         MessageBusConfigs configs = new()
         {
-            BusType = BusType.RabbitMq,
             RabbitMq = null
         };
 
-        Assert.Throws<InvalidDataException>(() => configurator.Configure(Substitute.For<IBusRegistrationConfigurator>(), configs));
+        Assert.Throws<MConfigurationException>(() => configurator.Configure(Substitute.For<IBusRegistrationConfigurator>(), configs));
     }
 
     [Fact]

@@ -1,5 +1,7 @@
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.RuleEngine.Runtime.Rules;
 using Xunit;
 
@@ -86,7 +88,7 @@ public sealed class FileRuleSetStoreTests : IDisposable
     {
         Func<Task> act = () => _sut.SetActiveVersionAsync("wf1", 0);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -150,7 +152,7 @@ public sealed class FileRuleSetStoreTests : IDisposable
     {
         Action act = () => new FileRuleSetStore("");
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -158,9 +160,9 @@ public sealed class FileRuleSetStoreTests : IDisposable
     {
         RuleStoreConfigs configs = new() { MaxRuleSetSizeBytes = 0 };
 
-        Action act = () => new FileRuleSetStore(_rootPath, configs: configs);
+        Action act = () => new FileRuleSetStore(_rootPath, configs: Options.Create(configs));
 
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -168,9 +170,9 @@ public sealed class FileRuleSetStoreTests : IDisposable
     {
         RuleStoreConfigs configs = new() { RequireSignature = true };
 
-        Action act = () => new FileRuleSetStore(_rootPath, configs: configs);
+        Action act = () => new FileRuleSetStore(_rootPath, configs: Options.Create(configs));
 
-        act.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<MConfigurationException>();
     }
 
     [Fact]
@@ -190,12 +192,12 @@ public sealed class FileRuleSetStoreTests : IDisposable
     public async Task SaveAsync_ExceedsMaxSize_Throws()
     {
         RuleStoreConfigs configs = new() { MaxRuleSetSizeBytes = 10 };
-        FileRuleSetStore store = new(_rootPath, configs: configs);
+        FileRuleSetStore store = new(_rootPath, configs: Options.Create(configs));
         string largeJson = new('x', 100);
 
         Func<Task> act = () => store.SaveAsync("wf1", largeJson);
 
-        await act.Should().ThrowAsync<InvalidDataException>();
+        await act.Should().ThrowAsync<MConfigurationException>();
     }
 
     [Fact]
@@ -203,7 +205,7 @@ public sealed class FileRuleSetStoreTests : IDisposable
     {
         Func<Task> act = () => _sut.SaveAsync("wf1", null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -211,6 +213,6 @@ public sealed class FileRuleSetStoreTests : IDisposable
     {
         Func<Task> act = () => _sut.SaveAsync("../../../etc", """{"p":"v"}""");
 
-        await act.Should().ThrowAsync<InvalidDataException>();
+        await act.Should().ThrowAsync<MConfigurationException>();
     }
 }

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MConfigurationExtensionTests
@@ -37,7 +38,7 @@ public class MConfigurationExtensionTests
     public void GetOptions_NullOrEmpty_Key_Throws(string? key)
     {
         IConfiguration cfg = new ConfigurationBuilder().AddInMemoryCollection([]).Build();
-        Assert.Throws<ArgumentNullException>(() => cfg.GetOptions<MyOptions>(key!));
+        Assert.Throws<MArgumentException>(() => cfg.GetOptions<MyOptions>(key!));
     }
 
     [Fact]
@@ -73,7 +74,7 @@ public class MConfigurationExtensionTests
     public void GetCryptConfigValue_Null_Or_Empty_Key_Throws(string? key)
     {
         IConfiguration cfg = new ConfigurationBuilder().AddInMemoryCollection([]).Build();
-        Assert.Throws<ArgumentException>(() => cfg.GetCryptConfigValue(key!));
+        Assert.Throws<MArgumentException>(() => cfg.GetCryptConfigValue(key!));
     }
 
     [Fact]

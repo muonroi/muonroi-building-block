@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class RuleEngineOrchestrationTests
@@ -73,7 +74,7 @@ public class RuleEngineOrchestrationTests
             .AddRule(new ThrowingRule())
             .AddRule(goodRule);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => engine.ExecuteAsync(context));
+        await Assert.ThrowsAsync<MInternalException>(() => engine.ExecuteAsync(context));
         Assert.False(goodRule.Executed);
     }
 

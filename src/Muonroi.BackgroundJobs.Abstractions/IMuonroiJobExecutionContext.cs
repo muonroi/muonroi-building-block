@@ -26,37 +26,30 @@ public interface IMuonroiJobExecutionContext : ISystemExecutionContext
 /// <summary>
 /// Default implementation of <see cref="IMuonroiJobExecutionContext"/>.
 /// </summary>
-public sealed class MuonroiJobExecutionContext : SystemExecutionContext, IMuonroiJobExecutionContext
+/// <remarks>
+/// Initializes a new instance of the <see cref="MuonroiJobExecutionContext"/> class.
+/// </remarks>
+public sealed class MuonroiJobExecutionContext(
+    string? tenantId,
+    string? userId,
+    string? username,
+    string correlationId,
+    string? accessToken,
+    string? apiKey,
+    bool isAuthenticated,
+    IReadOnlyList<string>? permissions,
+    string sourceType,
+    string jobId,
+    string jobType,
+    DateTimeOffset scheduledAt) : SystemExecutionContext(tenantId, userId, username, correlationId, accessToken, apiKey, isAuthenticated, permissions, sourceType), IMuonroiJobExecutionContext
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MuonroiJobExecutionContext"/> class.
-    /// </summary>
-    public MuonroiJobExecutionContext(
-        string? tenantId,
-        string? userId,
-        string? username,
-        string correlationId,
-        string? accessToken,
-        string? apiKey,
-        bool isAuthenticated,
-        IReadOnlyList<string>? permissions,
-        string sourceType,
-        string jobId,
-        string jobType,
-        DateTimeOffset scheduledAt)
-        : base(tenantId, userId, username, correlationId, accessToken, apiKey, isAuthenticated, permissions, sourceType)
-    {
-        JobId = string.IsNullOrWhiteSpace(jobId) ? Guid.NewGuid().ToString("N") : jobId;
-        JobType = string.IsNullOrWhiteSpace(jobType) ? "unknown" : jobType;
-        ScheduledAt = scheduledAt;
-    }
 
     /// <inheritdoc />
-    public string JobId { get; }
+    public string JobId { get; } = string.IsNullOrWhiteSpace(jobId) ? Guid.NewGuid().ToString("N") : jobId;
 
     /// <inheritdoc />
-    public string JobType { get; }
+    public string JobType { get; } = string.IsNullOrWhiteSpace(jobType) ? "unknown" : jobType;
 
     /// <inheritdoc />
-    public DateTimeOffset ScheduledAt { get; }
+    public DateTimeOffset ScheduledAt { get; } = scheduledAt;
 }

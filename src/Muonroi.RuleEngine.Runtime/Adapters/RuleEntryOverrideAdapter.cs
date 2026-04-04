@@ -4,18 +4,24 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// Wraps a compiled rule so flow-graph order and dependency metadata can override
 /// the generated/default values without changing the inner rule implementation.
 /// </summary>
-public sealed class RuleEntryOverrideAdapter<TContext> : IRule<TContext>
+/// <remarks>
+/// Initializes a new instance of the <see cref="RuleEntryOverrideAdapter{TContext}"/> class.
+/// </remarks>
+/// <param name="inner">The inner rule to execute.</param>
+/// <param name="order">Override order for the flow graph.</param>
+/// <param name="dependsOn">Optional dependency overrides.</param>
+public sealed class RuleEntryOverrideAdapter<TContext>(IRule<TContext> inner, int order, IReadOnlyList<string>? dependsOn = null) : IRule<TContext>
 {
-    private readonly IRule<TContext> _inner;
+    private readonly IRule<TContext> _inner = inner;
 
     /// <inheritdoc />
     public string Code => _inner.Code;
 
     /// <inheritdoc />
-    public int Order { get; }
+    public int Order { get; } = order;
 
     /// <inheritdoc />
-    public IReadOnlyList<string> DependsOn { get; }
+    public IReadOnlyList<string> DependsOn { get; } = dependsOn is null ? [] : [.. dependsOn];
 
     /// <inheritdoc />
     public HookPoint HookPoint => _inner.HookPoint;
@@ -28,19 +34,6 @@ public sealed class RuleEntryOverrideAdapter<TContext> : IRule<TContext>
 
     /// <inheritdoc />
     public IEnumerable<Type> Dependencies => _inner.Dependencies;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RuleEntryOverrideAdapter{TContext}"/> class.
-    /// </summary>
-    /// <param name="inner">The inner rule to execute.</param>
-    /// <param name="order">Override order for the flow graph.</param>
-    /// <param name="dependsOn">Optional dependency overrides.</param>
-    public RuleEntryOverrideAdapter(IRule<TContext> inner, int order, IReadOnlyList<string>? dependsOn = null)
-    {
-        _inner = inner;
-        Order = order;
-        DependsOn = dependsOn is null ? [] : [.. dependsOn];
-    }
 
     /// <inheritdoc />
     public Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)

@@ -10,11 +10,9 @@ namespace TestProject.Service.Sites.Alpha;
 /// Registered as a keyed IRequestHandler under key "ALPHA" to enable
 /// MSiteCommandHandler keyed dispatch via AddSiteCommandHandler.
 /// </summary>
-public sealed class AlphaCreateOrderHandler : MSiteCommandHandler<CreateOrderCommand, CreateOrderResponse>
+/// <inheritdoc />
+public sealed class AlphaCreateOrderHandler(ISiteProfileResolver siteResolver, ISiteConfiguration siteConfig) : MSiteCommandHandler<CreateOrderCommand, CreateOrderResponse>(siteResolver, siteConfig)
 {
-    /// <inheritdoc />
-    public AlphaCreateOrderHandler(ISiteProfileResolver siteResolver, ISiteConfiguration siteConfig)
-        : base(siteResolver, siteConfig) { }
 
     /// <inheritdoc />
     protected override Task<CreateOrderResponse> ExecuteAsync(

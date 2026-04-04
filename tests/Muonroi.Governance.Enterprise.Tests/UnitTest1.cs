@@ -11,6 +11,7 @@ using Muonroi.Governance.Enterprise.Policy;
 using Muonroi.Governance.Enterprise.ServerValidation;
 using Muonroi.Governance.License;
 using Muonroi.Governance.Operations;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Governance.Enterprise.Tests;
 
@@ -86,7 +87,7 @@ public class EnterpriseGovernanceServiceExtensionsTests
         IServiceCollection? services = null;
         IConfiguration configuration = CreateConfiguration();
 
-        Assert.Throws<ArgumentNullException>(() => services!.AddMEnterpriseGovernance(configuration));
+        Assert.Throws<MArgumentException>(() => services!.AddMEnterpriseGovernance(configuration));
     }
 
     [Fact]
@@ -95,7 +96,7 @@ public class EnterpriseGovernanceServiceExtensionsTests
         ServiceCollection services = new();
         IConfiguration? configuration = null;
 
-        Assert.Throws<ArgumentNullException>(() => services.AddMEnterpriseGovernance(configuration!));
+        Assert.Throws<MArgumentException>(() => services.AddMEnterpriseGovernance(configuration!));
     }
 
     private static IConfiguration CreateConfiguration(Dictionary<string, string?>? overrides = null)

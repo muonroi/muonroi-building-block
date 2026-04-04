@@ -11,25 +11,18 @@ namespace Muonroi.Integration.Persistence;
 /// EF-backed credential store using ASP.NET Data Protection for encryption.
 /// Per-tenant key derivation via CreateProtector($"connector-creds:{tenantId}").
 /// </summary>
-public sealed class EfConnectorCredentialStore : IConnectorCredentialStore
+/// <remarks>Creates a new EF-backed credential store.</remarks>
+/// <param name="db">Connector database context.</param>
+/// <param name="protectionProvider">Data protection provider.</param>
+/// <param name="log">Optional logger.</param>
+public sealed class EfConnectorCredentialStore(
+    ConnectorDbContext db,
+    IDataProtectionProvider protectionProvider,
+    IMLog<EfConnectorCredentialStore>? log = null) : IConnectorCredentialStore
 {
-    private readonly ConnectorDbContext _db;
-    private readonly IDataProtectionProvider _protectionProvider;
-    private readonly IMLog<EfConnectorCredentialStore>? _log;
-
-    /// <summary>Creates a new EF-backed credential store.</summary>
-    /// <param name="db">Connector database context.</param>
-    /// <param name="protectionProvider">Data protection provider.</param>
-    /// <param name="log">Optional logger.</param>
-    public EfConnectorCredentialStore(
-        ConnectorDbContext db,
-        IDataProtectionProvider protectionProvider,
-        IMLog<EfConnectorCredentialStore>? log = null)
-    {
-        _db = db;
-        _protectionProvider = protectionProvider;
-        _log = log;
-    }
+    private readonly ConnectorDbContext _db = db;
+    private readonly IDataProtectionProvider _protectionProvider = protectionProvider;
+    private readonly IMLog<EfConnectorCredentialStore>? _log = log;
 
     /// <inheritdoc />
     public async Task<IReadOnlyDictionary<string, string>> GetAsync(string credentialId, string? tenantId, CancellationToken ct)

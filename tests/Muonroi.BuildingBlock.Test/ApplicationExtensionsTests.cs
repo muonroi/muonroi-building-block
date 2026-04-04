@@ -1,4 +1,5 @@
 using Polly.Retry;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -31,7 +32,7 @@ public class ApplicationExtensionsTests
     public void AddApplication_With_Null_Service_Throws()
     {
         IServiceCollection? services = null;
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             services!.AddApplication(typeof(ApplicationExtensionsTests).Assembly));
     }
 
@@ -47,7 +48,7 @@ public class ApplicationExtensionsTests
     public void SwaggerConfig_Null_Service_Throws()
     {
         IServiceCollection? services = null;
-        Assert.Throws<ArgumentNullException>(() => services!.SwaggerConfig("test"));
+        Assert.Throws<MArgumentException>(() => services!.SwaggerConfig("test"));
     }
 
     [Fact]
@@ -65,7 +66,7 @@ public class ApplicationExtensionsTests
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         WebApplication app = builder.Build();
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<MInternalException>(() =>
             app.AddLocalization(typeof(ApplicationExtensionsTests).Assembly));
     }
 

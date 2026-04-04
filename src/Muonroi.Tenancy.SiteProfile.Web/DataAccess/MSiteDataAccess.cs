@@ -9,22 +9,15 @@ namespace Muonroi.Tenancy.SiteProfile.Web.DataAccess;
 /// Domain events dispatch automatically via MDbContext.SaveChangesAsync() — no explicit event publishing needed (D-05).
 /// </summary>
 /// <typeparam name="TContext">The per-site DbContext type. Must inherit from MDbContext.</typeparam>
-internal sealed class MSiteDataAccess<TContext> : IMSiteDataAccess<TContext>
+internal sealed class MSiteDataAccess<TContext>(
+    TContext context,
+    ISiteQueryExecutor queryExecutor,
+    SiteSqlBuilder sqlBuilder) : IMSiteDataAccess<TContext>
     where TContext : MDbContext
 {
-    private readonly TContext _context;
-    private readonly ISiteQueryExecutor _queryExecutor;
-    private readonly SiteSqlBuilder _sqlBuilder;
-
-    public MSiteDataAccess(
-        TContext context,
-        ISiteQueryExecutor queryExecutor,
-        SiteSqlBuilder sqlBuilder)
-    {
-        _context = MGuard.NotNull(context);
-        _queryExecutor = MGuard.NotNull(queryExecutor);
-        _sqlBuilder = MGuard.NotNull(sqlBuilder);
-    }
+    private readonly TContext _context = MGuard.NotNull(context);
+    private readonly ISiteQueryExecutor _queryExecutor = MGuard.NotNull(queryExecutor);
+    private readonly SiteSqlBuilder _sqlBuilder = MGuard.NotNull(sqlBuilder);
 
     // --- Escape hatches (D-04) ---
     public TContext Context => _context;

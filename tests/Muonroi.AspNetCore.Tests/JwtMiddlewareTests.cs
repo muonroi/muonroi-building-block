@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.AspNetCore.Tests;
 
 public class JwtMiddlewareTests
@@ -174,7 +175,7 @@ public class JwtMiddlewareTests
             new SystemExecutionContextAccessor(),
             new PassthroughTenantContextPolicy());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => middleware.Invoke(context, Provider));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => middleware.Invoke(context, new ServiceCollection().BuildServiceProvider()));
     }
 
     private static bool InvokeIsAllowAnonymous(HttpContext context)

@@ -1,0 +1,9 @@
+﻿global using FluentAssertions;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Caching.Memory;
+global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.RuleEngine.Abstractions.Rules;
+global using Muonroi.RuleEngine.EntityFrameworkCore.Rules;
+global using Muonroi.RuleEngine.Runtime.Rules;
+global using NSubstitute;
+global using Xunit;

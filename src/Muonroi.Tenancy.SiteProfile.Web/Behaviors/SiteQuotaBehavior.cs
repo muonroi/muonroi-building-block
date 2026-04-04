@@ -75,16 +75,10 @@ public sealed class SiteQuotaBehavior : ISiteProfileBehavior
 /// <summary>
 /// Default ISiteQuotaEnforcer implementation — delegates to ITenantQuotaTracker.
 /// </summary>
-internal sealed class SiteQuotaEnforcer : ISiteQuotaEnforcer
+internal sealed class SiteQuotaEnforcer(string siteId, ITenantQuotaTracker tracker) : ISiteQuotaEnforcer
 {
-    private readonly string _siteId;
-    private readonly ITenantQuotaTracker _tracker;
-
-    public SiteQuotaEnforcer(string siteId, ITenantQuotaTracker tracker)
-    {
-        _siteId = siteId;
-        _tracker = tracker;
-    }
+    private readonly string _siteId = siteId;
+    private readonly ITenantQuotaTracker _tracker = tracker;
 
     public async Task EnforceAsync(QuotaType type, int amount = 1, CancellationToken ct = default)
     {

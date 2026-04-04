@@ -1,7 +1,3 @@
-using System.Globalization;
-using System.Reflection;
-using Muonroi.RuleEngine.Abstractions.Adapters;
-
 namespace Muonroi.RuleEngine.Runtime.Adapters;
 
 /// <summary>
@@ -10,7 +6,7 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// Requires <typeparamref name="TContext"/> to have a parameterless constructor.
 /// Matches fact keys to writable properties (case-insensitive, also tries camelCase).
 /// </summary>
-internal sealed class ReflectionContextFactory<TContext>
+public sealed class ReflectionContextFactory<TContext>
     : IContextFactory<TContext>
     where TContext : new()
 {

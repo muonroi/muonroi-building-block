@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MCryptographyExtensionTests
@@ -21,7 +22,7 @@ public class MCryptographyExtensionTests
     public void GenerateHmacSha512_NullInput_Throws()
     {
         string key = "secret";
-        Assert.Throws<ArgumentNullException>(() => MCryptographyExtension.GenerateHmacSha512(key, null!));
+        Assert.Throws<MArgumentException>(() => MCryptographyExtension.GenerateHmacSha512(key, null!));
     }
 
     [Fact]
@@ -49,7 +50,7 @@ public class MCryptographyExtensionTests
     [Fact]
     public void MD5Hash_NullInput_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => MCryptographyExtension.Md5Hash(null!));
+        Assert.Throws<MArgumentException>(() => MCryptographyExtension.Md5Hash(null!));
     }
 
     [Fact]
@@ -75,7 +76,7 @@ public class MCryptographyExtensionTests
     [Fact]
     public void EncryptMd5_NullInput_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => MCryptographyExtension.EncryptMd5(null!));
+        Assert.Throws<MArgumentException>(() => MCryptographyExtension.EncryptMd5(null!));
     }
 
     [Fact]
@@ -100,7 +101,7 @@ public class MCryptographyExtensionTests
     [Fact]
     public void Sha256_NullInput_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => MCryptographyExtension.Sha256(null!));
+        Assert.Throws<MArgumentException>(() => MCryptographyExtension.Sha256(null!));
     }
 
     [Fact]
@@ -150,7 +151,7 @@ public class MCryptographyExtensionTests
     [Fact]
     public void GenerateSha256String_Null_Input_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => MCryptographyExtension.GenerateSha256String(null!));
+        Assert.Throws<MArgumentException>(() => MCryptographyExtension.GenerateSha256String(null!));
     }
 
     [Fact]

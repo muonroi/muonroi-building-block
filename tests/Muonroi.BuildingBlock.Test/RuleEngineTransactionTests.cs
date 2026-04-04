@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class RuleEngineTransactionTests
@@ -78,7 +79,7 @@ public class RuleEngineTransactionTests
             .AddRule(new InsertUserRule())
             .AddRule(new FailingRule());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => engine.ExecuteAsync(db));
+        await Assert.ThrowsAsync<MInternalException>(() => engine.ExecuteAsync(db));
 
         int count = await db.Users.CountAsync();
         Assert.Equal(0, count);

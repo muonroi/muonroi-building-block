@@ -1,5 +1,6 @@
 using Muonroi.RuleGen.Models;
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleGen.Services;
 
@@ -43,12 +44,12 @@ internal static class RuntimeRuleJsonService
         }
         else
         {
-            throw new InvalidDataException("Runtime rules JSON must be an object or array.");
+            throw new MConfigurationException("Runtime rules JSON must be an object or array.");
         }
 
         if (rules.Count == 0)
         {
-            throw new InvalidDataException("Runtime rules JSON does not contain any rules.");
+            throw new MConfigurationException("Runtime rules JSON does not contain any rules.");
         }
 
         return new RuntimeRuleSet(workflow, version, tenant, rules);

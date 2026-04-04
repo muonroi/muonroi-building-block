@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class OidcHandlerTests
@@ -33,7 +34,7 @@ public class OidcHandlerTests
     {
         IServiceCollection? services = null;
         IConfiguration config = CreateConfig(new Dictionary<string, string?>());
-        Assert.Throws<ArgumentNullException>(() => services!.AddOidcLogin(config));
+        Assert.Throws<MArgumentException>(() => services!.AddOidcLogin(config));
     }
 
     [Fact]
@@ -44,6 +45,6 @@ public class OidcHandlerTests
         services.AddOidcLogin(config);
         ServiceProvider sp = services.BuildServiceProvider();
         IOptionsMonitor<OpenIdConnectOptions> oidc = sp.GetRequiredService<IOptionsMonitor<OpenIdConnectOptions>>();
-        Assert.Throws<ArgumentException>(() => oidc.Get("oidc"));
+        Assert.Throws<MArgumentException>(() => oidc.Get("oidc"));
     }
 }

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MessageBusTenantIsolationTests
@@ -72,7 +73,7 @@ public class MessageBusTenantIsolationTests
             IPipe<ConsumeContext<MessageEnvelope>> next = Substitute.For<IPipe<ConsumeContext<MessageEnvelope>>>();
             next.Send(context).Returns(_ => throw new InvalidOperationException("boom"));
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => filter.Send(context, next));
+            await Assert.ThrowsAsync<MInternalException>(() => filter.Send(context, next));
             Assert.Equal("seed-tenant", TenantContext.CurrentTenantId);
         }
         finally

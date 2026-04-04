@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.RuleEngine.Abstractions.Adapters;
 using Muonroi.RuleEngine.Runtime.Adapters;
 using Muonroi.RuleEngine.Abstractions;
@@ -172,7 +173,7 @@ public sealed class RulesEngineServiceInternalTests
         Action act = () => InvokePrivateStatic(nameof(RulesEngineService), "ResolveContextType", "Missing.Context.Type");
 
         act.Should().Throw<TargetInvocationException>()
-            .WithInnerException<InvalidDataException>()
+            .WithInnerException<MConfigurationException>()
             .WithMessage("*Cannot resolve contextType*");
     }
 
@@ -240,7 +241,7 @@ public sealed class RulesEngineServiceInternalTests
         };
 
         TargetInvocationException ex = (await act.Should().ThrowAsync<TargetInvocationException>()).Which;
-        ex.InnerException.Should().BeOfType<InvalidDataException>();
+        ex.InnerException.Should().BeOfType<MConfigurationException>();
         ex.InnerException!.Message.Should().Contain("Dry-run context type mismatch");
     }
 
@@ -262,7 +263,7 @@ public sealed class RulesEngineServiceInternalTests
         };
 
         TargetInvocationException ex = (await act.Should().ThrowAsync<TargetInvocationException>()).Which;
-        ex.InnerException.Should().BeOfType<InvalidDataException>();
+        ex.InnerException.Should().BeOfType<MConfigurationException>();
         ex.InnerException!.Message.Should().Contain("Legacy dry-run context type mismatch");
     }
 
@@ -387,7 +388,7 @@ public sealed class RulesEngineServiceInternalTests
         };
 
         TargetInvocationException ex = (await act.Should().ThrowAsync<TargetInvocationException>()).Which;
-        ex.InnerException.Should().BeOfType<InvalidDataException>();
+        ex.InnerException.Should().BeOfType<MConfigurationException>();
         ex.InnerException!.Message.Should().Contain("Flow-graph context type mismatch");
     }
 

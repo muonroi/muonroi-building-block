@@ -1,4 +1,5 @@
 using Muonroi.Governance.License;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -119,7 +120,7 @@ public class PermissionServiceRbacPlusTests
         };
         PermissionService<TestPerm, TestDbContext> service = new(db, ctx, null, new DenyAdvancedAuthGuard());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetRolesAsync(CancellationToken.None));
+        await Assert.ThrowsAsync<MInternalException>(() => service.GetRolesAsync(CancellationToken.None));
     }
 
     private sealed class RecordingCacheService : IMultiLevelCacheService

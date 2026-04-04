@@ -12,15 +12,32 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// context projection + FactBag, then writes output column values back to the FactBag.
 /// </summary>
 /// <typeparam name="TContext">The rule execution context type.</typeparam>
-public sealed class DecisionTableRuleAdapter<TContext> : IRule<TContext>
+/// <remarks>
+/// Initializes a new instance of the <see cref="DecisionTableRuleAdapter{TContext}"/> class.
+/// </remarks>
+/// <param name="code">Rule code for this node.</param>
+/// <param name="tableId">Decision table identifier.</param>
+/// <param name="store">Decision table store.</param>
+/// <param name="executor">Decision table executor.</param>
+/// <param name="projector">Context projector for inputs.</param>
+/// <param name="log">Logger instance.</param>
+/// <param name="failOnNoMatch">Whether to fail when no row matches.</param>
+public sealed class DecisionTableRuleAdapter<TContext>(
+    string code,
+    string tableId,
+    IDecisionTableStore store,
+    IDecisionTableExecutor executor,
+    IContextProjector<TContext> projector,
+    IMLog<DecisionTableRuleAdapter<TContext>> log,
+    bool failOnNoMatch = true) : IRule<TContext>
 {
-    private readonly string _code;
-    private readonly string _tableId;
-    private readonly IDecisionTableStore _store;
-    private readonly IDecisionTableExecutor _executor;
-    private readonly IContextProjector<TContext> _projector;
-    private readonly IMLog<DecisionTableRuleAdapter<TContext>> _log;
-    private readonly bool _failOnNoMatch;
+    private readonly string _code = code;
+    private readonly string _tableId = tableId;
+    private readonly IDecisionTableStore _store = store;
+    private readonly IDecisionTableExecutor _executor = executor;
+    private readonly IContextProjector<TContext> _projector = projector;
+    private readonly IMLog<DecisionTableRuleAdapter<TContext>> _log = log;
+    private readonly bool _failOnNoMatch = failOnNoMatch;
 
     /// <inheritdoc />
     public string Code => _code;
@@ -42,34 +59,6 @@ public sealed class DecisionTableRuleAdapter<TContext> : IRule<TContext>
 
     /// <inheritdoc />
     public IEnumerable<Type> Dependencies => [];
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DecisionTableRuleAdapter{TContext}"/> class.
-    /// </summary>
-    /// <param name="code">Rule code for this node.</param>
-    /// <param name="tableId">Decision table identifier.</param>
-    /// <param name="store">Decision table store.</param>
-    /// <param name="executor">Decision table executor.</param>
-    /// <param name="projector">Context projector for inputs.</param>
-    /// <param name="log">Logger instance.</param>
-    /// <param name="failOnNoMatch">Whether to fail when no row matches.</param>
-    public DecisionTableRuleAdapter(
-        string code,
-        string tableId,
-        IDecisionTableStore store,
-        IDecisionTableExecutor executor,
-        IContextProjector<TContext> projector,
-        IMLog<DecisionTableRuleAdapter<TContext>> log,
-        bool failOnNoMatch = true)
-    {
-        _code         = code;
-        _tableId      = tableId;
-        _store        = store;
-        _executor     = executor;
-        _projector    = projector;
-        _log          = log;
-        _failOnNoMatch = failOnNoMatch;
-    }
 
     /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)

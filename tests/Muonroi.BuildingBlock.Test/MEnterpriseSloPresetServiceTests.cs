@@ -1,4 +1,5 @@
 using Muonroi.Governance.Operations;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -28,6 +29,6 @@ public class MEnterpriseSloPresetServiceTests
     [Fact]
     public void GetPreset_Unknown_Throws()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => _service.GetPreset("unknown-preset"));
+        Assert.Throws<MArgumentException>(() => _service.GetPreset("unknown-preset"));
     }
 }

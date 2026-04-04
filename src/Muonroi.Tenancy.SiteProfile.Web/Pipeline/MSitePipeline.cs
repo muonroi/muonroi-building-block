@@ -17,29 +17,20 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Pipeline;
 /// The service context type (e.g., the calling service class).
 /// Used to derive serviceName for hook registry lookups.
 /// </typeparam>
-public class MSitePipeline<TContext>
+/// <remarks>
+/// Initializes a new instance of <see cref="MSitePipeline{TContext}"/>.
+/// </remarks>
+public class MSitePipeline<TContext>(
+    SitePipelineHookRegistry registry,
+    ISiteProfileResolver siteResolver,
+    IServiceProvider serviceProvider,
+    IMLog<MSitePipeline<TContext>>? log = null)
 {
-    private readonly SitePipelineHookRegistry _registry;
-    private readonly ISiteProfileResolver _siteResolver;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IMLog<MSitePipeline<TContext>>? _log;
-    private readonly string _serviceName;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="MSitePipeline{TContext}"/>.
-    /// </summary>
-    public MSitePipeline(
-        SitePipelineHookRegistry registry,
-        ISiteProfileResolver siteResolver,
-        IServiceProvider serviceProvider,
-        IMLog<MSitePipeline<TContext>>? log = null)
-    {
-        _registry = MGuard.NotNull(registry);
-        _siteResolver = MGuard.NotNull(siteResolver);
-        _serviceProvider = MGuard.NotNull(serviceProvider);
-        _log = log;
-        _serviceName = typeof(TContext).Name;
-    }
+    private readonly SitePipelineHookRegistry _registry = MGuard.NotNull(registry);
+    private readonly ISiteProfileResolver _siteResolver = MGuard.NotNull(siteResolver);
+    private readonly IServiceProvider _serviceProvider = MGuard.NotNull(serviceProvider);
+    private readonly IMLog<MSitePipeline<TContext>>? _log = log;
+    private readonly string _serviceName = typeof(TContext).Name;
 
     /// <summary>
     /// Executes a named pipeline step with hook interception.

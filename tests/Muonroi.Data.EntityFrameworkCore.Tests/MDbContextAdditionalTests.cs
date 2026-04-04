@@ -1,4 +1,5 @@
 using Muonroi.Governance.Abstractions.License;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
@@ -137,7 +138,7 @@ public class MDbContextAdditionalTests
 
         Func<Task> act = () => db.CommitTransactionAsync(null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -168,7 +169,7 @@ public class MDbContextAdditionalTests
 
         Func<Task> act = () => db.CommitTransactionAsync(otherTx!);
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        await act.Should().ThrowAsync<MInternalException>();
 
         db.RollbackTransaction();
         db2.RollbackTransaction();

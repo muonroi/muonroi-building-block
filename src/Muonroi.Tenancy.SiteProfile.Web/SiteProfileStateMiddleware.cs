@@ -14,14 +14,9 @@ namespace Muonroi.Tenancy.SiteProfile.Web;
 ///
 /// Opt-in via app.UseSiteProfileStateMiddleware().
 /// </summary>
-public sealed class SiteProfileStateMiddleware
+public sealed class SiteProfileStateMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public SiteProfileStateMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
+    private readonly RequestDelegate _next = next;
 
     public async Task InvokeAsync(HttpContext context)
     {

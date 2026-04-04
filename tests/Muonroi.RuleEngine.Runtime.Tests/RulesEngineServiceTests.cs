@@ -6,6 +6,8 @@ using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Runtime.Rules;
 using NSubstitute;
 using Xunit;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.RuleEngine.Abstractions.Exceptions;
 
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
@@ -65,7 +67,7 @@ public sealed class RulesEngineServiceTests
 
         Func<Task> act = () => sut.SaveRuleSetAsync("wf1", "bad");
 
-        await act.Should().ThrowAsync<InvalidDataException>();
+        await act.Should().ThrowAsync<MConfigurationException>();
         await _store.DidNotReceive().SaveAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
@@ -244,7 +246,7 @@ public sealed class RulesEngineServiceTests
         RulesEngineService sut = CreateSut(provider);
         Func<Task> action = () => sut.ExecuteWithResultAsync("wf-missing-rule", new TestExecutionContext { Value = 1 });
 
-        await action.Should().ThrowAsync<InvalidDataException>()
+        await action.Should().ThrowAsync<MConfigurationException>()
             .WithMessage("*unknown rule code*");
     }
 
@@ -270,8 +272,7 @@ public sealed class RulesEngineServiceTests
         RulesEngineService sut = CreateSut(provider);
         Func<Task> action = () => sut.ExecuteWithResultAsync("wf-ambiguous-rule", new TestExecutionContext { Value = 1 });
 
-        await action.Should().ThrowAsync<InvalidDataException>()
-            .WithMessage("*ambiguous rule code mappings*");
+        await action.Should().ThrowAsync<RuleEngineAmbiguousCodeException>();
     }
 
     [Fact]
@@ -316,7 +317,7 @@ public sealed class RulesEngineServiceTests
         RulesEngineService sut = CreateSut(provider);
         Func<Task> action = async () => await sut.ExecuteAsync("wf-failing-rule", new TestExecutionContext { Value = 2 });
 
-        await action.Should().ThrowAsync<InvalidOperationException>()
+        await action.Should().ThrowAsync<MInternalException>()
             .WithMessage("*boom*");
     }
 
@@ -362,7 +363,7 @@ public sealed class RulesEngineServiceTests
         RulesEngineService sut = CreateSut(provider);
         Func<Task> action = () => sut.ExecuteWithResultAsync("wf-no-impl", new NoImplementationContext { Value = 7 });
 
-        await action.Should().ThrowAsync<InvalidDataException>()
+        await action.Should().ThrowAsync<MConfigurationException>()
             .WithMessage("*no rule implementations were discovered*");
     }
 

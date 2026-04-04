@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using System.Security.Cryptography;
 using FluentAssertions;
 using Muonroi.RuleEngine.Runtime.Rules;
@@ -93,7 +94,7 @@ public sealed class RsaRuleSetAuditSignerTests
 
         Action act = () => sut.Sign(null!);
 
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -109,7 +110,7 @@ public sealed class RsaRuleSetAuditSignerTests
     {
         Action act = () => RsaRuleSetAuditSigner.FromPrivateKeyPem("");
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -117,7 +118,7 @@ public sealed class RsaRuleSetAuditSignerTests
     {
         Action act = () => new RsaRuleSetAuditSigner(null!);
 
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]

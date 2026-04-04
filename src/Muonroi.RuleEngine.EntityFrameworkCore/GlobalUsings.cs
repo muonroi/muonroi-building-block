@@ -1,0 +1,10 @@
+﻿global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Caching.Memory;
+global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using Muonroi.Core.Abstractions.Guards;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.RuleEngine.Abstractions.Rules;
+global using Muonroi.RuleEngine.Runtime.Rules;
+global using System.Security.Cryptography;
+global using System.Text;

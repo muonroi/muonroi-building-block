@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class BaseApiServiceTests
@@ -43,13 +44,13 @@ public class BaseApiServiceTests
     public void CreateClient_Null_BaseUrl_Throws()
     {
         TestService svc = new(new MAuthenticateInfoContext(false));
-        Assert.Throws<ArgumentNullException>(() => svc.Build<ITestApi>(null!));
+        Assert.Throws<MArgumentException>(() => svc.Build<ITestApi>(null!));
     }
 
     [Fact]
     public void CreateClient_Null_Context_Throws()
     {
         TestService svc = new(null!);
-        Assert.Throws<ArgumentNullException>(() => svc.Build<ITestApi>("http://a"));
+        Assert.Throws<MArgumentException>(() => svc.Build<ITestApi>("http://a"));
     }
 }

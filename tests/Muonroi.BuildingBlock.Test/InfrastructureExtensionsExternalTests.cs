@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class InfrastructureExtensionsExternalTests
@@ -69,7 +70,7 @@ public class InfrastructureExtensionsExternalTests
     {
         IConfiguration config = CreateConfig();
         ServiceCollection? services = null;
-        Assert.Throws<ArgumentNullException>(() => services!.AddInfrastructure(config));
+        Assert.Throws<MArgumentException>(() => services!.AddInfrastructure(config));
     }
 
     [Fact]
@@ -102,7 +103,7 @@ public class InfrastructureExtensionsExternalTests
     public void AddPermissionFilter_NullServices_Throws()
     {
         ServiceCollection? services = null;
-        Assert.Throws<ArgumentNullException>(() => services!.AddPermissionFilter<TestPerm>());
+        Assert.Throws<MArgumentException>(() => services!.AddPermissionFilter<TestPerm>());
     }
 
     [Fact]
@@ -118,7 +119,7 @@ public class InfrastructureExtensionsExternalTests
         Assert.Equal(2, count);
 
         IServiceCollection? nullServices = null;
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             nullServices!.AddDynamicPermission<TestDbContext>());
     }
 
@@ -136,7 +137,7 @@ public class InfrastructureExtensionsExternalTests
         Assert.Contains(services, d => d.ServiceType == typeof(IConfigureOptions<SwaggerGenOptions>));
 
         IServiceCollection? nullServices = null;
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             nullServices!.AddApiDocumentation<InfrastructureExtensionsExternalTests>());
     }
 
@@ -182,7 +183,7 @@ public class InfrastructureExtensionsExternalTests
         Assert.NotNull(provider.GetService<RedisConfigs>());
         Assert.Equal(2, services.Count(d => d.ServiceType == typeof(RedisConfigs)));
 
-        Assert.Throws<ArgumentNullException>(() => InfrastructureExtensions.AddRedisConfiguration(null!, config));
+        Assert.Throws<MArgumentException>(() => InfrastructureExtensions.AddRedisConfiguration(null!, config));
     }
 
     [Fact]
@@ -195,7 +196,7 @@ public class InfrastructureExtensionsExternalTests
         Assert.Same(app, result1);
         Assert.Same(app, result2);
 
-        Assert.Throws<ArgumentNullException>(() => InfrastructureExtensions.UseDefaultMiddleware(null!));
+        Assert.Throws<MArgumentException>(() => InfrastructureExtensions.UseDefaultMiddleware(null!));
     }
 
     [Fact]
@@ -209,7 +210,7 @@ public class InfrastructureExtensionsExternalTests
         Assert.Equal(JsonNamingPolicy.CamelCase, opts.PropertyNamingPolicy);
 
         IServiceCollection? nullServices = null;
-        Assert.Throws<ArgumentNullException>(() => nullServices!.AddConfigureHttpJson());
+        Assert.Throws<MArgumentException>(() => nullServices!.AddConfigureHttpJson());
     }
 
     [Fact]

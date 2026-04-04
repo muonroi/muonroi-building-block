@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 [Collection("NonParallel")]
@@ -55,7 +56,7 @@ public class MHelpersTests
             ["EnableEncryption"] = "true"
         }).Build();
 
-        Assert.Throws<InvalidOperationException>(() => config.GetConfigHelper("MyKey"));
+        Assert.Throws<MInternalException>(() => config.GetConfigHelper("MyKey"));
     }
 
     [Fact]

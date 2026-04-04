@@ -1,10 +1,5 @@
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.RuleEngine.Runtime.Rules;
-using NSubstitute;
-using Xunit;
+using Muonroi.Core.Abstractions.Exceptions;
+
 
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
@@ -37,7 +32,7 @@ public sealed class CanaryRolloutServiceTests
             Version = 7
         });
 
-        await action.Should().ThrowAsync<InvalidOperationException>()
+        await action.Should().ThrowAsync<MInternalException>()
             .WithMessage("*TargetTenantIds or TargetPercentage*");
     }
 
@@ -137,7 +132,7 @@ public sealed class CanaryRolloutServiceTests
             TargetPercentage = 100
         });
 
-        await action.Should().ThrowAsync<InvalidOperationException>()
+        await action.Should().ThrowAsync<MInternalException>()
             .WithMessage("*TargetPercentage must be in range*");
     }
 

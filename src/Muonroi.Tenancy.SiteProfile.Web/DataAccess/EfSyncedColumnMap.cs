@@ -9,19 +9,13 @@ namespace Muonroi.Tenancy.SiteProfile.Web.DataAccess;
 /// AND a synced entry exists, returns the synced value instead. This ensures manual overrides
 /// always take precedence (D-13/DATA-05).
 /// </summary>
-internal sealed class EfSyncedColumnMap : ISiteColumnMap
+internal sealed class EfSyncedColumnMap(
+    ISiteColumnMap inner,
+    IReadOnlyDictionary<string, SyncedColumnInfo> syncedEntries) : ISiteColumnMap
 {
-    private readonly ISiteColumnMap _inner;
-    private readonly IReadOnlyDictionary<string, SyncedColumnInfo> _syncedEntries;
+    private readonly ISiteColumnMap _inner = MGuard.NotNull(inner);
+    private readonly IReadOnlyDictionary<string, SyncedColumnInfo> _syncedEntries = MGuard.NotNull(syncedEntries);
     private readonly DefaultSiteColumnMap _conventionFallback = new();
-
-    public EfSyncedColumnMap(
-        ISiteColumnMap inner,
-        IReadOnlyDictionary<string, SyncedColumnInfo> syncedEntries)
-    {
-        _inner = MGuard.NotNull(inner);
-        _syncedEntries = MGuard.NotNull(syncedEntries);
-    }
 
     public string Column(string propertyName)
     {

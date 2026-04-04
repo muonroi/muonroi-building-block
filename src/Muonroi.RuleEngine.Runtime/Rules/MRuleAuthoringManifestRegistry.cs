@@ -8,22 +8,16 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 /// <summary>
 /// Discovers rule authoring manifests from loaded assemblies and falls back to reflection when no generated provider exists.
 /// </summary>
-public sealed class MRuleAuthoringManifestRegistry
+/// <remarks>
+/// Initializes a new instance of the <see cref="MRuleAuthoringManifestRegistry"/> class.
+/// </remarks>
+/// <param name="serviceProvider">The optional service provider used to create manifest providers and rules.</param>
+/// <param name="assemblies">The optional assembly set to inspect instead of the current app domain.</param>
+public sealed class MRuleAuthoringManifestRegistry(IServiceProvider? serviceProvider = null, IEnumerable<Assembly>? assemblies = null)
 {
-    private readonly IServiceProvider? _serviceProvider;
-    private readonly IReadOnlyList<Assembly>? _assemblies;
+    private readonly IServiceProvider? _serviceProvider = serviceProvider;
+    private readonly IReadOnlyList<Assembly>? _assemblies = assemblies?.ToArray();
     private readonly ConcurrentDictionary<string, MRuleAuthoringManifest> _cache = new(StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MRuleAuthoringManifestRegistry"/> class.
-    /// </summary>
-    /// <param name="serviceProvider">The optional service provider used to create manifest providers and rules.</param>
-    /// <param name="assemblies">The optional assembly set to inspect instead of the current app domain.</param>
-    public MRuleAuthoringManifestRegistry(IServiceProvider? serviceProvider = null, IEnumerable<Assembly>? assemblies = null)
-    {
-        _serviceProvider = serviceProvider;
-        _assemblies = assemblies?.ToArray();
-    }
 
     /// <summary>
     /// Gets the manifests discovered from the configured assembly set.

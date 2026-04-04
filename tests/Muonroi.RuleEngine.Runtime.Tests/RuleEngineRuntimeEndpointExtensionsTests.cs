@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.RuleEngine.Runtime.Tracing;
 using Muonroi.RuleEngine.Runtime.Web;
 using Muonroi.RuleEngine.Runtime.Web.Controllers;
 using Muonroi.RuleEngine.Runtime.Web.Services;
 using NSubstitute;
+using StackExchange.Redis;
 using Xunit;
 
 namespace Muonroi.RuleEngine.Runtime.Tests;
@@ -22,6 +24,8 @@ public sealed class RuleEngineRuntimeEndpointExtensionsTests
         builder.Services.AddControllers().AddApplicationPart(typeof(MRuleFlowContractController).Assembly);
         builder.Services.AddSignalR();
         builder.Services.AddRuleEngineTracing();
+        builder.Services.AddSingleton(Substitute.For<IConnectionMultiplexer>());
+        builder.Services.AddSingleton(Substitute.For<IMJsonSerializeService>());
         builder.Services.AddSingleton(Substitute.For<IMRuleFlowContractProvider>());
 
         await using WebApplication app = builder.Build();

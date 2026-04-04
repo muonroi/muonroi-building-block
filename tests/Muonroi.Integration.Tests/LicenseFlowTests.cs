@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Moq;
 using Muonroi.Governance.Abstractions.License;
@@ -57,7 +58,7 @@ public class LicenseFlowTests
         // DistributedCache is premium
         Action act = () => guard.EnsureFeature(FreeTierFeatures.Premium.DistributedCache);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
            .WithMessage("*not available*");
     }
 
@@ -82,7 +83,7 @@ public class LicenseFlowTests
         // Act & Assert
         Action act = () => guard.EnsureValid("some-action");
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
            .WithMessage("*SEC_ERR_01*");
     }
 }

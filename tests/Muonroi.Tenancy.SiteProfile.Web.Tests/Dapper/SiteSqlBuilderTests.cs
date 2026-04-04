@@ -1,4 +1,5 @@
 using Muonroi.Tenancy.SiteProfile.Web.Dapper;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.Tests.Dapper;
 
@@ -107,7 +108,7 @@ public class SiteSqlBuilderTests
     {
         var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
 
-        Assert.Throws<ArgumentException>(() => builder.Select());
+        Assert.Throws<MArgumentException>(() => builder.Select());
     }
 
     // -----------------------------------------------------------------------
@@ -142,7 +143,7 @@ public class SiteSqlBuilderTests
     [Fact]
     public void SiteSqlBuilder_NullColumnMap_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => new SiteSqlBuilder(null!));
+        Assert.Throws<MArgumentException>(() => new SiteSqlBuilder(null!));
     }
 
     // -----------------------------------------------------------------------
@@ -269,7 +270,7 @@ public class SiteSqlBuilderTests
         // Test 7: null input throws ArgumentNullException
         var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
 
-        Assert.Throws<ArgumentNullException>(() => builder.InterpolateMarkers(null!));
+        Assert.Throws<MArgumentException>(() => builder.InterpolateMarkers(null!));
     }
 
     [Fact]
@@ -355,7 +356,7 @@ public class SiteSqlBuilderTests
         var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
 
         // Only ContainerNo provided, which is removed
-        Assert.Throws<ArgumentException>(() => builder.Select("ContainerNo"));
+        Assert.Throws<MArgumentException>(() => builder.Select("ContainerNo"));
     }
 
     [Fact]
@@ -420,7 +421,7 @@ public class SiteSqlBuilderTests
         // SiteWithRemovedColumnMap removes ContainerNo but has NO extras
         var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
 
-        Assert.Throws<ArgumentException>(() => builder.SelectWithExtras("ContainerNo"));
+        Assert.Throws<MArgumentException>(() => builder.SelectWithExtras("ContainerNo"));
     }
 
     [Fact]
@@ -428,7 +429,7 @@ public class SiteSqlBuilderTests
     {
         var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
 
-        Assert.Throws<ArgumentException>(() => builder.SelectWithExtras());
+        Assert.Throws<MArgumentException>(() => builder.SelectWithExtras());
     }
 
     [Fact]
@@ -515,7 +516,7 @@ public class SiteSqlBuilderTests
         var builder = new SiteSqlBuilder(new SiteWithRemovedColumnMap());
         const string sql = "WHERE [[ContainerNo]] = @c";
 
-        var ex = Assert.Throws<InvalidOperationException>(() => builder.InterpolateMarkers(sql));
+        var ex = Assert.Throws<MInternalException>(() => builder.InterpolateMarkers(sql));
         Assert.Contains("ContainerNo", ex.Message);
         Assert.Contains("InterpolateMarkersSafe", ex.Message);
     }
@@ -527,7 +528,7 @@ public class SiteSqlBuilderTests
         // BookingNo exists, ContainerNo removed
         const string sql = "SELECT [[BookingNo]], [[ContainerNo]] FROM orders";
 
-        Assert.Throws<InvalidOperationException>(() => builder.InterpolateMarkers(sql));
+        Assert.Throws<MInternalException>(() => builder.InterpolateMarkers(sql));
     }
 
     [Fact]
@@ -596,7 +597,7 @@ public class SiteSqlBuilderTests
     public void InterpolateMarkersSafe_NullInput_ThrowsArgumentNullException()
     {
         var builder = new SiteSqlBuilder(new DefaultSiteColumnMap());
-        Assert.Throws<ArgumentNullException>(() => builder.InterpolateMarkersSafe(null!));
+        Assert.Throws<MArgumentException>(() => builder.InterpolateMarkersSafe(null!));
     }
 
     [Fact]

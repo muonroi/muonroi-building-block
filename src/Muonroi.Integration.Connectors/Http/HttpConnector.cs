@@ -12,18 +12,13 @@ namespace Muonroi.Integration.Connectors.Http;
 /// Body can be a Scriban template (rendered before sending).
 /// Response is mapped to FactBag via JSONPath-like response mapping.
 /// </summary>
-public sealed class HttpConnector : IServiceTaskConnector
+/// <remarks>
+/// Creates an HTTP connector with the provided client factory.
+/// </remarks>
+/// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
+public sealed class HttpConnector(IHttpClientFactory httpClientFactory) : IServiceTaskConnector
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    /// <summary>
-    /// Creates an HTTP connector with the provided client factory.
-    /// </summary>
-    /// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
-    public HttpConnector(IHttpClientFactory httpClientFactory)
-    {
-        _httpClientFactory = httpClientFactory;
-    }
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
     /// <summary>
     /// Connector metadata describing capabilities and configuration.

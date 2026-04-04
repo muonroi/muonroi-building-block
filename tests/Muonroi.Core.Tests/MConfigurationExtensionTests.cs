@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Core.Tests;
 
 public class MConfigurationExtensionTests
@@ -36,7 +37,7 @@ public class MConfigurationExtensionTests
 
         Action action = () => configuration.GetCryptConfigValue(string.Empty);
 
-        action.Should().Throw<ArgumentException>();
+        action.Should().Throw<MArgumentException>();
     }
 
     [Fact]

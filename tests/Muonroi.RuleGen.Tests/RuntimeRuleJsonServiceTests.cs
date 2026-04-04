@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using System.Text.Json;
 using FluentAssertions;
 using Muonroi.RuleGen.Models;
@@ -78,7 +79,7 @@ public sealed class RuntimeRuleJsonServiceTests
         try
         {
             Action act = () => RuntimeRuleJsonService.Load(path, defaultWorkflow: null, tenantId: null);
-            act.Should().Throw<InvalidDataException>()
+            act.Should().Throw<MConfigurationException>()
                 .WithMessage("*does not contain any rules*");
         }
         finally

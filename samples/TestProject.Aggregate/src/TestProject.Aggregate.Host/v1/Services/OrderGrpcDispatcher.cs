@@ -31,13 +31,10 @@ namespace TestProject.Aggregate.Host.v1.Services;
 /// </code>
 /// </para>
 /// </summary>
-public class OrderGrpcDispatcher : AggregateRpc.AggregateRpcBase
+/// <remarks>Creates a new <see cref="OrderGrpcDispatcher"/> with the site dispatch helper.</remarks>
+public class OrderGrpcDispatcher(SiteGrpcDispatchHelper<AggregateRpc.AggregateRpcBase> helper) : AggregateRpc.AggregateRpcBase
 {
-    private readonly SiteGrpcDispatchHelper<AggregateRpc.AggregateRpcBase> _helper;
-
-    /// <summary>Creates a new <see cref="OrderGrpcDispatcher"/> with the site dispatch helper.</summary>
-    public OrderGrpcDispatcher(SiteGrpcDispatchHelper<AggregateRpc.AggregateRpcBase> helper)
-        => _helper = helper;
+    private readonly SiteGrpcDispatchHelper<AggregateRpc.AggregateRpcBase> _helper = helper;
 
     /// <inheritdoc/>
     public override Task<HandleContainerReply> HandleContainer(

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class PolicyHandlerTests
@@ -57,7 +58,7 @@ public class PolicyHandlerTests
             InnerHandler = inner
         };
         HttpMessageInvoker invoker = new(handler);
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MInternalException>(() =>
             invoker.SendAsync(new HttpRequestMessage(HttpMethod.Get, "http://a"), CancellationToken.None));
     }
 
@@ -71,7 +72,7 @@ public class PolicyHandlerTests
             InnerHandler = inner
         };
         HttpMessageInvoker inv = new(handler);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => inv.SendAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<MArgumentException>(() => inv.SendAsync(null!, CancellationToken.None));
     }
 
     [Fact]

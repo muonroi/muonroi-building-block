@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class JwtMiddlewareTests
@@ -108,7 +109,7 @@ public class JwtMiddlewareTests
             "test");
         ctx.SetEndpoint(endpoint);
         JwtMiddleware mw = new(_ => Task.CompletedTask, (_, _) => throw new InvalidOperationException("fail"));
-        await Assert.ThrowsAsync<InvalidOperationException>(() => mw.Invoke(ctx, Provider));
+        await Assert.ThrowsAsync<MInternalException>(() => mw.Invoke(ctx, Provider));
     }
 
     private static bool InvokeIsAllowAnonymous(HttpContext context)

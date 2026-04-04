@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MapperTests
@@ -41,7 +42,7 @@ public class MapperTests
         ServiceProvider sp = services.BuildServiceProvider();
         IMapper mapper = sp.GetRequiredService<IMapper>();
 
-        Assert.Throws<ArgumentNullException>(() => mapper.Map<Dest>(null!));
+        Assert.Throws<MArgumentException>(() => mapper.Map<Dest>(null!));
     }
 
     [Fact]

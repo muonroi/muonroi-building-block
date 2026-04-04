@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using System.Reflection;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -30,7 +31,7 @@ public class AddSiteInfrastructureTests
             options.SiteAssemblies = [typeof(FakeProfile).Assembly];
         });
 
-        act.Should().Throw<InvalidOperationException>().WithMessage("*SiteCodeAccessor is required*");
+        act.Should().Throw<MInternalException>().WithMessage("*SiteCodeAccessor is required*");
     }
 
     [Fact]
@@ -45,7 +46,7 @@ public class AddSiteInfrastructureTests
             options.ManifestProfiles = null;
         });
 
-        act.Should().Throw<InvalidOperationException>().WithMessage("*Either ManifestProfiles (AOT) or SiteAssemblies (reflection) is required*");
+        act.Should().Throw<MInternalException>().WithMessage("*Either ManifestProfiles (AOT) or SiteAssemblies (reflection) is required*");
     }
 
     [Fact]

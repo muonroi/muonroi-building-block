@@ -5,28 +5,19 @@ using System.Diagnostics;
 
 namespace Muonroi.Diagnostics.Context;
 
-internal sealed class MTraceSession : ITraceSession
+internal sealed class MTraceSession(string sessionId, string? tenantId, string? userId, bool lineTraceEnabled, IMJsonSerializeService json) : ITraceSession
 {
-    private readonly IMJsonSerializeService _json;
+    private readonly IMJsonSerializeService _json = json;
     private readonly Stack<MTraceNodeRecord> _nodeStack = new();
     private readonly List<MTraceNodeRecord> _rootNodes = new();
     private readonly Stopwatch _sw = Stopwatch.StartNew();
 
-    public string SessionId { get; }
-    public string? TenantId { get; }
-    public string? UserId { get; }
+    public string SessionId { get; } = sessionId;
+    public string? TenantId { get; } = tenantId;
+    public string? UserId { get; } = userId;
     public bool IsActive => true;
-    public bool IsLineTraceEnabled { get; }
+    public bool IsLineTraceEnabled { get; } = lineTraceEnabled;
     public DateTime StartedAt { get; } = DateTime.UtcNow;
-
-    public MTraceSession(string sessionId, string? tenantId, string? userId, bool lineTraceEnabled, IMJsonSerializeService json)
-    {
-        SessionId = sessionId;
-        TenantId = tenantId;
-        UserId = userId;
-        IsLineTraceEnabled = lineTraceEnabled;
-        _json = json;
-    }
 
     public IDisposable BeginNode(string name, MTraceNodeType type)
     {

@@ -1,4 +1,5 @@
 using Microsoft.CSharp.RuntimeBinder;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Mediator.Tests;
 
@@ -52,7 +53,7 @@ public class MediatorAdditionalTests
     {
         MMediator mediator = new(_ => null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => mediator.Send(new MediatorTests.PingRequest()));
+        await Assert.ThrowsAsync<MInternalException>(() => mediator.Send(new MediatorTests.PingRequest()));
     }
 
     [Fact]
@@ -60,7 +61,7 @@ public class MediatorAdditionalTests
     {
         MMediator mediator = new(_ => null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => mediator.Send(new object()));
+        await Assert.ThrowsAsync<MInternalException>(() => mediator.Send(new object()));
     }
 
     private class PingVoid : IRequest

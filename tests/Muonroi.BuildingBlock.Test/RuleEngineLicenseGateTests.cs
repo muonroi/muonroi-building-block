@@ -1,4 +1,5 @@
 using Muonroi.Governance.License;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -31,7 +32,7 @@ public class RuleEngineLicenseGateTests
         RuleEngine<object> engine = new(licenseGuard: new DenyRuleEngineGuard());
         engine.AddRule(new DummyRule());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => engine.ExecuteAsync(new object()));
+        await Assert.ThrowsAsync<MInternalException>(() => engine.ExecuteAsync(new object()));
     }
 
     private sealed class DenyRuleEngineGuard : ILicenseGuard

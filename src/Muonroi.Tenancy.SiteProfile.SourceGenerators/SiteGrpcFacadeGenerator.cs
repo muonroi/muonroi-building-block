@@ -589,68 +589,45 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
     // Model
     // -----------------------------------------------------------------------
 
-    private sealed class FacadeModel
+    private sealed class FacadeModel(
+        string interfaceName,
+        string ns,
+        string facadeClassName,
+        IReadOnlyList<SiteGrpcFacadeGenerator.RpcMethodModel> sharedMethods,
+        IReadOnlyList<SiteGrpcFacadeGenerator.RpcMethodModel> extendMethods,
+        IReadOnlyList<SiteGrpcFacadeGenerator.RpcMethodModel> ownSharedMethods,
+        IReadOnlyList<SiteGrpcFacadeGenerator.RpcMethodModel> ownExtendMethods,
+        string sharedClientFullName,
+        IReadOnlyList<string> extendClientFullNames,
+        IReadOnlyList<string> collisions)
     {
-        public string InterfaceName { get; }
-        public string Namespace { get; }
-        public string FacadeClassName { get; }
+        public string InterfaceName { get; } = interfaceName;
+        public string Namespace { get; } = ns;
+        public string FacadeClassName { get; } = facadeClassName;
         /// <summary>All shared methods — used by facade impl (must implement all).</summary>
-        public IReadOnlyList<RpcMethodModel> SharedMethods { get; }
+        public IReadOnlyList<RpcMethodModel> SharedMethods { get; } = sharedMethods;
         /// <summary>All extend methods — used by facade impl (must implement all).</summary>
-        public IReadOnlyList<RpcMethodModel> ExtendMethods { get; }
+        public IReadOnlyList<RpcMethodModel> ExtendMethods { get; } = extendMethods;
         /// <summary>Shared methods NOT inherited from base facade interfaces — emitted in interface only.</summary>
-        public IReadOnlyList<RpcMethodModel> OwnSharedMethods { get; }
+        public IReadOnlyList<RpcMethodModel> OwnSharedMethods { get; } = ownSharedMethods;
         /// <summary>Extend methods NOT inherited from base facade interfaces — emitted in interface only.</summary>
-        public IReadOnlyList<RpcMethodModel> OwnExtendMethods { get; }
-        public string SharedClientFullName { get; }
-        public IReadOnlyList<string> ExtendClientFullNames { get; }
-        public IReadOnlyList<string> Collisions { get; }
-
-        public FacadeModel(
-            string interfaceName,
-            string ns,
-            string facadeClassName,
-            IReadOnlyList<RpcMethodModel> sharedMethods,
-            IReadOnlyList<RpcMethodModel> extendMethods,
-            IReadOnlyList<RpcMethodModel> ownSharedMethods,
-            IReadOnlyList<RpcMethodModel> ownExtendMethods,
-            string sharedClientFullName,
-            IReadOnlyList<string> extendClientFullNames,
-            IReadOnlyList<string> collisions)
-        {
-            InterfaceName = interfaceName;
-            Namespace = ns;
-            FacadeClassName = facadeClassName;
-            SharedMethods = sharedMethods;
-            ExtendMethods = extendMethods;
-            OwnSharedMethods = ownSharedMethods;
-            OwnExtendMethods = ownExtendMethods;
-            SharedClientFullName = sharedClientFullName;
-            ExtendClientFullNames = extendClientFullNames;
-            Collisions = collisions;
-        }
+        public IReadOnlyList<RpcMethodModel> OwnExtendMethods { get; } = ownExtendMethods;
+        public string SharedClientFullName { get; } = sharedClientFullName;
+        public IReadOnlyList<string> ExtendClientFullNames { get; } = extendClientFullNames;
+        public IReadOnlyList<string> Collisions { get; } = collisions;
     }
 
-    private sealed class RpcMethodModel
+    private sealed class RpcMethodModel(
+        string methodName,
+        string requestType,
+        string responseType,
+        string returnTypeKind,
+        string sourceClient)
     {
-        public string MethodName { get; }
-        public string RequestType { get; }
-        public string ResponseType { get; }
-        public string ReturnTypeKind { get; }
-        public string SourceClient { get; }
-
-        public RpcMethodModel(
-            string methodName,
-            string requestType,
-            string responseType,
-            string returnTypeKind,
-            string sourceClient)
-        {
-            MethodName = methodName;
-            RequestType = requestType;
-            ResponseType = responseType;
-            ReturnTypeKind = returnTypeKind;
-            SourceClient = sourceClient;
-        }
+        public string MethodName { get; } = methodName;
+        public string RequestType { get; } = requestType;
+        public string ResponseType { get; } = responseType;
+        public string ReturnTypeKind { get; } = returnTypeKind;
+        public string SourceClient { get; } = sourceClient;
     }
 }

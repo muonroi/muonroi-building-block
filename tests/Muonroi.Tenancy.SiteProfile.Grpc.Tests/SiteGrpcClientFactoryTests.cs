@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,7 +53,7 @@ public sealed class SiteGrpcClientFactoryTests
 
         var act = () => _factory.CreateForCurrentSite<ConcreteFakeClient>("test-svc");
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*No gRPC client cached*");
     }
 
@@ -66,7 +67,7 @@ public sealed class SiteGrpcClientFactoryTests
 
         var act = () => _factory.CreateForCurrentSite<ConcreteFakeClient>("test-svc");
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*No gRPC client cached*");
     }
 
@@ -78,7 +79,7 @@ public sealed class SiteGrpcClientFactoryTests
 
         var act = () => _factory.CreateForCurrentSite<ConcreteFakeClient>("test-svc");
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*No gRPC client registered for site 'TCI'*");
     }
 
@@ -88,7 +89,7 @@ public sealed class SiteGrpcClientFactoryTests
         BuildFactory();
         var act = () => _factory.CreateForCurrentSite<ConcreteFakeClient>("");
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -125,7 +126,7 @@ public sealed class SiteGrpcClientFactoryTests
 
         var act = () => _factory.CreateFacadeForCurrentSite<IFakeFacade>("test-svc");
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*No gRPC facade registered for site 'TCI'*");
     }
 }

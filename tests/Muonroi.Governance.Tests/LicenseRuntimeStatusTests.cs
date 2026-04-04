@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Governance.Tests;
 
 public sealed class LicenseRuntimeStatusTests
@@ -73,7 +74,7 @@ public sealed class LicenseRuntimeStatusTests
             new NoopFingerprintSigner(),
             runtimeStatus);
 
-        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(
+        MInternalException ex = Assert.Throws<MInternalException>(
             () => guard.EnsureValid(FreeTierFeatures.Premium.RuleEngine));
         Assert.Contains("not included", ex.Message, StringComparison.OrdinalIgnoreCase);
     }

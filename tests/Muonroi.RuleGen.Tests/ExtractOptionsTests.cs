@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Muonroi.RuleGen.Cli;
 using Muonroi.RuleGen.Commands;
@@ -110,7 +111,7 @@ public sealed class ExtractOptionsTests
 
         Action act = () => ExtractCommand.ExtractOptions.FromContext(context);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*Missing output location*");
     }
 

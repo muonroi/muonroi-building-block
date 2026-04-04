@@ -5,6 +5,7 @@ using Muonroi.RuleEngine.Abstractions;
 using Muonroi.Tenancy.SiteProfile;
 using Muonroi.Tenancy.SiteProfile.Web.Pipeline;
 using NSubstitute;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.Tests.Pipeline;
 
@@ -310,7 +311,7 @@ public class MSitePipelineTests
             return Task.CompletedTask;
         }, executionMode: ExecutionMode.AllOrNothing);
 
-        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*hook failed*");
+        await act.Should().ThrowAsync<MInternalException>().WithMessage("*hook failed*");
         defaultCalled.Should().BeFalse("default should not run after AllOrNothing failure");
         log.Should().NotContain("after-should-not-run");
     }

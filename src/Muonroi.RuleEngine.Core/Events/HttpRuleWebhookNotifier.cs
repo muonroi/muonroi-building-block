@@ -9,30 +9,23 @@ namespace Muonroi.RuleEngine.Core.Events;
 /// Sends CloudEvents to a webhook URL via HTTP POST with exponential backoff retry
 /// on transient failures (5xx responses and network errors).
 /// </summary>
-public sealed class HttpRuleWebhookNotifier : IRuleWebhookNotifier
+/// <remarks>
+/// Initializes a new instance of <see cref="HttpRuleWebhookNotifier"/>.
+/// </remarks>
+/// <param name="httpClientFactory">Factory for creating named HTTP clients.</param>
+/// <param name="options">Webhook configuration options.</param>
+/// <param name="logger">Optional structured logger.</param>
+public sealed class HttpRuleWebhookNotifier(
+    IHttpClientFactory httpClientFactory,
+    IOptions<WebhookOptions> options,
+    IMLog<HttpRuleWebhookNotifier>? logger = null) : IRuleWebhookNotifier
 {
     private const string CloudEventsContentType = "application/cloudevents+json";
     private const string HttpClientName = "RuleWebhook";
 
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly WebhookOptions _options;
-    private readonly IMLog<HttpRuleWebhookNotifier>? _logger;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="HttpRuleWebhookNotifier"/>.
-    /// </summary>
-    /// <param name="httpClientFactory">Factory for creating named HTTP clients.</param>
-    /// <param name="options">Webhook configuration options.</param>
-    /// <param name="logger">Optional structured logger.</param>
-    public HttpRuleWebhookNotifier(
-        IHttpClientFactory httpClientFactory,
-        IOptions<WebhookOptions> options,
-        IMLog<HttpRuleWebhookNotifier>? logger = null)
-    {
-        _httpClientFactory = httpClientFactory;
-        _options = options.Value;
-        _logger = logger;
-    }
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly WebhookOptions _options = options.Value;
+    private readonly IMLog<HttpRuleWebhookNotifier>? _logger = logger;
 
     /// <inheritdoc />
     public async Task<WebhookResult> NotifyAsync(CloudEvent cloudEvent, CancellationToken ct = default)

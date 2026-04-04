@@ -1,8 +1,11 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.RuleEngine.Abstractions.Rules;
+using Muonroi.RuleEngine.EntityFrameworkCore.Rules;
 using Muonroi.RuleEngine.Runtime.Rules;
 using Xunit;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
@@ -28,7 +31,7 @@ public sealed class RuleSetApprovalServiceTests
 
         Func<Task> action = async () => await fixture.Service.SubmitForApprovalAsync("workflow-a", 1, "reviewer");
 
-        await action.Should().ThrowAsync<InvalidOperationException>()
+        await action.Should().ThrowAsync<MInternalException>()
             .WithMessage("*cannot be submitted*");
     }
 
@@ -52,7 +55,7 @@ public sealed class RuleSetApprovalServiceTests
 
         Func<Task> makerApprovesOwnRule = async () => await fixture.Service.ApproveAsync("workflow-a", 1, "maker");
 
-        await makerApprovesOwnRule.Should().ThrowAsync<InvalidOperationException>()
+        await makerApprovesOwnRule.Should().ThrowAsync<MInternalException>()
             .WithMessage("*Maker-checker violation*");
     }
 
@@ -143,7 +146,10 @@ public sealed class RuleSetApprovalServiceTests
             return new ApprovalFixture(dbContext, auditStore, notifier, service);
         }
 
-        public ValueTask DisposeAsync() => DbContext.DisposeAsync();
+        public ValueTask DisposeAsync()
+        {
+            return DbContext.DisposeAsync();
+        }
     }
 
     private sealed class CapturingAuditStore : IRuleSetAuditStore
@@ -157,7 +163,9 @@ public sealed class RuleSetApprovalServiceTests
         }
 
         public Task<RuleSetAuditPage> QueryAsync(string? workflowName = null, int page = 1, int pageSize = 50, CancellationToken cancellationToken = default)
-            => Task.FromResult(new RuleSetAuditPage());
+        {
+            return Task.FromResult(new RuleSetAuditPage());
+        }
     }
 
     private sealed class CapturingChangeNotifier : IRuleSetChangeNotifier
@@ -170,7 +178,10 @@ public sealed class RuleSetApprovalServiceTests
             return Task.CompletedTask;
         }
 
-        public IDisposable Subscribe(Func<RuleSetChangeEvent, Task> handler) => new NoopDisposable();
+        public IDisposable Subscribe(Func<RuleSetChangeEvent, Task> handler)
+        {
+            return new NoopDisposable();
+        }
     }
 
     private sealed class NoopDisposable : IDisposable
@@ -184,7 +195,10 @@ public sealed class RuleSetApprovalServiceTests
     {
         private ISystemExecutionContext _context = context;
 
-        public ISystemExecutionContext Get() => _context;
+        public ISystemExecutionContext Get()
+        {
+            return _context;
+        }
 
         public void Set(ISystemExecutionContext context)
         {

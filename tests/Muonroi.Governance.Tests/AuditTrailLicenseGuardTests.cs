@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Governance.Enterprise.License;
 using Muonroi.Tenancy.Core;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Governance.Tests;
 
@@ -23,7 +24,7 @@ public class AuditTrailLicenseGuardTests
                 new NoopFingerprintChainStore(),
                 new HmacFingerprintSigner(state.Payload, configs));
 
-            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+            MInternalException ex = Assert.Throws<MInternalException>(() =>
             {
                 LicenseActionContext context = new()
                 {
@@ -56,7 +57,7 @@ public class AuditTrailLicenseGuardTests
                 new NoopFingerprintChainStore(),
                 new HmacFingerprintSigner(state.Payload, configs));
 
-            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+            MInternalException ex = Assert.Throws<MInternalException>(() =>
             {
                 LicenseActionContext context = new()
                 {

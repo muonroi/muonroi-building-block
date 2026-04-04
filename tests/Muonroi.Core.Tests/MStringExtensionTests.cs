@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Core.Tests;
 
 public class MStringExtensionTests
@@ -29,19 +30,19 @@ public class MStringExtensionTests
     [Fact]
     public void Truncate_Null_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => MStringExtension.Truncate(null, 1));
+        Assert.Throws<MArgumentException>(() => MStringExtension.Truncate(null, 1));
     }
 
     [Fact]
     public void Left_Length_Greater_Than_String_Throws()
     {
-        Assert.Throws<ArgumentException>(() => "abc".Left(5));
+        Assert.Throws<MArgumentException>(() => "abc".Left(5));
     }
 
     [Fact]
     public void Left_Null_String_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => MStringExtension.Left(null, 1));
+        Assert.Throws<MArgumentException>(() => MStringExtension.Left(null, 1));
     }
 
     [Fact]

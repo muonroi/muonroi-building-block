@@ -19,18 +19,13 @@ public sealed class SiteQuotaEnforcementTests
     /// CheckQuotaAsync returns true when usage + amount &lt;= limit.
     /// IncrementUsageAsync adds to usage counter.
     /// </summary>
-    private sealed class FakeTenantQuotaTracker : ITenantQuotaTracker
+    private sealed class FakeTenantQuotaTracker(Dictionary<(string, QuotaType), int> limits) : ITenantQuotaTracker
     {
         // Key: (tenantId, quotaType) -> configured limit
-        private readonly Dictionary<(string, QuotaType), int> _limits;
+        private readonly Dictionary<(string, QuotaType), int> _limits = limits;
 
         // Key: (tenantId, quotaType) -> current usage
         private readonly Dictionary<(string, QuotaType), int> _usage = new();
-
-        public FakeTenantQuotaTracker(Dictionary<(string, QuotaType), int> limits)
-        {
-            _limits = limits;
-        }
 
         public Task<bool> CheckQuotaAsync(
             string tenantId,

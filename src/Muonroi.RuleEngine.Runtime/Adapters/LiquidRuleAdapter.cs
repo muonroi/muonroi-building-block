@@ -19,16 +19,35 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// Supports full control flow (if/else, for), filters, nested access, and async rendering.
 /// </remarks>
 /// <typeparam name="TContext">The rule execution context type.</typeparam>
-public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
+/// <remarks>
+/// Initializes a new instance of the <see cref="LiquidRuleAdapter{TContext}"/> class.
+/// </remarks>
+/// <param name="code">Rule code for this node.</param>
+/// <param name="template">Liquid/Scriban template.</param>
+/// <param name="outputFormat">Output format (json|text|object).</param>
+/// <param name="outputKey">FactBag key to store rendered output.</param>
+/// <param name="projector">Context projector for variables.</param>
+/// <param name="json">JSON serializer.</param>
+/// <param name="log">Logger instance.</param>
+/// <param name="functionProviders">Optional custom Scriban function providers.</param>
+public sealed class LiquidRuleAdapter<TContext>(
+    string code,
+    string template,
+    string outputFormat,
+    string outputKey,
+    IContextProjector<TContext> projector,
+    IMJsonSerializeService json,
+    IMLog<LiquidRuleAdapter<TContext>> log,
+    IEnumerable<IScribanFunctionProvider>? functionProviders = null) : IRule<TContext>
 {
-    private readonly string _code;
-    private readonly string _template;
-    private readonly string _outputFormat;  // json|text|object
-    private readonly string _outputKey;     // FactBag key for rendered output
-    private readonly IContextProjector<TContext> _projector;
-    private readonly IMJsonSerializeService _json;
-    private readonly IMLog<LiquidRuleAdapter<TContext>> _log;
-    private readonly IEnumerable<IScribanFunctionProvider>? _functionProviders;
+    private readonly string _code = code;
+    private readonly string _template = template;
+    private readonly string _outputFormat = outputFormat;  // json|text|object
+    private readonly string _outputKey = string.IsNullOrWhiteSpace(outputKey) ? "liquidOutput" : outputKey;     // FactBag key for rendered output
+    private readonly IContextProjector<TContext> _projector = projector;
+    private readonly IMJsonSerializeService _json = json;
+    private readonly IMLog<LiquidRuleAdapter<TContext>> _log = log;
+    private readonly IEnumerable<IScribanFunctionProvider>? _functionProviders = functionProviders;
     private Template? _parsedTemplate;
 
     /// <inheritdoc />
@@ -51,37 +70,6 @@ public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
 
     /// <inheritdoc />
     public IEnumerable<Type> Dependencies => [];
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="LiquidRuleAdapter{TContext}"/> class.
-    /// </summary>
-    /// <param name="code">Rule code for this node.</param>
-    /// <param name="template">Liquid/Scriban template.</param>
-    /// <param name="outputFormat">Output format (json|text|object).</param>
-    /// <param name="outputKey">FactBag key to store rendered output.</param>
-    /// <param name="projector">Context projector for variables.</param>
-    /// <param name="json">JSON serializer.</param>
-    /// <param name="log">Logger instance.</param>
-    /// <param name="functionProviders">Optional custom Scriban function providers.</param>
-    public LiquidRuleAdapter(
-        string code,
-        string template,
-        string outputFormat,
-        string outputKey,
-        IContextProjector<TContext> projector,
-        IMJsonSerializeService json,
-        IMLog<LiquidRuleAdapter<TContext>> log,
-        IEnumerable<IScribanFunctionProvider>? functionProviders = null)
-    {
-        _code         = code;
-        _template     = template;
-        _outputFormat = outputFormat;
-        _outputKey    = string.IsNullOrWhiteSpace(outputKey) ? "liquidOutput" : outputKey;
-        _projector    = projector;
-        _json         = json;
-        _log          = log;
-        _functionProviders = functionProviders;
-    }
 
     /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BackgroundJobs.Quartz.Tests;
 
 using QuartzConfigs = Muonroi.BackgroundJobs.Quartz.Quartz.BackgroundJobConfigs;
@@ -36,7 +37,7 @@ public class QuartzConfigsTests
 
         Action act = () => QuartzHandler.AddBackgroundJobs(services, config);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MConfigurationException>()
             .WithMessage("*Invalid JobType*Hangfire*Quartz*");
     }
 

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Messaging.MassTransit.Tests;
 
 /// <summary>
@@ -72,7 +73,7 @@ public class RuleEngineRoutingFilterTests
 
         Func<Task> action = () => filter.Send(fixture.Context, fixture.Next);
 
-        await action.Should().ThrowAsync<InvalidOperationException>()
+        await action.Should().ThrowAsync<MInternalException>()
             .WithMessage("legacy failed");
         await fixture.Next.DidNotReceive().Send(fixture.Context);
     }
@@ -257,28 +258,21 @@ public class RuleEngineRoutingFilterTests
     /// <summary>
     /// Router implementation backed by a delegate.
     /// </summary>
-    private sealed class DelegateRouter : IMessageRouter<TestMessage>
+    /// <remarks>
+    /// Initializes a new router instance.
+    /// </remarks>
+    /// <param name="code">The router code.</param>
+    /// <param name="order">The router order.</param>
+    /// <param name="decisionFactory">The decision factory delegate.</param>
+    private sealed class DelegateRouter(string code, int order, Func<RuleEngineRoutingFilterTests.TestMessage, IRoutingDecision> decisionFactory) : IMessageRouter<TestMessage>
     {
-        private readonly Func<TestMessage, IRoutingDecision> _decisionFactory;
-
-        /// <summary>
-        /// Initializes a new router instance.
-        /// </summary>
-        /// <param name="code">The router code.</param>
-        /// <param name="order">The router order.</param>
-        /// <param name="decisionFactory">The decision factory delegate.</param>
-        public DelegateRouter(string code, int order, Func<TestMessage, IRoutingDecision> decisionFactory)
-        {
-            Code = code;
-            Order = order;
-            _decisionFactory = decisionFactory ?? throw new ArgumentNullException(nameof(decisionFactory));
-        }
+        private readonly Func<TestMessage, IRoutingDecision> _decisionFactory = decisionFactory ?? throw new ArgumentNullException(nameof(decisionFactory));
 
         /// <inheritdoc />
-        public int Order { get; }
+        public int Order { get; } = order;
 
         /// <inheritdoc />
-        public string Code { get; }
+        public string Code { get; } = code;
 
         /// <summary>
         /// Gets the number of times the router has been invoked.
@@ -313,7 +307,7 @@ public class RuleEngineRoutingFilterTests
         /// <inheritdoc />
         public Task ExecuteAsync(TestMessage context, CancellationToken cancellationToken = default)
         {
-            throw new InvalidOperationException("legacy failed");
+            throw new MInternalException("legacy failed");
         }
     }
 }

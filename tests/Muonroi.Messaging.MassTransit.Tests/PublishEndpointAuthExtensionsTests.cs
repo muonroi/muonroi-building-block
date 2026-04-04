@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Messaging.MassTransit.Tests;
 
 public class PublishEndpointAuthExtensionsTests
@@ -115,7 +116,7 @@ public class PublishEndpointAuthExtensionsTests
         IPublishEndpoint endpoint = Substitute.For<IPublishEndpoint>();
         ITenantContextPolicy tenantContextPolicy = Substitute.For<ITenantContextPolicy>();
 
-        ArgumentNullException ex = await Assert.ThrowsAsync<ArgumentNullException>(
+        MArgumentException ex = await Assert.ThrowsAsync<MArgumentException>(
             () => endpoint.PublishWithAuthContext(new TestMessage("x"), null!, tenantContextPolicy));
 
         Assert.Equal("contextAccessor", ex.ParamName);
@@ -127,7 +128,7 @@ public class PublishEndpointAuthExtensionsTests
         ITenantContextPolicy tenantContextPolicy = Substitute.For<ITenantContextPolicy>();
         SystemExecutionContext context = SystemExecutionContext.Empty;
 
-        ArgumentNullException ex = await Assert.ThrowsAsync<ArgumentNullException>(
+        MArgumentException ex = await Assert.ThrowsAsync<MArgumentException>(
             () => PublishEndpointAuthExtensions.PublishWithContext<TestMessage>(
                 null!,
                 new TestMessage("x"),
@@ -143,7 +144,7 @@ public class PublishEndpointAuthExtensionsTests
         IPublishEndpoint endpoint = Substitute.For<IPublishEndpoint>();
         ITenantContextPolicy tenantContextPolicy = Substitute.For<ITenantContextPolicy>();
 
-        ArgumentNullException ex = await Assert.ThrowsAsync<ArgumentNullException>(
+        MArgumentException ex = await Assert.ThrowsAsync<MArgumentException>(
             () => endpoint.PublishWithContext(new TestMessage("x"), null!, tenantContextPolicy));
 
         Assert.Equal("context", ex.ParamName);
@@ -155,7 +156,7 @@ public class PublishEndpointAuthExtensionsTests
         IPublishEndpoint endpoint = Substitute.For<IPublishEndpoint>();
         SystemExecutionContext context = SystemExecutionContext.Empty;
 
-        ArgumentNullException ex = await Assert.ThrowsAsync<ArgumentNullException>(
+        MArgumentException ex = await Assert.ThrowsAsync<MArgumentException>(
             () => endpoint.PublishWithContext(new TestMessage("x"), context, null!));
 
         Assert.Equal("tenantContextPolicy", ex.ParamName);

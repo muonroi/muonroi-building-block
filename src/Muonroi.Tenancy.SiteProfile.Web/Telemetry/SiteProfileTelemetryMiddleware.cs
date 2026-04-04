@@ -16,18 +16,12 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Telemetry;
 /// Opt-in via <c>app.UseSiteProfileTelemetry()</c>. Place after SiteProfileStateMiddleware.
 /// When <see cref="ISiteProfileResolver"/> is not registered, the middleware is a no-op passthrough.
 /// </summary>
-public sealed class SiteProfileTelemetryMiddleware
+public sealed class SiteProfileTelemetryMiddleware(
+    RequestDelegate next,
+    IMLog<SiteProfileTelemetryMiddleware> log)
 {
-    private readonly RequestDelegate _next;
-    private readonly IMLog<SiteProfileTelemetryMiddleware> _log;
-
-    public SiteProfileTelemetryMiddleware(
-        RequestDelegate next,
-        IMLog<SiteProfileTelemetryMiddleware> log)
-    {
-        _next = next;
-        _log = log;
-    }
+    private readonly RequestDelegate _next = next;
+    private readonly IMLog<SiteProfileTelemetryMiddleware> _log = log;
 
     public async Task InvokeAsync(HttpContext context)
     {

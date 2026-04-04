@@ -44,12 +44,8 @@ public class TestDbContext : MDbContext
     }
 }
 
-public class FaultyDbContext : TestDbContext
+public class FaultyDbContext(DbContextOptions<FaultyDbContext> options) : TestDbContext(options)
 {
-    public FaultyDbContext(DbContextOptions<FaultyDbContext> options) : base(options)
-    {
-    }
-
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         throw new Exception("Database failure");

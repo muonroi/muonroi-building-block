@@ -11,27 +11,20 @@ namespace Muonroi.RuleEngine.Runtime.Events;
 /// Extracts the target workflow name and input facts from the event data,
 /// then delegates to <see cref="RulesEngineService"/> for rule execution.
 /// </summary>
-public sealed class EventDrivenRuleEvaluator : IEventDrivenRuleEvaluator
+/// <remarks>
+/// Initializes a new <see cref="EventDrivenRuleEvaluator"/>.
+/// </remarks>
+/// <param name="rulesEngine">The rule engine service to evaluate rules with.</param>
+/// <param name="eventPublisher">Optional publisher for execution result events.</param>
+/// <param name="log">Optional structured logger.</param>
+public sealed class EventDrivenRuleEvaluator(
+    RulesEngineService rulesEngine,
+    RuleExecutionEventPublisher? eventPublisher = null,
+    IMLog<EventDrivenRuleEvaluator>? log = null) : IEventDrivenRuleEvaluator
 {
-    private readonly RulesEngineService _rulesEngine;
-    private readonly RuleExecutionEventPublisher? _eventPublisher;
-    private readonly IMLog<EventDrivenRuleEvaluator>? _log;
-
-    /// <summary>
-    /// Initializes a new <see cref="EventDrivenRuleEvaluator"/>.
-    /// </summary>
-    /// <param name="rulesEngine">The rule engine service to evaluate rules with.</param>
-    /// <param name="eventPublisher">Optional publisher for execution result events.</param>
-    /// <param name="log">Optional structured logger.</param>
-    public EventDrivenRuleEvaluator(
-        RulesEngineService rulesEngine,
-        RuleExecutionEventPublisher? eventPublisher = null,
-        IMLog<EventDrivenRuleEvaluator>? log = null)
-    {
-        _rulesEngine = MGuard.NotNull(rulesEngine);
-        _eventPublisher = eventPublisher;
-        _log = log;
-    }
+    private readonly RulesEngineService _rulesEngine = MGuard.NotNull(rulesEngine);
+    private readonly RuleExecutionEventPublisher? _eventPublisher = eventPublisher;
+    private readonly IMLog<EventDrivenRuleEvaluator>? _log = log;
 
     /// <inheritdoc />
     public async Task<EventEvaluationResult> HandleEventAsync(CloudEvent cloudEvent, CancellationToken ct = default)

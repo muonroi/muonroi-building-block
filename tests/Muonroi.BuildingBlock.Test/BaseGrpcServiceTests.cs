@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class BaseGrpcServiceTests
@@ -65,7 +66,7 @@ public class BaseGrpcServiceTests
     public async Task CallGrpcServiceAsync_Throws_Exception()
     {
         TestGrpc svc = new(new MAuthenticateInfoContext(false), GrpcLicensed);
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MInternalException>(() =>
             svc.Call<string>(_ => throw new InvalidOperationException()));
     }
 
@@ -88,7 +89,7 @@ public class BaseGrpcServiceTests
     public async Task CallGrpcServiceAsync_LicenseGuardDenies_ShouldThrow()
     {
         TestGrpc svc = new(new MAuthenticateInfoContext(false), GrpcLicensed, new DenyGrpcGuard());
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => svc.Call(_ => Task.FromResult("ok")));
+        InvalidOperationException ex = await Assert.ThrowsAsync<MInternalException>(() => svc.Call(_ => Task.FromResult("ok")));
         Assert.Contains("grpc feature not licensed", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 }

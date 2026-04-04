@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
-using Muonroi.RuleEngine.Runtime.Rules;
+using Muonroi.RuleEngine.EntityFrameworkCore.Rules;
 using Muonroi.Tenancy.Abstractions;
 using Muonroi.Tenancy.Core;
 using System.Data;
@@ -239,12 +239,10 @@ public sealed class RowLevelSecurityInterceptorTests : IDisposable
     /// <summary>
     /// Minimal fake <see cref="DbCommand"/> that captures command text and first parameter value on execution.
     /// </summary>
-    private sealed class FakeDbCommand : DbCommand
+    private sealed class FakeDbCommand(List<RowLevelSecurityInterceptorTests.ExecutedCommandInfo> log) : DbCommand
     {
-        private readonly List<ExecutedCommandInfo> _log;
+        private readonly List<ExecutedCommandInfo> _log = log;
         private readonly FakeDbParameterCollection _parameters = new();
-
-        public FakeDbCommand(List<ExecutedCommandInfo> log) => _log = log;
 
 #pragma warning disable CS8765 // Nullability mismatch with base
         public override string CommandText { get; set; } = string.Empty;

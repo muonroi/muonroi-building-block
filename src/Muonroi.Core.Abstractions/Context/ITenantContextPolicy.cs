@@ -108,29 +108,21 @@ public sealed class DefaultTenantContextPolicy(IContextResolver resolver) : ITen
 /// <summary>
 /// Exception thrown when tenant context is missing but required by the policy.
 /// </summary>
-public sealed class MissingTenantContextException : MException
+/// <remarks>
+/// Initializes a new instance of the <see cref="MissingTenantContextException"/> class.
+/// </remarks>
+/// <param name="message">The error message.</param>
+public sealed class MissingTenantContextException(string message) : MException("MISSING_TENANT_CONTEXT", message, MExceptionCategory.Security, 400)
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MissingTenantContextException"/> class.
-    /// </summary>
-    /// <param name="message">The error message.</param>
-    public MissingTenantContextException(string message)
-        : base("MISSING_TENANT_CONTEXT", message, MExceptionCategory.Security, 400)
-    {
-    }
 }
 
 /// <summary>
 /// Exception thrown when user context is missing but required by the policy.
 /// </summary>
-public sealed class MissingUserContextException : MException
+/// <remarks>
+/// Initializes a new instance of the <see cref="MissingUserContextException"/> class.
+/// </remarks>
+/// <param name="message">The error message.</param>
+public sealed class MissingUserContextException(string message) : MException("MISSING_USER_CONTEXT", message, MExceptionCategory.Security, 400)
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MissingUserContextException"/> class.
-    /// </summary>
-    /// <param name="message">The error message.</param>
-    public MissingUserContextException(string message)
-        : base("MISSING_USER_CONTEXT", message, MExceptionCategory.Security, 400)
-    {
-    }
 }

@@ -8,9 +8,8 @@ public class MGenericControllerTests
         public string TenantId { get; set; } = string.Empty;
     }
 
-    public class TestDbContext : MDbContext
+    public class TestDbContext(DbContextOptions<MGenericControllerTests.TestDbContext> options) : MDbContext(options)
     {
-        public TestDbContext(DbContextOptions<TestDbContext> options) : base(options) { }
         public DbSet<TestEntity> TestEntities => Set<TestEntity>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

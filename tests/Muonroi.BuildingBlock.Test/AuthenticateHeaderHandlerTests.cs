@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class AuthenticateHeaderHandlerTests
@@ -75,7 +76,7 @@ public class AuthenticateHeaderHandlerTests
         HttpRequestMessage req = new(HttpMethod.Get, "http://localhost");
 
         HttpMessageInvoker invoker = new(handler);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => invoker.SendAsync(req, CancellationToken.None));
+        await Assert.ThrowsAsync<MInternalException>(() => invoker.SendAsync(req, CancellationToken.None));
     }
 
 }

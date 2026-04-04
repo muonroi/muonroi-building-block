@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using NSubstitute;
 using Xunit;
@@ -68,7 +69,7 @@ public class SiteProfileScopeTests
     public void ForSite_NullProfile_ThrowsArgumentNullException()
     {
         var act = () => SiteProfileScope.ForSite(null!);
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]

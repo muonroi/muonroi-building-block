@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -17,7 +18,7 @@ public sealed class RuleTracerServiceCollectionExtensionsTests
     {
         Action action = () => RuleTracerServiceCollectionExtensions.AddRuleEngineTracing(null!);
 
-        action.Should().Throw<ArgumentNullException>();
+        action.Should().Throw<MArgumentException>();
     }
 
     [Fact]

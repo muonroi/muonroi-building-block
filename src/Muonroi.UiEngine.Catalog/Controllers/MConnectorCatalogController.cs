@@ -9,20 +9,15 @@ namespace Muonroi.UiEngine.Catalog.Controllers;
 /// Separate route base from MRuleCatalogCompatController to avoid {code} template conflict.
 /// AllowAnonymous: Rule Studio calls this endpoint without consumer-app auth tokens.
 /// </summary>
+/// <remarks>
+/// Initializes the controller with a service provider.
+/// </remarks>
 [ApiController]
 [AllowAnonymous]
 [Route("api/v1/ui-engine/connectors")]
-public class MConnectorCatalogController : ControllerBase
+public class MConnectorCatalogController(IServiceProvider serviceProvider) : ControllerBase
 {
-    private readonly IServiceProvider _serviceProvider;
-
-    /// <summary>
-    /// Initializes the controller with a service provider.
-    /// </summary>
-    public MConnectorCatalogController(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
 
     /// <summary>
     /// List available connector types for the flow designer Connector Type dropdown.

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.AspNetCore.Tests;
 
 public class MExceptionMiddlewareTests
@@ -32,7 +33,7 @@ public class MExceptionMiddlewareTests
     [Fact]
     public void Constructor_Throws_For_Null_Next()
     {
-        Assert.Throws<ArgumentNullException>(() => new MExceptionMiddleware(
+        Assert.Throws<MArgumentException>(() => new MExceptionMiddleware(
             null!,
             Substitute.For<IMLog<MExceptionMiddleware>>(),
             new MJsonSerializeService(),
@@ -72,7 +73,7 @@ public class MExceptionMiddlewareTests
             new FakeEnvironment());
 
         var ex = await Assert.ThrowsAsync<TargetInvocationException>(() => InvokeHandle(middleware, context, null));
-        Assert.IsType<ArgumentNullException>(ex.InnerException);
+        Assert.IsType<MArgumentException>(ex.InnerException);
     }
 
     [Fact]

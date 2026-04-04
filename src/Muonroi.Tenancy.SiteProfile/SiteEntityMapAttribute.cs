@@ -17,28 +17,21 @@ namespace Muonroi.Tenancy.SiteProfile;
 /// public partial class TciSiteProfile : ISiteProfile { ... }
 /// </code>
 /// </summary>
+/// <remarks>
+/// Declares an entity hierarchy mapping for a single entity pair.
+/// </remarks>
+/// <param name="coreType">The base/core entity type shared across all sites.</param>
+/// <param name="siteType">The site-specific entity type inheriting from <paramref name="coreType"/>.</param>
+/// <param name="table">The database table name to map the site entity to.</param>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-public sealed class SiteEntityMapAttribute : Attribute
+public sealed class SiteEntityMapAttribute(Type coreType, Type siteType, string table) : Attribute
 {
     /// <summary>The base/core entity type shared across all sites (e.g., <c>typeof(CoreOrder)</c>).</summary>
-    public Type CoreType { get; }
+    public Type CoreType { get; } = coreType;
 
     /// <summary>The site-specific entity type that inherits from the core type (e.g., <c>typeof(TciOrder)</c>).</summary>
-    public Type SiteType { get; }
+    public Type SiteType { get; } = siteType;
 
     /// <summary>The database table name to map the site entity to (e.g., <c>"TCI_ORDER"</c>).</summary>
-    public string Table { get; }
-
-    /// <summary>
-    /// Declares an entity hierarchy mapping for a single entity pair.
-    /// </summary>
-    /// <param name="coreType">The base/core entity type shared across all sites.</param>
-    /// <param name="siteType">The site-specific entity type inheriting from <paramref name="coreType"/>.</param>
-    /// <param name="table">The database table name to map the site entity to.</param>
-    public SiteEntityMapAttribute(Type coreType, Type siteType, string table)
-    {
-        CoreType = coreType;
-        SiteType = siteType;
-        Table = table;
-    }
+    public string Table { get; } = table;
 }

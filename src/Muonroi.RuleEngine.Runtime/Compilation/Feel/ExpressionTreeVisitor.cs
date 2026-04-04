@@ -383,15 +383,10 @@ internal static class FeelExpressionParser
         return result;
     }
 
-    private sealed class Parser
+    private sealed class Parser(string expression)
     {
-        private readonly List<FeelToken> _tokens;
+        private readonly List<FeelToken> _tokens = Tokenize(expression);
         private int _position;
-
-        public Parser(string expression)
-        {
-            _tokens = Tokenize(expression);
-        }
 
         public FeelSyntaxNode ParseExpression()
         {

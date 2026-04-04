@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Muonroi.Core.Abstractions.Diagnostics;
@@ -121,7 +122,7 @@ public sealed class RuleExecutionTracerTests
 
         Func<Task> act = async () => await sut.TraceAsync(null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -144,7 +145,7 @@ public sealed class RuleExecutionTracerTests
     {
         Action act = () => new RuleExecutionTracer(null!, _debuggerMode, _options);
 
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -152,6 +153,6 @@ public sealed class RuleExecutionTracerTests
     {
         Action act = () => new RuleExecutionTracer(_store, null!, _options);
 
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 }

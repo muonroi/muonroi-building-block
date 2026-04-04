@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -74,7 +75,7 @@ public class SiteResolvedServiceTests
         using var scope = sp.CreateScope();
         
         var act = () => scope.ServiceProvider.GetRequiredService<IMyService>();
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*No keyed service 'IMyService' registered for site 'TCI' or 'default'*");
     }
 

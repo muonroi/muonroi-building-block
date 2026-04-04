@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using Xunit;
 using FluentAssertions;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Tenancy.SiteProfile.Tests;
 
@@ -68,7 +69,7 @@ public class SiteProfileStartupValidatorTests
         var validator = new SiteProfileStartupValidator(tracker, sp, _logger);
 
         var act = () => validator.StartAsync(default);
-        act.Should().ThrowAsync<InvalidOperationException>()
+        act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*Site 'TCI' x Service 'IMyService': no keyed registration for key \"TCI\" or \"default\"*");
     }
 
@@ -108,7 +109,7 @@ public class SiteProfileStartupValidatorTests
         var validator = new SiteProfileStartupValidator(tracker, sp, _logger);
 
         var act = () => validator.StartAsync(default);
-        act.Should().ThrowAsync<InvalidOperationException>()
+        act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*no site-specific registration (StrictMode rejects 'default' fallback)*");
     }
 
@@ -124,7 +125,7 @@ public class SiteProfileStartupValidatorTests
         var validator = new SiteProfileStartupValidator(tracker, sp, _logger);
 
         var act = () => validator.StartAsync(default);
-        act.Should().ThrowAsync<InvalidOperationException>()
+        act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*Site 'TCI' x Service 'IMyService'*")
             .WithMessage("*Site 'HNI' x Service 'IMyService'*");
     }

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using Muonroi.Tenancy.Abstractions;
 using Muonroi.Tenancy.Core;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Rules.Tests.Rules;
 
@@ -186,7 +187,7 @@ public sealed class RuleEngineAdvancedTests
 
         Func<Task> act = () => engine.ExecuteAsync(context, RuleType.Validation);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("boom");
         context.BeginCalls.Should().Be(1);
         context.CommitCalls.Should().Be(0);

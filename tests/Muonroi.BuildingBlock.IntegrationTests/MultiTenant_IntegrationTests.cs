@@ -9,18 +9,13 @@ namespace Muonroi.BuildingBlock.IntegrationTests;
 /// <summary>
 /// Integration tests for multi-tenant behavior.
 /// </summary>
-public class MultiTenant_IntegrationTests : IClassFixture<CustomWebApplicationFactory>
+/// <remarks>
+/// Initializes a new test instance with the application factory.
+/// </remarks>
+/// <param name="factory">Test application factory.</param>
+public class MultiTenant_IntegrationTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly CustomWebApplicationFactory _factory;
-
-    /// <summary>
-    /// Initializes a new test instance with the application factory.
-    /// </summary>
-    /// <param name="factory">Test application factory.</param>
-    public MultiTenant_IntegrationTests(CustomWebApplicationFactory factory)
-    {
-        _factory = factory;
-    }
+    private readonly CustomWebApplicationFactory _factory = factory;
 
     /// <summary>
     /// Verifies tenant resolution from request headers.

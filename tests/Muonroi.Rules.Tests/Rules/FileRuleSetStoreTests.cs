@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using System.Security.Cryptography;
 
 namespace Muonroi.Rules.Tests.Rules;
@@ -24,14 +25,14 @@ public class FileRuleSetStoreTests : IDisposable
     public void Constructor_EmptyRootPath_ShouldThrow()
     {
         Action act = () => new FileRuleSetStore("");
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
     public void Constructor_NullRootPath_ShouldThrow()
     {
         Action act = () => new FileRuleSetStore(null!);
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -39,7 +40,7 @@ public class FileRuleSetStoreTests : IDisposable
     {
         var configs = new RuleStoreConfigs { MaxRuleSetSizeBytes = 0 };
         Action act = () => new FileRuleSetStore(_rootPath, configs: configs);
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -47,7 +48,7 @@ public class FileRuleSetStoreTests : IDisposable
     {
         var configs = new RuleStoreConfigs { RequireSignature = true };
         Action act = () => new FileRuleSetStore(_rootPath, signer: null, configs: configs);
-        act.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<MInternalException>();
     }
 
     [Fact]
@@ -118,7 +119,7 @@ public class FileRuleSetStoreTests : IDisposable
         var store = new FileRuleSetStore(_rootPath);
 
         Func<Task> act = () => store.SetActiveVersionAsync("test-wf", 0);
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]

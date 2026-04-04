@@ -4,7 +4,7 @@ namespace Muonroi.Core.Abstractions.Exceptions;
 /// Exception thrown when a required configuration value is missing or invalid.
 /// Represents startup or infrastructure configuration failures.
 /// </summary>
-public sealed class MConfigurationException : MException
+public class MConfigurationException : MException
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="MConfigurationException"/> class.

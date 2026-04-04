@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Muonroi.Observability.Logging;
 using Xunit;
@@ -168,6 +169,6 @@ public class TenantIdEnricherTests
     public void Constructor_Should_Throw_On_Null_Accessor()
     {
         Action act = () => new TenantIdEnricher(null!);
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 }

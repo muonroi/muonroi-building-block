@@ -8,18 +8,13 @@ namespace Muonroi.Integration.Connectors.Redis;
 /// <summary>
 /// Redis connector supporting GET, SET, and PUB operations.
 /// </summary>
-public sealed class RedisConnector : IServiceTaskConnector
+/// <remarks>
+/// Creates a Redis connector.
+/// </remarks>
+/// <param name="redis">Optional Redis connection multiplexer.</param>
+public sealed class RedisConnector(IConnectionMultiplexer? redis = null) : IServiceTaskConnector
 {
-    private readonly IConnectionMultiplexer? _redis;
-
-    /// <summary>
-    /// Creates a Redis connector.
-    /// </summary>
-    /// <param name="redis">Optional Redis connection multiplexer.</param>
-    public RedisConnector(IConnectionMultiplexer? redis = null)
-    {
-        _redis = redis;
-    }
+    private readonly IConnectionMultiplexer? _redis = redis;
 
     /// <summary>
     /// Connector metadata describing capabilities and configuration.

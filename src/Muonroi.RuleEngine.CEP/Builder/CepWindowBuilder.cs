@@ -94,11 +94,7 @@ public sealed class CepConfigBuilder(string name)
     public CepConfigBuilder KeepEventsFor(TimeSpan timeToLive)
     {
         _timeToLive = ValidateDuration(timeToLive, nameof(timeToLive));
-        if (_timeToLive < _windowSize)
-        {
-            throw new ArgumentOutOfRangeException(nameof(timeToLive),
-                "Time to live must be greater than or equal to the window size.");
-        }
+        MGuard.Against(_timeToLive < _windowSize, "Time to live must be greater than or equal to the window size.");
 
         return this;
     }
@@ -149,10 +145,7 @@ public sealed class CepConfigBuilder(string name)
 
     private static TimeSpan ValidateDuration(TimeSpan value, string paramName)
     {
-        if (value <= TimeSpan.Zero)
-        {
-            throw new ArgumentOutOfRangeException(paramName, "Duration must be greater than zero.");
-        }
+        MGuard.Against(value <= TimeSpan.Zero, "Duration must be greater than zero.");
 
         return value;
     }
@@ -194,7 +187,7 @@ public sealed class CepConfigBuilder(string name)
 /// <param name="config">Configuration to bind.</param>
 public sealed class CepWindowRuntimeBuilder<TPayload>(CepConfig config)
 {
-    private readonly CepConfig _config = config ?? throw new ArgumentNullException(nameof(config));
+    private readonly CepConfig _config = MGuard.NotNull(config);
     private Func<TPayload, string>? _keySelector;
 
     /// <summary>
@@ -202,7 +195,7 @@ public sealed class CepWindowRuntimeBuilder<TPayload>(CepConfig config)
     /// </summary>
     public CepWindowRuntimeBuilder<TPayload> CorrelateBy(Func<TPayload, string> keySelector)
     {
-        _keySelector = keySelector ?? throw new ArgumentNullException(nameof(keySelector));
+        _keySelector = MGuard.NotNull(keySelector);
         return this;
     }
 
@@ -211,12 +204,9 @@ public sealed class CepWindowRuntimeBuilder<TPayload>(CepConfig config)
     /// </summary>
     public CepWindow<TPayload> Build()
     {
-        if (_keySelector is null)
-        {
-            throw new MInternalException("A correlation key selector must be provided.");
-        }
+        MGuard.State(_keySelector is not null, "A correlation key selector must be provided.");
 
-        return new CepWindow<TPayload>(_config, _keySelector);
+        return new CepWindow<TPayload>(_config, _keySelector!);
     }
 }
 
@@ -230,8 +220,8 @@ public sealed class CepWindow<TPayload>
 
     internal CepWindow(CepConfig config, Func<TPayload, string> keySelector)
     {
-        Config = config ?? throw new ArgumentNullException(nameof(config));
-        _keySelector = keySelector ?? throw new ArgumentNullException(nameof(keySelector));
+        Config = MGuard.NotNull(config);
+        _keySelector = MGuard.NotNull(keySelector);
         _engine = new CepEngine<TPayload>(config.WindowSize, config.WindowType, config.TimeToLive);
     }
 

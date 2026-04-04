@@ -11,13 +11,26 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// <see cref="RuleResult.Failure(string[])"/> otherwise.
 /// </summary>
 /// <typeparam name="TContext">The rule execution context type.</typeparam>
-public sealed class JavaScriptRuleAdapter<TContext> : IRule<TContext>
+/// <remarks>
+/// Initializes a new instance of the <see cref="JavaScriptRuleAdapter{TContext}"/> class.
+/// </remarks>
+/// <param name="code">Rule code for this node.</param>
+/// <param name="expression">JavaScript expression to evaluate.</param>
+/// <param name="outputFields">Optional output fields written on pass.</param>
+/// <param name="projector">Context projector for variables.</param>
+/// <param name="log">Logger instance.</param>
+public sealed class JavaScriptRuleAdapter<TContext>(
+    string code,
+    string expression,
+    IReadOnlyList<FeelOutputField>? outputFields,
+    IContextProjector<TContext> projector,
+    IMLog<JavaScriptRuleAdapter<TContext>> log) : IRule<TContext>
 {
-    private readonly string _code;
-    private readonly string _expression;
-    private readonly IReadOnlyList<FeelOutputField> _outputFields;
-    private readonly IContextProjector<TContext> _projector;
-    private readonly IMLog<JavaScriptRuleAdapter<TContext>> _log;
+    private readonly string _code = code;
+    private readonly string _expression = expression;
+    private readonly IReadOnlyList<FeelOutputField> _outputFields = outputFields ?? [];
+    private readonly IContextProjector<TContext> _projector = projector;
+    private readonly IMLog<JavaScriptRuleAdapter<TContext>> _log = log;
     private Func<IDictionary<string, object?>, CancellationToken, object?>? _compiledDelegate;
 
     /// <inheritdoc />
@@ -40,28 +53,6 @@ public sealed class JavaScriptRuleAdapter<TContext> : IRule<TContext>
 
     /// <inheritdoc />
     public IEnumerable<Type> Dependencies => [];
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JavaScriptRuleAdapter{TContext}"/> class.
-    /// </summary>
-    /// <param name="code">Rule code for this node.</param>
-    /// <param name="expression">JavaScript expression to evaluate.</param>
-    /// <param name="outputFields">Optional output fields written on pass.</param>
-    /// <param name="projector">Context projector for variables.</param>
-    /// <param name="log">Logger instance.</param>
-    public JavaScriptRuleAdapter(
-        string code,
-        string expression,
-        IReadOnlyList<FeelOutputField>? outputFields,
-        IContextProjector<TContext> projector,
-        IMLog<JavaScriptRuleAdapter<TContext>> log)
-    {
-        _code = code;
-        _expression = expression;
-        _outputFields = outputFields ?? [];
-        _projector = projector;
-        _log = log;
-    }
 
     /// <inheritdoc />
     public Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)

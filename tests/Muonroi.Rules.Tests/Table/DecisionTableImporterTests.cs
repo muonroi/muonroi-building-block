@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Rules.Tests.Table;
 
 public class DecisionTableImporterTests
@@ -6,21 +7,21 @@ public class DecisionTableImporterTests
     public void ImportCsv_EmptyContent_ShouldThrow()
     {
         Action act = () => DecisionTableImporter.ImportCsv("");
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
     public void ImportCsv_NullContent_ShouldThrow()
     {
         Action act = () => DecisionTableImporter.ImportCsv(null!);
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
     public void ImportCsv_TooFewLines_ShouldThrow()
     {
         Action act = () => DecisionTableImporter.ImportCsv("HitPolicy,First\nAge,Result");
-        act.Should().Throw<InvalidDataException>()
+        act.Should().Throw<MConfigurationException>()
             .WithMessage("*hit policy*headers*rule*");
     }
 
@@ -29,7 +30,7 @@ public class DecisionTableImporterTests
     {
         string csv = "NotHitPolicy,First\nAge,Result\n25,Pass";
         Action act = () => DecisionTableImporter.ImportCsv(csv);
-        act.Should().Throw<InvalidDataException>().WithMessage("*HitPolicy*");
+        act.Should().Throw<MConfigurationException>().WithMessage("*HitPolicy*");
     }
 
     [Fact]
@@ -37,7 +38,7 @@ public class DecisionTableImporterTests
     {
         string csv = "HitPolicy,InvalidPolicy\nAge,Result\n25,Pass";
         Action act = () => DecisionTableImporter.ImportCsv(csv);
-        act.Should().Throw<InvalidDataException>().WithMessage("*Invalid hit policy*");
+        act.Should().Throw<MConfigurationException>().WithMessage("*Invalid hit policy*");
     }
 
     [Fact]
@@ -70,7 +71,7 @@ public class DecisionTableImporterTests
     {
         string csv = "HitPolicy,First\nAge,Result\n25";
         Action act = () => DecisionTableImporter.ImportCsv(csv);
-        act.Should().Throw<InvalidDataException>().WithMessage("*incorrect*columns*");
+        act.Should().Throw<MConfigurationException>().WithMessage("*incorrect*columns*");
     }
 
     [Fact]
@@ -143,7 +144,7 @@ public class DecisionTableImporterTests
     {
         string csv = "HitPolicy,First\nAge\n25";
         Action act = () => DecisionTableImporter.ImportCsv(csv);
-        act.Should().Throw<InvalidDataException>().WithMessage("*at least one input and one output*");
+        act.Should().Throw<MConfigurationException>().WithMessage("*at least one input and one output*");
     }
 
     [Fact]

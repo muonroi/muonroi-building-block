@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Muonroi.Caching.Abstractions.Distributed;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Bff.Tests;
 
@@ -63,7 +64,7 @@ public class RedisTokenStoreTests
     {
         RedisTokenStore store = new(new TestCacheService());
 
-        await Assert.ThrowsAsync<ArgumentException>(() => store.StoreRefreshTokenAsync(" ", "token"));
+        await Assert.ThrowsAsync<MArgumentException>(() => store.StoreRefreshTokenAsync(" ", "token"));
     }
 
     private sealed class TestCacheService : IMCacheService

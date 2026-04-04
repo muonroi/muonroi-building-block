@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using Muonroi.Tenancy.Abstractions;
 using Muonroi.Tenancy.Core;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Rules.Tests.Rules;
 
@@ -246,7 +247,7 @@ public class RuleEngineTests
 
         Func<Task> act = () => engine.ExecuteAsync("ctx", RuleType.Validation);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("Rule failed");
     }
 
@@ -305,7 +306,7 @@ public class RuleEngineTests
         engine.AddRule(ruleB, new RuleDescriptor("B", "B", "", RuleType.Validation, 0, ["A"]));
 
         Func<Task> act = () => engine.ExecuteAsync("ctx", RuleType.Validation);
-        act.Should().ThrowAsync<InvalidOperationException>()
+        act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*Circular*");
     }
 
@@ -321,7 +322,7 @@ public class RuleEngineTests
         engine.AddRule(ruleA, new RuleDescriptor("A", "A", "", RuleType.Validation, 0, ["MISSING"]));
 
         Func<Task> act = () => engine.ExecuteAsync("ctx", RuleType.Validation);
-        act.Should().ThrowAsync<InvalidOperationException>()
+        act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*Missing dependency*");
     }
 
@@ -488,7 +489,7 @@ public class RuleEngineTests
 
         Func<Task> act = () => engine.ExecuteAsync(context, RuleType.Validation);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("Transactional failure");
         context.BeginCalls.Should().Be(1);
         context.CommitCalls.Should().Be(0);

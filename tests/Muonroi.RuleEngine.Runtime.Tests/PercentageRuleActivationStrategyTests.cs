@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Runtime.Rules;
@@ -62,6 +63,6 @@ public sealed class PercentageRuleActivationStrategyTests
     {
         Action act = () => new PercentageRuleActivationStrategy<string>(null!);
 
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 }

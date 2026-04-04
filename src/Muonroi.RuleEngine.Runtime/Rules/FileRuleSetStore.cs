@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 
@@ -24,12 +25,12 @@ public sealed class FileRuleSetStore : IRuleSetStore
     public FileRuleSetStore(
         string rootPath,
         IRuleSetSigner? signer = null,
-        RuleStoreConfigs? configs = null,
+        IOptions<RuleStoreConfigs>? configs = null,
         ISystemExecutionContextAccessor? executionContextAccessor = null)
     {
         MGuard.NotEmpty(rootPath);
 
-        _configs = configs ?? new RuleStoreConfigs();
+        _configs = configs?.Value ?? new RuleStoreConfigs();
         MGuard.Against(_configs.MaxRuleSetSizeBytes <= 0, "MaxRuleSetSizeBytes must be greater than zero.");
 
         _rootPath = Path.GetFullPath(rootPath);

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Tenancy.SiteProfile.Web.Validation;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.Tests.Validation;
 
@@ -152,7 +153,7 @@ public class SiteSchemaValidatorTests
     [Fact]
     public void SiteSchemaValidator_NullServiceProvider_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             new SiteSchemaValidator(null!, CreateOptions(), CreateLog()));
     }
 
@@ -162,7 +163,7 @@ public class SiteSchemaValidatorTests
         var services = new ServiceCollection();
         var sp = services.BuildServiceProvider();
 
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             new SiteSchemaValidator(sp, null!, CreateLog()));
     }
 
@@ -172,7 +173,7 @@ public class SiteSchemaValidatorTests
         var services = new ServiceCollection();
         var sp = services.BuildServiceProvider();
 
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             new SiteSchemaValidator(sp, CreateOptions(), null!));
     }
 

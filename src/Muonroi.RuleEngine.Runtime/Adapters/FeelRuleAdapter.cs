@@ -11,13 +11,26 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// <see cref="RuleResult.Failure(string[])"/> otherwise.
 /// </summary>
 /// <typeparam name="TContext">The rule execution context type.</typeparam>
-public sealed class FeelRuleAdapter<TContext> : IRule<TContext>
+/// <remarks>
+/// Initializes a new instance of the <see cref="FeelRuleAdapter{TContext}"/> class.
+/// </remarks>
+/// <param name="code">The rule code.</param>
+/// <param name="expression">The FEEL expression.</param>
+/// <param name="outputFields">The output fields written on pass.</param>
+/// <param name="projector">The context projector used to build FEEL variables.</param>
+/// <param name="log">The adapter logger.</param>
+public sealed class FeelRuleAdapter<TContext>(
+    string code,
+    string expression,
+    IReadOnlyList<FeelOutputField>? outputFields,
+    IContextProjector<TContext> projector,
+    IMLog<FeelRuleAdapter<TContext>> log) : IRule<TContext>
 {
-    private readonly string _code;
-    private readonly string _expression;
-    private readonly IReadOnlyList<FeelOutputField> _outputFields;
-    private readonly IContextProjector<TContext> _projector;
-    private readonly IMLog<FeelRuleAdapter<TContext>> _log;
+    private readonly string _code = code;
+    private readonly string _expression = expression;
+    private readonly IReadOnlyList<FeelOutputField> _outputFields = outputFields ?? [];
+    private readonly IContextProjector<TContext> _projector = projector;
+    private readonly IMLog<FeelRuleAdapter<TContext>> _log = log;
     private Func<IDictionary<string, object>, bool>? _compiledDelegate;
 
     /// <summary>
@@ -54,28 +67,6 @@ public sealed class FeelRuleAdapter<TContext> : IRule<TContext>
     /// Gets the dependent service types.
     /// </summary>
     public IEnumerable<Type> Dependencies => [];
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="FeelRuleAdapter{TContext}"/> class.
-    /// </summary>
-    /// <param name="code">The rule code.</param>
-    /// <param name="expression">The FEEL expression.</param>
-    /// <param name="outputFields">The output fields written on pass.</param>
-    /// <param name="projector">The context projector used to build FEEL variables.</param>
-    /// <param name="log">The adapter logger.</param>
-    public FeelRuleAdapter(
-        string code,
-        string expression,
-        IReadOnlyList<FeelOutputField>? outputFields,
-        IContextProjector<TContext> projector,
-        IMLog<FeelRuleAdapter<TContext>> log)
-    {
-        _code = code;
-        _expression = expression;
-        _outputFields = outputFields ?? [];
-        _projector = projector;
-        _log = log;
-    }
 
     /// <summary>
     /// Evaluates the FEEL condition and writes configured output fields on success.

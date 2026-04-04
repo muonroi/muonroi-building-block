@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Muonroi.Caching.Memory.MultiLevel;
 using Muonroi.Tenancy;
 using Xunit;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -230,7 +231,7 @@ public class MultiLevelCacheServiceTests
         IMemoryCache memory = new MemoryCache(new MemoryCacheOptions());
         MultiLevelCacheService service = new(memory, dist);
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<MArgumentException>(() =>
             service.GetOrSetAsync(null!, () => Task.FromResult<string?>("v")));
     }
 

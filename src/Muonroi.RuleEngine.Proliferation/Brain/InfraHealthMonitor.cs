@@ -42,26 +42,19 @@ public interface IInfraHealthMonitor
 /// <summary>
 /// Implementation of <see cref="IInfraHealthMonitor"/> that probes <c>GET {OllamaEndpoint}/api/tags</c>.
 /// </summary>
-public sealed class InfraHealthMonitor : IInfraHealthMonitor
+/// <remarks>Creates an infrastructure health monitor.</remarks>
+public sealed class InfraHealthMonitor(
+    IHttpClientFactory httpClientFactory,
+    ProliferationOptions options,
+    IMLog<InfraHealthMonitor>? logger = null) : IInfraHealthMonitor
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ProliferationOptions _options;
-    private readonly IMLog<InfraHealthMonitor>? _logger;
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly ProliferationOptions _options = options;
+    private readonly IMLog<InfraHealthMonitor>? _logger = logger;
 
     private InfraHealthStatus? _cachedStatus;
     private DateTimeOffset _cacheExpiry = DateTimeOffset.MinValue;
     private readonly SemaphoreSlim _lock = new(1, 1);
-
-    /// <summary>Creates an infrastructure health monitor.</summary>
-    public InfraHealthMonitor(
-        IHttpClientFactory httpClientFactory,
-        ProliferationOptions options,
-        IMLog<InfraHealthMonitor>? logger = null)
-    {
-        _httpClientFactory = httpClientFactory;
-        _options = options;
-        _logger = logger;
-    }
 
     /// <inheritdoc />
     public async Task<InfraHealthStatus> CheckHealthAsync(CancellationToken ct = default)

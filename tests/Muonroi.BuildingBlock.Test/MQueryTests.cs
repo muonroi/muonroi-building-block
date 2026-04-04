@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MQueryTests
@@ -176,7 +177,7 @@ public class MQueryTests
         DbContextOptions<TestDbContext> opt = CreateOptions("any_null");
         using TestDbContext db = new(opt);
         UserQuery q = new(db, new MAuthenticateInfoContext(false));
-        await Assert.ThrowsAsync<ArgumentNullException>(() => q.AnyAsync(null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => q.AnyAsync(null!));
     }
 
     [Fact]

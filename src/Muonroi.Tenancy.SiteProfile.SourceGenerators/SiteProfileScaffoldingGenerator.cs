@@ -267,49 +267,30 @@ public partial class {model.ClassName}
     // Model
     // -----------------------------------------------------------------------
 
-    private sealed class ScaffoldingModel
+    private sealed class ScaffoldingModel(
+        string className,
+        string namespaceName,
+        string siteId,
+        string dbContextTypeName,
+        List<string> behaviorTypeNames,
+        bool isPartial,
+        bool skipDbContextRegistration = false,
+        List<SiteProfileScaffoldingGenerator.EntityMapModel>? entityMaps = null)
     {
-        public string ClassName { get; }
-        public string NamespaceName { get; }
-        public string SiteId { get; }
-        public string DbContextTypeName { get; }
-        public List<string> BehaviorTypeNames { get; }
-        public bool IsPartial { get; }
-        public bool SkipDbContextRegistration { get; }
-        public List<EntityMapModel> EntityMaps { get; }
-
-        public ScaffoldingModel(
-            string className,
-            string namespaceName,
-            string siteId,
-            string dbContextTypeName,
-            List<string> behaviorTypeNames,
-            bool isPartial,
-            bool skipDbContextRegistration = false,
-            List<EntityMapModel>? entityMaps = null)
-        {
-            ClassName = className;
-            NamespaceName = namespaceName;
-            SiteId = siteId;
-            DbContextTypeName = dbContextTypeName;
-            BehaviorTypeNames = behaviorTypeNames;
-            IsPartial = isPartial;
-            SkipDbContextRegistration = skipDbContextRegistration;
-            EntityMaps = entityMaps ?? new List<EntityMapModel>();
-        }
+        public string ClassName { get; } = className;
+        public string NamespaceName { get; } = namespaceName;
+        public string SiteId { get; } = siteId;
+        public string DbContextTypeName { get; } = dbContextTypeName;
+        public List<string> BehaviorTypeNames { get; } = behaviorTypeNames;
+        public bool IsPartial { get; } = isPartial;
+        public bool SkipDbContextRegistration { get; } = skipDbContextRegistration;
+        public List<EntityMapModel> EntityMaps { get; } = entityMaps ?? new List<EntityMapModel>();
     }
 
-    private sealed class EntityMapModel
+    private sealed class EntityMapModel(string coreTypeName, string siteTypeName, string tableName)
     {
-        public string CoreTypeName { get; }
-        public string SiteTypeName { get; }
-        public string TableName { get; }
-
-        public EntityMapModel(string coreTypeName, string siteTypeName, string tableName)
-        {
-            CoreTypeName = coreTypeName;
-            SiteTypeName = siteTypeName;
-            TableName = tableName;
-        }
+        public string CoreTypeName { get; } = coreTypeName;
+        public string SiteTypeName { get; } = siteTypeName;
+        public string TableName { get; } = tableName;
     }
 }

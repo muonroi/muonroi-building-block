@@ -16,23 +16,17 @@ namespace Muonroi.Tenancy.SiteProfile.Web.DataAccess;
 /// The synced data is consumed by <see cref="EfSyncedColumnMap"/> which decorates the
 /// existing <see cref="Dapper.ISiteColumnMap"/> chain.
 /// </summary>
-internal sealed class EfColumnSyncHostedService : IHostedService
+internal sealed class EfColumnSyncHostedService(
+    IServiceProvider serviceProvider,
+    ILogger<EfColumnSyncHostedService> logger) : IHostedService
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<EfColumnSyncHostedService> _logger;
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
+    private readonly ILogger<EfColumnSyncHostedService> _logger = logger;
 
     // Static store — populated once at startup, read by EfSyncedColumnMap instances.
     // Key: DbContext full type name (e.g., "MyApp.AlphaSiteDbContext")
     // Value: dictionary of propertyName -> SyncedColumnInfo
     private static readonly Dictionary<string, Dictionary<string, SyncedColumnInfo>> _syncedMaps = new();
-
-    public EfColumnSyncHostedService(
-        IServiceProvider serviceProvider,
-        ILogger<EfColumnSyncHostedService> logger)
-    {
-        _serviceProvider = serviceProvider;
-        _logger = logger;
-    }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {

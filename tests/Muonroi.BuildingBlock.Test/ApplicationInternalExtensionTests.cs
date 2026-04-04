@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class ApplicationInternalExtensionTests
@@ -73,7 +74,7 @@ public class ApplicationInternalExtensionTests
         ServiceCollection services = [];
         _ = InvokeGeneric("AddAuthContextFactory", typeof(DefaultAuthContextFactory), services);
         ServiceProvider provider = services.BuildServiceProvider();
-        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IAuthContextFactory>());
+        Assert.Throws<MInternalException>(() => provider.GetRequiredService<IAuthContextFactory>());
     }
 
     [Fact]

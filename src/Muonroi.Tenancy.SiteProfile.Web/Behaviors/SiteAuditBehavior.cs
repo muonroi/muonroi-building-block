@@ -32,16 +32,10 @@ public sealed class SiteAuditBehavior : ISiteProfileBehavior
 /// <summary>
 /// IHostedService that logs the site registration event once at application startup.
 /// </summary>
-internal sealed class SiteAuditStartupLogger : IHostedService
+internal sealed class SiteAuditStartupLogger(string siteId, IMLog<SiteAuditBehavior> log) : IHostedService
 {
-    private readonly string _siteId;
-    private readonly IMLog<SiteAuditBehavior> _log;
-
-    public SiteAuditStartupLogger(string siteId, IMLog<SiteAuditBehavior> log)
-    {
-        _siteId = siteId;
-        _log = log;
-    }
+    private readonly string _siteId = siteId;
+    private readonly IMLog<SiteAuditBehavior> _log = log;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {

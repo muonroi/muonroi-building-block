@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class CorrelationIdHandlerTests
@@ -87,6 +88,6 @@ public class CorrelationIdHandlerTests
         using HttpMessageInvoker invoker = new(handler);
         HttpRequestMessage req = new(HttpMethod.Get, "http://localhost/");
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => invoker.SendAsync(req, CancellationToken.None));
+        await Assert.ThrowsAsync<MInternalException>(() => invoker.SendAsync(req, CancellationToken.None));
     }
 }

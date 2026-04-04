@@ -8,20 +8,30 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// so that connectors participate in the flow graph like any other rule.
 /// </summary>
 /// <typeparam name="TContext">The rule execution context type.</typeparam>
-public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
+/// <inheritdoc/>
+public sealed class ConnectorRuleAdapter<TContext>(
+    string code,
+    string connectorType,
+    JsonElement? connectorConfig,
+    string? credentialId,
+    IConnectorRegistry registry,
+    IConnectorCredentialStore? credentialStore,
+    IContextProjector<TContext> projector,
+    IMLog<ConnectorRuleAdapter<TContext>> log,
+    string? tenantId = null) : IRule<TContext>
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.Integration");
-    private readonly string _connectorType;
-    private readonly JsonElement? _connectorConfig;
-    private readonly string? _credentialId;
-    private readonly IConnectorRegistry _registry;
-    private readonly IConnectorCredentialStore? _credentialStore;
-    private readonly IContextProjector<TContext> _projector;
-    private readonly IMLog<ConnectorRuleAdapter<TContext>> _log;
-    private readonly string? _tenantId;
+    private readonly string _connectorType = connectorType;
+    private readonly JsonElement? _connectorConfig = connectorConfig;
+    private readonly string? _credentialId = credentialId;
+    private readonly IConnectorRegistry _registry = registry;
+    private readonly IConnectorCredentialStore? _credentialStore = credentialStore;
+    private readonly IContextProjector<TContext> _projector = projector;
+    private readonly IMLog<ConnectorRuleAdapter<TContext>> _log = log;
+    private readonly string? _tenantId = tenantId;
 
     /// <inheritdoc/>
-    public string Code { get; }
+    public string Code { get; } = code;
     /// <inheritdoc/>
     public int Order { get; init; }
     /// <inheritdoc/>
@@ -34,29 +44,6 @@ public sealed class ConnectorRuleAdapter<TContext> : IRule<TContext>
     public string Name => $"Connector:{_connectorType}:{Code}";
     /// <inheritdoc/>
     public IEnumerable<Type> Dependencies => [];
-
-    /// <inheritdoc/>
-    public ConnectorRuleAdapter(
-        string code,
-        string connectorType,
-        JsonElement? connectorConfig,
-        string? credentialId,
-        IConnectorRegistry registry,
-        IConnectorCredentialStore? credentialStore,
-        IContextProjector<TContext> projector,
-        IMLog<ConnectorRuleAdapter<TContext>> log,
-        string? tenantId = null)
-    {
-        Code = code;
-        _connectorType = connectorType;
-        _connectorConfig = connectorConfig;
-        _credentialId = credentialId;
-        _registry = registry;
-        _credentialStore = credentialStore;
-        _projector = projector;
-        _log = log;
-        _tenantId = tenantId;
-    }
 
     /// <inheritdoc/>
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)

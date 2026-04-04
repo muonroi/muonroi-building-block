@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Messaging.MassTransit.Tests;
 
 public class AmqpContextConsumeFilterTests
@@ -208,12 +209,12 @@ public class AmqpContextConsumeFilterTests
             .Returns(callInfo => callInfo.Arg<ISystemExecutionContext>());
 
         IPipe<ConsumeContext<string>> next = Substitute.For<IPipe<ConsumeContext<string>>>();
-        next.Send(context).Returns(_ => throw new InvalidOperationException("boom"));
+        next.Send(context).Returns(_ => throw new MInternalException("boom"));
 
         SystemExecutionContextAccessor accessor = new();
         AmqpContextConsumeFilter<string> filter = new(amqpContext, accessor, tenantContextPolicy);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => filter.Send(context, next));
+        await Assert.ThrowsAsync<MInternalException>(() => filter.Send(context, next));
         Assert.Equal(2, clearCalls);
     }
 

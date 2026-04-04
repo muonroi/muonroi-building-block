@@ -1,4 +1,5 @@
 using Muonroi.RuleEngine.Core.Workflow;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleEngine.Core.Tests;
 
@@ -102,7 +103,7 @@ public class RuleWorkflowRunnerTests
                 MRuleWorkflowStep<int>.End("end")
             ]);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => runner.ExecuteAsync(1, workflow));
+        await Assert.ThrowsAsync<MInternalException>(() => runner.ExecuteAsync(1, workflow));
     }
 
     private sealed class ParityRule : IRule<int>

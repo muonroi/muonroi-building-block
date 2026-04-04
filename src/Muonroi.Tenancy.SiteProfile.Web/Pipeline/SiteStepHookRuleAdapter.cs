@@ -9,30 +9,23 @@ namespace Muonroi.Tenancy.SiteProfile.Web.Pipeline;
 /// If the wrapped hook implements <see cref="ISiteCompensatableStepHook"/>,
 /// compensation is delegated; otherwise <see cref="CompensateAsync"/> is a no-op.
 /// </summary>
-internal sealed class SiteStepHookRuleAdapter : ICompensatableRule<FactBag>
+internal sealed class SiteStepHookRuleAdapter(
+    ISiteStepHook hook,
+    SiteStepHookPhase phase,
+    string stepName,
+    int hookIndex) : ICompensatableRule<FactBag>
 {
-    private readonly ISiteStepHook _hook;
-    private readonly int _phaseOrder;
-
-    public SiteStepHookRuleAdapter(
-        ISiteStepHook hook,
-        SiteStepHookPhase phase,
-        string stepName,
-        int hookIndex)
+    private readonly ISiteStepHook _hook = hook;
+    private readonly int _phaseOrder = phase switch
     {
-        _hook = hook;
-        _phaseOrder = phase switch
-        {
-            SiteStepHookPhase.Before => -1000 + hook.Order,
-            SiteStepHookPhase.After => 1000 + hook.Order,
-            SiteStepHookPhase.Replace => hook.Order,
-            _ => hook.Order
-        };
-        Code = $"{stepName}.{phase}.{hookIndex}.{hook.GetType().Name}";
-    }
+        SiteStepHookPhase.Before => -1000 + hook.Order,
+        SiteStepHookPhase.After => 1000 + hook.Order,
+        SiteStepHookPhase.Replace => hook.Order,
+        _ => hook.Order
+    };
 
     /// <inheritdoc />
-    public string Code { get; }
+    public string Code { get; } = $"{stepName}.{phase}.{hookIndex}.{hook.GetType().Name}";
 
     /// <inheritdoc />
     public string Name => _hook.GetType().Name;
@@ -83,18 +76,12 @@ internal sealed class SiteStepHookRuleAdapter : ICompensatableRule<FactBag>
 /// alongside <see cref="SiteStepHookRuleAdapter"/> instances.
 /// Order is always 0 (between Before hooks at -1000 and After hooks at +1000).
 /// </summary>
-internal sealed class DefaultImplRuleAdapter : IRule<FactBag>
+internal sealed class DefaultImplRuleAdapter(Func<FactBag, CancellationToken, Task> impl, string stepName) : IRule<FactBag>
 {
-    private readonly Func<FactBag, CancellationToken, Task> _impl;
-
-    public DefaultImplRuleAdapter(Func<FactBag, CancellationToken, Task> impl, string stepName)
-    {
-        _impl = impl;
-        Code = $"{stepName}.Default";
-    }
+    private readonly Func<FactBag, CancellationToken, Task> _impl = impl;
 
     /// <inheritdoc />
-    public string Code { get; }
+    public string Code { get; } = $"{stepName}.Default";
 
     /// <inheritdoc />
     public string Name => "DefaultImpl";

@@ -12,25 +12,18 @@ namespace Muonroi.RuleEngine.Proliferation.Auth;
 /// - OAuth2ClientCredentials: fetch/cache bearer token via IOAuth2TokenProvider
 /// - MutualTls: create mTLS HttpClient via IMtlsHttpClientFactory
 /// </summary>
-public sealed class AuthStrategyResolver : IAuthStrategyResolver
+/// <remarks>Creates a resolver for external project auth strategies.</remarks>
+public sealed class AuthStrategyResolver(
+    IOAuth2TokenProvider oauth2Provider,
+    IMtlsHttpClientFactory mtlsFactory,
+    IApiKeyRotationService apiKeyRotation) : IAuthStrategyResolver
 {
     private static readonly IReadOnlyDictionary<string, string> EmptyHeaders =
         new Dictionary<string, string>();
 
-    private readonly IOAuth2TokenProvider _oauth2Provider;
-    private readonly IMtlsHttpClientFactory _mtlsFactory;
-    private readonly IApiKeyRotationService _apiKeyRotation;
-
-    /// <summary>Creates a resolver for external project auth strategies.</summary>
-    public AuthStrategyResolver(
-        IOAuth2TokenProvider oauth2Provider,
-        IMtlsHttpClientFactory mtlsFactory,
-        IApiKeyRotationService apiKeyRotation)
-    {
-        _oauth2Provider = oauth2Provider;
-        _mtlsFactory = mtlsFactory;
-        _apiKeyRotation = apiKeyRotation;
-    }
+    private readonly IOAuth2TokenProvider _oauth2Provider = oauth2Provider;
+    private readonly IMtlsHttpClientFactory _mtlsFactory = mtlsFactory;
+    private readonly IApiKeyRotationService _apiKeyRotation = apiKeyRotation;
 
     /// <inheritdoc/>
     public async Task<AuthResult> ResolveAsync(ExternalProjectConfig config, CancellationToken ct)

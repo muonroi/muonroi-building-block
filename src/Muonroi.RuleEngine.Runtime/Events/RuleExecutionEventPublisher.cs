@@ -8,25 +8,19 @@ namespace Muonroi.RuleEngine.Runtime.Events;
 /// Publishes CloudEvents for rule execution results (executed/failed).
 /// Fire-and-forget safe: exceptions from the sink are caught and logged, never propagated.
 /// </summary>
-public sealed class RuleExecutionEventPublisher
+/// <remarks>
+/// Initializes a new <see cref="RuleExecutionEventPublisher"/>.
+/// </remarks>
+/// <param name="eventSink">The event sink to publish to.</param>
+/// <param name="log">Optional structured logger.</param>
+public sealed class RuleExecutionEventPublisher(
+    IEventSink eventSink,
+    IMLog<RuleExecutionEventPublisher>? log = null)
 {
     private const string EventSource = "/muonroi/rule-engine";
 
-    private readonly IEventSink _eventSink;
-    private readonly IMLog<RuleExecutionEventPublisher>? _log;
-
-    /// <summary>
-    /// Initializes a new <see cref="RuleExecutionEventPublisher"/>.
-    /// </summary>
-    /// <param name="eventSink">The event sink to publish to.</param>
-    /// <param name="log">Optional structured logger.</param>
-    public RuleExecutionEventPublisher(
-        IEventSink eventSink,
-        IMLog<RuleExecutionEventPublisher>? log = null)
-    {
-        _eventSink = MGuard.NotNull(eventSink);
-        _log = log;
-    }
+    private readonly IEventSink _eventSink = MGuard.NotNull(eventSink);
+    private readonly IMLog<RuleExecutionEventPublisher>? _log = log;
 
     /// <summary>
     /// Publishes a rule execution result as a CloudEvent.

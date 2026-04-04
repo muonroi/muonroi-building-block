@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class ConfigureExtensionsTests
@@ -36,7 +37,7 @@ public class ConfigureExtensionsTests
             new("S:Key", "1"),
             new("S:Key", "2")
         ];
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<MArgumentException>(() =>
         {
             IConfiguration cfg = new ConfigurationBuilder().AddInMemoryCollection(data).Build();
             ServiceCollection services = [];
@@ -66,7 +67,7 @@ public class ConfigureExtensionsTests
     public void ConfigureStartupConfig_Null_Config_Throws()
     {
         IServiceCollection services = new ServiceCollection();
-        Assert.Throws<ArgumentNullException>(() => services.ConfigureStartupConfig<StartConfig>(null!));
+        Assert.Throws<MArgumentException>(() => services.ConfigureStartupConfig<StartConfig>(null!));
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 [Collection("NonParallel")]
@@ -9,7 +10,7 @@ public class AntiTamperingLicenseGuardTests
         LicenseState state = CreateLicensedState(FreeTierFeatures.Premium.MessageBus);
         LicenseConfigs configs = CreateConfigs();
 
-        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => CreateGuard(configs, state));
+        MInternalException ex = Assert.Throws<MInternalException>(() => CreateGuard(configs, state));
         Assert.Contains("anti-tampering", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -30,7 +31,7 @@ public class AntiTamperingLicenseGuardTests
         LicenseState state = CreateLicensedState(FreeTierFeatures.Premium.MessageBus);
         LicenseConfigs configs = CreateConfigs(enforcementMode: LicenseEnforcementMode.Development);
 
-        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => CreateGuard(configs, state));
+        MInternalException ex = Assert.Throws<MInternalException>(() => CreateGuard(configs, state));
         Assert.Contains("anti-tampering", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 

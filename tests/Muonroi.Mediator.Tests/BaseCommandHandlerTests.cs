@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.Models;
@@ -49,7 +50,7 @@ public sealed class BaseCommandHandlerTests
 
         Action action = () => sut.MapInto("abc", "target");
 
-        action.Should().Throw<InvalidOperationException>()
+        action.Should().Throw<MInternalException>()
             .WithMessage("*Mapping resulted in null*");
     }
 

@@ -10,20 +10,14 @@ namespace Muonroi.BuildingBlock.IntegrationTests;
 /// <summary>
 /// Integration tests for permission filter behavior.
 /// </summary>
-public class PermissionFilter_IntegrationTests : IClassFixture<CustomWebApplicationFactory>
+/// <remarks>
+/// Initializes a new test instance with a factory and client.
+/// </remarks>
+/// <param name="factory">Test application factory.</param>
+public class PermissionFilter_IntegrationTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly CustomWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>
-    /// Initializes a new test instance with a factory and client.
-    /// </summary>
-    /// <param name="factory">Test application factory.</param>
-    public PermissionFilter_IntegrationTests(CustomWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateClient();
-    }
+    private readonly CustomWebApplicationFactory _factory = factory;
+    private readonly HttpClient _client = factory.CreateClient();
 
     /// <summary>
     /// Verifies authorized users are allowed.

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class TenantAwareJobBaseTests
@@ -50,7 +51,7 @@ public class TenantAwareJobBaseTests
     {
         TestJob job = new(() => { }, true);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => job.Handle(CreateContext("t", "g", "u")));
+        await Assert.ThrowsAsync<MInternalException>(() => job.Handle(CreateContext("t", "g", "u")));
 
         Assert.Null(TenantContext.CurrentTenantId);
         Assert.Null(UserContext.CurrentUserGuid);

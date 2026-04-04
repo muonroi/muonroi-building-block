@@ -8,6 +8,9 @@
     <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Muonroi.RuleEngine.EntityFrameworkCore.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Muonroi.RuleEngine.Runtime\Muonroi.RuleEngine.Runtime.csproj" />
   </ItemGroup>
   <ItemGroup>

@@ -7,17 +7,14 @@ namespace Muonroi.Integration.Persistence;
 /// EF DbContext for connector configurations and credentials.
 /// Applies tenant query filters (same pattern as RuleEngineDb).
 /// </summary>
-public class ConnectorDbContext : DbContext
+/// <remarks>Creates a new connector persistence context.</remarks>
+/// <param name="options">DbContext options.</param>
+public class ConnectorDbContext(DbContextOptions<ConnectorDbContext> options) : DbContext(options)
 {
     /// <summary>Connector configurations.</summary>
     public DbSet<ConnectorConfigEntity> ConnectorConfigs => Set<ConnectorConfigEntity>();
     /// <summary>Connector credentials.</summary>
     public DbSet<ConnectorCredentialEntity> ConnectorCredentials => Set<ConnectorCredentialEntity>();
-
-    /// <summary>Creates a new connector persistence context.</summary>
-    /// <param name="options">DbContext options.</param>
-    public ConnectorDbContext(DbContextOptions<ConnectorDbContext> options)
-        : base(options) { }
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)

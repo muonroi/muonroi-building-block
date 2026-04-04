@@ -10,6 +10,7 @@ using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 using Muonroi.Core.Abstractions.Response;
 using Muonroi.Governance.Abstractions;
 using Xunit;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.AspNetCore.Tests.Permissions;
 

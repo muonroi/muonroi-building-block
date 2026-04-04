@@ -8,13 +8,8 @@ namespace TestProject.Service.Sites.Bravo;
 /// Bravo site EF Core DbContext — adds ContainerNo index for faster lookups.
 /// Override OnModelCreating for Bravo-specific schema differences.
 /// </summary>
-public sealed class BravoOrderContext : ContextBase
+public sealed class BravoOrderContext(DbContextOptions<BravoOrderContext> options) : ContextBase(options)
 {
-    public BravoOrderContext(DbContextOptions<BravoOrderContext> options)
-        : base(options)
-    {
-    }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

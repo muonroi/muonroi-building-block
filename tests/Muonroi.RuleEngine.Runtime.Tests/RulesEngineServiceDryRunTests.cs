@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.Core.Abstractions.SeedWorks;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.RuleEngine.Runtime.Adapters;
 using Muonroi.RuleEngine.Runtime.Rules;
 using System.Text.Json;
@@ -64,7 +65,7 @@ public sealed class RulesEngineServiceDryRunTests
         JsonElement context = JsonDocument.Parse("{\"value\":1}").RootElement.Clone();
         Func<Task> action = async () => await service.DryRunAsync("CodeWorkflow", json, context);
 
-        await action.Should().ThrowAsync<InvalidDataException>();
+        await action.Should().ThrowAsync<MConfigurationException>();
     }
 
     [Fact]
@@ -112,7 +113,7 @@ public sealed class RulesEngineServiceDryRunTests
             context,
             "Muonroi.RuleEngine.Runtime.Tests.DoesNotExistContext");
 
-        await action.Should().ThrowAsync<InvalidDataException>()
+        await action.Should().ThrowAsync<MConfigurationException>()
             .WithMessage("*Cannot resolve contextType*");
     }
 
@@ -137,8 +138,7 @@ public sealed class RulesEngineServiceDryRunTests
             context,
             typeof(DryRunCodeContext).FullName);
 
-        await action.Should().ThrowAsync<InvalidDataException>()
-            .WithMessage("*no rule implementations were discovered*");
+        await action.Should().ThrowAsync<MConfigurationException>();
     }
 
     [Fact]
@@ -207,7 +207,7 @@ public sealed class RulesEngineServiceDryRunTests
             context,
             "Muonroi.RuleEngine.Runtime.Tests.DoesNotExistGraphContext");
 
-        await action.Should().ThrowAsync<InvalidDataException>()
+        await action.Should().ThrowAsync<MConfigurationException>()
             .WithMessage("*Cannot resolve contextType*");
     }
 

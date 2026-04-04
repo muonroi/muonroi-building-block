@@ -1,6 +1,7 @@
 namespace Muonroi.BuildingBlock.Test;
 
 using Muonroi.Governance.License;
+using Muonroi.Core.Abstractions.Exceptions;
 
 public class MDbContextConfigurationTests
 {
@@ -73,7 +74,7 @@ public class MDbContextConfigurationTests
     public void SystemDependencyInjectionService_Null_Services_Throws()
     {
         IServiceCollection? services = null;
-        Assert.Throws<ArgumentNullException>(() => InvokeSystemDi(services!));
+        Assert.Throws<MArgumentException>(() => InvokeSystemDi(services!));
     }
 
     [Fact]
@@ -221,7 +222,7 @@ public class MDbContextConfigurationTests
     public void ConfigureDbContext_Invalid_DbType_Throws()
     {
         ServiceCollection services = [];
-        Assert.Throws<ArgumentException>(() => InvokeConfigure(services, "Invalid"));
+        Assert.Throws<MArgumentException>(() => InvokeConfigure(services, "Invalid"));
     }
 
     [Fact]
@@ -241,7 +242,7 @@ public class MDbContextConfigurationTests
         services.AddSingleton<ILicenseGuard>(new TestLicenseGuard());
         InvokeConfigure(services, nameof(DbTypes.Sqlite));
         ServiceProvider provider = services.BuildServiceProvider();
-        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<TestDbContext>());
+        Assert.Throws<MInternalException>(() => provider.GetRequiredService<TestDbContext>());
     }
 
     [Fact]

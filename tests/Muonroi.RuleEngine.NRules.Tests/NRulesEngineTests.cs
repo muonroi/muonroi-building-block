@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.RuleEngine.NRules.Tests;
 
 public class NRulesEngineTests
@@ -57,7 +58,7 @@ public class NRulesEngineTests
     public void Constructor_ThrowsOnConflictingRules()
     {
         RuleOptions options = new(); // no version specified -> both rules enabled
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<MInternalException>(() =>
             new NRulesEngine([typeof(DiscountRuleV1).Assembly], Options.Create(options)));
     }
 }

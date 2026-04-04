@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.RuleGen.Cli;
 using Muonroi.RuleGen.Services;
 using Muonroi.RuleGen.Writers;
@@ -11,13 +12,13 @@ internal static class RegisterCommand
         string? rules = OptionReader.GetString(context, "rules");
         if (string.IsNullOrWhiteSpace(rules))
         {
-            throw new InvalidOperationException("Missing required option --rules.");
+            throw new MInternalException("Missing required option --rules.");
         }
 
         string? output = OptionReader.GetString(context, "output");
         if (string.IsNullOrWhiteSpace(output))
         {
-            throw new InvalidOperationException("Missing required option --output.");
+            throw new MInternalException("Missing required option --output.");
         }
 
         string ns = OptionReader.GetString(context, "namespace", context.Config.Extract.Namespace) ?? "Generated.Rules";

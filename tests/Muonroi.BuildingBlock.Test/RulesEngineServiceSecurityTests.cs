@@ -1,4 +1,5 @@
 using Muonroi.Governance.License;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -50,7 +51,7 @@ public class RulesEngineServiceSecurityTests
         FileRuleSetStore store = new(root);
         RulesEngineService service = new(store, null, new DenyRuleEngineGuard());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync("login", new object()));
+        await Assert.ThrowsAsync<MInternalException>(() => service.ExecuteAsync("login", new object()));
     }
 
     [Fact]

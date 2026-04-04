@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MExceptionMiddlewareTests
@@ -73,7 +74,7 @@ public class MExceptionMiddlewareTests
     [Fact]
     public void Constructor_Throws_For_Null()
     {
-        Assert.Throws<ArgumentNullException>(() => new MExceptionMiddleware(null!, new NullSerilogLogger(),
+        Assert.Throws<MArgumentException>(() => new MExceptionMiddleware(null!, new NullSerilogLogger(),
             new MJsonSerializeService(), new MAuthenticateInfoContext(false), new FakeEnvironment()));
     }
 

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class DependencyInternalInjectionTests
@@ -107,7 +108,7 @@ public class DependencyInternalInjectionTests
         ServiceCollection services = [];
         services.ResolveDependencyScope(typeof(string).Assembly);
         ServiceProvider provider = services.BuildServiceProvider();
-        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IMRepository<MUser>>());
+        Assert.Throws<MInternalException>(() => provider.GetRequiredService<IMRepository<MUser>>());
     }
 
     [Fact]

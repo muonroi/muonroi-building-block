@@ -1,4 +1,5 @@
 using Muonroi.Governance.Operations;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Governance.Enterprise.Tests.Operations;
 
@@ -41,6 +42,6 @@ public class EnterpriseSloPresetServiceTests
     public void GetPreset_WithInvalidName_ShouldThrow()
     {
         // Act & Assert
-        Assert.Throws<ArgumentOutOfRangeException>(() => _service.GetPreset("invalid"));
+        Assert.Throws<MArgumentException>(() => _service.GetPreset("invalid"));
     }
 }

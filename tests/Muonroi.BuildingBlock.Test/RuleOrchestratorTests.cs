@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class RuleOrchestratorTests
@@ -79,7 +80,7 @@ public class RuleOrchestratorTests
         TestRule<RuleA> a = new("A", HookPoint.BeforePersist, dependencies: [typeof(TestRule<RuleB>)]);
         TestRule<RuleB> b = new("B", HookPoint.BeforePersist, dependencies: [typeof(TestRule<RuleA>)]);
 
-        Assert.Throws<InvalidOperationException>(() => CreateOrchestrator(a, b));
+        Assert.Throws<MInternalException>(() => CreateOrchestrator(a, b));
     }
 
     [Fact]
@@ -101,7 +102,7 @@ public class RuleOrchestratorTests
 
         RuleOrchestrator<object> orchestrator = CreateOrchestrator(fail, later);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => orchestrator.ExecuteAsync(new object()));
+        await Assert.ThrowsAsync<MInternalException>(() => orchestrator.ExecuteAsync(new object()));
 
         Assert.Equal(new[] { "A" }, executed);
     }

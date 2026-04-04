@@ -1,5 +1,7 @@
+using Muonroi.RuleEngine.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
+using Muonroi.RuleEngine.Abstractions.Rules;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
@@ -411,7 +413,7 @@ public sealed class RulesEngineService(
         if (ambiguousCodes.Count > 0)
         {
             string detail = string.Join(" | ", ambiguousCodes.Select(kv => $"{kv.Key} => [{string.Join(", ", kv.Value)}]"));
-            throw new MConfigurationException($"Ruleset contains ambiguous rule code mappings: {detail}.");
+            throw new RuleEngineAmbiguousCodeException($"Ruleset contains ambiguous rule code mappings: {detail}.");
         }
 
         IEnumerable<IHookHandler<TContext>> hooks = _serviceProvider?.GetServices<IHookHandler<TContext>>() ?? [];

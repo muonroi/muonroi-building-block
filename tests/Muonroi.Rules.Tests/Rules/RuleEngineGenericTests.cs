@@ -1,4 +1,5 @@
 using Muonroi.RuleEngine.Abstractions;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Rules.Tests.Rules;
 
@@ -110,7 +111,7 @@ public class RuleEngineGenericTests
         var engine = new RuleEngine<TestContext>();
         engine.AddRule(new FailRule());
         Func<Task> act = () => engine.ExecuteAsync(new TestContext(), RuleType.Business);
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        await act.Should().ThrowAsync<MInternalException>();
     }
 
     [Fact]
