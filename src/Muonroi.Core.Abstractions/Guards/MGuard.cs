@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Runtime.CompilerServices;
 using Muonroi.Core.Abstractions.Exceptions;
+using System.Collections;
 
 namespace Muonroi.Core.Abstractions.Guards;
 
@@ -22,7 +21,7 @@ public static class MGuard
     /// <exception cref="MArgumentException">Thrown when value is null.</exception>
     public static T NotNull<T>(
         T? value,
-        [CallerArgumentExpression("value")] string? paramName = null,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerMemberName] string? callerMember = null,
         [CallerFilePath] string? callerFile = null,
         [CallerLineNumber] int callerLine = 0)
@@ -49,7 +48,7 @@ public static class MGuard
     /// <exception cref="MArgumentException">Thrown when value is null.</exception>
     public static T NotNull<T>(
         T? value,
-        [CallerArgumentExpression("value")] string? paramName = null,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerMemberName] string? callerMember = null,
         [CallerFilePath] string? callerFile = null,
         [CallerLineNumber] int callerLine = 0)
@@ -75,7 +74,7 @@ public static class MGuard
     /// <exception cref="MArgumentException">Thrown when value is null or whitespace.</exception>
     public static string NotEmpty(
         string? value,
-        [CallerArgumentExpression("value")] string? paramName = null,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerMemberName] string? callerMember = null,
         [CallerFilePath] string? callerFile = null,
         [CallerLineNumber] int callerLine = 0)
@@ -101,7 +100,7 @@ public static class MGuard
     /// <exception cref="MArgumentException">Thrown when value is null or empty.</exception>
     public static T NotEmpty<T>(
         T? value,
-        [CallerArgumentExpression("value")] string? paramName = null,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerMemberName] string? callerMember = null,
         [CallerFilePath] string? callerFile = null,
         [CallerLineNumber] int callerLine = 0)
@@ -134,7 +133,7 @@ public static class MGuard
     /// <exception cref="MArgumentException">Thrown when value is the default for its type.</exception>
     public static T NotDefault<T>(
         T value,
-        [CallerArgumentExpression("value")] string? paramName = null,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerMemberName] string? callerMember = null,
         [CallerFilePath] string? callerFile = null,
         [CallerLineNumber] int callerLine = 0)
@@ -169,7 +168,7 @@ public static class MGuard
     {
         if (!predicate(value))
         {
-            throw new MArgumentException("value", errorMessage, callerMember, callerFile, callerLine);
+            throw new MArgumentException(nameof(value), errorMessage, callerMember, callerFile, callerLine);
         }
     }
 
@@ -191,7 +190,7 @@ public static class MGuard
     {
         if (condition)
         {
-            throw new MArgumentException("condition", errorMessage, callerMember, callerFile, callerLine);
+            throw new MArgumentException(nameof(condition), errorMessage, callerMember, callerFile, callerLine);
         }
     }
 
@@ -211,7 +210,7 @@ public static class MGuard
         int value,
         int min,
         int max,
-        [CallerArgumentExpression("value")] string? paramName = null,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerMemberName] string? callerMember = null,
         [CallerFilePath] string? callerFile = null,
         [CallerLineNumber] int callerLine = 0)
@@ -240,7 +239,7 @@ public static class MGuard
         long value,
         long min,
         long max,
-        [CallerArgumentExpression("value")] string? paramName = null,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerMemberName] string? callerMember = null,
         [CallerFilePath] string? callerFile = null,
         [CallerLineNumber] int callerLine = 0)
@@ -267,7 +266,7 @@ public static class MGuard
     public static string? MaxLength(
         string? value,
         int maxLength,
-        [CallerArgumentExpression("value")] string? paramName = null,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerMemberName] string? callerMember = null,
         [CallerFilePath] string? callerFile = null,
         [CallerLineNumber] int callerLine = 0)
@@ -293,7 +292,7 @@ public static class MGuard
     /// <exception cref="MArgumentException">Thrown when the enum value is not defined.</exception>
     public static TEnum ValidEnum<TEnum>(
         TEnum value,
-        [CallerArgumentExpression("value")] string? paramName = null,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerMemberName] string? callerMember = null,
         [CallerFilePath] string? callerFile = null,
         [CallerLineNumber] int callerLine = 0)
