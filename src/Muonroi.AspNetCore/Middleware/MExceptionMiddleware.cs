@@ -62,11 +62,24 @@ public class MExceptionMiddleware(
         // Branch 1 — MException (per D-08, D-09)
         if (ex is MException mex)
         {
-            // Log level by category (per D-08)
-            if (mex.Category is MExceptionCategory.Validation or MExceptionCategory.Domain)
-                _logger.Warn("Domain/Validation exception: {ErrorCode}. Message: {Message}", mex.ErrorCode, mex.Message);
-            else
-                _logger.Error(mex, "Infrastructure/Security exception: {ErrorCode}", mex.ErrorCode);
+            // Enrich structured log scope with auto-context properties (per D-03)
+            using (_logger.BeginScope(new Dictionary<string, object?>
+            {
+                ["ErrorCode"] = mex.ErrorCode,
+                ["SourcePackage"] = mex.SourcePackage,
+                ["CallerMethod"] = mex.CallerMethod,
+                ["CallerFile"] = mex.CallerFile,
+                ["CallerLine"] = mex.CallerLine,
+                ["MTraceId"] = mex.TraceId,
+                ["MSpanId"] = mex.SpanId,
+            }))
+            {
+                // Log level by category (per D-08)
+                if (mex.Category is MExceptionCategory.Validation or MExceptionCategory.Domain)
+                    _logger.Warn("Domain/Validation exception: {ErrorCode} from {SourcePackage}.{CallerMethod}. Message: {Message}", mex.ErrorCode, mex.SourcePackage, mex.CallerMethod, mex.Message);
+                else
+                    _logger.Error(mex, "Infrastructure/Security exception: {ErrorCode} from {SourcePackage}.{CallerMethod}", mex.ErrorCode, mex.SourcePackage, mex.CallerMethod);
+            }
 
             context.Response.StatusCode = mex.HttpStatusCode;
 
