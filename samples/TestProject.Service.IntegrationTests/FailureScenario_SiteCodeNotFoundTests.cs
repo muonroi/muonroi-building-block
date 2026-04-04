@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Muonroi.Core.Abstractions.Exceptions;
 using TestProject.Service.Core.Constants;
 using TestProject.Service.Core.Contracts;
 using TestProject.Service.Sites.Alpha;
@@ -8,7 +9,7 @@ namespace TestProject.Service.IntegrationTests;
 
 /// <summary>
 /// FAIL-01: Verifies that resolving ISiteProfileResolver for an unknown SiteCode throws
-/// InvalidOperationException with a clear, operator-readable message — not a cryptic DI error.
+/// MInternalException with a clear, operator-readable message — not a cryptic DI error.
 ///
 /// The "default" fallback in AddMultiSiteProfiles silently resolves when a site named "DEFAULT"
 /// or "default" is registered (OrdinalIgnoreCase match). To reliably trigger the not-found path,
@@ -51,14 +52,14 @@ public sealed class FailureScenario_SiteCodeNotFoundTests
     }
 
     [Fact]
-    public void ResolvingUnknownSiteCode_Throws_InvalidOperationException()
+    public void ResolvingUnknownSiteCode_Throws_MInternalException()
     {
         // Arrange
         using var provider = BuildProvider(UnknownSiteCode);
         using var scope = provider.CreateScope();
 
         // Act & Assert — resolving ISiteProfileResolver with unknown site code must throw
-        var ex = Assert.Throws<InvalidOperationException>(
+        var ex = Assert.Throws<MInternalException>(
             () => scope.ServiceProvider.GetRequiredService<ISiteProfileResolver>());
 
         Assert.NotNull(ex);
@@ -72,7 +73,7 @@ public sealed class FailureScenario_SiteCodeNotFoundTests
         using var scope = provider.CreateScope();
 
         // Act
-        var ex = Assert.Throws<InvalidOperationException>(
+        var ex = Assert.Throws<MInternalException>(
             () => scope.ServiceProvider.GetRequiredService<ISiteProfileResolver>());
 
         // Assert — message must name the unknown code so operators know what to fix
@@ -87,7 +88,7 @@ public sealed class FailureScenario_SiteCodeNotFoundTests
         using var scope = provider.CreateScope();
 
         // Act
-        var ex = Assert.Throws<InvalidOperationException>(
+        var ex = Assert.Throws<MInternalException>(
             () => scope.ServiceProvider.GetRequiredService<ISiteProfileResolver>());
 
         // Assert — message lists registered site codes (ALPHA + BRAVO in this setup)
@@ -104,7 +105,7 @@ public sealed class FailureScenario_SiteCodeNotFoundTests
         using var scope = provider.CreateScope();
 
         // Act
-        var ex = Assert.Throws<InvalidOperationException>(
+        var ex = Assert.Throws<MInternalException>(
             () => scope.ServiceProvider.GetRequiredService<ISiteProfileResolver>());
 
         // Assert — message must NOT leak internal DI namespace details
