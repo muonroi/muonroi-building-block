@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Muonroi.Core.Abstractions.Exceptions;
 using TestProject.Service.Core.Constants;
 using TestProject.Service.Core.Contracts;
 using TestProject.Service.Sites.Default;
@@ -9,7 +10,7 @@ using TestProject.Service.Sites.Bravo;
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>
-/// FAIL-02: Verifies that SiteProfileStartupValidator throws InvalidOperationException at startup
+/// FAIL-02: Verifies that SiteProfileStartupValidator throws MInternalException at startup
 /// when a keyed service is missing for a registered site — specifically when BRAVO's IOrderService
 /// keyed registration is deliberately omitted.
 ///
@@ -55,14 +56,14 @@ public sealed class FailureScenario_StartupValidatorTests
     }
 
     [Fact]
-    public async Task StartupValidator_WithMissingBravoService_Throws_InvalidOperationException()
+    public async Task StartupValidator_WithMissingBravoService_Throws_MInternalException()
     {
         // Arrange
         await using var provider = BuildProviderWithMissingBravoService();
         var validator = provider.GetRequiredService<IHostedService>();
 
         // Act & Assert — validator must throw because BRAVO keyed service is missing
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<MInternalException>(
             () => validator.StartAsync(CancellationToken.None));
     }
 
@@ -74,7 +75,7 @@ public sealed class FailureScenario_StartupValidatorTests
         var validator = provider.GetRequiredService<IHostedService>();
 
         // Act
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+        var ex = await Assert.ThrowsAsync<MInternalException>(
             () => validator.StartAsync(CancellationToken.None));
 
         // Assert — message names which site has the missing registration
@@ -89,7 +90,7 @@ public sealed class FailureScenario_StartupValidatorTests
         var validator = provider.GetRequiredService<IHostedService>();
 
         // Act
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+        var ex = await Assert.ThrowsAsync<MInternalException>(
             () => validator.StartAsync(CancellationToken.None));
 
         // Assert — message names which service type is missing
@@ -104,7 +105,7 @@ public sealed class FailureScenario_StartupValidatorTests
         var validator = provider.GetRequiredService<IHostedService>();
 
         // Act
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+        var ex = await Assert.ThrowsAsync<MInternalException>(
             () => validator.StartAsync(CancellationToken.None));
 
         // Assert — message contains the sentinel phrase used by SiteProfileStartupValidator
