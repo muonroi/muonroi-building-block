@@ -95,7 +95,7 @@ public static class MSerilogAction
         }
         catch (Exception ex)
         {
-            throw new MConfigurationException("Invalid log file path.", "Serilog:LogFilePath");
+            throw new MConfigurationException("Invalid log file path.", "Serilog:LogFilePath", ex);
         }
 
         loggerConfiguration.WriteTo.File(
