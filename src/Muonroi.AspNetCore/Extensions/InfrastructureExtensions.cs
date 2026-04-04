@@ -365,7 +365,7 @@ public static class InfrastructureExtensions
         bool enableEncryption = configuration.GetValue<bool>("EnableEncryption");
         if (!enableEncryption)
         {
-            throw new SecurityException("[SEC_FATAL] EnableEncryption must be true in Production with paid license.");
+            throw new MInternalException("[SEC_FATAL] EnableEncryption must be true in Production with paid license.", MErrorCodes.AspNetCore.EncryptionRequired);
         }
     }
 }

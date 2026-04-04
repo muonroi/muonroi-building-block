@@ -1,6 +1,7 @@
 using Quartz;
 using Muonroi.BackgroundJobs.Abstractions;
 using System.Linq.Expressions;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BackgroundJobs.Quartz.Quartz;
 
@@ -14,17 +15,17 @@ public sealed class QuartzJobScheduler(ISchedulerFactory schedulerFactory) : IBa
         // Quartz typically uses Class-based jobs. 
         // For Expression-based jobs, a wrapper job would be needed.
         // For now, we provide a placeholder or basic implementation.
-        throw new NotSupportedException("Expression-based jobs are not yet supported in Quartz provider. Use Class-based jobs or Hangfire.");
+        throw new MInternalException("Expression-based jobs are not yet supported in Quartz provider. Use Class-based jobs or Hangfire.", MErrorCodes.BackgroundJobs.ExpressionJobsNotSupported);
     }
 
     public string Schedule<T>(Expression<Func<T, Task>> methodCall, DateTimeOffset enqueueAt)
     {
-        throw new NotSupportedException("Expression-based jobs are not yet supported in Quartz provider.");
+        throw new MInternalException("Expression-based jobs are not yet supported in Quartz provider. Use Class-based jobs or Hangfire.", MErrorCodes.BackgroundJobs.ExpressionJobsNotSupported);
     }
 
     public void AddOrUpdateRecurring<T>(string recurringJobId, Expression<Func<T, Task>> methodCall, string cronExpression)
     {
-        throw new NotSupportedException("Expression-based recurring jobs are not yet supported in Quartz provider.");
+        throw new MInternalException("Expression-based jobs are not yet supported in Quartz provider. Use Class-based jobs or Hangfire.", MErrorCodes.BackgroundJobs.ExpressionJobsNotSupported);
     }
 
     public void RemoveRecurring(string recurringJobId)

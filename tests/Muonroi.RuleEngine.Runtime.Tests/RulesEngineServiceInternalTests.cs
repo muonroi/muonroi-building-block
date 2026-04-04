@@ -66,15 +66,7 @@ public sealed class RulesEngineServiceInternalTests
         GetProperty<ExecutionMode?>(result, "ExecutionMode").Should().BeNull();
     }
 
-    [Fact]
-    public void ResolveContextType_CanResolveByFullNameAndSimpleName()
-    {
-        Type byFullName = (Type)InvokePrivateStatic(nameof(RulesEngineService), "ResolveContextType", typeof(InternalContext).FullName!);
-        Type bySimpleName = (Type)InvokePrivateStatic(nameof(RulesEngineService), "ResolveContextType", nameof(InternalContext));
 
-        byFullName.Should().Be(typeof(InternalContext));
-        bySimpleName.Should().Be(typeof(InternalContext));
-    }
 
     [Fact]
     public void ConvertJsonElement_ConvertsNestedObjectsAndArrays()

@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.UiEngine.Catalog.Attributes;
 
 /// <summary>
@@ -9,7 +11,7 @@ public sealed class BindRuleContextAttribute(Type contextType) : Attribute
     /// <summary>
     /// The bound rule context type.
     /// </summary>
-    public Type ContextType { get; } = contextType ?? throw new ArgumentNullException(nameof(contextType));
+    public Type ContextType { get; } = MGuard.NotNull(contextType);
 
     /// <summary>
     /// Optional runtime workflow name bound to this endpoint.

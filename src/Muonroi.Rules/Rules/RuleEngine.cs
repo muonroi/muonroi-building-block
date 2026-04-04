@@ -261,7 +261,7 @@ public sealed class RuleEngine<T>(
             string? current = TenantContext.CurrentTenantId;
             if (!string.IsNullOrWhiteSpace(current) && scoped.TenantId != current)
             {
-                throw new UnauthorizedAccessException("Cross tenant rule execution detected.");
+                throw new MUnauthorizedException("Cross tenant rule execution detected.");
             }
         }
 
@@ -399,4 +399,6 @@ public sealed class RuleEngine<T>(
     private sealed record CachedExecutionPlan(
         int Version,
         IReadOnlyList<(IRule<T> Rule, RuleDescriptor Descriptor)> Plan);
+}
+, RuleDescriptor Descriptor)> Plan);
 }

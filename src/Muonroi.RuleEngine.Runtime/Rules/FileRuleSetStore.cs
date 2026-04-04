@@ -147,7 +147,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
 
         string dir = GetWorkflowDirectory(workflowName);
         string path = EnsureUnderRoot(Path.Combine(dir, $"v{version}.json"));
-        if (!File.Exists(path)) throw new FileNotFoundException("Specified version not found", path);
+        if (!File.Exists(path)) throw new MNotFoundException("RuleSetVersion", path);
 
         Directory.CreateDirectory(dir);
         SemaphoreSlim gate = WorkflowLocks.GetOrAdd(dir, _ => new SemaphoreSlim(1, 1));

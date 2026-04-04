@@ -173,7 +173,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
         string path = EnsureUnderRoot(Path.Combine(dir, $"v{version}.json"));
         if (!File.Exists(path))
         {
-            throw new FileNotFoundException("Specified version not found", path);
+            throw new MNotFoundException("RuleSetVersion", path);
         }
 
         Directory.CreateDirectory(dir);

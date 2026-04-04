@@ -435,7 +435,7 @@ public sealed class RulesEngineService(
             BindingFlags.Instance | BindingFlags.NonPublic);
         if (bridge is null)
         {
-            throw new MissingMethodException(nameof(ExecuteCodeWorkflowBridgeAsync));
+            throw new MConfigurationException($"Method {nameof(ExecuteCodeWorkflowBridgeAsync)} not available — code workflow bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
@@ -471,7 +471,7 @@ public sealed class RulesEngineService(
             BindingFlags.Instance | BindingFlags.NonPublic);
         if (bridge is null)
         {
-            throw new MissingMethodException(nameof(ExecuteLegacyWorkflowBridgeAsync));
+            throw new MConfigurationException($"Method {nameof(ExecuteLegacyWorkflowBridgeAsync)} not available — legacy workflow bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
@@ -514,7 +514,7 @@ public sealed class RulesEngineService(
         {
             if (!string.IsNullOrEmpty(result.ExceptionMessage))
             {
-                throw new Exception(result.ExceptionMessage);
+                throw new MInternalException(result.ExceptionMessage ?? "Rule execution failed.", MErrorCodes.Rule.ExecutionFailed);
             }
 
             if (result.ActionResult?.Exception is not null)
@@ -1458,7 +1458,7 @@ public sealed class RulesEngineService(
             BindingFlags.Instance | BindingFlags.NonPublic);
         if (bridge is null)
         {
-            throw new MissingMethodException(nameof(ExecuteFlowGraphBridgeAsync));
+            throw new MConfigurationException($"Method {nameof(ExecuteFlowGraphBridgeAsync)} not available — flow graph bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());

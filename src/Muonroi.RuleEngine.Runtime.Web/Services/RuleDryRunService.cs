@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.License;
 using Muonroi.RuleEngine.Core.Tracing;
 using RulesEngine.Models;
@@ -29,11 +30,11 @@ public sealed class RuleDryRunService(
     private const string ContextTypeKey = "__contextType";
     private static readonly TimeSpan MaxDuration = TimeSpan.FromSeconds(10);
 
-    private readonly IRuleSetStore _store = store ?? throw new ArgumentNullException(nameof(store));
-    private readonly IRuleSetDefinitionValidator _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-    private readonly IServiceProvider _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+    private readonly IRuleSetStore _store = MGuard.NotNull(store);
+    private readonly IRuleSetDefinitionValidator _validator = MGuard.NotNull(validator);
+    private readonly IServiceProvider _serviceProvider = MGuard.NotNull(serviceProvider);
     private readonly ISystemExecutionContextAccessor _executionContextAccessor =
-        executionContextAccessor ?? throw new ArgumentNullException(nameof(executionContextAccessor));
+        MGuard.NotNull(executionContextAccessor);
     private readonly ReSettings _settings = settings ?? new ReSettings();
     private readonly ILicenseGuard? _licenseGuard = licenseGuard;
     private readonly ProofTierAccessor? _proofTierAccessor = proofTierAccessor;

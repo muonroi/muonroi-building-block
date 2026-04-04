@@ -74,6 +74,15 @@ public static class MErrorCodes
 
         /// <summary>Rule action delegate was null when creating Activation.</summary>
         public const string NullRuleAction = "MBB:RULE:014";
+
+        /// <summary>Rule execution failed with an unexpected error.</summary>
+        public const string ExecutionFailed = "MBB:RULE:015";
+
+        /// <summary>Generic bridge method for workflow execution is missing.</summary>
+        public const string MissingWorkflowBridge = "MBB:RULE:016";
+
+        /// <summary>Unsupported FEEL comparison operation.</summary>
+        public const string UnsupportedComparison = "MBB:RULE:017";
     }
 
     /// <summary>
@@ -129,6 +138,12 @@ public static class MErrorCodes
 
         /// <summary>Dapper string handler Parse method is not implemented.</summary>
         public const string DapperHandlerNotImplemented = "MBB:DATA:002";
+
+        /// <summary>Requested feature or method is not implemented in the data provider.</summary>
+        public const string NotImplemented = "MBB:DATA:003";
+
+        /// <summary>MongoDB context configuration is not supported.</summary>
+        public const string MongoNotSupported = "MBB:DATA:004";
     }
 
     /// <summary>
@@ -148,6 +163,18 @@ public static class MErrorCodes
 
         /// <summary>Assembly hash mismatch detected by CodeIntegrityVerifier.</summary>
         public const string AssemblyIntegrityViolation = "MBB:GOV:004";
+
+        /// <summary>Tamper detection sensor triggered.</summary>
+        public const string TamperDetected = "MBB:GOV:005";
+
+        /// <summary>Integrity check failed.</summary>
+        public const string IntegrityCompromised = "MBB:GOV:006";
+
+        /// <summary>General security violation.</summary>
+        public const string SecurityViolation = "MBB:GOV:007";
+
+        /// <summary>Code integrity verification failed.</summary>
+        public const string CodeIntegrityFailed = "MBB:GOV:008";
     }
 
     /// <summary>
@@ -177,6 +204,9 @@ public static class MErrorCodes
 
         /// <summary>Expression-based fire-and-forget jobs are not supported in the Quartz provider.</summary>
         public const string ExpressionFireAndForgetNotSupported = "MBB:BG:003";
+
+        /// <summary>Expression-based jobs are not supported in the current provider.</summary>
+        public const string ExpressionJobsNotSupported = "MBB:BG:004";
     }
 
     /// <summary>
@@ -197,5 +227,8 @@ public static class MErrorCodes
     {
         /// <summary>Encryption must be enabled in Production environment with a paid license tier.</summary>
         public const string EncryptionRequiredInProduction = "MBB:ASP:001";
+
+        /// <summary>Encryption is required for the current operation.</summary>
+        public const string EncryptionRequired = "MBB:ASP:002";
     }
 }

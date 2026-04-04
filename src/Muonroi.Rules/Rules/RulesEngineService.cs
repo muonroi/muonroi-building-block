@@ -181,7 +181,7 @@ public sealed class RulesEngineService(
         {
             if (!string.IsNullOrEmpty(result.ExceptionMessage))
             {
-                throw new Exception(result.ExceptionMessage);
+                throw new MInternalException(result.ExceptionMessage ?? "Rule execution failed.", MErrorCodes.Rule.ExecutionFailed);
             }
 
             if (result.ActionResult?.Exception is not null)

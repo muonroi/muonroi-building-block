@@ -74,7 +74,7 @@ public abstract class BaseGrpcService(
         Func<Metadata, Task<MResponse>> grpcCall,
         GrpcMethodPolicyConfig? policy)
     {
-        _ = grpcCall ?? throw new NullReferenceException(nameof(grpcCall));
+        _ = MGuard.NotNull(grpcCall);
         EnsureGrpcLicensed();
 
         Metadata metadata = CreateMetadata();

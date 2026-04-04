@@ -1,4 +1,4 @@
-
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.RuleEngine.Core.Runtime;
 
@@ -9,7 +9,7 @@ public sealed class Activation(Func<IRuleContext, Task> action, int priority = 0
 {
 
     /// <summary>Gets the rule action to execute.</summary>
-    public Func<IRuleContext, Task> Action { get; } = action ?? throw new ArgumentNullException(nameof(action));
+    public Func<IRuleContext, Task> Action { get; } = MGuard.NotNull(action);
 
     /// <summary>Priority of this activation. Higher values fire first.</summary>
     public int Priority { get; } = priority;

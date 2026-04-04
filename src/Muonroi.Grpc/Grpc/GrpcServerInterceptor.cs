@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Muonroi.Core.Abstractions.Constants;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.License;
 using Muonroi.Logging.Abstractions;
 
@@ -38,7 +39,7 @@ public class GrpcServerInterceptor(
         ServerCallContext context,
         UnaryServerMethod<TRequest, TResponse> continuation)
     {
-        _ = context ?? throw new NullReferenceException(nameof(context));
+        _ = MGuard.NotNull(context);
         EnsureGrpcLicensed();
 
         SystemExecutionContext executionContext = NormalizeExecutionContext(context, allowCorrelationTrailer: true);
@@ -84,7 +85,7 @@ public class GrpcServerInterceptor(
         ServerCallContext context,
         ClientStreamingServerMethod<TRequest, TResponse> continuation)
     {
-        _ = context ?? throw new NullReferenceException(nameof(context));
+        _ = MGuard.NotNull(context);
         EnsureGrpcLicensed();
 
         SystemExecutionContext executionContext = NormalizeExecutionContext(context, allowCorrelationTrailer: false);
@@ -125,7 +126,7 @@ public class GrpcServerInterceptor(
         ServerCallContext context,
         ServerStreamingServerMethod<TRequest, TResponse> continuation)
     {
-        _ = context ?? throw new NullReferenceException(nameof(context));
+        _ = MGuard.NotNull(context);
         EnsureGrpcLicensed();
 
         SystemExecutionContext executionContext = NormalizeExecutionContext(context, allowCorrelationTrailer: false);
@@ -165,7 +166,7 @@ public class GrpcServerInterceptor(
         ServerCallContext context,
         DuplexStreamingServerMethod<TRequest, TResponse> continuation)
     {
-        _ = context ?? throw new NullReferenceException(nameof(context));
+        _ = MGuard.NotNull(context);
         EnsureGrpcLicensed();
 
         SystemExecutionContext executionContext = NormalizeExecutionContext(context, allowCorrelationTrailer: false);

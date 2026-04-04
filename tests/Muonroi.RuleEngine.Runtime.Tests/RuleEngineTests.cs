@@ -7,6 +7,7 @@ using Muonroi.RuleEngine.Runtime.Rules;
 using NSubstitute;
 using Xunit;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Mediator.Exceptions;
 
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
@@ -193,7 +194,7 @@ public sealed class RuleEngineTests
         Func<Task> act = () => engine.ExecuteAsync(
             new TestContext { TenantId = "tenant-B" });
 
-        await act.Should().ThrowAsync<UnauthorizedAccessException>()
+        await act.Should().ThrowAsync<MUnauthorizedException>()
             .WithMessage("*Cross tenant*");
     }
 

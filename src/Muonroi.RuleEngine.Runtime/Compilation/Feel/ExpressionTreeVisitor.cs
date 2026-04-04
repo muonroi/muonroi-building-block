@@ -141,7 +141,7 @@ internal static class ExpressionTreeVisitor
                     VisitAsObject(forNode.List, varsParameter),
                     Expression.Constant(forNode.Body)),
             FeelListLiteralNode listNode => BuildListLiteral(listNode, varsParameter),
-            _ => throw new NotSupportedException($"Unsupported FEEL syntax node '{node.GetType().Name}'.")
+            _ => throw new MInternalException($"Unsupported FEEL syntax node '{node.GetType().Name}'.", MErrorCodes.Rule.UnsupportedFeelSyntax)
         };
     }
 
@@ -156,7 +156,7 @@ internal static class ExpressionTreeVisitor
             FeelBinaryOperator.GreaterThanOrEqual => Expression.GreaterThanOrEqual(comparison, Expression.Constant(0)),
             FeelBinaryOperator.LessThan => Expression.LessThan(comparison, Expression.Constant(0)),
             FeelBinaryOperator.LessThanOrEqual => Expression.LessThanOrEqual(comparison, Expression.Constant(0)),
-            _ => throw new NotSupportedException($"Unsupported comparison operator '{node.Operator}'.")
+            _ => throw new MInternalException($"Unsupported comparison operator '{node.Operator}'.", MErrorCodes.Rule.UnsupportedComparisonOperator)
         };
     }
 
@@ -168,7 +168,7 @@ internal static class ExpressionTreeVisitor
             FeelBinaryOperator.Subtract => "-",
             FeelBinaryOperator.Multiply => "*",
             FeelBinaryOperator.Divide => "/",
-            _ => throw new NotSupportedException($"Unsupported arithmetic operator '{node.Operator}'.")
+            _ => throw new MInternalException($"Unsupported arithmetic operator '{node.Operator}'.", MErrorCodes.Rule.UnsupportedArithmeticOperator)
         };
         return Expression.Call(ArithmeticMethod,
             VisitAsObject(node.Left, varsParameter),
@@ -292,7 +292,7 @@ internal static class ExpressionTreeVisitor
             "-" => (object)(l - r),
             "*" => (object)(l * r),
             "/" => r == 0 ? throw new DivideByZeroException("Division by zero in FEEL expression.") : (object)(l / r),
-            _ => throw new NotSupportedException($"Unsupported arithmetic operator '{op}'.")
+            _ => throw new MInternalException($"Unsupported arithmetic operator '{op}'.", MErrorCodes.Rule.UnsupportedArithmeticOperator)
         };
     }
 

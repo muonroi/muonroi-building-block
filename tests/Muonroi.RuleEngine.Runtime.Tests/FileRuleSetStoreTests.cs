@@ -98,7 +98,7 @@ public sealed class FileRuleSetStoreTests : IDisposable
 
         Func<Task> act = () => _sut.SetActiveVersionAsync("wf1", 99);
 
-        await act.Should().ThrowAsync<FileNotFoundException>();
+        await act.Should().ThrowAsync<MNotFoundException>();
     }
 
     [Fact]

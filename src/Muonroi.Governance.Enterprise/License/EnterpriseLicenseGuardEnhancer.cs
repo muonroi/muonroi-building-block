@@ -186,7 +186,7 @@ public sealed class EnterpriseLicenseGuardEnhancer(
 
                 if (GetEffectiveFailMode() != LicenseFailMode.Soft)
                 {
-                    throw new SecurityException("[SEC_TAMPER] Security violation detected via anti-tamper sensors.");
+                    throw new MInternalException("[SEC_TAMPER] Security violation detected via anti-tamper sensors.", MErrorCodes.Governance.TamperDetected);
                 }
 
                 return;
@@ -196,7 +196,7 @@ public sealed class EnterpriseLicenseGuardEnhancer(
             {
                 if (AntiTamperDetector.IsMethodHooked(typeof(LicenseGuard).GetMethod(nameof(LicenseGuard.RecordAction))!))
                 {
-                    throw new SecurityException("[SEC_TAMPER] Execution integrity compromised.");
+                    throw new MInternalException("[SEC_TAMPER] Execution integrity compromised.", MErrorCodes.Governance.IntegrityCompromised);
                 }
             }
         }
@@ -252,8 +252,9 @@ public sealed class EnterpriseLicenseGuardEnhancer(
 
         if (MEnterpriseFailClosedMatrix.ShouldBlock(requestedFeature, MEnterpriseFailureReason.MissingSignedPolicy))
         {
-            throw new SecurityException(
-                $"[SEC_FAIL_CLOSED] Enterprise Production requires a valid signed policy for '{requestedFeature}'.");
+            throw new MInternalException(
+                $"[SEC_FAIL_CLOSED] Enterprise Production requires a valid signed policy for '{requestedFeature}'.",
+                MErrorCodes.Governance.SecurityViolation);
         }
     }
 }
