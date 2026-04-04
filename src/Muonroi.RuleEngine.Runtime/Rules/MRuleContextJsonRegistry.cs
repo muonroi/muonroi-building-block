@@ -5,13 +5,13 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
 /// Registry for rule context types that can be deserialized during dry-run execution.
-/// Replaces the unsafe <c>Type.GetType()</c> + <c>JsonSerializer.Deserialize(json, type)</c> pattern.
+/// Replaces the unsafe assembly-scanning type resolution pattern.
 /// All types must be explicitly registered via <see cref="AddRuleContext{T}"/>.
 /// </summary>
 /// <remarks>
 /// Source-gen compatible: each registration stores a deserialization delegate
 /// that can use <c>JsonTypeInfo&lt;T&gt;</c> from a <c>JsonSerializerContext</c> when available.
-/// AOT-safe: no <c>Type.GetType</c>, no <c>AppDomain.GetAssemblies</c>, no reflection.
+/// AOT-safe: no assembly scanning, no reflection-based type lookup.
 /// Thread-safe: uses <see cref="ConcurrentDictionary{TKey,TValue}"/> internally.
 /// </remarks>
 public sealed class MRuleContextJsonRegistry
