@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 [Collection("NonParallel")]
@@ -18,7 +19,7 @@ public class AuditTrailLicenseGuardTests
                 new NoopFingerprintChainStore(),
                 new HmacFingerprintSigner(state.Payload, configs));
 
-            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+            MInternalException ex = Assert.Throws<MInternalException>(() =>
             {
                 LicenseActionContext context = new()
                 {
@@ -51,7 +52,7 @@ public class AuditTrailLicenseGuardTests
                 new NoopFingerprintChainStore(),
                 new HmacFingerprintSigner(state.Payload, configs));
 
-            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+            MInternalException ex = Assert.Throws<MInternalException>(() =>
             {
                 LicenseActionContext context = new()
                 {

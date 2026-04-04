@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Messaging.Abstractions.Contracts;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
@@ -19,7 +20,7 @@ public static class MassTransitFilterExtensions
         where TMessage : class
         where TRouter : class, IMessageRouter<TMessage>
     {
-        ArgumentNullException.ThrowIfNull(services);
+        MGuard.NotNull(services);
         services.TryAddScoped<TRouter>();
         services.TryAddScoped<IMessageRouter<TMessage>>(sp => sp.GetRequiredService<TRouter>());
         return services;
@@ -30,8 +31,8 @@ public static class MassTransitFilterExtensions
     /// </summary>
     public static void AddConsumeFilter(this IBusRegistrationConfigurator configurator, Type filterType)
     {
-        ArgumentNullException.ThrowIfNull(configurator);
-        ArgumentNullException.ThrowIfNull(filterType);
+        MGuard.NotNull(configurator);
+        MGuard.NotNull(filterType);
 
         configurator.AddConfigureEndpointsCallback((context, _, cfg) => { cfg.UseConsumeFilter(filterType, context); });
     }
@@ -41,8 +42,8 @@ public static class MassTransitFilterExtensions
     /// </summary>
     public static void AddPublishFilter(this IBusRegistrationConfigurator configurator, Type filterType)
     {
-        ArgumentNullException.ThrowIfNull(configurator);
-        ArgumentNullException.ThrowIfNull(filterType);
+        MGuard.NotNull(configurator);
+        MGuard.NotNull(filterType);
 
         configurator.AddConfigureEndpointsCallback((context, _, cfg) => { cfg.UsePublishFilter(filterType, context); });
     }
@@ -52,8 +53,8 @@ public static class MassTransitFilterExtensions
     /// </summary>
     public static void AddSendFilter(this IBusRegistrationConfigurator configurator, Type filterType)
     {
-        ArgumentNullException.ThrowIfNull(configurator);
-        ArgumentNullException.ThrowIfNull(filterType);
+        MGuard.NotNull(configurator);
+        MGuard.NotNull(filterType);
 
         configurator.AddConfigureEndpointsCallback((context, _, cfg) => { cfg.UseSendFilter(filterType, context); });
     }
@@ -71,8 +72,8 @@ public static class MassTransitFilterExtensions
     /// </summary>
     public static void ApplyRuntimePolicies(this IBusRegistrationConfigurator configurator, MessageBusRuntimeConfigs runtime)
     {
-        ArgumentNullException.ThrowIfNull(configurator);
-        ArgumentNullException.ThrowIfNull(runtime);
+        MGuard.NotNull(configurator);
+        MGuard.NotNull(runtime);
 
         configurator.AddConfigureEndpointsCallback((context, _, cfg) =>
         {

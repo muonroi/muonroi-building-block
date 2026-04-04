@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Models;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
@@ -300,6 +301,6 @@ public class MQueryTests
 
         Action act = () => new MQuery<MUser>(db, CreateAuth(), null!);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("licenseGuard");
+        act.Should().Throw<MArgumentException>();
     }
 }

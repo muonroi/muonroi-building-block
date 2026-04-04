@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MediatorAdditionalTests
@@ -45,7 +46,7 @@ public class MediatorAdditionalTests
     public async Task SendDynamic_No_Handler_Throws()
     {
         Mediator mediator = new(_ => null);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => mediator.Send(new MediatorTests.PingRequest()));
+        await Assert.ThrowsAsync<MInternalException>(() => mediator.Send(new MediatorTests.PingRequest()));
     }
 
     [Fact]
@@ -112,7 +113,7 @@ public class MediatorAdditionalTests
         ServiceProvider sp = services.BuildServiceProvider();
         IMediator mediator = sp.GetRequiredService<IMediator>();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.ThrowsAsync<MInternalException>(async () =>
         {
             await foreach (int _ in mediator.CreateStream(new ThrowingStreamRequest()))
             {

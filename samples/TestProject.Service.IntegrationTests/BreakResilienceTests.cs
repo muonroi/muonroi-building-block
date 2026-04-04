@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging;
 using TestProject.Service.Core.Constants;
 using TestProject.Service.Core.Contracts;
@@ -75,7 +76,7 @@ public sealed class BreakResilienceTests
 
         // BRAVO should fail
         Assert.NotNull(bravoException);
-        Assert.IsType<InvalidOperationException>(bravoException);
+        Assert.IsType<MInternalException>(bravoException);
         Assert.Contains("intentional failure", bravoException.Message);
 
         // --- DEFAULT run (should succeed) ---

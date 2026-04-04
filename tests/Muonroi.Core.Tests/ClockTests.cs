@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Core.Tests;
 
 public class ClockTests
@@ -11,7 +12,7 @@ public class ClockTests
         {
             Clock.Provider = ClockProviders.Local;
             Assert.Equal(ClockProviders.Local, Clock.Provider);
-            Assert.Throws<ArgumentNullException>(() => Clock.Provider = null!);
+            Assert.Throws<MArgumentException>(() => Clock.Provider = null!);
         }
         finally
         {

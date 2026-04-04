@@ -7,16 +7,11 @@ namespace Muonroi.Integration.Persistence;
 /// <summary>
 /// EF-backed connector config store.
 /// </summary>
-public sealed class EfConnectorConfigStore : IConnectorConfigStore
+/// <remarks>Creates a new EF-backed connector config store.</remarks>
+/// <param name="db">Connector database context.</param>
+public sealed class EfConnectorConfigStore(ConnectorDbContext db) : IConnectorConfigStore
 {
-    private readonly ConnectorDbContext _db;
-
-    /// <summary>Creates a new EF-backed connector config store.</summary>
-    /// <param name="db">Connector database context.</param>
-    public EfConnectorConfigStore(ConnectorDbContext db)
-    {
-        _db = db;
-    }
+    private readonly ConnectorDbContext _db = db;
 
     /// <inheritdoc />
     public async Task<ConnectorConfigDto?> GetByIdAsync(string id, string? tenantId, CancellationToken ct)

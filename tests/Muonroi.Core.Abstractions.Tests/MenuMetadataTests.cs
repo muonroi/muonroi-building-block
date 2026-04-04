@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Core.Abstractions.Tests;
 
 public class MenuMetadataTests
@@ -60,7 +61,7 @@ public class SystemExecutionContextScopeTests
 
         Action act = () => new SystemExecutionContextScope(null!, ctx);
 
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -70,7 +71,7 @@ public class SystemExecutionContextScopeTests
 
         Action act = () => new SystemExecutionContextScope(accessor, null!);
 
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]

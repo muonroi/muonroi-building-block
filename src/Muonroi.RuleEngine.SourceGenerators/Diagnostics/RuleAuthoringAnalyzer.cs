@@ -9,33 +9,22 @@ namespace Muonroi.RuleEngine.SourceGenerators.Diagnostics;
 
 internal static class RuleAuthoringAnalyzer
 {
-    private sealed class RuleMethodInfo
+    private sealed class RuleMethodInfo(
+        string code,
+        int order,
+        IReadOnlyList<string> dependsOn,
+        MethodDeclarationSyntax methodSyntax,
+        Location location,
+        HashSet<string> consumedFactKeys,
+        HashSet<string> producedFactKeys)
     {
-        public string Code { get; }
-        public int Order { get; }
-        public IReadOnlyList<string> DependsOn { get; }
-        public MethodDeclarationSyntax MethodSyntax { get; }
-        public Location Location { get; }
-        public HashSet<string> ConsumedFactKeys { get; }
-        public HashSet<string> ProducedFactKeys { get; }
-
-        public RuleMethodInfo(
-            string code,
-            int order,
-            IReadOnlyList<string> dependsOn,
-            MethodDeclarationSyntax methodSyntax,
-            Location location,
-            HashSet<string> consumedFactKeys,
-            HashSet<string> producedFactKeys)
-        {
-            Code = code;
-            Order = order;
-            DependsOn = dependsOn;
-            MethodSyntax = methodSyntax;
-            Location = location;
-            ConsumedFactKeys = consumedFactKeys;
-            ProducedFactKeys = producedFactKeys;
-        }
+        public string Code { get; } = code;
+        public int Order { get; } = order;
+        public IReadOnlyList<string> DependsOn { get; } = dependsOn;
+        public MethodDeclarationSyntax MethodSyntax { get; } = methodSyntax;
+        public Location Location { get; } = location;
+        public HashSet<string> ConsumedFactKeys { get; } = consumedFactKeys;
+        public HashSet<string> ProducedFactKeys { get; } = producedFactKeys;
     }
 
     public static void Analyze(Compilation compilation, IEnumerable<MethodDeclarationSyntax> methods, SourceProductionContext context)

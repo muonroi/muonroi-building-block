@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Rules.Tests;
 
 [Collection("NonParallel")]
@@ -62,7 +63,7 @@ public class RuleEngineOrchestrationTests
             .AddRule(new ThrowingRule())
             .AddRule(goodRule);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => engine.ExecuteAsync(context));
+        await Assert.ThrowsAsync<MInternalException>(() => engine.ExecuteAsync(context));
         Assert.False(goodRule.Executed);
     }
 

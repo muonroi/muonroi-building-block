@@ -8,13 +8,8 @@ namespace TestProject.Service.Sites.Alpha;
 /// Alpha site EF Core DbContext — allows longer Name values (300 chars vs base 200).
 /// Override OnModelCreating for Alpha-specific schema differences.
 /// </summary>
-public sealed class AlphaOrderContext : ContextBase
+public sealed class AlphaOrderContext(DbContextOptions<AlphaOrderContext> options) : ContextBase(options)
 {
-    public AlphaOrderContext(DbContextOptions<AlphaOrderContext> options)
-        : base(options)
-    {
-    }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

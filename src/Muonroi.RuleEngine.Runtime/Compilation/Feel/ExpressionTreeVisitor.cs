@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleEngine.Runtime.Compilation.Feel;
 
@@ -282,7 +283,7 @@ internal static class ExpressionTreeVisitor
             {
                 return $"{left}{right}";
             }
-            throw new InvalidOperationException($"Cannot perform '{op}' on non-numeric values.");
+            throw new MInternalException($"Cannot perform '{op}' on non-numeric values.");
         }
 
         return op switch
@@ -382,15 +383,10 @@ internal static class FeelExpressionParser
         return result;
     }
 
-    private sealed class Parser
+    private sealed class Parser(string expression)
     {
-        private readonly List<FeelToken> _tokens;
+        private readonly List<FeelToken> _tokens = Tokenize(expression);
         private int _position;
-
-        public Parser(string expression)
-        {
-            _tokens = Tokenize(expression);
-        }
 
         public FeelSyntaxNode ParseExpression()
         {
@@ -430,7 +426,7 @@ internal static class FeelExpressionParser
         {
             if (!Match(kind))
             {
-                throw new InvalidOperationException($"Expected token '{kind}' but found '{Current.Kind}'.");
+                throw new MInternalException($"Expected token '{kind}' but found '{Current.Kind}'.");
             }
         }
 
@@ -698,7 +694,7 @@ internal static class FeelExpressionParser
                 return new FeelVariableNode(identifier);
             }
 
-            throw new InvalidOperationException($"Unexpected token '{Current.Text}'.");
+            throw new MInternalException($"Unexpected token '{Current.Text}'.");
         }
 
         private FeelToken Current => _tokens[_position];
@@ -742,7 +738,7 @@ internal static class FeelExpressionParser
                 }
                 if (index >= expression.Length)
                 {
-                    throw new InvalidOperationException("Unterminated string literal.");
+                    throw new MInternalException("Unterminated string literal.");
                 }
                 tokens.Add(new FeelToken(FeelTokenKind.String, expression[start..index]));
                 index++;
@@ -842,7 +838,7 @@ internal static class FeelExpressionParser
                 '-' => new FeelToken(FeelTokenKind.Minus, "-"),
                 '*' => new FeelToken(FeelTokenKind.Star, "*"),
                 '/' => new FeelToken(FeelTokenKind.Slash, "/"),
-                _ => throw new InvalidOperationException($"Unsupported token '{current}'.")
+                _ => throw new MInternalException($"Unsupported token '{current}'.")
             });
             index++;
         }

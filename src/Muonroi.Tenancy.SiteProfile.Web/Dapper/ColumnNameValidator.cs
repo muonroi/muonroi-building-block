@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using System.Text.RegularExpressions;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.Dapper;
@@ -37,7 +38,7 @@ public static partial class ColumnNameValidator
     {
         if (!IsValidIdentifier(columnName))
         {
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"[SQL-SAFETY] Column name '{columnName}' for property '{propertyName}' " +
                 $"is not a valid SQL identifier. Expected pattern: ^[A-Za-z_][A-Za-z0-9_.]*$ (max 128 chars). " +
                 $"Check your ISiteColumnMap.Column() implementation.");

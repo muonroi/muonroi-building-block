@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.RuleEngine.Testing;
 
 /// <summary>
@@ -102,7 +104,7 @@ public sealed class MRuleTestBuilder<TContext> where TContext : class, new()
     {
         if (_execution is null)
         {
-            throw new InvalidOperationException("No execution strategy configured. Use ForRule or ForOrchestrator.");
+            throw new MInternalException("No execution strategy configured. Use ForRule or ForOrchestrator.");
         }
 
         using ServiceProvider provider = _services.BuildServiceProvider();

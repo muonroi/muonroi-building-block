@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Constants;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.License;
 
 namespace Muonroi.Grpc.Grpc;
@@ -14,7 +15,7 @@ public sealed class GrpcClientTelemetryInterceptor(
     : Interceptor
 {
     private readonly ISystemExecutionContextAccessor _contextAccessor =
-        contextAccessor ?? throw new ArgumentNullException(nameof(contextAccessor));
+        MGuard.NotNull(contextAccessor);
     private readonly LicenseState _licenseState = licenseState ?? LicenseState.CreateFree();
     private readonly ILicenseGuard? _licenseGuard = licenseGuard;
 

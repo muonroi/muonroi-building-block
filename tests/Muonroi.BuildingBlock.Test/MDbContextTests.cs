@@ -1,6 +1,7 @@
 namespace Muonroi.BuildingBlock.Test;
 
 using Muonroi.Governance.License;
+using Muonroi.Core.Abstractions.Exceptions;
 
 public class MDbContextTests
 {
@@ -137,7 +138,7 @@ public class MDbContextTests
         tx.When(t => t.Rollback()).Do(_ => throw new InvalidOperationException("fail"));
         typeof(MDbContext).GetField("_currentTransaction", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(db,
             tx);
-        Assert.Throws<InvalidOperationException>(() => db.RollbackTransaction());
+        Assert.Throws<MInternalException>(() => db.RollbackTransaction());
         Assert.Null(db.GetCurrentTransaction());
     }
 
@@ -255,7 +256,7 @@ public class MDbContextTests
         DbContextOptions<CustomDbContext> options = CreateSqliteOptions<CustomDbContext>(conn);
         using CustomDbContext db = new(options, new FakeMediator());
         IDbContextTransaction dummy = Substitute.For<IDbContextTransaction>();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => db.CommitTransactionAsync(dummy));
+        await Assert.ThrowsAsync<MInternalException>(() => db.CommitTransactionAsync(dummy));
     }
 
     [Fact]
@@ -269,7 +270,7 @@ public class MDbContextTests
         typeof(MDbContext).GetField("_currentTransaction", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(db,
             tx);
         tx.When(t => t.CommitAsync()).Do(_ => throw new InvalidOperationException());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => db.CommitTransactionAsync(tx));
+        await Assert.ThrowsAsync<MInternalException>(() => db.CommitTransactionAsync(tx));
         Assert.False(db.HasActiveTransaction);
     }
 
@@ -387,7 +388,7 @@ public class MDbContextTests
         using CustomDbContext db = new(options, mediator);
         typeof(MDbContext).GetField("_trackEntities", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(db,
             null);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => db.SaveEntitiesAsync());
+        await Assert.ThrowsAsync<MArgumentException>(() => db.SaveEntitiesAsync());
     }
 
     private class TenantEntity : MEntity

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.RuleEngine.Proliferation.Models;
 
 namespace Muonroi.RuleEngine.Proliferation.Export;
@@ -30,7 +31,7 @@ public static class TestReportExporter
         {
             TestReportFormat.XUnitXml => XUnitXmlWriter.Write(workflowName, scenarios, results, timestamp),
             TestReportFormat.Trx => TrxWriter.Write(workflowName, scenarios, results, timestamp),
-            _ => throw new ArgumentOutOfRangeException(nameof(format), format, $"Unsupported report format: {format}")
+            _ => throw new MArgumentException(nameof(format), $"Unsupported report format: {format}")
         };
     }
 }

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class FileRuleSetStoreSecurityTests
@@ -61,7 +62,7 @@ public class FileRuleSetStoreSecurityTests
         {
             RequireSignature = true
         };
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.ThrowsAsync<MInternalException>(async () =>
         {
             FileRuleSetStore store = new(root, null, configs);
             await store.SaveAsync("wf", """[{ "WorkflowName":"wf", "Rules":[] }]""");

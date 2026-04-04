@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -18,7 +19,7 @@ public sealed class RuleTracingEndpointsTests
     {
         Action action = () => RuleTracingEndpoints.MapRuleTracingEndpoints(null!);
 
-        action.Should().Throw<ArgumentNullException>();
+        action.Should().Throw<MArgumentException>();
     }
 
     [Fact]

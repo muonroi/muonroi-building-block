@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BackgroundJobs.Hangfire.Tests;
 
 using HangfireConfigs = Muonroi.BackgroundJobs.Hangfire.Hangfire.BackgroundJobConfigs;
@@ -35,7 +36,7 @@ public class HangfireConfigsTests
 
         Action act = () => HangfireHandler.AddBackgroundJobs(services, config);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MConfigurationException>()
             .WithMessage("*Invalid JobType*Quartz*Hangfire*");
     }
 

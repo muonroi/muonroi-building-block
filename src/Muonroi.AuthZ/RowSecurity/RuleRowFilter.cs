@@ -1,5 +1,6 @@
 namespace Muonroi.AuthZ.RowSecurity;
 
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.Logging.Abstractions;
 
@@ -12,7 +13,7 @@ internal sealed class RuleRowFilter<T>(
         RowFilterContext<T> context,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        MGuard.NotNull(context);
 
         OrchestratorResult result = await orchestrator.ExecuteAsync(context, cancellationToken);
 

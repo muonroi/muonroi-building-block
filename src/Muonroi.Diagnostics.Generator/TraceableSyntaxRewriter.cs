@@ -6,16 +6,11 @@ using System.Linq;
 
 namespace Muonroi.Diagnostics.Generator;
 
-internal sealed class TraceableSyntaxRewriter : CSharpSyntaxRewriter
+internal sealed class TraceableSyntaxRewriter(SemanticModel semanticModel) : CSharpSyntaxRewriter
 {
-    private readonly SemanticModel _semanticModel;
+    private readonly SemanticModel _semanticModel = semanticModel;
     private int _captureCount = 0;
     private const int MaxCaptures = 50;
-
-    public TraceableSyntaxRewriter(SemanticModel semanticModel)
-    {
-        _semanticModel = semanticModel;
-    }
 
     public override SyntaxNode? VisitAssignmentExpression(AssignmentExpressionSyntax node)
     {

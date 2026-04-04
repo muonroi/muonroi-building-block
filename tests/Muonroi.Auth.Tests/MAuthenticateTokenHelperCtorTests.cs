@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Auth.Tests;
 
 public class MAuthenticateTokenHelperCtorTests
@@ -27,7 +28,7 @@ public class MAuthenticateTokenHelperCtorTests
             new HmacTokenSigner("testkey123456789012345678901234567890"),
             new MDateTimeService());
 
-        action.Should().Throw<ArgumentNullException>();
+        action.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -38,7 +39,7 @@ public class MAuthenticateTokenHelperCtorTests
             null!,
             new MDateTimeService());
 
-        action.Should().Throw<ArgumentNullException>();
+        action.Should().Throw<MArgumentException>();
     }
 
     [Fact]

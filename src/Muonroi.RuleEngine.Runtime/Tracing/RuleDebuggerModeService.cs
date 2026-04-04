@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
 /// <summary>
@@ -8,13 +10,13 @@ public sealed class RuleDebuggerModeService(
     IOptions<RuleTracingOptions> options) : IRuleDebuggerModeService
 {
     private readonly IConnectionMultiplexer _connectionMultiplexer =
-        connectionMultiplexer ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
+        MGuard.NotNull(connectionMultiplexer);
     private readonly RuleTracingOptions _options = options?.Value ?? new RuleTracingOptions();
 
     /// <summary>Returns true if debugging is enabled for the tenant.</summary>
     public async ValueTask<bool> IsDebugEnabledAsync(string tenantId, CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
+        MGuard.NotEmpty(tenantId);
         ct.ThrowIfCancellationRequested();
 
         StackExchange.Redis.IDatabase db = _connectionMultiplexer.GetDatabase(_options.Database);
@@ -25,7 +27,7 @@ public sealed class RuleDebuggerModeService(
     /// <summary>Enables debugging for the tenant for the specified duration.</summary>
     public async ValueTask EnableAsync(string tenantId, TimeSpan duration, CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
+        MGuard.NotEmpty(tenantId);
         ct.ThrowIfCancellationRequested();
 
         if (duration <= TimeSpan.Zero)
@@ -40,7 +42,7 @@ public sealed class RuleDebuggerModeService(
     /// <summary>Disables debugging for the tenant.</summary>
     public async ValueTask DisableAsync(string tenantId, CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
+        MGuard.NotEmpty(tenantId);
         ct.ThrowIfCancellationRequested();
 
         StackExchange.Redis.IDatabase db = _connectionMultiplexer.GetDatabase(_options.Database);

@@ -1,5 +1,5 @@
-using GrpcClientFactory = global::Grpc.Net.ClientFactory.GrpcClientFactory;
-
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>
@@ -96,8 +96,8 @@ public static class SiteGrpcExtensions
         string serviceName)
         where TClient : ClientBase
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(siteId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
+        MGuard.NotEmpty(siteId);
+        MGuard.NotEmpty(serviceName);
 
         // Each call registers a descriptor. AddSiteGrpcClientFactory() reads all of them.
         services.AddSingleton(new SiteGrpcClientDescriptor(siteId, serviceName, typeof(TClient)));
@@ -200,7 +200,7 @@ public static class SiteGrpcExtensions
         where TServiceBase : class
         where TImpl : class, TServiceBase
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(siteId);
+        MGuard.NotEmpty(siteId);
         services.AddKeyedScoped<TServiceBase, TImpl>(siteId);
         return services;
     }
@@ -253,23 +253,26 @@ public static class SiteGrpcExtensions
         where TFacade : class
         where TImpl : class, TFacade
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(siteId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
+        MGuard.NotEmpty(siteId);
+        MGuard.NotEmpty(serviceName);
 
         services.AddKeyedScoped<TFacade>($"facade:{serviceName}:{siteId}", (sp, _) =>
         {
             var accessor = sp.GetRequiredService<GrpcClientFactoryAccessor>();
 
-            var ctor = typeof(TImpl).GetConstructors()[0];
+            // Generated facades have ClientBase-only constructors.
+            var ctors = typeof(TImpl).GetConstructors();
+            var ctor = ctors.FirstOrDefault(c => c.GetParameters()
+                    .All(p => typeof(ClientBase).IsAssignableFrom(p.ParameterType)))
+                  ?? ctors[0];
+
             var ctorParams = ctor.GetParameters();
             var args = new object[ctorParams.Length];
             for (int i = 0; i < ctorParams.Length; i++)
             {
                 var paramType = ctorParams[i].ParameterType;
-                // CreateClient produces correct Type from the requesting assembly's proto
                 args[i] = accessor.CreateClient(paramType, serviceName)
-                    ?? sp.GetService(paramType)
-                    ?? throw new InvalidOperationException(
+                    ?? throw new MInternalException(
                         $"Cannot resolve gRPC client '{paramType.Name}' for facade '{typeof(TImpl).Name}'. " +
                         $"Ensure AddGrpcClient<{paramType.Name}>() is registered and " +
                         $"app.InitializeSiteGrpcClients() is called in Program.cs.");

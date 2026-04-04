@@ -2,6 +2,7 @@ using Muonroi.RuleGen.Cli;
 using Muonroi.RuleGen.Commands;
 using FluentAssertions;
 using Xunit;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleGen.Tests;
 
@@ -19,7 +20,7 @@ public sealed class RegisterCommandTests
 
         Func<Task> act = () => RegisterCommand.RunAsync(context);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*--rules*");
     }
 

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Auth.Tests;
 
 public class FlowTests
@@ -35,7 +36,7 @@ public class FlowTests
             Scopes = ["openid"]
         };
         PkceClient client = new(options);
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MInternalException>(() =>
             client.RedeemCodeForTokenAsync("code", "verifier", "https://wrong", new HttpClient(new StubHandler())));
     }
 

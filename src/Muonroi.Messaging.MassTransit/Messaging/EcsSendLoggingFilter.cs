@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>
@@ -96,7 +98,7 @@ public class EcsSendLoggingFilter<T>(
 
         if (!_licenseState.HasFeature(FreeTierFeatures.Premium.MessageBus))
         {
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 "[LICENSE] Feature 'message-bus' is not available under your current license.");
         }
     }

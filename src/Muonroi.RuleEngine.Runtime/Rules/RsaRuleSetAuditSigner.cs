@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 public sealed class RsaRuleSetAuditSigner(RSA rsa, string keyId = "ruleset-control-plane", bool ownsRsa = false)
     : IRuleSetAuditSigner, IDisposable
 {
-    private readonly RSA _rsa = rsa ?? throw new ArgumentNullException(nameof(rsa));
+    private readonly RSA _rsa = MGuard.NotNull(rsa);
 
     /// <inheritdoc />
     public string KeyId { get; } = string.IsNullOrWhiteSpace(keyId) ? "ruleset-control-plane" : keyId.Trim();
@@ -20,7 +22,7 @@ public sealed class RsaRuleSetAuditSigner(RSA rsa, string keyId = "ruleset-contr
     /// <returns>A configured signer.</returns>
     public static RsaRuleSetAuditSigner FromPrivateKeyPem(string pem, string keyId = "ruleset-control-plane")
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pem);
+        MGuard.NotEmpty(pem);
         RSA rsa = RSA.Create();
         rsa.ImportFromPem(pem.ToCharArray());
         return new RsaRuleSetAuditSigner(rsa, keyId, ownsRsa: true);
@@ -32,7 +34,7 @@ public sealed class RsaRuleSetAuditSigner(RSA rsa, string keyId = "ruleset-contr
     /// <returns>A configured signer.</returns>
     public static RsaRuleSetAuditSigner FromPrivateKeyFile(string path, string keyId = "ruleset-control-plane")
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        MGuard.NotEmpty(path);
         if (!File.Exists(path))
         {
             throw new FileNotFoundException("Audit signer private key was not found.", path);
@@ -52,7 +54,7 @@ public sealed class RsaRuleSetAuditSigner(RSA rsa, string keyId = "ruleset-contr
     /// <inheritdoc />
     public string Sign(string payload)
     {
-        ArgumentNullException.ThrowIfNull(payload);
+        MGuard.NotNull(payload);
         byte[] bytes = Encoding.UTF8.GetBytes(payload);
         byte[] signature = _rsa.SignData(bytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         return Convert.ToBase64String(signature);

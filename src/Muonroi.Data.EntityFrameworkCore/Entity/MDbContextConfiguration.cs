@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Extensions;
 using Muonroi.Governance.Abstractions.License;
@@ -29,7 +31,7 @@ public static class MDbContextConfiguration
     {
         DatabaseConfigs? databaseConfigs = configuration.GetSection(nameof(DatabaseConfigs)).Get<DatabaseConfigs>();
         if (databaseConfigs == null || string.IsNullOrEmpty(databaseConfigs.DbType))
-            throw new InvalidDataException("Database configuration is not properly set.");
+            throw new MConfigurationException("Database configuration is not properly set.", "DatabaseConfigs");
 
         // Register DatabaseConfigs for use in MigrationManager and other services
         services.TryAddSingleton(databaseConfigs);
@@ -90,8 +92,8 @@ public static class MDbContextConfiguration
                 nameof(DbTypes.MySql) => databaseConfigs.ConnectionStrings?.MySqlConnectionString,
                 nameof(DbTypes.PostgreSql) => databaseConfigs.ConnectionStrings?.PostgreSqlConnectionString,
                 nameof(DbTypes.Sqlite) => databaseConfigs.ConnectionStrings?.SqliteConnectionString,
-                _ => throw new ArgumentException("Unsupported database type: " + databaseConfigs.DbType)
-            } ?? throw new InvalidDataException("Connection string is empty.");
+                _ => throw new MConfigurationException("Unsupported database type: " + databaseConfigs.DbType, "DatabaseConfigs:DbType")
+            } ?? throw new MConfigurationException("Connection string is empty.", "DatabaseConfigs:ConnectionStrings");
         }
 
         // Encryption enabled - decrypt the connection string
@@ -105,8 +107,8 @@ public static class MDbContextConfiguration
                 databaseConfigs.ConnectionStrings?.PostgreSqlConnectionString, isSecretDefault, secretKey, fingerprint),
             nameof(DbTypes.Sqlite) => MStringExtension.DecryptConfigurationValue(configuration,
                 databaseConfigs.ConnectionStrings?.SqliteConnectionString, isSecretDefault, secretKey, fingerprint),
-            _ => throw new ArgumentException("Unsupported database type: " + databaseConfigs.DbType)
-        } ?? throw new InvalidDataException("Connection string is not provided or is empty.");
+            _ => throw new MConfigurationException("Unsupported database type: " + databaseConfigs.DbType, "DatabaseConfigs:DbType")
+        } ?? throw new MConfigurationException("Connection string is not provided or is empty.", "DatabaseConfigs:ConnectionStrings");
     }
 
     private static void ConfigureDbContext<T, TPermission>(IServiceCollection services, string dbType, bool isSecretDefault, string secretKey)
@@ -121,7 +123,7 @@ public static class MDbContextConfiguration
             nameof(DbTypes.PostgreSql) => services
                 .AddScoped<IDbContextConfigurator<T>, PostgreSqlDbContextConfigurator<T>>(),
             nameof(DbTypes.Sqlite) => services.AddScoped<IDbContextConfigurator<T>, SqliteDbContextConfigurator<T>>(),
-            _ => throw new ArgumentException("Unsupported database type: " + dbType)
+            _ => throw new MConfigurationException("Unsupported database type: " + dbType, "DatabaseConfigs:DbType")
         };
 
         _ = services.AddDbContext<T>((serviceProvider, options) =>
@@ -132,7 +134,7 @@ public static class MDbContextConfiguration
             IConfiguration config = serviceProvider.GetRequiredService<IConfiguration>();
 
             DatabaseConfigs dbConfigs = config.GetSection(nameof(DatabaseConfigs)).Get<DatabaseConfigs>()
-                            ?? throw new InvalidDataException("DatabaseConfigs not found.");
+                            ?? throw new MConfigurationException("DatabaseConfigs not found.", "DatabaseConfigs");
 
             bool enableEncryption = config.GetValue("EnableEncryption", false);
             string connectionString;

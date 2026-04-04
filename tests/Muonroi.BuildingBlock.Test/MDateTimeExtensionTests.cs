@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MDateTimeExtensionTests
@@ -114,7 +115,7 @@ public class MDateTimeExtensionTests
     public void GetTimeZoneExpiryDate_InvalidZone_Throws()
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
-        Assert.Throws<ArgumentOutOfRangeException>(() => now.GetTimeZoneExpiryDate(20));
+        Assert.Throws<MArgumentException>(() => now.GetTimeZoneExpiryDate(20));
     }
 
     [Fact]

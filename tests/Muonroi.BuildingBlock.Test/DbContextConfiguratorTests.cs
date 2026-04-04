@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -16,7 +17,7 @@ public class DbContextConfiguratorTests
     public void PostgreSql_NullOptions_Throws()
     {
         PostgreSqlDbContextConfigurator<TestDbContext> cfg = new();
-        Assert.Throws<ArgumentNullException>(() => cfg.Configure(null!, "cs"));
+        Assert.Throws<MArgumentException>(() => cfg.Configure(null!, "cs"));
     }
 
     [Theory]

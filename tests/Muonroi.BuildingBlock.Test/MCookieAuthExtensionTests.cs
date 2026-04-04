@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MCookieAuthExtensionTests
@@ -42,7 +43,7 @@ public class MCookieAuthExtensionTests
             SymmetricSecretKey = "key123456789012345678901234567890",
             EnableCookieAuth = true
         };
-        Assert.Throws<ArgumentException>(() => ctx.Response.AppendAuthCookie(null!, info));
+        Assert.Throws<MArgumentException>(() => ctx.Response.AppendAuthCookie(null!, info));
     }
 
     [Fact]

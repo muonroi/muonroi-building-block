@@ -11,15 +11,32 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// Detects circular sub-flow references via <see cref="SubFlowCallStack"/>.
 /// </summary>
 /// <typeparam name="TContext">The parent rule execution context type.</typeparam>
-public sealed class SubFlowRuleAdapter<TContext> : IRule<TContext>
+/// <remarks>
+/// Initializes a new instance of the <see cref="SubFlowRuleAdapter{TContext}"/> class.
+/// </remarks>
+/// <param name="code">Rule code for this node.</param>
+/// <param name="childFlowCode">Child workflow code.</param>
+/// <param name="inputMappings">Input mappings from parent to child.</param>
+/// <param name="outputMappings">Output mappings from child to parent.</param>
+/// <param name="engine">Rules engine service used to execute the sub-flow.</param>
+/// <param name="projector">Context projector for variables.</param>
+/// <param name="log">Logger instance.</param>
+public sealed class SubFlowRuleAdapter<TContext>(
+    string code,
+    string childFlowCode,
+    IReadOnlyList<SubFlowInputMapping> inputMappings,
+    IReadOnlyList<SubFlowOutputMapping> outputMappings,
+    RulesEngineService engine,
+    IContextProjector<TContext> projector,
+    IMLog<SubFlowRuleAdapter<TContext>> log) : IRule<TContext>
 {
-    private readonly string _code;
-    private readonly string _childFlowCode;
-    private readonly IReadOnlyList<SubFlowInputMapping> _inputMappings;
-    private readonly IReadOnlyList<SubFlowOutputMapping> _outputMappings;
-    private readonly RulesEngineService _engine;
-    private readonly IContextProjector<TContext> _projector;
-    private readonly IMLog<SubFlowRuleAdapter<TContext>> _log;
+    private readonly string _code = code;
+    private readonly string _childFlowCode = childFlowCode;
+    private readonly IReadOnlyList<SubFlowInputMapping> _inputMappings = inputMappings;
+    private readonly IReadOnlyList<SubFlowOutputMapping> _outputMappings = outputMappings;
+    private readonly RulesEngineService _engine = engine;
+    private readonly IContextProjector<TContext> _projector = projector;
+    private readonly IMLog<SubFlowRuleAdapter<TContext>> _log = log;
 
     /// <inheritdoc />
     public string Code => _code;
@@ -41,34 +58,6 @@ public sealed class SubFlowRuleAdapter<TContext> : IRule<TContext>
 
     /// <inheritdoc />
     public IEnumerable<Type> Dependencies => [];
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SubFlowRuleAdapter{TContext}"/> class.
-    /// </summary>
-    /// <param name="code">Rule code for this node.</param>
-    /// <param name="childFlowCode">Child workflow code.</param>
-    /// <param name="inputMappings">Input mappings from parent to child.</param>
-    /// <param name="outputMappings">Output mappings from child to parent.</param>
-    /// <param name="engine">Rules engine service used to execute the sub-flow.</param>
-    /// <param name="projector">Context projector for variables.</param>
-    /// <param name="log">Logger instance.</param>
-    public SubFlowRuleAdapter(
-        string code,
-        string childFlowCode,
-        IReadOnlyList<SubFlowInputMapping> inputMappings,
-        IReadOnlyList<SubFlowOutputMapping> outputMappings,
-        RulesEngineService engine,
-        IContextProjector<TContext> projector,
-        IMLog<SubFlowRuleAdapter<TContext>> log)
-    {
-        _code           = code;
-        _childFlowCode  = childFlowCode;
-        _inputMappings  = inputMappings;
-        _outputMappings = outputMappings;
-        _engine         = engine;
-        _projector      = projector;
-        _log            = log;
-    }
 
     /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)

@@ -1,4 +1,5 @@
 using Muonroi.Caching.Abstractions.Distributed;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Microsoft.Extensions.Configuration;
 
@@ -18,10 +19,7 @@ public sealed class RedisTokenStore(IMCacheService cache, IConfiguration? config
     /// <inheritdoc />
     public async Task StoreRefreshTokenAsync(string subject, string refreshToken)
     {
-        if (string.IsNullOrWhiteSpace(subject))
-        {
-            throw new ArgumentException("Subject is required.", nameof(subject));
-        }
+        MGuard.NotEmpty(subject);
 
         string trimmedSubject = subject.Trim();
         await cache.SetAsync(trimmedSubject, refreshToken, new CacheEntryOptions

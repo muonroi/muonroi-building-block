@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Dapper.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Tenancy.SiteProfile;
@@ -72,9 +73,7 @@ public static class SiteProfileDapperExtensions
         configure(options);
 
         if (options.WriteConnectionString is null)
-            throw new ArgumentException(
-                "SiteDapperInfrastructureOptions.WriteConnectionString resolver is required.",
-                nameof(configure));
+            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(configure), "SiteDapperInfrastructureOptions.WriteConnectionString resolver is required.");
 
         // Store options as singleton for downstream use by IConnectionStringProvider
         services.AddSingleton(options);
@@ -99,7 +98,7 @@ public static class SiteProfileDapperExtensions
 
             return sp.GetKeyedService<IDapper>(siteId)
                 ?? sp.GetKeyedService<IDapper>("default")
-                ?? throw new InvalidOperationException(
+                ?? throw new MInternalException(
                     $"No keyed IDapper registered for site '{siteId}' or 'default'. " +
                     $"Ensure ISiteProfile.RegisterServices() calls: " +
                     $"services.AddKeyedScoped<IDapper, TImpl>(\"{siteId}\")");
@@ -125,7 +124,7 @@ public static class SiteProfileDapperExtensions
 
             if (writeDapper is IDapperRead readCapable) return readCapable;
 
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"No keyed IDapperRead registered for site '{siteId}' or 'default'. " +
                 $"Either register a dedicated read replica: " +
                 $"services.AddKeyedScoped<IDapperRead, TReadImpl>(\"{siteId}\"), " +

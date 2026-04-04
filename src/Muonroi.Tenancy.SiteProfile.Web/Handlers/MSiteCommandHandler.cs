@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Mediator.Mediator.Interfaces;
 using Muonroi.Tenancy.SiteProfile;
 using Muonroi.Tenancy.SiteProfile.Web.Configuration;
@@ -99,8 +101,8 @@ public abstract class MSiteCommandHandler<TRequest, TResponse>
     /// <exception cref="ArgumentNullException">Thrown when either argument is null.</exception>
     protected MSiteCommandHandler(ISiteProfileResolver siteResolver, ISiteConfiguration siteConfig)
     {
-        ArgumentNullException.ThrowIfNull(siteResolver);
-        ArgumentNullException.ThrowIfNull(siteConfig);
+        MGuard.NotNull(siteResolver);
+        MGuard.NotNull(siteConfig);
         SiteResolver = siteResolver;
         SiteConfig = siteConfig;
     }
@@ -155,7 +157,7 @@ public abstract class MSiteCommandHandler<TRequest, TResponse>
     {
         ValidationResult result = await ValidateAsync(request, cancellationToken).ConfigureAwait(false);
         if (!result.IsValid)
-            throw new InvalidOperationException($"Validation failed: {result.Error}");
+            throw new MInternalException($"Validation failed: {result.Error}");
         return await ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
     }
 }

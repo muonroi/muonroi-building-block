@@ -238,6 +238,9 @@
 | SiteProfileWebExtensions.cs | `SiteProfileWebExtensions` | `AddSiteProfileWeb()` — registers middleware + hot-reload |
 | SiteProfileStateMiddleware.cs | `SiteProfileStateMiddleware` | Sets site profile state per request |
 | HotReload/ISiteProfileChangeHandler.cs | `ISiteProfileChangeHandler` | Hot-reload contract |
+| DataAccess/SyncedColumnInfo.cs | `SyncedColumnInfo` (record) | Holds EF IModel-derived column metadata: ColumnName, MaxLength, IsNullable |
+| DataAccess/EfSyncedColumnMap.cs | `EfSyncedColumnMap` | Decorator wrapping ISiteColumnMap with EF-synced fallback; manual overrides win (D-13/D-14) |
+| DataAccess/EfColumnSyncHostedService.cs | `EfColumnSyncHostedService` | IHostedService: discovers SiteDbContextTypeRegistry via reflection, reads IModel at startup, populates static _syncedMaps keyed by DbContext full type name; `GetSyncedEntries(Type)` used by DI wiring |
 
 ---
 

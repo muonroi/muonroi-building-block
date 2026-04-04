@@ -1,3 +1,6 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Governance.Operations;
 
 /// <summary>
@@ -12,7 +15,7 @@ public static class MEnterpriseOperationsEndpointExtensions
         this IEndpointRouteBuilder endpoints,
         string basePath = "/api/v1/enterprise-ops")
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
+        MGuard.NotNull(endpoints);
 
         RouteGroupBuilder group = endpoints.MapGroup(basePath).WithTags("Muonroi Enterprise Operations");
 
@@ -34,7 +37,7 @@ public static class MEnterpriseOperationsEndpointExtensions
                 {
                     return Results.Ok(service.GetPreset(presetName));
                 }
-                catch (ArgumentOutOfRangeException ex)
+                catch (MArgumentException ex)
                 {
                     return Results.BadRequest(new { Error = ex.Message });
                 }

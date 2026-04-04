@@ -5,21 +5,16 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// Used as the generic context when executing child sub-flows where the
 /// concrete context type is unknown at compile time.
 /// </summary>
-public sealed class FactBagRuleContext : IRuleContext
+/// <remarks>
+/// Creates a new fact-bag-backed rule context.
+/// </remarks>
+/// <param name="facts">Facts to expose to the child workflow.</param>
+public sealed class FactBagRuleContext(FactBag facts) : IRuleContext
 {
     /// <summary>
     /// Gets the facts available to the child workflow.
     /// </summary>
-    public FactBag Facts { get; }
-
-    /// <summary>
-    /// Creates a new fact-bag-backed rule context.
-    /// </summary>
-    /// <param name="facts">Facts to expose to the child workflow.</param>
-    public FactBagRuleContext(FactBag facts)
-    {
-        Facts = facts;
-    }
+    public FactBag Facts { get; } = facts;
 
     /// <inheritdoc/>
     public void HaltGroup()

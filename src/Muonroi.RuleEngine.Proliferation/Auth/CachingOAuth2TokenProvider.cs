@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Proliferation.Models;
 
@@ -11,22 +12,16 @@ namespace Muonroi.RuleEngine.Proliferation.Auth;
 /// Cache key: "{clientId}:{tokenEndpoint}" — allows multiple tenants/configs to coexist.
 /// Early refresh: tokens are considered expired (expires_in - 60s buffer) to avoid serving expired tokens.
 /// </summary>
-public sealed class CachingOAuth2TokenProvider : IOAuth2TokenProvider
+/// <remarks>Creates a caching OAuth2 token provider.</remarks>
+public sealed class CachingOAuth2TokenProvider(
+    IHttpClientFactory httpClientFactory,
+    IMLog<CachingOAuth2TokenProvider>? logger = null) : IOAuth2TokenProvider
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IMLog<CachingOAuth2TokenProvider>? _logger;
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly IMLog<CachingOAuth2TokenProvider>? _logger = logger;
 
     // Key: "{clientId}:{tokenEndpoint}", Value: (access_token, expiresAt with 60s buffer)
     private readonly ConcurrentDictionary<string, (string Token, DateTimeOffset ExpiresAt)> _cache = new();
-
-    /// <summary>Creates a caching OAuth2 token provider.</summary>
-    public CachingOAuth2TokenProvider(
-        IHttpClientFactory httpClientFactory,
-        IMLog<CachingOAuth2TokenProvider>? logger = null)
-    {
-        _httpClientFactory = httpClientFactory;
-        _logger = logger;
-    }
 
     /// <inheritdoc/>
     public async Task<string> GetAccessTokenAsync(OAuth2Config config, CancellationToken ct)
@@ -83,7 +78,7 @@ public sealed class CachingOAuth2TokenProvider : IOAuth2TokenProvider
         using JsonDocument doc = JsonDocument.Parse(json);
 
         string accessToken = doc.RootElement.GetProperty("access_token").GetString()
-            ?? throw new InvalidOperationException("OAuth2 token response missing 'access_token'");
+            ?? throw new MConfigurationException("OAuth2 token response missing 'access_token'", "access_token");
 
         // Parse expires_in (default to 3600s if missing)
         int expiresIn = doc.RootElement.TryGetProperty("expires_in", out JsonElement expiresElem)

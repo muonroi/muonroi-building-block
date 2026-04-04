@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MVoidMethodResultTests
@@ -92,7 +93,7 @@ public class MVoidMethodResultTests
     {
         Init();
         MVoidMethodResult result = new();
-        Assert.Throws<ArgumentNullException>(() => result.AddError(null!, "en-US"));
+        Assert.Throws<MArgumentException>(() => result.AddError(null!, "en-US"));
     }
 
     [Fact]
@@ -107,7 +108,7 @@ public class MVoidMethodResultTests
     public void AddError_WithArgs_Null_Code_Throws()
     {
         MVoidMethodResult result = new();
-        Assert.Throws<ArgumentNullException>(() => result.AddError(null!, "1"));
+        Assert.Throws<MArgumentException>(() => result.AddError(null!, "1"));
     }
 
     [Fact]

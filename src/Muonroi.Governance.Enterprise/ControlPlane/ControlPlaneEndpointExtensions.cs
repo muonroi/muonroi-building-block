@@ -1,3 +1,6 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Governance.ControlPlane;
 
 /// <summary>
@@ -12,7 +15,7 @@ public static class MControlPlaneEndpointExtensions
         this IEndpointRouteBuilder endpoints,
         string basePath = "/api/v1/control-plane")
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
+        MGuard.NotNull(endpoints);
 
         RouteGroupBuilder group = endpoints.MapGroup(basePath).WithTags("Muonroi Enterprise Control Plane");
 
@@ -75,7 +78,7 @@ public static class MControlPlaneEndpointExtensions
         {
             return operation();
         }
-        catch (Exception ex) when (ex is ArgumentException or ArgumentOutOfRangeException or InvalidOperationException)
+        catch (Exception ex) when (ex is MException or ArgumentException or ArgumentOutOfRangeException or InvalidOperationException)
         {
             return Results.BadRequest(new { Error = ex.Message });
         }

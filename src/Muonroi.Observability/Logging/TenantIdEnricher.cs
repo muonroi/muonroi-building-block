@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
 using Serilog.Core;
 
 namespace Muonroi.Observability.Logging;
@@ -9,15 +10,15 @@ namespace Muonroi.Observability.Logging;
 public sealed class TenantIdEnricher(ISystemExecutionContextAccessor accessor) : ILogEventEnricher
 {
     private readonly ISystemExecutionContextAccessor _accessor =
-        accessor ?? throw new ArgumentNullException(nameof(accessor));
+        MGuard.NotNull(accessor);
 
     /// <summary>
     /// Adds context identifiers to the log event.
     /// </summary>
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {
-        ArgumentNullException.ThrowIfNull(logEvent);
-        ArgumentNullException.ThrowIfNull(propertyFactory);
+        MGuard.NotNull(logEvent);
+        MGuard.NotNull(propertyFactory);
 
         ISystemExecutionContext context = _accessor.Get();
         if (!string.IsNullOrWhiteSpace(context.TenantId))

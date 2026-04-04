@@ -1,3 +1,6 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Core.Extensions;
 
 /// <summary>
@@ -7,7 +10,6 @@ public static class MConfigurationExtension
 {
     private const string ConfigKey = "SecretKey";
     private const string EnableEncryptionKey = "EnableEncryption";
-    private const string MessageException = "Value cannot be null or empty.";
 
     /// <summary>
     /// Gets options of type <typeparamref name="T"/> from the specified configuration section.
@@ -19,11 +21,8 @@ public static class MConfigurationExtension
     public static T GetOptions<T>(this IConfiguration configuration, string section)
         where T : new()
     {
-        ArgumentNullException.ThrowIfNull(configuration);
-        if (string.IsNullOrEmpty(section))
-        {
-            throw new ArgumentNullException(nameof(section));
-        }
+        MGuard.NotNull(configuration);
+        MGuard.NotEmpty(section);
 
         T model = new();
         try
@@ -52,7 +51,7 @@ public static class MConfigurationExtension
         HashSet<string> keys = [];
         foreach (IConfigurationSection? v in values.Where(v => !keys.Add(v.Key)))
         {
-            throw new ArgumentException(
+            MGuard.Against(true,
                 $"An item with the same key has already been added. Key: {section.Path}:{v.Key}");
         }
 
@@ -72,8 +71,8 @@ public static class MConfigurationExtension
     public static TConfig ConfigureStartupConfig<TConfig>(this IServiceCollection services,
         IConfiguration configuration) where TConfig : class, new()
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(services);
+        MGuard.NotNull(configuration);
 
         TConfig config = new();
         try
@@ -105,7 +104,7 @@ public static class MConfigurationExtension
                 string? secretKey = configuration.GetCryptConfigValue(ConfigKey);
                 if (string.IsNullOrEmpty(secretKey))
                 {
-                    throw new InvalidOperationException("SecretKey cannot be an empty string");
+                    throw new MConfigurationException("SecretKey cannot be an empty string", ConfigKey);
                 }
 
                 configValue = configuration.GetCryptConfigValue(keyOfConfig, secretKey);
@@ -131,9 +130,8 @@ public static class MConfigurationExtension
     /// <returns>The configuration value, or null if not found.</returns>
     public static string? GetCryptConfigValue(this IConfiguration configuration, string configKey)
     {
-        return string.IsNullOrEmpty(configKey)
-            ? throw new ArgumentException(MessageException, nameof(configKey))
-            : configuration[configKey];
+        MGuard.NotEmpty(configKey);
+        return configuration[configKey];
     }
 
     /// <summary>
@@ -146,10 +144,7 @@ public static class MConfigurationExtension
     /// <returns>The decrypted configuration value, or the original cipher text if encryption is disabled.</returns>
     public static string? GetCryptConfigValue(this IConfiguration configuration, string configKey, string secretKey, string fingerprintSalt = "")
     {
-        if (string.IsNullOrEmpty(configKey))
-        {
-            throw new ArgumentException(MessageException, nameof(configKey));
-        }
+        MGuard.NotEmpty(configKey);
 
         string? cipherText = configuration.GetCryptConfigValue(configKey);
         if (string.IsNullOrEmpty(cipherText))
@@ -163,10 +158,7 @@ public static class MConfigurationExtension
             return cipherText;
         }
 
-        if (string.IsNullOrEmpty(secretKey))
-        {
-            throw new ArgumentException(MessageException, nameof(secretKey));
-        }
+        MGuard.NotEmpty(secretKey);
 
         return MCryptographyExtension.Decrypt(secretKey, cipherText, fingerprintSalt);
     }
@@ -182,10 +174,7 @@ public static class MConfigurationExtension
     /// <returns>The decrypted configuration value, or the original cipher text if encryption is disabled.</returns>
     public static string? GetCryptConfigValue(this IConfiguration configuration, string configKey, bool useConfiguredSecretKey, string secretKey, string fingerprintSalt = "")
     {
-        if (string.IsNullOrEmpty(configKey))
-        {
-            throw new ArgumentException(MessageException, nameof(configKey));
-        }
+        MGuard.NotEmpty(configKey);
 
         string? cipherText = configuration.GetCryptConfigValue(configKey);
         if (string.IsNullOrEmpty(cipherText))
@@ -202,14 +191,11 @@ public static class MConfigurationExtension
         if (useConfiguredSecretKey)
         {
             secretKey = configuration.GetCryptConfigValue(ConfigKey) ?? string.Empty;
-            if (string.IsNullOrEmpty(secretKey))
-            {
-                throw new ArgumentException(MessageException, nameof(secretKey));
-            }
+            MGuard.NotEmpty(secretKey);
         }
-        else if (string.IsNullOrEmpty(secretKey))
+        else
         {
-            throw new ArgumentException(MessageException, nameof(secretKey));
+            MGuard.NotEmpty(secretKey);
         }
 
         return MCryptographyExtension.Decrypt(secretKey, cipherText, fingerprintSalt);
@@ -236,7 +222,7 @@ public static class MConfigurationExtension
         }
 
         string secretKey = configuration.GetCryptConfigValue(ConfigKey) ?? string.Empty;
-        ArgumentException.ThrowIfNullOrEmpty(secretKey);
+        MGuard.NotEmpty(secretKey);
 
         if (string.IsNullOrEmpty(fingerprintSalt))
         {

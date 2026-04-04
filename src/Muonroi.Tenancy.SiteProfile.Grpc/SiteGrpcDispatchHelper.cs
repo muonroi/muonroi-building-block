@@ -50,28 +50,21 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 /// The proto-generated gRPC service base class (e.g., <c>FullContainerDeliveryBase</c>).
 /// Must be a class (not interface) — gRPC generated base classes use <c>abstract class</c>.
 /// </typeparam>
-public sealed class SiteGrpcDispatchHelper<TServiceBase>
+/// <remarks>
+/// Creates a new dispatch helper.
+/// </remarks>
+/// <param name="serviceProvider">DI container for keyed service resolution.</param>
+/// <param name="siteCodeHolder">Scoped holder carrying the current request's SiteCode (set by <see cref="SiteCodeGrpcInterceptor"/>).</param>
+/// <param name="log">Structured logger for dispatch diagnostics.</param>
+public sealed class SiteGrpcDispatchHelper<TServiceBase>(
+    IServiceProvider serviceProvider,
+    ISiteCodeHolder siteCodeHolder,
+    IMLog<SiteGrpcDispatchHelper<TServiceBase>> log)
     where TServiceBase : class
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ISiteCodeHolder _siteCodeHolder;
-    private readonly IMLog<SiteGrpcDispatchHelper<TServiceBase>> _log;
-
-    /// <summary>
-    /// Creates a new dispatch helper.
-    /// </summary>
-    /// <param name="serviceProvider">DI container for keyed service resolution.</param>
-    /// <param name="siteCodeHolder">Scoped holder carrying the current request's SiteCode (set by <see cref="SiteCodeGrpcInterceptor"/>).</param>
-    /// <param name="log">Structured logger for dispatch diagnostics.</param>
-    public SiteGrpcDispatchHelper(
-        IServiceProvider serviceProvider,
-        ISiteCodeHolder siteCodeHolder,
-        IMLog<SiteGrpcDispatchHelper<TServiceBase>> log)
-    {
-        _serviceProvider = serviceProvider;
-        _siteCodeHolder = siteCodeHolder;
-        _log = log;
-    }
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
+    private readonly ISiteCodeHolder _siteCodeHolder = siteCodeHolder;
+    private readonly IMLog<SiteGrpcDispatchHelper<TServiceBase>> _log = log;
 
     /// <summary>
     /// Resolves the site-specific handler and delegates the RPC call to it.

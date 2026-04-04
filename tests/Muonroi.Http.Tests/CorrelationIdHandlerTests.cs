@@ -12,6 +12,7 @@ using Muonroi.Http.Http;
 using Muonroi.Logging.Abstractions;
 using Moq;
 using Xunit;
+using Muonroi.Core.Abstractions.Exceptions;
 
 public class CorrelationIdHandlerTests
 {
@@ -75,7 +76,7 @@ public class CorrelationIdHandlerTests
     [Fact]
     public void Constructor_Should_Throw_On_Null_Context()
     {
-        Assert.Throws<ArgumentNullException>(() => new CorrelationIdHandler(null!));
+        Assert.Throws<MArgumentException>(() => new CorrelationIdHandler(null!));
     }
 
     [Fact]

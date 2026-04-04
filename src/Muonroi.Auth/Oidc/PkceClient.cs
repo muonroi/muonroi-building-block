@@ -1,4 +1,5 @@
 using System.Net;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Auth.Oidc;
 
@@ -48,10 +49,7 @@ public class PkceClient(OidcOptions options)
     public async Task<TokenResponse> RedeemCodeForTokenAsync(string code, string codeVerifier, string redirectUri,
         HttpClient httpClient)
     {
-        if (redirectUri != options.RedirectUri)
-        {
-            throw new InvalidOperationException("Redirect URI must exactly match configured redirect URI.");
-        }
+        MGuard.Against(redirectUri != options.RedirectUri, "Redirect URI must exactly match configured redirect URI.");
 
         Dictionary<string, string> parameters = new()
         {

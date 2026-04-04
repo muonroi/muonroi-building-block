@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.Compliance;
@@ -16,10 +18,8 @@ public sealed class MComplianceEvidencePackService(
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private readonly LicenseConfigs _licenseConfigs =
-        licenseConfigs ?? throw new ArgumentNullException(nameof(licenseConfigs));
-    private readonly IMComplianceExportService _exportService =
-        exportService ?? throw new ArgumentNullException(nameof(exportService));
+    private readonly LicenseConfigs _licenseConfigs = MGuard.NotNull(licenseConfigs);
+    private readonly IMComplianceExportService _exportService = MGuard.NotNull(exportService);
     private readonly IHostEnvironment? _hostEnvironment = hostEnvironment;
 
     /// <summary>
@@ -29,10 +29,10 @@ public sealed class MComplianceEvidencePackService(
         MComplianceEvidencePackRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        MGuard.NotNull(request);
         if (!_exportService.IsEnabled)
         {
-            throw new InvalidOperationException("Compliance export is not enabled.");
+            throw new MInternalException("Compliance export is not enabled.");
         }
 
         MComplianceExportQuery filters = new()

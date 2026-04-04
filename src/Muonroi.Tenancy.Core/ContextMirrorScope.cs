@@ -1,6 +1,8 @@
 
 
 
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Tenancy.Core;
 
 /// <summary>
@@ -37,7 +39,7 @@ public sealed class ContextMirrorScope : IDisposable
     /// <returns>The created scope.</returns>
     public static ContextMirrorScope Apply(ISystemExecutionContext context, ILogScopeFactory? logScopeFactory = null)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        MGuard.NotNull(context);
         return new ContextMirrorScope(context, logScopeFactory);
     }
 

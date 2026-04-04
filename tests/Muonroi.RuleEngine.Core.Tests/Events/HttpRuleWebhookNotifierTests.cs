@@ -325,11 +325,9 @@ internal sealed class MockHttpMessageHandler : HttpMessageHandler
 /// A minimal IHttpClientFactory that creates an HttpClient backed by the given handler.
 /// Uses a named client "RuleWebhook" as expected by HttpRuleWebhookNotifier.
 /// </summary>
-internal sealed class SingleClientFactory : IHttpClientFactory
+internal sealed class SingleClientFactory(HttpMessageHandler handler) : IHttpClientFactory
 {
-    private readonly HttpMessageHandler _handler;
-
-    public SingleClientFactory(HttpMessageHandler handler) => _handler = handler;
+    private readonly HttpMessageHandler _handler = handler;
 
     public HttpClient CreateClient(string name) => new(_handler, disposeHandler: false);
 }

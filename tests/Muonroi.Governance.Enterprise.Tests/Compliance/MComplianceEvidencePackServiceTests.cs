@@ -7,6 +7,7 @@ using Muonroi.Governance.ControlPlane;
 using Muonroi.Governance.Enterprise.Compliance;
 using Muonroi.Governance.License;
 using Muonroi.Logging.Abstractions;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Governance.Enterprise.Tests.Compliance;
 
@@ -58,7 +59,7 @@ public class MComplianceEvidencePackServiceTests
             exportService.Object,
             Mock.Of<IHostEnvironment>());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GenerateAsync(new MComplianceEvidencePackRequest()));
+        await Assert.ThrowsAsync<MInternalException>(() => service.GenerateAsync(new MComplianceEvidencePackRequest()));
     }
 
     [Fact]

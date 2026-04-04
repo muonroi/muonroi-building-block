@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MediatorModuleTests
@@ -56,7 +57,7 @@ public class MediatorModuleTests
 
         using ILifetimeScope scope = container.BeginLifetimeScope();
         IMediator mediator = scope.Resolve<IMediator>();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => mediator.Send(new PingRequest()));
+        await Assert.ThrowsAsync<MInternalException>(() => mediator.Send(new PingRequest()));
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MJsonSerializeServiceTests
@@ -49,7 +50,7 @@ public class MJsonSerializeServiceTests
     {
         MJsonSerializeService svc = new();
         string? text = null;
-        Assert.Throws<ArgumentNullException>(() => svc.Deserialize<SimpleObj>(text!));
+        Assert.Throws<MArgumentException>(() => svc.Deserialize<SimpleObj>(text!));
     }
 
     [Fact]

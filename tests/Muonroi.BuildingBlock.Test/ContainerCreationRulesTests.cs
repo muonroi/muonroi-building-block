@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Core;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -119,7 +120,7 @@ public class ContainerCreationRulesTests
         RuleOrchestrator<ContainerContext> orchestrator = BuildOrchestrator(mock.Object);
         ContainerContext context = new("C1");
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => orchestrator.ExecuteAsync(context));
+        await Assert.ThrowsAsync<MInternalException>(() => orchestrator.ExecuteAsync(context));
 
         mock.Verify(m => m.HasExitedPortAsync(It.IsAny<string>()), Times.Never);
         mock.Verify(m => m.IsDeclaredElsewhereAsync(It.IsAny<string>()), Times.Never);
@@ -135,7 +136,7 @@ public class ContainerCreationRulesTests
         RuleOrchestrator<ContainerContext> orchestrator = BuildOrchestrator(mock.Object);
         ContainerContext context = new("C1");
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => orchestrator.ExecuteAsync(context));
+        await Assert.ThrowsAsync<MInternalException>(() => orchestrator.ExecuteAsync(context));
 
         mock.Verify(m => m.IsDeclaredElsewhereAsync(It.IsAny<string>()), Times.Never);
     }

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class SharedDbContextFactoryTests
@@ -30,7 +31,7 @@ public class SharedDbContextFactoryTests
         Directory.SetCurrentDirectory(tempDir);
 
         SharedDbContextFactory<TestDbContext> factory = new();
-        Assert.Throws<InvalidOperationException>(() => factory.CreateDbContext([]));
+        Assert.Throws<MInternalException>(() => factory.CreateDbContext([]));
 
         Directory.SetCurrentDirectory(original);
     }
@@ -57,7 +58,7 @@ public class SharedDbContextFactoryTests
         }
         else
         {
-            Assert.Throws<InvalidOperationException>(() => factory.CreateDbContext([]));
+            Assert.Throws<MInternalException>(() => factory.CreateDbContext([]));
         }
 
         Directory.SetCurrentDirectory(original);
@@ -167,7 +168,7 @@ public class SharedDbContextFactoryTests
         Directory.SetCurrentDirectory(tempDir);
 
         SharedDbContextFactory<TestDbContext> factory = new();
-        Assert.Throws<InvalidOperationException>(() => factory.CreateDbContext([]));
+        Assert.Throws<MInternalException>(() => factory.CreateDbContext([]));
 
         Directory.SetCurrentDirectory(original);
     }
@@ -231,7 +232,7 @@ public class SharedDbContextFactoryTests
         Directory.SetCurrentDirectory(tempDir);
 
         SharedDbContextFactory<TestDbContext> factory = new();
-        Assert.Throws<InvalidOperationException>(() => factory.CreateDbContext([]));
+        Assert.Throws<MInternalException>(() => factory.CreateDbContext([]));
 
         Directory.SetCurrentDirectory(original);
     }
@@ -323,7 +324,7 @@ public class SharedDbContextFactoryTests
         Directory.SetCurrentDirectory(tempDir);
 
         SharedDbContextFactory<TestDbContext> factory = new();
-        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => factory.CreateDbContext([]));
+        MInternalException ex = Assert.Throws<MInternalException>(() => factory.CreateDbContext([]));
         Assert.Contains("Unsupported database type", ex.Message);
 
         Directory.SetCurrentDirectory(original);
@@ -344,7 +345,7 @@ public class SharedDbContextFactoryTests
         Directory.SetCurrentDirectory(tempDir);
 
         SharedDbContextFactory<TestDbContext> factory = new();
-        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => factory.CreateDbContext([]));
+        MInternalException ex = Assert.Throws<MInternalException>(() => factory.CreateDbContext([]));
         Assert.Contains("Unsupported database type", ex.Message);
 
         Directory.SetCurrentDirectory(original);

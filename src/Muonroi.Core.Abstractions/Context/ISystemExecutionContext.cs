@@ -54,7 +54,28 @@ public interface ISystemExecutionContext
 /// <summary>
 /// A default implementation of <see cref="ISystemExecutionContext"/>.
 /// </summary>
-public class SystemExecutionContext : ISystemExecutionContext
+/// <remarks>
+/// Initializes a new instance of the <see cref="SystemExecutionContext"/> class.
+/// </remarks>
+/// <param name="tenantId">The tenant identifier.</param>
+/// <param name="userId">The user identifier.</param>
+/// <param name="username">The username.</param>
+/// <param name="correlationId">The correlation identifier.</param>
+/// <param name="accessToken">The access token.</param>
+/// <param name="apiKey">The API key.</param>
+/// <param name="isAuthenticated">Whether the context is authenticated.</param>
+/// <param name="permissions">The list of permissions.</param>
+/// <param name="sourceType">The type of source.</param>
+public class SystemExecutionContext(
+    string? tenantId,
+    string? userId,
+    string? username,
+    string correlationId,
+    string? accessToken,
+    string? apiKey,
+    bool isAuthenticated,
+    IReadOnlyList<string>? permissions,
+    string sourceType) : ISystemExecutionContext
 {
     /// <summary>
     /// An empty execution context instance.
@@ -71,83 +92,49 @@ public class SystemExecutionContext : ISystemExecutionContext
         sourceType: "unknown");
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SystemExecutionContext"/> class.
-    /// </summary>
-    /// <param name="tenantId">The tenant identifier.</param>
-    /// <param name="userId">The user identifier.</param>
-    /// <param name="username">The username.</param>
-    /// <param name="correlationId">The correlation identifier.</param>
-    /// <param name="accessToken">The access token.</param>
-    /// <param name="apiKey">The API key.</param>
-    /// <param name="isAuthenticated">Whether the context is authenticated.</param>
-    /// <param name="permissions">The list of permissions.</param>
-    /// <param name="sourceType">The type of source.</param>
-    public SystemExecutionContext(
-        string? tenantId,
-        string? userId,
-        string? username,
-        string correlationId,
-        string? accessToken,
-        string? apiKey,
-        bool isAuthenticated,
-        IReadOnlyList<string>? permissions,
-        string sourceType)
-    {
-        TenantId = Normalize(tenantId);
-        UserId = Normalize(userId);
-        Username = Normalize(username);
-        CorrelationId = string.IsNullOrWhiteSpace(correlationId) ? Guid.NewGuid().ToString("N") : correlationId.Trim();
-        AccessToken = Normalize(accessToken);
-        ApiKey = Normalize(apiKey);
-        IsAuthenticated = isAuthenticated;
-        Permissions = permissions ?? [];
-        SourceType = string.IsNullOrWhiteSpace(sourceType) ? "unknown" : sourceType.Trim().ToLowerInvariant();
-    }
-
-    /// <summary>
     /// Gets the tenant identifier.
     /// </summary>
-    public string? TenantId { get; }
+    public string? TenantId { get; } = Normalize(tenantId);
 
     /// <summary>
     /// Gets the user identifier.
     /// </summary>
-    public string? UserId { get; }
+    public string? UserId { get; } = Normalize(userId);
 
     /// <summary>
     /// Gets the username.
     /// </summary>
-    public string? Username { get; }
+    public string? Username { get; } = Normalize(username);
 
     /// <summary>
     /// Gets the correlation identifier.
     /// </summary>
-    public string CorrelationId { get; }
+    public string CorrelationId { get; } = string.IsNullOrWhiteSpace(correlationId) ? Guid.NewGuid().ToString("N") : correlationId.Trim();
 
     /// <summary>
     /// Gets the access token. This token can be forwarded by downstream transports such as gRPC clients.
     /// </summary>
-    public string? AccessToken { get; }
+    public string? AccessToken { get; } = Normalize(accessToken);
 
     /// <summary>
     /// Gets the API key.
     /// </summary>
-    public string? ApiKey { get; }
+    public string? ApiKey { get; } = Normalize(apiKey);
 
     /// <summary>
     /// Gets a value indicating whether the current execution is authenticated.
     /// </summary>
-    public bool IsAuthenticated { get; }
+    public bool IsAuthenticated { get; } = isAuthenticated;
 
     /// <summary>
     /// Gets the list of permissions.
     /// </summary>
-    public IReadOnlyList<string> Permissions { get; }
+    public IReadOnlyList<string> Permissions { get; } = permissions ?? [];
 
     /// <summary>
     /// Gets the source type.
     /// </summary>
-    public string SourceType { get; }
+    public string SourceType { get; } = string.IsNullOrWhiteSpace(sourceType) ? "unknown" : sourceType.Trim().ToLowerInvariant();
 
     /// <summary>
     /// Creates a new execution context by copying the current context and updating specific fields.

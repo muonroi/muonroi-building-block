@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 using System.Net.Http.Json;
@@ -371,7 +372,7 @@ public sealed class ChainSubmitter(
             return;
         }
 
-        throw new InvalidOperationException(
+        throw new MInternalException(
             "[LICENSE] Feature 'audit-trail' is not available under your current license.");
     }
 

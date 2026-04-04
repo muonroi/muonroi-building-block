@@ -93,7 +93,7 @@ public sealed class ClaudeProliferationBrain(
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(options.AiTimeoutSeconds));
 
             HttpClient client = httpClientFactory.CreateClient("ClaudeProliferation");
-            string endpoint = $"{options.ClaudeEndpoint.TrimEnd('/')}/v1/messages";
+            string endpoint = EndpointValidator.ValidateExternal(options.ClaudeEndpoint, "/v1/messages");
 
             var requestBody = new
             {

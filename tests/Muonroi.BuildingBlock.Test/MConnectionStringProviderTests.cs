@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MConnectionStringProviderTests
@@ -37,6 +38,6 @@ public class MConnectionStringProviderTests
             .AddInMemoryCollection(new Dictionary<string, string?> { ["EnableEncryption"] = "true" }).Build();
         MConnectionStringProvider provider = new(config, new ConfigurationSecretProvider(config));
 
-        Assert.Throws<InvalidOperationException>(() => provider.GetConnectionString("Default"));
+        Assert.Throws<MInternalException>(() => provider.GetConnectionString("Default"));
     }
 }

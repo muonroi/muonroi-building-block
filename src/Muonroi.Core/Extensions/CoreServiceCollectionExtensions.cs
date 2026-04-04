@@ -1,5 +1,6 @@
-using Muonroi.Core.Abstractions.Models.Common;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
+using Muonroi.Core.Abstractions.Models.Common;
 using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Logging;
 
@@ -56,8 +57,8 @@ public static class CoreServiceCollectionExtensions
         bool isSecretDefault = true,
         string secretKey = "")
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(services);
+        MGuard.NotNull(configuration);
         RedisConfigs redisConfigs = new();
         configuration.GetSection(redisConfigs.SectionName).Bind(redisConfigs);
 

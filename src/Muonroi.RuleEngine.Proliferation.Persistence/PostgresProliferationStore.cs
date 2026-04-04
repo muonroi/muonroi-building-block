@@ -8,23 +8,18 @@ namespace Muonroi.RuleEngine.Proliferation.Persistence;
 /// <summary>
 /// PostgreSQL-backed persistence for proliferation scenarios and results.
 /// </summary>
-public sealed class PostgresProliferationStore : IProliferationStore
+/// <remarks>
+/// Creates a PostgreSQL-backed proliferation store.
+/// </remarks>
+/// <param name="db">The proliferation DbContext.</param>
+public sealed class PostgresProliferationStore(ProliferationDbContext db) : IProliferationStore
 {
-    private readonly ProliferationDbContext _db;
+    private readonly ProliferationDbContext _db = db;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
-
-    /// <summary>
-    /// Creates a PostgreSQL-backed proliferation store.
-    /// </summary>
-    /// <param name="db">The proliferation DbContext.</param>
-    public PostgresProliferationStore(ProliferationDbContext db)
-    {
-        _db = db;
-    }
 
     /// <inheritdoc/>
     public async Task SaveScenariosAsync(IReadOnlyList<NeuronScenario> scenarios, CancellationToken ct = default)

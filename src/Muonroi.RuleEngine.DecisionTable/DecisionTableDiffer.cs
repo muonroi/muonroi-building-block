@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable;
@@ -15,8 +16,8 @@ public sealed class DecisionTableDiffer
     /// <returns>Diff result.</returns>
     public DecisionTableDiff Compute(DecisionTableModel from, DecisionTableModel to)
     {
-        ArgumentNullException.ThrowIfNull(from);
-        ArgumentNullException.ThrowIfNull(to);
+        MGuard.NotNull(from);
+        MGuard.NotNull(to);
 
         List<ColumnChange> columnChanges = ComputeColumnChanges(from, to);
         List<RowDiff> rowDiffs = ComputeRowDiffs(from, to);

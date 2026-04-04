@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class GrpcClientTelemetryInterceptorTests
@@ -158,7 +159,7 @@ public class GrpcClientTelemetryInterceptorTests
         GrpcClientTelemetryInterceptor interceptor = new(authContext, GrpcLicensed, new DenyGrpcGuard());
         Grpc.Core.Interceptors.ClientInterceptorContext<string, string> context = CreateClientContext();
 
-        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+        MInternalException ex = Assert.Throws<MInternalException>(() =>
             interceptor.AsyncUnaryCall(
                 "req",
                 context,

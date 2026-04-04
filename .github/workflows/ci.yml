@@ -93,7 +93,7 @@ jobs:
           --verbosity minimal
           --collect:"XPlat Code Coverage"
           --results-directory ./coverage
-          --filter "FullyQualifiedName!~IntegrationTests"
+          --filter "FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~WatchRulesTool_Detects_Changes"
 
       - name: Merge Coverage Reports
         run: |

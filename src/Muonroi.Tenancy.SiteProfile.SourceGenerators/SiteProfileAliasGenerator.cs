@@ -229,35 +229,23 @@ public sealed class SiteProfileAliasGenerator : IIncrementalGenerator
     // Model
     // -----------------------------------------------------------------------
 
-    private sealed class AliasModel
+    private sealed class AliasModel(
+        string className,
+        string namespaceName,
+        string? aliasSiteId,
+        string targetSiteId,
+        bool hasGenerateAttribute,
+        bool hasBehaviorAttribute,
+        bool isPartial,
+        Location location)
     {
-        public string ClassName { get; }
-        public string NamespaceName { get; }
-        public string? AliasSiteId { get; }
-        public string TargetSiteId { get; }
-        public bool HasGenerateAttribute { get; }
-        public bool HasBehaviorAttribute { get; }
-        public bool IsPartial { get; }
-        public Location Location { get; }
-
-        public AliasModel(
-            string className,
-            string namespaceName,
-            string? aliasSiteId,
-            string targetSiteId,
-            bool hasGenerateAttribute,
-            bool hasBehaviorAttribute,
-            bool isPartial,
-            Location location)
-        {
-            ClassName = className;
-            NamespaceName = namespaceName;
-            AliasSiteId = aliasSiteId;
-            TargetSiteId = targetSiteId;
-            HasGenerateAttribute = hasGenerateAttribute;
-            HasBehaviorAttribute = hasBehaviorAttribute;
-            IsPartial = isPartial;
-            Location = location;
-        }
+        public string ClassName { get; } = className;
+        public string NamespaceName { get; } = namespaceName;
+        public string? AliasSiteId { get; } = aliasSiteId;
+        public string TargetSiteId { get; } = targetSiteId;
+        public bool HasGenerateAttribute { get; } = hasGenerateAttribute;
+        public bool HasBehaviorAttribute { get; } = hasBehaviorAttribute;
+        public bool IsPartial { get; } = isPartial;
+        public Location Location { get; } = location;
     }
 }

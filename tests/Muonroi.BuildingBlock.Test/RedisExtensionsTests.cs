@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Muonroi.Caching.Redis.Redis;
 using System.Text;
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -168,7 +169,7 @@ public class RedisExtensionsTests
     public async Task GetCacheAsync_InvalidKey_Throws()
     {
         InMemoryDistributedCache cache = new();
-        await Assert.ThrowsAsync<ArgumentException>(() => cache.GetCacheAsync<string>(""));
+        await Assert.ThrowsAsync<MArgumentException>(() => cache.GetCacheAsync<string>(""));
     }
 
     [Fact]
@@ -213,7 +214,7 @@ public class RedisExtensionsTests
     public async Task GetCacheAsync_KeyNull_Throws()
     {
         InMemoryDistributedCache cache = new();
-        await Assert.ThrowsAsync<ArgumentNullException>(() => cache.GetCacheAsync<string>(null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => cache.GetCacheAsync<string>(null!));
     }
 
     [Fact]
@@ -230,7 +231,7 @@ public class RedisExtensionsTests
         IDistributedCache cache = Substitute.For<IDistributedCache>();
         cache.GetAsync("k", Arg.Any<CancellationToken>())
             .Returns<Task<byte[]?>>(_ => throw new InvalidOperationException());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => cache.GetCacheAsync<string>("k"));
+        await Assert.ThrowsAsync<MInternalException>(() => cache.GetCacheAsync<string>("k"));
     }
 
     [Fact]
@@ -306,7 +307,7 @@ public class RedisExtensionsTests
             throw new InvalidOperationException();
         }
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => cache.GetOrSetAsync("err", Factory));
+        await Assert.ThrowsAsync<MInternalException>(() => cache.GetOrSetAsync("err", Factory));
         string? cached = await cache.GetCacheAsync<string>("err");
 
         Assert.Null(cached);
@@ -316,7 +317,7 @@ public class RedisExtensionsTests
     public async Task Distributed_GetOrSetAsync_KeyEmpty_Throws()
     {
         InMemoryDistributedCache cache = new();
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<MArgumentException>(() =>
             cache.GetOrSetAsync(string.Empty, () => Task.FromResult<string?>("val")));
     }
 
@@ -324,7 +325,7 @@ public class RedisExtensionsTests
     public async Task ExternalDistributedCache_FreeMode_Throws_For_DistributedCacheFeature()
     {
         ExternalDistributedCache cache = new();
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        InvalidOperationException ex = await Assert.ThrowsAsync<MInternalException>(() =>
             cache.SetCacheAsync("k", "v", 1));
         Assert.Contains("distributed-cache", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -344,7 +345,7 @@ public class RedisExtensionsTests
     public async Task ExternalDistributedCache_LicenseGuardDenies_TakesPrecedence()
     {
         ExternalDistributedCache cache = new();
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        InvalidOperationException ex = await Assert.ThrowsAsync<MInternalException>(() =>
             cache.SetCacheAsync(
                 "k",
                 "v",
@@ -360,7 +361,7 @@ public class RedisExtensionsTests
     public async Task RefreshAsync_KeyNull_Throws()
     {
         InMemoryDistributedCache cache = new();
-        await Assert.ThrowsAsync<ArgumentNullException>(() => RedisExtensions.RefreshAsync(cache, null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => RedisExtensions.RefreshAsync(cache, null!));
     }
 
     [Fact]
@@ -375,7 +376,7 @@ public class RedisExtensionsTests
     public async Task RemoveAsync_KeyNull_Throws()
     {
         InMemoryDistributedCache cache = new();
-        await Assert.ThrowsAsync<ArgumentNullException>(() => RedisExtensions.RemoveAsync(cache, null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => RedisExtensions.RemoveAsync(cache, null!));
     }
 
     [Fact]
@@ -432,6 +433,6 @@ public class RedisExtensionsTests
             Port = "6379",
             Password = "pwd"
         };
-        Assert.Throws<ArgumentNullException>(() => services.AddRedis(null!, cfg));
+        Assert.Throws<MArgumentException>(() => services.AddRedis(null!, cfg));
     }
 }

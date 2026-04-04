@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Core.Abstractions.Helpers;
@@ -17,8 +18,8 @@ public class MAuthenticateTokenHelper<TPermission>(
     IMLog<MAuthenticateTokenHelper<TPermission>>? logger = null)
     where TPermission : Enum
 {
-    private readonly MTokenInfo _tokenConfig = tokenConfig ?? throw new ArgumentNullException(nameof(tokenConfig));
-    private readonly ITokenSigner _signer = signer ?? throw new ArgumentNullException(nameof(signer));
+    private readonly MTokenInfo _tokenConfig = MGuard.NotNull(tokenConfig);
+    private readonly ITokenSigner _signer = MGuard.NotNull(signer);
 
     /// <summary>
     /// Generates an authentication token for the specified user and permissions.
@@ -29,7 +30,7 @@ public class MAuthenticateTokenHelper<TPermission>(
     /// <returns>A string representing the generated token.</returns>
     public string GenerateAuthenticateToken(MUserModel user, List<TPermission> permissions, List<Claim>? claims = null)
     {
-        ArgumentNullException.ThrowIfNull(permissions);
+        MGuard.NotNull(permissions);
         logger?.Info("Generating token for {User}", user.UserGuid);
         List<Claim> privateClaims =
         [

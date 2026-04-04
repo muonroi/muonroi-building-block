@@ -13,14 +13,9 @@ namespace TestProject.Aggregate.IntegrationTests;
 /// send gRPC requests with x-site-code metadata, and assert that per-site handlers
 /// return site-specific responses. Covers GRPC-01.
 /// </summary>
-public sealed class GrpcDispatchTests : IClassFixture<AggregateWebAppFactory>
+public sealed class GrpcDispatchTests(AggregateWebAppFactory factory) : IClassFixture<AggregateWebAppFactory>
 {
-    private readonly AggregateWebAppFactory _factory;
-
-    public GrpcDispatchTests(AggregateWebAppFactory factory)
-    {
-        _factory = factory;
-    }
+    private readonly AggregateWebAppFactory _factory = factory;
 
     /// <summary>
     /// GRPC-01: Shared endpoint with BRAVO site context.

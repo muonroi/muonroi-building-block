@@ -1,4 +1,5 @@
 using Muonroi.RuleEngine.CEP.Builder;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleEngine.CEP.Tests;
 
@@ -53,7 +54,7 @@ public class CepWindowBuilderTests
             .Named("Fraud")
             .Sliding(TimeSpan.FromSeconds(30));
 
-        ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.KeepEventsFor(TimeSpan.FromSeconds(10)));
+        MArgumentException ex = Assert.Throws<MArgumentException>(() => builder.KeepEventsFor(TimeSpan.FromSeconds(10)));
 
         Assert.Contains("Time to live", ex.Message);
     }

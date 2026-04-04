@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Auth.Tests;
 
 public class FlowTests
@@ -39,7 +40,7 @@ public class FlowTests
 
         Func<Task> action = () => client.RedeemCodeForTokenAsync("code", "verifier", "https://wrong", new HttpClient(new StubHandler()));
 
-        await action.Should().ThrowAsync<InvalidOperationException>();
+        await action.Should().ThrowAsync<MInternalException>();
     }
 
     [Fact]

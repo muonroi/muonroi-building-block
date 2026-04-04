@@ -34,21 +34,17 @@ internal static class SubFlowCallStack
         return new PopScope(prev);
     }
 
-    private sealed class PopScope : IDisposable
+    private sealed class PopScope(ImmutableStack<string>? prev) : IDisposable
     {
-        private readonly ImmutableStack<string>? _prev;
-
-        public PopScope(ImmutableStack<string>? prev) { _prev = prev; }
+        private readonly ImmutableStack<string>? _prev = prev;
 
         public void Dispose() { _stack.Value = _prev; }
     }
 }
 
 /// <summary>Thrown when a sub-flow execution would create a circular dependency.</summary>
-public sealed class SubFlowCycleException : MException
+/// <remarks>Initializes a new instance of the <see cref="SubFlowCycleException"/> class.</remarks>
+/// <param name="message">Error message describing the cycle.</param>
+public sealed class SubFlowCycleException(string message) : MException("SUBFLOW_CYCLE", message, MExceptionCategory.Domain, 400)
 {
-    /// <summary>Initializes a new instance of the <see cref="SubFlowCycleException"/> class.</summary>
-    /// <param name="message">Error message describing the cycle.</param>
-    public SubFlowCycleException(string message)
-        : base("SUBFLOW_CYCLE", message, MExceptionCategory.Domain, 400) { }
 }

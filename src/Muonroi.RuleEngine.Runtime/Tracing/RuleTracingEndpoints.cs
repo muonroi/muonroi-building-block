@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
@@ -10,7 +11,7 @@ public static class RuleTracingEndpoints
     /// <summary>Maps rule tracing endpoints onto the route builder.</summary>
     public static IEndpointRouteBuilder MapRuleTracingEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
+        MGuard.NotNull(endpoints);
 
         RouteGroupBuilder group = endpoints.MapGroup("/muonroi/rule-debugger");
 

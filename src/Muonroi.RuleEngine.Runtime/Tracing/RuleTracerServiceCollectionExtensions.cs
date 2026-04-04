@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.Core.Tracing;
 
 namespace Muonroi.RuleEngine.Runtime.Tracing;
@@ -12,7 +13,7 @@ public static class RuleTracerServiceCollectionExtensions
         this IServiceCollection services,
         Action<RuleTracingOptions>? configure = null)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        MGuard.NotNull(services);
 
         if (configure is not null)
         {

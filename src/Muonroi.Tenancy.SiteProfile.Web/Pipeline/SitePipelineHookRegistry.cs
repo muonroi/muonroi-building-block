@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Options;
 
@@ -23,7 +24,7 @@ public sealed class SitePipelineHookRegistry
     /// </summary>
     public SitePipelineHookRegistry(IOptions<SitePipelineHookOptions> options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        MGuard.NotNull(options);
         foreach (HookRegistration reg in options.Value.Hooks)
         {
             Register(reg.SiteId, reg.ServiceName, reg.StepName, reg.Phase, reg.Factory);
@@ -40,10 +41,10 @@ public sealed class SitePipelineHookRegistry
         SiteStepHookPhase phase,
         Func<IServiceProvider, ISiteStepHook> factory)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(siteId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(stepName);
-        ArgumentNullException.ThrowIfNull(factory);
+        MGuard.NotEmpty(siteId);
+        MGuard.NotEmpty(serviceName);
+        MGuard.NotEmpty(stepName);
+        MGuard.NotNull(factory);
 
         var key = (siteId, serviceName, stepName, phase);
         _hooks.AddOrUpdate(key,
@@ -59,8 +60,21 @@ public sealed class SitePipelineHookRegistry
     }
 
     /// <summary>
-    /// Returns all hook factories registered for the given composite key.
-    /// Returns an empty list if no hooks are registered.
+    /// Fallback site ID used for default hooks that apply to ALL sites
+    /// unless a site registers its own override for the same (service, step, phase).
+    /// Register with <c>siteId: SitePipelineHookRegistry.FallbackSiteId</c>.
+    /// </summary>
+    public const string FallbackSiteId = "*";
+
+    /// <summary>
+    /// Returns hook factories for the given composite key with fallback support.
+    /// Lookup order:
+    /// <list type="number">
+    /// <item>Exact match: (siteId, serviceName, stepName, phase)</item>
+    /// <item>Fallback: ("*", serviceName, stepName, phase) — if no exact match found</item>
+    /// </list>
+    /// This enables "default hooks" that apply to all sites without explicit per-site registration.
+    /// A site overrides fallback by registering its own hook for the same (service, step, phase).
     /// </summary>
     public IReadOnlyList<Func<IServiceProvider, ISiteStepHook>> GetHookFactories(
         string siteId,
@@ -72,6 +86,16 @@ public sealed class SitePipelineHookRegistry
         if (_hooks.TryGetValue(key, out List<Func<IServiceProvider, ISiteStepHook>>? factories))
         {
             return factories;
+        }
+
+        // Fallback: check for wildcard ("*") hooks
+        if (siteId != FallbackSiteId)
+        {
+            var fallbackKey = (FallbackSiteId, serviceName, stepName, phase);
+            if (_hooks.TryGetValue(fallbackKey, out List<Func<IServiceProvider, ISiteStepHook>>? fallbackFactories))
+            {
+                return fallbackFactories;
+            }
         }
 
         return [];

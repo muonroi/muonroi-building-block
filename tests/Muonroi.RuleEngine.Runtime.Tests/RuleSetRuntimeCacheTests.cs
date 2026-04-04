@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using Muonroi.RuleEngine.Runtime.Rules;
 using NSubstitute;
 using Xunit;
@@ -9,7 +10,7 @@ namespace Muonroi.RuleEngine.Runtime.Tests;
 public sealed class RuleSetRuntimeCacheTests : IDisposable
 {
     private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
-    private readonly RuleStoreConfigs _configs = new() { EnableRuntimeCache = true, RuntimeCacheMinutes = 10 };
+    private readonly IOptions<RuleStoreConfigs> _configs = Options.Create(new RuleStoreConfigs { EnableRuntimeCache = true, RuntimeCacheMinutes = 10 });
 
     public void Dispose() => _cache.Dispose();
 
@@ -17,7 +18,7 @@ public sealed class RuleSetRuntimeCacheTests : IDisposable
     public async Task GetOrCreateAsync_WhenCacheDisabled_CallsFactoryDirectly()
     {
         RuleStoreConfigs configs = new() { EnableRuntimeCache = false };
-        using RuleSetRuntimeCache sut = new(_cache, configs);
+        using RuleSetRuntimeCache sut = new(_cache, Options.Create(configs));
         int factoryCalled = 0;
 
         string? result = await sut.GetOrCreateAsync("t1", "wf1", () =>
@@ -122,7 +123,7 @@ public sealed class RuleSetRuntimeCacheTests : IDisposable
 
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
-
+    
     [Fact]
     public async Task InvalidateAsync_CancellationRequested_Throws()
     {
@@ -160,7 +161,7 @@ public sealed class RuleSetRuntimeCacheTests : IDisposable
     public async Task GetOrCreateAsync_DefaultRuntimeCacheMinutes_UsesDefault()
     {
         RuleStoreConfigs configs = new() { EnableRuntimeCache = true, RuntimeCacheMinutes = 0 };
-        using RuleSetRuntimeCache sut = new(_cache, configs);
+        using RuleSetRuntimeCache sut = new(_cache, Options.Create(configs));
 
         await sut.GetOrCreateAsync("t1", "wf1", () => Task.FromResult<string?>("payload"));
         string? result = await sut.GetOrCreateAsync("t1", "wf1", () => Task.FromResult<string?>("miss"));

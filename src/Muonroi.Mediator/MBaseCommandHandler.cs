@@ -1,4 +1,6 @@
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Models.Common;
 using Muonroi.Core.Extensions;
 using Muonroi.Logging.Abstractions;
@@ -159,7 +161,7 @@ public abstract class MBaseCommandHandler(
     /// </summary>
     protected void LogWarning(string message)
     {
-        ArgumentNullException.ThrowIfNull(message);
+        MGuard.NotNull(message);
         logger.LogWarning(message);
     }
 
@@ -177,6 +179,6 @@ public abstract class MBaseCommandHandler(
     {
         ArgumentNullException.ThrowIfNull(destination);
         object? mapped = Mapper.Map(source, (object)destination);
-        return mapped is null ? throw new InvalidOperationException("Mapping resulted in null.") : (T)mapped;
+        return mapped is null ? throw new MInternalException("Mapping resulted in null.") : (T)mapped;
     }
 }

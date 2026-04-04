@@ -8,6 +8,8 @@
 
 
 
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Logging;
 
 /// <summary>
@@ -19,9 +21,9 @@ public sealed class MLogFactory(
     IMLogContext logContext,
     IMTraceContext? traceContext = null) : IMLogFactory
 {
-    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-    private readonly ISystemExecutionContextAccessor _accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
-    private readonly IMLogContext _logContext = logContext ?? throw new ArgumentNullException(nameof(logContext));
+    private readonly ILoggerFactory _loggerFactory = MGuard.NotNull(loggerFactory);
+    private readonly ISystemExecutionContextAccessor _accessor = MGuard.NotNull(accessor);
+    private readonly IMLogContext _logContext = MGuard.NotNull(logContext);
 
     /// <inheritdoc />
     public IMLog<T> CreateLogger<T>()
@@ -51,9 +53,9 @@ internal sealed class MLogNonGeneric(
     IMLogContext logContext,
     IMTraceContext? traceContext = null) : IMLog
 {
-    private readonly ILogger _inner = inner ?? throw new ArgumentNullException(nameof(inner));
-    private readonly ISystemExecutionContextAccessor _accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
-    private readonly IMLogContext _logContext = logContext ?? throw new ArgumentNullException(nameof(logContext));
+    private readonly ILogger _inner = MGuard.NotNull(inner);
+    private readonly ISystemExecutionContextAccessor _accessor = MGuard.NotNull(accessor);
+    private readonly IMLogContext _logContext = MGuard.NotNull(logContext);
 
     /// <inheritdoc />
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull

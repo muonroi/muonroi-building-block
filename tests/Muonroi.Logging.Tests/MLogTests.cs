@@ -8,6 +8,7 @@ using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Logging.Abstractions;
 using Moq;
 using Xunit;
+using Muonroi.Core.Abstractions.Exceptions;
 
 public class MLogMethodTests
 {
@@ -90,21 +91,21 @@ public class MLogMethodTests
     [Fact]
     public void Constructor_Should_Throw_On_Null_Logger()
     {
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             new MLog<MLogMethodTests>(null!, _accessorMock.Object, _logContextMock.Object));
     }
 
     [Fact]
     public void Constructor_Should_Throw_On_Null_Accessor()
     {
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             new MLog<MLogMethodTests>(_loggerMock.Object, null!, _logContextMock.Object));
     }
 
     [Fact]
     public void Constructor_Should_Throw_On_Null_LogContext()
     {
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             new MLog<MLogMethodTests>(_loggerMock.Object, _accessorMock.Object, null!));
     }
 
@@ -158,7 +159,7 @@ public class MLogContextTests
     [Fact]
     public void Constructor_Should_Throw_On_Null_Factory()
     {
-        Assert.Throws<ArgumentNullException>(() => new MLogContext(null!));
+        Assert.Throws<MArgumentException>(() => new MLogContext(null!));
     }
 }
 
@@ -207,7 +208,7 @@ public class MLogFactoryTests
     [Fact]
     public void Constructor_Should_Throw_On_Null_LoggerFactory()
     {
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             new MLogFactory(null!, Mock.Of<ISystemExecutionContextAccessor>(), Mock.Of<IMLogContext>()));
     }
 }
@@ -228,7 +229,7 @@ public class MLogScopeFactoryTests
     [Fact]
     public void Constructor_Should_Throw_On_Null()
     {
-        Assert.Throws<ArgumentNullException>(() => new MLogScopeFactory(null!));
+        Assert.Throws<MArgumentException>(() => new MLogScopeFactory(null!));
     }
 }
 
@@ -252,7 +253,7 @@ public class MLogServiceCollectionExtensionsTests
     [Fact]
     public void AddMuonroiLogging_Should_Throw_On_Null_Builder()
     {
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             MLogServiceCollectionExtensions.AddMuonroiLogging(null!));
     }
 }

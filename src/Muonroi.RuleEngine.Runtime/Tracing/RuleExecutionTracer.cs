@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Diagnostics;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
@@ -11,9 +12,9 @@ public sealed class RuleExecutionTracer(
     IOptions<RuleTracingOptions> options,
     IMTraceContext? traceContext = null) : IRuleExecutionTracer
 {
-    private readonly IRuleTraceStore _store = store ?? throw new ArgumentNullException(nameof(store));
+    private readonly IRuleTraceStore _store = MGuard.NotNull(store);
     private readonly IRuleDebuggerModeService _debuggerModeService =
-        debuggerModeService ?? throw new ArgumentNullException(nameof(debuggerModeService));
+        MGuard.NotNull(debuggerModeService);
     private readonly RuleTracingOptions _options = options?.Value ?? new RuleTracingOptions();
     private readonly ConcurrentDictionary<string, (bool Enabled, DateTimeOffset ExpiresAt)> _modeCache = new(StringComparer.OrdinalIgnoreCase);
 
@@ -46,7 +47,7 @@ public sealed class RuleExecutionTracer(
     /// <summary>Persists a trace entry when tracing is enabled.</summary>
     public async ValueTask TraceAsync(RuleTraceEntry entry, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(entry);
+        MGuard.NotNull(entry);
         ct.ThrowIfCancellationRequested();
 
         if (!IsEnabled(entry.TenantId))

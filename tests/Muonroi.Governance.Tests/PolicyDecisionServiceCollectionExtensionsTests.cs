@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Muonroi.Governance.Authorization;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Governance.Tests;
 
@@ -68,7 +69,7 @@ public sealed class PolicyDecisionServiceCollectionExtensionsTests
         ServiceCollection? services = null;
         IConfiguration configuration = new ConfigurationBuilder().Build();
 
-        Assert.Throws<ArgumentNullException>(() => services!.AddMPolicyDecision(configuration));
-        Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddMPolicyDecision(null!));
+        Assert.Throws<MArgumentException>(() => services!.AddMPolicyDecision(configuration));
+        Assert.Throws<MArgumentException>(() => new ServiceCollection().AddMPolicyDecision(null!));
     }
 }

@@ -1,5 +1,6 @@
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
@@ -139,7 +140,7 @@ public class MDbContextConfigurationTests
             ConnectionStrings = new ConnectionStrings()
         };
 
-        Assert.Throws<InvalidDataException>(() => InvokeDecrypt(configs, configuration));
+        Assert.Throws<MConfigurationException>(() => InvokeDecrypt(configs, configuration));
     }
 
     [Fact]
@@ -215,7 +216,7 @@ public class MDbContextConfigurationTests
     public void ConfigureDbContext_Invalid_DbType_Throws()
     {
         ServiceCollection services = [];
-        Assert.Throws<ArgumentException>(() => InvokeConfigure(services, "Invalid"));
+        Assert.Throws<MConfigurationException>(() => InvokeConfigure(services, "Invalid"));
     }
 
     [Fact]

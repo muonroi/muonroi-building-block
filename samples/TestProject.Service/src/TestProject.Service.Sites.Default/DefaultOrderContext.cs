@@ -7,13 +7,8 @@ namespace TestProject.Service.Sites.Default;
 /// Default site EF Core DbContext — inherits shared configuration.
 /// Override OnModelCreating for Default-specific schema differences.
 /// </summary>
-public sealed class DefaultOrderContext : ContextBase
+public sealed class DefaultOrderContext(DbContextOptions<DefaultOrderContext> options) : ContextBase(options)
 {
-    public DefaultOrderContext(DbContextOptions<DefaultOrderContext> options)
-        : base(options)
-    {
-    }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

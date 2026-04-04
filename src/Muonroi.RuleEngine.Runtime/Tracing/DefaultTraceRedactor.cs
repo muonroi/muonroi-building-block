@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.Core.Tracing;
 using System.Text;
 using System.Text.Json;
@@ -18,7 +19,7 @@ public sealed class DefaultTraceRedactor(IOptions<RuleTracingOptions> options) :
     /// <inheritdoc/>
     public RuleTraceEntry Redact(RuleTraceEntry entry)
     {
-        ArgumentNullException.ThrowIfNull(entry);
+        MGuard.NotNull(entry);
 
         string? redactedInput = RedactJson(entry.InputFactsJson);
         string? redactedOutput = RedactJson(entry.OutputFactsJson);

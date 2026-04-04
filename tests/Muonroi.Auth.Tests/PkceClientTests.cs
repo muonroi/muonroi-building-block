@@ -2,6 +2,7 @@ namespace Muonroi.Auth.Tests;
 
 using System.Net.Http;
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
 
 public class PkceClientTests
 {
@@ -40,7 +41,7 @@ public class PkceClientTests
         Func<Task> act = () => _client.RedeemCodeForTokenAsync("code", "verifier", "wrong-uri", new HttpClient());
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("Redirect URI must exactly match configured redirect URI.");
     }
 }

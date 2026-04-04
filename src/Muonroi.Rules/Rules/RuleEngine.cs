@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Governance.License;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
@@ -99,7 +100,7 @@ public sealed class RuleEngine<T>(
             baseCode = rule.Code;
             if (string.IsNullOrWhiteSpace(baseCode))
             {
-                throw new InvalidOperationException("Rule code cannot be empty");
+                throw new MInternalException("Rule code cannot be empty");
             }
         }
         catch
@@ -146,19 +147,19 @@ public sealed class RuleEngine<T>(
 
             if (!visiting.Add(code))
             {
-                throw new InvalidOperationException($"Circular rule dependency detected for '{code}'.");
+                throw new MInternalException($"Circular rule dependency detected for '{code}'.", "CIRCULAR_DEPENDENCY");
             }
 
             if (!dict.TryGetValue(code, out (IRule<T> Rule, RuleDescriptor Descriptor) entry))
             {
-                throw new InvalidOperationException($"Rule '{code}' not registered but referenced as a dependency.");
+                throw new MNotFoundException("Rule", code);
             }
 
             foreach (string dep in entry.Descriptor.DependsOn)
             {
                 if (!dict.ContainsKey(dep))
                 {
-                    throw new InvalidOperationException($"Missing dependency '{dep}' for rule '{code}'.");
+                    throw new MNotFoundException("RuleDependency", dep);
                 }
 
                 Visit(dep);

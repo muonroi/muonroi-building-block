@@ -1,5 +1,6 @@
 using Muonroi.Mediator.Mediator;
 using Muonroi.Mediator.Mediator.Interfaces;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Mediator.Tests.Pipeline;
 
@@ -26,17 +27,11 @@ public class CompiledDelegateTests
     // Behavior is registered manually (factory delegate) — not via open-generic DI scan.
     // TPhantom is a phantom type parameter that makes arity (3) != IPipelineBehavior<,> arity (2),
     // so the assembly scan's arity guard skips this type and DI never tries to auto-resolve it.
-    private class TagBehavior<TReq, TRes, TPhantom> : IPipelineBehavior<TReq, TRes>
+    private class TagBehavior<TReq, TRes, TPhantom>(List<string> log, string tag) : IPipelineBehavior<TReq, TRes>
         where TReq : IRequest<TRes>
     {
-        private readonly List<string> _log;
-        private readonly string _tag;
-
-        public TagBehavior(List<string> log, string tag)
-        {
-            _log = log;
-            _tag = tag;
-        }
+        private readonly List<string> _log = log;
+        private readonly string _tag = tag;
 
         public async Task<TRes> Handle(TReq req, RequestHandlerDelegate<TRes> next, CancellationToken ct)
         {
@@ -100,7 +95,7 @@ public class CompiledDelegateTests
         services.AddSingleton<IMediator>(sp => new MMediator(sp.GetService));
         IMediator mediator = services.BuildServiceProvider().GetRequiredService<IMediator>();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<MInternalException>(
             () => mediator.Send(new EchoRequest("test")));
     }
 

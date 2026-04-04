@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.Compliance;
 using Muonroi.Governance.ControlPlane;
@@ -22,9 +23,8 @@ public sealed class MComplianceExportService(
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private readonly LicenseConfigs _licenseConfigs =
-        licenseConfigs ?? throw new ArgumentNullException(nameof(licenseConfigs));
-    private readonly IFingerprintChainStore _chainStore = chainStore ?? throw new ArgumentNullException(nameof(chainStore));
+    private readonly LicenseConfigs _licenseConfigs = MGuard.NotNull(licenseConfigs);
+    private readonly IFingerprintChainStore _chainStore = MGuard.NotNull(chainStore);
     private readonly IEnumerable<IMControlPlaneStore> _controlPlaneStores =
         controlPlaneStores ?? [];
     private readonly IHostEnvironment? _hostEnvironment = hostEnvironment;
@@ -207,7 +207,7 @@ public sealed class MComplianceExportService(
         MComplianceExportQuery query,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(query);
+        MGuard.NotNull(query);
         MCompliancePaths paths = ResolvePaths();
         if (!File.Exists(paths.ExportFilePath))
         {

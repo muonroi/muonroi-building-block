@@ -1,6 +1,7 @@
 using Moq;
 using Muonroi.RuleEngine.Proliferation.Auth;
 using Muonroi.RuleEngine.Proliferation.Models;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleEngine.Proliferation.Tests.Auth;
 
@@ -128,7 +129,7 @@ public class AuthStrategyResolverTests
             OAuth2 = null // missing config
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => resolver.ResolveAsync(config, CancellationToken.None));
+        await Assert.ThrowsAsync<MConfigurationException>(() => resolver.ResolveAsync(config, CancellationToken.None));
     }
 
     [Fact]
@@ -144,6 +145,6 @@ public class AuthStrategyResolverTests
             Mtls = null // missing config
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => resolver.ResolveAsync(config, CancellationToken.None));
+        await Assert.ThrowsAsync<MConfigurationException>(() => resolver.ResolveAsync(config, CancellationToken.None));
     }
 }

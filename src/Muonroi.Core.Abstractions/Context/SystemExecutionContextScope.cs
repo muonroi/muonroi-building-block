@@ -1,3 +1,6 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Core.Abstractions.Context;
 
 /// <summary>
@@ -16,12 +19,12 @@ public sealed class SystemExecutionContextScope : IDisposable
     /// </summary>
     /// <param name="accessor">The execution context accessor.</param>
     /// <param name="context">The context to set for this scope.</param>
-    /// <exception cref="ArgumentNullException">Thrown if accessor or context is null.</exception>
+    /// <exception cref="MArgumentException">Thrown if accessor or context is null.</exception>
     public SystemExecutionContextScope(ISystemExecutionContextAccessor accessor, ISystemExecutionContext context)
     {
-        _accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
+        _accessor = MGuard.NotNull(accessor);
         _previous = accessor.Get();
-        _accessor.Set(context ?? throw new ArgumentNullException(nameof(context)));
+        _accessor.Set(MGuard.NotNull(context));
     }
 
     /// <summary>

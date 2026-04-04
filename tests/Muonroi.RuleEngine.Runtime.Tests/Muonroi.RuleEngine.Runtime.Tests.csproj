@@ -10,6 +10,7 @@
 <PackageReference Include="Scriban" />
 </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.RuleEngine.EntityFrameworkCore\Muonroi.RuleEngine.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Runtime\Muonroi.RuleEngine.Runtime.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Runtime.Web\Muonroi.RuleEngine.Runtime.Web.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.RuleEngine.DecisionTable\Muonroi.RuleEngine.DecisionTable.csproj" />

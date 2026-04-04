@@ -10,11 +10,9 @@ namespace TestProject.Service.Sites.Bravo;
 /// Registered as a keyed IRequestHandler under key "BRAVO" to enable
 /// MSiteCommandHandler keyed dispatch via AddSiteCommandHandler.
 /// </summary>
-public sealed class BravoCreateOrderHandler : MSiteCommandHandler<CreateOrderCommand, CreateOrderResponse>
+/// <inheritdoc />
+public sealed class BravoCreateOrderHandler(ISiteProfileResolver siteResolver, ISiteConfiguration siteConfig) : MSiteCommandHandler<CreateOrderCommand, CreateOrderResponse>(siteResolver, siteConfig)
 {
-    /// <inheritdoc />
-    public BravoCreateOrderHandler(ISiteProfileResolver siteResolver, ISiteConfiguration siteConfig)
-        : base(siteResolver, siteConfig) { }
 
     /// <inheritdoc />
     protected override Task<CreateOrderResponse> ExecuteAsync(

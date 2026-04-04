@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Governance.ControlPlane;
 
 /// <summary>
@@ -50,10 +52,7 @@ public sealed class MFileControlPlaneStore(string path, IMJsonSerializeService j
 
     private static string ResolvePath(string path)
     {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            throw new ArgumentException("Control-plane registry path is required.", nameof(path));
-        }
+        MGuard.NotEmpty(path);
 
         if (Path.IsPathRooted(path))
         {

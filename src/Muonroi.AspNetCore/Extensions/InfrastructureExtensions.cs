@@ -8,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using Muonroi.AspNetCore.Controllers;
 using Muonroi.AspNetCore.Controllers.ActionFilters;
 using Muonroi.AspNetCore.Controllers.Conventions;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.AspNetCore.DI.Autofac;
 using Muonroi.AspNetCore.Filters;
 using Muonroi.AspNetCore.Middleware;
@@ -50,8 +52,8 @@ public static class InfrastructureExtensions
         string? projectSeed = configuration.GetValue<string>("LicenseConfigs:ProjectSeed");
         if (string.IsNullOrWhiteSpace(projectSeed) || projectSeed.Length < 16)
         {
-            throw new InvalidOperationException("[SEC_FATAL] ProjectSeed is missing or too weak. " +
-                                                "A unique 16+ char seed is required for security chaining.");
+            throw new MConfigurationException("[SEC_FATAL] ProjectSeed is missing or too weak. " +
+                                                "A unique 16+ char seed is required for security chaining.", "LicenseConfigs:ProjectSeed");
         }
 
         // Scanning info + validation diagnostics are deferred and logged via IMLog<T>
@@ -138,7 +140,7 @@ public static class InfrastructureExtensions
     public static IServiceCollection AddPermissionFilter<TPermission>(this IServiceCollection services)
         where TPermission : Enum
     {
-        ArgumentNullException.ThrowIfNull(services);
+        MGuard.NotNull(services);
         _ = services.AddScoped<PermissionFilter<TPermission>>();
         _ = services.AddMvc(options => { _ = options.Filters.AddService<PermissionFilter<TPermission>>(); });
         return services;
@@ -147,7 +149,7 @@ public static class InfrastructureExtensions
 /// <inheritdoc />
     public static IApplicationBuilder UseDefaultMiddleware(this IApplicationBuilder app)
     {
-        ArgumentNullException.ThrowIfNull(app);
+        MGuard.NotNull(app);
         IOptions<MultiTenantConfigs>? tenantOptions = app.ApplicationServices.GetService<IOptions<MultiTenantConfigs>>();
         if (tenantOptions?.Value.Enabled == true)
         {
@@ -179,7 +181,7 @@ public static class InfrastructureExtensions
 /// <inheritdoc />
     public static IApplicationBuilder ConfigureEndpoints(this WebApplication app, bool mapHealthChecks = true)
     {
-        ArgumentNullException.ThrowIfNull(app);
+        MGuard.NotNull(app);
         _ = app.UseSwagger();
         _ = app.UseSwaggerUI();
         _ = app.MapControllers();
@@ -257,8 +259,8 @@ public static class InfrastructureExtensions
         where TDbContext : MDbContext
         where TPermission : Enum
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(services);
+        MGuard.NotNull(configuration);
         services.TryAddSingleton<Func<IServiceProvider, HttpContext, Task<IAuthenticateInfoContext>>>(_ =>
             async (provider, httpContext) =>
             {

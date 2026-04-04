@@ -1,5 +1,6 @@
 using Muonroi.Messaging.Abstractions.Events;
 using NSubstitute;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
@@ -40,7 +41,7 @@ public class MEventOutboxDbContextTests
 
         Func<Task> act = () => db.AddAsync(null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MBaseHandlerTests
@@ -165,7 +166,7 @@ public class MBaseHandlerTests
     public void LogInformation_Null_Message_Throws()
     {
         (TestHandler handler, TestSink _) = Create();
-        Assert.Throws<ArgumentNullException>(() => handler.Info(null!));
+        Assert.Throws<MArgumentException>(() => handler.Info(null!));
     }
 
     [Fact]
@@ -182,7 +183,7 @@ public class MBaseHandlerTests
     public void LogWarning_Null_Message_Throws()
     {
         (TestHandler handler, TestSink _) = Create();
-        Assert.Throws<ArgumentNullException>(() => handler.Warn(null!));
+        Assert.Throws<MArgumentException>(() => handler.Warn(null!));
     }
 
     [Fact]
@@ -199,7 +200,7 @@ public class MBaseHandlerTests
     public void LogError_Null_Message_Throws()
     {
         (TestHandler handler, TestSink _) = Create();
-        Assert.Throws<ArgumentNullException>(() => handler.Error(null!));
+        Assert.Throws<MArgumentException>(() => handler.Error(null!));
     }
 
     [Fact]
@@ -216,7 +217,7 @@ public class MBaseHandlerTests
     public void LogDebug_Null_Message_Throws()
     {
         (TestHandler handler, TestSink _) = Create();
-        Assert.Throws<ArgumentNullException>(() => handler.DebugMsg(null!));
+        Assert.Throws<MArgumentException>(() => handler.DebugMsg(null!));
     }
 
     [Fact]

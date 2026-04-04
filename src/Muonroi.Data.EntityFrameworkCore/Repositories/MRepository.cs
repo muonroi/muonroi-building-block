@@ -1,4 +1,6 @@
 using System.Data;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Data.EntityFrameworkCore.Repositories;
 
@@ -66,10 +68,10 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
     /// <exception cref="ArgumentNullException">Thrown when any of the parameters are null.</exception>
     public MRepository(MDbContext dbContext, IAuthenticateInfoContext authContext, ILicenseGuard licenseGuard, IMDateTimeService dateTimeService, IMLog<MRepository<T>>? logger = null)
     {
-        _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
-        DbBaseContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        _licenseGuard = licenseGuard ?? throw new ArgumentNullException(nameof(licenseGuard));
-        _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+        _authContext = MGuard.NotNull(authContext);
+        DbBaseContext = MGuard.NotNull(dbContext);
+        _licenseGuard = MGuard.NotNull(licenseGuard);
+        _dateTimeService = MGuard.NotNull(dateTimeService);
         _logger = logger;
         DbSet = DbBaseContext.Set<T>();
     }
@@ -358,7 +360,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
 
         if (existingEntity != null)
         {
-            throw new InvalidOperationException("Entity already exists in the context.");
+            throw new MInternalException("Entity already exists in the context.");
         }
 
         DateTime utcNow = _dateTimeService.UtcNow();
@@ -523,7 +525,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
     public async Task BulkInsertAsync(IEnumerable<T> entities)
     {
         Protect("bulk_insert");
-        ArgumentNullException.ThrowIfNull(entities);
+        MGuard.NotNull(entities);
 
         try
         {
@@ -543,7 +545,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Bulk insert failed.", ex);
+            throw new MInternalException("Bulk insert failed.");
         }
     }
 
@@ -557,10 +559,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
     [Obsolete("Raw SQL bypasses EF tenant query filters. Use the overload with explicit tenantId parameter, or ensure TenantContext.CurrentTenantId is set.")]
     public virtual async Task<int> ExecuteStoredProcedureAsync(string storedProcedureName, params object[] parameters)
     {
-        if (string.IsNullOrWhiteSpace(storedProcedureName))
-        {
-            throw new ArgumentException("Stored procedure name is not null or empty.", nameof(storedProcedureName));
-        }
+        MGuard.NotEmpty(storedProcedureName);
 
         if (string.IsNullOrEmpty(TenantContext.CurrentTenantId) && !TenantContext.AllowCrossTenantAccess)
         {
@@ -585,10 +584,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
     public virtual async Task<TResult> ExecuteStoredProcedureScalarAsync<TResult>(string storedProcedureName,
         params object[]? parameters)
     {
-        if (string.IsNullOrWhiteSpace(storedProcedureName))
-        {
-            throw new ArgumentException("Stored procedure name is not null or empty.", nameof(storedProcedureName));
-        }
+        MGuard.NotEmpty(storedProcedureName);
 
         if (string.IsNullOrEmpty(TenantContext.CurrentTenantId) && !TenantContext.AllowCrossTenantAccess)
         {

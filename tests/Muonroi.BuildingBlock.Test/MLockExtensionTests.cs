@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MLockExtensionTests
@@ -15,7 +16,7 @@ public class MLockExtensionTests
     public void Locking_Null_Source_Throws()
     {
         object? obj = null;
-        Assert.Throws<ArgumentNullException>(() => obj!.Locking(() => { }));
+        Assert.Throws<MArgumentException>(() => obj!.Locking(() => { }));
     }
 
     [Fact]

@@ -77,11 +77,8 @@ public sealed class SiteColumnDemoTests
     /// Minimal DbContext for testing ApplySiteColumnOverrides with BravoOrder entity.
     /// Uses in-memory provider so no real database is needed.
     /// </summary>
-    private sealed class SiteColumnDemoDbContext : DbContext
+    private sealed class SiteColumnDemoDbContext(DbContextOptions<SiteColumnDemoTests.SiteColumnDemoDbContext> options) : DbContext(options)
     {
-        public SiteColumnDemoDbContext(DbContextOptions<SiteColumnDemoDbContext> options)
-            : base(options) { }
-
         public DbSet<BravoOrder> BravoOrders { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

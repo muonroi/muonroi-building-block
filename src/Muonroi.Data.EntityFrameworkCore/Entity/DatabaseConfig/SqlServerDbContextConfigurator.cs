@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig;
 
 /// <summary>
@@ -8,11 +10,7 @@ public class SqlServerDbContextConfigurator<T> : IDbContextConfigurator<T> where
     /// <inheritdoc />
     public void Configure(DbContextOptionsBuilder<T> options, string connectionString)
     {
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw new ArgumentException("Connection string cannot be null or empty", nameof(connectionString));
-        }
-
+        MGuard.NotEmpty(connectionString);
         options.UseSqlServer(connectionString);
     }
 }

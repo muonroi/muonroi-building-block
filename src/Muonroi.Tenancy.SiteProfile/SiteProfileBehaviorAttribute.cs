@@ -11,18 +11,13 @@ namespace Muonroi.Tenancy.SiteProfile;
 /// public class TciSiteProfile : ISiteProfile { ... }
 /// </code>
 /// </summary>
+/// <remarks>
+/// Creates a SiteProfileBehavior attribute.
+/// </remarks>
+/// <param name="behaviorType">Type implementing ISiteProfileBehavior.</param>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-public sealed class SiteProfileBehaviorAttribute : Attribute
+public sealed class SiteProfileBehaviorAttribute(Type behaviorType) : Attribute
 {
     /// <summary>The ISiteProfileBehavior implementation type to apply.</summary>
-    public Type BehaviorType { get; }
-
-    /// <summary>
-    /// Creates a SiteProfileBehavior attribute.
-    /// </summary>
-    /// <param name="behaviorType">Type implementing ISiteProfileBehavior.</param>
-    public SiteProfileBehaviorAttribute(Type behaviorType)
-    {
-        BehaviorType = behaviorType;
-    }
+    public Type BehaviorType { get; } = behaviorType;
 }

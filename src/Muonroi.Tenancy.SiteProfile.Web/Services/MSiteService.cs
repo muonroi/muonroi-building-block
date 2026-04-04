@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Dapper.Extensions;
 using Muonroi.Core.Abstractions.Response;
 using Muonroi.Tenancy.SiteProfile;
@@ -104,10 +105,10 @@ public abstract class MSiteService<TContext, TEntity> : IMSiteService<TContext, 
         IDapper readContext,
         ISiteProfileResolver siteResolver)
     {
-        ArgumentNullException.ThrowIfNull(writeContext);
-        ArgumentNullException.ThrowIfNull(repository);
-        ArgumentNullException.ThrowIfNull(readContext);
-        ArgumentNullException.ThrowIfNull(siteResolver);
+        MGuard.NotNull(writeContext);
+        MGuard.NotNull(repository);
+        MGuard.NotNull(readContext);
+        MGuard.NotNull(siteResolver);
 
         WriteContext = writeContext;
         Repository = repository;
@@ -151,7 +152,7 @@ public abstract class MSiteService<TContext, TEntity> : IMSiteService<TContext, 
     /// <inheritdoc />
     public virtual async Task<TEntity> CreateAsync(TEntity entity)
     {
-        ArgumentNullException.ThrowIfNull(entity);
+        MGuard.NotNull(entity);
 
         TEntity mapped = MapCreate(entity);
         TEntity added = Repository.Add(mapped);
@@ -162,7 +163,7 @@ public abstract class MSiteService<TContext, TEntity> : IMSiteService<TContext, 
     /// <inheritdoc />
     public virtual async Task<int> UpdateAsync(TEntity entity)
     {
-        ArgumentNullException.ThrowIfNull(entity);
+        MGuard.NotNull(entity);
 
         TEntity mapped = MapUpdate(entity);
         return await Repository.UpdateAsync(mapped).ConfigureAwait(false);
@@ -171,7 +172,7 @@ public abstract class MSiteService<TContext, TEntity> : IMSiteService<TContext, 
     /// <inheritdoc />
     public virtual async Task<bool> DeleteAsync(TEntity entity)
     {
-        ArgumentNullException.ThrowIfNull(entity);
+        MGuard.NotNull(entity);
 
         return await Repository.DeleteAsync(entity).ConfigureAwait(false);
     }
@@ -179,7 +180,7 @@ public abstract class MSiteService<TContext, TEntity> : IMSiteService<TContext, 
     /// <inheritdoc />
     public virtual async Task ExecuteTransactionAsync(Func<Task<MVoidMethodResult>> action)
     {
-        ArgumentNullException.ThrowIfNull(action);
+        MGuard.NotNull(action);
 
         await Repository.ExecuteTransactionAsync(action).ConfigureAwait(false);
     }

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging;
 using TestProject.Service.Sites.Default;
 using TestProject.Service.Sites.Alpha;
@@ -10,7 +11,7 @@ using TestProject.Service.Sites.Bravo;
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>
-/// INFR-04: Verifies that MigrationStrategy.ValidateOnly throws InvalidOperationException
+/// INFR-04: Verifies that MigrationStrategy.ValidateOnly throws MInternalException
 /// when pending migrations are detected, and logs "Validated" when no pending migrations exist.
 ///
 /// To guarantee a "pending migrations" scenario, we use a test-only DbContext
@@ -31,15 +32,11 @@ public sealed class ValidateOnlyMigrationTests
     /// <summary>
     /// Minimal test DbContext that has exactly one EF migration defined (InitialCreate_Test).
     /// Since that migration is never applied to any database, ValidateOnly will always report it
-    /// as pending and throw InvalidOperationException.
+    /// as pending and throw MInternalException.
     /// </summary>
     [DbContext(typeof(PendingMigrationContext))]
-    private sealed class PendingMigrationContext : DbContext
+    private sealed class PendingMigrationContext(DbContextOptions<ValidateOnlyMigrationTests.PendingMigrationContext> options) : DbContext(options)
     {
-        public PendingMigrationContext(DbContextOptions<PendingMigrationContext> options)
-            : base(options)
-        {
-        }
     }
 
     /// <summary>
@@ -128,7 +125,7 @@ public sealed class ValidateOnlyMigrationTests
     // -----------------------------------------------------------------------
 
     [Fact]
-    public async Task ValidateOnly_WithPendingMigration_ThrowsInvalidOperationException()
+    public async Task ValidateOnly_WithPendingMigration_ThrowsMInternalException()
     {
         // Arrange — PendingMigrationContext has migration "20990101000000_NeverApplied" which
         // will never be in __EFMigrationsHistory, so GetPendingMigrationsAsync returns it as pending.
@@ -140,8 +137,8 @@ public sealed class ValidateOnlyMigrationTests
 
         var hostedService = provider.GetRequiredService<IHostedService>();
 
-        // Act + Assert — ValidateOnly must throw InvalidOperationException
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+        // Act + Assert — ValidateOnly must throw MInternalException
+        var ex = await Assert.ThrowsAsync<MInternalException>(
             () => hostedService.StartAsync(CancellationToken.None));
 
         // Assert message content
@@ -165,7 +162,7 @@ public sealed class ValidateOnlyMigrationTests
         var hostedService = provider.GetRequiredService<IHostedService>();
 
         // Act + Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+        var ex = await Assert.ThrowsAsync<MInternalException>(
             () => hostedService.StartAsync(CancellationToken.None));
 
         // The exception message should include the migration name or count

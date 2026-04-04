@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MAuthenticateTokenHelperCtorTests
@@ -20,14 +21,14 @@ public class MAuthenticateTokenHelperCtorTests
     public void Ctor_Null_Config_Throws()
     {
         ITokenSigner signer = Substitute.For<ITokenSigner>();
-        Assert.Throws<ArgumentNullException>(() => new MAuthenticateTokenHelper<TestPerm>(null!, signer));
+        Assert.Throws<MArgumentException>(() => new MAuthenticateTokenHelper<TestPerm>(null!, signer));
     }
 
     [Fact]
     public void Ctor_Null_Signer_Throws()
     {
         MTokenInfo info = CreateInfo();
-        Assert.Throws<ArgumentNullException>(() => new MAuthenticateTokenHelper<TestPerm>(info, null!));
+        Assert.Throws<MArgumentException>(() => new MAuthenticateTokenHelper<TestPerm>(info, null!));
     }
 
     [Fact]

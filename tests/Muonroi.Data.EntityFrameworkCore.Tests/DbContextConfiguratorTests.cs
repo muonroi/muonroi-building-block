@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class DbContextConfiguratorTests
@@ -46,7 +47,7 @@ public class DbContextConfiguratorTests
         DbContextOptionsBuilder<ConfiguratorTestDbContext> builder = new();
         SqlServerDbContextConfigurator<ConfiguratorTestDbContext> configurator = new();
 
-        Assert.Throws<ArgumentException>(() => configurator.Configure(builder, connectionString!));
+        Assert.Throws<MArgumentException>(() => configurator.Configure(builder, connectionString!));
     }
 
     [Fact]
@@ -74,6 +75,6 @@ public class DbContextConfiguratorTests
         DbContextOptionsBuilder<ConfiguratorTestDbContext> builder = new();
         SqliteDbContextConfigurator<ConfiguratorTestDbContext> configurator = new();
 
-        Assert.Throws<ArgumentException>(() => configurator.Configure(builder, connectionString!));
+        Assert.Throws<MArgumentException>(() => configurator.Configure(builder, connectionString!));
     }
 }

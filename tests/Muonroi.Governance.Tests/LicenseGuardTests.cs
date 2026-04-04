@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Governance.Tests;
 
 public class LicenseGuardTests
@@ -59,7 +60,7 @@ public class LicenseGuardTests
 
         Action act = () => guard.EnsureFeature("rule-engine");
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*rule-engine*not available*");
     }
 
@@ -71,7 +72,7 @@ public class LicenseGuardTests
 
         Action act = () => guard.EnsureValid("db.query");
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*License validation failed*");
     }
 
@@ -95,7 +96,7 @@ public class LicenseGuardTests
 
         Action act = () => guard.EnsureValid("rule-engine");
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*rule-engine*not included*");
     }
 

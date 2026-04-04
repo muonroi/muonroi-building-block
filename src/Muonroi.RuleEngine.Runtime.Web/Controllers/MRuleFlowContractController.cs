@@ -8,19 +8,14 @@ namespace Muonroi.RuleEngine.Runtime.Web.Controllers;
 /// Route paths match what <c>MRuleFlowContractService</c> frontend expects.
 /// Consumers can override <see cref="IMRuleFlowContractProvider"/> to customize behavior.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of <see cref="MRuleFlowContractController"/>.
+/// </remarks>
 [ApiController]
 [Route("api/v1/rule-engine")]
-public class MRuleFlowContractController : ControllerBase
+public class MRuleFlowContractController(IMRuleFlowContractProvider contractProvider) : ControllerBase
 {
-    private readonly IMRuleFlowContractProvider _contractProvider;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="MRuleFlowContractController"/>.
-    /// </summary>
-    public MRuleFlowContractController(IMRuleFlowContractProvider contractProvider)
-    {
-        _contractProvider = contractProvider;
-    }
+    private readonly IMRuleFlowContractProvider _contractProvider = contractProvider;
 
     /// <summary>
     /// Get the I/O contract for a rule by source type and code.

@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Logging;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace Muonroi.Logging;
 /// <param name="factory">The <see cref="ILoggerFactory"/> used to create the internal logger.</param>
 public sealed class MLogContext(ILoggerFactory factory) : IMLogContext
 {
-    private readonly ILoggerFactory _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+    private readonly ILoggerFactory _factory = MGuard.NotNull(factory);
 
     /// <inheritdoc />
     public IMLogContextScope PushProperty(string key, object? value)

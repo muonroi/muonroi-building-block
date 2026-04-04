@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class DbContextExtensionsTests
@@ -57,7 +58,7 @@ public class DbContextExtensionsTests
         };
         List<MUser> list =
             [user, null!];
-        await Assert.ThrowsAsync<ArgumentNullException>(() => db.BulkInsertAsync(list));
+        await Assert.ThrowsAsync<MArgumentException>(() => db.BulkInsertAsync(list));
         Assert.Equal(0, await db.Users.CountAsync());
     }
 }

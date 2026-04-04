@@ -610,32 +610,18 @@ internal static class RuleGenPromptService
         return map.TryGetValue(key, out string value) ? value : fallback;
     }
 
-    private sealed class GridRow
+    private sealed class GridRow(string key, string value, bool required, bool readOnly, string hint)
     {
-        public GridRow(string key, string value, bool required, bool readOnly, string hint)
-        {
-            Key = key;
-            Value = value;
-            Required = required;
-            ReadOnly = readOnly;
-            Hint = hint;
-        }
-
-        public string Key { get; }
-        public string Value { get; }
-        public bool Required { get; }
-        public bool ReadOnly { get; }
-        public string Hint { get; }
+        public string Key { get; } = key;
+        public string Value { get; } = value;
+        public bool Required { get; } = required;
+        public bool ReadOnly { get; } = readOnly;
+        public string Hint { get; } = hint;
     }
 
-    private sealed class ProcessingDialogScope : IDisposable
+    private sealed class ProcessingDialogScope(RuleGenPromptService.ProcessingDialogForm form) : IDisposable
     {
-        private readonly ProcessingDialogForm _form;
-
-        public ProcessingDialogScope(ProcessingDialogForm form)
-        {
-            _form = form;
-        }
+        private readonly ProcessingDialogForm _form = form;
 
         public void Dispose()
         {

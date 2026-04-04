@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Integration.Abstractions;
 using System.Data;
 using System.Text.Json;
@@ -135,7 +136,7 @@ public sealed class SqlQueryConnector(IServiceProvider serviceProvider) : IServi
     private static string GetRequiredQuery(JsonElement root)
     {
         return root.GetProperty("query").GetString()
-            ?? throw new InvalidOperationException("query is required");
+            ?? throw new MInternalException("query is required");
     }
 
     private static bool IsReadOnly(JsonElement root)

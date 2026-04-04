@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Mediator.Tests;
 
 public class MediatorExceptionTests
@@ -20,7 +21,7 @@ public class MediatorExceptionTests
     {
         MMediator mediator = new(new EmptyServiceFactory());
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() => mediator.Send<string>(null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => mediator.Send<string>(null!));
     }
 
     private class DummyRequest : IRequest<string>
@@ -32,7 +33,7 @@ public class MediatorExceptionTests
     {
         MMediator mediator = new(new EmptyServiceFactory());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => mediator.Send(new DummyRequest()));
+        await Assert.ThrowsAsync<MInternalException>(() => mediator.Send(new DummyRequest()));
     }
 
     private class TestNotification : INotification
@@ -52,7 +53,7 @@ public class MediatorExceptionTests
     {
         MMediator mediator = new(new EmptyServiceFactory());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => mediator.Publish(new object()));
+        await Assert.ThrowsAsync<MInternalException>(() => mediator.Publish(new object()));
     }
 
     private class StreamRequest : IStreamRequest<int>
@@ -79,7 +80,7 @@ public class MediatorExceptionTests
         MMediator mediator = new(new EmptyServiceFactory());
 
         // v2: ArgumentNullException instead of NullReferenceException (direct null guard via ArgumentNullException.ThrowIfNull)
-        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+        await Assert.ThrowsAsync<MArgumentException>(async () =>
         {
             IAsyncEnumerable<int> stream = mediator.CreateStream<int>(null!);
             await foreach (int _ in stream)
@@ -94,6 +95,6 @@ public class MediatorExceptionTests
         MMediator mediator = new(new EmptyServiceFactory());
 
         // v2: ArgumentNullException instead of NullReferenceException (direct null guard via ArgumentNullException.ThrowIfNull)
-        await Assert.ThrowsAsync<ArgumentNullException>(() => mediator.Send((object)null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => mediator.Send((object)null!));
     }
 }

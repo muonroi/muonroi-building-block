@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.AspNetCore.Tests.Middleware;
 
 public class LicenseMiddlewareTests
@@ -6,7 +7,7 @@ public class LicenseMiddlewareTests
     public void Constructor_NullNext_ThrowsArgumentNullException()
     {
         Action act = () => new LicenseMiddleware(null!);
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]

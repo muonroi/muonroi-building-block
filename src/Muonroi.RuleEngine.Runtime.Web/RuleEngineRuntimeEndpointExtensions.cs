@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.Runtime.Tracing;
 using Muonroi.RuleEngine.Runtime.Web.Hubs;
 
@@ -13,7 +14,7 @@ public static class RuleEngineRuntimeEndpointExtensions
     /// <returns>The same endpoint route builder.</returns>
     public static IEndpointRouteBuilder MapRuleEngineRuntimeWeb(this IEndpointRouteBuilder endpoints)
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
+        MGuard.NotNull(endpoints);
         endpoints.MapControllers();
         endpoints.MapRuleTracingEndpoints();
         endpoints.MapHub<RuleSetChangeHub>("/hubs/ruleset-changes");

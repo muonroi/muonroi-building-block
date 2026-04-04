@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Policy;
 using System.Net.Http.Json;
 using Muonroi.Governance.Abstractions.Integrity;
@@ -18,8 +19,8 @@ public static class LicenseServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddLicenseProtection(this IServiceCollection services, IConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(services);
+        MGuard.NotNull(configuration);
 
         LicenseConfigs configs = new();
         configuration.GetSection(LicenseConfigs.SectionName).Bind(configs);

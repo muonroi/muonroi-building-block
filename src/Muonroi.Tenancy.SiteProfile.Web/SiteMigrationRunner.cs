@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using System.Diagnostics;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Logging.Abstractions;
@@ -170,7 +171,7 @@ internal sealed class SiteMigrationRunner(
             if (failures.Count > 0)
             {
                 string details = string.Join("\n  - ", failures);
-                throw new InvalidOperationException(
+                throw new MInternalException(
                     $"[SiteMigration] Pending migrations detected — deployment must apply migrations before starting:\n  - {details}");
             }
         }

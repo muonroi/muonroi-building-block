@@ -10,29 +10,23 @@ namespace Muonroi.RuleEngine.Runtime.Web.Services;
 /// rule contract schemas. Falls back to reflection-based schema building when the registry
 /// does not contain a pre-built context schema.
 /// </summary>
-public class MDefaultRuleFlowContractProvider : IMRuleFlowContractProvider
+/// <remarks>
+/// Initializes a new instance of <see cref="MDefaultRuleFlowContractProvider"/>.
+/// Resolves <see cref="MRuleAuthoringManifestRegistry"/> from the service provider,
+/// creating a new instance if one is not registered.
+/// </remarks>
+public class MDefaultRuleFlowContractProvider(
+    IServiceProvider serviceProvider,
+    ILogger<MDefaultRuleFlowContractProvider>? log = null) : IMRuleFlowContractProvider
 {
-    private readonly MRuleAuthoringManifestRegistry _registry;
-    private readonly ILogger<MDefaultRuleFlowContractProvider>? _log;
+    private readonly MRuleAuthoringManifestRegistry _registry = serviceProvider.GetService(typeof(MRuleAuthoringManifestRegistry)) as MRuleAuthoringManifestRegistry
+                    ?? new MRuleAuthoringManifestRegistry(serviceProvider);
+    private readonly ILogger<MDefaultRuleFlowContractProvider>? _log = log;
 
     /// <summary>
     /// Lazy-built index: rule code → authoring entry (case-insensitive).
     /// </summary>
     private Dictionary<string, MRuleAuthoringEntry>? _ruleIndex;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="MDefaultRuleFlowContractProvider"/>.
-    /// Resolves <see cref="MRuleAuthoringManifestRegistry"/> from the service provider,
-    /// creating a new instance if one is not registered.
-    /// </summary>
-    public MDefaultRuleFlowContractProvider(
-        IServiceProvider serviceProvider,
-        ILogger<MDefaultRuleFlowContractProvider>? log = null)
-    {
-        _registry = serviceProvider.GetService(typeof(MRuleAuthoringManifestRegistry)) as MRuleAuthoringManifestRegistry
-                    ?? new MRuleAuthoringManifestRegistry(serviceProvider);
-        _log = log;
-    }
 
     /// <inheritdoc />
     public Task<MRuleFlowContractLookupResponse?> MGetContractAsync(

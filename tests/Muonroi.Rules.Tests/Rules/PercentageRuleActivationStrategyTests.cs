@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Rules.Tests.Rules;
 
 public class PercentageRuleActivationStrategyTests
@@ -6,7 +7,7 @@ public class PercentageRuleActivationStrategyTests
     public void Constructor_NullProvider_ShouldThrow()
     {
         Action act = () => new PercentageRuleActivationStrategy<string>(null!);
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]

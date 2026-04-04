@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Grpc.Core;
 
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
@@ -19,7 +21,7 @@ internal sealed class SiteGrpcClientFactory(
     public TBase CreateForCurrentSite<TBase>(string serviceName)
         where TBase : ClientBase
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
+        MGuard.NotEmpty(serviceName);
 
         string siteId = resolver.Current.SiteId;
 
@@ -36,7 +38,7 @@ internal sealed class SiteGrpcClientFactory(
 
         if (descriptor is null)
         {
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"No gRPC client registered for site '{siteId}' (or 'default') with service name '{serviceName}'. " +
                 $"Ensure Program.cs calls: services.AddSiteGrpcClient<TClient>(\"{siteId}\", \"{serviceName}\") " +
                 $"and services.AddGrpcClient<TClient>() is also registered.");
@@ -46,7 +48,7 @@ internal sealed class SiteGrpcClientFactory(
         object? client = grpcClientFactoryAccessor.CreateClient(descriptor.ClientType, serviceName);
         if (client is null)
         {
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"No gRPC client cached for site '{siteId}' service '{serviceName}' " +
                 $"(type: {descriptor.ClientType.Name}). " +
                 $"Ensure app.InitializeSiteGrpcClients() is called in Program.cs.");
@@ -67,7 +69,7 @@ internal sealed class SiteGrpcClientFactory(
     public TFacade CreateFacadeForCurrentSite<TFacade>(string serviceName)
         where TFacade : class
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
+        MGuard.NotEmpty(serviceName);
 
         string siteId = resolver.Current.SiteId;
 
@@ -85,7 +87,7 @@ internal sealed class SiteGrpcClientFactory(
 
         if (facade is null)
         {
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"No gRPC facade registered for site '{siteId}' (or 'default') with service name '{serviceName}'. " +
                 $"Ensure Program.cs calls: services.AddSiteGrpcFacadeClient<TFacade, TImpl>(\"{siteId}\", \"{serviceName}\") " +
                 $"and services.AddSiteGrpcFacadeClient<TFacade, TImpl>(\"default\", \"{serviceName}\") as fallback.");

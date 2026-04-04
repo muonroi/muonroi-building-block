@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -14,14 +15,12 @@ public class TenantAwareJobBaseTests
     private readonly Mock<ISystemExecutionContextAccessor> _accessorMock = new();
     private readonly Mock<ITenantContextPolicy> _policyMock = new();
 
-    private class TestJob : TenantAwareJobBase
+    private class TestJob(
+        ISystemExecutionContextAccessor accessor,
+        ITenantContextPolicy policy) : TenantAwareJobBase(accessor, policy)
     {
         public bool Executed { get; private set; }
         public string? CapturedTenantId { get; private set; }
-
-        public TestJob(
-            ISystemExecutionContextAccessor accessor,
-            ITenantContextPolicy policy) : base(accessor, policy) { }
 
         protected override Task ExecuteAsync()
         {
@@ -120,15 +119,13 @@ public class TenantAwareJobBaseTests
         TestJob job = new(_accessorMock.Object, _policyMock.Object);
 
         Func<Task> act = () => job.RunPublic(null!);
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
-    private class FailingJob : TenantAwareJobBase
+    private class FailingJob(
+        ISystemExecutionContextAccessor accessor,
+        ITenantContextPolicy policy) : TenantAwareJobBase(accessor, policy)
     {
-        public FailingJob(
-            ISystemExecutionContextAccessor accessor,
-            ITenantContextPolicy policy) : base(accessor, policy) { }
-
         protected override Task ExecuteAsync() => throw new InvalidOperationException("Job failed");
         public Task RunPublic(IMuonroiJobExecutionContext ctx) => RunAsync(ctx);
     }
@@ -148,6 +145,6 @@ public class BackgroundJobHandlerTests
             .Build();
 
         Action act = () => BackgroundJobHandler.AddBackgroundJobs(services, config);
-        act.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<MInternalException>();
     }
 }

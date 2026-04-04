@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig;
 
 /// <summary>
@@ -27,11 +29,11 @@ public class MongoDbContextConfigurator<T> : IDbContextConfigurator<T> where T :
     {
         string? mongoDbConnectionString = configuration.GetConnectionString("MongoDbConnectionString");
         if (string.IsNullOrEmpty(mongoDbConnectionString))
-            throw new InvalidDataException("MongoDb connection string is not configured.");
+            throw new MConfigurationException("MongoDb connection string is not configured.", "ConnectionStrings:MongoDbConnectionString");
 
         string? mongoDbName = configuration.GetSection("DatabaseConfigs")["DatabaseName"];
         if (string.IsNullOrEmpty(mongoDbName))
-            throw new InvalidDataException("MongoDb database name is not configured.");
+            throw new MConfigurationException("MongoDb database name is not configured.", "DatabaseConfigs:DatabaseName");
 
         string result = $"{mongoDbConnectionString}/{mongoDbName}?authSource=admin";
 

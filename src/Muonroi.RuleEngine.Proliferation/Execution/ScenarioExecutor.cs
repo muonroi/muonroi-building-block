@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Proliferation.Models;
@@ -138,8 +139,7 @@ public sealed class ScenarioExecutor(
         string? json = await ruleSetStore.GetAsync(workflowName, version: null, ct);
         if (string.IsNullOrWhiteSpace(json))
         {
-            throw new InvalidOperationException(
-                $"No active ruleset found for workflow '{workflowName}'. Ensure the workflow exists and has an active version.");
+            throw new MNotFoundException("Ruleset", workflowName);
         }
 
         return json;

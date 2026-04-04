@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleEngine.NRules;
 
@@ -60,7 +61,7 @@ public sealed class NRulesEngine
         if (conflicts.Count > 0)
         {
             string names = string.Join(", ", conflicts.Select(g => g.Key));
-            throw new InvalidOperationException($"Conflicting rules detected: {names}");
+            throw new MInternalException($"Conflicting rules detected: {names}");
         }
     }
 

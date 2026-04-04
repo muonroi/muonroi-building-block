@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Governance.Tests;
 
 public class LicenseRuntimeEnforcementTests
@@ -100,7 +101,7 @@ public class LicenseRuntimeEnforcementTests
         {
             if (!HasFeature(featureName))
             {
-                throw new InvalidOperationException("distributed-cache feature not licensed");
+                throw new MInternalException("distributed-cache feature not licensed");
             }
         }
 
@@ -139,7 +140,7 @@ public class LicenseRuntimeEnforcementTests
         {
             if (!HasFeature(featureName))
             {
-                throw new InvalidOperationException("message-bus feature blocked by guard");
+                throw new MInternalException("message-bus feature blocked by guard");
             }
         }
 
@@ -165,7 +166,7 @@ public class LicenseRuntimeEnforcementTests
         IDistributedCache distributed = new FakeDistributedCache();
         MultiLevelCacheService service = new(memory, distributed, LicenseState.CreateFree());
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetAsync<string>("k"));
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => service.GetAsync<string>("k"));
         Assert.Contains("distributed-cache", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -189,7 +190,7 @@ public class LicenseRuntimeEnforcementTests
         IDistributedCache distributed = new FakeDistributedCache();
         MultiLevelCacheService service = new(memory, distributed, DistributedCacheSpoofedInvalid);
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetAsync<string>("k"));
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => service.GetAsync<string>("k"));
         Assert.Contains("distributed-cache", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -208,7 +209,7 @@ public class LicenseRuntimeEnforcementTests
             DistributedCacheLicensed,
             scopeFactory: provider.GetRequiredService<IServiceScopeFactory>());
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetAsync<string>("k"));
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => service.GetAsync<string>("k"));
         Assert.Contains("distributed-cache", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -220,7 +221,7 @@ public class LicenseRuntimeEnforcementTests
         context.Headers.Returns(Substitute.For<SendHeaders>());
         IPipe<PublishContext<TestMessage>> next = Substitute.For<IPipe<PublishContext<TestMessage>>>();
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => filter.Send(context, next));
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => filter.Send(context, next));
         Assert.Contains("message-bus", ex.Message, StringComparison.OrdinalIgnoreCase);
         await next.DidNotReceive().Send(Arg.Any<PublishContext<TestMessage>>());
     }
@@ -247,7 +248,7 @@ public class LicenseRuntimeEnforcementTests
         context.Headers.Returns(Substitute.For<Headers>());
         IPipe<ConsumeContext<TestMessage>> next = Substitute.For<IPipe<ConsumeContext<TestMessage>>>();
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => filter.Send(context, next));
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => filter.Send(context, next));
         Assert.Contains("message-bus", ex.Message, StringComparison.OrdinalIgnoreCase);
         await next.DidNotReceive().Send(Arg.Any<ConsumeContext<TestMessage>>());
     }
@@ -282,7 +283,7 @@ public class LicenseRuntimeEnforcementTests
         context.Headers.Returns(Substitute.For<SendHeaders>());
         IPipe<SendContext<TestMessage>> next = Substitute.For<IPipe<SendContext<TestMessage>>>();
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => filter.Send(context, next));
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => filter.Send(context, next));
         Assert.Contains("message-bus", ex.Message, StringComparison.OrdinalIgnoreCase);
         await next.DidNotReceive().Send(Arg.Any<SendContext<TestMessage>>());
     }
@@ -309,7 +310,7 @@ public class LicenseRuntimeEnforcementTests
         context.Headers.Returns(Substitute.For<SendHeaders>());
         IPipe<PublishContext<TestMessage>> next = Substitute.For<IPipe<PublishContext<TestMessage>>>();
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => filter.Send(context, next));
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => filter.Send(context, next));
         Assert.Contains("message-bus", ex.Message, StringComparison.OrdinalIgnoreCase);
         await next.DidNotReceive().Send(Arg.Any<PublishContext<TestMessage>>());
     }
@@ -322,7 +323,7 @@ public class LicenseRuntimeEnforcementTests
         context.Headers.Returns(Substitute.For<SendHeaders>());
         IPipe<PublishContext<TestMessage>> next = Substitute.For<IPipe<PublishContext<TestMessage>>>();
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => filter.Send(context, next));
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => filter.Send(context, next));
         Assert.Contains("message-bus feature blocked by guard", ex.Message, StringComparison.OrdinalIgnoreCase);
         await next.DidNotReceive().Send(Arg.Any<PublishContext<TestMessage>>());
     }
@@ -335,7 +336,7 @@ public class LicenseRuntimeEnforcementTests
         context.Headers.Returns(Substitute.For<SendHeaders>());
         IPipe<SendContext<TestMessage>> next = Substitute.For<IPipe<SendContext<TestMessage>>>();
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => filter.Send(context, next));
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => filter.Send(context, next));
         Assert.Contains("message-bus feature blocked by guard", ex.Message, StringComparison.OrdinalIgnoreCase);
         await next.DidNotReceive().Send(Arg.Any<SendContext<TestMessage>>());
     }
@@ -348,7 +349,7 @@ public class LicenseRuntimeEnforcementTests
         context.Headers.Returns(Substitute.For<Headers>());
         IPipe<ConsumeContext<TestMessage>> next = Substitute.For<IPipe<ConsumeContext<TestMessage>>>();
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => filter.Send(context, next));
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => filter.Send(context, next));
         Assert.Contains("message-bus feature blocked by guard", ex.Message, StringComparison.OrdinalIgnoreCase);
         await next.DidNotReceive().Send(Arg.Any<ConsumeContext<TestMessage>>());
     }

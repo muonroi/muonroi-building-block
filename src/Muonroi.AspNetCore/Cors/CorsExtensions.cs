@@ -14,9 +14,17 @@ public static class CorsExtensions
             options.AddPolicy(domainName, policy =>
             {
                 policy.WithOrigins(origins)
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
+                    .WithHeaders(
+                        "Content-Type",
+                        "Authorization",
+                        "Accept",
+                        "Accept-Language",
+                        "X-Tenant-Id",
+                        "X-Request-Id",
+                        "X-Correlation-Id")
+                    .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                    .AllowCredentials()
+                    .WithExposedHeaders("X-Correlation-Id", "X-Request-Id");
             });
         });
 

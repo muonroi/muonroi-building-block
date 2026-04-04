@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.RuleEngine.CEP.Abstractions;
 using Muonroi.RuleEngine.CEP.Observability;
@@ -141,12 +142,7 @@ public sealed class InMemoryCepConfigRepository(
 
     private static string NormalizeRequired(string? value, string paramName)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new ArgumentException("Value is required.", paramName);
-        }
-
-        return value.Trim();
+        return MGuard.NotEmpty(value, paramName).Trim();
     }
 
     private static string? NormalizeOptional(string? value)

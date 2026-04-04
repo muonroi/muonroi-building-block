@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using System.Net.Http.Json;
 
@@ -13,9 +14,8 @@ public sealed class MPolicyDecisionService(
 {
     private const string ClientName = "MuonroiPolicyDecision";
 
-    private readonly MPolicyDecisionConfigs _configs = configs ?? throw new ArgumentNullException(nameof(configs));
-    private readonly IHttpClientFactory _httpClientFactory =
-        httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+    private readonly MPolicyDecisionConfigs _configs = MGuard.NotNull(configs);
+    private readonly IHttpClientFactory _httpClientFactory = MGuard.NotNull(httpClientFactory);
     private readonly IMLog<MPolicyDecisionService>? _logger = logger;
 
     /// <summary>
@@ -30,7 +30,7 @@ public sealed class MPolicyDecisionService(
         MPolicyDecisionRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        MGuard.NotNull(request);
 
         if (!_configs.Enabled)
         {

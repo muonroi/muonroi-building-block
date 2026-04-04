@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using StackExchange.Redis;
 
@@ -32,9 +33,9 @@ public sealed class RedisRoutingTableStore : IRedisRoutingTableStore, IDisposabl
         IMDateTimeService dateTimeService,
         IOptions<RedisRoutingTableOptions>? options = null)
     {
-        ArgumentNullException.ThrowIfNull(connectionMultiplexer);
-        _jsonSerializeService = jsonSerializeService ?? throw new ArgumentNullException(nameof(jsonSerializeService));
-        _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+        MGuard.NotNull(connectionMultiplexer);
+        _jsonSerializeService = MGuard.NotNull(jsonSerializeService);
+        _dateTimeService = MGuard.NotNull(dateTimeService);
         _options = options?.Value ?? new RedisRoutingTableOptions();
         _database = connectionMultiplexer.GetDatabase();
         _subscriber = connectionMultiplexer.GetSubscriber();
@@ -142,7 +143,7 @@ public sealed class RedisRoutingTableStore : IRedisRoutingTableStore, IDisposabl
 
     private RoutingTableEntry NormalizeEntry(RoutingTableEntry entry)
     {
-        ArgumentNullException.ThrowIfNull(entry);
+        MGuard.NotNull(entry);
         return entry with
         {
             MessageType = NormalizeRequired(entry.MessageType, nameof(entry.MessageType)),
@@ -156,7 +157,7 @@ public sealed class RedisRoutingTableStore : IRedisRoutingTableStore, IDisposabl
     private static string NormalizeRequired(string value, string paramName)
     {
         return string.IsNullOrWhiteSpace(value)
-            ? throw new ArgumentException("Value is required.", paramName)
+            ? throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(paramName, "Value is required.")
             : value.Trim();
     }
 

@@ -19,6 +19,7 @@
     <ProjectReference Include="../Muonroi.Quota.Abstractions/Muonroi.Quota.Abstractions.csproj" />
     <ProjectReference Include="../Muonroi.Mediator/Muonroi.Mediator.csproj" />
     <ProjectReference Include="../Muonroi.RuleEngine.Abstractions/Muonroi.RuleEngine.Abstractions.csproj" />
+    <ProjectReference Include="../Muonroi.RuleEngine.Core/Muonroi.RuleEngine.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Dapper.Extensions.NetCore" />

@@ -1,4 +1,5 @@
 using Muonroi.Governance.Abstractions.License;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
@@ -53,7 +54,7 @@ public class SharedDbContextFactoryTests
             () =>
             {
                 SharedDbContextFactory<FactoryTestDbContext> factory = new();
-                Assert.Throws<InvalidOperationException>(() => factory.CreateDbContext([]));
+                Assert.Throws<MConfigurationException>(() => factory.CreateDbContext([]));
             });
     }
 
@@ -108,7 +109,7 @@ public class SharedDbContextFactoryTests
             () =>
             {
                 SharedDbContextFactory<FactoryTestDbContext> factory = new();
-                Assert.Throws<InvalidOperationException>(() => factory.CreateDbContext([]));
+                Assert.Throws<MConfigurationException>(() => factory.CreateDbContext([]));
             });
     }
 
@@ -130,7 +131,7 @@ public class SharedDbContextFactoryTests
             () =>
             {
                 SharedDbContextFactory<NoCtorDbContext> factory = new();
-                Assert.Throws<InvalidOperationException>(() => factory.CreateDbContext([]));
+                Assert.Throws<MInternalException>(() => factory.CreateDbContext([]));
             });
     }
 

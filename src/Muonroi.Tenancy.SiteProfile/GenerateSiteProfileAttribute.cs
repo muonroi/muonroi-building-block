@@ -15,14 +15,19 @@ namespace Muonroi.Tenancy.SiteProfile;
 /// }
 /// </code>
 /// </summary>
+/// <remarks>
+/// Creates a GenerateSiteProfile attribute.
+/// </remarks>
+/// <param name="siteId">Site identifier string (e.g., "SiteA").</param>
+/// <param name="dbContextType">DbContext type for this site.</param>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public sealed class GenerateSiteProfileAttribute : Attribute
+public sealed class GenerateSiteProfileAttribute(string siteId, Type dbContextType) : Attribute
 {
     /// <summary>Site identifier used as the keyed service key.</summary>
-    public string SiteId { get; }
+    public string SiteId { get; } = siteId;
 
     /// <summary>DbContext type for this site (registered via MultiTenantServiceCollectionExtensions.AddDbContext).</summary>
-    public Type DbContextType { get; }
+    public Type DbContextType { get; } = dbContextType;
 
     /// <summary>
     /// When true, the generated RegisterServices() skips AddDbContext registration.
@@ -32,15 +37,4 @@ public sealed class GenerateSiteProfileAttribute : Attribute
     /// Default: false.
     /// </summary>
     public bool SkipDbContextRegistration { get; set; }
-
-    /// <summary>
-    /// Creates a GenerateSiteProfile attribute.
-    /// </summary>
-    /// <param name="siteId">Site identifier string (e.g., "SiteA").</param>
-    /// <param name="dbContextType">DbContext type for this site.</param>
-    public GenerateSiteProfileAttribute(string siteId, Type dbContextType)
-    {
-        SiteId = siteId;
-        DbContextType = dbContextType;
-    }
 }

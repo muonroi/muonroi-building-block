@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Caching.Redis.Tests;
@@ -69,7 +70,7 @@ public class RedisExtensionsTests
 
         Func<Task> action = async () => _ = await cache.GetCacheAsync<string>(string.Empty);
 
-        await action.Should().ThrowAsync<ArgumentException>();
+        await action.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -89,7 +90,7 @@ public class RedisExtensionsTests
 
         Func<Task> action = async () => _ = await cache.GetCacheAsync<string>("k");
 
-        await action.Should().ThrowAsync<InvalidOperationException>();
+        await action.Should().ThrowAsync<MInternalException>();
     }
 
     [Fact]
@@ -209,7 +210,7 @@ public class RedisExtensionsTests
 
         Func<Task> action = async () => await cache.GetOrSetAsync<string>("bad-factory", null!);
 
-        await action.Should().ThrowAsync<ArgumentNullException>();
+        await action.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -219,7 +220,7 @@ public class RedisExtensionsTests
 
         Func<Task> action = async () => await cache.SetCacheAsync("k", "v", 1);
 
-        var exception = await action.Should().ThrowAsync<InvalidOperationException>();
+        var exception = await action.Should().ThrowAsync<MInternalException>();
         exception.Which.Message.Should().Contain("distributed-cache");
     }
 
@@ -359,7 +360,7 @@ public class RedisExtensionsTests
 
         Action action = () => services.AddRedis(configuration, configs);
 
-        action.Should().Throw<InvalidOperationException>()
+        action.Should().Throw<MConfigurationException>()
             .WithMessage("*Host and Port are required*");
     }
 
@@ -378,7 +379,7 @@ public class RedisExtensionsTests
 
         Action action = () => services.AddRedis(null!, configs);
 
-        action.Should().Throw<ArgumentNullException>();
+        action.Should().Throw<MArgumentException>();
     }
 
     private sealed class OperationThrowingDistributedCache(

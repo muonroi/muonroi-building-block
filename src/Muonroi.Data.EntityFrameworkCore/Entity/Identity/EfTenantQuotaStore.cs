@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Quota.Abstractions;
 using System.Globalization;
 
@@ -18,7 +19,7 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
     /// <returns>The tenant quota, or <c>null</c> if not found.</returns>
     public async Task<TenantQuota?> GetQuotaAsync(string tenantId, CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrEmpty(tenantId);
+        MGuard.NotEmpty(tenantId);
 
         MTenantQuota? entity = await context.TenantQuotas
             .IgnoreQueryFilters()
@@ -34,8 +35,8 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
     /// <param name="ct">Cancellation token.</param>
     public async Task SaveQuotaAsync(string tenantId, TenantQuota quota, CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrEmpty(tenantId);
-        ArgumentNullException.ThrowIfNull(quota);
+        MGuard.NotEmpty(tenantId);
+        MGuard.NotNull(quota);
 
         MTenantQuota? entity = await context.TenantQuotas
             .IgnoreQueryFilters()
@@ -76,7 +77,7 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
     /// <param name="ct">Cancellation token.</param>
     public async Task RecordUsageAsync(string tenantId, QuotaType type, int amount, CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrEmpty(tenantId);
+        MGuard.NotEmpty(tenantId);
         if (amount == 0)
         {
             return;
@@ -118,7 +119,7 @@ public sealed class EfTenantQuotaStore<TContext>(TContext context, IMDateTimeSer
     /// <returns>The current quota usage snapshot.</returns>
     public async Task<QuotaUsage> GetUsageAsync(string tenantId, CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrEmpty(tenantId);
+        MGuard.NotEmpty(tenantId);
 
         DateTime now = dateTimeService.UtcNow();
         TenantQuota quota = await GetQuotaAsync(tenantId, ct) ?? TenantQuotaPresets.Free;

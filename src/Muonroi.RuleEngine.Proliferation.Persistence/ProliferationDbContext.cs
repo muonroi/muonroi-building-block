@@ -8,16 +8,12 @@ namespace Muonroi.RuleEngine.Proliferation.Persistence;
 /// <summary>
 /// Entity Framework DbContext for proliferation persistence.
 /// </summary>
-public class ProliferationDbContext : DbContext
+/// <remarks>
+/// Creates a proliferation DbContext.
+/// </remarks>
+/// <param name="options">DbContext options.</param>
+public class ProliferationDbContext(DbContextOptions<ProliferationDbContext> options) : DbContext(options)
 {
-    /// <summary>
-    /// Creates a proliferation DbContext.
-    /// </summary>
-    /// <param name="options">DbContext options.</param>
-    public ProliferationDbContext(DbContextOptions<ProliferationDbContext> options)
-        : base(options)
-    {
-    }
 
     /// <summary>Gets the neuron scenario entities.</summary>
     public DbSet<NeuronScenarioEntity> NeuronScenarios => Set<NeuronScenarioEntity>();

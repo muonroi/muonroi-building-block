@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>
@@ -31,24 +32,19 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 /// </code>
 /// </example>
 /// </summary>
+/// <remarks>
+/// Creates a new site gRPC service marker.
+/// </remarks>
+/// <param name="siteId">Site identifier matching <see cref="ISiteProfile.SiteId"/>.</param>
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-public sealed class SiteGrpcServiceAttribute : Attribute
+public sealed class SiteGrpcServiceAttribute(string siteId) : Attribute
 {
     /// <summary>Site identifier (e.g., "TCI", "CTL").</summary>
-    public string SiteId { get; }
+    public string SiteId { get; } = MGuard.NotNull(siteId);
 
     /// <summary>
     /// Optional description of why this site needs a separate proto.
     /// For documentation/logging only.
     /// </summary>
     public string? Reason { get; set; }
-
-    /// <summary>
-    /// Creates a new site gRPC service marker.
-    /// </summary>
-    /// <param name="siteId">Site identifier matching <see cref="ISiteProfile.SiteId"/>.</param>
-    public SiteGrpcServiceAttribute(string siteId)
-    {
-        SiteId = siteId ?? throw new ArgumentNullException(nameof(siteId));
-    }
 }

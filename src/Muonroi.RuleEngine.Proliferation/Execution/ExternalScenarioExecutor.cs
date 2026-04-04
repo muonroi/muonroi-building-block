@@ -18,32 +18,24 @@ namespace Muonroi.RuleEngine.Proliferation.Execution;
 /// 401 retry: if OAuth2ClientCredentials strategy returns 401, the token cache is
 /// invalidated and the request retried once with a fresh token.
 /// </summary>
-public sealed class ExternalScenarioExecutor : IExternalScenarioExecutor
+/// <remarks>
+/// Constructor with auth resolver (full feature set).
+/// </remarks>
+public sealed class ExternalScenarioExecutor(
+    IServiceTaskConnector connector,
+    IAuthStrategyResolver? authResolver = null,
+    IOAuth2TokenProvider? oauth2TokenProvider = null,
+    IMLog<ExternalScenarioExecutor>? logger = null) : IExternalScenarioExecutor
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    private readonly IServiceTaskConnector _connector;
-    private readonly IMLog<ExternalScenarioExecutor>? _logger;
-    private readonly IAuthStrategyResolver? _authResolver;
-    private readonly IOAuth2TokenProvider? _oauth2TokenProvider;
-
-    /// <summary>
-    /// Constructor with auth resolver (full feature set).
-    /// </summary>
-    public ExternalScenarioExecutor(
-        IServiceTaskConnector connector,
-        IAuthStrategyResolver? authResolver = null,
-        IOAuth2TokenProvider? oauth2TokenProvider = null,
-        IMLog<ExternalScenarioExecutor>? logger = null)
-    {
-        _connector = connector;
-        _authResolver = authResolver;
-        _oauth2TokenProvider = oauth2TokenProvider;
-        _logger = logger;
-    }
+    private readonly IServiceTaskConnector _connector = connector;
+    private readonly IMLog<ExternalScenarioExecutor>? _logger = logger;
+    private readonly IAuthStrategyResolver? _authResolver = authResolver;
+    private readonly IOAuth2TokenProvider? _oauth2TokenProvider = oauth2TokenProvider;
 
     /// <summary>
     /// Executes the scenario against the external endpoint in config.

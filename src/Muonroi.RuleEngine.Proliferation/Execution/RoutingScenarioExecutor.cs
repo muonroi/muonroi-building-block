@@ -15,28 +15,19 @@ namespace Muonroi.RuleEngine.Proliferation.Execution;
 /// After external execution, optionally fires a webhook notification (fire-and-forget).
 /// Webhook failures are caught/logged and never propagate to callers.
 /// </summary>
-public sealed class RoutingScenarioExecutor : IScenarioExecutor
+/// <remarks>Creates a routing executor.</remarks>
+public sealed class RoutingScenarioExecutor(
+    IScenarioExecutor internalExecutor,
+    IExternalScenarioExecutor externalExecutor,
+    IExternalProjectConfigProvider configProvider,
+    IWebhookNotificationService? webhookService = null,
+    IMLog<RoutingScenarioExecutor>? logger = null) : IScenarioExecutor
 {
-    private readonly IScenarioExecutor _internalExecutor;
-    private readonly IExternalScenarioExecutor _externalExecutor;
-    private readonly IExternalProjectConfigProvider _configProvider;
-    private readonly IWebhookNotificationService? _webhookService;
-    private readonly IMLog<RoutingScenarioExecutor>? _logger;
-
-    /// <summary>Creates a routing executor.</summary>
-    public RoutingScenarioExecutor(
-        IScenarioExecutor internalExecutor,
-        IExternalScenarioExecutor externalExecutor,
-        IExternalProjectConfigProvider configProvider,
-        IWebhookNotificationService? webhookService = null,
-        IMLog<RoutingScenarioExecutor>? logger = null)
-    {
-        _internalExecutor = internalExecutor;
-        _externalExecutor = externalExecutor;
-        _configProvider = configProvider;
-        _webhookService = webhookService;
-        _logger = logger;
-    }
+    private readonly IScenarioExecutor _internalExecutor = internalExecutor;
+    private readonly IExternalScenarioExecutor _externalExecutor = externalExecutor;
+    private readonly IExternalProjectConfigProvider _configProvider = configProvider;
+    private readonly IWebhookNotificationService? _webhookService = webhookService;
+    private readonly IMLog<RoutingScenarioExecutor>? _logger = logger;
 
     /// <summary>
     /// Routes the scenario to internal or external executor.

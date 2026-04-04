@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 [Collection("NonParallel")]
@@ -773,7 +774,7 @@ public class BaseCommandHandlerTests
     public void LogWarning_Null_Message_Throws()
     {
         TestHandler handler = CreateAdvancedHandler();
-        Assert.Throws<ArgumentNullException>(() => handler.CallLogWarning(null));
+        Assert.Throws<MArgumentException>(() => handler.CallLogWarning(null));
     }
 
     private class Source
@@ -811,7 +812,7 @@ public class BaseCommandHandlerTests
         IMapper mapper = new SimpleMapper(cfg);
         TestHandler handler = CreateAdvancedHandler(mapper: mapper);
 
-        Assert.Throws<ArgumentNullException>(() => handler.CallMap<Dest>(null!));
+        Assert.Throws<MArgumentException>(() => handler.CallMap<Dest>(null!));
     }
 
     [Fact]
@@ -842,8 +843,8 @@ public class BaseCommandHandlerTests
         TestHandler handler = CreateAdvancedHandler(mapper: mapper);
 
         Dest dest = new();
-        Assert.Throws<ArgumentNullException>(() => handler.CallMap(null!, dest));
-        Assert.Throws<ArgumentNullException>(() => handler.CallMap(new Source(), (Dest)null!));
+        Assert.Throws<MArgumentException>(() => handler.CallMap(null!, dest));
+        Assert.Throws<MArgumentException>(() => handler.CallMap(new Source(), (Dest)null!));
     }
 
     [Fact]
@@ -890,7 +891,7 @@ public class BaseCommandHandlerTests
     {
         SpyMediator mediator = new();
         TestHandler handler = CreateAdvancedHandler(mediator: mediator);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.CallPublishAsync<DummyNotification>(null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => handler.CallPublishAsync<DummyNotification>(null!));
     }
 
     [Fact]
@@ -911,6 +912,6 @@ public class BaseCommandHandlerTests
     {
         SpyMediator mediator = new();
         TestHandler handler = CreateAdvancedHandler(mediator: mediator);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.CallSendAsync<string>(null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => handler.CallSendAsync<string>(null!));
     }
 }

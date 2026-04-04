@@ -7,29 +7,20 @@ namespace Muonroi.AspNetCore.Services;
 /// </summary>
 /// <typeparam name="TPermission">The type of the permission enum.</typeparam>
 /// <typeparam name="TDbContext">The type of the database context.</typeparam>
-public class AuthService<TPermission, TDbContext> : IAuthService<TPermission, TDbContext>
+public class AuthService<TPermission, TDbContext>(
+    TDbContext dbContext,
+    IAuthenticateInfoContext context,
+    IAuthenticateRepository? authenticateRepository,
+    IMDateTimeService dateTimeService,
+    IPasswordHasher passwordHasher) : IAuthService<TPermission, TDbContext>
     where TPermission : Enum
     where TDbContext : MDbContext
 {
-    private readonly TDbContext _dbContext;
-    private readonly IAuthenticateInfoContext _context;
-    private readonly IAuthenticateRepository? _authenticateRepository;
-    private readonly IMDateTimeService _dateTimeService;
-    private readonly IPasswordHasher _passwordHasher;
-
-    public AuthService(
-        TDbContext dbContext,
-        IAuthenticateInfoContext context,
-        IAuthenticateRepository? authenticateRepository,
-        IMDateTimeService dateTimeService,
-        IPasswordHasher passwordHasher)
-    {
-        _dbContext = dbContext;
-        _context = context;
-        _authenticateRepository = authenticateRepository;
-        _dateTimeService = dateTimeService;
-        _passwordHasher = passwordHasher;
-    }
+    private readonly TDbContext _dbContext = dbContext;
+    private readonly IAuthenticateInfoContext _context = context;
+    private readonly IAuthenticateRepository? _authenticateRepository = authenticateRepository;
+    private readonly IMDateTimeService _dateTimeService = dateTimeService;
+    private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
     public async Task<MResponse<object>> LogoutAsync(CancellationToken cancellationToken)
     {

@@ -7,9 +7,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.AuthZ.Authorization;
 using Muonroi.AuthZ.HotReload;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
+using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.RuleEngine.Core;
 
 /// <summary>
@@ -25,7 +27,9 @@ public static class AuthZServiceExtensions
     public static IServiceCollection AddMAuthorizationRuleEngine(
         this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        MGuard.NotNull(services);
+
+        services.GetOrCreateRegistry().Register(MCapability.Auth);
 
         // Register orchestrator for AuthorizationRuleContext so the DI chain resolves.
         // Wraps RuleOrchestrator<AuthorizationRuleContext> which has no IRuleContext constraint.
@@ -67,8 +71,8 @@ public static class AuthZServiceExtensions
         this IServiceCollection services,
         Action<AuthRuleHotReloadOptions> configure)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configure);
+        MGuard.NotNull(services);
+        MGuard.NotNull(configure);
 
         AuthRuleHotReloadOptions options = new();
         configure(options);

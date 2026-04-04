@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.AspNetCore.Tests.Extensions;
 
 public class MCookieAuthExtensionTests
@@ -10,7 +11,7 @@ public class MCookieAuthExtensionTests
 
         var act = () => httpContext.Response.AppendAuthCookie("", info);
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -21,7 +22,7 @@ public class MCookieAuthExtensionTests
 
         var act = () => httpContext.Response.AppendAuthCookie(null!, info);
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]

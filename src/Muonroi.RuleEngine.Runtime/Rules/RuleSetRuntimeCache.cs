@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
@@ -13,10 +15,10 @@ public sealed class RuleSetRuntimeCache : IRuleSetRuntimeCache, IDisposable
     /// <param name="cache">Memory cache.</param>
     /// <param name="configs">Ruleset store configuration.</param>
     /// <param name="notifier">Optional change notifier for invalidation.</param>
-    public RuleSetRuntimeCache(IMemoryCache cache, RuleStoreConfigs configs, IRuleSetChangeNotifier? notifier = null)
+    public RuleSetRuntimeCache(IMemoryCache cache, IOptions<RuleStoreConfigs> configs, IRuleSetChangeNotifier? notifier = null)
     {
         _cache = cache;
-        _configs = configs;
+        _configs = configs.Value;
 
         if (notifier is not null)
         {

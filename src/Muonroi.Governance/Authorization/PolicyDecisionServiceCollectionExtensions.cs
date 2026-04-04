@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Governance.Authorization;
 
 /// <summary>
@@ -10,8 +12,8 @@ public static class PolicyDecisionServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddMPolicyDecision(this IServiceCollection services, IConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(services);
+        MGuard.NotNull(configuration);
 
         MPolicyDecisionConfigs configs = new();
         configuration.GetSection(MPolicyDecisionConfigs.SectionName).Bind(configs);

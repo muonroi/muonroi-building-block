@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Tenancy.SiteProfile;
@@ -19,6 +21,11 @@ public static class SiteProfileExtensions
     /// Reset the tracker for testing.
     /// </summary>
     internal static void ResetTracker() => s_tracker.Clear();
+
+    /// <summary>
+    /// Shared tracker instance — accessed by SiteProfileConventionExtensions for convention registration tracking.
+    /// </summary>
+    internal static SiteProfileRegistrationTracker SharedTracker => s_tracker;
 
     /// <summary>
     /// Configures SiteProfile options including strict mode for site resolution.
@@ -60,7 +67,7 @@ public static class SiteProfileExtensions
         ISiteProfile profile,
         IConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(profile);
+        MGuard.NotNull(profile);
         services.AddSingleton<ISiteProfile>(profile);
         profile.RegisterServices(services, configuration);
 
@@ -85,7 +92,7 @@ public static class SiteProfileExtensions
         IMLog? diagnosticLog = null,
         params Assembly[] assemblies)
     {
-        ArgumentNullException.ThrowIfNull(siteCodeAccessor);
+        MGuard.NotNull(siteCodeAccessor);
 
         // Scan assemblies for ISiteProfile implementations (reflection-based discovery)
         var discoveredProfiles = new List<ISiteProfile>();
@@ -124,7 +131,7 @@ public static class SiteProfileExtensions
         ISiteProfile[] profiles,
         IMLog? diagnosticLog = null)
     {
-        ArgumentNullException.ThrowIfNull(siteCodeAccessor);
+        MGuard.NotNull(siteCodeAccessor);
 
         services.Configure<SiteProfileOptions>(_ => { }); // Register with defaults if not already configured
 
@@ -184,7 +191,7 @@ public static class SiteProfileExtensions
             var options = sp.GetService<IOptions<SiteProfileOptions>>()?.Value;
             if (options?.StrictMode == true)
             {
-                throw new InvalidOperationException(
+                throw new MInternalException(
                     $"[SITE-SAFETY] No ISiteProfile registered for site '{siteCode}'. " +
                     $"StrictMode is enabled — no fallback to 'default'. " +
                     $"Available: [{string.Join(", ", profileMap.Keys)}]");
@@ -201,7 +208,7 @@ public static class SiteProfileExtensions
                 return new SiteProfileResolver(fallback);
             }
 
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"No ISiteProfile registered for site '{siteCode}'. " +
                 $"Available: [{string.Join(", ", profileMap.Keys)}]");
         });
@@ -257,7 +264,7 @@ public static class SiteProfileExtensions
             service = sp.GetKeyedService<TService>("default");
             if (service is not null) return service;
 
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"No keyed service '{typeof(TService).Name}' registered for site '{siteId}' or 'default'. " +
                 $"Ensure ISiteProfile.RegisterServices() calls: " +
                 $"services.AddKeyedScoped<{typeof(TService).Name}, TImpl>(\"{siteId}\")");

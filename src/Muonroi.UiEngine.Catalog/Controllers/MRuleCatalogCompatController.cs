@@ -10,19 +10,14 @@ namespace Muonroi.UiEngine.Catalog.Controllers;
 /// Groups scanned <see cref="MUiEngineCatalogRuleDescriptor"/> items by context type
 /// and maps them to <see cref="MRuleCatalogGroupResponse"/>.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of <see cref="MRuleCatalogCompatController"/>.
+/// </remarks>
 [ApiController]
 [Route("api/v1/ui-engine/catalog/palette")]
-public class MRuleCatalogCompatController : ControllerBase
+public class MRuleCatalogCompatController(ICatalogScanService scanService) : ControllerBase
 {
-    private readonly ICatalogScanService _scanService;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="MRuleCatalogCompatController"/>.
-    /// </summary>
-    public MRuleCatalogCompatController(ICatalogScanService scanService)
-    {
-        _scanService = scanService;
-    }
+    private readonly ICatalogScanService _scanService = scanService;
 
     /// <summary>
     /// List catalog items grouped by category, compatible with <c>MRuleCatalogService.MListCatalog()</c>.

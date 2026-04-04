@@ -7,7 +7,10 @@
     <PackageId>Muonroi.Tenancy.SiteProfile.SourceGenerators</PackageId>
     <Authors>Muon Roi</Authors>
     <Description>Source generator for Muonroi.Tenancy.SiteProfile — AOT-safe ISiteProfile scan, registration, and SiteId constants.</Description>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <!-- Removed IncludeBuildOutput=false — it breaks P2P analyzer resolution
+         (GetTargetPath returns empty, so OutputItemType="Analyzer" resolves nothing).
+         NuGet packaging still works: the None items below explicitly place the DLL
+         in analyzers/dotnet/cs. The extra lib/ copy is harmless for analyzer packages. -->
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
@@ -15,7 +18,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>

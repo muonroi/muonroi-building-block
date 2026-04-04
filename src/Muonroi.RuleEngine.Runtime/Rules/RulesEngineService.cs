@@ -1,4 +1,7 @@
+using Muonroi.RuleEngine.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
+using Muonroi.RuleEngine.Abstractions.Rules;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
@@ -231,7 +234,7 @@ public sealed class RulesEngineService(
             message = $"{message} Compensation: {string.Join("; ", execution.CompensationErrors)}";
         }
 
-        throw new InvalidOperationException(message);
+        throw new MInternalException(message);
     }
 
     /// <summary>
@@ -258,7 +261,7 @@ public sealed class RulesEngineService(
         {
             if (string.IsNullOrWhiteSpace(contextType))
             {
-                throw new InvalidDataException(
+                throw new MConfigurationException(
                     "Graph-based dry-run requires 'contextType' (assembly-qualified name or full type name).");
             }
 
@@ -267,7 +270,7 @@ public sealed class RulesEngineService(
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (graphContext is null)
             {
-                throw new InvalidDataException("Dry-run context payload could not be deserialized to the requested contextType.");
+                throw new MConfigurationException("Dry-run context payload could not be deserialized to the requested contextType.");
             }
 
             return await ExecuteFlowGraphDynamicAsync(workflowName, json, graphContext, cancellationToken);
@@ -278,7 +281,7 @@ public sealed class RulesEngineService(
         {
             if (string.IsNullOrWhiteSpace(contextType))
             {
-                throw new InvalidDataException(
+                throw new MConfigurationException(
                     "Code-based ruleset dry-run requires 'contextType' (assembly-qualified name or full type name).");
             }
 
@@ -287,7 +290,7 @@ public sealed class RulesEngineService(
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (contextValue is null)
             {
-                throw new InvalidDataException("Dry-run context payload could not be deserialized to the requested contextType.");
+                throw new MConfigurationException("Dry-run context payload could not be deserialized to the requested contextType.");
             }
 
             return await ExecuteCodeWorkflowDynamicAsync(
@@ -365,7 +368,7 @@ public sealed class RulesEngineService(
             message = $"{message} Compensation: {string.Join("; ", execution.CompensationErrors)}";
         }
 
-        throw new InvalidOperationException(message);
+        throw new MInternalException(message);
     }
 
     private async Task<OrchestratorResult> ExecuteCodeWorkflowWithResultAsync<TContext>(
@@ -377,7 +380,7 @@ public sealed class RulesEngineService(
         Dictionary<string, List<IRule<TContext>>> rulesByCode = ResolveRulesByCode<TContext>(codes);
         if (rulesByCode.Count == 0)
         {
-            throw new InvalidDataException("Ruleset uses code-based workflow but no rule implementations were discovered.");
+            throw new MConfigurationException("Ruleset uses code-based workflow but no rule implementations were discovered.");
         }
 
         List<string> missingCodes = [];
@@ -403,14 +406,14 @@ public sealed class RulesEngineService(
 
         if (missingCodes.Count > 0)
         {
-            throw new InvalidDataException(
+            throw new MConfigurationException(
                 $"Ruleset references unknown rule code(s): {string.Join(", ", missingCodes.Distinct(StringComparer.OrdinalIgnoreCase))}.");
         }
 
         if (ambiguousCodes.Count > 0)
         {
             string detail = string.Join(" | ", ambiguousCodes.Select(kv => $"{kv.Key} => [{string.Join(", ", kv.Value)}]"));
-            throw new InvalidDataException($"Ruleset contains ambiguous rule code mappings: {detail}.");
+            throw new RuleEngineAmbiguousCodeException($"Ruleset contains ambiguous rule code mappings: {detail}.");
         }
 
         IEnumerable<IHookHandler<TContext>> hooks = _serviceProvider?.GetServices<IHookHandler<TContext>>() ?? [];
@@ -445,7 +448,7 @@ public sealed class RulesEngineService(
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
         if (closed.Invoke(this, [codes, context, executionMode, cancellationToken]) is not Task<FactBag> invoke)
         {
-            throw new InvalidOperationException("Unable to invoke code-based dry-run bridge.");
+            throw new MInternalException("Unable to invoke code-based dry-run bridge.");
         }
 
         return await invoke;
@@ -459,7 +462,7 @@ public sealed class RulesEngineService(
     {
         if (context is not TContext typed)
         {
-            throw new InvalidDataException($"Dry-run context type mismatch. Expected '{typeof(TContext).FullName}'.");
+            throw new MConfigurationException($"Dry-run context type mismatch. Expected '{typeof(TContext).FullName}'.");
         }
 
         return ExecuteCodeWorkflowAsync(codes, typed, executionMode, cancellationToken);
@@ -481,7 +484,7 @@ public sealed class RulesEngineService(
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
         if (closed.Invoke(this, [workflowName, workflows, context]) is not Task<FactBag> invoke)
         {
-            throw new InvalidOperationException("Unable to invoke legacy dry-run bridge.");
+            throw new MInternalException("Unable to invoke legacy dry-run bridge.");
         }
 
         return await invoke;
@@ -494,7 +497,7 @@ public sealed class RulesEngineService(
     {
         if (context is not TContext typed)
         {
-            throw new InvalidDataException($"Legacy dry-run context type mismatch. Expected '{typeof(TContext).FullName}'.");
+            throw new MConfigurationException($"Legacy dry-run context type mismatch. Expected '{typeof(TContext).FullName}'.");
         }
 
         return ExecuteLegacyWorkflowAsync(workflowName, workflows, typed);
@@ -588,7 +591,7 @@ public sealed class RulesEngineService(
             }
         }
 
-        throw new InvalidDataException($"Cannot resolve contextType '{contextTypeName}'.");
+        throw new MConfigurationException($"Cannot resolve contextType '{contextTypeName}'.");
     }
 
     private static object? ConvertJsonElement(JsonElement element)
@@ -1009,7 +1012,7 @@ public sealed class RulesEngineService(
             message = $"{message} Compensation: {string.Join("; ", execution.CompensationErrors)}";
         }
 
-        throw new InvalidOperationException(message);
+        throw new MInternalException(message);
     }
 
     private async Task<OrchestratorResult> ExecuteFlowGraphWithResultAsync<TContext>(
@@ -1496,7 +1499,7 @@ public sealed class RulesEngineService(
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
         if (closed.Invoke(this, [workflowName, graphJson, context, cancellationToken]) is not Task<FactBag> invoke)
         {
-            throw new InvalidOperationException("Unable to invoke flow-graph execution bridge.");
+            throw new MInternalException("Unable to invoke flow-graph execution bridge.");
         }
 
         return await invoke;
@@ -1510,7 +1513,7 @@ public sealed class RulesEngineService(
     {
         if (context is not TContext typed)
         {
-            throw new InvalidDataException($"Flow-graph context type mismatch. Expected '{typeof(TContext).FullName}'.");
+            throw new MConfigurationException($"Flow-graph context type mismatch. Expected '{typeof(TContext).FullName}'.");
         }
 
         return ExecuteFlowGraphAsync(workflowName, graphJson, typed, cancellationToken);

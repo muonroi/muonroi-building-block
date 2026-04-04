@@ -1,4 +1,5 @@
 using Muonroi.Governance.License;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -110,7 +111,7 @@ public class MGenericControllerRuleEngineLicenseTests
             HttpContext = httpContext
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MInternalException>(() =>
         {
             ProductEntity entity = new()
             {

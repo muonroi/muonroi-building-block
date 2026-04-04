@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,7 +55,7 @@ internal sealed class SiteActivityEnricher : ISiteActivityEnricher
 
     public SiteActivityEnricher(string siteId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(siteId);
+        MGuard.NotEmpty(siteId);
         _siteId = siteId;
     }
 

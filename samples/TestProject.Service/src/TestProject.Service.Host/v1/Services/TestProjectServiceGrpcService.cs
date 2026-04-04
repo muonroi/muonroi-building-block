@@ -10,18 +10,12 @@ namespace TestProject.Service.Host.v1.Services;
 /// gRPC service routing — dispatches to site-resolved IOrderService.
 /// SiteCode extracted by SiteCodeGrpcInterceptor from configured metadata key.
 /// </summary>
-public sealed class TestProjectServiceGrpcService : ServiceRpc.ServiceRpcBase
+public sealed class TestProjectServiceGrpcService(
+    IServiceProvider serviceProvider,
+    ISiteCodeHolder siteCodeHolder) : ServiceRpc.ServiceRpcBase
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ISiteCodeHolder _siteCodeHolder;
-
-    public TestProjectServiceGrpcService(
-        IServiceProvider serviceProvider,
-        ISiteCodeHolder siteCodeHolder)
-    {
-        _serviceProvider = serviceProvider;
-        _siteCodeHolder = siteCodeHolder;
-    }
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
+    private readonly ISiteCodeHolder _siteCodeHolder = siteCodeHolder;
 
     public override async Task<CreateReply> Create(CreateRequest request, ServerCallContext context)
     {

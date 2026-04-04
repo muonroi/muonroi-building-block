@@ -8,21 +8,15 @@ namespace Muonroi.RuleEngine.Proliferation.Auth;
 /// Checks API key expiry and rotates the key by calling the rotation URL when within 1 hour of expiry.
 /// Gracefully falls back to existing headers if rotation fails.
 /// </summary>
-public sealed class ApiKeyRotationService : IApiKeyRotationService
+/// <remarks>Creates an API key rotation service.</remarks>
+public sealed class ApiKeyRotationService(
+    IHttpClientFactory httpClientFactory,
+    IMLog<ApiKeyRotationService>? logger = null) : IApiKeyRotationService
 {
     private static readonly TimeSpan RotationThreshold = TimeSpan.FromHours(1);
 
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IMLog<ApiKeyRotationService>? _logger;
-
-    /// <summary>Creates an API key rotation service.</summary>
-    public ApiKeyRotationService(
-        IHttpClientFactory httpClientFactory,
-        IMLog<ApiKeyRotationService>? logger = null)
-    {
-        _httpClientFactory = httpClientFactory;
-        _logger = logger;
-    }
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly IMLog<ApiKeyRotationService>? _logger = logger;
 
     /// <inheritdoc/>
     public async Task<IReadOnlyDictionary<string, string>> CheckAndRotateAsync(

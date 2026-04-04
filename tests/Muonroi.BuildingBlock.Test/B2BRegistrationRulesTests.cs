@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class B2BRegistrationRulesTests
@@ -235,6 +236,6 @@ public class B2BRegistrationRulesTests
 
         B2BRegistrationContext ctx = new("123", "ABC", "R1");
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => orchestrator.ExecuteAsync(ctx));
+        await Assert.ThrowsAsync<MInternalException>(() => orchestrator.ExecuteAsync(ctx));
     }
 }

@@ -1,6 +1,3 @@
-using System.Reflection;
-using Muonroi.RuleEngine.Abstractions.Adapters;
-
 namespace Muonroi.RuleEngine.Runtime.Adapters;
 
 /// <summary>
@@ -8,9 +5,10 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// <typeparamref name="TContext"/> using their property name as the variable name.
 /// Depth: one level (primitive + string properties only; nested objects are included as-is).
 /// </summary>
-internal sealed class ReflectionContextProjector<TContext>
+public sealed class ReflectionContextProjector<TContext>
     : IContextProjector<TContext>
 {
+    /// <inheritdoc/>
     public IReadOnlyDictionary<string, object?> Project(TContext context)
     {
         if (context is null)

@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Tenancy.Cache;
 
 /// <summary>
@@ -19,9 +21,8 @@ public class RedisTenantCache
     /// <param name="tenantId">The tenant identifier.</param>
     public RedisTenantCache(IConnectionMultiplexer connection, string tenantId)
     {
-        ArgumentNullException.ThrowIfNull(connection);
-
-        if (string.IsNullOrWhiteSpace(tenantId)) throw new ArgumentNullException(nameof(tenantId));
+        MGuard.NotNull(connection);
+        MGuard.NotEmpty(tenantId);
 
         _database = connection.GetDatabase();
         _server = connection.GetServer(connection.GetEndPoints()[0]);

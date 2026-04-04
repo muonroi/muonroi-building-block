@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Muonroi.Governance.License;
+using Muonroi.RuleEngine.EntityFrameworkCore;
 using Muonroi.RuleEngine.Runtime.Rules;
 using NSubstitute;
 using Xunit;
@@ -33,8 +34,8 @@ public sealed class RuleEngineServiceCollectionExtensionsTests
                     ["RuleStore:RootPath"] = "runtime-rules",
                     ["RuleStore:UseContentRoot"] = "true",
                     ["RuleStore:EnableRuntimeCache"] = "true",
-                    ["RuleStore:RequireApproval"] = "true",
-                    ["RuleStore:NotifyOnStateChange"] = "false"
+                    ["RuleControlPlane:RequireApproval"] = "true",
+                    ["RuleControlPlane:NotifyOnStateChange"] = "false"
                 })
                 .Build();
 
@@ -48,7 +49,7 @@ public sealed class RuleEngineServiceCollectionExtensionsTests
             provider.GetRequiredService<IRuleSetDefinitionValidator>().Should().BeOfType<RuleSetDefinitionValidator>();
             provider.GetService(typeof(Muonroi.RuleEngine.Runtime.Adapters.RuleGraphParser)).Should().NotBeNull();
 
-            RuleControlPlaneOptions controlPlane = provider.GetRequiredService<RuleControlPlaneOptions>();
+            RuleControlPlaneOptions controlPlane = provider.GetRequiredService<IOptions<RuleControlPlaneOptions>>().Value;
             controlPlane.RequireApproval.Should().BeTrue();
             controlPlane.NotifyOnStateChange.Should().BeFalse();
 
@@ -75,7 +76,7 @@ public sealed class RuleEngineServiceCollectionExtensionsTests
         services.AddMRuleEngineApprovalWorkflow();
 
         ServiceProvider provider = services.BuildServiceProvider();
-        provider.GetRequiredService<RuleControlPlaneOptions>().RequireApproval.Should().BeTrue();
+        provider.GetRequiredService<IOptions<RuleControlPlaneOptions>>().Value.RequireApproval.Should().BeTrue();
         services.Should().Contain(x => x.ServiceType == typeof(IRuleSetApprovalService));
     }
 
@@ -87,7 +88,7 @@ public sealed class RuleEngineServiceCollectionExtensionsTests
         services.AddMCanaryRollout();
 
         ServiceProvider provider = services.BuildServiceProvider();
-        provider.GetRequiredService<RuleControlPlaneOptions>().EnableCanary.Should().BeTrue();
+        provider.GetRequiredService<IOptions<RuleControlPlaneOptions>>().Value.EnableCanary.Should().BeTrue();
         services.Should().Contain(x => x.ServiceType == typeof(ICanaryRolloutService));
     }
 

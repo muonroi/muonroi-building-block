@@ -118,6 +118,20 @@ public sealed class SiteProfileRegistrationGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(allGrpcServices,
             static (spc, services) => EmitSiteGrpcServiceRegistry(services, spc));
+
+        // --- Pipeline 4: [SiteEntityMap] entity hierarchy type discovery ---
+        IncrementalValuesProvider<(string SiteId, string CoreTypeName, string SiteTypeName, string TableName)?> entityMaps =
+            context.SyntaxProvider
+                .CreateSyntaxProvider(
+                    predicate: static (s, _) => s is ClassDeclarationSyntax cls && cls.AttributeLists.Count > 0,
+                    transform: static (ctx, _) => GetEntityMapsFromClass(ctx))
+                .SelectMany(static (list, _) => list);
+
+        IncrementalValueProvider<ImmutableArray<(string SiteId, string CoreTypeName, string SiteTypeName, string TableName)>> collectedEntityMaps =
+            entityMaps.Where(static x => x is not null).Select(static (x, _) => x!.Value).Collect();
+
+        context.RegisterSourceOutput(collectedEntityMaps,
+            static (spc, maps) => EmitSiteEntityTypeRegistry(maps, spc));
     }
 
     private static INamedTypeSymbol? GetSiteProfileSymbol(GeneratorSyntaxContext context)
@@ -517,6 +531,121 @@ internal static class SiteGrpcServiceRegistry
 }}
 ";
         context.AddSource("SiteGrpcServiceRegistry.g.cs", source);
+    }
+
+    // -----------------------------------------------------------------------
+    // Pipeline 4 helpers: [SiteEntityMap] entity hierarchy type discovery
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Extracts all (SiteId, CoreTypeName, SiteTypeName, TableName) tuples from a class
+    /// that has both [GenerateSiteProfile] (for siteId) and [SiteEntityMap] attributes.
+    /// Returns empty when class has no [GenerateSiteProfile] or no [SiteEntityMap].
+    /// </summary>
+    private static ImmutableArray<(string SiteId, string CoreTypeName, string SiteTypeName, string TableName)?> GetEntityMapsFromClass(
+        GeneratorSyntaxContext context)
+    {
+        var classDecl = (ClassDeclarationSyntax)context.Node;
+        if (context.SemanticModel.GetDeclaredSymbol(classDecl) is not INamedTypeSymbol classSymbol)
+            return ImmutableArray<(string, string, string, string)?>.Empty;
+
+        // Find siteId from [GenerateSiteProfile]
+        string? siteId = null;
+        foreach (var attr in classSymbol.GetAttributes())
+        {
+            if (attr.AttributeClass is null) continue;
+            string name = attr.AttributeClass.Name;
+            if (name != "GenerateSiteProfile" && name != "GenerateSiteProfileAttribute") continue;
+            if (attr.ConstructorArguments.Length >= 1 && attr.ConstructorArguments[0].Value is string sid)
+                siteId = sid;
+            break;
+        }
+        if (siteId is null)
+            return ImmutableArray<(string, string, string, string)?>.Empty;
+
+        // Collect [SiteEntityMap] attributes
+        var builder = ImmutableArray.CreateBuilder<(string, string, string, string)?>();
+        foreach (var attr in classSymbol.GetAttributes())
+        {
+            if (attr.AttributeClass is null) continue;
+            string name = attr.AttributeClass.Name;
+            if (name != "SiteEntityMap" && name != "SiteEntityMapAttribute") continue;
+            if (attr.ConstructorArguments.Length < 3) continue;
+            if (attr.ConstructorArguments[0].Value is not INamedTypeSymbol coreSymbol) continue;
+            if (attr.ConstructorArguments[1].Value is not INamedTypeSymbol siteSymbol) continue;
+            if (attr.ConstructorArguments[2].Value is not string tableName) continue;
+            builder.Add((siteId, coreSymbol.ToDisplayString(), siteSymbol.ToDisplayString(), tableName));
+        }
+        return builder.ToImmutable();
+    }
+
+    // -----------------------------------------------------------------------
+    // Generator 5: SiteEntityTypeRegistry.g.cs
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Emits SiteEntityTypeRegistry.g.cs with:
+    ///   - GeneratedSiteEntityDescriptor record (SiteId, CoreType, SiteType, TableName)
+    ///   - SiteEntityTypeRegistry static class with GetAllSiteEntityTypes()
+    /// AOT-safe — no reflection at runtime.
+    /// </summary>
+    private static void EmitSiteEntityTypeRegistry(
+        ImmutableArray<(string SiteId, string CoreTypeName, string SiteTypeName, string TableName)> maps,
+        SourceProductionContext context)
+    {
+        string arrayBody;
+        if (maps.IsDefaultOrEmpty)
+        {
+            arrayBody = "        => System.Array.Empty<GeneratedSiteEntityDescriptor>();";
+        }
+        else
+        {
+            var distinctMaps = maps
+                .GroupBy(m => $"{m.SiteId}|{m.CoreTypeName}|{m.SiteTypeName}", StringComparer.Ordinal)
+                .Select(g => g.First())
+                .ToList();
+
+            if (distinctMaps.Count == 0)
+            {
+                arrayBody = "        => System.Array.Empty<GeneratedSiteEntityDescriptor>();";
+            }
+            else
+            {
+                string entries = string.Join("\n", distinctMaps.Select(m =>
+                    $"            new GeneratedSiteEntityDescriptor(\"{EscapeStringLiteral(m.SiteId)}\", typeof({m.CoreTypeName}), typeof({m.SiteTypeName}), \"{EscapeStringLiteral(m.TableName)}\"),"));
+                arrayBody = $@"        => new GeneratedSiteEntityDescriptor[]
+        {{
+{entries}
+        }};";
+            }
+        }
+
+        string source = $@"// <auto-generated />
+#nullable enable
+using System;
+using System.Collections.Generic;
+
+namespace Muonroi.Tenancy.SiteProfile.Generated;
+
+/// <summary>
+/// Descriptor for a site entity hierarchy mapping from [SiteEntityMap].
+/// </summary>
+internal sealed record GeneratedSiteEntityDescriptor(
+    string SiteId, System.Type CoreType, System.Type SiteType, string TableName);
+
+/// <summary>
+/// Registry of all entity hierarchy mappings from [SiteEntityMap]. AOT-safe.
+/// </summary>
+internal static class SiteEntityTypeRegistry
+{{
+    /// <summary>
+    /// Returns all entity type pairs declared via [SiteEntityMap] across all SiteProfiles.
+    /// </summary>
+    public static IReadOnlyList<GeneratedSiteEntityDescriptor> GetAllSiteEntityTypes()
+{arrayBody}
+}}
+";
+        context.AddSource("SiteEntityTypeRegistry.g.cs", source);
     }
 
     // -----------------------------------------------------------------------

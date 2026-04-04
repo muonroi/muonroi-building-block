@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Constants;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.License;
 using Muonroi.Grpc.Grpc;
 using Muonroi.Core.Abstractions.Exceptions;
@@ -26,7 +27,7 @@ public abstract class BaseGrpcService(
     IOptions<GrpcServicesConfig>? grpcConfigOptions = null,
     ILicenseGuard? licenseGuard = null)
 {
-    private readonly ISystemExecutionContextAccessor _contextAccessor = contextAccessor ?? throw new ArgumentNullException(nameof(contextAccessor));
+    private readonly ISystemExecutionContextAccessor _contextAccessor = MGuard.NotNull(contextAccessor);
     private readonly LicenseState _licenseState = licenseState ?? LicenseState.CreateFree();
     private readonly GrpcClientDefaultsConfig _clientDefaults = grpcConfigOptions?.Value.ClientDefaults ?? new();
 

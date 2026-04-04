@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Governance.License;
 
 /// <summary>
@@ -173,7 +175,7 @@ public sealed class LicenseRuntimeStatus
     /// </summary>
     public LicenseTier GetEffectiveTier(LicenseState state)
     {
-        ArgumentNullException.ThrowIfNull(state);
+        MGuard.NotNull(state);
         lock (_sync)
         {
             if (_degradedToFree)
@@ -190,7 +192,7 @@ public sealed class LicenseRuntimeStatus
     /// </summary>
     public bool HasFeature(LicenseState state, string featureName)
     {
-        ArgumentNullException.ThrowIfNull(state);
+        MGuard.NotNull(state);
         if (string.IsNullOrWhiteSpace(featureName))
         {
             return false;

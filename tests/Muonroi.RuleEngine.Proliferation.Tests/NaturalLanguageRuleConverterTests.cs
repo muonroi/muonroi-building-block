@@ -22,10 +22,9 @@ public sealed class NaturalLanguageRuleConverterTests
         AiTimeoutSeconds = 30
     };
 
-    private sealed class FixedResponseHandler : HttpMessageHandler
+    private sealed class FixedResponseHandler(string response) : HttpMessageHandler
     {
-        private readonly string _response;
-        public FixedResponseHandler(string response) => _response = response;
+        private readonly string _response = response;
 
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)

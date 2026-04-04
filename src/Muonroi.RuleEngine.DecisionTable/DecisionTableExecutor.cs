@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.DecisionTable.Converters;
 using Muonroi.RuleEngine.DecisionTable.Feel;
 using Muonroi.RuleEngine.DecisionTable.Models;
@@ -26,8 +28,8 @@ public sealed class DecisionTableExecutor(IFeelCellEvaluator? feelEvaluator = nu
         IReadOnlyDictionary<string, object?> inputFacts,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(table);
-        ArgumentNullException.ThrowIfNull(inputFacts);
+        MGuard.NotNull(table);
+        MGuard.NotNull(inputFacts);
         cancellationToken.ThrowIfCancellationRequested();
 
         Stopwatch stopwatch = Stopwatch.StartNew();
@@ -119,7 +121,7 @@ public sealed class DecisionTableExecutor(IFeelCellEvaluator? feelEvaluator = nu
         return hitPolicy switch
         {
             HitPolicy.First => [matches[0]],
-            HitPolicy.Unique when matches.Count > 1 => throw new InvalidOperationException(
+            HitPolicy.Unique when matches.Count > 1 => throw new MInternalException(
                 $"Hit policy '{HitPolicy.Unique}' requires a single match, but found {matches.Count}."),
             HitPolicy.Unique => [matches[0]],
             HitPolicy.Collect => [.. matches],

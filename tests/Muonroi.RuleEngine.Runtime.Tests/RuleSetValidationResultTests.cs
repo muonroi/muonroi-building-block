@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Muonroi.RuleEngine.Runtime.Rules;
 using Xunit;
@@ -42,7 +43,7 @@ public sealed class RuleSetValidationResultTests
 
         Action act = () => result.ThrowIfInvalid();
 
-        act.Should().Throw<InvalidDataException>()
+        act.Should().Throw<MConfigurationException>()
             .WithMessage("*Error one*")
             .WithMessage("*Error two*");
     }

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Abstractions.License;
 
 namespace Muonroi.Governance.License;
@@ -8,7 +9,7 @@ namespace Muonroi.Governance.License;
 public sealed class HmacFingerprintSigner(LicensePayload? payload, LicenseConfigs configs)
     : IFingerprintSigner
 {
-    private readonly LicenseConfigs _configs = configs ?? throw new ArgumentNullException(nameof(configs));
+    private readonly LicenseConfigs _configs = MGuard.NotNull(configs);
 
     /// <summary>
     /// Executes the Compute Signature operation.

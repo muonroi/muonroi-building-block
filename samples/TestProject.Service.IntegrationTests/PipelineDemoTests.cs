@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging;
 using TestProject.Service.Core.Constants;
 using TestProject.Service.Core.Contracts;
@@ -97,9 +98,9 @@ public sealed class PipelineDemoTests
         var pipeline = scope.ServiceProvider.GetRequiredService<MSitePipeline<IOrderService>>();
 
         var facts = new FactBag();
-        // No order.booking_no set — should trigger InvalidOperationException
+        // No order.booking_no set — should trigger MInternalException
 
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.ThrowsAsync<MInternalException>(async () =>
             await pipeline.RunStep("create-order", facts, (f, ct) => Task.CompletedTask));
     }
 

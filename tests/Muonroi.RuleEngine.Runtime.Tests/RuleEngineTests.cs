@@ -6,6 +6,7 @@ using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Runtime.Rules;
 using NSubstitute;
 using Xunit;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
@@ -116,7 +117,7 @@ public sealed class RuleEngineTests
 
         Func<Task> act = () => engine.ExecuteAsync(new TestContext());
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("Rule failed");
     }
 
@@ -227,7 +228,7 @@ public sealed class RuleEngineTests
 
         Func<Task> act = () => engine.ExecuteAsync(new TestContext());
 
-        act.Should().ThrowAsync<InvalidOperationException>()
+        act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*Circular*");
     }
 
@@ -246,16 +247,10 @@ public sealed class RuleEngineTests
         public string? TenantId { get; set; }
     }
 
-    private sealed class FakeRule : IRule<TestContext>
+    private sealed class FakeRule(string code, RuleType type = RuleType.Validation) : IRule<TestContext>
     {
-        public FakeRule(string code, RuleType type = RuleType.Validation)
-        {
-            Code = code;
-            Type = type;
-        }
-
-        public string Code { get; }
-        public RuleType Type { get; }
+        public string Code { get; } = code;
+        public RuleType Type { get; } = type;
         public int ExecuteCount { get; private set; }
 
         public Task ExecuteAsync(TestContext context, CancellationToken cancellationToken = default)
@@ -271,7 +266,7 @@ public sealed class RuleEngineTests
 
         public Task ExecuteAsync(TestContext context, CancellationToken cancellationToken = default)
         {
-            throw new InvalidOperationException("Rule failed");
+            throw new MInternalException("Rule failed");
         }
     }
 

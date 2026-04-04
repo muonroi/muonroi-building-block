@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 [Collection("NonParallel")]
@@ -141,7 +142,7 @@ public class GrpcServerInterceptorTests
     [Fact]
     public void Constructor_Null_Context_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             new GrpcServerInterceptor(null!, new MTokenInfo(), NullLogger<GrpcServerInterceptor>.Instance,
                 GrpcLicensedState));
     }
@@ -166,7 +167,7 @@ public class GrpcServerInterceptorTests
         GrpcServerInterceptor interceptor = CreateLicensedInterceptor();
         Metadata headers = new() { { CustomHeader.CorrelationId, "c" }, { CustomHeader.TenantId, "t" } };
         TestServerCallContext callCtx = new(headers);
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MInternalException>(() =>
             interceptor.UnaryServerHandler<string, string>("req", callCtx,
                 (_, _) => throw new InvalidOperationException()));
         Assert.Null(TenantContext.CurrentTenantId);
@@ -323,7 +324,7 @@ public class GrpcServerInterceptorTests
         Metadata headers = new() { { CustomHeader.TenantId, "t" }, { CustomHeader.CorrelationId, "c" } };
         TestServerCallContext ctx = new(headers);
         TestStreamReader<string> reader = new([]);
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MInternalException>(() =>
             interceptor.ClientStreamingServerHandler<string, string>(reader, ctx,
                 (_, _) => throw new InvalidOperationException()));
         Assert.Null(TenantContext.CurrentTenantId);
@@ -357,7 +358,7 @@ public class GrpcServerInterceptorTests
         GrpcServerInterceptor interceptor = CreateLicensedInterceptor();
         Metadata headers = new() { { CustomHeader.TenantId, "t" }, { CustomHeader.CorrelationId, "c" } };
         TestServerCallContext ctx = new(headers);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => interceptor.ServerStreamingServerHandler("req",
+        await Assert.ThrowsAsync<MInternalException>(() => interceptor.ServerStreamingServerHandler("req",
             new TestStreamWriter<string>(), ctx, (_, _, _) => throw new InvalidOperationException()));
         Assert.Null(TenantContext.CurrentTenantId);
     }
@@ -389,7 +390,7 @@ public class GrpcServerInterceptorTests
         GrpcServerInterceptor interceptor = CreateLicensedInterceptor();
         Metadata headers = new() { { CustomHeader.TenantId, "t" }, { CustomHeader.CorrelationId, "c" } };
         TestServerCallContext ctx = new(headers);
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MInternalException>(() =>
             interceptor.DuplexStreamingServerHandler(new TestStreamReader<string>([]), new TestStreamWriter<string>(),
                 ctx, (_, _, _) => throw new InvalidOperationException()));
         Assert.Null(TenantContext.CurrentTenantId);
@@ -424,7 +425,7 @@ public class GrpcServerInterceptorTests
         Metadata headers = new() { { CustomHeader.CorrelationId, "c" }, { CustomHeader.TenantId, "t" } };
         TestServerCallContext callCtx = new(headers);
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        InvalidOperationException ex = await Assert.ThrowsAsync<MInternalException>(() =>
             interceptor.UnaryServerHandler("req", callCtx, (_, _) => Task.FromResult("res")));
 
         Assert.Contains("grpc feature not licensed", ex.Message, StringComparison.OrdinalIgnoreCase);
@@ -608,6 +609,6 @@ public class GrpcServerInterceptorTests
     [Fact]
     public void MetadataExtensions_Null_Metadata_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => MetadataExtensions.GetValue(null!, "a"));
+        Assert.Throws<MArgumentException>(() => MetadataExtensions.GetValue(null!, "a"));
     }
 }

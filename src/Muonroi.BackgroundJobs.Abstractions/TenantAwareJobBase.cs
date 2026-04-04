@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Tenancy.Core;
 
@@ -31,7 +32,7 @@ public abstract class TenantAwareJobBase(
     /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async Task RunAsync(IMuonroiJobExecutionContext executionContext)
     {
-        _ = executionContext ?? throw new ArgumentNullException(nameof(executionContext));
+        MGuard.NotNull(executionContext);
 
         // If context is already restored by a filter (e.g. Hangfire/Quartz Listener), 
         // we just execute. 

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Diagnostics;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Logging.Abstractions;
 
@@ -16,10 +17,9 @@ public sealed class MLog<T>(
     IMLogContext logContext,
     IMTraceContext? traceContext = null) : IMLog<T>
 {
-    private readonly ILogger<T> _inner = inner ?? throw new ArgumentNullException(nameof(inner));
-    private readonly ISystemExecutionContextAccessor _accessor =
-        accessor ?? throw new ArgumentNullException(nameof(accessor));
-    private readonly IMLogContext _logContext = logContext ?? throw new ArgumentNullException(nameof(logContext));
+    private readonly ILogger<T> _inner = MGuard.NotNull(inner);
+    private readonly ISystemExecutionContextAccessor _accessor = MGuard.NotNull(accessor);
+    private readonly IMLogContext _logContext = MGuard.NotNull(logContext);
 
     /// <inheritdoc />
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull

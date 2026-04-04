@@ -3,6 +3,7 @@ using Muonroi.AspNetCore.Extensions;
 using System.Reflection;
 using Xunit;
 using Microsoft.AspNetCore.Mvc;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.AspNetCore.Tests.Extensions;
 
@@ -30,7 +31,7 @@ public class ArchitectureValidationTests
         var services = new ServiceCollection();
         
         // This assembly contains BadEntity, BadRepository etc.
-        Assert.Throws<InvalidOperationException>(() => 
+        Assert.Throws<MInternalException>(() => 
             services.EnforceArchitecture(Assembly.GetExecutingAssembly(), throwOnViolation: true));
     }
 }

@@ -26,4 +26,9 @@ public sealed class MArgumentException : MException
         Details["CallerFile"] = callerFile;
         Details["CallerLine"] = callerLine;
     }
+
+    /// <summary>
+    /// Gets the name of the parameter that is invalid.
+    /// </summary>
+    public string? ParamName => Details.TryGetValue("ParamName", out object? val) ? val?.ToString() : null;
 }

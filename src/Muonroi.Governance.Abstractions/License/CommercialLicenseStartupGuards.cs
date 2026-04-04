@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Hosting;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Governance.License;
 
@@ -15,8 +16,8 @@ public static class CommercialLicenseStartupGuards
         LicenseTier minimumTier,
         string featureName)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentException.ThrowIfNullOrEmpty(featureName);
+        MGuard.NotNull(services);
+        MGuard.NotEmpty(featureName);
 
         services.AddSingleton<IHostedService>(sp =>
         {

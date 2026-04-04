@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MediatorExceptionTests
@@ -19,7 +20,7 @@ public class MediatorExceptionTests
     public async Task Send_Null_Request_Throws()
     {
         Mediator mediator = new(new EmptyServiceFactory());
-        await Assert.ThrowsAsync<ArgumentNullException>(() => mediator.Send<string>(null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => mediator.Send<string>(null!));
     }
 
     private class DummyRequest : IRequest<string>
@@ -30,14 +31,14 @@ public class MediatorExceptionTests
     public async Task Send_Handler_Not_Found_Throws()
     {
         Mediator mediator = new(new EmptyServiceFactory());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => mediator.Send(new DummyRequest()));
+        await Assert.ThrowsAsync<MInternalException>(() => mediator.Send(new DummyRequest()));
     }
 
     [Fact]
     public async Task Publish_Null_Event_Throws()
     {
         Mediator mediator = new(new EmptyServiceFactory());
-        await Assert.ThrowsAsync<ArgumentNullException>(() => mediator.Publish<TestNotification>(null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => mediator.Publish<TestNotification>(null!));
     }
 
     private class TestNotification : INotification
@@ -48,7 +49,7 @@ public class MediatorExceptionTests
     public async Task Publish_Object_NotINotification_Throws()
     {
         Mediator mediator = new(new EmptyServiceFactory());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => mediator.Publish(new object()));
+        await Assert.ThrowsAsync<MInternalException>(() => mediator.Publish(new object()));
     }
 
     private class StreamRequest : IStreamRequest<int>

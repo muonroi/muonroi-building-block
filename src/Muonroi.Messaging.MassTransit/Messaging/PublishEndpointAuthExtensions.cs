@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>
@@ -16,7 +18,7 @@ public static class PublishEndpointAuthExtensions
         CancellationToken cancellationToken = default)
         where T : class
     {
-        _ = contextAccessor ?? throw new ArgumentNullException(nameof(contextAccessor));
+        MGuard.NotNull(contextAccessor);
         ISystemExecutionContext context = contextAccessor.Get();
         return endpoint.PublishWithContext(message, context, tenantContextPolicy, cancellationToken);
     }
@@ -32,9 +34,9 @@ public static class PublishEndpointAuthExtensions
         CancellationToken cancellationToken = default)
         where T : class
     {
-        _ = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
-        _ = context ?? throw new ArgumentNullException(nameof(context));
-        _ = tenantContextPolicy ?? throw new ArgumentNullException(nameof(tenantContextPolicy));
+        MGuard.NotNull(endpoint);
+        MGuard.NotNull(context);
+        MGuard.NotNull(tenantContextPolicy);
 
         ISystemExecutionContext resolved = tenantContextPolicy.ResolveAndValidate(context);
         MuonroiMessageEnvelope envelope = new()

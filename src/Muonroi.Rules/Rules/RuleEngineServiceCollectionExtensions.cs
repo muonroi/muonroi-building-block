@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.License;
@@ -20,8 +21,8 @@ public static class RuleEngineServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddRuleEngineStore(this IServiceCollection services, IConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configuration);
+        MGuard.NotNull(services);
+        MGuard.NotNull(configuration);
         services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.RuleEngine);
 
         RuleStoreConfigs configs = new();

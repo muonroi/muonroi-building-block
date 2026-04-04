@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class RequestLoggingFilterTests
@@ -150,7 +151,7 @@ public class RequestLoggingFilterTests
         DefaultHttpContext ctx = new();
         ActionContext ac = new(ctx, new RouteData(), new ActionDescriptor());
         ActionExecutingContext exc = new(ac, [], new Dictionary<string, object?>(), new object());
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MInternalException>(() =>
             filter.OnActionExecutionAsync(exc, () => Task.FromResult(new ActionExecutedContext(ac, [], new object()))));
     }
 

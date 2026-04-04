@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Governance.ControlPlane;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace Muonroi.Governance.ControlPlane;
 public sealed class MRsaControlPlaneSigner(RSA rsa, string keyId = "control-plane", bool ownsRsa = false)
     : IMControlPlaneSigner, IDisposable
 {
-    private readonly RSA _rsa = rsa ?? throw new ArgumentNullException(nameof(rsa));
+    private readonly RSA _rsa = MGuard.NotNull(rsa);
 
     /// <summary>
     /// Executes the Key Id operation.
@@ -22,7 +24,7 @@ public sealed class MRsaControlPlaneSigner(RSA rsa, string keyId = "control-plan
     /// </summary>
     public static MRsaControlPlaneSigner FromPrivateKeyPem(string pem, string keyId = "control-plane")
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pem);
+        MGuard.NotEmpty(pem);
         RSA rsa = RSA.Create();
         rsa.ImportFromPem(pem.ToCharArray());
         return new MRsaControlPlaneSigner(rsa, keyId, ownsRsa: true);
@@ -33,7 +35,7 @@ public sealed class MRsaControlPlaneSigner(RSA rsa, string keyId = "control-plan
     /// </summary>
     public static MRsaControlPlaneSigner FromPrivateKeyFile(string path, string keyId = "control-plane")
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        MGuard.NotEmpty(path);
         if (!File.Exists(path))
         {
             throw new FileNotFoundException("Private key file was not found.", path);
@@ -56,7 +58,7 @@ public sealed class MRsaControlPlaneSigner(RSA rsa, string keyId = "control-plan
     /// </summary>
     public string Sign(string payload)
     {
-        ArgumentNullException.ThrowIfNull(payload);
+        MGuard.NotNull(payload);
         byte[] bytes = Encoding.UTF8.GetBytes(payload);
         byte[] signature = _rsa.SignData(bytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         return Convert.ToBase64String(signature);

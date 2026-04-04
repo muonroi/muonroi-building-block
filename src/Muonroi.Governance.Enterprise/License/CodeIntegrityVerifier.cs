@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Abstractions.Integrity;
 using Muonroi.Logging.Abstractions;
 
@@ -10,15 +11,14 @@ public sealed class CodeIntegrityVerifier(
     IAssemblyHashCollector assemblyHashCollector,
     IMLog<CodeIntegrityVerifier>? logger = null)
 {
-    private readonly IAssemblyHashCollector _assemblyHashCollector =
-        assemblyHashCollector ?? throw new ArgumentNullException(nameof(assemblyHashCollector));
+    private readonly IAssemblyHashCollector _assemblyHashCollector = MGuard.NotNull(assemblyHashCollector);
 
     /// <summary>
     /// Executes the Verify Integrity operation.
     /// </summary>
     public bool VerifyIntegrity(LicenseState state, bool throwOnFailure = false)
     {
-        ArgumentNullException.ThrowIfNull(state);
+        MGuard.NotNull(state);
 
         ActivationProof? proof = state.ActivationProof;
         if (proof == null || proof.AllowedAssemblyHashes.Length == 0)

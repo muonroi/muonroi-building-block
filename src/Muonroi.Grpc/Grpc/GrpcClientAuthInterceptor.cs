@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Constants;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Grpc.Grpc;
 
@@ -29,9 +30,9 @@ public class GrpcClientAuthInterceptor(
 {
     private const string AuthorizationHeaderName = "authorization";
     private readonly ISystemExecutionContextAccessor _contextAccessor =
-        contextAccessor ?? throw new ArgumentNullException(nameof(contextAccessor));
+        MGuard.NotNull(contextAccessor);
     private readonly GrpcClientAuthForwardingOptions _options =
-        options ?? throw new ArgumentNullException(nameof(options));
+        MGuard.NotNull(options);
 
     /// <summary>
     /// Intercepts blocking unary calls and appends execution-context metadata.

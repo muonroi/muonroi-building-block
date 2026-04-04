@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using System.Reflection;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -30,7 +31,7 @@ public class SiteProfileExtensionsTests
         
         // Should throw because no profiles and no "default"
         var act = () => sp.GetRequiredService<ISiteProfileResolver>();
-        act.Should().Throw<InvalidOperationException>().WithMessage("*No ISiteProfile registered for site 'any'*");
+        act.Should().Throw<MInternalException>().WithMessage("*No ISiteProfile registered for site 'any'*");
     }
 
     [Fact]
@@ -154,7 +155,7 @@ public class SiteProfileExtensionsTests
         var sp = services.BuildServiceProvider();
         
         var act = () => sp.GetRequiredService<ISiteProfileResolver>();
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*[SITE-SAFETY]*StrictMode is enabled*");
     }
 
@@ -185,7 +186,7 @@ public class SiteProfileExtensionsTests
         var sp = services.BuildServiceProvider();
 
         var act = () => sp.GetRequiredService<ISiteProfileResolver>();
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*No ISiteProfile registered for site 'UNKNOWN'*");
     }
 
@@ -232,6 +233,6 @@ public class SiteProfileExtensionsTests
     {
         var services = new ServiceCollection();
         var act = () => services.AddMultiSiteProfilesCore(_emptyConfig, null!, []);
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 }

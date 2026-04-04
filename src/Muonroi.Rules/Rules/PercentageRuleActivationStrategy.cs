@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.Abstractions;
 
 namespace Muonroi.Rules.Rules;
@@ -19,7 +20,7 @@ public sealed class PercentageRuleActivationStrategy<T>(
     Random? random = null) : IRuleActivationStrategy<T>
 {
     private readonly Func<IRule<T>, T, double> _percentageProvider =
-        percentageProvider ?? throw new ArgumentNullException(nameof(percentageProvider));
+        MGuard.NotNull(percentageProvider);
 
     private readonly Random _random = random ?? Random.Shared;
 

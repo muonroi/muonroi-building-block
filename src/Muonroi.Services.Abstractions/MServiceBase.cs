@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Data.Abstractions.Entities;
 using Muonroi.Mapping.Abstractions;
 
@@ -18,28 +19,22 @@ namespace Muonroi.Services.Abstractions;
 /// - ValidateAsync — business validation before save
 /// - ApplyDefaultValues — set site-specific defaults on new entities
 /// </summary>
-public abstract class MServiceBase<TEntity, TDto>
+/// <remarks>
+/// Initialize with DbContext and mapper.
+/// </remarks>
+public abstract class MServiceBase<TEntity, TDto>(DbContext context, IEntityMapper<TEntity, TDto> mapper)
     where TEntity : class, IEntityBase
     where TDto : class
 {
     /// <summary>
     /// The DbContext for data access. Use Set&lt;TEntity&gt;() for queries.
     /// </summary>
-    protected readonly DbContext Context;
+    protected readonly DbContext Context = MGuard.NotNull(context);
 
     /// <summary>
     /// Entity-DTO mapper. Core maps shared fields, site overrides MapSiteSpecific.
     /// </summary>
-    protected readonly IEntityMapper<TEntity, TDto> Mapper;
-
-    /// <summary>
-    /// Initialize with DbContext and mapper.
-    /// </summary>
-    protected MServiceBase(DbContext context, IEntityMapper<TEntity, TDto> mapper)
-    {
-        Context = context ?? throw new ArgumentNullException(nameof(context));
-        Mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-    }
+    protected readonly IEntityMapper<TEntity, TDto> Mapper = MGuard.NotNull(mapper);
 
     /// <summary>
     /// Get entity by primary key and map to DTO.

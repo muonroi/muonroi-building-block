@@ -15,14 +15,9 @@ namespace TestProject.Aggregate.IntegrationTests;
 /// This means a missing x-site-code header does NOT trigger InvalidArgument from the interceptor.
 /// Instead, the request proceeds without a SiteCode set — and behavior depends on the handler.
 /// </summary>
-public sealed class FailureScenario_GrpcWrongSiteTests : IClassFixture<AggregateWebAppFactory>
+public sealed class FailureScenario_GrpcWrongSiteTests(AggregateWebAppFactory factory) : IClassFixture<AggregateWebAppFactory>
 {
-    private readonly AggregateWebAppFactory _factory;
-
-    public FailureScenario_GrpcWrongSiteTests(AggregateWebAppFactory factory)
-    {
-        _factory = factory;
-    }
+    private readonly AggregateWebAppFactory _factory = factory;
 
     /// <summary>
     /// FAIL-05 Test 1: HandleContainer with x-site-code="NONEXISTENT" returns a gRPC error.

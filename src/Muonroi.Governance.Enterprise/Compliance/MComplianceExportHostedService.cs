@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.Compliance;
 using Muonroi.Logging.Abstractions;
@@ -12,9 +13,8 @@ public sealed class MComplianceExportHostedService(
     LicenseConfigs configs,
     IMLog<MComplianceExportHostedService>? logger = null) : BackgroundService
 {
-    private readonly IMComplianceExportService _exportService =
-        exportService ?? throw new ArgumentNullException(nameof(exportService));
-    private readonly LicenseConfigs _configs = configs ?? throw new ArgumentNullException(nameof(configs));
+    private readonly IMComplianceExportService _exportService = MGuard.NotNull(exportService);
+    private readonly LicenseConfigs _configs = MGuard.NotNull(configs);
     private readonly IMLog<MComplianceExportHostedService>? _logger = logger;
 
     /// <summary>

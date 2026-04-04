@@ -11,18 +11,13 @@ namespace Muonroi.RuleEngine.Proliferation.Auth;
 /// Supports PFX (.pfx, .p12) and PEM (.pem, .crt) certificate formats.
 /// Clients are cached per projectId; the same instance is reused across requests.
 /// </summary>
-public sealed class MtlsHttpClientFactory : IMtlsHttpClientFactory
+/// <remarks>Creates a factory that builds mTLS HttpClient instances.</remarks>
+public sealed class MtlsHttpClientFactory(IMLog<MtlsHttpClientFactory>? logger = null) : IMtlsHttpClientFactory
 {
-    private readonly IMLog<MtlsHttpClientFactory>? _logger;
+    private readonly IMLog<MtlsHttpClientFactory>? _logger = logger;
 
     // Cache: projectId -> HttpClient with configured mTLS handler
     private readonly ConcurrentDictionary<string, HttpClient> _clientCache = new();
-
-    /// <summary>Creates a factory that builds mTLS HttpClient instances.</summary>
-    public MtlsHttpClientFactory(IMLog<MtlsHttpClientFactory>? logger = null)
-    {
-        _logger = logger;
-    }
 
     /// <inheritdoc/>
     public HttpClient CreateClient(string projectId, MtlsConfig config)

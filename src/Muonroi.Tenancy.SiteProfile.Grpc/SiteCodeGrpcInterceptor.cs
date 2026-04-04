@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Options;
+
 
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
@@ -23,20 +23,15 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 /// </code>
 /// </para>
 /// </summary>
-public sealed class SiteCodeGrpcInterceptor : Interceptor
+/// <remarks>
+/// Creates a new interceptor with the specified options.
+/// </remarks>
+public sealed class SiteCodeGrpcInterceptor(IOptions<SiteGrpcOptions> options) : Interceptor
 {
     /// <summary>The HttpContext.Items key used as fallback storage.</summary>
     internal const string HttpContextItemKey = "__site_code";
 
-    private readonly SiteGrpcOptions _options;
-
-    /// <summary>
-    /// Creates a new interceptor with the specified options.
-    /// </summary>
-    public SiteCodeGrpcInterceptor(IOptions<SiteGrpcOptions> options)
-    {
-        _options = options.Value;
-    }
+    private readonly SiteGrpcOptions _options = options.Value;
 
     private void ResolveSiteCode(ServerCallContext context)
     {
@@ -88,7 +83,16 @@ public sealed class SiteCodeGrpcInterceptor : Interceptor
         UnaryServerMethod<TRequest, TResponse> continuation)
     {
         ResolveSiteCode(context);
-        return await continuation(request, context);
+        try
+        {
+            TResponse result = await continuation(request, context);
+            return result;
+        }
+        catch (Exception)
+        {
+            // Name not registered — try next
+            throw;
+        }
     }
 
     /// <inheritdoc />

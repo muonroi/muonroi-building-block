@@ -1,4 +1,5 @@
 using Muonroi.Quota.Abstractions;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
@@ -90,7 +91,7 @@ public class EfTenantQuotaStoreTests
 
         Func<Task> act = () => store.SaveQuotaAsync(null!, new TenantQuota());
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -100,7 +101,7 @@ public class EfTenantQuotaStoreTests
 
         Func<Task> act = () => store.SaveQuotaAsync("tenant", null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -146,7 +147,7 @@ public class EfTenantQuotaStoreTests
 
         Func<Task> act = () => store.RecordUsageAsync(null!, QuotaType.RuleExecutionsPerDay, 1);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -182,7 +183,7 @@ public class EfTenantQuotaStoreTests
 
         Func<Task> act = () => store.GetQuotaAsync("");
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -192,7 +193,7 @@ public class EfTenantQuotaStoreTests
 
         Func<Task> act = () => store.GetUsageAsync("");
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]

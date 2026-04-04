@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class MRepositoryTests
@@ -94,7 +95,7 @@ public class MRepositoryTests
             Password = "p"
         };
         repo.Add(user);
-        Assert.Throws<InvalidOperationException>(() => repo.Add(user));
+        Assert.Throws<MInternalException>(() => repo.Add(user));
     }
 
     [Fact]
@@ -104,7 +105,7 @@ public class MRepositoryTests
         DbContextOptions<TestDbContext> options = new DbContextOptionsBuilder<TestDbContext>().UseInMemoryDatabase("sp").Options;
         using TestDbContext db = new(options);
         MRepository<MUser> repo = new(db, CreateAuth(), new TestLicenseGuard());
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<MArgumentException>(() =>
         {
             object[] parameters = [];
             return repo.ExecuteStoredProcedureAsync("", parameters);
@@ -118,7 +119,7 @@ public class MRepositoryTests
         DbContextOptions<FailingDbContext> options = new DbContextOptionsBuilder<FailingDbContext>().UseInMemoryDatabase("bulk_fail").Options;
         using FailingDbContext db = new(options);
         MRepository<MUser> repo = new(db, CreateAuth(), new TestLicenseGuard());
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MInternalException>(() =>
         {
             MUser user = new()
             {
@@ -578,7 +579,7 @@ public class MRepositoryTests
         DbContextOptions<TestDbContext> options = new DbContextOptionsBuilder<TestDbContext>().UseInMemoryDatabase("scalar_invalid").Options;
         using TestDbContext db = new(options);
         MRepository<MUser> repo = new(db, CreateAuth(), new TestLicenseGuard());
-        await Assert.ThrowsAsync<ArgumentException>(() => repo.ExecuteStoredProcedureScalarAsync<int>(""));
+        await Assert.ThrowsAsync<MArgumentException>(() => repo.ExecuteStoredProcedureScalarAsync<int>(""));
     }
 
     private static MRepository<MUser> CreateRepoWithFakeSp(object? result, out DbCommand command)
@@ -659,7 +660,7 @@ public class MRepositoryTests
             .Options;
         FakeDbContext db = new(options);
         MRepository<MUser> repo = new(db, CreateAuth(), new TestLicenseGuard());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => repo.ExecuteStoredProcedureScalarAsync<int>("proc"));
+        await Assert.ThrowsAsync<MInternalException>(() => repo.ExecuteStoredProcedureScalarAsync<int>("proc"));
     }
 
     [Fact]
@@ -862,7 +863,7 @@ public class MRepositoryTests
         DbContextOptions<TestDbContext> options = new DbContextOptionsBuilder<TestDbContext>().UseInMemoryDatabase("bulk_insert_null").Options;
         using TestDbContext db = new(options);
         MRepository<MUser> repo = new(db, CreateAuth(), new TestLicenseGuard());
-        await Assert.ThrowsAsync<ArgumentNullException>(() => repo.BulkInsertAsync(null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => repo.BulkInsertAsync(null!));
     }
 
     [Fact]
@@ -913,13 +914,13 @@ public class MRepositoryTests
         TenantContext.CurrentTenantId = Guid.NewGuid().ToString();
         DbContextOptions<TestDbContext> options = new DbContextOptionsBuilder<TestDbContext>().UseInMemoryDatabase("ctor_auth_null").Options;
         using TestDbContext db = new(options);
-        Assert.Throws<ArgumentNullException>(() => new MRepository<MUser>(db, null!, new TestLicenseGuard()));
+        Assert.Throws<MArgumentException>(() => new MRepository<MUser>(db, null!, new TestLicenseGuard()));
     }
 
     [Fact]
     public void Constructor_NullDbContext_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => new MRepository<MUser>(null!, CreateAuth(), new TestLicenseGuard()));
+        Assert.Throws<MArgumentException>(() => new MRepository<MUser>(null!, CreateAuth(), new TestLicenseGuard()));
     }
 
     private class FailingDbContext(DbContextOptions<FailingDbContext> options) : MDbContext(options, new FakeMediator())

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.CEP.Observability;
 
 namespace Muonroi.RuleEngine.CEP;
@@ -22,15 +23,9 @@ public sealed class CepEngine<T>
         WindowType windowType,
         TimeSpan? ttl = null)
     {
-        if (windowSize <= TimeSpan.Zero)
-        {
-            throw new ArgumentOutOfRangeException(nameof(windowSize), "Window size must be greater than zero.");
-        }
+        MGuard.Against(windowSize <= TimeSpan.Zero, "Window size must be greater than zero.");
 
-        if (ttl.HasValue && ttl.Value <= TimeSpan.Zero)
-        {
-            throw new ArgumentOutOfRangeException(nameof(ttl), "TTL must be greater than zero when provided.");
-        }
+        MGuard.Against(ttl.HasValue && ttl.Value <= TimeSpan.Zero, "TTL must be greater than zero when provided.");
 
         WindowSize = windowSize;
         WindowType = windowType;

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using FluentAssertions;
 using Muonroi.Mapper.Mapper;
 using Xunit;
@@ -140,7 +141,7 @@ public class SimpleMapperTests
     public void Map_Generic_Should_Throw_On_Null_Source()
     {
         Action act = () => _mapper.Map<PersonEntity>(null!);
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -161,13 +162,13 @@ public class SimpleMapperTests
     public void Map_Object_Should_Throw_On_Null_Source()
     {
         Action act = () => _mapper.Map(null!, new PersonEntity());
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
     public void Map_Object_Should_Throw_On_Null_Destination()
     {
         Action act = () => _mapper.Map(new PersonDto(), null!);
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 }

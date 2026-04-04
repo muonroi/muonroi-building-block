@@ -1,4 +1,8 @@
-﻿namespace Muonroi.Core.Abstractions.SeedWorks;
+﻿using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+
+namespace Muonroi.Core.Abstractions.SeedWorks;
 
 /// <summary>
 /// Provides JSON serialization and deserialization services.
@@ -24,6 +28,7 @@ public class MJsonSerializeService : IMJsonSerializeService
     /// <returns>The deserialized object, or null if deserialization fails.</returns>
     public T? Deserialize<T>(string text)
     {
+        MGuard.NotNull(text);
         return JsonSerializer.Deserialize<T>(text);
     }
 }

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 /// <summary>
@@ -41,7 +42,7 @@ public class MRepositoryAdditionalTests
     {
         Action act = () => new MRepository<MUser>(null!, CreateAuth(), new TestLicenseGuard(), new MDateTimeService());
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("dbContext");
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -54,7 +55,7 @@ public class MRepositoryAdditionalTests
 
         Action act = () => new MRepository<MUser>(db, null!, new TestLicenseGuard(), new MDateTimeService());
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("authContext");
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -67,7 +68,7 @@ public class MRepositoryAdditionalTests
 
         Action act = () => new MRepository<MUser>(db, CreateAuth(), null!, new MDateTimeService());
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("licenseGuard");
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -80,7 +81,7 @@ public class MRepositoryAdditionalTests
 
         Action act = () => new MRepository<MUser>(db, CreateAuth(), new TestLicenseGuard(), null!);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("dateTimeService");
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
@@ -117,7 +118,7 @@ public class MRepositoryAdditionalTests
 
         Action act = () => repo.Add(user);
 
-        act.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<MInternalException>();
     }
 
     [Fact]
@@ -320,7 +321,7 @@ public class MRepositoryAdditionalTests
 
         Func<Task> act = () => repo.BulkInsertAsync(null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -369,7 +370,7 @@ public class MRepositoryAdditionalTests
 
         Func<Task> act = () => repo.ExecuteStoredProcedureAsync("");
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]
@@ -384,7 +385,7 @@ public class MRepositoryAdditionalTests
 
         Func<Task> act = () => repo.ExecuteStoredProcedureScalarAsync<int>("");
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]

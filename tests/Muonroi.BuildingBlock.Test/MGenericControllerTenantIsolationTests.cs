@@ -1,6 +1,7 @@
 namespace Muonroi.BuildingBlock.Test;
 
 using Muonroi.Governance.License;
+using Muonroi.Core.Abstractions.Exceptions;
 
 public class MGenericControllerTenantIsolationTests
 {
@@ -168,7 +169,7 @@ public class MGenericControllerTenantIsolationTests
             new MTokenInfo { MultiTenantEnabled = true },
             BuildConfig(true));
 
-        Assert.Throws<InvalidOperationException>(() => controller.Apply(db.Items.IgnoreQueryFilters()).ToList());
+        Assert.Throws<MInternalException>(() => controller.Apply(db.Items.IgnoreQueryFilters()).ToList());
         TenantContext.CurrentTenantId = null;
     }
 

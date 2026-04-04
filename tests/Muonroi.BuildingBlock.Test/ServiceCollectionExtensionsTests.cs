@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class ServiceCollectionExtensionsTests
@@ -29,6 +30,6 @@ public class ServiceCollectionExtensionsTests
     public void AddBaseApi_Null_Services_Throws()
     {
         IServiceCollection? services = null;
-        Assert.Throws<ArgumentNullException>(() => services!.AddBaseApi());
+        Assert.Throws<MArgumentException>(() => services!.AddBaseApi());
     }
 }

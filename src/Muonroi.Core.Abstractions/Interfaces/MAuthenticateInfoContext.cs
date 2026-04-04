@@ -75,7 +75,11 @@ public interface IAuthenticateInfoContext : ICurrentUserContext
 /// <summary>
 /// Implementation of the authentication information context.
 /// </summary>
-public sealed class MAuthenticateInfoContext : IAuthenticateInfoContext
+/// <remarks>
+/// Initializes a new instance of the <see cref="MAuthenticateInfoContext"/> class.
+/// </remarks>
+/// <param name="isAuthenticated">A value indicating whether the user is authenticated.</param>
+public sealed class MAuthenticateInfoContext(bool isAuthenticated) : IAuthenticateInfoContext
 {
     /// <inheritdoc/>
     public string CorrelationId { get; set; } = string.Empty;
@@ -111,16 +115,7 @@ public sealed class MAuthenticateInfoContext : IAuthenticateInfoContext
     public MUserModel? CurrentUser { get; set; }
 
     /// <inheritdoc/>
-    public bool IsAuthenticated { get; set; }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MAuthenticateInfoContext"/> class.
-    /// </summary>
-    /// <param name="isAuthenticated">A value indicating whether the user is authenticated.</param>
-    public MAuthenticateInfoContext(bool isAuthenticated)
-    {
-        IsAuthenticated = isAuthenticated;
-    }
+    public bool IsAuthenticated { get; set; } = isAuthenticated;
 
     /// <inheritdoc/>
     public string GetAccessToken()

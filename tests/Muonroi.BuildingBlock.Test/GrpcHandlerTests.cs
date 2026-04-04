@@ -1,6 +1,7 @@
 using Grpc.AspNetCore.Server;
 using Microsoft.Extensions.Options;
 using ServerGrpcServiceOptions = Grpc.AspNetCore.Server.GrpcServiceOptions;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BuildingBlock.Test;
 
@@ -96,7 +97,7 @@ public class GrpcHandlerTests
     [Fact]
     public void AddGrpcServer_Null_Services_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => GrpcHandler.AddGrpcServer(null!));
+        Assert.Throws<MArgumentException>(() => GrpcHandler.AddGrpcServer(null!));
     }
 
     [Fact]
@@ -124,7 +125,7 @@ public class GrpcHandlerTests
     [Fact]
     public void AddGrpcClient_Null_ServiceCollection_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.Throws<MArgumentException>(() =>
             GrpcHandler.AddGrpcClient<DummyGrpcClient>(null!, "http://localhost"));
     }
 

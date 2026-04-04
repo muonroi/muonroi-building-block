@@ -11,10 +11,15 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// using <see cref="IContextFactory{TChild}"/>.
 /// </summary>
 /// <typeparam name="TChild">The concrete rule context type of the inner rule.</typeparam>
-public sealed class ContextAdaptedRule<TChild> : IRule<FactBagRuleContext>
+/// <remarks>
+/// Initializes a new instance of the <see cref="ContextAdaptedRule{TChild}"/> class.
+/// </remarks>
+/// <param name="inner">The inner rule to execute.</param>
+/// <param name="factory">Factory used to build the child context.</param>
+public sealed class ContextAdaptedRule<TChild>(IRule<TChild> inner, IContextFactory<TChild> factory) : IRule<FactBagRuleContext>
 {
-    private readonly IRule<TChild> _inner;
-    private readonly IContextFactory<TChild> _factory;
+    private readonly IRule<TChild> _inner = inner;
+    private readonly IContextFactory<TChild> _factory = factory;
 
     /// <inheritdoc />
     public string Code => _inner.Code;
@@ -36,17 +41,6 @@ public sealed class ContextAdaptedRule<TChild> : IRule<FactBagRuleContext>
 
     /// <inheritdoc />
     public IEnumerable<Type> Dependencies => _inner.Dependencies;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ContextAdaptedRule{TChild}"/> class.
-    /// </summary>
-    /// <param name="inner">The inner rule to execute.</param>
-    /// <param name="factory">Factory used to build the child context.</param>
-    public ContextAdaptedRule(IRule<TChild> inner, IContextFactory<TChild> factory)
-    {
-        _inner   = inner;
-        _factory = factory;
-    }
 
     /// <inheritdoc />
     public Task<RuleResult> EvaluateAsync(

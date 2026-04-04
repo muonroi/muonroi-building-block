@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Runtime.Web.ViewModels;
 
@@ -296,7 +297,7 @@ public sealed class RuntimeRuleSetController(
     {
         if (payload.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
         {
-            throw new InvalidDataException($"Request field '{fieldName}' is required.");
+            throw new MConfigurationException($"Request field '{fieldName}' is required.", fieldName);
         }
 
         return payload.GetRawText();

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Integration.Abstractions;
 
 namespace Muonroi.Integration.Connectors.Http;
@@ -11,18 +12,13 @@ namespace Muonroi.Integration.Connectors.Http;
 /// Body can be a Scriban template (rendered before sending).
 /// Response is mapped to FactBag via JSONPath-like response mapping.
 /// </summary>
-public sealed class HttpConnector : IServiceTaskConnector
+/// <remarks>
+/// Creates an HTTP connector with the provided client factory.
+/// </remarks>
+/// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
+public sealed class HttpConnector(IHttpClientFactory httpClientFactory) : IServiceTaskConnector
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    /// <summary>
-    /// Creates an HTTP connector with the provided client factory.
-    /// </summary>
-    /// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
-    public HttpConnector(IHttpClientFactory httpClientFactory)
-    {
-        _httpClientFactory = httpClientFactory;
-    }
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
     /// <summary>
     /// Connector metadata describing capabilities and configuration.
@@ -48,7 +44,7 @@ public sealed class HttpConnector : IServiceTaskConnector
         Stopwatch sw = Stopwatch.StartNew();
         JsonElement root = context.Config.RootElement;
 
-        string url = root.GetProperty("url").GetString() ?? throw new InvalidOperationException("url is required");
+        string url = root.GetProperty("url").GetString() ?? throw new MInternalException("url is required");
         string method = root.TryGetProperty("method", out JsonElement m) ? m.GetString() ?? "GET" : "GET";
         int timeout = root.TryGetProperty("timeout", out JsonElement t) ? t.GetInt32() : 30;
 

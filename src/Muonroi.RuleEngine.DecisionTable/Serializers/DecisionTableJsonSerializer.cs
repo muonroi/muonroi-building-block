@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Serializers;
@@ -32,6 +33,6 @@ public sealed class DecisionTableJsonSerializer
     public static DecisionTableModel Deserialize(string json)
     {
         return JsonSerializer.Deserialize<DecisionTableModel>(json, Options) // MBB002-exempt: static helper with custom JsonOptions (WriteIndented + WhenWritingNull) not available in wrapper
-               ?? throw new InvalidDataException("Cannot deserialize decision table JSON.");
+               ?? throw new MConfigurationException("Cannot deserialize decision table JSON.");
     }
 }

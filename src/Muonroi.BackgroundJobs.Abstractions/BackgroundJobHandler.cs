@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.BackgroundJobs.Abstractions;
 
@@ -31,7 +32,7 @@ public static class BackgroundJobHandler
                 services,
                 configuration,
                 typeName: "Muonroi.BackgroundJobs.Quartz.Quartz.BackgroundJobHandler, Muonroi.BackgroundJobs.Quartz"),
-            _ => throw new InvalidOperationException("Unsupported job type")
+            _ => throw new MInternalException("Unsupported job type")
         };
     }
 

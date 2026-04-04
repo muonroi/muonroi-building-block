@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Guards;
+
 namespace Muonroi.Caching.Abstractions.Distributed;
 
 /// <summary>
@@ -14,7 +16,7 @@ public static class DistributedCacheKeyBuilder
     /// <returns>The composed cache key.</returns>
     public static string Build(string key, string? keyNamespace = null, string? tenantId = null)
     {
-        ArgumentNullException.ThrowIfNull(key);
+        MGuard.NotNull(key);
 
         string? resolvedTenantId = NormalizeTenantId(tenantId);
         if (string.IsNullOrWhiteSpace(keyNamespace))

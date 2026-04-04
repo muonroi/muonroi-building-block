@@ -94,7 +94,7 @@ public sealed class OpenAiProliferationBrain(
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(options.AiTimeoutSeconds));
 
             HttpClient client = httpClientFactory.CreateClient("OpenAiProliferation");
-            string endpoint = $"{options.OpenAiEndpoint.TrimEnd('/')}/v1/chat/completions";
+            string endpoint = EndpointValidator.ValidateExternal(options.OpenAiEndpoint, "/v1/chat/completions");
 
             var requestBody = new
             {

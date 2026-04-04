@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class ContainerRuleEngineCase4Tests
@@ -206,7 +207,7 @@ public class ContainerRuleEngineCase4Tests
         RuleOrchestrator<ContainerContext> orchestrator =
             new(rules, hooks, NullLogger<RuleOrchestrator<ContainerContext>>.Instance);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => orchestrator.ExecuteAsync(ctx));
+        await Assert.ThrowsAsync<MInternalException>(() => orchestrator.ExecuteAsync(ctx));
         await rollback.Received(1).RollbackAsync("C1");
         await rfid.DidNotReceive().SendToRfidAsync(Arg.Any<string>());
     }

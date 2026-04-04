@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Integration.Abstractions;
 using StackExchange.Redis;
 
@@ -7,18 +8,13 @@ namespace Muonroi.Integration.Connectors.Redis;
 /// <summary>
 /// Redis connector supporting GET, SET, and PUB operations.
 /// </summary>
-public sealed class RedisConnector : IServiceTaskConnector
+/// <remarks>
+/// Creates a Redis connector.
+/// </remarks>
+/// <param name="redis">Optional Redis connection multiplexer.</param>
+public sealed class RedisConnector(IConnectionMultiplexer? redis = null) : IServiceTaskConnector
 {
-    private readonly IConnectionMultiplexer? _redis;
-
-    /// <summary>
-    /// Creates a Redis connector.
-    /// </summary>
-    /// <param name="redis">Optional Redis connection multiplexer.</param>
-    public RedisConnector(IConnectionMultiplexer? redis = null)
-    {
-        _redis = redis;
-    }
+    private readonly IConnectionMultiplexer? _redis = redis;
 
     /// <summary>
     /// Connector metadata describing capabilities and configuration.
@@ -50,9 +46,9 @@ public sealed class RedisConnector : IServiceTaskConnector
         JsonElement root = context.Config.RootElement;
 
         string operation = root.GetProperty("operation").GetString()?.ToUpperInvariant()
-            ?? throw new InvalidOperationException("operation is required");
+            ?? throw new MInternalException("operation is required");
         string key = root.GetProperty("key").GetString()
-            ?? throw new InvalidOperationException("key is required");
+            ?? throw new MInternalException("key is required");
 
         IDatabase db = _redis.GetDatabase();
 

@@ -5,10 +5,10 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// orchestrator can keep running sequentially while edges decide whether a node
 /// should run and whether failures branch or halt the workflow.
 /// </summary>
-internal sealed class GraphRuleDispatchAdapter<TContext> : IRule<TContext>
+internal sealed class GraphRuleDispatchAdapter<TContext>(IRule<TContext> inner, RuleGraphEntry entry) : IRule<TContext>
 {
-    private readonly IRule<TContext> _inner;
-    private readonly RuleGraphEntry _entry;
+    private readonly IRule<TContext> _inner = inner;
+    private readonly RuleGraphEntry _entry = entry;
     private readonly AsyncLocal<PendingExecutionState?> _pendingExecution = new();
 
     public string Code => _inner.Code;
@@ -18,12 +18,6 @@ internal sealed class GraphRuleDispatchAdapter<TContext> : IRule<TContext>
     public RuleType Type => _inner.Type;
     public string Name => _inner.Name;
     public IEnumerable<Type> Dependencies => _inner.Dependencies;
-
-    public GraphRuleDispatchAdapter(IRule<TContext> inner, RuleGraphEntry entry)
-    {
-        _inner = inner;
-        _entry = entry;
-    }
 
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)
     {

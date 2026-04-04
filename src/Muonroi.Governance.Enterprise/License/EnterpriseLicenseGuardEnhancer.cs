@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.Enterprise.Policy;
 using Muonroi.Core.Abstractions.Context;
@@ -52,7 +53,7 @@ public sealed class EnterpriseLicenseGuardEnhancer(
         {
             if (!policyEnforcer.CheckApiRateLimit())
             {
-                throw new InvalidOperationException("[POLICY] API rate limit exceeded.");
+                throw new MInternalException("[POLICY] API rate limit exceeded.");
             }
         }
 
@@ -60,7 +61,7 @@ public sealed class EnterpriseLicenseGuardEnhancer(
         {
             if (!policyEnforcer.CheckDbRateLimit())
             {
-                throw new InvalidOperationException("[POLICY] DB rate limit exceeded.");
+                throw new MInternalException("[POLICY] DB rate limit exceeded.");
             }
         }
     }

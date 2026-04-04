@@ -7,18 +7,13 @@ namespace Muonroi.Integration.Connectors.Slack;
 /// <summary>
 /// Slack incoming webhook connector.
 /// </summary>
-public sealed class SlackWebhookConnector : IServiceTaskConnector
+/// <remarks>
+/// Creates a Slack webhook connector.
+/// </remarks>
+/// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
+public sealed class SlackWebhookConnector(IHttpClientFactory httpClientFactory) : IServiceTaskConnector
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    /// <summary>
-    /// Creates a Slack webhook connector.
-    /// </summary>
-    /// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
-    public SlackWebhookConnector(IHttpClientFactory httpClientFactory)
-    {
-        _httpClientFactory = httpClientFactory;
-    }
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
     /// <summary>
     /// Connector metadata describing capabilities and configuration.

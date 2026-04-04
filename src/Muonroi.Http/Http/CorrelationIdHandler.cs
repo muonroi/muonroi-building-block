@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.Constants;
 
@@ -8,7 +9,7 @@ namespace Muonroi.Http.Http;
 /// </summary>
 public class CorrelationIdHandler(IAuthenticateInfoContext authContext) : DelegatingHandler
 {
-    private readonly IAuthenticateInfoContext _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
+    private readonly IAuthenticateInfoContext _authContext = MGuard.NotNull(authContext);
 
     /// <inheritdoc/>
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

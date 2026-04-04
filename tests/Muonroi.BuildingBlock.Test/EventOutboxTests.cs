@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BuildingBlock.Test;
 
 public class EventOutboxTests
@@ -66,6 +67,6 @@ public class EventOutboxContextTests
     [Fact]
     public void Constructor_NullOptions_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => new EventOutboxContext(null!));
+        Assert.Throws<MArgumentException>(() => new EventOutboxContext(null!));
     }
 }
