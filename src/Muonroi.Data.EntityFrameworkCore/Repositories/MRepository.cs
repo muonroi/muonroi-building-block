@@ -441,7 +441,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
     /// </summary>
     /// <param name="action">The action to execute.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public virtual async Task ExecuteTransactionAsync(Func<Task<Muonroi.Core.Abstractions.Response.MVoidMethodResult>> action)
+    public virtual async Task ExecuteTransactionAsync(Func<Task<MVoidMethodResult>> action)
     {
         if (DbBaseContext.Database.IsInMemory() || DbBaseContext.HasActiveTransaction)
         {
@@ -455,7 +455,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
             await using IDbContextTransaction? transaction = await DbBaseContext.BeginTransactionAsync().ConfigureAwait(false);
             try
             {
-                Muonroi.Core.Abstractions.Response.MVoidMethodResult result = await action().ConfigureAwait(false);
+                MVoidMethodResult result = await action().ConfigureAwait(false);
 
                 if (result?.IsOk ?? false)
                 {
@@ -545,7 +545,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         }
         catch (Exception ex)
         {
-            throw new MInternalException("Bulk insert failed.");
+            throw new MInternalException("Bulk insert failed.", ex);
         }
     }
 
