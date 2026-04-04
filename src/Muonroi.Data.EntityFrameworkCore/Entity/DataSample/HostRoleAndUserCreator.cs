@@ -1,3 +1,7 @@
+using Muonroi.Core.Abstractions.Ecosystem;
+using Muonroi.Core.Abstractions.Exceptions;
+using BCrypts = BCrypt.Net.BCrypt;
+
 namespace Muonroi.Data.EntityFrameworkCore.Entity.DataSample;
 
 /// <summary>
@@ -6,7 +10,16 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity.DataSample;
 /// <typeparam name="TContext">The EF Core context type.</typeparam>
 /// <param name="context">The database context.</param>
 /// <param name="dateTimeService">The date/time service.</param>
-public class HostRoleAndUserCreator<TContext>(TContext context, IMDateTimeService dateTimeService) where TContext : MDbContext
+/// <param name="registry">
+/// Optional ecosystem registry. When provided:
+/// +Logging — emits a warn log after seeding (password change required).
+/// +Auth — enforces minimum password complexity (8+ chars) on env-supplied passwords.
+/// </param>
+public class HostRoleAndUserCreator<TContext>(
+    TContext context,
+    IMDateTimeService dateTimeService,
+    IMEcosystemRegistry? registry = null)
+    where TContext : MDbContext
 {
     /// <summary>
     /// Creates the host admin role and user, plus default permissions when missing.
@@ -29,21 +42,58 @@ public class HostRoleAndUserCreator<TContext>(TContext context, IMDateTimeServic
         MUser? adminUserForHost = context.Users.IgnoreQueryFilters()
             .FirstOrDefault(u => u.UserName == StaticRoleAndUserNames.Host.AdminUserName);
         if (adminUserForHost is not null) return;
+
+        string seedPassword = ResolveSeedPassword();
+
         MUser user = new()
         {
             UserName = StaticRoleAndUserNames.Host.AdminUserName,
             Name = "Admin",
             Surname = "User",
             EmailAddress = "admin@muonroi.com",
-            Password = "$2b$08$xjH/bTjHs/EnYJTHDTFAoOTsrxrz2/6WP4Yrz6JZ9uLvbyyiJKbB6", //sysadmin,
+            Password = BCrypts.HashPassword(seedPassword),
             IsEmailConfirmed = true,
-            ShouldChangePasswordOnNextLogin = false,
+            ShouldChangePasswordOnNextLogin = true, // Always require password change on first login (D-02)
             IsActive = true,
             CreationTime = dateTimeService.UtcNow()
         };
 
         _ = context.Users.Add(user);
         _ = context.SaveChanges();
+
+        // +Logging: emit a structured warn log when Logging capability is active (D-05).
+        // INTENTIONAL DEGRADATION: Console.WriteLine used because IMLog<T> is not available
+        // at seed time — DI container has not been built yet when seeding runs.
+        if (registry?.Has(MCapability.Logging) == true)
+        {
+            Console.WriteLine("[Ecosystem] WARN: Default admin seeded — password change required on next login");
+        }
+    }
+
+    /// <summary>
+    /// Resolves the seed admin password from the environment or generates a random one.
+    /// </summary>
+    /// <returns>The plaintext password to hash and store.</returns>
+    private string ResolveSeedPassword()
+    {
+        string? envPassword = Environment.GetEnvironmentVariable("MUONROI_SEED_ADMIN_PASSWORD");
+
+        if (!string.IsNullOrWhiteSpace(envPassword))
+        {
+            // +Auth: enforce minimum password complexity when Auth capability is active (D-06)
+            if (registry?.Has(MCapability.Auth) == true && envPassword.Length < 8)
+            {
+                throw new MConfigurationException(
+                    "Seed admin password does not meet minimum complexity (8+ chars).",
+                    "MUONROI_SEED_ADMIN_PASSWORD");
+            }
+
+            return envPassword;
+        }
+
+        // D-03: Generate a cryptographically random password when env var is absent.
+        // The password is hashed immediately — the plaintext is never stored.
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
     }
 
     private void CreateDefaultRolesAndPermissions()

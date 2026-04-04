@@ -24,6 +24,7 @@
     <ProjectReference Include="..\Muonroi.EntityFrameworkCore.Configuration\Muonroi.EntityFrameworkCore.Configuration.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
