@@ -62,4 +62,12 @@ internal static class MBBDiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor MBB008CrossCapabilityDirectReference = new(
+        id: "MBB008",
+        title: "Cross-capability reference without ecosystem guard",
+        messageFormat: "Reference to '{0}' (capability: {1}) requires IMEcosystemRegistry.Has(MCapability.{1}) guard in method '{2}'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
 }
