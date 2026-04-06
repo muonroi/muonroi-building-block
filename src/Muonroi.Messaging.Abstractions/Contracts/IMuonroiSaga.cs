@@ -10,7 +10,7 @@ public interface IMuonroiSaga : MassTransit.ISaga, ITenantScoped
     /// <summary>
     /// Gets or sets the Tenant Id.
     /// </summary>
-    new string TenantId { get; set; }
+    new string? TenantId { get; set; }
     /// <summary>
     /// Gets or sets the Creation Time.
     /// </summary>

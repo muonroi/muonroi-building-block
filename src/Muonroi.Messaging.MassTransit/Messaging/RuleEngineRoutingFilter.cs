@@ -135,9 +135,8 @@ public sealed class RuleEngineRoutingFilter<T>(
                 static group => Convert.ToString(group.Last().Value) ?? string.Empty,
                 StringComparer.OrdinalIgnoreCase);
 
-        string tenantId = ResolveHeaderValue(headers, CustomHeader.TenantId)
-            ?? _executionContextAccessor?.Get().TenantId
-            ?? string.Empty;
+        string? tenantId = ResolveHeaderValue(headers, CustomHeader.TenantId)
+            ?? _executionContextAccessor?.Get().TenantId;
         string correlationId = ResolveHeaderValue(headers, CustomHeader.CorrelationId)
             ?? _executionContextAccessor?.Get().CorrelationId
             ?? Guid.NewGuid().ToString("N");
@@ -235,7 +234,7 @@ public sealed class RuleEngineRoutingFilter<T>(
     /// <param name="MessageType">The CLR message type name.</param>
     /// <param name="Headers">The normalized string headers.</param>
     private sealed record RoutingContext(
-        string TenantId,
+        string? TenantId,
         string CorrelationId,
         string MessageType,
         IReadOnlyDictionary<string, string> Headers) : IRoutingContext;
@@ -306,7 +305,7 @@ public sealed class RuleEngineRoutingFilter<T>(
         {
             Dictionary<string, object> variables = new(StringComparer.OrdinalIgnoreCase)
             {
-                ["tenantId"] = context.TenantId,
+                ["tenantId"] = context.TenantId ?? string.Empty,
                 ["correlationId"] = context.CorrelationId,
                 ["messageType"] = context.MessageType,
                 ["headers"] = context.Headers
