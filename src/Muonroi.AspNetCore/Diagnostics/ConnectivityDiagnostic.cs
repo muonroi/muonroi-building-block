@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Muonroi.AspNetCore.Diagnostics;
 
@@ -18,8 +17,7 @@ public sealed class ConnectivityDiagnostic : IMEcosystemDiagnostic
     /// <inheritdoc />
     public async Task<DiagnosticResult> CheckAsync(IServiceProvider sp, CancellationToken ct)
     {
-        // Try to resolve a DbContext — use IEnumerable to discover all registered contexts
-        // We look for the abstract DbContext base type which all EF contexts inherit
+        // Try to resolve a DbContext — the abstract DbContext base type covers all EF contexts
         DbContext? dbContext = sp.GetService<DbContext>();
         if (dbContext is null)
         {
@@ -34,13 +32,9 @@ public sealed class ConnectivityDiagnostic : IMEcosystemDiagnostic
 
         try
         {
-            IRelationalDatabaseCreator? creator = dbContext.Database.GetService<IRelationalDatabaseCreator>();
-            if (creator is null)
-            {
-                return DiagnosticResult.Pass("Non-relational DbContext registered — skipping connectivity ping.");
-            }
+            // DatabaseFacade.CanConnectAsync() is available on DbContext.Database directly
+            bool canConnect = await dbContext.Database.CanConnectAsync(ct).ConfigureAwait(false);
 
-            bool canConnect = await creator.CanConnectAsync(ct).ConfigureAwait(false);
             return canConnect
                 ? DiagnosticResult.Pass($"Database connectivity confirmed for '{dbContext.GetType().Name}'.")
                 : DiagnosticResult.Fail(
