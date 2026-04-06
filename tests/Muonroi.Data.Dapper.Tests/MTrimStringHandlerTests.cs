@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Data.Dapper.Dapper.Handlers;
 using Xunit;
 
@@ -34,7 +35,9 @@ public class MTrimStringHandlerTests
     {
         Action act = () => _handler.SetValue(null!, "value");
 
-        act.Should().Throw<NotImplementedException>();
+        var ex = act.Should().Throw<MInternalException>().Which;
+        ex.Message.Should().Be("MTrimStringHandler.Parse is not implemented.");
+        ex.ErrorCode.Should().Be(MErrorCodes.Data.NotImplemented);
     }
 }
 
