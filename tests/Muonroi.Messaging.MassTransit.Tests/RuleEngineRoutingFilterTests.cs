@@ -117,6 +117,41 @@ public class RuleEngineRoutingFilterTests
     }
 
     /// <summary>
+    /// Ensures the filter processes a message with no tenant header and no execution context,
+    /// resolving TenantId to null (DCP-09 — null tenant is valid).
+    /// </summary>
+    [Fact]
+    public async Task Send_WhenNoTenantHeaderAndNoExecutionContext_TenantIdResolvesToNull()
+    {
+        RoutingFilterFixture fixture = new(includeExecutionContext: false);
+        DelegateRouter inspector = new("inspect", 0, static _ => RoutingDecision.PassThrough);
+        fixture.Routers = [inspector];
+        RuleEngineRoutingFilter<TestMessage> filter = fixture.CreateFilter();
+
+        await filter.Send(fixture.Context, fixture.Next);
+
+        inspector.CallCount.Should().Be(1);
+        await fixture.Next.Received(1).Send(fixture.Context);
+    }
+
+    /// <summary>
+    /// Ensures that existing tests with non-null TenantId continue to work (DCP-10 regression guard).
+    /// </summary>
+    [Fact]
+    public async Task Send_WhenTenantIdPresent_RoutingStillWorks()
+    {
+        RoutingFilterFixture fixture = new();
+        DelegateRouter router = new("pass", 0, static _ => RoutingDecision.PassThrough);
+        fixture.Routers = [router];
+        RuleEngineRoutingFilter<TestMessage> filter = fixture.CreateFilter();
+
+        await filter.Send(fixture.Context, fixture.Next);
+
+        router.CallCount.Should().Be(1);
+        await fixture.Next.Received(1).Send(fixture.Context);
+    }
+
+    /// <summary>
     /// Provides the collaborators used by the routing filter tests.
     /// </summary>
     private sealed class RoutingFilterFixture
@@ -125,7 +160,7 @@ public class RuleEngineRoutingFilterTests
         /// Initializes a new fixture instance.
         /// </summary>
         /// <param name="enableRedisRoutingTable">Controls whether Redis dynamic routing is enabled.</param>
-        public RoutingFilterFixture(bool enableRedisRoutingTable = false)
+        public RoutingFilterFixture(bool enableRedisRoutingTable = false, bool includeExecutionContext = true)
         {
             Headers headers = CreateHeaders(new Dictionary<string, object?>());
             Context = Substitute.For<ConsumeContext<TestMessage>>();
@@ -142,18 +177,25 @@ public class RuleEngineRoutingFilterTests
                 .Returns(Task.CompletedTask);
             SendEndpointProvider.GetSendEndpoint(Arg.Any<Uri>()).Returns(SendEndpoint);
 
-            ExecutionContextAccessor = new SystemExecutionContextAccessor();
-            ExecutionContextAccessor.Set(new SystemExecutionContext(
-                tenantId: "tenant-a",
-                userId: "user-a",
-                username: "alice",
-                correlationId: "corr-a",
-                accessToken: "token-a",
-                apiKey: "api-key",
-                isAuthenticated: true,
-                permissions: [],
-                sourceType: "message-bus"));
-
+            if (includeExecutionContext)
+            {
+                SystemExecutionContextAccessor accessor = new();
+                accessor.Set(new SystemExecutionContext(
+                    tenantId: "tenant-a",
+                    userId: "user-a",
+                    username: "alice",
+                    correlationId: "corr-a",
+                    accessToken: "token-a",
+                    apiKey: "api-key",
+                    isAuthenticated: true,
+                    permissions: [],
+                    sourceType: "message-bus"));
+                ExecutionContextAccessor = accessor;
+            }
+            else
+            {
+                ExecutionContextAccessor = null;
+            }
             RedisStore = Substitute.For<IRedisRoutingTableStore>();
             Routers = [];
             LegacyRules = [];
@@ -185,9 +227,9 @@ public class RuleEngineRoutingFilterTests
         public ISendEndpoint SendEndpoint { get; }
 
         /// <summary>
-        /// Gets the execution context accessor used to provide tenant context.
+        /// Gets the execution context accessor used to provide tenant context. Null when simulating no-tenant context.
         /// </summary>
-        public SystemExecutionContextAccessor ExecutionContextAccessor { get; }
+        public SystemExecutionContextAccessor? ExecutionContextAccessor { get; }
 
         /// <summary>
         /// Gets the Redis routing table store substitute.
