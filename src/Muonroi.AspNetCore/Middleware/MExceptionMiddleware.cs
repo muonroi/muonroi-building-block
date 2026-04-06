@@ -1,5 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
@@ -28,6 +30,7 @@ public class MExceptionMiddleware(RequestDelegate next)
     /// <param name="authContext">The authentication info context.</param>
     /// <param name="environment">The host environment.</param>
     /// <param name="tenantContext">The optional tenant context.</param>
+    /// <param name="causalChainOptions">Optional causal chain options. When provided, a serialized chain is written to the muonroi-causal-chain response header on MException errors.</param>
     /// <returns>A task that represents the completion of the middleware invocation.</returns>
     public async Task InvokeAsync(
         HttpContext context,
@@ -35,7 +38,8 @@ public class MExceptionMiddleware(RequestDelegate next)
         IMJsonSerializeService serializeService,
         MAuthenticateInfoContext authContext,
         IHostEnvironment environment,
-        ITenantContext? tenantContext = null)
+        ITenantContext? tenantContext = null,
+        IOptions<MCausalChainOptions>? causalChainOptions = null)
     {
         try
         {
@@ -43,7 +47,7 @@ public class MExceptionMiddleware(RequestDelegate next)
         }
         catch (Exception ex)
         {
-            await HandleExceptionAsync(context, ex, logger, serializeService, authContext, environment, tenantContext);
+            await HandleExceptionAsync(context, ex, logger, serializeService, authContext, environment, tenantContext, causalChainOptions?.Value);
         }
     }
 
@@ -54,7 +58,8 @@ public class MExceptionMiddleware(RequestDelegate next)
         IMJsonSerializeService serializeService,
         MAuthenticateInfoContext authContext,
         IHostEnvironment environment,
-        ITenantContext? tenantContext)
+        ITenantContext? tenantContext,
+        MCausalChainOptions? causalChainOptions = null)
     {
         MGuard.NotNull(ex);
 
@@ -128,6 +133,22 @@ public class MExceptionMiddleware(RequestDelegate next)
                         Message = e.Message,
                         AttemptedValue = environment.IsDevelopment() ? e.AttemptedValue : null
                     })];
+                }
+
+                // Per D-06: Serialize causal chain to response header for upstream consumers.
+                // CRITICAL: Must be set BEFORE WriteAsync — headers cannot be modified after body starts.
+                if (causalChainOptions is not null && causalChainOptions.PropagateInHeaders)
+                {
+                    MCausalChain chain = new()
+                    {
+                        OriginService = causalChainOptions.ServiceName,
+                        OriginErrorCode = mex.ErrorCode,
+                        OriginLayer = mex.Layer,
+                        OriginMessage = causalChainOptions.IncludeMessageInChain ? mex.Message : null,
+                        Cause = mex.CausalChain,
+                        Timestamp = DateTimeOffset.UtcNow
+                    };
+                    context.Response.Headers["muonroi-causal-chain"] = MCausalChain.Serialize(chain);
                 }
 
                 return context.Response.WriteAsync(serializeService.Serialize(response));

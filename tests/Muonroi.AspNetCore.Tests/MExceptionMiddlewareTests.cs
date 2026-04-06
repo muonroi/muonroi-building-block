@@ -49,7 +49,8 @@ public class MExceptionMiddlewareTests
             serializeService ?? new MJsonSerializeService(),
             authContext ?? new MAuthenticateInfoContext(false),
             environment ?? new FakeEnvironment(),
-            tenantContext
+            tenantContext,
+            (Muonroi.Core.Abstractions.Diagnostics.MCausalChainOptions?)null
         ])!;
     }
 
