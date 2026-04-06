@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Muonroi.Core.Abstractions.Diagnostics;
 
 namespace Muonroi.Core.Abstractions.Exceptions;
 
@@ -53,6 +54,17 @@ public abstract class MException(
     /// Automatically captured from <see cref="Activity.Current"/> at exception creation time.
     /// </summary>
     public string? SpanId { get; } = Activity.Current?.SpanId.ToString();
+
+    /// <summary>
+    /// Gets the upstream causal chain from cross-service error propagation.
+    /// Auto-populated from <see cref="Activity.Current"/> baggage (key: "muonroi.causal")
+    /// when a <see cref="MCausalChain"/> has been stored
+    /// by an upstream <c>MCausalChainDelegatingHandler</c>.
+    /// </summary>
+    public MCausalChain? CausalChain { get; } =
+        Activity.Current?.GetBaggageItem("muonroi.causal") is string baggageValue
+            ? MCausalChain.TryDeserialize(baggageValue)
+            : null;
 
     /// <summary>
     /// Gets the name of the Muonroi package that threw this exception.
