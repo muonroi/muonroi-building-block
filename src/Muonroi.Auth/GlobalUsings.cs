@@ -9,7 +9,6 @@ global using Muonroi.Auth.Jwt;
 global using Muonroi.Caching.Memory.MultiLevel;
 global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Core.Abstractions.Models.Common;
-global using Muonroi.Data.EntityFrameworkCore.Auth;
 global using Muonroi.Data.EntityFrameworkCore.Entity;
 global using System;
 global using System.Collections.Concurrent;
