@@ -85,6 +85,12 @@ public abstract class MException(
     public Dictionary<string, object?> Details { get; } = [];
 
     /// <summary>
+    /// Gets the architectural layer where this exception originated.
+    /// Auto-derived from <see cref="SourcePackage"/> via prefix matching.
+    /// </summary>
+    public MExceptionLayer Layer => DeriveLayer(SourcePackage);
+
+    /// <summary>
     /// Extracts the Muonroi package name from a CallerFilePath string.
     /// Scans path segments for a segment starting with "Muonroi." and returns the first match.
     /// AOT-safe: uses string parsing only, no reflection or assembly loading.
@@ -94,7 +100,7 @@ public abstract class MException(
     /// The package directory segment (e.g., "Muonroi.RuleEngine.Runtime"),
     /// or <see langword="null"/> if the path does not contain a Muonroi package segment.
     /// </returns>
-    protected static string? ExtractPackageName(string? callerFilePath)
+    protected internal static string? ExtractPackageName(string? callerFilePath)
     {
         if (string.IsNullOrEmpty(callerFilePath))
         {
@@ -122,6 +128,53 @@ public abstract class MException(
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Determines the architectural layer from a Muonroi package name.
+    /// Checks Presentation-specific packages (.Web suffix) BEFORE generic prefixes
+    /// to prevent false Domain classification per D-04.
+    /// </summary>
+    /// <param name="sourcePackage">The package name (e.g., "Muonroi.RuleEngine.Runtime").</param>
+    /// <returns>The <see cref="MExceptionLayer"/> for the package.</returns>
+    protected internal static MExceptionLayer DeriveLayer(string? sourcePackage)
+    {
+        if (string.IsNullOrEmpty(sourcePackage))
+            return MExceptionLayer.Unknown;
+
+        // Per D-04: Check Presentation-specific .Web packages FIRST
+        // to avoid false Domain classification for RuleEngine.*.Web.*
+        if (sourcePackage.StartsWith("Muonroi.AspNetCore", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Grpc", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Bff", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.RuleEngine.Runtime.Web", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.RuleEngine.DecisionTable.Web", StringComparison.Ordinal))
+            return MExceptionLayer.Presentation;
+
+        if (sourcePackage.StartsWith("Muonroi.Mediator", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.BackgroundJobs", StringComparison.Ordinal))
+            return MExceptionLayer.Application;
+
+        if (sourcePackage.StartsWith("Muonroi.RuleEngine", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Rules", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Tenancy", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Auth", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.AuthZ", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Governance", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Core", StringComparison.Ordinal))
+            return MExceptionLayer.Domain;
+
+        if (sourcePackage.StartsWith("Muonroi.Data", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Caching", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Messaging", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Logging", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Resilience", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Integration", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Http", StringComparison.Ordinal) ||
+            sourcePackage.StartsWith("Muonroi.Diagnostics", StringComparison.Ordinal))
+            return MExceptionLayer.Infrastructure;
+
+        return MExceptionLayer.Unknown;
     }
 
     /// <inheritdoc />
