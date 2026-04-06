@@ -13,7 +13,6 @@ using Muonroi.Core.Abstractions.Guards;
 using Muonroi.AspNetCore.DI.Autofac;
 using Muonroi.AspNetCore.Filters;
 using Muonroi.AspNetCore.Middleware;
-using Muonroi.Auth.BearerToken.Signers;
 using Muonroi.Core.Extensions;
 using Muonroi.Tenancy.Core.Legacy;
 using Muonroi.UiEngine.Catalog.Services;
@@ -252,12 +251,14 @@ public static class InfrastructureExtensions
         return app;
     }
 
-/// <inheritdoc />
-    public static IServiceCollection AddValidateBearerToken<TDbContext, TPermission>(
+/// <summary>
+    /// Registers bearer token validation with JWT authentication.
+    /// Signer implementations are internal — no dependency on Muonroi.Auth required.
+    /// When IRefreshTokenValidator is not registered (Auth absent), refresh falls through to ClaimsPrincipal.
+    /// </summary>
+    public static IServiceCollection AddValidateBearerToken(
         this IServiceCollection services,
         IConfiguration configuration)
-        where TDbContext : MDbContext
-        where TPermission : Enum
     {
         MGuard.NotNull(services);
         MGuard.NotNull(configuration);
@@ -286,8 +287,6 @@ public static class InfrastructureExtensions
 
             return new HmacTokenSigner(configs.SymmetricSecretKey);
         });
-        services.TryAddScoped<MAuthenticateTokenHelper<TPermission>>();
-        services.TryAddScoped<IRefreshTokenValidator, DefaultRefreshTokenValidator<TDbContext, TPermission>>();
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -331,6 +330,43 @@ public static class InfrastructureExtensions
         });
         services.AddAuthorization();
         return services;
+    }
+
+    /// <summary>
+    /// Backward-compatible overload. Generic parameters are no longer needed —
+    /// MAuthenticateTokenHelper and DefaultRefreshTokenValidator should be registered
+    /// by the consuming application when Auth package is used.
+    /// </summary>
+    [Obsolete("Use AddValidateBearerToken(services, configuration) instead. Generic parameters are no longer needed.")]
+    public static IServiceCollection AddValidateBearerToken<TDbContext, TPermission>(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        where TDbContext : MDbContext
+        where TPermission : Enum
+        => AddValidateBearerToken(services, configuration);
+
+    /// <summary>
+    /// Internal RSA token signer — decoupled from Muonroi.Auth.
+    /// </summary>
+    private sealed class RsaTokenSigner(RSA rsa) : ITokenSigner
+    {
+        public SigningCredentials GetCredentials()
+        {
+            SecurityKey key = new RsaSecurityKey(rsa);
+            return new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
+        }
+    }
+
+    /// <summary>
+    /// Internal HMAC token signer — decoupled from Muonroi.Auth.
+    /// </summary>
+    private sealed class HmacTokenSigner(string signingKey) : ITokenSigner
+    {
+        public SigningCredentials GetCredentials()
+        {
+            SecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+            return new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        }
     }
 
     private static void VerifyEnterpriseSecurityRequirements(IConfiguration configuration)
