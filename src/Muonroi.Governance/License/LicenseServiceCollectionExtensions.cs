@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Policy;
 using System.Net.Http.Json;
@@ -21,6 +22,8 @@ public static class LicenseServiceCollectionExtensions
     {
         MGuard.NotNull(services);
         MGuard.NotNull(configuration);
+
+        services.GetOrCreateRegistry().Register(MCapability.Governance);
 
         LicenseConfigs configs = new();
         configuration.GetSection(LicenseConfigs.SectionName).Bind(configs);

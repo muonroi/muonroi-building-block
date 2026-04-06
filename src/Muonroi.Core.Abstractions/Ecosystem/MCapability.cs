@@ -26,4 +26,7 @@ public enum MCapability
 
     /// <summary>Auth governance (license guard, HMAC chain, anti-tamper) is present in the ecosystem.</summary>
     Auth = 1 << 3,
+
+    /// <summary>License governance (license guard integration with rule engine) is present in the ecosystem.</summary>
+    Governance = 1 << 4,
 }
