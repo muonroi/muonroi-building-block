@@ -1,10 +1,9 @@
 using Fido2NetLib;
 using Fido2NetLib.Objects;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
+using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Tenancy.Core;
 
 namespace Muonroi.Auth.Mfa.WebAuthenticate;
@@ -15,7 +14,7 @@ namespace Muonroi.Auth.Mfa.WebAuthenticate;
 public class WebAuthenticateService(
     IFido2 fido2,
     IDistributedCache challengeCache,
-    MDbContext context,
+    IWebAuthnCredentialStore credentialStore,
     IMJsonSerializeService jsonService,
     IMDateTimeService dateTimeService)
 {
@@ -36,12 +35,11 @@ public class WebAuthenticateService(
         MGuard.NotEmpty(userName);
         MGuard.NotEmpty(displayName);
 
-        List<PublicKeyCredentialDescriptor> existingCredentials = await context.WebAuthnCredentials
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Where(x => x.TenantId == TenantContext.CurrentTenantId && x.UserId == userId)
-            .Select(x => new PublicKeyCredentialDescriptor(x.CredentialId))
-            .ToListAsync(ct);
+        string? tenantId = TenantContext.CurrentTenantId;
+        List<byte[]> existingIds = await credentialStore.GetCredentialIdsByUserAsync(tenantId, userId, ct);
+        List<PublicKeyCredentialDescriptor> existingCredentials = existingIds
+            .Select(id => new PublicKeyCredentialDescriptor(id))
+            .ToList();
 
         Fido2User user = new()
         {
@@ -92,7 +90,7 @@ public class WebAuthenticateService(
             },
             ct);
 
-        MWebAuthnCredential credential = new()
+        WebAuthnCredentialInfo credential = new()
         {
             TenantId = TenantContext.CurrentTenantId,
             UserId = userId,
@@ -105,8 +103,7 @@ public class WebAuthenticateService(
             IsBackedUp = result.IsBackedUp
         };
 
-        await context.WebAuthnCredentials.AddAsync(credential, ct);
-        await context.SaveChangesAsync(ct);
+        await credentialStore.SaveCredentialAsync(credential, ct);
         await challengeCache.RemoveAsync(GetRegistrationCacheKey(userId), ct);
 
         bool syncable = credential.IsBackupEligible || credential.IsBackedUp;
@@ -123,12 +120,11 @@ public class WebAuthenticateService(
     /// </summary>
     public async Task<AssertionOptions> BeginAuthenticationAsync(Guid userId, CancellationToken ct = default)
     {
-        List<PublicKeyCredentialDescriptor> allowedCredentials = await context.WebAuthnCredentials
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Where(x => x.TenantId == TenantContext.CurrentTenantId && x.UserId == userId)
-            .Select(x => new PublicKeyCredentialDescriptor(x.CredentialId))
-            .ToListAsync(ct);
+        string? tenantId = TenantContext.CurrentTenantId;
+        List<byte[]> credentialIds = await credentialStore.GetCredentialIdsByUserAsync(tenantId, userId, ct);
+        List<PublicKeyCredentialDescriptor> allowedCredentials = credentialIds
+            .Select(id => new PublicKeyCredentialDescriptor(id))
+            .ToList();
 
         AssertionOptions options = fido2.GetAssertionOptions(new GetAssertionOptionsParams
         {
@@ -155,14 +151,12 @@ public class WebAuthenticateService(
     {
         MGuard.NotNull(response);
 
+        string? tenantId = TenantContext.CurrentTenantId;
         AssertionOptions options = await GetRequiredAuthenticationOptionsAsync(userId, ct);
         byte[] credentialId = ExtractCredentialId(response);
 
-        List<MWebAuthnCredential> credentials = await context.WebAuthnCredentials
-            .IgnoreQueryFilters()
-            .Where(x => x.TenantId == TenantContext.CurrentTenantId && x.UserId == userId)
-            .ToListAsync(ct);
-        MWebAuthnCredential? credential = credentials.FirstOrDefault(x => x.CredentialId.SequenceEqual(credentialId))
+        List<WebAuthnCredentialInfo> credentials = await credentialStore.GetCredentialsByUserAsync(tenantId, userId, ct);
+        WebAuthnCredentialInfo? credential = credentials.FirstOrDefault(x => x.CredentialId.SequenceEqual(credentialId))
             ?? throw new MInternalException("Credential not found for user.");
         VerifyAssertionResult verificationResult = await fido2.MakeAssertionAsync(
             new MakeAssertionParams
@@ -180,7 +174,7 @@ public class WebAuthenticateService(
         credential.LastUsedAt = dateTimeService.UtcNow();
         credential.UserHandle = TryEncodeUserHandle(response.Response?.UserHandle) ?? credential.UserHandle;
 
-        await context.SaveChangesAsync(ct);
+        await credentialStore.UpdateCredentialAsync(credential, ct);
         await challengeCache.RemoveAsync(GetAuthenticationCacheKey(userId), ct);
 
         bool syncable = credential.IsBackupEligible || credential.IsBackedUp;
@@ -219,24 +213,17 @@ public class WebAuthenticateService(
 
     private async Task<bool> IsCredentialIdUniqueToUserAsync(IsCredentialIdUniqueToUserParams input, CancellationToken ct)
     {
-        List<byte[]> existingIds = await context.WebAuthnCredentials
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Where(x => x.TenantId == TenantContext.CurrentTenantId)
-            .Select(x => x.CredentialId)
-            .ToListAsync(ct);
+        string? tenantId = TenantContext.CurrentTenantId;
+        List<byte[]> existingIds = await credentialStore.GetAllCredentialIdsAsync(tenantId, ct);
         return existingIds.All(x => !x.SequenceEqual(input.CredentialId));
     }
 
     private async Task<bool> IsUserHandleOwnerOfCredentialAsync(IsUserHandleOwnerOfCredentialIdParams input, CancellationToken ct)
     {
-        List<MWebAuthnCredential> credentials = await context.WebAuthnCredentials
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Where(x => x.TenantId == TenantContext.CurrentTenantId)
-            .ToListAsync(ct);
+        string? tenantId = TenantContext.CurrentTenantId;
+        List<WebAuthnCredentialInfo> credentials = await credentialStore.GetCredentialsByUserAsync(tenantId, Guid.Empty, ct);
 
-        MWebAuthnCredential? credential = credentials.FirstOrDefault(x => x.CredentialId.SequenceEqual(input.CredentialId));
+        WebAuthnCredentialInfo? credential = credentials.FirstOrDefault(x => x.CredentialId.SequenceEqual(input.CredentialId));
         if (credential is null)
         {
             return false;
