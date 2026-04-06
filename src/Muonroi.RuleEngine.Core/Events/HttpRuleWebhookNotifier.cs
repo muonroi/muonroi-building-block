@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Integration.Connectors.Http;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.RuleEngine.Core.Events;
@@ -32,6 +34,17 @@ public sealed class HttpRuleWebhookNotifier(
     {
         if (string.IsNullOrWhiteSpace(_options.Url))
             return new WebhookResult(false, 0, "Webhook URL is not configured.");
+
+        try
+        {
+            await UrlSafetyValidator.ValidateAsync(_options.Url);
+        }
+        catch (MInternalException ex)
+        {
+            _logger?.Error(ex, "Webhook URL blocked by SSRF policy. Url={Url} Code={Code}",
+                _options.Url, ex.ErrorCode);
+            return new WebhookResult(false, 0, ex.Message);
+        }
 
         var client = _httpClientFactory.CreateClient(HttpClientName);
         var json = JsonSerializer.Serialize(cloudEvent);

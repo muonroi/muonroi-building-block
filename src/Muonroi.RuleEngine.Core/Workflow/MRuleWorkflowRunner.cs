@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.RuleEngine.Core.Workflow;
@@ -20,7 +21,7 @@ public sealed class MRuleWorkflowRunner<TContext>(
         MRuleWorkflowDefinition<TContext> workflow,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(workflow);
+        MGuard.NotNull(workflow);
 
         MRuleWorkflowExecutionContext<TContext> executionContext = new(context, new FactBag(), ruleRouter);
         List<string> executedSteps = [];

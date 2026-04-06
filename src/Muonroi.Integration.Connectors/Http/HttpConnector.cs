@@ -48,6 +48,8 @@ public sealed class HttpConnector(IHttpClientFactory httpClientFactory) : IServi
         string method = root.TryGetProperty("method", out JsonElement m) ? m.GetString() ?? "GET" : "GET";
         int timeout = root.TryGetProperty("timeout", out JsonElement t) ? t.GetInt32() : 30;
 
+        await UrlSafetyValidator.ValidateAsync(url);
+
         HttpClient client = _httpClientFactory.CreateClient("MuonroiConnector");
         client.Timeout = TimeSpan.FromSeconds(timeout);
 
