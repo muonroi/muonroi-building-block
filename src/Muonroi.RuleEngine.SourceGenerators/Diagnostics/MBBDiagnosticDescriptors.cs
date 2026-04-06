@@ -70,4 +70,20 @@ internal static class MBBDiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor MBB009ForbiddenRawException = new(
+        id: "MBB009",
+        title: "Forbidden non-MException throw in Muonroi namespace",
+        messageFormat: "Use M{0} instead of throwing raw '{0}' in namespace '{1}'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor MBB010MissingGuardForParameter = new(
+        id: "MBB010",
+        title: "Missing MGuard.NotNull() for unguarded reference-type parameter",
+        messageFormat: "Parameter '{0}' of public method '{1}' is not guarded -- add MGuard.NotNull({0}, nameof({0}))",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
 }
