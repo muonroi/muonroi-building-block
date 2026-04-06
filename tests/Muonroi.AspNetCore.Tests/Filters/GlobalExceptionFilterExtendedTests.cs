@@ -2,11 +2,17 @@ namespace Muonroi.AspNetCore.Tests.Filters;
 
 public class GlobalExceptionFilterExtendedTests
 {
+    private static GlobalExceptionFilter CreateFilter(string environmentName = "Development")
+    {
+        IHostEnvironment env = Substitute.For<IHostEnvironment>();
+        env.EnvironmentName.Returns(environmentName);
+        return new GlobalExceptionFilter(Substitute.For<IMLog<GlobalExceptionFilter>>(), env);
+    }
+
     [Fact]
     public void OnException_SetsExceptionHandledTrue()
     {
-        var logger = Substitute.For<IMLog<GlobalExceptionFilter>>();
-        var filter = new GlobalExceptionFilter(logger);
+        var filter = CreateFilter();
         var httpContext = new DefaultHttpContext();
         var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
         var exceptionContext = new ExceptionContext(actionContext, [])
@@ -22,8 +28,7 @@ public class GlobalExceptionFilterExtendedTests
     [Fact]
     public void OnException_ReturnsObjectResultWith500()
     {
-        var logger = Substitute.For<IMLog<GlobalExceptionFilter>>();
-        var filter = new GlobalExceptionFilter(logger);
+        var filter = CreateFilter();
         var httpContext = new DefaultHttpContext();
         var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
         var exceptionContext = new ExceptionContext(actionContext, [])
@@ -41,8 +46,8 @@ public class GlobalExceptionFilterExtendedTests
     [Fact]
     public void OnException_ResultContainsProblemDetails()
     {
-        var logger = Substitute.For<IMLog<GlobalExceptionFilter>>();
-        var filter = new GlobalExceptionFilter(logger);
+        // Development environment: detail exposed
+        var filter = CreateFilter("Development");
         var httpContext = new DefaultHttpContext();
         var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
         var exceptionContext = new ExceptionContext(actionContext, [])
@@ -62,7 +67,9 @@ public class GlobalExceptionFilterExtendedTests
     public void OnException_LogsError()
     {
         var logger = Substitute.For<IMLog<GlobalExceptionFilter>>();
-        var filter = new GlobalExceptionFilter(logger);
+        IHostEnvironment env = Substitute.For<IHostEnvironment>();
+        env.EnvironmentName.Returns("Development");
+        var filter = new GlobalExceptionFilter(logger, env);
         var httpContext = new DefaultHttpContext();
         var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
         var exception = new Exception("test");

@@ -20,7 +20,9 @@ public class ExceptionHandlingTests
     public void GlobalExceptionFilter_OnException_SetsResult()
     {
         var logger = Substitute.For<IMLog<GlobalExceptionFilter>>();
-        var filter = new GlobalExceptionFilter(logger);
+        var env = Substitute.For<IHostEnvironment>();
+        env.EnvironmentName.Returns("Development");
+        var filter = new GlobalExceptionFilter(logger, env);
         var actionContext = new ActionContext(new DefaultHttpContext(), new RouteData(), new ActionDescriptor());
         var exceptionContext = new ExceptionContext(actionContext, new List<IFilterMetadata>())
         {
