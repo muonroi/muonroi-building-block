@@ -53,8 +53,8 @@ public static class MDbContextConfiguration
             services.TryAddSingleton<TenantSchemaSelector>();
             services.TryAddScoped<ISaveChangesInterceptor>(sp =>
             {
-                ILicenseGuard guard = sp.GetRequiredService<ILicenseGuard>();
-                LicenseConfigs configs = sp.GetRequiredService<LicenseConfigs>();
+                ILicenseGuard? guard = sp.GetService<ILicenseGuard>();
+                LicenseConfigs? configs = sp.GetService<LicenseConfigs>();
                 return new LicenseSaveChangesInterceptor(guard, configs);
             });
 
@@ -129,8 +129,8 @@ public static class MDbContextConfiguration
         _ = services.AddDbContext<T>((serviceProvider, options) =>
         {
             IDbContextConfigurator<T> configurator = serviceProvider.GetRequiredService<IDbContextConfigurator<T>>();
-            ITenantContext tenantContext = serviceProvider.GetRequiredService<ITenantContext>();
-            ILicenseGuard guard = serviceProvider.GetRequiredService<ILicenseGuard>();
+            ITenantContext tenantContext = serviceProvider.GetService<ITenantContext>() ?? new NoOpTenantContext();
+            ILicenseGuard? guard = serviceProvider.GetService<ILicenseGuard>();
             IConfiguration config = serviceProvider.GetRequiredService<IConfiguration>();
 
             DatabaseConfigs dbConfigs = config.GetSection(nameof(DatabaseConfigs)).Get<DatabaseConfigs>()
@@ -142,6 +142,8 @@ public static class MDbContextConfiguration
             if (enableEncryption)
             {
                 // ENTANGLEMENT: Perform the decryption inside the guard's secure scope using LIVE key
+                if (guard is null)
+                    throw new MConfigurationException("ILicenseGuard is required when encryption is enabled.", "EnableEncryption");
                 connectionString = guard.DecryptSecurely("db_connection", "dummy", (key, _) =>
                     DecryptConnectionString(dbConfigs, config, isSecretDefault, secretKey, key));
             }
