@@ -3,7 +3,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Editing;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
@@ -70,35 +69,43 @@ public sealed class MBB010_MissingGuardCodeFix : CodeFixProvider
         string paramName,
         CancellationToken cancellationToken)
     {
-        DocumentEditor editor = await DocumentEditor.CreateAsync(document, cancellationToken).ConfigureAwait(false);
+        SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+        if (root is null)
+        {
+            return document;
+        }
 
         // Build: MGuard.NotNull(param, nameof(param));
         StatementSyntax guardStatement = SyntaxFactory
             .ParseStatement($"MGuard.NotNull({paramName}, nameof({paramName}));")
             .WithTrailingTrivia(SyntaxFactory.ElasticCarriageReturnLineFeed);
 
+        SyntaxNode updatedRoot = root;
+
         if (method.Body is not null)
         {
+            BlockSyntax newBody;
             if (method.Body.Statements.Count > 0)
             {
                 // Insert before the first existing statement
                 StatementSyntax firstStatement = method.Body.Statements[0];
-                editor.InsertBefore(firstStatement, guardStatement.WithLeadingTrivia(firstStatement.GetLeadingTrivia()));
+                StatementSyntax guardWithTrivia = guardStatement.WithLeadingTrivia(firstStatement.GetLeadingTrivia());
+                newBody = method.Body.WithStatements(
+                    method.Body.Statements.Insert(0, guardWithTrivia));
             }
             else
             {
                 // Empty body — replace with block containing the guard
-                BlockSyntax newBody = SyntaxFactory.Block(guardStatement)
+                newBody = SyntaxFactory.Block(guardStatement)
                     .WithOpenBraceToken(method.Body.OpenBraceToken)
                     .WithCloseBraceToken(method.Body.CloseBraceToken);
-                editor.ReplaceNode(method.Body, newBody);
             }
+
+            updatedRoot = updatedRoot.ReplaceNode(method.Body, newBody);
         }
 
         // Add using Muonroi.Core.Abstractions.Guards if not present
-        SyntaxNode currentRoot = editor.GetChangedRoot();
-        CompilationUnitSyntax compilationUnit = (CompilationUnitSyntax)currentRoot;
-
+        CompilationUnitSyntax compilationUnit = (CompilationUnitSyntax)updatedRoot;
         bool hasUsing = compilationUnit.Usings.Any(u =>
             u.Name?.ToString() == "Muonroi.Core.Abstractions.Guards");
 
@@ -108,9 +115,9 @@ public sealed class MBB010_MissingGuardCodeFix : CodeFixProvider
                 SyntaxFactory.ParseName("Muonroi.Core.Abstractions.Guards"))
                 .WithTrailingTrivia(SyntaxFactory.ElasticCarriageReturnLineFeed);
 
-            editor.ReplaceNode(compilationUnit, compilationUnit.AddUsings(usingDirective));
+            updatedRoot = compilationUnit.AddUsings(usingDirective);
         }
 
-        return editor.GetChangedDocument();
+        return document.WithSyntaxRoot(updatedRoot);
     }
 }
