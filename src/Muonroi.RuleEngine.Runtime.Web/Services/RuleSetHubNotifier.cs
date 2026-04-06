@@ -8,7 +8,7 @@ namespace Muonroi.RuleEngine.Runtime.Web.Services;
 /// Bridges ruleset change notifications to SignalR clients.
 /// When the MultiTenant capability is active and a TenantId is present, broadcasts only
 /// to the tenant-specific group and the global all-tenants group. Otherwise falls back
-/// to <see cref="IHubClients.All"/> for backward compatibility.
+/// to all connected clients for backward compatibility.
 /// </summary>
 /// <param name="notifier">Ruleset change notifier.</param>
 /// <param name="hubContext">SignalR hub context.</param>
