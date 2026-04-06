@@ -51,7 +51,7 @@ internal sealed class EfCoreCepConfigRepository(
 
     public async Task<CepConfig> SaveAsync(CepConfig config, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(config);
+        MGuard.NotNull(config);
         cancellationToken.ThrowIfCancellationRequested();
 
         string tenantId = NormalizeTenantId(config.TenantId);

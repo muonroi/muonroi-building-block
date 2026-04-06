@@ -14,7 +14,7 @@ namespace Muonroi.Tenancy.SiteProfile.Web;
 ///                          .MultiTenantContext?.TenantInfo?.TenantId;
 ///     o.ConnectionString = sp => sp.GetRequiredService&lt;IMultiTenantContextAccessor&lt;TenantInfo&gt;&gt;()
 ///                                  .MultiTenantContext?.TenantInfo?.ConnectionString
-///                               ?? throw new InvalidOperationException("No tenant");
+///                               ?? throw new MInternalException("No tenant");
 ///     o.ConnectionStringTransform = cs => Cryptography.Decrypt(secretKey, cs);
 /// });
 /// </code>
@@ -29,7 +29,7 @@ namespace Muonroi.Tenancy.SiteProfile.Web;
 ///     {
 ///         var tenantId = sp.GetRequiredService&lt;ITenantContext&gt;().TenantId;
 ///         return sp.GetRequiredService&lt;IConfiguration&gt;()
-///                  .GetConnectionString($"Tenant_{tenantId}") ?? throw new InvalidOperationException();
+///                  .GetConnectionString($"Tenant_{tenantId}") ?? throw new MInternalException();
 ///     };
 ///     o.ConfigureDbContext = (builder, cs) => builder.UseNpgsql(cs);
 /// });

@@ -1,6 +1,7 @@
 using System.Xml;
 using System.Xml.Linq;
 using Muonroi.RuleEngine.DecisionTable.Models;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.RuleEngine.DecisionTable.Dmn;
 
@@ -47,7 +48,7 @@ public static class DmnImporter
     /// <returns>A <see cref="DmnImportResult"/> with the imported table or error messages.</returns>
     public static DmnImportResult ImportFromDmnXml(Stream stream)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        MGuard.NotNull(stream);
 
         try
         {

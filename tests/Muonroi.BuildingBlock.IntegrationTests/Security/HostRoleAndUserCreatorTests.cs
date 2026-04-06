@@ -16,7 +16,7 @@ namespace Muonroi.BuildingBlock.IntegrationTests.Security;
 
 /// <summary>
 /// Tests for HostRoleAndUserCreator SEC-01 security fix: env-based seed password.
-/// Uses a minimal MDbContext subclass backed by SQLite in-memory.
+/// Uses a minimal MDbContext subclass backed by InMemory database.
 /// </summary>
 public class HostRoleAndUserCreatorTests : IDisposable
 {
@@ -25,14 +25,22 @@ public class HostRoleAndUserCreatorTests : IDisposable
 
     public HostRoleAndUserCreatorTests()
     {
+        // Use a unique database name for EVERY test instance to ensure absolute isolation
         DbContextOptions<SecurityTestDbContext> options = new DbContextOptionsBuilder<SecurityTestDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .UseInMemoryDatabase($"SecurityTest_{Guid.NewGuid():N}")
             .Options;
+        
         _dateTimeService = Mock.Of<IMDateTimeService>(s => s.UtcNow() == DateTime.UtcNow);
         _context = new SecurityTestDbContext(options, Mock.Of<IMediator>(), Mock.Of<ILicenseGuard>(), _dateTimeService);
+        
+        _context.Database.EnsureCreated();
     }
 
-    public void Dispose() => _context.Dispose();
+    public void Dispose()
+    {
+        _context.Database.EnsureDeleted();
+        _context.Dispose();
+    }
 
     /// <summary>
     /// Test 1: When MUONROI_SEED_ADMIN_PASSWORD env var is set to "MyStr0ng!Pass",

@@ -1,8 +1,13 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
+using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.Response;
 using Muonroi.Observability.OpenTelemetry;
+using Muonroi.Tenancy.Abstractions;
+using System.Diagnostics;
+using System.Security.Claims;
 
 namespace Muonroi.AspNetCore.Middleware;
 
@@ -10,29 +15,27 @@ namespace Muonroi.AspNetCore.Middleware;
 /// Middleware for handling unhandled exceptions and providing a standardized error response.
 /// </summary>
 /// <param name="next">The next delegate in the middleware pipeline.</param>
-/// <param name="logger">The logger for this middleware.</param>
-/// <param name="serializeService">The JSON serialization service.</param>
-/// <param name="authContext">The authentication info context.</param>
-/// <param name="environment">The host environment.</param>
-public class MExceptionMiddleware(
-    RequestDelegate next,
-    IMLog<MExceptionMiddleware> logger,
-    IMJsonSerializeService serializeService,
-    MAuthenticateInfoContext authContext,
-    IHostEnvironment environment)
+public class MExceptionMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = MGuard.NotNull(next);
-    private readonly IMLog<MExceptionMiddleware> _logger = MGuard.NotNull(logger);
-    private readonly IMJsonSerializeService _serializeService = MGuard.NotNull(serializeService);
-    private readonly MAuthenticateInfoContext _authContext = MGuard.NotNull(authContext);
-    private readonly IHostEnvironment _environment = MGuard.NotNull(environment);
 
     /// <summary>
     /// Invokes the middleware.
     /// </summary>
     /// <param name="context">The HTTP context.</param>
+    /// <param name="logger">The logger for this middleware.</param>
+    /// <param name="serializeService">The JSON serialization service.</param>
+    /// <param name="authContext">The authentication info context.</param>
+    /// <param name="environment">The host environment.</param>
+    /// <param name="tenantContext">The optional tenant context.</param>
     /// <returns>A task that represents the completion of the middleware invocation.</returns>
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(
+        HttpContext context,
+        IMLog<MExceptionMiddleware> logger,
+        IMJsonSerializeService serializeService,
+        MAuthenticateInfoContext authContext,
+        IHostEnvironment environment,
+        ITenantContext? tenantContext = null)
     {
         try
         {
@@ -40,11 +43,18 @@ public class MExceptionMiddleware(
         }
         catch (Exception ex)
         {
-            await HandleExceptionAsync(context, ex);
+            await HandleExceptionAsync(context, ex, logger, serializeService, authContext, environment, tenantContext);
         }
     }
 
-    private Task HandleExceptionAsync(HttpContext context, Exception ex)
+    private Task HandleExceptionAsync(
+        HttpContext context,
+        Exception ex,
+        IMLog<MExceptionMiddleware> logger,
+        IMJsonSerializeService serializeService,
+        MAuthenticateInfoContext authContext,
+        IHostEnvironment environment,
+        ITenantContext? tenantContext)
     {
         MGuard.NotNull(ex);
 
@@ -54,92 +64,123 @@ public class MExceptionMiddleware(
         // D-03: Track exception metric
         if (ex is MException mexTrack)
         {
-            MuonroiMetrics.ExceptionCount.Add(1, 
+            MuonroiMetrics.ExceptionCount.Add(1,
                 new KeyValuePair<string, object?>("category", mexTrack.Category.ToString()),
                 new KeyValuePair<string, object?>("error_code", mexTrack.ErrorCode));
         }
 
-        // Branch 1 — MException (per D-08, D-09)
-        if (ex is MException mex)
+        // Layer detection logic
+        string layer = GetLayer(context);
+        string? tenantId = tenantContext?.TenantId ?? authContext.TenantId;
+        string? userId = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                        ?? context.User?.FindFirst("sub")?.Value 
+                        ?? authContext.CurrentUserGuid;
+
+        // Enrich structured log scope (EXC-03, EXC-04, EXC-05)
+        var logScope = new Dictionary<string, object?>
         {
-            // Enrich structured log scope with auto-context properties (per D-03)
-            using (_logger.BeginScope(new Dictionary<string, object?>
-            {
-                ["ErrorCode"] = mex.ErrorCode,
-                ["SourcePackage"] = mex.SourcePackage,
-                ["CallerMethod"] = mex.CallerMethod,
-                ["CallerFile"] = mex.CallerFile,
-                ["CallerLine"] = mex.CallerLine,
-                ["MTraceId"] = mex.TraceId,
-                ["MSpanId"] = mex.SpanId,
-            }))
-            {
-                // Log level by category (per D-08)
-                if (mex.Category is MExceptionCategory.Validation or MExceptionCategory.Domain)
-                    _logger.Warn("Domain/Validation exception: {ErrorCode} from {SourcePackage}.{CallerMethod}. Message: {Message}", mex.ErrorCode, mex.SourcePackage, mex.CallerMethod, mex.Message);
-                else
-                    _logger.Error(mex, "Infrastructure/Security exception: {ErrorCode} from {SourcePackage}.{CallerMethod}", mex.ErrorCode, mex.SourcePackage, mex.CallerMethod);
-            }
-
-            context.Response.StatusCode = mex.HttpStatusCode;
-
-            var response = new MErrorResponse
-            {
-                StatusCode = mex.HttpStatusCode,
-                ErrorCode = mex.ErrorCode,
-                TraceId = traceId,
-                Message = mex.Message,
-                Details = _environment.IsDevelopment() ? mex.Details : null
-            };
-
-            // Special handling for MValidationException (per D-10)
-            if (mex is MValidationException validationEx)
-            {
-                response.ErrorCode = "VALIDATION_FAILED";
-                response.Errors = [.. validationEx.Errors.Select(e => new MErrorDetail
-                {
-                    Field = e.Field,
-                    Message = e.Message,
-                    AttemptedValue = _environment.IsDevelopment() ? e.AttemptedValue : null
-                })];
-            }
-
-            return context.Response.WriteAsync(_serializeService.Serialize(response));
-        }
-
-        // Branch 2 — FluentValidation.ValidationException (per D-10)
-        if (ex is ValidationException fluentEx)
-        {
-            _logger.Warn("Validation exception from FluentValidation. Message: {Message}", fluentEx.Message);
-            context.Response.StatusCode = 400;
-
-            var response = new MErrorResponse
-            {
-                StatusCode = 400,
-                ErrorCode = "VALIDATION_FAILED",
-                TraceId = traceId,
-                Message = "One or more validation failures have occurred.",
-                Errors = [.. fluentEx.Errors.Select(e => new MErrorDetail
-                {
-                    Field = e.PropertyName,
-                    Message = e.ErrorMessage,
-                    AttemptedValue = _environment.IsDevelopment() ? e.AttemptedValue : null
-                })]
-            };
-            return context.Response.WriteAsync(_serializeService.Serialize(response));
-        }
-
-        // Branch 3 — Fallback (untyped Exception):
-        _logger.Error(ex, "An unhandled exception occurred.");
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-
-        var fallback = new MErrorResponse
-        {
-            StatusCode = 500,
-            ErrorCode = "UNHANDLED_EXCEPTION",
-            TraceId = traceId,
-            Message = _environment.IsDevelopment() ? ex.Message : MVoidMethodResult.GetErrorMessage(nameof(SystemEnum.UnhandledException), _authContext.Language)
+            ["Layer"] = layer,
+            ["TenantId"] = tenantId,
+            ["UserId"] = userId,
         };
-        return context.Response.WriteAsync(_serializeService.Serialize(fallback));
+
+        if (ex is MException mExInfo)
+        {
+            logScope["ErrorCode"] = mExInfo.ErrorCode;
+            logScope["SourcePackage"] = mExInfo.SourcePackage;
+            logScope["CallerMethod"] = mExInfo.CallerMethod;
+            logScope["CallerFile"] = mExInfo.CallerFile;
+            logScope["CallerLine"] = mExInfo.CallerLine;
+            logScope["MTraceId"] = mExInfo.TraceId;
+            logScope["MSpanId"] = mExInfo.SpanId;
+        }
+
+        using (logger.BeginScope(logScope))
+        {
+            if (ex is MException mex)
+            {
+                // Log level by category
+                if (mex.Category is MExceptionCategory.Validation or MExceptionCategory.Domain)
+                    logger.Warn("Domain/Validation exception: {ErrorCode} from {SourcePackage}.{CallerMethod}. Message: {Message}", mex.ErrorCode, mex.SourcePackage, mex.CallerMethod, mex.Message);
+                else
+                    logger.Error(mex, "Infrastructure/Security exception: {ErrorCode} from {SourcePackage}.{CallerMethod}", mex.ErrorCode, mex.SourcePackage, mex.CallerMethod);
+
+                context.Response.StatusCode = mex.HttpStatusCode;
+
+                var response = new MErrorResponse
+                {
+                    StatusCode = mex.HttpStatusCode,
+                    ErrorCode = mex.ErrorCode,
+                    TraceId = traceId,
+                    Message = mex.Message,
+                    Details = environment.IsDevelopment() ? mex.Details : null
+                };
+
+                // Special handling for MValidationException
+                if (mex is MValidationException validationEx)
+                {
+                    response.ErrorCode = "VALIDATION_FAILED";
+                    response.Errors = [.. validationEx.Errors.Select(e => new MErrorDetail
+                    {
+                        Field = e.Field,
+                        Message = e.Message,
+                        AttemptedValue = environment.IsDevelopment() ? e.AttemptedValue : null
+                    })];
+                }
+
+                return context.Response.WriteAsync(serializeService.Serialize(response));
+            }
+
+            // Branch 2 — FluentValidation.ValidationException
+            if (ex is ValidationException fluentEx)
+            {
+                logger.Warn("Validation exception from FluentValidation. Message: {Message}", fluentEx.Message);
+                context.Response.StatusCode = 400;
+
+                var response = new MErrorResponse
+                {
+                    StatusCode = 400,
+                    ErrorCode = "VALIDATION_FAILED",
+                    TraceId = traceId,
+                    Message = "One or more validation failures have occurred.",
+                    Errors = [.. fluentEx.Errors.Select(e => new MErrorDetail
+                    {
+                        Field = e.PropertyName,
+                        Message = e.ErrorMessage,
+                        AttemptedValue = environment.IsDevelopment() ? e.AttemptedValue : null
+                    })]
+                };
+                return context.Response.WriteAsync(serializeService.Serialize(response));
+            }
+
+            // Branch 3 — Fallback (untyped Exception):
+            logger.Error(ex, "An unhandled exception occurred.");
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+            var fallback = new MErrorResponse
+            {
+                StatusCode = 500,
+                ErrorCode = "UNHANDLED_EXCEPTION",
+                TraceId = traceId,
+                Message = environment.IsDevelopment() ? ex.Message : "An unexpected error occurred."
+            };
+            return context.Response.WriteAsync(serializeService.Serialize(fallback));
+        }
+    }
+
+    private static string GetLayer(HttpContext context)
+    {
+        if (context.Request.Headers.ContentType.ToString().Contains("application/grpc", StringComparison.OrdinalIgnoreCase))
+        {
+            return "grpc";
+        }
+
+        var endpoint = context.GetEndpoint();
+        if (endpoint != null)
+        {
+            return "api";
+        }
+
+        return "web";
     }
 }

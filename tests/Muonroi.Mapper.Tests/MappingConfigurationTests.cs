@@ -148,14 +148,14 @@ public class SimpleMapperTests
     public void Map_With_Destination_Should_Throw_On_Null_Source()
     {
         Action act = () => _mapper.Map<PersonDto, PersonEntity>(null!, new PersonEntity());
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]
     public void Map_With_Destination_Should_Throw_On_Null_Destination()
     {
         Action act = () => _mapper.Map(new PersonDto(), (PersonEntity)null!);
-        act.Should().Throw<ArgumentNullException>();
+        act.Should().Throw<MArgumentException>();
     }
 
     [Fact]

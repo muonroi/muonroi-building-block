@@ -26,6 +26,9 @@ public class HostRoleAndUserCreator<TContext>(
     /// </summary>
     public void Create()
     {
+        // SEC-01: Fail fast if env-supplied password is insecure, before any other logic
+        ValidateEnvPasswordComplexity();
+
         List<string> permissionName =
         [
             "Auth_All"
@@ -70,6 +73,19 @@ public class HostRoleAndUserCreator<TContext>(
         }
     }
 
+    private void ValidateEnvPasswordComplexity()
+    {
+        if (registry?.Has(MCapability.Auth) != true) return;
+
+        string? envPassword = Environment.GetEnvironmentVariable("MUONROI_SEED_ADMIN_PASSWORD");
+        if (!string.IsNullOrWhiteSpace(envPassword) && envPassword.Length < 8)
+        {
+            throw new MConfigurationException(
+                "Seed admin password does not meet minimum complexity (8+ chars).",
+                "MUONROI_SEED_ADMIN_PASSWORD");
+        }
+    }
+
     /// <summary>
     /// Resolves the seed admin password from the environment or generates a random one.
     /// </summary>
@@ -80,14 +96,6 @@ public class HostRoleAndUserCreator<TContext>(
 
         if (!string.IsNullOrWhiteSpace(envPassword))
         {
-            // +Auth: enforce minimum password complexity when Auth capability is active (D-06)
-            if (registry?.Has(MCapability.Auth) == true && envPassword.Length < 8)
-            {
-                throw new MConfigurationException(
-                    "Seed admin password does not meet minimum complexity (8+ chars).",
-                    "MUONROI_SEED_ADMIN_PASSWORD");
-            }
-
             return envPassword;
         }
 

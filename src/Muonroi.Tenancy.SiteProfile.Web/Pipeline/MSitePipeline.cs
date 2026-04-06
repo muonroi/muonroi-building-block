@@ -141,7 +141,7 @@ public class MSitePipeline<TContext>(
             {
                 throw new AggregateException(
                     $"[Pipeline:{_serviceName}] Step '{stepName}' encountered {result.Errors.Count} hook failure(s) in BestEffort mode.",
-                    result.Errors.Select(e => new InvalidOperationException(e)));
+                    result.Errors.Select(e => new MInternalException(e)));
             }
 
             // AllOrNothing / CompensateOnFailure — propagate first error

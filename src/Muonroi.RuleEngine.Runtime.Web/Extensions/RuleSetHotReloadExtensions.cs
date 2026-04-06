@@ -1,7 +1,5 @@
 namespace Muonroi.RuleEngine.Runtime.Web.Extensions;
 
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.RuleEngine.Runtime.Web.HotReload;
 
 /// <summary>
 /// Service registration helpers for ruleset hot-reload client.
@@ -20,8 +18,8 @@ public static class RuleSetHotReloadExtensions
         this IServiceCollection services,
         Action<RuleSetHotReloadOptions> configure)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configure);
+        MGuard.NotNull(services);
+        MGuard.NotNull(configure);
 
         RuleSetHotReloadOptions options = new();
         configure(options);

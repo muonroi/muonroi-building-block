@@ -1,4 +1,6 @@
 using System.Xml.Linq;
+using Muonroi.RuleEngine.DecisionTable.Models;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.RuleEngine.DecisionTable.Dmn;
 
@@ -42,7 +44,7 @@ public static class DmnExporter
     /// <returns>A well-formed DMN 1.3 XML string with UTF-8 XML declaration.</returns>
     public static string ExportToDmnXml(DecisionTableModel table)
     {
-        ArgumentNullException.ThrowIfNull(table);
+        MGuard.NotNull(table);
 
         (string hitPolicyStr, string? aggregation) = DmnHitPolicyMapper.ToDmnString(table.HitPolicy);
 

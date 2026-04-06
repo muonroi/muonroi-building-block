@@ -13,3 +13,6 @@ global using Muonroi.RuleEngine.Abstractions;
 global using Muonroi.RuleEngine.Runtime.Rules;
 global using System.Security.Claims;
 global using System.Text.Json;
+global using Muonroi.Core.Abstractions.Guards;
+global using Muonroi.RuleEngine.Runtime.Web.HotReload;
+global using Microsoft.Extensions.DependencyInjection;

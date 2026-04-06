@@ -7,6 +7,7 @@ using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Messaging.Abstractions.Contracts;
 using Muonroi.RuleEngine.Runtime.Compilation.Feel;
+using Muonroi.Core.Abstractions.Exceptions;
 using Headers = MassTransit.Headers;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
@@ -72,7 +73,7 @@ public sealed class RuleEngineRoutingFilter<T>(
 
             if (decision.Reject)
             {
-                RoutingRejectedException exception = new(decision.Reason);
+                RoutingRejectedException exception = new(decision.Reason ?? "Message rejected by routing rule.");
                 await context.NotifyFaulted(TimeSpan.Zero, nameof(RuleEngineRoutingFilter<T>), exception);
                 throw exception;
             }

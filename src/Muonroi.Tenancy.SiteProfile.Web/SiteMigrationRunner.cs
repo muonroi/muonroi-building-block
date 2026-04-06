@@ -128,7 +128,7 @@ internal sealed class SiteMigrationRunner(
             {
                 throw new AggregateException(
                     $"[SiteMigration] {failures.Count} DbContext(s) failed to migrate.",
-                    failures.Select(f => new InvalidOperationException(f)));
+                    failures.Select(f => new MInternalException(f)));
             }
         }
         else // ValidateOnly

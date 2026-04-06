@@ -162,11 +162,11 @@ public sealed class RulesEngineServiceInternalTests
     [Fact]
     public void ResolveContextType_Throws_WhenTypeCannotBeFound()
     {
-        Action act = () => InvokePrivateStatic(nameof(RulesEngineService), "ResolveContextType", "Missing.Context.Type");
+        MRuleContextJsonRegistry registry = new();
+        Action act = () => registry.DeserializeContext("Missing.Context.Type", "{}");
 
-        act.Should().Throw<TargetInvocationException>()
-            .WithInnerException<MConfigurationException>()
-            .WithMessage("*Cannot resolve contextType*");
+        act.Should().Throw<MConfigurationException>()
+            .WithMessage("*not registered*");
     }
 
     [Fact]

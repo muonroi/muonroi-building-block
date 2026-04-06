@@ -47,11 +47,11 @@ public class ExceptionHandlingTests
         var env = Substitute.For<IHostEnvironment>();
         env.EnvironmentName.Returns("Production");
 
-        var middleware = new MExceptionMiddleware(next, logger, serializeService, authContext, env);
+        var middleware = new MExceptionMiddleware(next);
         var httpContext = new DefaultHttpContext();
         httpContext.Response.Body = new MemoryStream();
 
-        await middleware.InvokeAsync(httpContext);
+        await middleware.InvokeAsync(httpContext, logger, serializeService, authContext, env);
 
         Assert.Equal(StatusCodes.Status500InternalServerError, httpContext.Response.StatusCode);
         serializeService.Received(1).Serialize(Arg.Any<object>());
