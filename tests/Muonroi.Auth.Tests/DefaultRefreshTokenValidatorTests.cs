@@ -1,5 +1,6 @@
 namespace Muonroi.Auth.Tests;
 
+using Muonroi.Data.EntityFrameworkCore.Auth;
 using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +15,6 @@ public class DefaultRefreshTokenValidatorTests
 
     private readonly TestDbContext _dbContext;
     private readonly IMultiLevelCacheService _cacheService = Substitute.For<IMultiLevelCacheService>();
-    private readonly IOptions<AuthOptions> _authOptions = Substitute.For<IOptions<AuthOptions>>();
     private readonly IMLog<MDbContext> _logger = Substitute.For<IMLog<MDbContext>>();
     private readonly MTokenInfo _tokenInfo = new();
     private readonly DefaultRefreshTokenValidator<TestDbContext, TestPermission> _validator;
@@ -26,18 +26,21 @@ public class DefaultRefreshTokenValidatorTests
             .Options;
         _dbContext = new TestDbContext(options);
 
-        _authOptions.Value.Returns(new AuthOptions());
         _tokenInfo.UseRsa = false;
         _tokenInfo.SymmetricSecretKey = "super-secret-key-at-least-32-chars-long!!";
         _tokenInfo.Issuer = "test-issuer";
         _tokenInfo.Audience = "test-audience";
 
+        var configuration = new ConfigurationBuilder().Build();
+        var resourceSetting = new ResourceSetting();
+
         _validator = new DefaultRefreshTokenValidator<TestDbContext, TestPermission>(
             _dbContext,
             _cacheService,
-            _authOptions,
-            _logger,
-            _tokenInfo);
+            resourceSetting,
+            configuration,
+            _tokenInfo,
+            _logger);
     }
 
     [Fact]
