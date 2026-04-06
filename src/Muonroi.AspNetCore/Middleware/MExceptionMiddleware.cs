@@ -1,15 +1,8 @@
 using FluentValidation;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Response;
 using Muonroi.Observability.OpenTelemetry;
-using Muonroi.Tenancy.Abstractions;
-using System.Diagnostics;
-using System.Security.Claims;
 
 namespace Muonroi.AspNetCore.Middleware;
 
@@ -77,8 +70,8 @@ public class MExceptionMiddleware(RequestDelegate next)
         // Layer detection logic
         string layer = GetLayer(context);
         string? tenantId = tenantContext?.TenantId ?? authContext.TenantId;
-        string? userId = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                        ?? context.User?.FindFirst("sub")?.Value 
+        string? userId = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? context.User?.FindFirst("sub")?.Value
                         ?? authContext.CurrentUserGuid;
 
         // Enrich structured log scope (EXC-03, EXC-04, EXC-05)
@@ -108,9 +101,13 @@ public class MExceptionMiddleware(RequestDelegate next)
             {
                 // D-06: Log with layer-enriched format
                 if (mex.Category is MExceptionCategory.Validation or MExceptionCategory.Domain)
+                {
                     logger.Warn("{ErrorCode} | {Layer} | {SourcePackage}.{CallerMethod} | {Message}", mex.ErrorCode, mex.Layer, mex.SourcePackage, mex.CallerMethod, mex.Message);
+                }
                 else
+                {
                     logger.Error(mex, "{ErrorCode} | {Layer} | {SourcePackage}.{CallerMethod} | {Message}", mex.ErrorCode, mex.Layer, mex.SourcePackage, mex.CallerMethod, mex.Message);
+                }
 
                 context.Response.StatusCode = mex.HttpStatusCode;
 
