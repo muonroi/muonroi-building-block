@@ -6,7 +6,6 @@ using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.RuleEngine.Core.Events;
 using Muonroi.RuleEngine.Runtime.Events;
-using Muonroi.Tenancy.Abstractions;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
