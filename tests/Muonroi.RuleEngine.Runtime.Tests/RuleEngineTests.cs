@@ -1,13 +1,7 @@
-using FluentAssertions;
 using Microsoft.Extensions.Options;
-using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Governance.License;
 using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Runtime.Rules;
-using NSubstitute;
-using Xunit;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Mediator.Exceptions;
 
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
@@ -194,7 +188,7 @@ public sealed class RuleEngineTests
         Func<Task> act = () => engine.ExecuteAsync(
             new TestContext { TenantId = "tenant-B" });
 
-        await act.Should().ThrowAsync<MUnauthorizedException>()
+        await act.Should().ThrowAsync<Muonroi.Core.Abstractions.Exceptions.MUnauthorizedException>()
             .WithMessage("*Cross tenant*");
     }
 
