@@ -231,7 +231,7 @@ public sealed class RuleEngine<T>(
             if (!string.IsNullOrWhiteSpace(current) &&
                 !string.Equals(contextTenantId, current, StringComparison.OrdinalIgnoreCase))
             {
-                throw new MUnauthorizedException("Cross tenant rule execution detected.");
+                throw new Muonroi.Core.Abstractions.Exceptions.MUnauthorizedException("Cross tenant rule execution detected.");
             }
         }
 

@@ -12,9 +12,26 @@ public class MExceptionMiddlewareTests
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
+    /// <summary>
+    /// Test-only MException subclass that allows explicit SourcePackage for layer testing.
+    /// </summary>
+    private sealed class TestLayerException : MException
+    {
+        public TestLayerException(
+            string message,
+            string sourcePackage,
+            MExceptionCategory category = MExceptionCategory.Domain,
+            int httpStatusCode = 500)
+            : base("TEST_ERROR", message, category, httpStatusCode)
+        {
+            SourcePackage = sourcePackage;
+            CallerMethod = "TestMethod";
+        }
+    }
+
     private static Task InvokeHandle(
-        MExceptionMiddleware middleware, 
-        HttpContext context, 
+        MExceptionMiddleware middleware,
+        HttpContext context,
         Exception? exception,
         IMLog<MExceptionMiddleware>? logger = null,
         IMJsonSerializeService? serializeService = null,
@@ -24,10 +41,10 @@ public class MExceptionMiddlewareTests
     {
         MethodInfo methodInfo = typeof(MExceptionMiddleware)
             .GetMethod("HandleExceptionAsync", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        
+
         return (Task)methodInfo.Invoke(middleware, [
-            context, 
-            exception!, 
+            context,
+            exception!,
             logger ?? Substitute.For<IMLog<MExceptionMiddleware>>(),
             serializeService ?? new MJsonSerializeService(),
             authContext ?? new MAuthenticateInfoContext(false),
@@ -72,24 +89,125 @@ public class MExceptionMiddlewareTests
         context.Response.Body = new MemoryStream();
         var logger = Substitute.For<IMLog<MExceptionMiddleware>>();
         MExceptionMiddleware middleware = new(_ => Task.CompletedTask);
-        
-        var authContext = new MAuthenticateInfoContext(true) 
-        { 
+
+        var authContext = new MAuthenticateInfoContext(true)
+        {
             TenantId = "test-tenant",
             CurrentUserGuid = "test-user"
         };
 
-        await InvokeHandle(middleware, context, new MInternalException("fail"), 
-            logger: logger, 
+        await InvokeHandle(middleware, context, new MInternalException("fail"),
+            logger: logger,
             authContext: authContext);
 
         // Verify BeginScope was called with expected fields
-        logger.Received().BeginScope(Arg.Is<IDictionary<string, object?>>(scope => 
-            scope.ContainsKey("Layer") && 
+        logger.Received().BeginScope(Arg.Is<IDictionary<string, object?>>(scope =>
+            scope.ContainsKey("Layer") &&
             scope["TenantId"] != null && scope["TenantId"]!.ToString() == "test-tenant" &&
             scope["UserId"] != null && scope["UserId"]!.ToString() == "test-user" &&
             scope["ErrorCode"] != null && scope["ErrorCode"]!.ToString() == "INTERNAL_ERROR"
         ));
+    }
+
+    [Fact]
+    public async Task HandleExceptionAsync_MException_Layer_Overrides_HttpLayer_Infrastructure()
+    {
+        // D-07: When MException has SourcePackage="Muonroi.Data.Postgres", Layer should be "Infrastructure"
+        DefaultHttpContext context = new();
+        context.Response.Body = new MemoryStream();
+        var logger = Substitute.For<IMLog<MExceptionMiddleware>>();
+        MExceptionMiddleware middleware = new(_ => Task.CompletedTask);
+
+        var ex = new TestLayerException("db error", "Muonroi.Data.Postgres", MExceptionCategory.Infrastructure);
+
+        await InvokeHandle(middleware, context, ex, logger: logger);
+
+        logger.Received().BeginScope(Arg.Is<IDictionary<string, object?>>(scope =>
+            scope.ContainsKey("Layer") &&
+            scope["Layer"]!.ToString() == "Infrastructure"
+        ));
+    }
+
+    [Fact]
+    public async Task HandleExceptionAsync_MException_Layer_Overrides_HttpLayer_Presentation()
+    {
+        // D-07: When MException has SourcePackage="Muonroi.AspNetCore.Filters", Layer should be "Presentation"
+        DefaultHttpContext context = new();
+        context.Response.Body = new MemoryStream();
+        var logger = Substitute.For<IMLog<MExceptionMiddleware>>();
+        MExceptionMiddleware middleware = new(_ => Task.CompletedTask);
+
+        var ex = new TestLayerException("filter error", "Muonroi.AspNetCore.Filters", MExceptionCategory.Domain);
+
+        await InvokeHandle(middleware, context, ex, logger: logger);
+
+        logger.Received().BeginScope(Arg.Is<IDictionary<string, object?>>(scope =>
+            scope.ContainsKey("Layer") &&
+            scope["Layer"]!.ToString() == "Presentation"
+        ));
+    }
+
+    [Fact]
+    public async Task HandleExceptionAsync_DomainCategory_Uses_LayerEnriched_LogFormat()
+    {
+        // D-06: Log format should be "{ErrorCode} | {Layer} | {SourcePackage}.{CallerMethod} | {Message}"
+        DefaultHttpContext context = new();
+        context.Response.Body = new MemoryStream();
+        var logger = Substitute.For<IMLog<MExceptionMiddleware>>();
+        MExceptionMiddleware middleware = new(_ => Task.CompletedTask);
+
+        var ex = new TestLayerException("validation failed", "Muonroi.Core.Validators", MExceptionCategory.Validation, 400);
+
+        await InvokeHandle(middleware, context, ex, logger: logger);
+
+        // Verify Warn was called with the new format template
+        logger.Received().Warn(
+            "{ErrorCode} | {Layer} | {SourcePackage}.{CallerMethod} | {Message}",
+            "TEST_ERROR",
+            MExceptionLayer.Domain,
+            "Muonroi.Core.Validators",
+            "TestMethod",
+            "validation failed");
+    }
+
+    [Fact]
+    public async Task HandleExceptionAsync_InfrastructureCategory_Uses_LayerEnriched_LogFormat()
+    {
+        // D-06: Infrastructure/Security exceptions also use new format with Error level
+        DefaultHttpContext context = new();
+        context.Response.Body = new MemoryStream();
+        var logger = Substitute.For<IMLog<MExceptionMiddleware>>();
+        MExceptionMiddleware middleware = new(_ => Task.CompletedTask);
+
+        var ex = new TestLayerException("connection lost", "Muonroi.Data.EFCore", MExceptionCategory.Infrastructure);
+
+        await InvokeHandle(middleware, context, ex, logger: logger);
+
+        // Verify Error was called with the new format template
+        logger.Received().Error(
+            ex,
+            "{ErrorCode} | {Layer} | {SourcePackage}.{CallerMethod} | {Message}",
+            "TEST_ERROR",
+            MExceptionLayer.Infrastructure,
+            "Muonroi.Data.EFCore",
+            "TestMethod",
+            "connection lost");
+    }
+
+    [Fact]
+    public async Task HandleExceptionAsync_NonMException_LogMessage_Unchanged()
+    {
+        // Non-MException log messages remain unchanged
+        DefaultHttpContext context = new();
+        context.Response.Body = new MemoryStream();
+        var logger = Substitute.For<IMLog<MExceptionMiddleware>>();
+        MExceptionMiddleware middleware = new(_ => Task.CompletedTask);
+
+        await InvokeHandle(middleware, context, new InvalidOperationException("generic error"), logger: logger);
+
+        logger.Received().Error(
+            Arg.Any<Exception>(),
+            "An unhandled exception occurred.");
     }
 
     [Fact]
@@ -118,4 +236,3 @@ public class MExceptionMiddlewareTests
         Assert.Equal(StatusCodes.Status500InternalServerError, context.Response.StatusCode);
     }
 }
-

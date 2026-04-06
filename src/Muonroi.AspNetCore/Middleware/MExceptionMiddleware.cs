@@ -86,6 +86,8 @@ public class MExceptionMiddleware(RequestDelegate next)
 
         if (ex is MException mExInfo)
         {
+            // D-07: Override HTTP-level layer with architectural layer from MException
+            logScope["Layer"] = mExInfo.Layer.ToString();
             logScope["ErrorCode"] = mExInfo.ErrorCode;
             logScope["SourcePackage"] = mExInfo.SourcePackage;
             logScope["CallerMethod"] = mExInfo.CallerMethod;
@@ -99,11 +101,11 @@ public class MExceptionMiddleware(RequestDelegate next)
         {
             if (ex is MException mex)
             {
-                // Log level by category
+                // D-06: Log with layer-enriched format
                 if (mex.Category is MExceptionCategory.Validation or MExceptionCategory.Domain)
-                    logger.Warn("Domain/Validation exception: {ErrorCode} from {SourcePackage}.{CallerMethod}. Message: {Message}", mex.ErrorCode, mex.SourcePackage, mex.CallerMethod, mex.Message);
+                    logger.Warn("{ErrorCode} | {Layer} | {SourcePackage}.{CallerMethod} | {Message}", mex.ErrorCode, mex.Layer, mex.SourcePackage, mex.CallerMethod, mex.Message);
                 else
-                    logger.Error(mex, "Infrastructure/Security exception: {ErrorCode} from {SourcePackage}.{CallerMethod}", mex.ErrorCode, mex.SourcePackage, mex.CallerMethod);
+                    logger.Error(mex, "{ErrorCode} | {Layer} | {SourcePackage}.{CallerMethod} | {Message}", mex.ErrorCode, mex.Layer, mex.SourcePackage, mex.CallerMethod, mex.Message);
 
                 context.Response.StatusCode = mex.HttpStatusCode;
 
