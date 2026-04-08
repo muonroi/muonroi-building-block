@@ -21,6 +21,12 @@ public sealed class OllamaExperienceBrain(
         "Respond ONLY in JSON: {\"trigger\":\"\",\"question\":\"\",\"reasoning\":[],\"solution\":\"\"}. " +
         "Session log:\n";
 
+    private const string AbstractionPromptPrefix =
+        "You are a principle extractor. Given several related coding experiences, " +
+        "extract ONE general principle that covers all cases. " +
+        "Respond ONLY in JSON: {\"trigger\":\"\",\"question\":\"\",\"reasoning\":[],\"solution\":\"\"}. " +
+        "Experiences:\n";
+
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -110,6 +116,94 @@ public sealed class OllamaExperienceBrain(
         {
             logger?.Warn("OllamaExperienceBrain: request failed — {Error}", ex.Message);
             return [];
+        }
+    }
+
+    /// <summary>Generates a single generalized principle via Ollama using a dedicated abstraction system prompt.</summary>
+    public async Task<NeuronExperience> AbstractAsync(string abstractionPrompt, CancellationToken ct = default)
+    {
+        try
+        {
+            using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(options.AiTimeoutSeconds));
+
+            HttpClient client = httpClientFactory.CreateClient("OllamaExperienceBrain");
+
+            var requestBody = new
+            {
+                model = options.OllamaPrimaryModel,
+                prompt = AbstractionPromptPrefix + abstractionPrompt,
+                stream = true,
+                options = new
+                {
+                    temperature = options.Temperature,
+                    num_predict = options.MaxTokens
+                }
+            };
+
+            using StringContent content = new(
+                JsonSerializer.Serialize(requestBody, JsonOpts),
+                Encoding.UTF8,
+                "application/json");
+
+            using HttpRequestMessage request = new(HttpMethod.Post, $"{options.OllamaEndpoint.TrimEnd('/')}/api/generate")
+            {
+                Content = content
+            };
+
+            HttpResponseMessage response = await client.SendAsync(
+                request, HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
+            response.EnsureSuccessStatusCode();
+
+            var accumulated = new StringBuilder();
+            using Stream stream = await response.Content.ReadAsStreamAsync(timeoutCts.Token);
+            using var reader = new StreamReader(stream);
+
+            while (!reader.EndOfStream && !timeoutCts.Token.IsCancellationRequested)
+            {
+                string? line = await reader.ReadLineAsync(timeoutCts.Token);
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                try
+                {
+                    using JsonDocument chunk = JsonDocument.Parse(line);
+                    if (chunk.RootElement.TryGetProperty("response", out JsonElement respEl))
+                    {
+                        string? token = respEl.GetString();
+                        if (token is not null)
+                            accumulated.Append(token);
+                    }
+
+                    if (chunk.RootElement.TryGetProperty("done", out JsonElement doneEl)
+                        && doneEl.ValueKind == JsonValueKind.True)
+                    {
+                        break;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Skip malformed chunk lines
+                }
+            }
+
+            string result = accumulated.ToString();
+            if (string.IsNullOrWhiteSpace(result))
+                throw new InvalidOperationException("OllamaExperienceBrain: AbstractAsync returned empty response");
+
+            NeuronExperience? principle = ParseExperience(result, "ollama-brain").FirstOrDefault();
+            return principle ?? throw new InvalidOperationException("OllamaExperienceBrain: AbstractAsync could not parse principle JSON");
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new InvalidOperationException($"OllamaExperienceBrain: AbstractAsync timed out after {options.AiTimeoutSeconds}s");
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"OllamaExperienceBrain: AbstractAsync failed — {ex.Message}", ex);
         }
     }
 

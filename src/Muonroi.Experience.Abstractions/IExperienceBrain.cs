@@ -20,4 +20,18 @@ public interface IExperienceBrain
     Task<IEnumerable<NeuronExperience>> ExtractAsync(
         string sessionLog,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Generates a single generalized principle from a cluster of related experiences.
+    /// Uses a different system prompt than <see cref="ExtractAsync"/> — abstraction, not extraction.
+    /// </summary>
+    /// <param name="abstractionPrompt">
+    /// Pre-formatted prompt containing all cluster entries and the abstraction instruction.
+    /// </param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A single <see cref="NeuronExperience"/> representing the abstracted principle.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the brain returns no result.</exception>
+    Task<NeuronExperience> AbstractAsync(
+        string abstractionPrompt,
+        CancellationToken ct = default);
 }

@@ -37,4 +37,19 @@ public sealed class CompositeExperienceBrain(
             return [];
         }
     }
+
+    /// <inheritdoc/>
+    public async Task<NeuronExperience> AbstractAsync(string abstractionPrompt, CancellationToken ct = default)
+    {
+        try
+        {
+            return await primary.AbstractAsync(abstractionPrompt, ct);
+        }
+        catch (Exception ex)
+        {
+            logger?.Warn("Primary brain AbstractAsync failed, trying fallback — {Error}", ex.Message);
+        }
+
+        return await fallback.AbstractAsync(abstractionPrompt, ct);
+    }
 }

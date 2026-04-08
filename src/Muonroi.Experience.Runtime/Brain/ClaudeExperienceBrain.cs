@@ -20,6 +20,11 @@ public sealed class ClaudeExperienceBrain(
         "extract a single structured experience entry. " +
         "Respond ONLY in JSON: {\"trigger\":\"\",\"question\":\"\",\"reasoning\":[],\"solution\":\"\"}";
 
+    private const string AbstractionSystemPrompt =
+        "You are a principle extractor. Given several related coding experiences, " +
+        "extract ONE general principle that covers all cases. " +
+        "Respond ONLY in JSON: {\"trigger\":\"\",\"question\":\"\",\"reasoning\":[],\"solution\":\"\"}";
+
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -95,6 +100,76 @@ public sealed class ClaudeExperienceBrain(
         {
             logger?.Warn("ClaudeExperienceBrain: request failed — {Error}", ex.Message);
             return [];
+        }
+    }
+
+    /// <summary>Generates a single generalized principle from the pre-formatted abstraction prompt.</summary>
+    public async Task<NeuronExperience> AbstractAsync(string abstractionPrompt, CancellationToken ct = default)
+    {
+        try
+        {
+            using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(options.AiTimeoutSeconds));
+
+            HttpClient client = httpClientFactory.CreateClient("ClaudeExperienceBrain");
+
+            var requestBody = new
+            {
+                model = options.ClaudeModel,
+                system = AbstractionSystemPrompt,
+                messages = new object[]
+                {
+                    new { role = "user", content = abstractionPrompt }
+                },
+                max_tokens = options.MaxTokens,
+                temperature = options.Temperature
+            };
+
+            using HttpRequestMessage request = new(HttpMethod.Post, $"{options.ClaudeEndpoint.TrimEnd('/')}/v1/messages");
+            request.Content = new StringContent(
+                JsonSerializer.Serialize(requestBody, JsonOpts),
+                Encoding.UTF8,
+                "application/json");
+
+            if (!string.IsNullOrWhiteSpace(options.ClaudeApiKey))
+                request.Headers.Add("x-api-key", options.ClaudeApiKey);
+            request.Headers.Add("anthropic-version", "2023-06-01");
+
+            HttpResponseMessage response = await client.SendAsync(request, timeoutCts.Token);
+            response.EnsureSuccessStatusCode();
+
+            using JsonDocument doc = await JsonDocument.ParseAsync(
+                await response.Content.ReadAsStreamAsync(timeoutCts.Token),
+                cancellationToken: timeoutCts.Token);
+
+            if (!doc.RootElement.TryGetProperty("content", out JsonElement contentArr)
+                || contentArr.GetArrayLength() == 0)
+            {
+                throw new InvalidOperationException("ClaudeExperienceBrain: AbstractAsync returned no content");
+            }
+
+            JsonElement firstBlock = contentArr[0];
+            if (!firstBlock.TryGetProperty("text", out JsonElement textEl))
+                throw new InvalidOperationException("ClaudeExperienceBrain: AbstractAsync content[0] has no text");
+
+            string? text = textEl.GetString();
+            if (string.IsNullOrWhiteSpace(text))
+                throw new InvalidOperationException("ClaudeExperienceBrain: AbstractAsync returned empty text");
+
+            NeuronExperience? principle = ParseExperience(text, "claude-brain").FirstOrDefault();
+            return principle ?? throw new InvalidOperationException("ClaudeExperienceBrain: AbstractAsync could not parse principle JSON");
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new InvalidOperationException($"ClaudeExperienceBrain: AbstractAsync timed out after {options.AiTimeoutSeconds}s");
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"ClaudeExperienceBrain: AbstractAsync failed — {ex.Message}", ex);
         }
     }
 
