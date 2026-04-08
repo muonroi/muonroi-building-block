@@ -1,7 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Muonroi.Experience.Abstractions;
+using Muonroi.Experience.Runtime.Brain;
+using Muonroi.Experience.Runtime.Extraction;
 using Muonroi.Experience.Runtime.File;
 using Muonroi.Experience.Runtime.Qdrant;
+using Muonroi.Logging.Abstractions;
 using Qdrant.Client;
 
 namespace Muonroi.Experience.Runtime;
@@ -52,6 +56,60 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton<ExperienceStoreOrchestrator>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the experience brain implementations, mistake detector, and extraction pipeline.
+    /// Call after <see cref="AddExperienceStore"/> to wire the full extraction pipeline.
+    /// </summary>
+    /// <param name="services">The service collection to register into.</param>
+    /// <param name="configure">Optional delegate to configure <see cref="ExperienceBrainOptions"/>.</param>
+    /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
+    public static IServiceCollection AddExperienceBrain(
+        this IServiceCollection services,
+        Action<ExperienceBrainOptions>? configure = null)
+    {
+        var opts = new ExperienceBrainOptions();
+        configure?.Invoke(opts);
+
+        services.Configure<ExperienceBrainOptions>(o =>
+        {
+            o.ClaudeEndpoint = opts.ClaudeEndpoint;
+            o.ClaudeApiKey = opts.ClaudeApiKey;
+            o.ClaudeModel = opts.ClaudeModel;
+            o.OllamaEndpoint = opts.OllamaEndpoint;
+            o.OllamaPrimaryModel = opts.OllamaPrimaryModel;
+            o.OllamaFallbackModel = opts.OllamaFallbackModel;
+            o.AiTimeoutSeconds = opts.AiTimeoutSeconds;
+            o.MaxTokens = opts.MaxTokens;
+            o.Temperature = opts.Temperature;
+        });
+
+        services.AddHttpClient("ClaudeExperienceBrain");
+        services.AddHttpClient("OllamaExperienceBrain");
+
+        services.AddSingleton<ClaudeExperienceBrain>(sp =>
+            new ClaudeExperienceBrain(
+                sp.GetRequiredService<IHttpClientFactory>(),
+                sp.GetRequiredService<IOptions<ExperienceBrainOptions>>().Value,
+                sp.GetService<IMLog<ClaudeExperienceBrain>>()));
+
+        services.AddSingleton<OllamaExperienceBrain>(sp =>
+            new OllamaExperienceBrain(
+                sp.GetRequiredService<IHttpClientFactory>(),
+                sp.GetRequiredService<IOptions<ExperienceBrainOptions>>().Value,
+                sp.GetService<IMLog<OllamaExperienceBrain>>()));
+
+        services.AddSingleton<IExperienceBrain>(sp =>
+            new CompositeExperienceBrain(
+                sp.GetRequiredService<ClaudeExperienceBrain>(),
+                sp.GetRequiredService<OllamaExperienceBrain>(),
+                sp.GetService<IMLog<CompositeExperienceBrain>>()));
+
+        services.AddSingleton<MistakeDetector>();
+        services.AddSingleton<IExperienceExtractor, ExperienceExtractionPipeline>();
 
         return services;
     }
