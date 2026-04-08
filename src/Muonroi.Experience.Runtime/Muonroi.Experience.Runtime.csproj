@@ -23,5 +23,6 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Muonroi.Experience.Runtime.Tests" />
+    <InternalsVisibleTo Include="Muonroi.Experience.Tests" />
   </ItemGroup>
 </Project>
