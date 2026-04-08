@@ -56,4 +56,18 @@ public sealed class ExperienceStoreOrchestrator
     /// </summary>
     public Task<NeuronExperience> DemoteAsync(NeuronExperience experience, CancellationToken ct = default)
         => _store.DemoteAsync(experience, ct);
+
+    /// <summary>
+    /// Returns all entries stored in the specified tier.
+    /// Used by the evolution orchestrator for promotion and archival sweeps.
+    /// </summary>
+    public Task<IEnumerable<NeuronExperience>> FindAllInTierAsync(ExperienceTier tier, CancellationToken ct = default)
+        => _store.FindAllInTierAsync(tier, ct);
+
+    /// <summary>
+    /// Deletes the entry with the given id from whichever tier it occupies.
+    /// No-op if not found.
+    /// </summary>
+    public Task DeleteAsync(string id, CancellationToken ct = default)
+        => _store.DeleteAsync(id, ct);
 }

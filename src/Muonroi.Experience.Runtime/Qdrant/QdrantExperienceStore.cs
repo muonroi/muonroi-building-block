@@ -18,6 +18,7 @@ public sealed class QdrantExperienceStore : IExperienceStore
     private readonly IQdrantClientWrapper _client;
     private readonly ExperienceStoreOptions _options;
     private readonly ExperienceBudgetConfig _budget;
+    private readonly IExperienceBrain? _brain;
     private readonly IMLog<QdrantExperienceStore>? _log;
 
     /// <summary>Tracks which collection names have already been ensured to avoid redundant CreateCollectionAsync calls.</summary>
@@ -37,11 +38,13 @@ public sealed class QdrantExperienceStore : IExperienceStore
     public QdrantExperienceStore(
         IQdrantClientWrapper client,
         IOptions<ExperienceStoreOptions> options,
-        IMLog<QdrantExperienceStore>? log = null)
+        IMLog<QdrantExperienceStore>? log = null,
+        IExperienceBrain? brain = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _budget = _options.Budget;
+        _brain = brain;
         _log = log;
 
         if (_options.VectorSize <= 0)
@@ -194,31 +197,20 @@ public sealed class QdrantExperienceStore : IExperienceStore
     }
 
     /// <inheritdoc />
-    /// <remarks>ClusterAndAbstractAsync requires an LLM (IExperienceBrain) — deferred to Phase 98 Evolution.</remarks>
+    /// <remarks>ClusterAndAbstractAsync requires an IExperienceBrain — register via AddExperienceBrain() before use.</remarks>
     public Task<NeuronExperience> ClusterAndAbstractAsync(IEnumerable<NeuronExperience> tier2Entries, CancellationToken ct = default)
-        => throw new NotSupportedException("ClusterAndAbstractAsync requires LLM — deferred to Phase 98 Evolution");
-
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
-    private async Task EnsureCollectionExistsAsync(string collectionName, CancellationToken ct)
     {
-        if (_ensuredCollections.Contains(collectionName))
+        if (_brain is null)
         {
-            return;
+            throw new NotSupportedException("IExperienceBrain not registered — call AddExperienceBrain() before using ClusterAndAbstractAsync");
         }
 
-        await _client.CreateCollectionAsync(
-            collectionName,
-            new VectorParams { Size = (ulong)_options.VectorSize, Distance = Distance.Cosine },
-            ct);
-
-        _log?.LogInformation("Created Qdrant collection {Collection}", collectionName);
-        _ensuredCollections.Add(collectionName);
+        // ClusterAndAbstractAsync full implementation is part of Phase 98 Plan 02 (Evolution Orchestrator).
+        throw new NotSupportedException("ClusterAndAbstractAsync full implementation is provided by ExperienceEvolutionOrchestrator (Phase 98 Plan 02)");
     }
 
-    private async Task<IEnumerable<NeuronExperience>> FindAllInTierAsync(ExperienceTier tier, CancellationToken ct)
+    /// <inheritdoc />
+    public async Task<IEnumerable<NeuronExperience>> FindAllInTierAsync(ExperienceTier tier, CancellationToken ct = default)
     {
         string collection = TierCollectionNames.For(tier);
         await EnsureCollectionExistsAsync(collection, ct);
@@ -241,6 +233,47 @@ public sealed class QdrantExperienceStore : IExperienceStore
         }
 
         return results;
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteAsync(string id, CancellationToken ct = default)
+    {
+        // Attempt delete across all tiers — silently ignore "not found" errors.
+        foreach (ExperienceTier tier in Enum.GetValues<ExperienceTier>())
+        {
+            string collection = TierCollectionNames.For(tier);
+            try
+            {
+                await EnsureCollectionExistsAsync(collection, ct);
+                await _client.DeleteAsync(collection, Guid.Parse(id), ct);
+                _log?.Debug("Deleted entry {Id} from tier {Tier}", id, tier);
+                return;
+            }
+            catch (Exception ex)
+            {
+                _log?.Debug("Entry {Id} not in tier {Tier} — {Error}", id, tier, ex.Message);
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    private async Task EnsureCollectionExistsAsync(string collectionName, CancellationToken ct)
+    {
+        if (_ensuredCollections.Contains(collectionName))
+        {
+            return;
+        }
+
+        await _client.CreateCollectionAsync(
+            collectionName,
+            new VectorParams { Size = (ulong)_options.VectorSize, Distance = Distance.Cosine },
+            ct);
+
+        _log?.LogInformation("Created Qdrant collection {Collection}", collectionName);
+        _ensuredCollections.Add(collectionName);
     }
 
     private static NeuronExperience? TryDeserializeExperience(string json)

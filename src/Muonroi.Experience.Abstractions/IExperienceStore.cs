@@ -44,4 +44,16 @@ public interface IExperienceStore
     Task<NeuronExperience> ClusterAndAbstractAsync(
         IEnumerable<NeuronExperience> tier2Entries,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns all entries stored in the specified tier.
+    /// Used by the evolution orchestrator for promotion and archival sweeps.
+    /// </summary>
+    Task<IEnumerable<NeuronExperience>> FindAllInTierAsync(ExperienceTier tier, CancellationToken ct = default);
+
+    /// <summary>
+    /// Deletes the entry with the given id from whichever tier it occupies.
+    /// No-op if not found.
+    /// </summary>
+    Task DeleteAsync(string id, CancellationToken ct = default);
 }

@@ -17,6 +17,7 @@ public sealed class FileExperienceStore : IExperienceStore
 {
     private readonly string _directoryPath;
     private readonly ExperienceBudgetConfig _budget;
+    private readonly IExperienceBrain? _brain;
     private readonly IMLog<FileExperienceStore>? _log;
     private readonly ConcurrentDictionary<ExperienceTier, SemaphoreSlim> _semaphores;
 
@@ -24,10 +25,11 @@ public sealed class FileExperienceStore : IExperienceStore
     /// Initialises a new <see cref="FileExperienceStore"/>.
     /// Creates the backing directory if it does not already exist.
     /// </summary>
-    public FileExperienceStore(IOptions<ExperienceStoreOptions> options, IMLog<FileExperienceStore>? log = null)
+    public FileExperienceStore(IOptions<ExperienceStoreOptions> options, IMLog<FileExperienceStore>? log = null, IExperienceBrain? brain = null)
     {
         _directoryPath = options.Value.FileDirectoryPath;
         _budget = options.Value.Budget;
+        _brain = brain;
         _log = log;
 
         Directory.CreateDirectory(_directoryPath);
@@ -194,9 +196,58 @@ public sealed class FileExperienceStore : IExperienceStore
     }
 
     /// <inheritdoc />
-    /// <remarks>ClusterAndAbstractAsync requires an LLM (IExperienceBrain) — deferred to Phase 98 Evolution.</remarks>
+    /// <remarks>ClusterAndAbstractAsync requires an IExperienceBrain — register via AddExperienceBrain() before use.</remarks>
     public Task<NeuronExperience> ClusterAndAbstractAsync(IEnumerable<NeuronExperience> tier2Entries, CancellationToken ct = default)
-        => throw new NotSupportedException("ClusterAndAbstractAsync requires LLM — deferred to Phase 98 Evolution");
+    {
+        if (_brain is null)
+        {
+            throw new NotSupportedException("IExperienceBrain not registered — call AddExperienceBrain() before using ClusterAndAbstractAsync");
+        }
+
+        // ClusterAndAbstractAsync full implementation is part of Phase 98 Plan 02 (Evolution Orchestrator).
+        throw new NotSupportedException("ClusterAndAbstractAsync full implementation is provided by ExperienceEvolutionOrchestrator (Phase 98 Plan 02)");
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<NeuronExperience>> FindAllInTierAsync(ExperienceTier tier, CancellationToken ct = default)
+    {
+        SemaphoreSlim sem = _semaphores[tier];
+        await sem.WaitAsync(ct);
+        try
+        {
+            return await LoadTierAsync(tier, ct);
+        }
+        finally
+        {
+            sem.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteAsync(string id, CancellationToken ct = default)
+    {
+        // Scan all tiers, short-circuit after first successful removal.
+        foreach (ExperienceTier tier in Enum.GetValues<ExperienceTier>())
+        {
+            SemaphoreSlim sem = _semaphores[tier];
+            await sem.WaitAsync(ct);
+            try
+            {
+                List<NeuronExperience> entries = await LoadTierAsync(tier, ct);
+                int removed = entries.RemoveAll(e => e.Id == id);
+                if (removed > 0)
+                {
+                    await SaveTierAsync(tier, entries, ct);
+                    _log?.Debug("Deleted entry {Id} from tier {Tier}", id, tier);
+                    return;
+                }
+            }
+            finally
+            {
+                sem.Release();
+            }
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Private helpers

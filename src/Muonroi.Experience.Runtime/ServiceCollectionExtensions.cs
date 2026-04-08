@@ -48,11 +48,18 @@ public static class ServiceCollectionExtensions
                 return new QdrantClient(uri.Host, port, https);
             });
             services.AddSingleton<IQdrantClientWrapper, QdrantClientWrapper>();
-            services.AddSingleton<IExperienceStore, QdrantExperienceStore>();
+            services.AddSingleton<IExperienceStore>(sp => new QdrantExperienceStore(
+                sp.GetRequiredService<IQdrantClientWrapper>(),
+                sp.GetRequiredService<IOptions<ExperienceStoreOptions>>(),
+                sp.GetService<IMLog<QdrantExperienceStore>>(),
+                sp.GetService<IExperienceBrain>()));
         }
         else
         {
-            services.AddSingleton<IExperienceStore, FileExperienceStore>();
+            services.AddSingleton<IExperienceStore>(sp => new FileExperienceStore(
+                sp.GetRequiredService<IOptions<ExperienceStoreOptions>>(),
+                sp.GetService<IMLog<FileExperienceStore>>(),
+                sp.GetService<IExperienceBrain>()));
         }
 
         services.AddSingleton<ExperienceStoreOrchestrator>();
