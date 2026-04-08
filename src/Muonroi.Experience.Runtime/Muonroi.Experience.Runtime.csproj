@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Muonroi.Experience.Runtime</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>Muonroi.Experience.Runtime</PackageId>
+    <Description>Runtime store implementations for the Muonroi Experience Engine — Qdrant and file-based backends with token budget enforcement.</Description>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Qdrant.Client" />
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Muonroi.Experience.Abstractions/Muonroi.Experience.Abstractions.csproj" />
+    <ProjectReference Include="../Muonroi.Logging.Abstractions/Muonroi.Logging.Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Muonroi.Experience.Runtime.Tests" />
+  </ItemGroup>
+</Project>
