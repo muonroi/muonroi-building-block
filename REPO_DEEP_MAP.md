@@ -400,3 +400,56 @@ IDecisionTableStore.ReadAsync(id) → DecisionTable
   → IFeelCellEvaluator per cell → HitPolicy selection
   → DecisionTableExecutionResult (matched rows + outputs)
 ```
+
+---
+
+## Experience Engine (Phase 96+)
+
+### Abstractions (Muonroi.Experience.Abstractions)
+```
+IExperienceBrain.ExtractAsync(sessionLog, ct) → IEnumerable<NeuronExperience>
+IExperienceStore: StoreAsync / FindRelevantAsync / PromoteAsync
+IExperienceExtractor / IExperienceInterceptor
+NeuronExperience: Id, Trigger, Question, Reasoning[], Solution, Tier, Confidence, HitCount, Principle, CreatedFrom, CreatedAt
+ExperienceTier: Principle(0) > Behavioral(1) > SelfQA(2) > RawTrajectory(3)
+ExperienceBudgetConfig: DedupThreshold=0.85, InitialConfidenceMin=0.4, InitialConfidenceMax=0.6
+```
+
+### Runtime - Extraction (Muonroi.Experience.Runtime/Extraction)
+```
+MistakeSignal record: (SignalType, Context, ToolCalls[], DetectedAt)
+  SignalType: "retry_loop" | "user_correction" | "git_revert" | "test_red_green"
+  Context: windowed excerpt (20 lines before + 10 after)
+MistakeDetector(IMLog<MistakeDetector>?):
+  DetectAsync(rawJsonl, ct) → IReadOnlyList<MistakeSignal>
+  4 heuristics: retry_loop(>=3 identical tool keys), user_correction(user text after tool_use),
+                git_revert(git revert/reset in Bash), test_red_green(FAILED→Edit→passed)
+```
+
+### Runtime - Brain (Muonroi.Experience.Runtime/Brain)
+```
+ExperienceBrainOptions (SectionName="ExperienceBrain"):
+  ClaudeEndpoint, ClaudeApiKey, ClaudeModel="claude-haiku-4-5-20251001"
+  OllamaEndpoint, OllamaPrimaryModel, OllamaFallbackModel
+  AiTimeoutSeconds=120, MaxTokens=800, Temperature=0.3
+
+ClaudeExperienceBrain(IHttpClientFactory, ExperienceBrainOptions, IMLog?):
+  ExtractAsync → POST {ClaudeEndpoint}/v1/messages, headers: x-api-key + anthropic-version:2023-06-01
+  Parses content[0].text as JSON → NeuronExperience, CreatedFrom="claude-brain", Tier=SelfQA
+
+OllamaExperienceBrain(IHttpClientFactory, ExperienceBrainOptions, IMLog?):
+  ExtractAsync → POST {OllamaEndpoint}/api/generate, stream=true, NDJSON accumulation
+  Parses accumulated response field as JSON → NeuronExperience, CreatedFrom="ollama-brain"
+
+CompositeExperienceBrain(primary, fallback, IMLog?):
+  ExtractAsync: primary first → if empty/exception → fallback → if fallback fails → []
+  Semantics: fallback-only (EXT-05), no parallel execution
+```
+
+### Runtime - Store (Muonroi.Experience.Runtime/File, /Qdrant)
+```
+FileExperienceStore(IOptions<ExperienceStoreOptions>): JSON files per tier (selfqa.json, behavioral.json, etc.)
+QdrantExperienceStore: vector similarity search
+ExperienceStoreOrchestrator: routes to correct store by tier
+TokenBudgetEnforcer: enforces ExperienceBudgetConfig per tier
+```
