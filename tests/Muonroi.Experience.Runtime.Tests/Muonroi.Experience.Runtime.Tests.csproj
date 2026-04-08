@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Common test packages injected by Directory.Build.props (Microsoft.NET.Test.Sdk, xunit, FluentAssertions, etc.) -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Moq" />
   </ItemGroup>
   <ItemGroup>
