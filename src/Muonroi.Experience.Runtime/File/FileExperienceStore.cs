@@ -197,15 +197,47 @@ public sealed class FileExperienceStore : IExperienceStore
 
     /// <inheritdoc />
     /// <remarks>ClusterAndAbstractAsync requires an IExperienceBrain — register via AddExperienceBrain() before use.</remarks>
-    public Task<NeuronExperience> ClusterAndAbstractAsync(IEnumerable<NeuronExperience> tier2Entries, CancellationToken ct = default)
+    public async Task<NeuronExperience> ClusterAndAbstractAsync(IEnumerable<NeuronExperience> tier2Entries, CancellationToken ct = default)
     {
         if (_brain is null)
         {
             throw new NotSupportedException("IExperienceBrain not registered — call AddExperienceBrain() before using ClusterAndAbstractAsync");
         }
 
-        // ClusterAndAbstractAsync full implementation is part of Phase 98 Plan 02 (Evolution Orchestrator).
-        throw new NotSupportedException("ClusterAndAbstractAsync full implementation is provided by ExperienceEvolutionOrchestrator (Phase 98 Plan 02)");
+        NeuronExperience[] cluster = tier2Entries.ToArray();
+        string prompt = BuildAbstractionPrompt(cluster);
+
+        NeuronExperience principle = await _brain.AbstractAsync(prompt, ct);
+
+        NeuronExperience stored = principle with
+        {
+            Id = Guid.NewGuid().ToString(),
+            Tier = ExperienceTier.Principle,
+            Principle = principle.Solution,
+            CreatedFrom = "evolution-engine",
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        bool success = await StoreAsync(stored, ct);
+        if (!success)
+        {
+            throw new InvalidOperationException("Principle budget exceeded — source entries preserved");
+        }
+
+        return stored;
+    }
+
+    private static string BuildAbstractionPrompt(NeuronExperience[] cluster)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Given these {cluster.Length} related experiences:");
+        foreach (NeuronExperience e in cluster)
+            sb.AppendLine($"- Trigger: {e.Trigger}, Solution: {e.Solution}");
+        sb.AppendLine();
+        sb.AppendLine("Extract ONE general principle that covers all cases.");
+        sb.AppendLine("Format: \"When [general condition], always [general action] because [general reason]\"");
+        sb.AppendLine("Respond ONLY in JSON: {\"trigger\":\"\",\"question\":\"\",\"reasoning\":[],\"solution\":\"\"}");
+        return sb.ToString();
     }
 
     /// <inheritdoc />

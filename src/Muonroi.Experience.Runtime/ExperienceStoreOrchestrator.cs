@@ -58,6 +58,14 @@ public sealed class ExperienceStoreOrchestrator
         => _store.DemoteAsync(experience, ct);
 
     /// <summary>
+    /// Clusters the supplied Tier 2 entries and abstracts them into a single Tier 0 principle.
+    /// Delegates to <see cref="IExperienceStore.ClusterAndAbstractAsync"/>.
+    /// Requires an <see cref="IExperienceBrain"/> to be registered via AddExperienceBrain().
+    /// </summary>
+    public Task<NeuronExperience> ClusterAndAbstractAsync(IEnumerable<NeuronExperience> tier2Entries, CancellationToken ct = default)
+        => _store.ClusterAndAbstractAsync(tier2Entries, ct);
+
+    /// <summary>
     /// Returns all entries stored in the specified tier.
     /// Used by the evolution orchestrator for promotion and archival sweeps.
     /// </summary>
