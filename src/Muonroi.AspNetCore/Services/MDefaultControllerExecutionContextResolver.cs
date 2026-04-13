@@ -73,7 +73,7 @@ public sealed class MDefaultControllerExecutionContextResolver(IConfiguration co
         if (!string.IsNullOrWhiteSpace(rawPermissions))
         {
             result.AddRange(rawPermissions
-                .Split([',', ';', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
         }
 
         result.AddRange(user.Claims

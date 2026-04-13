@@ -36,7 +36,7 @@
     <PackageVersion Include="Jint" Version="4.6.3" />
     <PackageVersion Include="MailKit" Version="4.3.0" />
     <PackageVersion Include="MassTransit" Version="8.3.6" />
-    <PackageVersion Include="MassTransit.Abstractions" Version="8.2.2" />
+    <PackageVersion Include="MassTransit.Abstractions" Version="8.3.6" />
     <PackageVersion Include="MassTransit.Kafka" Version="8.3.6" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.3.6" />
     <PackageVersion Include="MediatR" Version="14.1.0" />

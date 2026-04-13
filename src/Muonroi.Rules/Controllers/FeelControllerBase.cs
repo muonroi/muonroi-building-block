@@ -149,7 +149,7 @@ public abstract class FeelControllerBase : ControllerBase
             return string.Empty;
         }
 
-        string[] parts = value.Split([' ', '\t', '\n', '\r', '(', ')', '[', ']', '{', '}', ','],
+        string[] parts = value.Split(new[] { ' ', '\t', '\n', '\r', '(', ')', '[', ']', '{', '}', ',' },
             StringSplitOptions.RemoveEmptyEntries);
         return parts.Length == 0 ? string.Empty : parts[^1];
     }
@@ -253,7 +253,7 @@ public abstract class FeelControllerBase : ControllerBase
         }
 
         return [.. value
-            .Split([',', ';', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 }

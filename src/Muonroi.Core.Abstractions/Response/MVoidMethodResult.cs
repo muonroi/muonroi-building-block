@@ -125,7 +125,7 @@ public class MVoidMethodResult
     public void AddError(string errorCode)
     {
         MGuard.NotNull(errorCode);
-        AddErrorMessage(errorCode, null, []);
+        AddErrorMessage(errorCode, null, Array.Empty<string>());
     }
 
     /// <summary>

@@ -314,7 +314,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         }
 
         return [.. value
-            .Split([',', ';', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 
