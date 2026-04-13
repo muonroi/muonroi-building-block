@@ -1,5 +1,4 @@
 using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Diagnostics.Abstractions;
 using System.Collections.Concurrent;
 
 namespace Muonroi.Diagnostics.Store;

@@ -1,14 +1,3 @@
-using System.Security.Cryptography;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Constants;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models;
-using Muonroi.Tenancy.Core;
-
 namespace Muonroi.AspNetCore.Controllers;
 
 /// <inheritdoc />
@@ -20,7 +9,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
     IMJsonSerializeService jsonSerializeService,
     IMControllerExecutionContextResolver? executionContextResolver = null) : ControllerBase
 {
-/// <inheritdoc />
+    /// <inheritdoc />
     [HttpGet]
     public virtual IActionResult GetRoot()
     {
@@ -34,7 +23,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         });
     }
 
-/// <inheritdoc />
+    /// <inheritdoc />
     [HttpGet("current")]
     public virtual async Task<IActionResult> GetCurrent(
         [FromQuery] string? minimalFor,
@@ -47,7 +36,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         return BuildManifestWithEtagResult(manifest);
     }
 
-/// <inheritdoc />
+    /// <inheritdoc />
     [HttpGet("{userId:guid}")]
     public virtual async Task<IActionResult> GetByUser(
         Guid userId,
@@ -60,7 +49,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         return BuildManifestWithEtagResult(manifest);
     }
 
-/// <inheritdoc />
+    /// <inheritdoc />
     [HttpGet("contract-info")]
     public virtual IActionResult GetContractInfo()
     {
@@ -74,7 +63,7 @@ public abstract class UiEngineRuntimeManifestControllerBase(
         });
     }
 
-/// <inheritdoc />
+    /// <inheritdoc />
     [HttpGet("schema-hash")]
     public virtual async Task<IActionResult> GetSchemaHash(CancellationToken cancellationToken = default)
     {

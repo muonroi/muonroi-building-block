@@ -1,6 +1,5 @@
 using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Diagnostics.Abstractions;
 using StackExchange.Redis;
 
 namespace Muonroi.Diagnostics.Store;

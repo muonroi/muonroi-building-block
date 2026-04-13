@@ -73,8 +73,26 @@ public static class MDbContextConfiguration
         where TDbContext : MDbContext
         where TPermission : Enum
     {
-        _ = services.AddScoped<IAuthenticateRepository, AuthenticateRepository<TDbContext, TPermission>>();
-        _ = services.AddScoped<IRefreshTokenValidator, DefaultRefreshTokenValidator<TDbContext, TPermission>>();
+        // Auth repositories are registered lazily — only if their key dependency
+        // (MAuthenticateTokenHelper) is already in the container. This prevents
+        // ValidateOnBuild from failing when Muonroi.Auth is not configured.
+        // When Muonroi.Auth IS registered (via AddValidateBearerToken), it provides
+        // MAuthenticateTokenHelper and these registrations will be present.
+        bool authConfigured = services.Any(d => d.ServiceType.IsGenericType &&
+            d.ServiceType.GetGenericTypeDefinition() == typeof(MAuthenticateTokenHelper<>).GetGenericTypeDefinition()
+            || d.ServiceType == typeof(MAuthenticateTokenHelper<TPermission>));
+        if (authConfigured)
+        {
+            services.TryAddScoped<IAuthenticateRepository, AuthenticateRepository<TDbContext, TPermission>>();
+            services.TryAddScoped<IRefreshTokenValidator, DefaultRefreshTokenValidator<TDbContext, TPermission>>();
+        }
+    }
+
+    /// <summary>No-op hasher — Auth features disabled until Muonroi.Auth is registered.</summary>
+    private sealed class NoOpPasswordHasher : IPasswordHasher
+    {
+        public string HashPassword(string password, out string salt) { salt = string.Empty; return string.Empty; }
+        public bool VerifyPassword(string enteredPassword, string storedHash) => false;
     }
 
 
