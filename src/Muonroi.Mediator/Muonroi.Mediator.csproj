@@ -13,7 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Core\Muonroi.Core.csproj" />
-    <ProjectReference Include="..\Muonroi.Diagnostics\Muonroi.Diagnostics.csproj" />
+    <!-- Muonroi.Diagnostics removed: ITraceSessionStore moved to Core.Abstractions -->
     <ProjectReference Include="..\Muonroi.Mapper\Muonroi.Mapper.csproj" />
     <ProjectReference Include="..\Muonroi.Caching.Abstractions\Muonroi.Caching.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />

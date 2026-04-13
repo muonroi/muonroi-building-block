@@ -92,7 +92,8 @@ public static class InfrastructureExtensions
             options.ConstraintMap.Add("apiVersion", typeof(Asp.Versioning.Routing.ApiVersionRouteConstraint));
         });
 
-        _ = services.AddScoped<MCookieAuthMiddleware>();
+        // MCookieAuthMiddleware: activated by UseMiddleware<T>() (receives RequestDelegate from pipeline).
+        // Do NOT register as scoped service — causes ValidateOnBuild failure since RequestDelegate isn't in DI.
         services.TryAddScoped<ICatalogScanService, NoopCatalogScanService>();
         services.TryAddSingleton<IUiEngineSchemaNotifier, NoopUiEngineSchemaNotifier>();
         services.TryAddScoped<IMControllerExecutionContextResolver, MDefaultControllerExecutionContextResolver>();
@@ -115,6 +116,9 @@ public static class InfrastructureExtensions
     }
     internal static IServiceCollection AddControllerConfiguration(this IServiceCollection services, params Assembly[] assemblies)
     {
+        // MAuthenticateInfoContext required by RequestLoggingFilter.
+        // TryAdd = won't overwrite if consumer registers a real auth context (e.g. via JWT middleware).
+        services.TryAddScoped(_ => new MAuthenticateInfoContext(false));
         services.AddScoped<RequestLoggingFilter>();
         _ = services.AddControllers(options =>
         {

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.Abstractions;
 using RuleSourceGen.Api.Models;
 
@@ -13,6 +14,7 @@ public sealed class DiscountRules
     [MExtractAsRule("DISCOUNT_PREMIUM", Order = 1, DependsOn = ["DISCOUNT_VALIDATE"])]
     public decimal ApplyPremiumDiscount(DiscountRequest context)
     {
+        MGuard.NotNull(context, nameof(context));
         if (!string.Equals(context.CustomerType, "premium", StringComparison.OrdinalIgnoreCase))
         {
             return 0m;
@@ -26,6 +28,7 @@ public sealed class DiscountRules
     [MExtractAsRule("DISCOUNT_LOYALTY", Order = 2, DependsOn = ["DISCOUNT_VALIDATE"])]
     public decimal ApplyLoyaltyDiscount(DiscountRequest context)
     {
+        MGuard.NotNull(context, nameof(context));
         return context.LoyaltyYears >= 5 ? 0.05m : 0m;
     }
 
@@ -34,6 +37,7 @@ public sealed class DiscountRules
     [MExtractAsRule("DISCOUNT_SEASONAL", Order = 3, DependsOn = ["DISCOUNT_VALIDATE"])]
     public decimal ApplySeasonalDiscount(DiscountRequest context)
     {
+        MGuard.NotNull(context, nameof(context));
         return context.IsBlackFriday ? 0.05m : 0m;
     }
 

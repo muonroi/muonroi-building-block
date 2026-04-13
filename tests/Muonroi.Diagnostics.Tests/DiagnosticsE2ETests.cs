@@ -5,8 +5,6 @@ using Moq;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Serialization;
-using Muonroi.Diagnostics.Abstractions;
 using Muonroi.Diagnostics.Extensions;
 using Muonroi.Logging;
 using Muonroi.Mediator.Behaviours;
@@ -14,7 +12,6 @@ using Muonroi.Mediator.Mediator;
 using Muonroi.Mediator.Mediator.Interfaces;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Core;
-using System.Text;
 using Xunit;
 
 namespace Muonroi.Diagnostics.Tests;
@@ -26,11 +23,12 @@ public class DiagnosticsE2ETests
     public DiagnosticsE2ETests()
     {
         _services = new ServiceCollection();
-        
+
         // 1. Core infrastructure
         _services.AddLogging(builder => builder.AddMuonroiLogging());
         _services.AddSingleton<IMJsonSerializeService, MJsonSerializeService>();
-        _services.AddSingleton(sp => {
+        _services.AddSingleton(sp =>
+        {
             var mock = new Mock<ISystemExecutionContextAccessor>();
             mock.Setup(x => x.Get()).Returns(new SystemExecutionContext(
                 tenantId: "tenant-777",
@@ -50,7 +48,8 @@ public class DiagnosticsE2ETests
         _services.AddMuonroiDiagnostics();
 
         // 3. Mediator with Diagnostics Behavior
-        _services.AddMMediator(options => {
+        _services.AddMMediator(options =>
+        {
             // Register as open generics
             options.AddBehavior(typeof(MDiagnosticsBehavior<,>));
             options.AddBehavior(typeof(MRuleEngineBehavior<,>));
@@ -59,7 +58,7 @@ public class DiagnosticsE2ETests
         // 4. Rule Engine
         _services.AddTransient<RuleOrchestrator<OrderRequest>>();
         _services.AddTransient<IRule<OrderRequest>, MinimumAmountRule>();
-        
+
         // 5. Mock HTTP Context for Header
         var mockHttp = new Mock<IHttpContextAccessor>();
         var context = new DefaultHttpContext();
@@ -116,16 +115,23 @@ public class DiagnosticsE2ETests
 
     // --- Mocks & Domain Objects ---
 
-    public record OrderRequest(string OrderId, decimal Amount) 
+    public record OrderRequest(string OrderId, decimal Amount)
         : IMRuleRequest<string, OrderRequest>, IRequest<string>, IRuleContext
     {
-        public OrderRequest BuildRuleContext() => this;
+        public OrderRequest BuildRuleContext()
+        {
+            return this;
+        }
+
         public void HaltGroup() { }
     }
 
     public class OrderHandler : IRequestHandler<OrderRequest, string>
     {
-        public Task<string> Handle(OrderRequest request, CancellationToken ct) => Task.FromResult($"processed:{request.OrderId}");
+        public Task<string> Handle(OrderRequest request, CancellationToken ct)
+        {
+            return Task.FromResult($"processed:{request.OrderId}");
+        }
     }
 
     public class MinimumAmountRule : IRule<OrderRequest>
@@ -136,18 +142,28 @@ public class DiagnosticsE2ETests
 
         public Task<RuleResult> EvaluateAsync(OrderRequest ctx, FactBag facts, CancellationToken ct)
         {
-            return Task.FromResult(ctx.Amount >= 100 
-                ? RuleResult.Passed() 
+            return Task.FromResult(ctx.Amount >= 100
+                ? RuleResult.Passed()
                 : RuleResult.Failure("Amount too low"));
         }
 
-        public Task ExecuteAsync(OrderRequest ctx, CancellationToken ct) => Task.CompletedTask;
+        public Task ExecuteAsync(OrderRequest ctx, CancellationToken ct)
+        {
+            return Task.CompletedTask;
+        }
     }
 
     // Standard JSON implementation for test
     public class MJsonSerializeService : IMJsonSerializeService
     {
-        public string Serialize<T>(T obj) => System.Text.Json.JsonSerializer.Serialize(obj);
-        public T? Deserialize<T>(string text) => System.Text.Json.JsonSerializer.Deserialize<T>(text);
+        public string Serialize<T>(T obj)
+        {
+            return System.Text.Json.JsonSerializer.Serialize(obj);
+        }
+
+        public T? Deserialize<T>(string text)
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<T>(text);
+        }
     }
 }
