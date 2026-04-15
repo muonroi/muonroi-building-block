@@ -93,8 +93,8 @@ public static class SiteProfileDapperExtensions
         //   services.AddKeyedScoped<IDapper, TImpl>("SITE_CODE")
         services.AddScoped(sp =>
         {
-            var resolver = sp.GetRequiredService<ISiteProfileResolver>();
-            string siteId = resolver.Current.SiteId;
+            string siteId = SiteProfileScope.CurrentProfile?.SiteId
+                ?? sp.GetRequiredService<ISiteProfileResolver>().Current.SiteId;
 
             return sp.GetKeyedService<IDapper>(siteId)
                 ?? sp.GetKeyedService<IDapper>("default")
@@ -109,8 +109,8 @@ public static class SiteProfileDapperExtensions
         // or throws if neither keyed IDapperRead nor a compatible IDapper is available.
         services.AddScoped(sp =>
         {
-            var resolver = sp.GetRequiredService<ISiteProfileResolver>();
-            string siteId = resolver.Current.SiteId;
+            string siteId = SiteProfileScope.CurrentProfile?.SiteId
+                ?? sp.GetRequiredService<ISiteProfileResolver>().Current.SiteId;
 
             // Try keyed IDapperRead first (dedicated read replica)
             var dapperRead = sp.GetKeyedService<IDapperRead>(siteId)

@@ -55,9 +55,14 @@ public sealed class SiteProfileScope : IDisposable
 
     /// <summary>
     /// Gets the current scope-overridden profile, or null if no scope is active.
-    /// Called by ISiteProfileResolver factory to check for active scope override.
+    /// Public so companion infrastructure packages can honor the ambient override.
     /// </summary>
-    internal static ISiteProfile? Current => s_current.Value;
+    public static ISiteProfile? CurrentProfile => s_current.Value;
+
+    /// <summary>
+    /// Internal alias used by the core site-profile registration path.
+    /// </summary>
+    internal static ISiteProfile? Current => CurrentProfile;
 
     /// <summary>
     /// Creates a scope that overrides the resolved site profile for the current async context.

@@ -253,8 +253,8 @@ public static class SiteProfileExtensions
 
         services.AddScoped(sp =>
         {
-            var resolver = sp.GetRequiredService<ISiteProfileResolver>();
-            var siteId = resolver.Current.SiteId;
+            string siteId = SiteProfileScope.Current?.SiteId
+                ?? sp.GetRequiredService<ISiteProfileResolver>().Current.SiteId;
 
             // Try exact site key first
             var service = sp.GetKeyedService<TService>(siteId);

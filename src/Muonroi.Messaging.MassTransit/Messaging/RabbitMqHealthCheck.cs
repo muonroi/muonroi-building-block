@@ -11,7 +11,7 @@ public class RabbitMqHealthCheck(RabbitMqConfigs configs) : IHealthCheck
     /// <summary>
     /// Executes the Check Health Async operation.
     /// </summary>
-    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
         try
@@ -24,14 +24,16 @@ public class RabbitMqHealthCheck(RabbitMqConfigs configs) : IHealthCheck
                 VirtualHost = configs.VirtualHost,
                 Port = configs.Port
             };
-            using IConnection connection = factory.CreateConnection();
-            return Task.FromResult(connection.IsOpen
+
+            await using IConnection connection = await factory.CreateConnectionAsync(cancellationToken);
+
+            return connection.IsOpen
                 ? HealthCheckResult.Healthy("RabbitMQ is connected")
-                : HealthCheckResult.Unhealthy("RabbitMQ connection is closed"));
+                : HealthCheckResult.Unhealthy("RabbitMQ connection is closed");
         }
         catch (Exception ex)
         {
-            return Task.FromResult(HealthCheckResult.Unhealthy("RabbitMQ is down", ex));
+            return HealthCheckResult.Unhealthy("RabbitMQ is down", ex);
         }
     }
 }
