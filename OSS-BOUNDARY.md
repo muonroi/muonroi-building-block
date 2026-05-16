@@ -62,7 +62,13 @@ a license violation regardless of source visibility.
 - Muonroi.Logging
 - Muonroi.Logging.Abstractions
 
-## Commercial Packages (Muonroi Commercial License - private feed)
+## Commercial Packages (Muonroi Commercial License — published on nuget.org)
+
+> All commercial packages are publicly distributed on nuget.org for ease of consumption.
+> Source visibility does NOT imply free production use — see the Commercial License Agreement.
+> The only truly private artifacts are the SaaS services `muonroi-control-plane` and
+> `muonroi-license-server` (separate private repositories), not these packages.
+
 - Muonroi.Governance.Enterprise           (Phase 0.2 creates this)
 - Muonroi.AuthZ
 - Muonroi.Caching.Redis
