@@ -283,12 +283,27 @@ public static class InfrastructureExtensions
             MTokenInfo configs = sp.GetRequiredService<MTokenInfo>();
             if (configs.UseRsa)
             {
-                RSA rsa = RSA.Create();
                 string privateKeyStr = configs.GetEffectivePrivateKey();
+                if (string.IsNullOrWhiteSpace(privateKeyStr))
+                {
+                    throw new MConfigurationException(
+                        "TokenConfigs.UseRsa is true but no RSA private key was provided. " +
+                        "Set TokenConfigs:PrivateKey (inline PEM) or TokenConfigs:PrivateKeyPath (file path), " +
+                        "or set TokenConfigs:UseRsa=false to use HMAC with SymmetricSecretKey.",
+                        "TokenConfigs:PrivateKey");
+                }
+                RSA rsa = RSA.Create();
                 rsa.ImportFromPem(privateKeyStr.ToCharArray());
                 return new RsaTokenSigner(rsa);
             }
 
+            if (string.IsNullOrWhiteSpace(configs.SymmetricSecretKey))
+            {
+                throw new MConfigurationException(
+                    "TokenConfigs.UseRsa is false but TokenConfigs.SymmetricSecretKey is empty. " +
+                    "Set TokenConfigs:SymmetricSecretKey or set TokenConfigs:UseRsa=true with a private key.",
+                    "TokenConfigs:SymmetricSecretKey");
+            }
             return new HmacTokenSigner(configs.SymmetricSecretKey);
         });
         services.AddAuthentication(options =>

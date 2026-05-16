@@ -65,8 +65,14 @@ public class AuthenticateRepository<TDbContext, TPermission>(
     {
         MResponse<RefreshTokenResponseModel> result = new();
 
+        if (!Guid.TryParse(_authContext.CurrentUserGuid, out Guid currentUserId))
+        {
+            result.AddError(nameof(SystemEnum.InvalidCredentials), _authContext.Language, _authContext.CurrentUsername);
+            return result;
+        }
+
         MUser? existedUser =
-            await dbContext.Users.FirstOrDefaultAsync(x => x.EntityId == Guid.Parse(_authContext.CurrentUserGuid),
+            await dbContext.Users.FirstOrDefaultAsync(x => x.EntityId == currentUserId,
                 cancellationToken);
 
         if (existedUser is null)

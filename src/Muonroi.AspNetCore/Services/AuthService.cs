@@ -199,8 +199,14 @@ public class AuthService<TPermission, TDbContext>(
         CancellationToken cancellationToken)
     {
         MResponse<RefreshTokenResponseModel> result = new();
+        if (!Guid.TryParse(_context.CurrentUserGuid, out Guid currentUserId))
+        {
+            result.AddError(nameof(SystemEnum.InvalidCredentials), _context.Language);
+            return result;
+        }
+
         MUser? existedUser = await _dbContext.Set<MUser>()
-            .FirstOrDefaultAsync(x => x.EntityId == Guid.Parse(_context.CurrentUserGuid), cancellationToken);
+            .FirstOrDefaultAsync(x => x.EntityId == currentUserId, cancellationToken);
 
         if (existedUser is null)
         {

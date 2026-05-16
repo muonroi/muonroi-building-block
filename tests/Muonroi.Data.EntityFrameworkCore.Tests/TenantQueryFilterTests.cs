@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore.Metadata;
 using Muonroi.Core.Abstractions.SeedWorks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
@@ -11,10 +13,19 @@ public class TenantQueryFilterTests
     private sealed class FilterTestDbContext(DbContextOptions<FilterTestDbContext> options)
         : MDbContext(options, new NoMediator(), new TestLicenseGuard(), null, new MDateTimeService())
     {
+        public DbSet<OwnedEntity> OwnedEntities => Set<OwnedEntity>();
+    }
+
+    [Table("OwnedEntities")]
+    private sealed class OwnedEntity : MEntity
+    {
+        [Required]
+        [StringLength(64)]
+        public string Name { get; set; } = string.Empty;
     }
 
     [Fact]
-    public void OnModelCreating_Applies_CreatorFilter_To_MEntity_Types()
+    public void OnModelCreating_Skips_CreatorFilter_For_Identity_System_Types()
     {
         DbContextOptions<FilterTestDbContext> options = new DbContextOptionsBuilder<FilterTestDbContext>()
             .UseInMemoryDatabase("TestDb_" + Guid.NewGuid())
@@ -23,54 +34,47 @@ public class TenantQueryFilterTests
         using FilterTestDbContext db = new(options);
         IModel model = db.Model;
 
-        // MUser derives from MEntity and has CreatorUserId, so should have a query filter
         IEntityType? userType = model.FindEntityType(typeof(MUser));
         userType.Should().NotBeNull();
 
         System.Linq.Expressions.LambdaExpression? filter = userType!.GetQueryFilter();
-        filter.Should().NotBeNull("MUser derives from MEntity and should have a creator filter");
+        filter.Should().BeNull("identity users must remain queryable during anonymous auth and provisioning flows");
     }
 
     [Fact]
-    public async Task CreatorFilter_Allows_All_When_CurrentUserGuid_Null()
+    public void OnModelCreating_Applies_CreatorFilter_To_NonIdentity_MEntity_Types()
     {
         DbContextOptions<FilterTestDbContext> options = new DbContextOptionsBuilder<FilterTestDbContext>()
             .UseInMemoryDatabase("TestDb_" + Guid.NewGuid())
             .Options;
 
-        TenantContext.CurrentTenantId = null;
-        UserContext.CurrentUserGuid = null;
+        using FilterTestDbContext db = new(options);
+        IModel model = db.Model;
 
-        using (FilterTestDbContext seedDb = new(options))
-        {
-            seedDb.Users.Add(new MUser
-            {
-                UserName = "userA",
-                EmailAddress = "a@test.com",
-                Name = "A",
-                Surname = "User",
-                Password = "p",
-                CreatorUserId = Guid.NewGuid()
-            });
-            seedDb.Users.Add(new MUser
-            {
-                UserName = "userB",
-                EmailAddress = "b@test.com",
-                Name = "B",
-                Surname = "User",
-                Password = "p",
-                CreatorUserId = Guid.NewGuid()
-            });
-            await seedDb.SaveChangesAsync();
-        }
+        IEntityType? ownedType = model.FindEntityType(typeof(OwnedEntity));
+        ownedType.Should().NotBeNull();
 
-        // When CurrentUserGuid is null, all entities should be visible
-        UserContext.CurrentUserGuid = null;
-        using (FilterTestDbContext queryDb = new(options))
-        {
-            List<MUser> users = await queryDb.Users.ToListAsync();
-            users.Should().HaveCount(2);
-        }
+        System.Linq.Expressions.LambdaExpression? filter = ownedType!.GetQueryFilter();
+        filter.Should().NotBeNull("application-owned entities should continue using creator isolation by default");
+    }
+
+    [Fact]
+    public void OnModelCreating_Keeps_NonIdentity_CreatorFilter_When_Identity_Filters_Are_Exempted()
+    {
+        DbContextOptions<FilterTestDbContext> options = new DbContextOptionsBuilder<FilterTestDbContext>()
+            .UseInMemoryDatabase("TestDb_" + Guid.NewGuid())
+            .Options;
+
+        using FilterTestDbContext db = new(options);
+        IModel model = db.Model;
+
+        IEntityType? userType = model.FindEntityType(typeof(MUser));
+        IEntityType? ownedType = model.FindEntityType(typeof(OwnedEntity));
+
+        userType.Should().NotBeNull();
+        ownedType.Should().NotBeNull();
+        userType!.GetQueryFilter().Should().BeNull();
+        ownedType!.GetQueryFilter().Should().NotBeNull();
     }
 
     [Fact]

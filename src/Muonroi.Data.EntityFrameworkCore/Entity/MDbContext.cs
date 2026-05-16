@@ -9,6 +9,18 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity;
 public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactionalRuleContext, IIdentityAuth
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.Data.EntityFrameworkCore");
+    private static readonly HashSet<Type> CreatorFilterExemptEntityTypes =
+    [
+        typeof(MPermission),
+        typeof(MPermissionGroup),
+        typeof(MRole),
+        typeof(MRolePermission),
+        typeof(MUser),
+        typeof(MUserLoginAttempt),
+        typeof(MUserRole),
+        typeof(MUserToken),
+        typeof(MWebAuthnCredential)
+    ];
     private readonly IMediator? _mediator;
     private readonly IMLog<MDbContext>? _logger;
     private readonly ILicenseGuard? _licenseGuard;
@@ -429,7 +441,9 @@ public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactional
             if (typeof(MEntity).IsAssignableFrom(entityType.ClrType))
             {
                 PropertyInfo? creatorProp = entityType.ClrType.GetProperty("CreatorUserId");
-                if (creatorProp != null && creatorProp.PropertyType == typeof(Guid))
+                if (creatorProp != null &&
+                    creatorProp.PropertyType == typeof(Guid) &&
+                    ShouldApplyCreatorFilter(entityType.ClrType))
                 {
                     bool isTestProvider = Database.IsInMemory() || Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite";
                     LambdaExpression creatorFilter = BuildCreatorFilter(entityType.ClrType, creatorProp, isTestProvider);
@@ -489,6 +503,11 @@ public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactional
 
         BinaryExpression body = Expression.OrElse(isEqual, bypassExpression);
         return Expression.Lambda(body, parameter);
+    }
+
+    private static bool ShouldApplyCreatorFilter(Type entityType)
+    {
+        return !CreatorFilterExemptEntityTypes.Contains(entityType);
     }
 
     private static LambdaExpression CombineWithAnd(LambdaExpression? existing, LambdaExpression added, Type entityType)
