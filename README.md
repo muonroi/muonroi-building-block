@@ -44,21 +44,12 @@ builder.Services.AddGeneratedRules();
 
 Result: the rule enters the DI graph without a handwritten registration block, and `muonroi-rule verify` can catch dependency and rule-code mistakes before runtime.
 
-## Package Families
+## Packages
 
-| Area | OSS packages | Commercial packages |
-| --- | --- | --- |
-| Core | `Muonroi.Core.Abstractions`, `Muonroi.Core`, `Muonroi.Logging`, `Muonroi.Logging.Abstractions` | - |
-| Governance | `Muonroi.Governance.Abstractions`, `Muonroi.Governance` | `Muonroi.Governance.Enterprise` |
-| Rule engine | `Muonroi.RuleEngine.Abstractions`, `Muonroi.RuleEngine.Core`, `Muonroi.RuleEngine.SourceGenerators`, `Muonroi.RuleEngine.DecisionTable`, `Muonroi.RuleEngine.Testing` | `Muonroi.RuleEngine.Runtime.Web`, `Muonroi.RuleEngine.DecisionTable.Web`, `Muonroi.RuleEngine.CEP`, `Muonroi.UiEngine.Catalog` |
-| Infrastructure | `Muonroi.AspNetCore`, `Muonroi.Tenancy`, `Muonroi.Observability`, `Muonroi.Data.*` | `Muonroi.Caching.Redis`, `Muonroi.SignalR`, `Muonroi.Bff`, `Muonroi.AuthZ`, more |
+OSS and commercial packages span core, governance, rule engine, and infrastructure areas. OSS packages must not reference commercial packages.
 
-The boundary rule remains simple:
-
-- OSS packages must not reference commercial packages.
-- Commercial packages may reference OSS packages.
-
-See [OSS-BOUNDARY.md](./OSS-BOUNDARY.md) for the detailed matrix.
+- Full package list: https://docs.muonroi.com/docs/reference/package-reference
+- OSS boundary matrix: [OSS-BOUNDARY.md](./OSS-BOUNDARY.md)
 
 ## What To Read First
 
