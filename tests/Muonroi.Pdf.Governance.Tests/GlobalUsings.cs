@@ -1,0 +1,10 @@
+global using System;
+global using System.Collections.Generic;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Muonroi.Pdf.Abstractions;
+global using Muonroi.Pdf.Abstractions.Engine;
+global using Muonroi.Pdf.Abstractions.Exceptions;
+global using Muonroi.Pdf.Abstractions.Policy;
+global using Xunit;
+global using FluentAssertions;
