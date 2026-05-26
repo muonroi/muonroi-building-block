@@ -74,7 +74,7 @@ internal sealed class BlockLayoutEngine
             }
             else if (!firstChild)
             {
-                // Case 1: adjacent sibling collapse
+                // Case 1: adjacent sibling collapse — gap = max(prevMb, childMt), not sum
                 float collapsed = CollapseMargins(prevMarginBottom, childMarginTop);
                 childY += collapsed;
                 childMarginTop = 0f;
@@ -84,7 +84,8 @@ internal sealed class BlockLayoutEngine
             float childHeight = DispatchLayout(child, childContext, output, pageIndex);
 
             prevMarginBottom = child.MarginBottom;
-            childY = childContext.CurrentY + childMarginTop + childHeight;
+            // childContext.CurrentY was advanced to (childStart + childHeight) inside DispatchLayout
+            childY = childContext.CurrentY;
             firstChild = false;
         }
 
@@ -112,7 +113,8 @@ internal sealed class BlockLayoutEngine
                     Position = new Rect(ctx.PageMarginLeftPt + blockChild.MarginLeft, startY, childWidth, h),
                     PageIndex = pageIndex
                 });
-                ctx.CurrentY = startY + h + blockChild.MarginBottom;
+                // Do NOT add MarginBottom here — the parent loop handles margin collapsing separately.
+                ctx.CurrentY = startY + h;
                 return h;
             }
 
@@ -134,7 +136,7 @@ internal sealed class BlockLayoutEngine
                     Position = new Rect(ctx.PageMarginLeftPt + replacedChild.MarginLeft, startY, childWidth, h),
                     PageIndex = pageIndex
                 });
-                ctx.CurrentY = startY + h + replacedChild.MarginBottom;
+                ctx.CurrentY = startY + h;
                 return h;
             }
 
@@ -149,7 +151,7 @@ internal sealed class BlockLayoutEngine
                     Position = new Rect(ctx.PageMarginLeftPt + tableChild.MarginLeft, startY, childWidth, h),
                     PageIndex = pageIndex
                 });
-                ctx.CurrentY = startY + h + tableChild.MarginBottom;
+                ctx.CurrentY = startY + h;
                 return h;
             }
 

@@ -11,4 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Muonroi.Pdf.Tests" />
+  </ItemGroup>
 </Project>
