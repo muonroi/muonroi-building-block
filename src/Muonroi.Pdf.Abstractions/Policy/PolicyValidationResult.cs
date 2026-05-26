@@ -21,7 +21,18 @@ public sealed record PolicyValidationResult(
 /// <param name="RuleId">Stable identifier (e.g. <c>limit.max-dom-depth</c>, <c>forbidden.tag.script</c>).</param>
 /// <param name="Message">Human-readable description suitable for log lines (no template content).</param>
 /// <param name="Severity">Violation severity.</param>
-public sealed record PolicyViolation(string RuleId, string Message, PolicySeverity Severity = PolicySeverity.Error);
+/// <param name="PropertyName">CSS property name that triggered the violation, if applicable.</param>
+/// <param name="RejectedValue">The value that was rejected, if applicable.</param>
+/// <param name="CssSelector">CSS selector context where the violation occurred, if applicable.</param>
+/// <param name="SuggestedAlternative">Replacement value or approach the caller may use instead, if applicable.</param>
+public sealed record PolicyViolation(
+    string RuleId,
+    string Message,
+    PolicySeverity Severity = PolicySeverity.Error,
+    string? PropertyName = null,
+    string? RejectedValue = null,
+    string? CssSelector = null,
+    string? SuggestedAlternative = null);
 
 /// <summary>
 /// Severity classification for a policy violation.

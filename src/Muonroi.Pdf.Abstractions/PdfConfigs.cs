@@ -10,6 +10,8 @@ public sealed class PdfConfigs
 
     public PdfLimits Limits { get; set; } = new();
 
+    public bool RequirePolicySignature { get; set; } = false;
+
     /// <summary>
     /// Compile-time hard limits enforced before and during rendering.
     /// </summary>
