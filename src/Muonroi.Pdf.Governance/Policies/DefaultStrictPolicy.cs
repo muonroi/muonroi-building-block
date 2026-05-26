@@ -115,6 +115,10 @@ public sealed class DefaultStrictPolicy : IPdfCssPolicy
                 violations.Add(ViolationFor("forbidden.position.fixed", "position", position, selector, "position:static"));
             if (position is "sticky")
                 violations.Add(ViolationFor("forbidden.position.sticky", "position", position, selector, "position:static"));
+
+            string borderCollapse = style.GetPropertyValue("border-collapse") ?? string.Empty;
+            if (borderCollapse is "collapse")
+                violations.Add(ViolationFor("forbidden.border-collapse.collapse", "border-collapse", borderCollapse, selector, "border-collapse:separate"));
         }
     }
 

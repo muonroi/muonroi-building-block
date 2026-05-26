@@ -8,3 +8,6 @@ global using Muonroi.Pdf.Abstractions.Exceptions;
 global using Muonroi.Pdf.Abstractions.Policy;
 global using Xunit;
 global using FluentAssertions;
+global using Muonroi.Pdf.Governance.Cascade;
+global using Muonroi.Pdf.Governance.Parsing;
+global using Muonroi.Pdf.Governance.Policies;
