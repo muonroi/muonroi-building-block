@@ -68,7 +68,7 @@ The most important constraint is the `netstandard2.0` target: it ensures the Abs
 
 **Critical finding:** `AngleSharp.Css 1.0.0-beta.146` (the version specified in CONTEXT.md Decision 5 and PROJECT.md D4) **does not exist on NuGet**. The registry skips from `beta.144` to `beta.147`. The planner must resolve this before writing `Directory.Packages.props`. See `## Common Pitfalls` for options.
 
-**Primary recommendation:** Implement Phase 1 exactly as specified in CONTEXT.md Decisions 1–8, substitute `AngleSharp.Css 1.0.0-beta.147` for the non-existent `beta.146`, and confirm this with the user before committing.
+**Primary recommendation:** Implement Phase 1 exactly as specified in CONTEXT.md Decisions 1–8, substitute `AngleSharp.Css 1.0.0-beta.149` (current latest) for the non-existent `beta.146`, and confirm this with the user before committing.
 
 ---
 
@@ -92,11 +92,13 @@ The most important constraint is the `netstandard2.0` target: it ensures the Abs
 | Library | Verified Version | Purpose | Source |
 |---------|-----------------|---------|--------|
 | AngleSharp | 1.4.0 | HTML5 parsing (Phase 2) | [VERIFIED: NuGet API] |
-| AngleSharp.Css | 1.0.0-beta.147 ⚠️ | CSS cascade (Phase 2) — see Critical Finding | [VERIFIED: NuGet API — beta.146 absent] |
-| SixLabors.Fonts | 2.1.0 | Font loading + shaping (Phase 4) | [VERIFIED: NuGet API] |
+| AngleSharp.Css | 1.0.0-beta.149 ⚠️ | CSS cascade (Phase 2) — see Critical Finding | [VERIFIED: NuGet API — beta.146 absent; beta.149 is current latest] |
+| SixLabors.Fonts | 2.1.3 | Font loading + shaping (Phase 4) | [VERIFIED: NuGet API — latest in 2.1.x series] |
 | PdfSharpCore | 1.3.65 | PDF writing (Phase 5) | [VERIFIED: NuGet API] |
 
-> **Note on AngleSharp.Css:** Version `1.0.0-beta.146` does not exist on NuGet. The two nearest are `1.0.0-beta.144` (below) and `1.0.0-beta.147` (above). The planner should use `1.0.0-beta.147` unless the user specifies `beta.144`. This decision needs user confirmation before the commit.
+> **Note on AngleSharp.Css:** Version `1.0.0-beta.146` does not exist on NuGet. Available versions in the beta.14x range: `beta.144`, `beta.147`, `beta.149` (no `beta.145`, `beta.146`, `beta.148`). The planner should use `1.0.0-beta.149` (current latest beta) as the recommended pin. This decision needs user confirmation before the commit.
+
+> **Note on SixLabors.Fonts:** `3.0.0` is now available on NuGet (major version bump). Pinning to `2.1.3` (latest stable 2.x) is correct for Phase 1. Phase 4 must evaluate `3.0.0` API compatibility before upgrading — a major version bump may introduce breaking changes in the font shaping API.
 
 ### No NuGet references in the Abstractions project itself
 
@@ -297,8 +299,8 @@ No `Meter`, `ActivitySource`, or any `System.Diagnostics.Metrics` types — stri
 
 ### Pitfall 1: AngleSharp.Css Version Does Not Exist
 **What goes wrong:** `Directory.Packages.props` declares `AngleSharp.Css 1.0.0-beta.146`, `dotnet restore` fails with "package not found."
-**Why it happens:** The version number in CONTEXT.md Decision 5 and PROJECT.md D4 (`1.0.0-beta.146`) does not exist on NuGet. The registry has `beta.144`, then jumps to `beta.147`.
-**How to avoid:** Use `1.0.0-beta.147` (the immediate successor). Confirm with the user before committing. Document the substitution in a `Directory.Packages.props` comment.
+**Why it happens:** The version number in CONTEXT.md Decision 5 and PROJECT.md D4 (`1.0.0-beta.146`) does not exist on NuGet. Available versions in the `1.0.0-beta.14x` range are only: `beta.144`, `beta.147`, `beta.149` (no `beta.145`, `beta.146`, `beta.148`).
+**How to avoid:** Use `1.0.0-beta.149` (current latest beta). Confirm with the user before committing. Document the substitution in a `Directory.Packages.props` comment.
 **Warning signs:** Restore failure `NU1102: Unable to find package AngleSharp.Css with version 1.0.0-beta.146`.
 
 ### Pitfall 2: System.Diagnostics.Metrics Global Using
@@ -396,7 +398,7 @@ No test files needed for Phase 1. All verification is `dotnet build` passing. No
 |------|-----------------|------|
 | Managed CSS cascade for .NET | AngleSharp.Css (only viable pure-managed option) | No stable release exists; beta track is the production reality |
 | PDF generation (.NET, no native) | PdfSharpCore (fork of PDFsharp) | The original PDFsharp targets Windows-only GDI+; Core fork removes native deps |
-| Font shaping | SixLabors.Fonts | Handles OpenType shaping including diacritics; no HarfBuzz needed for the declared subset |
+| Font shaping | SixLabors.Fonts 2.1.x (pinned) | Handles OpenType shaping including diacritics; no HarfBuzz needed for the declared subset. **3.0.0 now available** — evaluate in Phase 4 before upgrading (potential breaking API changes) |
 
 ---
 
@@ -404,8 +406,8 @@ No test files needed for Phase 1. All verification is `dotnet build` passing. No
 
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
-| A1 | `AngleSharp.Css 1.0.0-beta.147` is a drop-in pin for `beta.146` with no breaking interface changes | Standard Stack | Restore succeeds but Phase 2 implementation fails at runtime; mitigated by using closest available version |
-| A2 | `SixLabors.Fonts 2.1.0` (not 2.1.3) is the preferred pin — PROJECT.md says `2.1.x` without specifying the patch | Standard Stack | No risk in Abstractions phase (version pinned only, not used); Phase 4 needs to verify 2.1.x API stability |
+| A1 | `AngleSharp.Css 1.0.0-beta.149` (current latest) is a drop-in pin for the intended `beta.146` with no breaking interface changes | Standard Stack | Restore succeeds but Phase 2 implementation may fail at runtime if API changed between betas; mitigated by using the current latest |
+| A2 | `SixLabors.Fonts 2.1.3` (latest 2.x) is safe to pin — `3.0.0` is available but has not been evaluated for Phase 4 API compatibility | Standard Stack | No risk in Abstractions phase (version pinned only, not used); Phase 4 must evaluate 3.0.0 API before any upgrade |
 | A3 | Removing `global using System.Diagnostics.Metrics;` has no downstream consumers within the Abstractions assembly | Common Pitfalls | No code in Abstractions uses Meter types — verified by reading all source files; risk is LOW |
 
 ---
@@ -413,9 +415,9 @@ No test files needed for Phase 1. All verification is `dotnet build` passing. No
 ## Open Questions
 
 1. **AngleSharp.Css version substitution**
-   - What we know: `1.0.0-beta.146` does not exist; `beta.147` is the next available version
-   - What's unclear: Whether the PROJECT.md D4 decision author intended `beta.147` and mis-typed, or whether `beta.144` (below) was the intended pin
-   - Recommendation: **Planner should use `beta.147` and add a code comment in `Directory.Packages.props`; flag for user confirmation before first NuGet restore**
+   - What we know: `1.0.0-beta.146` does not exist. Available beta.14x versions: `beta.144`, `beta.147`, `beta.149`. `beta.149` is the current latest.
+   - What's unclear: Whether the PROJECT.md D4 decision author intended a specific beta or simply documented the latest-at-time-of-writing
+   - Recommendation: **Planner should use `beta.149` (current latest) and add a code comment in `Directory.Packages.props`; flag for user confirmation before first NuGet restore**
 
 2. **PdfSharpCore version: 1.3.65 vs 1.3.67**
    - What we know: `1.3.65` (as specified in CONTEXT.md Decision 5) exists. Latest is `1.3.67`.
