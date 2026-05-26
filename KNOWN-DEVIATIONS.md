@@ -64,6 +64,30 @@ marginal improvement. The deviation is accepted and documented per Decision 4 in
 
 ---
 
+### KD-03-05: Unicode Line Breaking Algorithm (UAX#14) not implemented
+
+**Specification**: Unicode TR#14 (Unicode Line Breaking Algorithm) defines break opportunities by
+character class (BA, BB, ID, AL, SA, etc.) for all Unicode scripts, including CJK, Vietnamese,
+and Latin.
+
+**Actual behavior**: `InlineLayoutEngine` splits text using `String.Split` on
+`{ ' ', '\t', '\n', '\r', U+200B }`. No character-class-based break opportunities are computed.
+
+**Why this is acceptable for Phase 3**: Vietnamese text is space-delimited (one syllable per
+orthographic word); the space-splitting approach produces correct break opportunities for
+Latin+Vietnamese mixed text in practice. This is confirmed by the
+`VietnamesePlusLatin_MixedText_ProducesOneElementPerSpaceSeparatedToken` test.
+
+**Scope**: Phase 3 `InlineLayoutEngine` (`WordSeparators` field); full UAX#14 is deferred to
+Phase 4 when SixLabors.Fonts shaping is integrated.
+
+**Rationale**: UAX#14 requires a Unicode line-breaking table lookup per character. Phase 3 has
+no font metrics dependency; adding a UAX#14 implementation without font integration introduces
+complexity with no tested consumer. The space-splitting approach is confirmed correct for the
+Phase 3 Latin+Vietnamese use case.
+
+---
+
 ### KD-03-04: `counter(page)` / `counter(pages)` inside header/footer HTML not resolved recursively
 
 **Specification**: CSS Paged Media — margin-box content (`@page` `top-center`, etc.) may

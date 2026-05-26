@@ -113,4 +113,18 @@ public sealed class InlineLayoutTests
         h.Should().BeApproximately(expectedLineHeight, precision: 0.1f,
             because: "single-line layout height equals the font's line height");
     }
+
+    [Fact]
+    public void VietnamesePlusLatin_MixedText_ProducesOneElementPerSpaceSeparatedToken()
+    {
+        var box = MakeInlineBox("Xin chào world", 12f);
+
+        var engine = new InlineLayoutEngine();
+        var ctx = MakeContext(availableWidth: 500f);
+        var output = new List<PositionedElement>();
+        engine.Layout(new BoxNode[] { box }, ctx, output, pageIndex: 0);
+
+        output.Count.Should().Be(3,
+            because: "InlineLayoutEngine splits on spaces, producing one PositionedElement per token regardless of script");
+    }
 }
