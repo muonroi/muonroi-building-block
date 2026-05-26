@@ -8,6 +8,7 @@ internal sealed class AngleSharpStyledDocument : IStyledDocument, IPdfDocumentCo
     private readonly int _maxDepth;
     private readonly long _totalStylesheetBytes;
     private readonly long _sourceHtmlBytes;
+    private readonly IWindow? _window;
 
     internal AngleSharpStyledDocument(IDocument document, long sourceHtmlBytes)
     {
@@ -16,9 +17,17 @@ internal sealed class AngleSharpStyledDocument : IStyledDocument, IPdfDocumentCo
         _maxDepth = ComputeMaxDepth(document);
         _totalStylesheetBytes = ComputeTotalStylesheetBytes(document);
         _sourceHtmlBytes = sourceHtmlBytes;
+        _window = document.DefaultView;
+        Root = new AngleSharpStyledNode(
+            document.DocumentElement ?? throw new InvalidOperationException("Document has no root element."),
+            _window);
+        PageRule = AngleSharpPageRule.TryExtract(document);
     }
 
     internal IDocument AngleSharpDocument { get; }
+
+    public IStyledNode Root { get; }
+    public IPageRule? PageRule { get; }
 
     int IPdfDocumentContext.ElementCount => _elementCount;
     int IPdfDocumentContext.MaxDepth => _maxDepth;
