@@ -22,11 +22,21 @@ Created 8 zero-implementation files in `src/Muonroi.Pdf.Abstractions/Engine/` es
 
 ## Files Modified
 
-- `src/Muonroi.Pdf.Abstractions/Muonroi.Pdf.Abstractions.csproj` — added `<LangVersion>latest</LangVersion>` (required for ReadOnlyMemory<byte> and nullable annotations)
+- `src/Muonroi.Pdf.Abstractions/Muonroi.Pdf.Abstractions.csproj` — added `<LangVersion>latest</LangVersion>` (required for ReadOnlyMemory<byte> and nullable annotations); added `System.Memory` and `System.Threading.Tasks.Extensions` package references
+- `src/Muonroi.Pdf.Abstractions/PdfConfigs.cs` — renamed nested class `Limits` → `PdfLimits` to resolve CS0102 naming conflict with the `Limits` property
+- `Directory.Packages.props` — added `System.Memory 4.5.5` and `System.Threading.Tasks.Extensions 4.5.4` version pins
+
+## Files Created (post-initial-execution fixes)
+
+- `src/Muonroi.Pdf.Abstractions/IsExternalInit.cs` — `IsExternalInit` polyfill required for C# 9 `init`-only setters and `record` types when targeting `netstandard2.0`
 
 ## Deviations
 
-None. All 8 files match the plan specification exactly. The `LangVersion=latest` addition was bundled with Task 1 as a prerequisite for the Engine/ types.
+1. **Plan 01 spec claimed zero package references** but `ValueTask<T>`, `ReadOnlyMemory<T>`, and `ReadOnlySpan<T>` are NOT in the `netstandard2.0` BCL — they require `System.Memory 4.5.5` and `System.Threading.Tasks.Extensions 4.5.4`. Both packages added to CPM and csproj.
+2. **IsExternalInit polyfill required** — `netstandard2.0` does not define `System.Runtime.CompilerServices.IsExternalInit`, which the C# 9 compiler emits for records and `init`-only setters. Added as an `internal static class` polyfill.
+3. **PdfConfigs.Limits CS0102 conflict** — C# forbids a property and a nested type with the same simple name in the same class. Renamed the nested class from `Limits` to `PdfLimits` while keeping the property name `Limits` intact for IConfiguration binding.
+
+All 8 Engine/ files match the plan specification exactly.
 
 ## Invariants Verified
 
@@ -35,7 +45,8 @@ None. All 8 files match the plan specification exactly. The `LangVersion=latest`
 - Marker interfaces have empty bodies — no base interface extension
 - IImageDecoder.Decode is synchronous (no ValueTask) per plan intent
 - IPdfWriter references PdfRenderOptions via `using Muonroi.Pdf.Abstractions;`
+- Build: `dotnet build` succeeds with 0 errors after fixes (commit `61f0808`)
 
 ## Known Issues
 
-None.
+None — build is green.
