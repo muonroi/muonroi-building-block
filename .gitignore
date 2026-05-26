@@ -411,3 +411,5 @@ tools/MockLicenseServer/server_public_key.pem
 /.planning/*
 !/.planning/research/
 !/.planning/phases/
+!/.planning/REQUIREMENTS.md
+!/.planning/ROADMAP.md
