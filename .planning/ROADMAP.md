@@ -9,7 +9,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 1: Abstractions + Contracts** — Define all public API contracts and adapter seams in `Muonroi.Pdf.Abstractions` (netstandard2.0); zero implementation code (completed 2026-05-26)
 - [x] **Phase 2: Parse + Cascade + Policy Gate** — Wire AngleSharp HTML parsing, AngleSharp.Css cascade, and `IPdfCssPolicy.DefaultStrict` in `Muonroi.Pdf.Governance` (completed 2026-05-26)
 - [x] **Phase 3: Box Tree + Layout Engine** — Hand-written box tree with block/inline formatting, table layout, pagination, and page counters (completed 2026-05-26)
-- [ ] **Phase 4: Font + Image Pipeline** — `IFontResolver` integration, Vietnamese diacritic shaping via SixLabors.Fonts, PNG/JPEG/data-URI image decoding
+- [x] **Phase 4: Font + Image Pipeline** — `IFontResolver` integration, Vietnamese diacritic shaping via SixLabors.Fonts, PNG/JPEG/data-URI image decoding (completed 2026-05-27)
 - [ ] **Phase 5: PDF Writer + Determinism + Security** — PdfSharpCore writer adapter hardened to PDF 1.7 with deterministic IDs and JS/Launch/EmbeddedFile rejection
 - [ ] **Phase 6: DI + Telemetry + Integration** — `AddPdf()` DI registration, OpenTelemetry instrumentation, end-to-end `IMPdfService.RenderAsync()` integration
 - [ ] **Phase 7: Golden Snapshots + CI Gates + Publishing** — 40+ golden tests, Vietnamese corpus, convention gates, NuGet publish at `1.0.0-alpha.N`
@@ -91,12 +91,12 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — FontFaceDeclaration + IStyledDocument.FontFaces (Abstractions) + AngleSharpStyledDocument implementation (Governance)
-- [ ] 04-02-PLAN.md — SixLabors.Fonts csproj ref + EmbeddedFontInfo + SixLaborsTextMetrics + GlyphCollector
-- [ ] 04-03-PLAN.md — DataUriDecoder + PureImageDecoder (PNG IHDR + JPEG SOF) + ImagePipeline async pre-pass
-- [ ] 04-04-PLAN.md — TrueTypeFontSubsetter (TTF binary subsetter) + FontPipeline async orchestrator
-- [ ] 04-05-PLAN.md — PositionedPageList extended + BoxTreeBuilder resolvedImages + LayoutEngine.LayoutAsync wiring
-- [ ] 04-06-PLAN.md — Unit tests: FontPipelineTests, VietnameseDiacriticTests, ImagePipelineTests, TrueTypeFontSubsetterTests
+- [x] 04-01-PLAN.md — FontFaceDeclaration + IStyledDocument.FontFaces (Abstractions) + AngleSharpStyledDocument implementation (Governance)
+- [x] 04-02-PLAN.md — SixLabors.Fonts csproj ref + EmbeddedFontInfo + SixLaborsTextMetrics + GlyphCollector
+- [x] 04-03-PLAN.md — DataUriDecoder + PureImageDecoder (PNG IHDR + JPEG SOF) + ImagePipeline async pre-pass
+- [x] 04-04-PLAN.md — TrueTypeFontSubsetter (TTF binary subsetter) + FontPipeline async orchestrator
+- [x] 04-05-PLAN.md — PositionedPageList extended + BoxTreeBuilder resolvedImages + LayoutEngine.LayoutAsync wiring
+- [x] 04-06-PLAN.md — Unit tests: FontPipelineTests, VietnameseDiacriticTests, ImagePipelineTests, TrueTypeFontSubsetterTests
 
 ### Phase 5: PDF Writer + Determinism + Security
 **Goal**: The positioned box list writes to a deterministic, hardened PDF 1.7 stream; the default writer rejects all JavaScript/launch/embedded-file constructs and never writes timestamps
@@ -108,7 +108,12 @@ Plans:
   3. The output PDF version header is `%PDF-1.7`; no `CreationDate`, `ModDate`, producer timestamp, or random object IDs appear
   4. Calling the writer with a `/JavaScript` or `/EmbeddedFile` dictionary entry throws `PdfSecurityException`; the default `IPdfWriter` never writes these entries
   5. A `<script>` element in HTML input is rejected by the policy gate with a structured diagnostic before the box tree is built
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — PdfSecurityException + ThrowingResourceResolver + <script> policy rejection + PdfSharpCore csproj ref
+- [ ] 05-02-PLAN.md — PdfSharpFontResolverAdapter + PdfSharpCoreWriter (text, image, font, determinism, security hardening)
+- [ ] 05-03-PLAN.md — Tests: PdfWriterTests, DeterminismTests, SecurityTests (≥16 new tests)
 
 ### Phase 6: DI + Telemetry + Integration
 **Goal**: The full pipeline is wired through `AddPdf()` DI, the engine emits correct OpenTelemetry spans and metrics, and a single `RenderAsync()` call drives HTML to a valid PDF stream end-to-end
@@ -169,8 +174,8 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
 | 1. Abstractions + Contracts | 4/4 | Complete    | 2026-05-26 |
 | 2. Parse + Cascade + Policy Gate | 5/5 | Complete    | 2026-05-26 |
 | 3. Box Tree + Layout Engine | 9/9 | Complete    | 2026-05-26 |
-| 4. Font + Image Pipeline | 0/TBD | Not started | - |
-| 5. PDF Writer + Determinism + Security | 0/TBD | Not started | - |
+| 4. Font + Image Pipeline | 6/6 | Complete    | 2026-05-27 |
+| 5. PDF Writer + Determinism + Security | 0/3 | Not started | - |
 | 6. DI + Telemetry + Integration | 0/TBD | Not started | - |
 | 7. Golden Snapshots + CI Gates + Publishing | 0/TBD | Not started | - |
 | 8. v0.2 — Source Generator + AOT + DesignSystem | 0/TBD | Not started | - |
