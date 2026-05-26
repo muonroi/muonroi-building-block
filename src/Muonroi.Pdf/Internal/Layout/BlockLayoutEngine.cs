@@ -5,7 +5,11 @@ namespace Muonroi.Pdf.Internal.Layout;
 
 internal sealed class BlockLayoutEngine
 {
-    private readonly InlineLayoutEngine _inlineEngine = new();
+    internal InlineLayoutEngine InlineEngine { get; } = new();
+    private InlineLayoutEngine _inlineEngine => InlineEngine;
+
+    // Set by LayoutEngine after TableLayoutEngine is constructed (avoids circular ctor dependency).
+    internal TableLayoutEngine? TableEngine { get; set; }
 
     // CSS 2.1 §8.3.1: max(positives) + min(negatives) handles mixed-sign margins.
     internal static float CollapseMargins(float a, float b)
@@ -30,7 +34,7 @@ internal sealed class BlockLayoutEngine
     /// Lay out <paramref name="box"/> in a BFC. Returns the height consumed.
     /// Appends <see cref="PositionedElement"/> entries to <paramref name="output"/>.
     /// </summary>
-    public float Layout(BlockBox box, LayoutContext context, List<PositionedElement> output, int pageIndex, bool isRoot = false)
+    public float Layout(BoxNode box, LayoutContext context, List<PositionedElement> output, int pageIndex, bool isRoot = false)
     {
         float availableWidth = ResolveWidth(box, context);
 
@@ -136,8 +140,9 @@ internal sealed class BlockLayoutEngine
 
             case TableBox tableChild:
             {
-                // TODO: Plan 06 fills in TableLayoutEngine
-                float h = LayoutTable(tableChild, ctx, output, pageIndex);
+                float h = TableEngine != null
+                    ? TableEngine.Layout(tableChild, ctx, output, pageIndex)
+                    : (tableChild.Height > 0f ? tableChild.Height : 100f);
                 output.Add(new PositionedElement
                 {
                     Source = tableChild,
@@ -175,7 +180,4 @@ internal sealed class BlockLayoutEngine
                - box.BorderLeft - box.BorderRight;
     }
 
-    // Plan 06 replaces this placeholder with the real TableLayoutEngine.
-    private static float LayoutTable(TableBox box, LayoutContext ctx, List<PositionedElement> output, int pageIndex)
-        => box.Height > 0f ? box.Height : 100f;
 }
