@@ -9,6 +9,9 @@
     <Description>HTML/CSS to PDF layout engine: box-tree construction, pagination, and rendering coordination for Muonroi applications.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="SixLabors.Fonts" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
