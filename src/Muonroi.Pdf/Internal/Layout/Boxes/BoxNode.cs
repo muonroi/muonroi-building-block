@@ -10,6 +10,7 @@ internal abstract class BoxNode
     public string? PageBreakInside { get; set; }
 
     public float Width { get; set; } = -1f;
+    public string? WidthRaw { get; set; }
     public float Height { get; set; } = -1f;
 
     public float MarginTop { get; set; }

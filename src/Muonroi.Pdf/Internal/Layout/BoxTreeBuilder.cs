@@ -94,6 +94,7 @@ internal sealed class BoxTreeBuilder
 
         var widthVal = style.GetValue("width");
         box.Width = widthVal is null or "auto" ? -1f : ParseLength(widthVal, fontSize);
+        box.WidthRaw = widthVal;
 
         var heightVal = style.GetValue("height");
         box.Height = heightVal is null or "auto" ? -1f : ParseLength(heightVal, fontSize);
