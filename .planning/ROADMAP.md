@@ -6,7 +6,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 
 ## Phases
 
-- [ ] **Phase 1: Abstractions + Contracts** — Define all public API contracts and adapter seams in `Muonroi.Pdf.Abstractions` (netstandard2.0); zero implementation code
+- [x] **Phase 1: Abstractions + Contracts** — Define all public API contracts and adapter seams in `Muonroi.Pdf.Abstractions` (netstandard2.0); zero implementation code (completed 2026-05-26)
 - [ ] **Phase 2: Parse + Cascade + Policy Gate** — Wire AngleSharp HTML parsing, AngleSharp.Css cascade, and `IPdfCssPolicy.DefaultStrict` in `Muonroi.Pdf.Governance`
 - [ ] **Phase 3: Box Tree + Layout Engine** — Hand-written box tree with block/inline formatting, table layout, pagination, and page counters
 - [ ] **Phase 4: Font + Image Pipeline** — `IFontResolver` integration, Vietnamese diacritic shaping via SixLabors.Fonts, PNG/JPEG/data-URI image decoding
@@ -31,10 +31,10 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 **Plans**: 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Fix csproj (netstandard2.0), GlobalUsings, CPM version pins; add PdfConfigs, PdfRenderResult.Diagnostics, PdfTelemetryNames
-- [ ] 01-02-PLAN.md — Create Engine/ adapter seams: 4 marker types + 4 seam interfaces (IHtmlParser, ICssCascadeEngine, IImageDecoder, IPdfWriter)
-- [ ] 01-03-PLAN.md — Create Muonroi.Pdf.Enterprise stub (PKG-04) + build verification for both projects
-- [ ] 01-04-PLAN.md — Gap closure: commit untracked public API contracts, fix build warnings, sync REQUIREMENTS + ROADMAP to implemented signatures
+- [x] 01-01-PLAN.md — Fix csproj (netstandard2.0), GlobalUsings, CPM version pins; add PdfConfigs, PdfRenderResult.Diagnostics, PdfTelemetryNames
+- [x] 01-02-PLAN.md — Create Engine/ adapter seams: 4 marker types + 4 seam interfaces (IHtmlParser, ICssCascadeEngine, IImageDecoder, IPdfWriter)
+- [x] 01-03-PLAN.md — Create Muonroi.Pdf.Enterprise stub (PKG-04) + build verification for both projects
+- [x] 01-04-PLAN.md — Gap closure: commit untracked public API contracts, fix build warnings, sync REQUIREMENTS + ROADMAP to implemented signatures
 
 ### Phase 2: Parse + Cascade + Policy Gate
 **Goal**: HTML input is parsed, CSS is cascaded, and every unsupported CSS construct is caught with a structured diagnostic before any layout code runs
@@ -46,7 +46,14 @@ Plans:
   3. HTML input exceeding `MaxHtmlBytes` (8 MB) is rejected before parsing with a typed exception and structured error
   4. DOM depth or element count exceeding their limits triggers a structured error before any cascade or layout step
   5. A document using `display:flex`, `float`, or `position:absolute` triggers a `PolicyViolation` with property name, rejected value, CSS selector, and a suggested alternative; `Muonroi.Pdf.Governance` compiles and `IPdfCssPolicy.DefaultStrict` rejects all six blocked feature categories
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Abstractions gap closure: exception hierarchy (PdfException, PdfInputLimitException, PdfPolicyException), extended PolicyViolation, RequirePolicySignature on PdfConfigs
+- [ ] 02-02-PLAN.md — Create Muonroi.Pdf.Governance csproj (net8.0) + test project scaffold + register both in solution
+- [ ] 02-03-PLAN.md — HTML parsing adapter: AngleSharpParsedDocument + AngleSharpHtmlParser with PIPE-01/PIPE-02 limit enforcement
+- [ ] 02-04-PLAN.md — CSS cascade adapter: AngleSharpStyledDocument + AngleSharpCascadeEngine with IPdfDocumentContext eager metrics
+- [ ] 02-05-PLAN.md — Policy gate: DefaultStrictPolicy (GOV-01/GOV-02, 9 blocked features) + SignedPdfCssPolicyDecorator (GOV-03)
 
 ### Phase 3: Box Tree + Layout Engine
 **Goal**: A styled DOM converts to a box tree and lays out into pages with correct block/inline/table formatting, margin collapsing, and pagination
@@ -140,7 +147,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Abstractions + Contracts | 0/TBD | Not started | - |
+| 1. Abstractions + Contracts | 4/4 | Complete    | 2026-05-26 |
 | 2. Parse + Cascade + Policy Gate | 0/TBD | Not started | - |
 | 3. Box Tree + Layout Engine | 0/TBD | Not started | - |
 | 4. Font + Image Pipeline | 0/TBD | Not started | - |
