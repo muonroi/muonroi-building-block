@@ -1,5 +1,8 @@
 using Muonroi.Pdf.Abstractions.Exceptions;
+using Muonroi.Pdf.Internal.Font;
+using Muonroi.Pdf.Internal.Image;
 using Muonroi.Pdf.Internal.Layout.Geometry;
+using SixLabors.Fonts;
 
 namespace Muonroi.Pdf.Internal.Layout;
 
@@ -42,7 +45,81 @@ internal sealed class LayoutEngine
         return RunLayout(doc, options, totalPages: pass1.PageCount);
     }
 
-    private PositionedPageList RunLayout(IStyledDocument doc, PdfRenderOptions options, int totalPages)
+    public async Task<IPositionedPageList> LayoutAsync(
+        IStyledDocument doc,
+        PdfRenderOptions options,
+        PdfConfigs.PdfLimits limits,
+        IFontResolver? fontResolver,
+        IResourceResolver? imageResolver,
+        IImageDecoder imageDecoder,
+        CancellationToken ct)
+    {
+        SixLaborsTextMetrics? realMetrics = null;
+        IReadOnlyDictionary<string, ReadOnlyMemory<byte>> fontBytesMap = new Dictionary<string, ReadOnlyMemory<byte>>();
+        FontCollection? fontCollection = null;
+
+        if (fontResolver != null)
+        {
+            var fontPipeline = new FontPipeline();
+            (realMetrics, fontBytesMap, fontCollection) = await fontPipeline.ResolveAsync(doc, fontResolver, limits, ct).ConfigureAwait(false);
+        }
+
+        IReadOnlyDictionary<string, DecodedImage> resolvedImages;
+        if (imageResolver != null)
+        {
+            var imagePipeline = new ImagePipeline();
+            resolvedImages = await imagePipeline.ResolveAsync(doc, imageResolver, imageDecoder, limits, ct).ConfigureAwait(false);
+        }
+        else
+        {
+            resolvedImages = new Dictionary<string, DecodedImage>();
+        }
+
+        LayoutEngine engineToUse = fontResolver != null && realMetrics != null
+            ? new LayoutEngine(realMetrics)
+            : this;
+
+        var pass1 = engineToUse.RunLayout(doc, options, totalPages: 0, resolvedImages);
+
+        if (pass1.PageCount > PdfConfigs.PdfLimits.MaxPages)
+            throw new PdfInputLimitException(
+                "PAGE-MAX-PAGES",
+                "MaxPages",
+                pass1.PageCount,
+                PdfConfigs.PdfLimits.MaxPages);
+
+        ct.ThrowIfCancellationRequested();
+
+        var pass2 = engineToUse.RunLayout(doc, options, totalPages: pass1.PageCount, resolvedImages);
+
+        var embeddedFonts = new List<EmbeddedFontInfo>();
+        if (fontResolver != null && fontBytesMap.Count > 0 && fontCollection != null)
+        {
+            var collector = new GlyphCollector();
+            IReadOnlyDictionary<string, IReadOnlySet<int>> usedCodepoints = collector.Collect(pass2, fontCollection);
+
+            foreach (KeyValuePair<string, ReadOnlyMemory<byte>> kvp in fontBytesMap)
+            {
+                string family = kvp.Key;
+                IReadOnlySet<int> codepoints = usedCodepoints.TryGetValue(family, out IReadOnlySet<int>? cp) ? cp : new HashSet<int>();
+                var subsetter = new TrueTypeFontSubsetter();
+                ReadOnlyMemory<byte> subsetBytes = subsetter.Subset(kvp.Value, codepoints);
+
+                FontFaceDeclaration? decl = doc.FontFaces.FirstOrDefault(f => f.Family == family);
+                if (decl == null)
+                    continue;
+
+                embeddedFonts.Add(new EmbeddedFontInfo(decl.Family, decl.Weight, decl.Style, subsetBytes, codepoints));
+            }
+        }
+
+        pass2.EmbeddedFonts = embeddedFonts;
+        pass2.Images = resolvedImages;
+
+        return pass2;
+    }
+
+    private PositionedPageList RunLayout(IStyledDocument doc, PdfRenderOptions options, int totalPages, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null)
     {
         var (pageWidthPt, pageHeightPt) = GetPageDimensions(options);
         var margins = ResolveMargins(options, doc.PageRule);
@@ -54,7 +131,7 @@ internal sealed class LayoutEngine
         float pageBodyHeight = pageHeightPt - topMarginPt - bottomMarginPt;
         float availableWidth = pageWidthPt - leftMarginPt - rightMarginPt;
 
-        var rootBox = _boxTreeBuilder.Build(doc.Root);
+        var rootBox = _boxTreeBuilder.Build(doc.Root, resolvedImages);
 
         var context = new LayoutContext
         {
