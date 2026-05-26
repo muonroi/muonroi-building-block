@@ -218,17 +218,20 @@ var document = await context.OpenAsync(req => req.Content(html), ct);
 **What:** Query cascade-resolved style values on a specific DOM element.
 **When to use:** In `DefaultStrictPolicy` Pass 2 — checking `display`, `float`, `position`.
 ```csharp
-// [ASSUMED] AngleSharp.Css beta.147 — IWindow.GetComputedStyle API
-if (document.DefaultView is IWindowCss windowCss)
+// [VERIFIED: github.com/AngleSharp/AngleSharp.Css — WindowExtensions.cs]
+// GetComputedStyle is a static extension method on IWindow (not IWindowCss):
+//   public static ICssStyleDeclaration GetComputedStyle(this IWindow window, IElement element, String pseudo = null)
+// document.DefaultView returns IWindow; using AngleSharp.Css brings the extension into scope.
+using AngleSharp.Css.Extensions;
+
+foreach (var element in document.All.OfType<IElement>())
 {
-    foreach (var element in document.All)
-    {
-        var style = windowCss.GetComputedStyle(element);
-        var display = style?.GetPropertyValue("display") ?? string.Empty;
-        var floatVal = style?.GetPropertyValue("float") ?? string.Empty;
-        var position = style?.GetPropertyValue("position") ?? string.Empty;
-        // check against blocked values
-    }
+    var style = document.DefaultView?.GetComputedStyle(element);
+    if (style is null) continue; // non-rendered elements (head, script, meta)
+    var display = style.GetPropertyValue("display");
+    var floatVal = style.GetPropertyValue("float");
+    var position = style.GetPropertyValue("position");
+    // check against blocked values
 }
 ```
 
@@ -428,7 +431,7 @@ var violation = new PolicyViolation(
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
 | A1 | `Configuration.Default.WithCss()` is the correct AngleSharp.Css 1.0.0-beta.147 setup call | Code Examples, Pattern 1 | Compilation error — minor, easily fixed on first build |
-| A2 | `document.DefaultView is IWindowCss` pattern provides `GetComputedStyle` | Pattern 2 | May need `(IWindowCss)document.DefaultView` direct cast or different interface name |
+| A2 | ~~`document.DefaultView is IWindowCss` pattern~~ | Pattern 2 | **RESOLVED** — `GetComputedStyle` is an extension method on `IWindow` from `AngleSharp.Css.Extensions.WindowExtensions`. No `IWindowCss` cast needed. [VERIFIED: AngleSharp.Css source] |
 | A3 | `ICssStyleSheet`, `ICssImportRule`, `ICssKeyframesRule`, `ICssStyleRule` are the correct rule type names in beta.147 | Pattern 3 | Type names may differ; check AngleSharp.Css source if cast fails at build time |
 | A4 | `element.GetSelector()` provides a CSS selector string for `CssSelector` field | Code Examples | May not exist; alternative is using `element.LocalName + element.Id/ClassName` |
 | A5 | `PolicyVerifier` can be adapted for PDF config signing without changing its signature | Pitfall 5 | May require a new signing helper or a thin adapter class |
@@ -447,10 +450,8 @@ var violation = new PolicyViolation(
    - What's unclear: Whether one or all four properties are always accessed
    - Recommendation: Compute all four eagerly in `AngleSharpStyledDocument` constructor — saves complexity, and all four are needed regardless
 
-3. **`IWindowCss` vs `IWindow` for computed styles**
-   - What we know: AngleSharp.Css extends `IWindow` with CSS capabilities via the `IWindowCss` interface
-   - What's unclear: Exact interface name in beta.147 (may be `ICssStyleDeclaration`-returning extension method instead)
-   - Recommendation: Verify on first build; add a `[VERIFIED]` note once confirmed
+3. ~~**`IWindowCss` vs `IWindow` for computed styles`**~~ **RESOLVED**
+   - `GetComputedStyle` is a static extension method on `IWindow` from `AngleSharp.Css.Extensions.WindowExtensions` (signature: `GetComputedStyle(this IWindow, IElement, string pseudo = null)`). No `IWindowCss` cast needed — just `using AngleSharp.Css.Extensions` and call `document.DefaultView?.GetComputedStyle(element)`. [VERIFIED: AngleSharp.Css source]
 
 ---
 
@@ -540,10 +541,11 @@ var violation = new PolicyViolation(
 - `.planning/phases/02-parse-cascade-policy-gate/02-CONTEXT.md` — all 9 locked decisions [VERIFIED: codebase]
 
 ### Secondary (MEDIUM confidence)
-- AngleSharp GitHub (github.com/AngleSharp/AngleSharp) — API patterns for `IBrowsingContext`, `Configuration.Default.WithCss()` [CITED: training + package existence confirmed via CPM]
+- AngleSharp GitHub `WindowExtensions.cs` — `GetComputedStyle(this IWindow, IElement, string)` signature confirmed [VERIFIED: WebFetch of AngleSharp.Css source]
+- NuGet gallery (nuget.org/packages/AngleSharp.Css) — version history confirmed; beta.147 pinned correctly; latest is beta.216 (May 2026) — intentionally not upgraded [CITED: WebFetch]
+- `Directory.Build.props` — xunit 2.9.2 + FluentAssertions + NSubstitute auto-applied to all projects in `tests/` [VERIFIED: codebase]
 
 ### Tertiary (LOW confidence)
-- `IWindowCss` interface name and `GetComputedStyle` return type in AngleSharp.Css beta.147 [ASSUMED: training knowledge, must verify on first build]
 - `ICssKeyframesRule`, `ICssImportRule`, `ICssStyleRule` type names in beta.147 [ASSUMED: training knowledge, must verify on first build]
 
 ---
