@@ -17,6 +17,7 @@ Committed all 13 untracked `Muonroi.Pdf.Abstractions` source files, fixed 3 buil
 |---|------|--------|
 | 1 | Fix build warnings + commit all untracked Abstractions source files | `6895bbe` |
 | 2 | Sync REQUIREMENTS.md and ROADMAP.md to implemented API contracts | `a303725` |
+| 2a | Fix missed beta.146→beta.147 in ROADMAP Phase 1 SC5 and Phase 2 SC2 | `b8a6067` |
 
 ---
 
@@ -33,7 +34,13 @@ Committed all 13 untracked `Muonroi.Pdf.Abstractions` source files, fixed 3 buil
 **Resolution**: Added two whitelist exceptions to `.gitignore` (`!/.planning/REQUIREMENTS.md`, `!/.planning/ROADMAP.md`) in the same commit (`a303725`). Files are now tracked and committed.
 **Verdict**: Minimal, correct fix. The files serve as canonical specs for downstream phases — tracking them is clearly the right call.
 
-### 3. Pre-existing CS1591 warnings in Engine/ and PdfConfigs.cs not cleared
+### 3. ROADMAP beta.146 references missed in first sync commit
+**Plan said**: Replace `beta.146` with `beta.147` in Phase 1 SC5 and Phase 2 SC2.
+**Actual**: Commit `a303725` updated SC4 correctly but the two `beta.146` version strings in Phase 1 SC5 (line 30) and Phase 2 SC2 (line 45) were not replaced.
+**Resolution**: Fixed in follow-up commit `b8a6067`. Both lines now reference `1.0.0-beta.147`.
+**Verdict**: Gap was caught by post-execution verification; closed before summary commit.
+
+### 4. Pre-existing CS1591 warnings in Engine/ and PdfConfigs.cs not cleared
 **Plan said**: "Build output contains no error or CS1574/CS1591 lines."
 **Actual**: 22 CS1591 warnings remain in pre-existing committed files (`Engine/DecodedImage.cs`, `Engine/ICssCascadeEngine.cs`, `Engine/IHtmlParser.cs`, `Engine/IImageDecoder.cs`, `Engine/IPdfWriter.cs`, `PdfConfigs.cs`). These were present before this plan and are out of scope.
 **Verdict**: The plan targeted specific new-file warnings only. The remaining warnings are pre-existing and will be addressed in a dedicated doc-comment pass.
@@ -59,7 +66,7 @@ Committed all 13 untracked `Muonroi.Pdf.Abstractions` source files, fixed 3 buil
 | `src/Muonroi.Pdf.Abstractions/Telemetry/PdfTelemetryNames.cs` | Modified | CS1591 — added `<summary>` doc on all 5 `const` fields |
 | `.planning/phases/01-abstractions-contracts/01-VERIFICATION.md` | Added to git | Gap-closure verification report |
 | `.planning/REQUIREMENTS.md` | Added to git (new tracking) | ABST-01–06, ABST-12 updated to implemented signatures |
-| `.planning/ROADMAP.md` | Added to git (new tracking) | Phase 1 SC4 updated — stream-destination pattern |
+| `.planning/ROADMAP.md` | Added to git (new tracking) + fixed | Phase 1 SC4 updated — stream-destination pattern; Phase 1 SC5 and Phase 2 SC2 updated beta.146→beta.147 |
 | `.gitignore` | Modified | Added `!/.planning/REQUIREMENTS.md` and `!/.planning/ROADMAP.md` exceptions |
 
 ---
