@@ -5,9 +5,12 @@ namespace Muonroi.Pdf.Internal.Layout;
 
 internal sealed class BoxTreeBuilder
 {
+    private IReadOnlyDictionary<string, DecodedImage>? _resolvedImages;
+
     /// <summary>Converts an IStyledNode tree into a BlockBox root. Pitfall 6: display:none check happens first in BuildNode.</summary>
-    public BlockBox Build(IStyledNode root)
+    public BlockBox Build(IStyledNode root, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null)
     {
+        _resolvedImages = resolvedImages;
         var box = new BlockBox { Source = root };
         ResolveCssProperties(root.Style, box);
         BuildChildren(root, box);
@@ -58,6 +61,9 @@ internal sealed class BoxTreeBuilder
 
     private static BoxNode CreateBox(IStyledNode node)
     {
+        if (string.Equals(node.LocalName, "img", StringComparison.OrdinalIgnoreCase))
+            return new ReplacedBox { Source = node, Src = node.GetAttribute("src") };
+
         var display = (node.Style.GetValue("display") ?? "block").Trim().ToLowerInvariant();
         return display switch
         {
@@ -73,7 +79,7 @@ internal sealed class BoxTreeBuilder
         };
     }
 
-    private static void ResolveCssProperties(IComputedStyle style, BoxNode box)
+    private void ResolveCssProperties(IComputedStyle style, BoxNode box)
     {
         float fontSize = ParseLength(style.GetValue("font-size")) is float fs and > 0f ? fs : 12f;
 
@@ -142,6 +148,14 @@ internal sealed class BoxTreeBuilder
             var rowspanAttr = box.Source?.GetAttribute("rowspan");
             if (rowspanAttr != null && int.TryParse(rowspanAttr, out int rowspan) && rowspan >= 1)
                 cell.Rowspan = rowspan;
+        }
+        else if (box is ReplacedBox replaced && replaced.Src != null && _resolvedImages != null)
+        {
+            if (_resolvedImages.TryGetValue(replaced.Src, out DecodedImage? decoded))
+            {
+                replaced.NaturalWidth = decoded.Width * Units.PxToPt;
+                replaced.NaturalHeight = decoded.Height * Units.PxToPt;
+            }
         }
     }
 

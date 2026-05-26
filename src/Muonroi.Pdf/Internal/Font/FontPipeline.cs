@@ -6,7 +6,7 @@ namespace Muonroi.Pdf.Internal.Font;
 
 internal sealed class FontPipeline
 {
-    internal async Task<(SixLaborsTextMetrics TextMetrics, IReadOnlyDictionary<string, ReadOnlyMemory<byte>> FontBytesMap)> ResolveAsync(
+    internal async Task<(SixLaborsTextMetrics TextMetrics, IReadOnlyDictionary<string, ReadOnlyMemory<byte>> FontBytesMap, FontCollection Collection)> ResolveAsync(
         IStyledDocument doc,
         IFontResolver resolver,
         PdfConfigs.PdfLimits limits,
@@ -43,6 +43,6 @@ internal sealed class FontPipeline
             fontBytesMap[decl.Family] = bytes.Value;
         }
 
-        return (new SixLaborsTextMetrics(collection), fontBytesMap);
+        return (new SixLaborsTextMetrics(collection), fontBytesMap, collection);
     }
 }
