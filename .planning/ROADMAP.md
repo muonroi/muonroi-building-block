@@ -27,7 +27,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
   2. All six adapter interfaces (`IHtmlParser`, `ICssCascadeEngine`, `IImageDecoder`, `IPdfWriter`, `IFontResolver`, `IResourceResolver`) are defined in the Abstractions assembly
   3. `PdfConfigs.Limits` exposes all seven hard limits as compile-time constants matching the documented values (MaxHtmlBytes 8 MB, MaxDomDepth 256, MaxElementCount 100k, MaxImagePixels 25 MP, MaxPages 1000, MaxRenderDurationMs 15000, MaxFontFiles 32)
   4. `PdfRenderResult` carries metadata only (`PageCount`, `ByteCount`, `Elapsed`, `TemplateHash`, `PolicyId`, `Diagnostics`); PDF bytes are written directly to the caller-supplied `Stream destination` on `IMPdfService.RenderAsync` — no content buffering on the result type
-  5. `Directory.Packages.props` contains AngleSharp, AngleSharp.Css (pinned 1.0.0-beta.146), SixLabors.Fonts, and PdfSharpCore; zero inline `Version` attributes in any csproj
+  5. `Directory.Packages.props` contains AngleSharp, AngleSharp.Css (pinned 1.0.0-beta.147), SixLabors.Fonts, and PdfSharpCore; zero inline `Version` attributes in any csproj
 **Plans**: 4 plans
 
 Plans:
@@ -42,7 +42,7 @@ Plans:
 **Requirements**: PKG-03, PIPE-01, PIPE-02, PIPE-03, PIPE-04, GOV-01, GOV-02, GOV-03
 **Success Criteria** (what must be TRUE):
   1. AngleSharp parses a valid HTML5 document through `IHtmlParser` and returns a DOM tree; the AngleSharp type does not leak through the adapter seam
-  2. `ICssCascadeEngine` produces computed styles on the DOM using AngleSharp.Css 1.0.0-beta.146; the result is accessible without exposing any AngleSharp type to callers
+  2. `ICssCascadeEngine` produces computed styles on the DOM using AngleSharp.Css 1.0.0-beta.147; the result is accessible without exposing any AngleSharp type to callers
   3. HTML input exceeding `MaxHtmlBytes` (8 MB) is rejected before parsing with a typed exception and structured error
   4. DOM depth or element count exceeding their limits triggers a structured error before any cascade or layout step
   5. A document using `display:flex`, `float`, or `position:absolute` triggers a `PolicyViolation` with property name, rejected value, CSS selector, and a suggested alternative; `Muonroi.Pdf.Governance` compiles and `IPdfCssPolicy.DefaultStrict` rejects all six blocked feature categories
