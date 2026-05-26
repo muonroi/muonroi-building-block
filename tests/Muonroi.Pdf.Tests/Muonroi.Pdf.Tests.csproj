@@ -10,4 +10,7 @@
     <ProjectReference Include="..\..\src\Muonroi.Pdf\Muonroi.Pdf.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TestResources/**" />
+  </ItemGroup>
 </Project>
