@@ -5,4 +5,5 @@ public interface IStyledDocument
 {
     IStyledNode Root { get; }
     IPageRule? PageRule { get; }
+    IReadOnlyList<FontFaceDeclaration> FontFaces { get; }
 }
