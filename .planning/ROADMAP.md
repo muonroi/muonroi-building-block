@@ -7,7 +7,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 ## Phases
 
 - [x] **Phase 1: Abstractions + Contracts** — Define all public API contracts and adapter seams in `Muonroi.Pdf.Abstractions` (netstandard2.0); zero implementation code (completed 2026-05-26)
-- [ ] **Phase 2: Parse + Cascade + Policy Gate** — Wire AngleSharp HTML parsing, AngleSharp.Css cascade, and `IPdfCssPolicy.DefaultStrict` in `Muonroi.Pdf.Governance`
+- [x] **Phase 2: Parse + Cascade + Policy Gate** — Wire AngleSharp HTML parsing, AngleSharp.Css cascade, and `IPdfCssPolicy.DefaultStrict` in `Muonroi.Pdf.Governance` (completed 2026-05-26)
 - [ ] **Phase 3: Box Tree + Layout Engine** — Hand-written box tree with block/inline formatting, table layout, pagination, and page counters
 - [ ] **Phase 4: Font + Image Pipeline** — `IFontResolver` integration, Vietnamese diacritic shaping via SixLabors.Fonts, PNG/JPEG/data-URI image decoding
 - [ ] **Phase 5: PDF Writer + Determinism + Security** — PdfSharpCore writer adapter hardened to PDF 1.7 with deterministic IDs and JS/Launch/EmbeddedFile rejection
@@ -49,11 +49,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Abstractions gap closure: exception hierarchy (PdfException, PdfInputLimitException, PdfPolicyException), extended PolicyViolation, RequirePolicySignature on PdfConfigs
-- [ ] 02-02-PLAN.md — Create Muonroi.Pdf.Governance csproj (net8.0) + test project scaffold + register both in solution
-- [ ] 02-03-PLAN.md — HTML parsing adapter: AngleSharpParsedDocument + AngleSharpHtmlParser with PIPE-01/PIPE-02 limit enforcement
-- [ ] 02-04-PLAN.md — CSS cascade adapter: AngleSharpStyledDocument + AngleSharpCascadeEngine with IPdfDocumentContext eager metrics
-- [ ] 02-05-PLAN.md — Policy gate: DefaultStrictPolicy (GOV-01/GOV-02, 9 blocked features) + SignedPdfCssPolicyDecorator (GOV-03)
+- [x] 02-01-PLAN.md — Abstractions gap closure: exception hierarchy (PdfException, PdfInputLimitException, PdfPolicyException), extended PolicyViolation, RequirePolicySignature on PdfConfigs
+- [x] 02-02-PLAN.md — Create Muonroi.Pdf.Governance csproj (net8.0) + test project scaffold + register both in solution
+- [x] 02-03-PLAN.md — HTML parsing adapter: AngleSharpParsedDocument + AngleSharpHtmlParser with PIPE-01/PIPE-02 limit enforcement
+- [x] 02-04-PLAN.md — CSS cascade adapter: AngleSharpStyledDocument + AngleSharpCascadeEngine with IPdfDocumentContext eager metrics
+- [x] 02-05-PLAN.md — Policy gate: DefaultStrictPolicy (GOV-01/GOV-02, 9 blocked features) + SignedPdfCssPolicyDecorator (GOV-03)
 
 ### Phase 3: Box Tree + Layout Engine
 **Goal**: A styled DOM converts to a box tree and lays out into pages with correct block/inline/table formatting, margin collapsing, and pagination
@@ -65,7 +65,17 @@ Plans:
   3. A table with `colspan=2` and `rowspan=2` cells lays out with correct column widths; `border-collapse:collapse` triggers a `PolicyViolation` naming `border-collapse:separate` as the alternative
   4. `page-break-before:always` forces a page break at the element boundary; the header defined in the `@page` top margin box repeats verbatim on every page
   5. `counter(pages)` in a footer resolves to the correct total page count via two-pass layout
-**Plans**: TBD
+**Plans**: 8 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Abstractions contracts (IStyledNode/IComputedStyle/IPageRule) + Muonroi.Pdf csproj setup
+- [ ] 03-02-PLAN.md — Governance gap: AngleSharpStyledNode/ComputedStyle/PageRule + extend AngleSharpStyledDocument
+- [ ] 03-03-PLAN.md — Box tree types: geometry helpers + full BoxNode hierarchy (12 files)
+- [ ] 03-04-PLAN.md — BoxTreeBuilder + ITextMetrics seam + positioning types + test project scaffold
+- [ ] 03-05-PLAN.md — BlockLayoutEngine (BFC, margin collapsing) + InlineLayoutEngine (IFC, baseline)
+- [ ] 03-06-PLAN.md — TableLayoutEngine (colspan/rowspan) + PaginationEngine (breaks, counters, header/footer)
+- [ ] 03-07-PLAN.md — LayoutEngine two-pass entry point + KNOWN-DEVIATIONS.md
+- [ ] 03-08-PLAN.md — Unit tests SC1–SC5 (15+ tests, dotnet test exits 0)
 
 ### Phase 4: Font + Image Pipeline
 **Goal**: Fonts are resolved, shaped, and subsetted; images are decoded; Vietnamese diacritics render correctly; all resource limits are enforced
@@ -148,7 +158,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Abstractions + Contracts | 4/4 | Complete    | 2026-05-26 |
-| 2. Parse + Cascade + Policy Gate | 0/TBD | Not started | - |
+| 2. Parse + Cascade + Policy Gate | 5/5 | Complete    | 2026-05-26 |
 | 3. Box Tree + Layout Engine | 0/TBD | Not started | - |
 | 4. Font + Image Pipeline | 0/TBD | Not started | - |
 | 5. PDF Writer + Determinism + Security | 0/TBD | Not started | - |
