@@ -8,12 +8,12 @@ public sealed class PdfConfigs
 {
     public const string SectionName = "PdfConfigs";
 
-    public Limits Limits { get; set; } = new();
+    public PdfLimits Limits { get; set; } = new();
 
     /// <summary>
     /// Compile-time hard limits enforced before and during rendering.
     /// </summary>
-    public sealed class Limits
+    public sealed class PdfLimits
     {
         public const long MaxHtmlBytes = 8_388_608;
         public const int MaxDomDepth = 256;
