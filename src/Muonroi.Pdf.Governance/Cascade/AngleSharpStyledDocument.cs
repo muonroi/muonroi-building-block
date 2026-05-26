@@ -1,4 +1,8 @@
+using System.Linq;
 using System.Text;
+using AngleSharp.Css.Dom;
+using PdfFontStyle = Muonroi.Pdf.Abstractions.FontStyle;
+using PdfFontWeight = Muonroi.Pdf.Abstractions.FontWeight;
 
 namespace Muonroi.Pdf.Governance.Cascade;
 
@@ -9,6 +13,7 @@ internal sealed class AngleSharpStyledDocument : IStyledDocument, IPdfDocumentCo
     private readonly long _totalStylesheetBytes;
     private readonly long _sourceHtmlBytes;
     private readonly IWindow? _window;
+    private readonly IReadOnlyList<FontFaceDeclaration> _fontFaces;
 
     internal AngleSharpStyledDocument(IDocument document, long sourceHtmlBytes)
     {
@@ -22,12 +27,14 @@ internal sealed class AngleSharpStyledDocument : IStyledDocument, IPdfDocumentCo
             document.DocumentElement ?? throw new InvalidOperationException("Document has no root element."),
             _window);
         PageRule = AngleSharpPageRule.TryExtract(document);
+        _fontFaces = ExtractFontFaces(document);
     }
 
     internal IDocument AngleSharpDocument { get; }
 
     public IStyledNode Root { get; }
     public IPageRule? PageRule { get; }
+    public IReadOnlyList<FontFaceDeclaration> FontFaces => _fontFaces;
 
     int IPdfDocumentContext.ElementCount => _elementCount;
     int IPdfDocumentContext.MaxDepth => _maxDepth;
@@ -64,4 +71,43 @@ internal sealed class AngleSharpStyledDocument : IStyledDocument, IPdfDocumentCo
         }
         return total;
     }
+
+    private static IReadOnlyList<FontFaceDeclaration> ExtractFontFaces(IDocument document)
+    {
+        var list = new List<FontFaceDeclaration>();
+        foreach (ICssStyleSheet sheet in document.StyleSheets.OfType<ICssStyleSheet>())
+        {
+            ICssRuleList rules = sheet.Rules;
+            for (int i = 0; i < rules.Length; i++)
+            {
+                if (rules[i] is not ICssFontFaceRule fontFaceRule)
+                    continue;
+
+                string family = fontFaceRule.Family.Trim('\'', '"');
+                PdfFontWeight weight = ParseFontWeight(fontFaceRule.Weight);
+                PdfFontStyle style = ParseFontStyle(fontFaceRule.Style);
+                list.Add(new FontFaceDeclaration(family, weight, style));
+            }
+        }
+        return list.Distinct().ToList();
+    }
+
+    private static PdfFontWeight ParseFontWeight(string? weight)
+    {
+        if (string.IsNullOrEmpty(weight) || weight == "normal")
+            return PdfFontWeight.Normal;
+        if (weight == "bold")
+            return PdfFontWeight.Bold;
+        if (int.TryParse(weight, out int value) && Enum.IsDefined(typeof(PdfFontWeight), value))
+            return (PdfFontWeight)value;
+        return PdfFontWeight.Normal;
+    }
+
+    private static PdfFontStyle ParseFontStyle(string? style) =>
+        style switch
+        {
+            "italic" => PdfFontStyle.Italic,
+            "oblique" => PdfFontStyle.Oblique,
+            _ => PdfFontStyle.Normal
+        };
 }
