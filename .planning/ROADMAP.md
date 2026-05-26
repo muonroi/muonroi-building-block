@@ -65,17 +65,18 @@ Plans:
   3. A table with `colspan=2` and `rowspan=2` cells lays out with correct column widths; `border-collapse:collapse` triggers a `PolicyViolation` naming `border-collapse:separate` as the alternative
   4. `page-break-before:always` forces a page break at the element boundary; the header defined in the `@page` top margin box repeats verbatim on every page
   5. `counter(pages)` in a footer resolves to the correct total page count via two-pass layout
-**Plans**: 8 plans
+**Plans**: 9 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Abstractions contracts (IStyledNode/IComputedStyle/IPageRule) + Muonroi.Pdf csproj setup
-- [ ] 03-02-PLAN.md — Governance gap: AngleSharpStyledNode/ComputedStyle/PageRule + extend AngleSharpStyledDocument
-- [ ] 03-03-PLAN.md — Box tree types: geometry helpers + full BoxNode hierarchy (12 files)
-- [ ] 03-04-PLAN.md — BoxTreeBuilder + ITextMetrics seam + positioning types + test project scaffold
-- [ ] 03-05-PLAN.md — BlockLayoutEngine (BFC, margin collapsing) + InlineLayoutEngine (IFC, baseline)
-- [ ] 03-06-PLAN.md — TableLayoutEngine (colspan/rowspan) + PaginationEngine (breaks, counters, header/footer)
-- [ ] 03-07-PLAN.md — LayoutEngine two-pass entry point + KNOWN-DEVIATIONS.md
-- [ ] 03-08-PLAN.md — Unit tests SC1–SC5 (15+ tests, dotnet test exits 0)
+- [x] 03-01-PLAN.md — Abstractions contracts (IStyledNode/IComputedStyle/IPageRule) + Muonroi.Pdf csproj setup
+- [x] 03-02-PLAN.md — Governance gap: AngleSharpStyledNode/ComputedStyle/PageRule + extend AngleSharpStyledDocument
+- [x] 03-03-PLAN.md — Box tree types: geometry helpers + full BoxNode hierarchy (12 files)
+- [x] 03-04-PLAN.md — BoxTreeBuilder + ITextMetrics seam + positioning types + test project scaffold
+- [x] 03-05-PLAN.md — BlockLayoutEngine (BFC, margin collapsing) + InlineLayoutEngine (IFC, baseline)
+- [x] 03-06-PLAN.md — TableLayoutEngine (colspan/rowspan) + PaginationEngine (breaks, counters, header/footer)
+- [x] 03-07-PLAN.md — LayoutEngine two-pass entry point + KNOWN-DEVIATIONS.md
+- [x] 03-08-PLAN.md — Unit tests SC1–SC5 (22 tests, dotnet test exits 0)
+- [ ] 03-09-PLAN.md — Gap closure: LAYOUT-07 border-collapse policy fix + governance test + KD-03-05 Vietnamese break test
 
 ### Phase 4: Font + Image Pipeline
 **Goal**: Fonts are resolved, shaped, and subsetted; images are decoded; Vietnamese diacritics render correctly; all resource limits are enforced
@@ -159,7 +160,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
 |-------|----------------|--------|-----------|
 | 1. Abstractions + Contracts | 4/4 | Complete    | 2026-05-26 |
 | 2. Parse + Cascade + Policy Gate | 5/5 | Complete    | 2026-05-26 |
-| 3. Box Tree + Layout Engine | 0/TBD | Not started | - |
+| 3. Box Tree + Layout Engine | 8/9 | In progress (gap closure) | - |
 | 4. Font + Image Pipeline | 0/TBD | Not started | - |
 | 5. PDF Writer + Determinism + Security | 0/TBD | Not started | - |
 | 6. DI + Telemetry + Integration | 0/TBD | Not started | - |
