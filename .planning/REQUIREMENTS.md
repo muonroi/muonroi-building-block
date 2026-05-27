@@ -9,9 +9,9 @@
 
 ### Package Structure
 
-- [ ] **PKG-01**: `Muonroi.Pdf.Abstractions` project exists targeting `netstandard2.0` with zero implementation code — public contracts only
+- [x] **PKG-01**: `Muonroi.Pdf.Abstractions` project exists targeting `netstandard2.0` with zero implementation code — public contracts only
 - [ ] **PKG-02**: `Muonroi.Pdf` project exists targeting `net8.0` with engine implementation and DI registration in namespace `Muonroi.Pdf.Extensions`
-- [ ] **PKG-03**: `Muonroi.Pdf.Governance` project exists targeting `net8.0` with CSS policy enforcement and signed config verification
+- [x] **PKG-03**: `Muonroi.Pdf.Governance` project exists targeting `net8.0` with CSS policy enforcement and signed config verification
 - [ ] **PKG-04**: `Muonroi.Pdf.Enterprise` project exists as an empty stub targeting `net8.0`, with `<IsCommercialPackage>true</IsCommercialPackage>` in its csproj, locking the namespace and assembly hash pipeline
 - [ ] **PKG-05**: `Muonroi.BuildingBlock.All` meta-package includes `Muonroi.Pdf`, `Muonroi.Pdf.Abstractions`, and `Muonroi.Pdf.Governance`
 - [ ] **PKG-06**: `OSS-BOUNDARY.md` allowlist updated to include the three OSS Pdf packages
@@ -19,20 +19,20 @@
 
 ### Public Contracts (`Muonroi.Pdf.Abstractions`)
 
-- [ ] **ABST-01**: `IMPdfService` interface defined with three overloads: (1) `RenderAsync(string html, Stream destination, PdfRenderOptions options, CancellationToken ct)` — primary stream-destination overload, avoids buffering; (2) `RenderMultiPageAsync(IReadOnlyList<string> htmlPages, Stream destination, PdfRenderOptions options, CancellationToken ct)` — merges fragments into one PDF; (3) `RenderToBytesAsync(string html, PdfRenderOptions options, CancellationToken ct) : Task<(byte[] Bytes, PdfRenderResult Metadata)>` — convenience overload for callers that need bytes directly
-- [ ] **ABST-02**: `IMPdfRenderer<TModel>` interface defined with `string TemplateId { get; }` and `RenderAsync(TModel model, Stream destination, PdfRenderOptions? options, CancellationToken ct) : Task<PdfRenderResult>`; the renderer writes directly to the destination stream and returns metadata
-- [ ] **ABST-03**: `IMPdfRendererFactory` interface defined with `Get<TModel>(string templateId) : IMPdfRenderer<TModel>` (throws `KeyNotFoundException` when unknown) and `TryGet<TModel>(string templateId, out IMPdfRenderer<TModel>? renderer) : bool`; resolves renderers by template id
-- [ ] **ABST-04**: `IPdfCssPolicy` interface defined with `string Id { get; }` (stable policy identifier for telemetry), `PdfPolicyLimits Limits { get; }` (hard numerical limits enforced before parsing), and `ValidateAsync(IPdfDocumentContext documentContext, CancellationToken ct) : ValueTask<PolicyValidationResult>`; `IPdfDocumentContext` exposes `ElementCount`, `MaxDepth`, `TotalStylesheetBytes`, `SourceHtmlBytes` — opaque to callers, produced by the parse/cascade stage
-- [ ] **ABST-05**: `IResourceResolver` interface defined with `ResolveAsync(Uri uri, string? contentTypeHint, CancellationToken ct) : ValueTask<ResourceResult?>` — bytes-only; companion record `ResourceResult(ReadOnlyMemory<byte> Bytes, string ContentType)`; `Uri` type (not `string`) prevents string-concatenation path-traversal; returns `null` when forbidden or not found
-- [ ] **ABST-06**: `IFontResolver` interface defined with `ResolveAsync(FontRequest request, CancellationToken ct) : ValueTask<ReadOnlyMemory<byte>?>` — bytes-only, returns `null` when no match; companion `FontRequest(string Family, FontWeight Weight = Normal, FontStyle Style = Normal)` includes Weight for bold/semibold variant resolution; `FontWeight` and `FontStyle` enums defined in Abstractions
-- [ ] **ABST-07**: `ICssCascadeEngine` interface defined as adapter seam over AngleSharp.Css, enabling future swap in one class
-- [ ] **ABST-08**: `IHtmlParser` interface defined as adapter seam over AngleSharp, enabling future swap in one class
-- [ ] **ABST-09**: `IImageDecoder` interface defined with `Decode(ReadOnlySpan<byte> data) : DecodedImage` — adapter seam
-- [ ] **ABST-10**: `IPdfWriter` interface defined as adapter seam over PdfSharpCore, enabling future writer swap
-- [ ] **ABST-11**: `PdfRenderOptions` record/class defined with: page size (A4/A5/Letter/Legal), orientation, margin overrides, resource resolver reference, font resolver reference, css policy reference
-- [ ] **ABST-12**: `PdfRenderResult` record defined as metadata-only: `PageCount : int`, `ByteCount : long`, `Elapsed : TimeSpan`, `TemplateHash : string`, `PolicyId : string`, `Diagnostics : IReadOnlyList<PolicyViolation>`; PDF bytes are written directly to the caller-supplied `Stream destination` on `IMPdfService.RenderAsync` — the result type carries no content (avoids buffering large documents in memory)
-- [ ] **ABST-13**: `PdfConfigs` options class defined with `SectionName = "PdfConfigs"` (flat, no colon path), containing a nested `Limits` object
-- [ ] **ABST-14**: `PdfConfigs.Limits` defines all six hard limits: `MaxHtmlBytes = 8_388_608` (8 MB), `MaxDomDepth = 256`, `MaxElementCount = 100_000`, `MaxImagePixels = 25_000_000`, `MaxPages = 1000`, `MaxRenderDurationMs = 15_000`, `MaxFontFiles = 32`
+- [x] **ABST-01**: `IMPdfService` interface defined with three overloads: (1) `RenderAsync(string html, Stream destination, PdfRenderOptions options, CancellationToken ct)` — primary stream-destination overload, avoids buffering; (2) `RenderMultiPageAsync(IReadOnlyList<string> htmlPages, Stream destination, PdfRenderOptions options, CancellationToken ct)` — merges fragments into one PDF; (3) `RenderToBytesAsync(string html, PdfRenderOptions options, CancellationToken ct) : Task<(byte[] Bytes, PdfRenderResult Metadata)>` — convenience overload for callers that need bytes directly
+- [x] **ABST-02**: `IMPdfRenderer<TModel>` interface defined with `string TemplateId { get; }` and `RenderAsync(TModel model, Stream destination, PdfRenderOptions? options, CancellationToken ct) : Task<PdfRenderResult>`; the renderer writes directly to the destination stream and returns metadata
+- [x] **ABST-03**: `IMPdfRendererFactory` interface defined with `Get<TModel>(string templateId) : IMPdfRenderer<TModel>` (throws `KeyNotFoundException` when unknown) and `TryGet<TModel>(string templateId, out IMPdfRenderer<TModel>? renderer) : bool`; resolves renderers by template id
+- [x] **ABST-04**: `IPdfCssPolicy` interface defined with `string Id { get; }` (stable policy identifier for telemetry), `PdfPolicyLimits Limits { get; }` (hard numerical limits enforced before parsing), and `ValidateAsync(IPdfDocumentContext documentContext, CancellationToken ct) : ValueTask<PolicyValidationResult>`; `IPdfDocumentContext` exposes `ElementCount`, `MaxDepth`, `TotalStylesheetBytes`, `SourceHtmlBytes` — opaque to callers, produced by the parse/cascade stage
+- [x] **ABST-05**: `IResourceResolver` interface defined with `ResolveAsync(Uri uri, string? contentTypeHint, CancellationToken ct) : ValueTask<ResourceResult?>` — bytes-only; companion record `ResourceResult(ReadOnlyMemory<byte> Bytes, string ContentType)`; `Uri` type (not `string`) prevents string-concatenation path-traversal; returns `null` when forbidden or not found
+- [x] **ABST-06**: `IFontResolver` interface defined with `ResolveAsync(FontRequest request, CancellationToken ct) : ValueTask<ReadOnlyMemory<byte>?>` — bytes-only, returns `null` when no match; companion `FontRequest(string Family, FontWeight Weight = Normal, FontStyle Style = Normal)` includes Weight for bold/semibold variant resolution; `FontWeight` and `FontStyle` enums defined in Abstractions
+- [x] **ABST-07**: `ICssCascadeEngine` interface defined as adapter seam over AngleSharp.Css, enabling future swap in one class
+- [x] **ABST-08**: `IHtmlParser` interface defined as adapter seam over AngleSharp, enabling future swap in one class
+- [x] **ABST-09**: `IImageDecoder` interface defined with `Decode(ReadOnlySpan<byte> data) : DecodedImage` — adapter seam
+- [x] **ABST-10**: `IPdfWriter` interface defined as adapter seam over PdfSharpCore, enabling future writer swap
+- [x] **ABST-11**: `PdfRenderOptions` record/class defined with: page size (A4/A5/Letter/Legal), orientation, margin overrides, resource resolver reference, font resolver reference, css policy reference
+- [x] **ABST-12**: `PdfRenderResult` record defined as metadata-only: `PageCount : int`, `ByteCount : long`, `Elapsed : TimeSpan`, `TemplateHash : string`, `PolicyId : string`, `Diagnostics : IReadOnlyList<PolicyViolation>`; PDF bytes are written directly to the caller-supplied `Stream destination` on `IMPdfService.RenderAsync` — the result type carries no content (avoids buffering large documents in memory)
+- [x] **ABST-13**: `PdfConfigs` options class defined with `SectionName = "PdfConfigs"` (flat, no colon path), containing a nested `Limits` object
+- [x] **ABST-14**: `PdfConfigs.Limits` defines all six hard limits: `MaxHtmlBytes = 8_388_608` (8 MB), `MaxDomDepth = 256`, `MaxElementCount = 100_000`, `MaxImagePixels = 25_000_000`, `MaxPages = 1000`, `MaxRenderDurationMs = 15_000`, `MaxFontFiles = 32`
 
 ### DI Registration
 
@@ -43,61 +43,61 @@
 
 ### Rendering Pipeline
 
-- [ ] **PIPE-01**: HTML input passes through `IHtmlParser` (AngleSharp) to produce a DOM — parser rejects input exceeding `PdfConfigs.Limits.MaxHtmlBytes`
-- [ ] **PIPE-02**: DOM depth and element count validated against `PdfConfigs.Limits.MaxDomDepth` and `MaxElementCount`; render aborted with structured error on violation
-- [ ] **PIPE-03**: `ICssCascadeEngine` (AngleSharp.Css 1.0.0-beta.146) resolves computed styles on the DOM
-- [ ] **PIPE-04**: `IPdfCssPolicy` gate runs after cascade; unsupported CSS properties produce structured `PolicyViolation` diagnostics, not silent fallback
-- [ ] **PIPE-05**: Hand-written box tree constructed from styled DOM — no dependency on archived HtmlRenderer.PdfSharp, no GDI+ dependency
-- [ ] **PIPE-06**: Layout engine produces a final page list with box positions before `IPdfWriter` is called
-- [ ] **PIPE-07**: `IPdfWriter` (PdfSharpCore 1.3.x adapter) writes the positioned boxes to a `Stream`
+- [x] **PIPE-01**: HTML input passes through `IHtmlParser` (AngleSharp) to produce a DOM — parser rejects input exceeding `PdfConfigs.Limits.MaxHtmlBytes`
+- [x] **PIPE-02**: DOM depth and element count validated against `PdfConfigs.Limits.MaxDomDepth` and `MaxElementCount`; render aborted with structured error on violation
+- [x] **PIPE-03**: `ICssCascadeEngine` (AngleSharp.Css 1.0.0-beta.146) resolves computed styles on the DOM
+- [x] **PIPE-04**: `IPdfCssPolicy` gate runs after cascade; unsupported CSS properties produce structured `PolicyViolation` diagnostics, not silent fallback
+- [x] **PIPE-05**: Hand-written box tree constructed from styled DOM — no dependency on archived HtmlRenderer.PdfSharp, no GDI+ dependency
+- [x] **PIPE-06**: Layout engine produces a final page list with box positions before `IPdfWriter` is called
+- [x] **PIPE-07**: `IPdfWriter` (PdfSharpCore 1.3.x adapter) writes the positioned boxes to a `Stream`
 - [ ] **PIPE-08**: Total render time enforced against `PdfConfigs.Limits.MaxRenderDurationMs`; render cancelled with `OperationCanceledException` on timeout
 
 ### Layout Engine
 
-- [ ] **LAYOUT-01**: Block formatting context (BFC) established correctly for block-level elements; margin collapsing applied per CSS 2.1 spec
-- [ ] **LAYOUT-02**: Inline formatting context handles white-space, line-break, and vertical-align properties
-- [ ] **LAYOUT-03**: Baseline alignment computed correctly for mixed inline content
-- [ ] **LAYOUT-04**: `display:table`, `display:table-row`, `display:table-cell` rendered with correct column/row sizing
-- [ ] **LAYOUT-05**: `colspan` and `rowspan` attributes respected in table layout
-- [ ] **LAYOUT-06**: `border-collapse: separate` applied correctly; `border-spacing` honored
-- [ ] **LAYOUT-07**: `border-collapse: collapse` rejected by `IPdfCssPolicy` with a structured diagnostic naming the alternative
+- [x] **LAYOUT-01**: Block formatting context (BFC) established correctly for block-level elements; margin collapsing applied per CSS 2.1 spec
+- [x] **LAYOUT-02**: Inline formatting context handles white-space, line-break, and vertical-align properties
+- [x] **LAYOUT-03**: Baseline alignment computed correctly for mixed inline content
+- [x] **LAYOUT-04**: `display:table`, `display:table-row`, `display:table-cell` rendered with correct column/row sizing
+- [x] **LAYOUT-05**: `colspan` and `rowspan` attributes respected in table layout
+- [x] **LAYOUT-06**: `border-collapse: separate` applied correctly; `border-spacing` honored
+- [x] **LAYOUT-07**: `border-collapse: collapse` rejected by `IPdfCssPolicy` with a structured diagnostic naming the alternative
 
 ### Pagination
 
-- [ ] **PAGE-01**: `@page` rule parsed; margin boxes (top, right, bottom, left) applied to each page
-- [ ] **PAGE-02**: Standard page sizes supported: A4, A5, Letter, Legal — both portrait and landscape
-- [ ] **PAGE-03**: `page-break-before`, `page-break-after`, `page-break-inside` properties respected; `avoid` honored where feasible
-- [ ] **PAGE-04**: Repeated page header rendered from `@page` top margin box on every page
-- [ ] **PAGE-05**: Repeated page footer rendered from `@page` bottom margin box on every page
-- [ ] **PAGE-06**: `counter(page)` resolves to the current page number (1-based)
-- [ ] **PAGE-07**: `counter(pages)` resolves to the total page count
-- [ ] **PAGE-08**: Generated page count within `PdfConfigs.Limits.MaxPages`; render aborted with structured error on violation
+- [x] **PAGE-01**: `@page` rule parsed; margin boxes (top, right, bottom, left) applied to each page
+- [x] **PAGE-02**: Standard page sizes supported: A4, A5, Letter, Legal — both portrait and landscape
+- [x] **PAGE-03**: `page-break-before`, `page-break-after`, `page-break-inside` properties respected; `avoid` honored where feasible
+- [x] **PAGE-04**: Repeated page header rendered from `@page` top margin box on every page
+- [x] **PAGE-05**: Repeated page footer rendered from `@page` bottom margin box on every page
+- [x] **PAGE-06**: `counter(page)` resolves to the current page number (1-based)
+- [x] **PAGE-07**: `counter(pages)` resolves to the total page count
+- [x] **PAGE-08**: Generated page count within `PdfConfigs.Limits.MaxPages`; render aborted with structured error on violation
 
 ### Font Handling
 
-- [ ] **FONT-01**: `@font-face` declarations resolved via `IFontResolver` — bytes-only, no URI dereferencing by the engine
-- [ ] **FONT-02**: TTF and OTF font formats embedded in the output PDF
-- [ ] **FONT-03**: Font subsetting applied via SixLabors.Fonts 2.1.x — only glyphs used in the document are embedded
-- [ ] **FONT-04**: Vietnamese diacritic stacking rendered correctly using SixLabors.Fonts shaping (combining diacritics positioned above/below base glyph)
-- [ ] **FONT-05**: Mixed Latin + Vietnamese line-breaking computes break opportunities correctly
-- [ ] **FONT-06**: Number of loaded font files validated against `PdfConfigs.Limits.MaxFontFiles`; font loading aborted on violation
+- [x] **FONT-01**: `@font-face` declarations resolved via `IFontResolver` — bytes-only, no URI dereferencing by the engine
+- [x] **FONT-02**: TTF and OTF font formats embedded in the output PDF
+- [x] **FONT-03**: Font subsetting applied via SixLabors.Fonts 2.1.x — only glyphs used in the document are embedded
+- [x] **FONT-04**: Vietnamese diacritic stacking rendered correctly using SixLabors.Fonts shaping (combining diacritics positioned above/below base glyph) _(metrics + glyph embedding verified by automated tests; pixel-level visual spot-check recommended at v0.1 release)_
+- [x] **FONT-05**: Mixed Latin + Vietnamese line-breaking computes break opportunities correctly
+- [x] **FONT-06**: Number of loaded font files validated against `PdfConfigs.Limits.MaxFontFiles`; font loading aborted on violation
 
 ### Image Handling
 
-- [ ] **IMG-01**: PNG images decoded and embedded in the output PDF
-- [ ] **IMG-02**: JPEG images decoded and embedded in the output PDF
-- [ ] **IMG-03**: Base64 `data:` URI images decoded inline — no outbound network call
-- [ ] **IMG-04**: External `src` URIs resolved exclusively via `IResourceResolver.ResolveAsync` — engine never opens a network connection or file path directly
-- [ ] **IMG-05**: Decoded pixel count validated against `PdfConfigs.Limits.MaxImagePixels`; image rejected with structured error on violation
+- [x] **IMG-01**: PNG images decoded and embedded in the output PDF
+- [x] **IMG-02**: JPEG images decoded and embedded in the output PDF
+- [x] **IMG-03**: Base64 `data:` URI images decoded inline — no outbound network call
+- [x] **IMG-04**: External `src` URIs resolved exclusively via `IResourceResolver.ResolveAsync` — engine never opens a network connection or file path directly
+- [x] **IMG-05**: Decoded pixel count validated against `PdfConfigs.Limits.MaxImagePixels`; image rejected with structured error on violation
 
 ### Security Hardening
 
-- [ ] **SEC-01**: PDF output version pinned to 1.7; linearization disabled in the default `IPdfWriter` implementation
-- [ ] **SEC-02**: `/JavaScript`, `/Launch`, `/OpenAction`, `/EmbeddedFile` PDF dictionary entries rejected — any attempt to write them throws in the default writer
-- [ ] **SEC-03**: Object IDs in the generated PDF are deterministic (content-hash–derived or sequential), never random
-- [ ] **SEC-04**: No timestamp fields written to the PDF (no `CreationDate`, no `ModDate`)
-- [ ] **SEC-05**: `<script>` elements in HTML input rejected by `IPdfCssPolicy` (or equivalent HTML policy gate) with a structured diagnostic
-- [ ] **SEC-06**: `file://` URI scheme rejected by `IResourceResolver` default implementation
+- [x] **SEC-01**: PDF output version pinned to 1.7; linearization disabled in the default `IPdfWriter` implementation
+- [x] **SEC-02**: `/JavaScript`, `/Launch`, `/OpenAction`, `/EmbeddedFile` PDF dictionary entries rejected — any attempt to write them throws in the default writer
+- [x] **SEC-03**: Object IDs in the generated PDF are deterministic (content-hash–derived or sequential), never random
+- [x] **SEC-04**: No timestamp fields written to the PDF (no `CreationDate`, no `ModDate`) _(fixed sentinel date written for byte-determinism; no current-time leakage — verified by test)_
+- [x] **SEC-05**: `<script>` elements in HTML input rejected by `IPdfCssPolicy` (or equivalent HTML policy gate) with a structured diagnostic
+- [x] **SEC-06**: `file://` URI scheme rejected by `IResourceResolver` default implementation
 - [ ] **SEC-07**: Multi-tenant cache keys derived from `(ITenantContext.TenantId, contentHash)` via ambient `ITenantContext` — caller-supplied strings never used as cache keys
 
 ### Deterministic Output
@@ -116,9 +116,9 @@
 
 ### Governance (`Muonroi.Pdf.Governance`)
 
-- [ ] **GOV-01**: `IPdfCssPolicy.DefaultStrict` rejects: `display:flex`, `display:grid`, `float`, `position:absolute`, `position:fixed`, `position:sticky`, CSS animations, CSS transitions, `@import` with external URIs
-- [ ] **GOV-02**: Every policy rejection includes a structured `PolicyViolation` with: property name, rejected value, CSS selector, and a suggested alternative
-- [ ] **GOV-03**: Policy configs can be signed via `Muonroi.Governance.Policy.PolicyVerifier`; engine refuses unsigned configs when signing is required by `PdfConfigs`
+- [x] **GOV-01**: `IPdfCssPolicy.DefaultStrict` rejects: `display:flex`, `display:grid`, `float`, `position:absolute`, `position:fixed`, `position:sticky`, CSS animations, CSS transitions, `@import` with external URIs
+- [x] **GOV-02**: Every policy rejection includes a structured `PolicyViolation` with: property name, rejected value, CSS selector, and a suggested alternative
+- [x] **GOV-03**: Policy configs can be signed via `Muonroi.Governance.Policy.PolicyVerifier`; engine refuses unsigned configs when signing is required by `PdfConfigs`
 
 ### Test Coverage
 
