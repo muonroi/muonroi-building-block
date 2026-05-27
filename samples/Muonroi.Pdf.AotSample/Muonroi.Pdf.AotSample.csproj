@@ -21,9 +21,8 @@
     <TrimmerRootDescriptor Include="TrimmerRootDescriptor.xml" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Self-contained font: embedded so the sample renders on Alpine with zero OS fonts
-         (PdfSharpCore 1.3.65 does not query fontconfig). Resource name:
-         Muonroi.Pdf.AotSample.SampleFont.ttf -->
+    <!-- Self-contained font: embedded so the sample renders on Alpine with zero OS fonts.
+         Resource name: Muonroi.Pdf.AotSample.SampleFont.ttf -->
     <EmbeddedResource Include="SampleFont.ttf" />
   </ItemGroup>
   <ItemGroup>

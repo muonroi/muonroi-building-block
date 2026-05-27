@@ -1,5 +1,4 @@
-// SPIKE - throwaway (Phase 8.5 "Owned PDF Writer" spike)
-// Per-stage allocation probe for OwnedPdfWriter vs PdfSharpCoreWriter.
+// Phase 8.5 "Owned PDF Writer" — per-stage allocation probe for OwnedPdfWriter.
 //
 // Measures GC.GetTotalAllocatedBytes(precise:true) around each pipeline stage on the
 // 50 KB stress template. Prints results to test output and asserts SC4 (≤288.96 MB total)
@@ -24,9 +23,8 @@ using Xunit.Abstractions;
 namespace Muonroi.Pdf.Tests.Service;
 
 /// <summary>
-/// Spike allocation probe: runs each pipeline stage independently and captures
-/// <c>GC.GetTotalAllocatedBytes(precise:true)</c> deltas. Not parallelized — belongs to
-/// <see cref="PdfRenderCollection"/> to avoid racing on PdfSharpCore global font state.
+/// Allocation probe: runs each pipeline stage independently and captures
+/// <c>GC.GetTotalAllocatedBytes(precise:true)</c> deltas. Tagged Category=SlowIntegration.
 /// </summary>
 [Collection(PdfRenderCollection.Name)]
 [Trait("Category", "SlowIntegration")]
@@ -41,67 +39,6 @@ public sealed class AllocationProbe
     private readonly ITestOutputHelper _out;
 
     public AllocationProbe(ITestOutputHelper output) => _out = output;
-
-    [Fact]
-    public async Task Probe_PdfSharpCoreWriter_PerStageAllocations()
-    {
-        string html = LoadReferenceTemplate();
-        var options = new PdfRenderOptions();
-
-        using ServiceProvider provider = PdfServiceTestHarness.BuildProvider();
-
-        // Resolve internal engine components via the test project's InternalsVisibleTo access.
-        (double parseMb, IParsedDocument parsed) = await MeasureAsync("parse",
-            async () =>
-            {
-                var parser = new Muonroi.Pdf.Governance.Parsing.AngleSharpHtmlParser();
-                return await parser.ParseAsync(html, CancellationToken.None);
-            });
-
-        (double cascadeMb, IStyledDocument styled) = await MeasureAsync("cascade",
-            async () =>
-            {
-                var cascade = new Muonroi.Pdf.Governance.Cascade.AngleSharpCascadeEngine();
-                return await cascade.CascadeAsync(parsed, null, CancellationToken.None);
-            });
-
-        (double policyMb, _) = await MeasureAsync("policy",
-            async () =>
-            {
-                var policy = new Muonroi.Pdf.Governance.Policies.DefaultStrictPolicy();
-                return await policy.ValidateAsync((Muonroi.Pdf.Abstractions.Policy.IPdfDocumentContext)styled, CancellationToken.None);
-            });
-
-        var fontResolver = provider.GetRequiredService<IFontResolver>();
-        var imageDecoder = provider.GetRequiredService<IImageDecoder>();
-
-        (double layoutMb, IPositionedPageList pageList) = await MeasureAsync("layout",
-            async () =>
-            {
-                var engine = new LayoutEngine();
-                return await engine.LayoutAsync(styled, options, new PdfConfigs.PdfLimits(), fontResolver, null, imageDecoder, CancellationToken.None);
-            });
-
-        var writer = new PdfSharpCoreWriter();
-        (double writeMb, long byteCount) = await MeasureAsync("write (PdfSharpCoreWriter)",
-            async () =>
-            {
-                using var ms = new MemoryStream();
-                return await writer.WriteAsync(pageList, options, ms, CancellationToken.None);
-            });
-
-        double totalMb = parseMb + cascadeMb + policyMb + layoutMb + writeMb;
-
-        _out.WriteLine("=== PdfSharpCoreWriter allocation probe ===");
-        _out.WriteLine($"  parse   : {parseMb,8:F2} MB");
-        _out.WriteLine($"  cascade : {cascadeMb,8:F2} MB");
-        _out.WriteLine($"  policy  : {policyMb,8:F2} MB");
-        _out.WriteLine($"  layout  : {layoutMb,8:F2} MB");
-        _out.WriteLine($"  write   : {writeMb,8:F2} MB");
-        _out.WriteLine($"  TOTAL   : {totalMb,8:F2} MB  (SC4 threshold: {Sc4ThresholdMb} MB)");
-        _out.WriteLine($"  PDF size: {byteCount:N0} bytes");
-        _out.WriteLine(totalMb <= Sc4ThresholdMb ? "  SC4 MET ✓" : $"  SC4 NOT MET (delta: +{totalMb - Sc4ThresholdMb:F2} MB)");
-    }
 
     [Fact]
     public async Task Probe_OwnedPdfWriter_PerStageAllocations()

@@ -135,13 +135,11 @@ internal static class PdfServiceTestHarness
             return RenameFontInternalName(ms.ToArray());
         }
 
-        // PdfSharpCore keeps a process-global FontFactory cache keyed by the font's internal
-        // FontName. The writer tests embed this same TestFont.ttf ("Noto Sans Regular") in full;
-        // our integration render embeds a SUBSET of it — same FontName, different bytes — which
-        // makes PdfSharpCore throw "same key already added" across test classes. Rewriting the
-        // internal name table to a unique, equal-length token gives our copy a distinct FontName
-        // so both coexist in the shared cache. Equal-length replacement preserves every name-table
-        // offset (and the subsetter copies the name table verbatim).
+        // The writer tests embed TestFont.ttf ("Noto Sans Regular") in full; our integration
+        // render embeds a SUBSET of it — same FontName, different bytes. Rewriting the internal
+        // name table to a unique, equal-length token gives our copy a distinct FontName so font
+        // caches in any writer implementation do not confuse the two. Equal-length replacement
+        // preserves every name-table offset (and the subsetter copies the name table verbatim).
         private static byte[] RenameFontInternalName(byte[] font)
         {
             ReadOnlySpan<byte> needle = Encoding.BigEndianUnicode.GetBytes("Noto Sans");

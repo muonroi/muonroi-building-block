@@ -18,9 +18,9 @@ namespace Muonroi.Pdf.Tests.Performance;
 ///   - cold &lt;= 1500 ms
 ///   - warm &lt;= 400 ms
 ///
-/// The test belongs to the non-parallel <see cref="PdfRenderCollection"/> (PdfSharpCore
-/// GlobalFontSettings race) and is tagged Category=SlowIntegration so the pre-publish gate
-/// filter (Category!=SlowIntegration) excludes it from blocking the release pipeline (GATE-02).
+/// The test belongs to <see cref="PdfRenderCollection"/> and is tagged Category=SlowIntegration
+/// so the pre-publish gate filter (Category!=SlowIntegration) excludes it from blocking the
+/// release pipeline (GATE-02).
 ///
 /// Skip via env var: set MUONROI_SKIP_PERF=1 (or =true) to skip this test entirely.
 /// </summary>

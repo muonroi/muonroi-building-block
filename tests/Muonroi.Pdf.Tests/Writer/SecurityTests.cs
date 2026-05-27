@@ -100,7 +100,7 @@ public sealed class SecurityTests
     }
 
     [Fact]
-    public async Task PdfSharpCoreWriter_OutputHeaderIsPdf17()
+    public async Task OwnedPdfWriter_OutputHeaderIsPdf17()
     {
         var pageList = new PositionedPageList();
         var page = new PositionedPage { PageIndex = 0 };
@@ -114,7 +114,7 @@ public sealed class SecurityTests
         pageList.EmbeddedFonts = WriterTestFonts.Embedded();
         pageList.Images = new Dictionary<string, DecodedImage>();
 
-        var writer = new PdfSharpCoreWriter();
+        var writer = new OwnedPdfWriter();
         using var ms = new MemoryStream();
         await writer.WriteAsync(pageList, new PdfRenderOptions(), ms, CancellationToken.None);
         byte[] pdfBytes = ms.ToArray();

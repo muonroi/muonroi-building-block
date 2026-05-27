@@ -9,11 +9,11 @@ using Muonroi.Pdf.Abstractions.Engine;
 using Muonroi.Pdf.Abstractions.Exceptions;
 using Muonroi.Pdf.Abstractions.Policy;
 using Muonroi.Pdf.Abstractions.Telemetry;
+using Muonroi.Pdf.Internal.Font;
 using Muonroi.Pdf.Internal.Layout;
+using Muonroi.Pdf.Internal.Layout.Boxes;
 using Muonroi.Pdf.Internal.Telemetry;
 using Muonroi.Tenancy.Abstractions;
-using PdfSharpCore.Pdf;
-using PdfSharpCore.Pdf.IO;
 
 namespace Muonroi.Pdf.Internal.Service;
 
@@ -168,51 +168,92 @@ internal sealed class MPdfService : IMPdfService
                 0, 0, TimeSpan.Zero, string.Empty, _cssPolicy.Id, Array.Empty<PolicyViolation>());
         }
 
-        var fragments = new List<MemoryStream>(htmlPages.Count);
+        // Layout-level merge: collect each fragment's PositionedPageList, concatenate into a
+        // single combined list, and write one PDF. This avoids any third-party PDF parsing and
+        // works with OwnedPdfWriter's pure-managed structure.
+        var allPages = new PositionedPageList();
+        var allFonts = new Dictionary<string, EmbeddedFontInfo>(StringComparer.Ordinal);
+        var allImages = new Dictionary<string, DecodedImage>(StringComparer.Ordinal);
         var diagnostics = new List<PolicyViolation>();
-        int totalPages = 0;
+        int globalPageIndex = 0;
         TimeSpan totalElapsed = TimeSpan.Zero;
-        try
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(TimeSpan.FromMilliseconds(_configs.Limits.MaxRenderDurationMs * htmlPages.Count));
+
+        var sw = Stopwatch.StartNew();
+
+        foreach (string fragmentHtml in htmlPages)
         {
-            foreach (string fragmentHtml in htmlPages)
+            int htmlBytes = Encoding.UTF8.GetByteCount(fragmentHtml);
+            if (htmlBytes > _configs.Limits.MaxHtmlBytes)
+                throw new PdfInputLimitException("HTML-MAX-BYTES", "MaxHtmlBytes", htmlBytes, _configs.Limits.MaxHtmlBytes);
+
+            IParsedDocument parsed = await _htmlParser.ParseAsync(fragmentHtml, cts.Token).ConfigureAwait(false);
+            IStyledDocument styled = await _cascadeEngine.CascadeAsync(parsed, null, cts.Token).ConfigureAwait(false);
+
+            if (styled is not IPdfDocumentContext documentContext)
+                throw new InvalidOperationException("Styled document must implement IPdfDocumentContext for policy validation.");
+
+            PolicyValidationResult policy = await _cssPolicy.ValidateAsync(documentContext, cts.Token).ConfigureAwait(false);
+            if (!policy.Accepted)
+                throw new PdfPolicyException(policy.Violations);
+
+            if (policy.Violations.Count > 0)
+                diagnostics.AddRange(policy.Violations);
+
+            var layout = new LayoutEngine();
+            IPositionedPageList fragmentPages = await layout.LayoutAsync(
+                styled, options, _configs.Limits, _fontResolver, _resourceResolver, _imageDecoder, cts.Token)
+                .ConfigureAwait(false);
+
+            if (fragmentPages is PositionedPageList pageList)
             {
-                var fragmentStream = new MemoryStream();
-                PdfRenderResult meta = await RenderAsync(fragmentHtml, fragmentStream, options, cancellationToken)
-                    .ConfigureAwait(false);
-                fragmentStream.Position = 0;
-                fragments.Add(fragmentStream);
-                totalPages += meta.PageCount;
-                totalElapsed += meta.Elapsed;
-                if (meta.Diagnostics.Count > 0)
+                foreach (PositionedPage page in pageList.Pages)
                 {
-                    diagnostics.AddRange(meta.Diagnostics);
+                    var reindexed = new PositionedPage { PageIndex = globalPageIndex++ };
+                    reindexed.Elements.AddRange(page.Elements.Select(e => new PositionedElement
+                    {
+                        Source = e.Source,
+                        Position = e.Position,
+                        PageIndex = reindexed.PageIndex
+                    }));
+                    allPages.Pages.Add(reindexed);
+                }
+
+                foreach (EmbeddedFontInfo fi in pageList.EmbeddedFonts)
+                {
+                    if (!allFonts.ContainsKey(fi.Family))
+                        allFonts[fi.Family] = fi;
+                }
+
+                foreach (KeyValuePair<string, DecodedImage> kv in pageList.Images)
+                {
+                    allImages.TryAdd(kv.Key, kv.Value);
                 }
             }
-
-            using var output = new PdfDocument();
-            foreach (MemoryStream fragment in fragments)
-            {
-                fragment.Position = 0;
-                using PdfDocument input = PdfReader.Open(fragment, PdfDocumentOpenMode.Import);
-                foreach (PdfPage page in input.Pages)
-                {
-                    output.AddPage(page);
-                }
-            }
-
-            long startPos = destination.CanSeek ? destination.Position : 0;
-            output.Save(destination, closeStream: false);
-            long byteCount = destination.CanSeek ? destination.Position - startPos : 0;
-
-            return new PdfRenderResult(
-                totalPages, byteCount, totalElapsed, string.Empty, _cssPolicy.Id, diagnostics);
         }
-        finally
-        {
-            foreach (MemoryStream fragment in fragments)
-            {
-                fragment.Dispose();
-            }
-        }
+
+        allPages.EmbeddedFonts = allFonts.Values.ToList();
+        allPages.Images = allImages;
+
+        sw.Stop();
+        totalElapsed = sw.Elapsed;
+
+        using Activity? activity = PdfMetrics.Source.StartActivity("pdf.render.multi", ActivityKind.Internal);
+        string tenantId = _serviceProvider.GetService<ITenantContext>()?.TenantId ?? "unknown";
+        activity?.SetTag(PdfTelemetryNames.TemplateIdTag, options.TemplateId ?? string.Empty);
+        activity?.SetTag(PdfTelemetryNames.TenantIdTag, tenantId);
+
+        long byteCount = await _writer.WriteAsync(allPages, options, destination, cancellationToken).ConfigureAwait(false);
+
+        PdfMetrics.OperationCounter.Add(
+            1, new TagList { { PdfTelemetryNames.TenantIdTag, tenantId }, { "pdf.status", "ok" } });
+        PdfMetrics.PageCountHistogram.Record(
+            allPages.PageCount, new TagList { { PdfTelemetryNames.TenantIdTag, tenantId } });
+        activity?.SetStatus(ActivityStatusCode.Ok);
+
+        return new PdfRenderResult(
+            allPages.PageCount, byteCount, totalElapsed, string.Empty, _cssPolicy.Id, diagnostics);
     }
 }

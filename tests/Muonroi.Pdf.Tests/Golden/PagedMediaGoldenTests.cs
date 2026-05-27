@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Muonroi.Pdf.Tests.Golden;
 
@@ -6,7 +6,7 @@ namespace Muonroi.Pdf.Tests.Golden;
 /// Golden byte-equality tests for the paged-media corpus group: page-break-before/after/inside-avoid,
 /// multi-page overflow flow, @page margins, A5/Letter/Legal page sizes, landscape orientation,
 /// repeating header/footer margin boxes, and counter(page)/counter(pages). Belongs to the non-parallel
-/// <see cref="PdfRenderCollection"/> (PdfSharpCore FontFactory race).
+/// <see cref="PdfRenderCollection"/> (parallelism-safe).
 /// </summary>
 [Collection(PdfRenderCollection.Name)]
 public sealed class PagedMediaGoldenTests

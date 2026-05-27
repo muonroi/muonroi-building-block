@@ -54,7 +54,7 @@ public class PdfRenderBenchmarks
         // IMLog<T> without requiring InternalsVisibleTo access to MPdfService.
         services.AddSingleton(typeof(IMLog<>), typeof(BenchmarkNoOpLog<>));
 
-        // Font resolver: read a system TTF so PdfSharpCore can embed a font without
+        // Font resolver: read a system TTF so OwnedPdfWriter can embed a font without
         // relying on OS font enumeration, which fails in headless/child-process contexts.
         services.AddSingleton<IFontResolver>(new SystemFontResolver());
 
