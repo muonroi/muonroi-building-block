@@ -1,0 +1,6 @@
+* text=auto
+
+# Golden snapshot baselines must survive checkout byte-exact: no CRLF/LF mangling.
+*.pdf binary
+*.ttf binary
+tests/**/TestResources/** -text
