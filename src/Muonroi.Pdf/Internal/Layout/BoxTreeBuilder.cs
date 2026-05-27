@@ -99,6 +99,13 @@ internal sealed class BoxTreeBuilder
             return hrBox;
         }
 
+        // HTML elements that carry implicit text-decoration (UA stylesheet semantics)
+        if (localName == "u")
+            return new InlineBox { Source = node, Text = node.TextContent, TextDecoration = "underline" };
+
+        if (localName is "s" or "strike" or "del")
+            return new InlineBox { Source = node, Text = node.TextContent, TextDecoration = "line-through" };
+
         if (localName == "a")
         {
             var aBox = new InlineBox { Source = node, Text = node.TextContent };
@@ -172,8 +179,13 @@ internal sealed class BoxTreeBuilder
 
         if (box is InlineBox inline)
         {
+            // AngleSharp's GetComputedStyle returns "" (not null) when font-family is not cascaded.
+            // Guard against both null and empty so the box keeps its default "serif" in that case,
+            // which the writer recognises. An empty FontFamily causes OwnedPdfWriter to silently
+            // skip the element (FontFamily guard at line ~671). See BuildChildrenWithListMarker
+            // for the same pattern applied to list markers.
             var fontFamily = style.GetValue("font-family");
-            if (fontFamily != null) inline.FontFamily = fontFamily;
+            if (!string.IsNullOrWhiteSpace(fontFamily)) inline.FontFamily = fontFamily;
             inline.FontSize = fontSize;
 
             var fontWeight = style.GetValue("font-weight");
@@ -211,9 +223,11 @@ internal sealed class BoxTreeBuilder
                 }
             }
 
-            // text-decoration
+            // text-decoration: only overwrite if the CSS cascade provides a non-empty value.
+            // An empty string from AngleSharp's GetComputedStyle must not clear a value that was
+            // set explicitly by CreateBox (e.g. for <u>, <s>, <del> elements).
             var textDecoration = style.GetValue("text-decoration");
-            if (textDecoration != null)
+            if (!string.IsNullOrEmpty(textDecoration))
                 inline.TextDecoration = textDecoration.Trim().ToLowerInvariant();
         }
         else if (box is TableBox table)
@@ -323,13 +337,36 @@ internal sealed class BoxTreeBuilder
             Source = liNode
         };
 
-        // Build children, then prepend the marker
+        // Build children, then combine marker + children into a single inline flow.
+        // If we add marker and children as separate BoxNode siblings of the BlockBox, each
+        // InlineBox child is dispatched by BlockLayoutEngine as a separate inline-layout call
+        // (separate line). Wrapping them all in one AnonymousBox forces InlineLayoutEngine to
+        // lay them out together on the same line: "• Item A".
         var raw = CollectChildren(liNode);
         var normalized = NormalizeChildren(raw);
 
-        // Prepend marker: insert at the front of the inline flow
-        liBox.Children.Add(markerBox);
-        liBox.Children.AddRange(normalized);
+        // Check whether the children contain any block-level boxes (e.g. nested <p>/<div>).
+        // If so, put just the marker into an AnonymousBox and keep the block children as-is,
+        // so block structure is preserved. For the common case (plain text <li>) all children
+        // are inline and should share the marker's row.
+        bool hasBlockChild = normalized.Any(n => n is BlockBox or AnonymousBox or TableBox);
+        if (hasBlockChild)
+        {
+            // Marker gets its own anonymous row above the block children — acceptable fallback.
+            var markerAnon = new AnonymousBox();
+            markerAnon.Children.Add(markerBox);
+            liBox.Children.Add(markerAnon);
+            liBox.Children.AddRange(normalized);
+        }
+        else
+        {
+            // All-inline case: combine marker + inline children into one AnonymousBox so they
+            // share a single line in InlineLayoutEngine.
+            var inlineRow = new AnonymousBox();
+            inlineRow.Children.Add(markerBox);
+            inlineRow.Children.AddRange(normalized);
+            liBox.Children.Add(inlineRow);
+        }
     }
 
     private string DetermineListMarker(IStyledNode liNode)

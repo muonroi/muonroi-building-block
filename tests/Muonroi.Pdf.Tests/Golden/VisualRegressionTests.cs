@@ -342,6 +342,121 @@ public sealed class VisualRegressionTests
     }
 
     /// <summary>
+    /// SC1 guard (Bug E): the text-decoration-underline case must produce a filled rectangle
+    /// operator (re ... f) OUTSIDE a BT/ET text block, at the row where the underlined text sits.
+    /// Before the fix, <c>InlineBox.TextDecoration</c> was never set for &lt;u&gt; elements
+    /// (AngleSharp returned "" for text-decoration on &lt;u&gt;, and empty FontFamily caused the
+    /// box to be skipped entirely), so no decoration rule was ever drawn.
+    ///
+    /// The guard decompresses the content stream and looks for the pattern:
+    ///   ET ... re ... f ... BT
+    /// which is the underline/strikethrough rect drawn between two text blocks.
+    /// </summary>
+    [Fact]
+    public async Task TextDecorationUnderline_ContentStream_ContainsDecorationRect()
+    {
+        const string html =
+            "<html><head><style>" +
+            "@font-face{font-family:serif;src:url(test.ttf);}p{margin:0;}" +
+            "</style></head>" +
+            "<body><p><u>Underlined text rendered with decoration rule.</u></p></body></html>";
+
+        byte[] pdfBytes = await GoldenPdf.RenderAsync(html, new PdfRenderOptions());
+        string decompressed = DecompressAllContentStreams(pdfBytes);
+
+        // After rendering underlined text the writer emits ET, then a `re` rect + `f` fill for the
+        // decoration line, then BT to resume text. Assert the pattern appears in the stream.
+        // We look for a filled rect (re followed by f) that appears between ET and BT.
+        bool hasDecorationRect = Regex.IsMatch(
+            decompressed,
+            @"ET[\s\S]*?\bre\b[\s\S]*?\bf\b[\s\S]*?BT",
+            RegexOptions.None);
+
+        Assert.True(
+            hasDecorationRect,
+            "SC1: text-decoration-underline content stream has no 'ET ... re ... f ... BT' decoration rect. " +
+            "The underline rule must be drawn for <u> elements. " +
+            "Check BoxTreeBuilder.CreateBox handles <u> → InlineBox.TextDecoration = \"underline\", " +
+            "and that FontFamily is not cleared to empty by ResolveCssProperties.");
+    }
+
+    /// <summary>
+    /// SC2 guard (Bug F): for the list-unordered case the bullet marker must share the same
+    /// PDF Y coordinate row as the item text that follows it on the same line.
+    ///
+    /// Before the fix, the marker was a separate child of the <c>BlockBox</c> and
+    /// <c>BlockLayoutEngine</c> dispatched it as an independent inline-layout call, placing it
+    /// on its own line above the item text.  After the fix, marker + text are wrapped in one
+    /// <c>AnonymousBox</c> and laid out together by <c>InlineLayoutEngine</c>, so they share one Tm Y.
+    ///
+    /// The guard parses <c>1 0 0 1 X Y Tm</c> operators and groups them by Y (rounded to 0.1 pt).
+    /// Each group must contain at least two Tj calls (bullet + at least one word), verifying
+    /// that marker and text are co-located on the same row.
+    /// </summary>
+    [Fact]
+    public async Task ListMarker_SharesRowWithItemText()
+    {
+        const string html =
+            "<html><head><style>" +
+            "@font-face{font-family:serif;src:url(test.ttf);}ul{margin:0;padding-left:20px;}" +
+            "</style></head>" +
+            "<body><ul><li>Item A</li><li>Item B</li><li>Item C</li></ul></body></html>";
+
+        byte[] pdfBytes = await GoldenPdf.RenderAsync(html, new PdfRenderOptions());
+        string decompressed = DecompressAllContentStreams(pdfBytes);
+
+        // Parse Tm/Tj pairs — same approach as ContentStream_NoDuplicateHexTjStringsOnSameLine.
+        var tmPattern = new Regex(@"1 0 0 1 [\d.+\-]+ ([\d.+\-]+) Tm");
+        var hexTjPattern = new Regex(@"<([0-9A-Fa-f]{4,})>\s*Tj");
+
+        var lineStrings = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        int pos = 0;
+        string? currentYKey = null;
+
+        while (pos < decompressed.Length)
+        {
+            var tmMatch = tmPattern.Match(decompressed, pos);
+            var tjMatch = hexTjPattern.Match(decompressed, pos);
+
+            if (!tmMatch.Success && !tjMatch.Success) break;
+
+            int tmIdx = tmMatch.Success ? tmMatch.Index : int.MaxValue;
+            int tjIdx = tjMatch.Success ? tjMatch.Index : int.MaxValue;
+
+            if (tmIdx < tjIdx)
+            {
+                if (double.TryParse(tmMatch.Groups[1].Value,
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out double y))
+                    currentYKey = y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                pos = tmMatch.Index + tmMatch.Length;
+            }
+            else
+            {
+                if (currentYKey != null)
+                {
+                    if (!lineStrings.TryGetValue(currentYKey, out var list))
+                        lineStrings[currentYKey] = list = new List<string>();
+                    list.Add(tjMatch.Groups[1].Value.ToUpperInvariant());
+                }
+                pos = tjMatch.Index + tjMatch.Length;
+            }
+        }
+
+        // Each of the 3 list items must produce a row with at least 2 Tj calls (bullet + word).
+        // If the bullet is on its own row (Bug F), that row has exactly 1 Tj and the word
+        // is on a separate row — neither row has 2+ Tj calls.
+        int rowsWithMultipleTj = lineStrings.Values.Count(v => v.Count >= 2);
+
+        Assert.True(
+            rowsWithMultipleTj >= 3,
+            $"SC2: expected at least 3 rows each with 2+ Tj calls (bullet + item text on same line), " +
+            $"but found {rowsWithMultipleTj} such rows. " +
+            "Bug F: list marker is on its own line above the item text. " +
+            "Check BoxTreeBuilder.BuildChildrenWithListMarker wraps marker + children in one AnonymousBox.");
+    }
+
+    /// <summary>
     /// Extracts and decompresses all FlateDecode content streams from a PDF byte array.
     /// Looks for the pattern: &lt;&lt; ... /Filter /FlateDecode ... &gt;&gt; stream [LF] [compressed bytes] endstream
     /// </summary>
