@@ -9,12 +9,13 @@ internal sealed record EmbeddedFontInfo(
     ReadOnlyMemory<byte> SubsetBytes,
     IReadOnlySet<int> UsedCodepoints,
     IReadOnlyDictionary<ushort, ushort> OldToNewGid,
-    IReadOnlyList<ushort> SortedGids)
+    IReadOnlyList<ushort> SortedGids,
+    IReadOnlyDictionary<int, ushort> CpToNewGid)
 {
     /// <summary>
     /// Backward-compat constructor for callers that don't have GID mapping data
     /// (e.g. test helpers that create EmbeddedFontInfo directly without going through FontPipeline).
-    /// OldToNewGid and SortedGids will be empty.
+    /// OldToNewGid, SortedGids, and CpToNewGid will be empty.
     /// </summary>
     public EmbeddedFontInfo(
         string family,
@@ -23,7 +24,8 @@ internal sealed record EmbeddedFontInfo(
         ReadOnlyMemory<byte> subsetBytes,
         IReadOnlySet<int> usedCodepoints)
         : this(family, weight, style, subsetBytes, usedCodepoints,
-               new Dictionary<ushort, ushort>(), Array.Empty<ushort>())
+               new Dictionary<ushort, ushort>(), Array.Empty<ushort>(),
+               new Dictionary<int, ushort>())
     {
     }
 }

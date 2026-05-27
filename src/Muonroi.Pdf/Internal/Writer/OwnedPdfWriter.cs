@@ -108,8 +108,15 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             }
         }
 
-        // Build cp→newGid map per family (from OldToNewGid + cmap in subsetBytes)
-        var cpToNewGidMap = BuildCpToNewGidMaps(fontResources);
+        // Build cp→newGid map per family from the authoritative mapping threaded out of the subsetter.
+        // This map was computed at subsetting time (BuildCmapTable) and is correct by construction —
+        // no post-hoc cmap parse needed or attempted.
+        var cpToNewGidMap = new Dictionary<string, Dictionary<int, ushort>>(StringComparer.Ordinal);
+        foreach ((_, _, EmbeddedFontInfo fi) in fontResources)
+        {
+            if (!cpToNewGidMap.ContainsKey(fi.Family))
+                cpToNewGidMap[fi.Family] = new Dictionary<int, ushort>(fi.CpToNewGid);
+        }
 
         // ── Emit objects ────────────────────────────────────────────────────
 
@@ -355,10 +362,9 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         // Build bfchar entries: newGid → Unicode codepoint
         var entries = new List<(ushort NewGid, int Cp)>();
 
-        if (cpToNewGid != null && fi.OldToNewGid.Count > 0)
+        if (cpToNewGid != null && cpToNewGid.Count > 0)
         {
-            // Build reverse map: newGid → cp (via oldGid → newGid and cp → oldGid chain)
-            // cpToNewGid is cp → newGid (already composed through OldToNewGid)
+            // Build reverse map newGid → cp from the authoritative cp→newGid mapping.
             var newGidToCp = new Dictionary<ushort, int>();
             foreach ((int cp, ushort newGid) in cpToNewGid)
             {
@@ -371,19 +377,6 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 if (newGidToCp.TryGetValue(newGid, out int cp))
                     entries.Add((newGid, cp));
             }
-        }
-        else if (cpToNewGid != null)
-        {
-            // Fallback: just use cpToNewGid directly
-            var newGidToCp = new Dictionary<ushort, int>();
-            foreach ((int cp, ushort newGid) in cpToNewGid)
-            {
-                if (!newGidToCp.ContainsKey(newGid))
-                    newGidToCp[newGid] = cp;
-            }
-            foreach ((ushort newGid, int cp) in newGidToCp)
-                entries.Add((newGid, cp));
-            entries.Sort((a, b) => a.NewGid.CompareTo(b.NewGid));
         }
 
         var sb = new StringBuilder();
@@ -669,7 +662,7 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 continue;
             }
 
-            if (el.Source is not InlineBox inline || string.IsNullOrEmpty(inline.Text))
+            if (el.Source is not InlineBox inline || string.IsNullOrEmpty(inline.Text) || string.IsNullOrEmpty(inline.FontFamily))
                 continue;
 
             // Switch font if needed
@@ -719,10 +712,15 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             }
             else
             {
-                // Fallback: emit as literal string (Latin-1, for fonts with empty cpMap)
-                sb.Append('(');
-                AppendPdfStringLatin1(sb, inline.Text);
-                sb.AppendLine(") Tj");
+                // A missing or empty cpMap means the subsetter did not produce a cp→newGid mapping
+                // for this font family. Under Identity-H encoding, emitting a Latin-1 literal would
+                // be interpreted as 2-byte glyph IDs and produce nothing visible (silent blank output).
+                // This violates the project's fail-loud rule — throw instead.
+                throw new PdfFormatException(
+                    "FONT-GID-MAP-MISSING",
+                    $"Font GID map missing or empty for family '{inline.FontFamily}'. " +
+                    "Ensure the font is declared in @font-face, the font file is resolvable, " +
+                    "and the subsetter produced a valid cp→newGid mapping.");
             }
 
             // text-decoration: draw underline or strikethrough outside BT/ET
@@ -780,144 +778,6 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         using (var zlib = new ZLibStream(output, level, leaveOpen: true))
             zlib.Write(data, 0, data.Length);
         return output.ToArray();
-    }
-
-    // ── helper: cp → newGid maps ─────────────────────────────────────────────
-
-    private static Dictionary<string, Dictionary<int, ushort>> BuildCpToNewGidMaps(
-        List<(string ResourceName, FontObjectIds Ids, EmbeddedFontInfo Info)> fontResources)
-    {
-        var result = new Dictionary<string, Dictionary<int, ushort>>(StringComparer.Ordinal);
-        foreach ((_, _, EmbeddedFontInfo fi) in fontResources)
-        {
-            if (result.ContainsKey(fi.Family)) continue;
-
-            if (fi.OldToNewGid.Count > 0)
-            {
-                // Parse cmap of subset font to get cp→oldGid, then compose with oldGid→newGid
-                var cpToOldGid = BuildCpToOldGidMap(fi.SubsetBytes.Span, fi.OldToNewGid);
-                var cpToNewGid = new Dictionary<int, ushort>(cpToOldGid.Count);
-                foreach ((int cp, ushort oldGid) in cpToOldGid)
-                {
-                    if (fi.OldToNewGid.TryGetValue(oldGid, out ushort newGid))
-                        cpToNewGid[cp] = newGid;
-                }
-                result[fi.Family] = cpToNewGid;
-            }
-            else
-            {
-                // Fallback: parse subset cmap and treat GIDs as new GIDs (identity mapping)
-                var cpToGid = BuildCpToGidFromSubset(fi.SubsetBytes.Span);
-                result[fi.Family] = cpToGid;
-            }
-        }
-        return result;
-    }
-
-    // Parse the subset font's cmap to get cp → old GID mapping.
-    // We pass in the OldToNewGid so we can validate bounds.
-    private static Dictionary<int, ushort> BuildCpToOldGidMap(
-        ReadOnlySpan<byte> font,
-        IReadOnlyDictionary<ushort, ushort> oldToNewGid)
-    {
-        var map = new Dictionary<int, ushort>();
-        if (font.Length < 12) return map;
-
-        int cmapOff = FindCmapOffset(font);
-        if (cmapOff < 0) return map;
-
-        int fmt4Off = FindFormat4Subtable(font, cmapOff);
-        if (fmt4Off < 0) return map;
-
-        ParseFormat4ToMap(font, fmt4Off, map);
-        return map;
-    }
-
-    private static Dictionary<int, ushort> BuildCpToGidFromSubset(ReadOnlySpan<byte> font)
-    {
-        var map = new Dictionary<int, ushort>();
-        if (font.Length < 12) return map;
-
-        int cmapOff = FindCmapOffset(font);
-        if (cmapOff < 0) return map;
-
-        int fmt4Off = FindFormat4Subtable(font, cmapOff);
-        if (fmt4Off < 0) return map;
-
-        ParseFormat4ToMap(font, fmt4Off, map);
-        return map;
-    }
-
-    private static int FindCmapOffset(ReadOnlySpan<byte> font)
-    {
-        if (font.Length < 12) return -1;
-        ushort numTables = BinaryPrimitives.ReadUInt16BigEndian(font.Slice(4, 2));
-        for (int i = 0; i < numTables; i++)
-        {
-            int rec = 12 + i * 16;
-            if (rec + 16 > font.Length) break;
-            string tag = Encoding.ASCII.GetString(font.Slice(rec, 4));
-            if (tag == "cmap")
-                return (int)BinaryPrimitives.ReadUInt32BigEndian(font.Slice(rec + 8, 4));
-        }
-        return -1;
-    }
-
-    private static int FindFormat4Subtable(ReadOnlySpan<byte> font, int cmapBase)
-    {
-        if (cmapBase + 4 > font.Length) return -1;
-        ushort numSubtables = BinaryPrimitives.ReadUInt16BigEndian(font.Slice(cmapBase + 2, 2));
-        int fmt4Off = -1;
-        for (int i = 0; i < numSubtables; i++)
-        {
-            int er = cmapBase + 4 + i * 8;
-            if (er + 8 > font.Length) break;
-            uint subOff = BinaryPrimitives.ReadUInt32BigEndian(font.Slice(er + 4, 4));
-            int subAbs = cmapBase + (int)subOff;
-            if (subAbs + 2 > font.Length) continue;
-            ushort fmt = BinaryPrimitives.ReadUInt16BigEndian(font.Slice(subAbs, 2));
-            if (fmt == 4)
-            {
-                fmt4Off = subAbs;
-                ushort pid = BinaryPrimitives.ReadUInt16BigEndian(font.Slice(er, 2));
-                ushort eid = BinaryPrimitives.ReadUInt16BigEndian(font.Slice(er + 2, 2));
-                if (pid == 3 && eid == 1) break; // prefer Windows BMP
-            }
-        }
-        return fmt4Off;
-    }
-
-    private static void ParseFormat4ToMap(ReadOnlySpan<byte> font, int fmt4Off, Dictionary<int, ushort> map)
-    {
-        int segCountX2 = BinaryPrimitives.ReadUInt16BigEndian(font.Slice(fmt4Off + 6, 2));
-        int segCount = segCountX2 / 2;
-        int endOff = fmt4Off + 14;
-        int startOff = endOff + segCountX2 + 2;
-        int deltaOff = startOff + segCountX2;
-        int rangeOff = deltaOff + segCountX2;
-
-        for (int s = 0; s < segCount - 1; s++) // skip terminator
-        {
-            ushort end = BinaryPrimitives.ReadUInt16BigEndian(font.Slice(endOff + s * 2, 2));
-            ushort start = BinaryPrimitives.ReadUInt16BigEndian(font.Slice(startOff + s * 2, 2));
-            short delta = (short)BinaryPrimitives.ReadUInt16BigEndian(font.Slice(deltaOff + s * 2, 2));
-            ushort range = BinaryPrimitives.ReadUInt16BigEndian(font.Slice(rangeOff + s * 2, 2));
-
-            for (int cp = start; cp <= end; cp++)
-            {
-                ushort gid;
-                if (range == 0)
-                    gid = (ushort)((cp + delta) & 0xFFFF);
-                else
-                {
-                    int idx = rangeOff + s * 2 + range + (cp - start) * 2;
-                    if (idx + 2 > font.Length) continue;
-                    ushort raw = BinaryPrimitives.ReadUInt16BigEndian(font.Slice(idx, 2));
-                    gid = raw == 0 ? (ushort)0 : (ushort)((raw + delta) & 0xFFFF);
-                }
-                if (gid != 0) map[cp] = gid;
-            }
-        }
     }
 
     // ── helper: font metrics ─────────────────────────────────────────────────

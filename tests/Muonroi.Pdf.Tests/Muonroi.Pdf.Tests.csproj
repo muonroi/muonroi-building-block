@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="PDFtoImage" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="TestResources/**" />

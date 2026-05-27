@@ -9,10 +9,18 @@ namespace Muonroi.Pdf.Internal.Font;
 /// computed during subsetting, which Plan 02 (CID font embedding) needs to emit /W arrays and
 /// 2-byte GID content streams without a redundant cmap parse.
 /// </summary>
+/// <param name="SubsetBytes">The subset TTF bytes.</param>
+/// <param name="OldToNewGid">Maps original GID → renumbered GID in the subset font.</param>
+/// <param name="SortedGids">Renumbered GIDs in ascending order (for /W array generation).</param>
+/// <param name="CpToNewGid">
+/// Authoritative codepoint → new GID mapping built at subsetting time.
+/// The writer uses this directly to emit 2-byte GID hex strings; no post-hoc cmap parse needed.
+/// </param>
 internal sealed record FontSubsetResult(
     ReadOnlyMemory<byte> SubsetBytes,
     IReadOnlyDictionary<ushort, ushort> OldToNewGid,
-    IReadOnlyList<ushort> SortedGids);
+    IReadOnlyList<ushort> SortedGids,
+    IReadOnlyDictionary<int, ushort> CpToNewGid);
 
 internal sealed class TrueTypeFontSubsetter
 {
@@ -71,7 +79,7 @@ internal sealed class TrueTypeFontSubsetter
 
         // --- Step 4: composite glyph closure ---
         if (!tables.TryGetValue("loca", out var locaTable) || !tables.TryGetValue("glyf", out _))
-            return new FontSubsetResult(fontBytes, new Dictionary<ushort, ushort>(), Array.Empty<ushort>()); // malformed; pass through
+            return new FontSubsetResult(fontBytes, new Dictionary<ushort, ushort>(), Array.Empty<ushort>(), new Dictionary<int, ushort>()); // malformed; pass through
 
         int indexToLocFormat = ReadIndexToLocFormat(fontBytes.Span, tables);
         ExpandCompositeGlyphs(fontBytes.Span, tables, usedGids, indexToLocFormat);
@@ -285,7 +293,7 @@ internal sealed class TrueTypeFontSubsetter
         byte[] glyfData = BuildGlyfTable(src, srcTables, sortedGids, oldToNew, srcLocFormat);
         byte[] locaData = BuildLocaTable(src, srcTables, sortedGids, srcLocFormat); // long format
         byte[] hmtxData = BuildHmtxTable(src, srcTables, sortedGids);
-        byte[] cmapData = BuildCmapTable(src, srcTables, usedCodepoints, oldToNew);
+        (byte[] cmapData, IReadOnlyDictionary<int, ushort> cpToNewGid) = BuildCmapTable(src, srcTables, usedCodepoints, oldToNew);
         byte[] maxpData = PatchMaxp(src, srcTables, (ushort)newGlyphCount);
         byte[] headData = PatchHead(src, srcTables); // checksumAdjustment set at end
 
@@ -375,7 +383,8 @@ internal sealed class TrueTypeFontSubsetter
         return new FontSubsetResult(
             new ReadOnlyMemory<byte>(output),
             oldToNew,
-            sortedGids);
+            sortedGids,
+            cpToNewGid);
     }
 
     // ── table builders ────────────────────────────────────────────────────────
@@ -537,13 +546,15 @@ internal sealed class TrueTypeFontSubsetter
         return result;
     }
 
-    private static byte[] BuildCmapTable(ReadOnlySpan<byte> src,
+    private static (byte[] CmapBytes, IReadOnlyDictionary<int, ushort> CpToNewGid) BuildCmapTable(
+        ReadOnlySpan<byte> src,
         Dictionary<string, (uint offset, uint length)> tables,
         IReadOnlySet<int> usedCodepoints,
         Dictionary<ushort, ushort> oldToNew)
     {
-        // Build minimal Format 4 cmap with remapped GIDs
-        // Collect (codepoint, newGid) pairs for codepoints that mapped in original
+        // Build minimal Format 4 cmap with remapped GIDs.
+        // Also return the authoritative cp→newGid map so callers can emit correct GID hex streams
+        // without a post-hoc cmap parse.
         var pairs = new List<(ushort cp, ushort gid)>();
         if (tables.TryGetValue("cmap", out var cmap))
         {
@@ -644,7 +655,12 @@ internal sealed class TrueTypeFontSubsetter
         foreach (var seg in segments) WriteU16((ushort)seg.delta);
         foreach (var seg in segments) WriteU16(seg.rangeOff);
 
-        return ms.ToArray();
+        // Build the authoritative cp→newGid dictionary from the sorted pairs
+        var cpToNewGid = new Dictionary<int, ushort>(pairs.Count);
+        foreach ((ushort cp, ushort gid) in pairs)
+            cpToNewGid[cp] = gid;
+
+        return (ms.ToArray(), cpToNewGid);
     }
 
     private static byte[] PatchMaxp(ReadOnlySpan<byte> src,

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Muonroi.Pdf.Abstractions;
 using Muonroi.Pdf.Internal.Font;
 
@@ -13,7 +14,11 @@ internal static class WriterTestFonts
 {
     public const string Family = "WriterTestFont";
 
-    private static byte[] LoadTestFontBytes()
+    /// <summary>Printable ASCII (0x20–0x7E) used as the default codepoint set for test subsets.</summary>
+    public static IReadOnlySet<int> PrintableAscii =>
+        new HashSet<int>(Enumerable.Range(0x20, 0x7F - 0x20));
+
+    public static byte[] LoadTestFontBytesRaw()
     {
         using System.IO.Stream? stream = typeof(WriterTestFonts).Assembly
             .GetManifestResourceStream("Muonroi.Pdf.Tests.TestResources.TestFont.ttf")
@@ -23,12 +28,23 @@ internal static class WriterTestFonts
         return ms.ToArray();
     }
 
-    public static IReadOnlyList<EmbeddedFontInfo> Embedded()
+    /// <summary>
+    /// Returns a properly subsetted <see cref="EmbeddedFontInfo"/> for all printable ASCII codepoints.
+    /// The subset is run through <see cref="TrueTypeFontSubsetter"/> so that <c>CpToNewGid</c> is
+    /// populated — required by <see cref="Muonroi.Pdf.Internal.Writer.OwnedPdfWriter"/> to emit correct
+    /// 2-byte GID hex strings under Identity-H encoding.
+    /// </summary>
+    public static IReadOnlyList<EmbeddedFontInfo> Embedded(IReadOnlySet<int>? codepoints = null)
     {
-        byte[] bytes = LoadTestFontBytes();
+        IReadOnlySet<int> cp = codepoints ?? PrintableAscii;
+        byte[] rawBytes = LoadTestFontBytesRaw();
+        var subsetter = new TrueTypeFontSubsetter();
+        FontSubsetResult result = subsetter.Subset(rawBytes, cp);
         return new List<EmbeddedFontInfo>
         {
-            new(Family, FontWeight.Normal, FontStyle.Normal, bytes, new HashSet<int>())
+            new(Family, FontWeight.Normal, FontStyle.Normal,
+                result.SubsetBytes, cp,
+                result.OldToNewGid, result.SortedGids, result.CpToNewGid)
         };
     }
 }
