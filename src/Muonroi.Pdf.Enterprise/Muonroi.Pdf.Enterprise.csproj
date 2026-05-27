@@ -4,6 +4,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsCommercialPackage>true</IsCommercialPackage>
+    <PackageLicenseFile>LICENSE-COMMERCIAL</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <Description>Commercial enterprise extension for Muonroi.Pdf. Empty stub — locks namespace and CI assembly hash pipeline.</Description>
   </PropertyGroup>
 </Project>
