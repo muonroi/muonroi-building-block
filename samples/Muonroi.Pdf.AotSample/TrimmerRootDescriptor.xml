@@ -1,0 +1,9 @@
+<linker>
+  <!-- AngleSharp.Css 1.0.0-beta.147 uses internal reflection for CSS property type registration.
+       No IsAotCompatible metadata exists for AngleSharp or AngleSharp.Css.
+       preserve="all" keeps these types at link time, preventing runtime MissingMethodException
+       when the CSS cascade engine resolves property types via reflection.
+       Re-evaluate when AngleSharp.Css ships a trim-safe release with [DynamicallyAccessedMembers]. -->
+  <assembly fullname="AngleSharp.Css" preserve="all" />
+  <assembly fullname="AngleSharp" preserve="all" />
+</linker>
