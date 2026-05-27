@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>Muonroi.Pdf.DesignSystem.Default</PackageId>
+    <IsPackable>false</IsPackable>
+    <Description>Default HTML/CSS design system templates for Muonroi PDF rendering — invoice, receipt, and report.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\**\*.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
+  </ItemGroup>
+</Project>
