@@ -61,6 +61,9 @@ a license violation regardless of source visibility.
 - Muonroi.BuildingBlock.Shared
 - Muonroi.Logging
 - Muonroi.Logging.Abstractions
+- Muonroi.Pdf.Abstractions
+- Muonroi.Pdf
+- Muonroi.Pdf.Governance
 
 ## Commercial Packages (Muonroi Commercial License — published on nuget.org)
 
@@ -83,3 +86,4 @@ a license violation regardless of source visibility.
 - Muonroi.RuleEngine.Runtime.Web
 - Muonroi.RuleEngine.DecisionTable.Web
 - Muonroi.UiEngine.Catalog
+- Muonroi.Pdf.Enterprise
