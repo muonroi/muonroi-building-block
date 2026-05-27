@@ -55,7 +55,7 @@ public sealed class DeterminismTests
 
     private static async Task<byte[]> RenderAsync(PositionedPageList pageList, PdfRenderOptions options)
     {
-        var writer = new PdfSharpCoreWriter();
+        var writer = new OwnedPdfWriter();
         using var ms = new MemoryStream();
         await writer.WriteAsync(pageList, options, ms, CancellationToken.None);
         return ms.ToArray();
