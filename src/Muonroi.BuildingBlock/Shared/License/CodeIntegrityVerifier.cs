@@ -1,4 +1,4 @@
-// Stub file â€” InjectAssemblyHash.ps1 hardcodes this path to inject the ExpectedHash constant.
+// Stub file Ã¢â‚¬â€ InjectAssemblyHash.ps1 hardcodes this path to inject the ExpectedHash constant.
 // Deep generalization of CodeIntegrityVerifier to Pdf/Enterprise assemblies is deferred to Phase 8/Enterprise.
 // See OSS-BOUNDARY.md and 07-05-SUMMARY.md for context.
 

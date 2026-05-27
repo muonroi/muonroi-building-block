@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Scriban" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.AspNetCore\Muonroi.AspNetCore.csproj" />
