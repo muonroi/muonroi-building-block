@@ -164,8 +164,10 @@ internal sealed class BoxTreeBuilder
         var heightVal = style.GetValue("height");
         box.Height = heightVal is null or "auto" ? -1f : ParseLength(heightVal, fontSize);
 
+        // AngleSharp's GetPropertyValue returns "" (not null) for non-cascaded properties.
+        // Guard with IsNullOrEmpty so an empty computed value never clobbers a default/inherited one.
         var displayVal = style.GetValue("display");
-        if (displayVal != null)
+        if (!string.IsNullOrEmpty(displayVal))
             box.Display = displayVal.ToLowerInvariant();
 
         box.PageBreakBefore = style.GetValue("page-break-before");
@@ -174,7 +176,7 @@ internal sealed class BoxTreeBuilder
 
         // text-align is an inherited property — live on BoxNode base
         var textAlignVal = style.GetValue("text-align");
-        if (textAlignVal != null)
+        if (!string.IsNullOrWhiteSpace(textAlignVal))
             box.TextAlign = textAlignVal.Trim().ToLowerInvariant();
 
         if (box is InlineBox inline)
@@ -198,7 +200,7 @@ internal sealed class BoxTreeBuilder
             inline.Color = style.GetValue("color");
 
             var verticalAlign = style.GetValue("vertical-align");
-            if (verticalAlign != null) inline.VerticalAlign = verticalAlign;
+            if (!string.IsNullOrWhiteSpace(verticalAlign)) inline.VerticalAlign = verticalAlign;
 
             // line-height: normal/null → 1.0f; unitless → factor; px → factor relative to fontSize; % → /100
             var lineHeightVal = style.GetValue("line-height");
@@ -233,7 +235,7 @@ internal sealed class BoxTreeBuilder
         else if (box is TableBox table)
         {
             var tableLayout = style.GetValue("table-layout");
-            if (tableLayout != null) table.TableLayout = tableLayout;
+            if (!string.IsNullOrWhiteSpace(tableLayout)) table.TableLayout = tableLayout;
 
             table.BorderSpacing = ParseLength(style.GetValue("border-spacing"), fontSize);
         }
