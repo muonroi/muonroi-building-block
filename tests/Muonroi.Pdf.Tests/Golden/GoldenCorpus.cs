@@ -138,11 +138,90 @@ internal static class GoldenCorpus
                 "<tr><td>x</td><td>y</td></tr></table>")),
     };
 
+    private static string LongFlow(int paragraphs)
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int i = 1; i <= paragraphs; i++)
+        {
+            sb.Append("<p>Paragraph ").Append(i)
+              .Append(" of a long document that flows across multiple pages to exercise pagination.</p>");
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Paged-media golden cases: explicit page breaks, @page margins, multiple page sizes and
+    /// orientations, repeating header/footer margin boxes, and counter(page)/counter(pages).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> PagedMedia = new[]
+    {
+        new GoldenCase(
+            "page-break-before-always",
+            Doc(".next{page-break-before:always;}",
+                "<p>First page content.</p><p class=\"next\">Forced onto a new page.</p>")),
+        new GoldenCase(
+            "page-break-after",
+            Doc(".brk{page-break-after:always;}",
+                "<p class=\"brk\">Ends this page.</p><p>Starts the next page.</p>")),
+        new GoldenCase(
+            "page-break-inside-avoid",
+            Doc(".keep{page-break-inside:avoid;padding:6px;}",
+                "<div class=\"keep\"><p>Block one.</p><p>Block two kept together.</p></div>")),
+        new GoldenCase(
+            "multi-page-overflow-flow",
+            Doc("p{margin:6px 0;}", LongFlow(60))),
+        new GoldenCase(
+            "page-margins",
+            Doc("p{margin:0;}", "<p>Document with wide custom @page margins.</p>"),
+            new PdfRenderOptions { Margins = PdfMargins.Uniform(30) }),
+        new GoldenCase(
+            "page-size-a5",
+            Doc("p{margin:0;}", "<p>A5 page size.</p>"),
+            new PdfRenderOptions { PageSize = PdfPageSize.A5 }),
+        new GoldenCase(
+            "page-size-letter",
+            Doc("p{margin:0;}", "<p>US Letter page size.</p>"),
+            new PdfRenderOptions { PageSize = PdfPageSize.Letter }),
+        new GoldenCase(
+            "page-size-legal",
+            Doc("p{margin:0;}", "<p>US Legal page size.</p>"),
+            new PdfRenderOptions { PageSize = PdfPageSize.Legal }),
+        new GoldenCase(
+            "orientation-landscape",
+            Doc("p{margin:0;}", "<p>Landscape orientation.</p>"),
+            new PdfRenderOptions { Orientation = PdfOrientation.Landscape }),
+        new GoldenCase(
+            "header-footer-repeat",
+            Doc("p{margin:6px 0;}", LongFlow(40)),
+            new PdfRenderOptions
+            {
+                Header = new PdfHeaderFooter(CenterHtml: "Report Title", ShowLine: true),
+                Footer = new PdfHeaderFooter(CenterHtml: "Confidential", ShowLine: true),
+            }),
+        new GoldenCase(
+            "counter-page",
+            Doc("p{margin:6px 0;}", LongFlow(30)),
+            new PdfRenderOptions
+            {
+                Footer = new PdfHeaderFooter(RightHtml: "<span>Page counter(page)</span>"),
+            }),
+        new GoldenCase(
+            "counter-pages-x-of-y",
+            Doc("p{margin:6px 0;}", LongFlow(30)),
+            new PdfRenderOptions
+            {
+                Footer = new PdfHeaderFooter(
+                    CenterHtml: "<span>counter(page) of counter(pages)</span>"),
+            }),
+    };
+
     /// <summary>Every registered case across all groups. Later plans extend by concatenation.</summary>
     internal static readonly IReadOnlyList<GoldenCase> AllCases =
         BlockLayout
             .Concat(InlineLayout)
             .Concat(Tables)
+            .Concat(PagedMedia)
             .ToList();
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for every registered case.</summary>
@@ -160,6 +239,10 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the table group only.</summary>
     public static IEnumerable<object[]> TableCasesData() =>
         Tables.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the paged-media group only.</summary>
+    public static IEnumerable<object[]> PagedMediaCasesData() =>
+        PagedMedia.Select(c => new object[] { c.Name });
 
     /// <summary>Looks up a registered case by name.</summary>
     public static GoldenCase ByName(string name) =>
