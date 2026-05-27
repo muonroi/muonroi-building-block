@@ -120,6 +120,22 @@ public sealed class DefaultStrictPolicy : IPdfCssPolicy
             if (borderCollapse is "collapse")
                 violations.Add(ViolationFor("forbidden.border-collapse.collapse", "border-collapse", borderCollapse, selector, "border-collapse:separate"));
         }
+
+        // Pass 3: HTML element security — reject <script> elements (SEC-05)
+        foreach (IElement element in document.All.OfType<IElement>())
+        {
+            if (element.LocalName.Equals("script", StringComparison.OrdinalIgnoreCase))
+            {
+                violations.Add(new PolicyViolation(
+                    "forbidden.script-element",
+                    "<script> elements are not permitted in PDF templates.",
+                    PropertyName: "script",
+                    CssSelector: "script",
+                    RejectedValue: "script",
+                    SuggestedAlternative: "Remove all <script> elements from the HTML template before rendering"));
+                break; // one violation sufficient; don't enumerate all script tags
+            }
+        }
     }
 
     private static PolicyViolation ViolationFor(

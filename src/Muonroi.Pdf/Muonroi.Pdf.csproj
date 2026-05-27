@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SixLabors.Fonts" />
+    <PackageReference Include="PdfSharpCore" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
