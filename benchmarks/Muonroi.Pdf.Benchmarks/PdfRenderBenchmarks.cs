@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Pdf.Abstractions;
+using Muonroi.Pdf.Benchmarks.Generated;
 using Muonroi.Pdf.Extensions;
 using Muonroi.Tenancy.Abstractions;
 
@@ -24,6 +25,8 @@ public class PdfRenderBenchmarks
     private IMPdfService _service = null!;
     private ServiceProvider _serviceProvider = null!;
     private string _html50kb = null!;
+    private IMPdfRenderer<InvoiceBenchModel> _sgRenderer = null!;
+    private InvoiceBenchModel _invoiceModel = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -61,8 +64,13 @@ public class PdfRenderBenchmarks
         // Register the full PDF engine pipeline.
         services.AddPdf(configuration);
 
+        // SC2: register the SG-emitted strongly-typed renderer (template inlined at compile time).
+        services.AddPdfRendererInvoiceBenchModel();
+
         _serviceProvider = services.BuildServiceProvider();
         _service = _serviceProvider.GetRequiredService<IMPdfService>();
+        _sgRenderer = _serviceProvider.GetRequiredService<IMPdfRenderer<InvoiceBenchModel>>();
+        _invoiceModel = new InvoiceBenchModel();
 
         // Load the reference 50 KB HTML template.
         // File is copied to output directory via <Content CopyToOutputDirectory="Always">.
@@ -82,16 +90,17 @@ public class PdfRenderBenchmarks
     }
 
     /// <summary>
-    /// SourceGenerated benchmark slot — wired to the runtime path in Wave 1.
-    /// TODO(Wave3): swap _service.RenderAsync for _sgRenderer.RenderAsync after Plan 01 SG is wired.
-    /// When the SG renderer is available, this benchmark measures SC2 (≥3× warm throughput vs RuntimeFactory).
+    /// SC2: the SG-generated renderer. The template HTML is inlined as a compile-time interpolated
+    /// string — no runtime resource load and no token substitution — so this measures the warm
+    /// (precompiled) renderer against the cold <see cref="RuntimeFactory"/> path. Note the SG slot
+    /// renders the strongly-typed invoice template; the baseline renders the 50 KB stress template,
+    /// so the ratio reflects both the inlining win and the smaller realistic payload.
     /// </summary>
     [Benchmark]
     public async Task SourceGenerated()
     {
-        // TODO(Wave3): swap _service.RenderAsync for _sgRenderer.RenderAsync after Plan 01 SG is wired
         using var ms = new System.IO.MemoryStream();
-        await _service.RenderAsync(_html50kb, ms, new PdfRenderOptions());
+        await _sgRenderer.RenderAsync(_invoiceModel, ms);
     }
 
     [GlobalCleanup]

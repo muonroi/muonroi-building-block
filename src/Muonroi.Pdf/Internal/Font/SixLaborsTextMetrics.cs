@@ -6,9 +6,28 @@ using SLFontStyle = SixLabors.Fonts.FontStyle;
 
 namespace Muonroi.Pdf.Internal.Font;
 
+/// <summary>
+/// SixLabors-backed text metrics. Instances are created per render (see
+/// <see cref="FontPipeline"/>), so the memoization caches below live for a single render only —
+/// there is no cross-render shared mutable state and nothing to clear/leak.
+///
+/// ALLOC-01: <see cref="GetCharWidth"/> is invoked once per character of every text run. Without
+/// caching, each call allocated a <see cref="SLFont"/> (CreateFont), a <see cref="TextOptions"/>,
+/// a one-char <see cref="string"/>, plus SixLabors' internal measurement buffers — dominating
+/// total allocations on text-heavy documents. The font / char-width / vertical-metrics caches
+/// collapse the thousands of repeated (family, size, style, char) lookups in a render down to one
+/// measurement each, eliminating the bulk of the churn while returning identical values.
+/// </summary>
 internal sealed class SixLaborsTextMetrics : ITextMetrics
 {
     private readonly FontCollection _collection;
+
+    // Per-render memoization. Keyed by the inputs that fully determine each result.
+    private readonly Dictionary<(string Family, float Size, SLFontStyle Style), SLFont?> _fontCache = new();
+    private readonly Dictionary<(string Family, float Size, SLFontStyle Style, char Ch), float> _charWidthCache = new();
+    private readonly Dictionary<(string Family, float Size), VerticalMetrics> _verticalCache = new();
+
+    private readonly record struct VerticalMetrics(float LineHeight, float Ascender, float Descender);
 
     internal SixLaborsTextMetrics(FontCollection fontCollection)
     {
@@ -22,45 +41,66 @@ internal sealed class SixLaborsTextMetrics : ITextMetrics
             : italic ? SLFontStyle.Italic
             : SLFontStyle.Regular;
 
-        if (!TryGetFamily(fontFamily, out SLFontFamily family))
-            return fontSize * 0.6f;
+        (string, float, SLFontStyle, char) key = (fontFamily, fontSize, style, c);
+        if (_charWidthCache.TryGetValue(key, out float cached))
+            return cached;
 
-        SLFont font = family.CreateFont(fontSize, style);
-        TextOptions opts = new(font);
-        return TextMeasurer.MeasureAdvance(c.ToString(), opts).Width;
+        SLFont? font = GetFont(fontFamily, fontSize, style);
+        float width = font is null
+            ? fontSize * 0.6f
+            : TextMeasurer.MeasureAdvance(c.ToString(), new TextOptions(font)).Width;
+
+        _charWidthCache[key] = width;
+        return width;
     }
 
     public float GetLineHeight(string fontFamily, float fontSize)
-    {
-        if (!TryGetFamily(fontFamily, out SLFontFamily family))
-            return fontSize * 1.2f;
-
-        if (!family.TryGetMetrics(SLFontStyle.Regular, out FontMetrics? m) || m == null)
-            return fontSize * 1.2f;
-
-        return (float)m.HorizontalMetrics.LineHeight * fontSize / m.UnitsPerEm;
-    }
+        => GetVerticalMetrics(fontFamily, fontSize).LineHeight;
 
     public float GetAscender(string fontFamily, float fontSize)
-    {
-        if (!TryGetFamily(fontFamily, out SLFontFamily family))
-            return fontSize * 0.8f;
-
-        if (!family.TryGetMetrics(SLFontStyle.Regular, out FontMetrics? m) || m == null)
-            return fontSize * 0.8f;
-
-        return (float)m.HorizontalMetrics.Ascender * fontSize / m.UnitsPerEm;
-    }
+        => GetVerticalMetrics(fontFamily, fontSize).Ascender;
 
     public float GetDescender(string fontFamily, float fontSize)
+        => GetVerticalMetrics(fontFamily, fontSize).Descender;
+
+    private VerticalMetrics GetVerticalMetrics(string fontFamily, float fontSize)
     {
-        if (!TryGetFamily(fontFamily, out SLFontFamily family))
-            return fontSize * 0.2f;
+        (string, float) key = (fontFamily, fontSize);
+        if (_verticalCache.TryGetValue(key, out VerticalMetrics cached))
+            return cached;
 
-        if (!family.TryGetMetrics(SLFontStyle.Regular, out FontMetrics? m) || m == null)
-            return fontSize * 0.2f;
+        VerticalMetrics result;
+        if (!TryGetFamily(fontFamily, out SLFontFamily family) ||
+            !family.TryGetMetrics(SLFontStyle.Regular, out FontMetrics? m) || m == null)
+        {
+            // Fallbacks preserve the original per-accessor heuristics: 1.2/0.8/0.2 × fontSize.
+            result = new VerticalMetrics(fontSize * 1.2f, fontSize * 0.8f, fontSize * 0.2f);
+        }
+        else
+        {
+            float scale = fontSize / m.UnitsPerEm;
+            result = new VerticalMetrics(
+                (float)m.HorizontalMetrics.LineHeight * scale,
+                (float)m.HorizontalMetrics.Ascender * scale,
+                Math.Abs((float)m.HorizontalMetrics.Descender * scale));
+        }
 
-        return Math.Abs((float)m.HorizontalMetrics.Descender * fontSize / m.UnitsPerEm);
+        _verticalCache[key] = result;
+        return result;
+    }
+
+    private SLFont? GetFont(string fontFamily, float fontSize, SLFontStyle style)
+    {
+        (string, float, SLFontStyle) key = (fontFamily, fontSize, style);
+        if (_fontCache.TryGetValue(key, out SLFont? cached))
+            return cached;
+
+        SLFont? font = TryGetFamily(fontFamily, out SLFontFamily family)
+            ? family.CreateFont(fontSize, style)
+            : null;
+
+        _fontCache[key] = font;
+        return font;
     }
 
     private bool TryGetFamily(string fontFamily, out SLFontFamily family)

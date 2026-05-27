@@ -19,10 +19,16 @@
     <ProjectReference Include="..\..\src\Muonroi.Pdf\Muonroi.Pdf.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj" />
+    <!-- SG analyzer: emits IMPdfRenderer<InvoiceBenchModel> from [PdfTemplate] for the SC2 slot. -->
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.SourceGenerators\Muonroi.Pdf.SourceGenerators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="reference-50kb.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <!-- Inlined at compile time by the SG (matched by path suffix to PdfTemplate templateResourceName). -->
+    <AdditionalFiles Include="invoice-bench.html" />
   </ItemGroup>
 </Project>

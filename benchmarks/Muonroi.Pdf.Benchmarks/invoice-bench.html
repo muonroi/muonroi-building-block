@@ -1,0 +1,29 @@
+<html>
+<head>
+<style>
+@font-face{font-family:serif;src:url(test.ttf);}
+body{font-family:serif;}
+p{margin:4px 0;}
+table{border-collapse:separate;}
+td{padding:5px 8px;border:1px solid #ddd;}
+.b{font-weight:bold;}
+.h1{font-size:22px;font-weight:bold;}
+.sec{font-size:15px;font-weight:bold;margin:16px 0 4px 0;}
+</style>
+</head>
+<body>
+<p class="h1">{{CompanyName}} - Tax Invoice</p>
+<p class="h2">Invoice {{InvoiceNumber}} | Date: {{InvoiceDate}}</p>
+<table>
+<tr><td class="b">Bill To</td><td>{{CustomerName}}</td></tr>
+<tr><td class="b">Address</td><td>{{CustomerAddress}}</td></tr>
+</table>
+<p class="sec">Line Items</p>
+<table>
+<tr><td>{{LineItem1}}</td><td>{{Amount1}}</td></tr>
+<tr><td>{{LineItem2}}</td><td>{{Amount2}}</td></tr>
+<tr><td>{{LineItem3}}</td><td>{{Amount3}}</td></tr>
+<tr><td class="b">Total</td><td class="b">{{Total}}</td></tr>
+</table>
+</body>
+</html>
