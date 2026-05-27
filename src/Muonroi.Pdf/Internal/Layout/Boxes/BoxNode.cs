@@ -30,5 +30,8 @@ internal abstract class BoxNode
 
     public IStyledNode? Source { get; set; }
 
+    /// <summary>CSS text-align (inherited). Null = left (default).</summary>
+    public string? TextAlign { get; set; }
+
     public List<BoxNode> Children { get; } = new();
 }

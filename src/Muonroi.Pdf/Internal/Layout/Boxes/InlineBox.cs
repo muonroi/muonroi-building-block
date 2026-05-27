@@ -9,4 +9,13 @@ internal sealed class InlineBox : BoxNode
     public bool Italic { get; set; }
     public string? Color { get; set; }
     public string VerticalAlign { get; set; } = "baseline";
+
+    /// <summary>CSS line-height multiplier. 1.0 = normal.</summary>
+    public float LineHeightFactor { get; set; } = 1.0f;
+
+    /// <summary>CSS text-decoration: "underline" | "line-through" | "none" | null.</summary>
+    public string? TextDecoration { get; set; }
+
+    /// <summary>Non-null if this inline box is inside an &lt;a&gt; element.</summary>
+    public string? LinkHref { get; set; }
 }
