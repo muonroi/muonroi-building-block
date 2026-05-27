@@ -14,7 +14,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [ ] **Phase 6: DI + Telemetry + Integration** â€” `AddPdf()` DI registration, OpenTelemetry instrumentation, end-to-end `IMPdfService.RenderAsync()` integration
 - [ ] **Phase 7: Golden Snapshots + CI Gates + Publishing** â€” 40+ golden tests, Vietnamese corpus, convention gates, NuGet publish at `1.0.0-alpha.N`
 - [x] **Phase 8: v0.2 â€” Source Generator + AOT + DesignSystem** â€” Compile-time `IMPdfRenderer<T>` fast path, trim-safe Alpine container, default design system templates (completed 2026-05-27; SC4 alloc target deferred to Phase 8.5)
-- [ ] **Phase 8.5: Owned PDF Writer (SC4 carry-over)** â€” Replace PdfSharpCore with an owned, allocation-controlled, AOT-trivial PDF 1.7 writer (per `.planning/research/pdf-writer-strategy.md`); closes ALLOC-01/SC4. Starts with a 2â€“3 day allocation spike.
+- [x] **Phase 8.5: Owned PDF Writer (SC4 carry-over)** â€” Replaced PdfSharpCore with an owned, allocation-controlled, AOT-trivial PDF 1.7 writer (CID Type0/Identity-H + ToUnicode, FlateDecode via ZLibStream, JPEG/PNG XObjects). Closes ALLOC-01/SC4: total alloc 51.62 MB vs 288.96 threshold (82% headroom). PdfSharpCore fully removed (+ transitives ImageSharp/CodePages). 215/215 tests, 56 snapshots re-baselined. Verified 7/7 (08.5-VERIFICATION.md). Completed 2026-05-27.
 - [ ] **Phase 9: v1.0 Enterprise** â€” Postgres template registry, Redis hot-reload, SSIM canary, web designer, TCIS cutover
 
 ## Phase Details
@@ -176,8 +176,9 @@ the per-word `DrawString` pipeline that dominates render allocations.
      (folding in the current `NormalizeForDeterminism` behavior natively)
   3. All golden snapshots are re-baselined and reviewed; Vietnamese diacritic corpus still passes
   4. PdfSharpCore is removed from the core render path (or retained only behind an adapter seam)
-**Fallback**: migrate to upstream empira PDFsharp 6.x (MIT, net8) if the owned-writer spike misses.
-**Plans**: TBD
+**Fallback**: migrate to upstream empira PDFsharp 6.x (MIT, net8) if the owned-writer spike misses. (Not needed â€” owned writer hit SC4 with 82% headroom.)
+**Plans**: 08.5-01..07 (complete) â€” branch `phase/08.5-owned-pdf-writer`, commit 3ea4348
+**Status**: COMPLETE â€” all 4 success criteria met; verified 7/7 (08.5-VERIFICATION.md, Opus, independently reproduced). Measured SC4 total 51.62 MB. PdfSharpCore removed. Non-blocking: external PDF validator (qpdf/veraPDF) pass recommended before GA.
 
 ### Phase 9: v1.0 Enterprise
 **Goal**: Enterprise teams govern, version, canary-deploy, and live-preview templates through a self-service Designer; TCIS.ePort runs on the live engine with DinkToPdf removed
@@ -207,5 +208,5 @@ Phases execute sequentially: 1 â†’ 2 â†’ 3 â†’ 4 â†’ 5 â†
 | 6. DI + Telemetry + Integration | 0/TBD | Not started | - |
 | 7. Golden Snapshots + CI Gates + Publishing | 4/5 | In Progress|  |
 | 8. v0.2 â€” Source Generator + AOT + DesignSystem | 5/5 | Complete (SC4 deferred to 8.5) | 2026-05-27 |
-| 8.5. Owned PDF Writer (SC4 carry-over) | 0/TBD | Not started | - |
+| 8.5. Owned PDF Writer (SC4 carry-over) | 7/7 | Complete (SC4 closed, PdfSharpCore removed) | 2026-05-27 |
 | 9. v1.0 Enterprise | 0/TBD | Not started | - |
