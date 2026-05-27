@@ -6,30 +6,30 @@ public sealed class AngleSharpHtmlParser : IHtmlParser
 {
     public async ValueTask<IParsedDocument> ParseAsync(string html, CancellationToken ct = default)
     {
-        if ((long)html.Length * 2 > PdfConfigs.PdfLimits.MaxHtmlBytes)
+        if ((long)html.Length * 2 > PdfConfigs.PdfLimits.Defaults.MaxHtmlBytes)
             throw new PdfInputLimitException(
                 "limit.max-html-bytes",
                 "MaxHtmlBytes",
                 (long)html.Length * 2,
-                PdfConfigs.PdfLimits.MaxHtmlBytes);
+                PdfConfigs.PdfLimits.Defaults.MaxHtmlBytes);
 
         IBrowsingContext context = BrowsingContext.New(Configuration.Default.WithCss());
         IDocument document = await context.OpenAsync(req => req.Content(html), ct).ConfigureAwait(false);
 
-        if (document.All.Length > PdfConfigs.PdfLimits.MaxElementCount)
+        if (document.All.Length > PdfConfigs.PdfLimits.Defaults.MaxElementCount)
             throw new PdfInputLimitException(
                 "limit.max-element-count",
                 "MaxElementCount",
                 document.All.Length,
-                PdfConfigs.PdfLimits.MaxElementCount);
+                PdfConfigs.PdfLimits.Defaults.MaxElementCount);
 
         int maxDepth = ComputeMaxDepth(document);
-        if (maxDepth > PdfConfigs.PdfLimits.MaxDomDepth)
+        if (maxDepth > PdfConfigs.PdfLimits.Defaults.MaxDomDepth)
             throw new PdfInputLimitException(
                 "limit.max-dom-depth",
                 "MaxDomDepth",
                 maxDepth,
-                PdfConfigs.PdfLimits.MaxDomDepth);
+                PdfConfigs.PdfLimits.Defaults.MaxDomDepth);
 
         return new AngleSharpParsedDocument(document, (long)html.Length * 2);
     }

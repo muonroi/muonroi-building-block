@@ -53,12 +53,12 @@ internal sealed class ImagePipeline
                 decoded = decoder.Decode(result.Bytes.Span, result.ContentType);
             }
 
-            if ((long)decoded.Width * decoded.Height > PdfConfigs.PdfLimits.MaxImagePixels)
+            if ((long)decoded.Width * decoded.Height > PdfConfigs.PdfLimits.Defaults.MaxImagePixels)
                 throw new PdfInputLimitException(
                     "IMG-MAX-PIXELS",
                     "MaxImagePixels",
                     (long)decoded.Width * decoded.Height,
-                    PdfConfigs.PdfLimits.MaxImagePixels);
+                    PdfConfigs.PdfLimits.Defaults.MaxImagePixels);
 
             dict[src] = decoded;
         }

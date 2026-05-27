@@ -33,12 +33,12 @@ internal sealed class LayoutEngine
     {
         var pass1 = RunLayout(doc, options, totalPages: 0);
 
-        if (pass1.PageCount > PdfConfigs.PdfLimits.MaxPages)
+        if (pass1.PageCount > PdfConfigs.PdfLimits.Defaults.MaxPages)
             throw new PdfInputLimitException(
                 "PAGE-MAX-PAGES",
                 "MaxPages",
                 pass1.PageCount,
-                PdfConfigs.PdfLimits.MaxPages);
+                PdfConfigs.PdfLimits.Defaults.MaxPages);
 
         ct.ThrowIfCancellationRequested();
 
@@ -81,12 +81,12 @@ internal sealed class LayoutEngine
 
         var pass1 = engineToUse.RunLayout(doc, options, totalPages: 0, resolvedImages);
 
-        if (pass1.PageCount > PdfConfigs.PdfLimits.MaxPages)
+        if (pass1.PageCount > PdfConfigs.PdfLimits.Defaults.MaxPages)
             throw new PdfInputLimitException(
                 "PAGE-MAX-PAGES",
                 "MaxPages",
                 pass1.PageCount,
-                PdfConfigs.PdfLimits.MaxPages);
+                PdfConfigs.PdfLimits.Defaults.MaxPages);
 
         ct.ThrowIfCancellationRequested();
 

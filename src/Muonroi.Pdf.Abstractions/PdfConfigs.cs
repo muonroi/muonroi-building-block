@@ -13,16 +13,22 @@ public sealed class PdfConfigs
     public bool RequirePolicySignature { get; set; } = false;
 
     /// <summary>
-    /// Compile-time hard limits enforced before and during rendering.
+    /// Resource limits enforced before and during rendering. Bindable from the
+    /// <c>"PdfConfigs:Limits"</c> configuration section and validated at startup. The static
+    /// <see cref="Defaults"/> instance carries the absolute backstop values the engine internals
+    /// enforce regardless of any configured (possibly stricter) instance.
     /// </summary>
     public sealed class PdfLimits
     {
-        public const long MaxHtmlBytes = 8_388_608;
-        public const int MaxDomDepth = 256;
-        public const int MaxElementCount = 100_000;
-        public const long MaxImagePixels = 25_000_000;
-        public const int MaxPages = 1_000;
-        public const long MaxRenderDurationMs = 15_000;
-        public const int MaxFontFiles = 32;
+        /// <summary>Absolute default/backstop values enforced by engine internals.</summary>
+        public static readonly PdfLimits Defaults = new();
+
+        public long MaxHtmlBytes { get; set; } = 8_388_608;
+        public int MaxDomDepth { get; set; } = 256;
+        public int MaxElementCount { get; set; } = 100_000;
+        public long MaxImagePixels { get; set; } = 25_000_000;
+        public int MaxPages { get; set; } = 1_000;
+        public long MaxRenderDurationMs { get; set; } = 15_000;
+        public int MaxFontFiles { get; set; } = 32;
     }
 }

@@ -16,12 +16,12 @@ internal sealed class FontPipeline
 
         IReadOnlyList<FontFaceDeclaration> fontFaces = doc.FontFaces;
 
-        if (fontFaces.Count > PdfConfigs.PdfLimits.MaxFontFiles)
+        if (fontFaces.Count > PdfConfigs.PdfLimits.Defaults.MaxFontFiles)
             throw new PdfInputLimitException(
                 "FONT-MAX-FILES",
                 "MaxFontFiles",
                 fontFaces.Count,
-                PdfConfigs.PdfLimits.MaxFontFiles);
+                PdfConfigs.PdfLimits.Defaults.MaxFontFiles);
 
         var collection = new FontCollection();
         var fontBytesMap = new Dictionary<string, ReadOnlyMemory<byte>>(StringComparer.Ordinal);
