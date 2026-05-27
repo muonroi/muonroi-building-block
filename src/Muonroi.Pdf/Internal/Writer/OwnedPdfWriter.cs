@@ -328,12 +328,18 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             w.WriteRaw($"<< /Type /Font /Subtype /CIDFontType2 /BaseFont /{baseFontName}");
             w.WriteRaw(" /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >>");
             w.WriteRaw(" /DW 1000");
-            // /W array: sparse format gid [width] for each glyph in SortedGids
+            // /W array: sparse format newGid [width].
+            // fi.SortedGids contains OLD (pre-subset) GIDs; after subsetting they are renumbered
+            // to sequential new GIDs 0..N-1 stored in fi.OldToNewGid.  The rebuilt hmtx (and
+            // therefore gidToAdvance) is indexed by the NEW sequential GID, not the old one.
+            // Emitting oldGid as the CID would reference nonexistent or wrong glyphs — Bug B.
             if (fi.SortedGids.Count > 0)
             {
                 w.WriteRaw(" /W [");
-                foreach (ushort newGid in fi.SortedGids)
+                foreach (ushort oldGid in fi.SortedGids)
                 {
+                    if (!fi.OldToNewGid.TryGetValue(oldGid, out ushort newGid))
+                        continue; // glyph not in subset (should not happen, but skip safely)
                     int width = gidToAdvance.TryGetValue(newGid, out int adv) ? adv : 1000;
                     w.WriteRaw($" {newGid} [{width}]");
                 }
@@ -662,7 +668,15 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 continue;
             }
 
-            if (el.Source is not InlineBox inline || string.IsNullOrEmpty(inline.Text) || string.IsNullOrEmpty(inline.FontFamily))
+            if (el.Source is not InlineBox inline || string.IsNullOrEmpty(inline.FontFamily))
+                continue;
+
+            // Use the per-word text stored by InlineLayoutEngine (Bug A fix).
+            // InlineLayoutEngine word-splits each InlineBox and stores the individual word in
+            // RenderedText. Falling back to inline.Text would draw the FULL source text (entire
+            // line) at every word position, producing overlapping duplicate text.
+            string renderText = el.RenderedText ?? inline.Text ?? string.Empty;
+            if (string.IsNullOrEmpty(renderText))
                 continue;
 
             // Switch font if needed
@@ -697,11 +711,12 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             sb.Append(pdfYt.ToString("F4", CultureInfo.InvariantCulture));
             sb.AppendLine(" Tm");
 
-            // Text as 2-byte GID hex string using CID encoding
+            // Text as 2-byte GID hex string using CID encoding.
+            // Use renderText (the per-word segment), NOT inline.Text (the full source line).
             if (cpToNewGidMap.TryGetValue(inline.FontFamily, out Dictionary<int, ushort>? cpMap) && cpMap.Count > 0)
             {
                 sb.Append('<');
-                foreach (char c in inline.Text)
+                foreach (char c in renderText)
                 {
                     if (cpMap.TryGetValue((int)c, out ushort newGid))
                         sb.Append(newGid.ToString("X4"));

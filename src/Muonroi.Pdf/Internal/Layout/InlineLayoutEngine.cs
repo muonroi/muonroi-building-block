@@ -105,6 +105,7 @@ internal sealed class InlineLayoutEngine
                 output.Add(new PositionedElement
                 {
                     Source = box,
+                    RenderedText = word,
                     Position = new Rect(wordX, wordY, wordWidth, boxHeight),
                     PageIndex = pageIndex
                 });

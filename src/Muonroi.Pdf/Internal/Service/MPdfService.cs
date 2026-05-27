@@ -215,6 +215,7 @@ internal sealed class MPdfService : IMPdfService
                     reindexed.Elements.AddRange(page.Elements.Select(e => new PositionedElement
                     {
                         Source = e.Source,
+                        RenderedText = e.RenderedText,
                         Position = e.Position,
                         PageIndex = reindexed.PageIndex
                     }));

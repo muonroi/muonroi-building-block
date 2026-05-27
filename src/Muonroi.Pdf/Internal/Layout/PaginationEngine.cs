@@ -87,6 +87,7 @@ internal sealed class PaginationEngine
             {
                 Position = new Rect(el.Position.X, localY, el.Position.Width, el.Position.Height),
                 Source = el.Source,
+                RenderedText = el.RenderedText,
                 PageIndex = pageIndex
             });
         }

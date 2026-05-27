@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -21,6 +22,10 @@ namespace Muonroi.Pdf.Tests.Golden;
 ///         produces a measurable fraction of non-white pixels; a blank page produces zero.</item>
 ///   <item>Asserts the content stream contains at least one <c>&lt;XXXX&gt; Tj</c> GID hex operator
 ///         (not a Latin-1 literal) — a cheap structural guard that the fix is in effect.</item>
+///   <item>Bug A guard: no hex Tj string may appear more than once in the content stream
+///         (duplicate identical strings = full-line text drawn at every word position).</item>
+///   <item>Bug B guard: every /W entry must have a width &gt;= 100 per-mille (near-zero widths
+///         indicate the old-vs-new GID mismatch that collapses glyph advances to 1).</item>
 /// </list>
 ///
 /// These tests MUST fail on pre-fix blank output and pass after the fix.
@@ -38,6 +43,13 @@ public sealed class VisualRegressionTests
     /// safely above absolute zero (true blank = 0 %) and well below any real text content.
     /// </summary>
     private const double MinNonWhiteFraction = 0.0005; // 0.05 %
+
+    /// <summary>
+    /// Minimum per-mille advance width for any non-.notdef glyph in /W.
+    /// A normal Latin letter should be 450-800; anything below 100 is bogus (Bug B).
+    /// GID 0 (.notdef) is excluded — it legitimately has width 0 in many fonts.
+    /// </summary>
+    private const int MinGlyphAdvance = 100;
 
     // Representative cases: one per major feature group
     private static readonly IReadOnlyList<(string Name, string Html)> Cases = new[]
@@ -114,6 +126,127 @@ public sealed class VisualRegressionTests
             hasLiteralTj,
             $"[{name}] Content stream contains '(text) Tj' Latin-1 literal, " +
             "which is incorrect under Identity-H encoding and produces blank output.");
+    }
+
+    /// <summary>
+    /// Bug A guard: on any single text line (same Tm Y coordinate), every Tj operand must be
+    /// DISTINCT.  Duplicate hex strings at the same Y mean the full source line is being drawn
+    /// at every word position (e.g. "Centered text." drawn twice — once per word — with different
+    /// X but identical glyph sequence).  Different lines legitimately share the same word (e.g.
+    /// two list items both containing "Item") — those cross-line duplicates are NOT flagged.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(CasesData))]
+    public async Task ContentStream_NoDuplicateHexTjStringsOnSameLine(string name, string html)
+    {
+        byte[] pdfBytes = await GoldenPdf.RenderAsync(html, new PdfRenderOptions());
+        string decompressed = DecompressAllContentStreams(pdfBytes);
+
+        // Parse Tm/Tj pairs from the content stream.
+        // Tm: "1 0 0 1 X Y Tm"  (X=horizontal, Y=vertical position in PDF coordinates)
+        // Tj: "<XXXX...> Tj"
+        var tmPattern  = new Regex(@"1 0 0 1 [\d.+\-]+ ([\d.+\-]+) Tm");
+        var hexTjPattern = new Regex(@"<([0-9A-Fa-f]{4,})>\s*Tj");
+
+        // Walk through the stream tracking current Y, building a map of Y → list of hex strings
+        // on that line.  We compare Y with a small tolerance for floating-point formatting.
+        var lineStrings = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        int pos = 0;
+        string? currentYKey = null;
+
+        while (pos < decompressed.Length)
+        {
+            // Look for the next Tm or Tj, whichever comes first
+            var tmMatch  = tmPattern.Match(decompressed, pos);
+            var tjMatch  = hexTjPattern.Match(decompressed, pos);
+
+            if (!tmMatch.Success && !tjMatch.Success) break;
+
+            int tmIdx = tmMatch.Success ? tmMatch.Index : int.MaxValue;
+            int tjIdx = tjMatch.Success ? tjMatch.Index : int.MaxValue;
+
+            if (tmIdx < tjIdx)
+            {
+                // New Tm — update current Y key (round to 2 dp to tolerate minor float differences)
+                if (double.TryParse(tmMatch.Groups[1].Value,
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out double y))
+                    currentYKey = y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                pos = tmMatch.Index + tmMatch.Length;
+            }
+            else
+            {
+                // Tj — record under current Y
+                if (currentYKey != null)
+                {
+                    string hex = tjMatch.Groups[1].Value.ToUpperInvariant();
+                    if (!lineStrings.TryGetValue(currentYKey, out var list))
+                        lineStrings[currentYKey] = list = new List<string>();
+                    list.Add(hex);
+                }
+                pos = tjMatch.Index + tjMatch.Length;
+            }
+        }
+
+        // On each line, every hex string must be distinct (no full-line text at every word pos)
+        var violations = new List<string>();
+        foreach ((string yKey, var strings) in lineStrings)
+        {
+            var dups = strings
+                .GroupBy(s => s)
+                .Where(g => g.Count() > 1 && g.Key.Length > 4) // >2 glyphs (skip .notdef runs)
+                .Select(g => $"Y={yKey} '{g.Key}' x{g.Count()}")
+                .ToList();
+            violations.AddRange(dups);
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"[{name}] Same hex Tj string appears multiple times on the same text line — " +
+            "Bug A: full line text drawn at every word position. Violations: " +
+            string.Join("; ", violations));
+    }
+
+    /// <summary>
+    /// Bug B guard: every /W entry for a non-.notdef glyph must have a per-mille advance
+    /// width of at least <see cref="MinGlyphAdvance"/>.  Near-zero widths (1, 4, 6, 7, 9, 11)
+    /// indicate the old-vs-new GID mismatch in BuildGidToAdvanceMap.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(CasesData))]
+    public async Task FontWidthArray_NoNearZeroAdvances(string name, string html)
+    {
+        byte[] pdfBytes = await GoldenPdf.RenderAsync(html, new PdfRenderOptions());
+
+        // /W arrays are NOT in FlateDecode streams — they are in the uncompressed CIDFont dict.
+        // Read the raw PDF text (Latin-1 safe).
+        string pdfText = Encoding.Latin1.GetString(pdfBytes);
+
+        // Find /W [...] arrays.  The format is: /W [ gid [width] gid [width] ... ]
+        // We look for patterns like: 3 [632] or 0 [600] — gid followed by [width]
+        // Extract all individual width values from /W array content.
+        var wArrayPattern = new Regex(@"/W\s*\[([^\]]*(?:\[[^\]]*\][^\]]*)*)\]");
+        var entryPattern = new Regex(@"(\d+)\s*\[(\d+)\]");
+
+        var bogusEntries = new List<string>();
+        foreach (Match wm in wArrayPattern.Matches(pdfText))
+        {
+            string wContent = wm.Groups[1].Value;
+            foreach (Match em in entryPattern.Matches(wContent))
+            {
+                int gid = int.Parse(em.Groups[1].Value);
+                int width = int.Parse(em.Groups[2].Value);
+                // GID 0 is .notdef — width 0 is normal.
+                if (gid != 0 && width < MinGlyphAdvance)
+                    bogusEntries.Add($"GID {gid} width={width}");
+            }
+        }
+
+        Assert.True(
+            bogusEntries.Count == 0,
+            $"[{name}] /W array contains near-zero glyph advances — Bug B: " +
+            "old-vs-new GID mismatch in BuildGidToAdvanceMap. Bogus entries: " +
+            string.Join(", ", bogusEntries));
     }
 
     /// <summary>
