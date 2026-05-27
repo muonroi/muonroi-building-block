@@ -116,10 +116,12 @@ internal sealed class PdfSharpCoreWriter : IPdfWriter
             doc.Info.CreationDate = SentinelDate;
             doc.Info.ModificationDate = SentinelDate;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Property read-only on some PdfSharpCore builds; the 05-03 determinism test
-            // will catch any residual non-determinism from timestamps.
+            // Intentional: these setters are read-only on some PdfSharpCore builds.
+            // NormalizeForDeterminism handles any residual non-determinism from timestamps.
+            System.Diagnostics.Debug.WriteLine(
+                $"[PdfSharpCoreWriter] Info.CreationDate/ModificationDate assignment skipped: {ex.Message}");
         }
 
         (double w, double h) = GetPageDimensions(options);
