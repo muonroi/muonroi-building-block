@@ -149,6 +149,11 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                     pageImages.Add((rn, oid));
             }
 
+            // Reserve annotation object IDs for this page's link annotations
+            int[] annotIds = page.LinkAnnotations
+                .Select(_ => store.ReserveId())
+                .ToArray();
+
             byte[] rawContent = BuildContentStream(page, pageHeightPt, fontResources, imageResources, cpToNewGidMap);
             byte[] compressedContent = CompressFlateDecode(rawContent);
 
@@ -186,8 +191,43 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                     }
                     w.WriteRaw(" >>");
                 }
+                // /Annots array for link annotations (SEC-02: only /S /URI action, no JS/Launch)
+                if (annotIds.Length > 0)
+                {
+                    w.WriteRaw(" /Annots [");
+                    foreach (int annotId in annotIds)
+                        w.WriteRaw($" {annotId} 0 R");
+                    w.WriteRaw(" ]");
+                }
                 w.WriteRawLine(" >>");
             });
+
+            // Emit annotation indirect objects for this page
+            for (int j = 0; j < page.LinkAnnotations.Count; j++)
+            {
+                LinkAnnotation annot = page.LinkAnnotations[j];
+                int annotObjId = annotIds[j];
+
+                // Defense-in-depth: double-check href does not start with javascript:
+                if (annot.Href.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase))
+                    continue; // silently skip — policy layer already filtered, this is second-layer
+
+                // Y-flip: layout Y=0 at top → PDF Y=0 at bottom
+                float llx = annot.X;
+                float lly = pageHeightPt - annot.Y - annot.Height;
+                float urx = annot.X + annot.Width;
+                float ury = pageHeightPt - annot.Y;
+
+                store.WriteObject(annotObjId, w =>
+                {
+                    w.WriteRaw("<< /Type /Annot");
+                    w.WriteRaw(" /Subtype /Link");
+                    w.WriteRaw($" /Rect [{llx.ToString("F4", CultureInfo.InvariantCulture)} {lly.ToString("F4", CultureInfo.InvariantCulture)} {urx.ToString("F4", CultureInfo.InvariantCulture)} {ury.ToString("F4", CultureInfo.InvariantCulture)}]");
+                    w.WriteRaw(" /Border [0 0 0]");
+                    w.WriteRaw($" /A << /S /URI /URI ({EscapePdfString(annot.Href)}) >>");
+                    w.WriteRawLine(" >>");
+                });
+            }
         }
 
         // CID font objects (one set per embedded font)
@@ -607,6 +647,28 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 continue;
             }
 
+            // HrBox: draw a filled rectangle outside BT/ET
+            if (el.Source is HrBox hr)
+            {
+                sb.AppendLine("ET");
+
+                (float hr_r, float hr_g, float hr_b) = ParseHrColor(hr.Color);
+                float hr_pdfY = pageHeightPt - el.Position.Y - hr.Thickness / 2f;
+                sb.Append(hr_r.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(hr_g.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(hr_b.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" rg");
+                sb.Append(el.Position.X.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(hr_pdfY.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(el.Position.Width.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(hr.Thickness.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" re");
+                sb.AppendLine("f");
+
+                sb.AppendLine("BT");
+                currentFamily = null; // reset font state after re-opening BT
+                currentSize = 0f;
+                continue;
+            }
+
             if (el.Source is not InlineBox inline || string.IsNullOrEmpty(inline.Text))
                 continue;
 
@@ -661,6 +723,46 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 sb.Append('(');
                 AppendPdfStringLatin1(sb, inline.Text);
                 sb.AppendLine(") Tj");
+            }
+
+            // text-decoration: draw underline or strikethrough outside BT/ET
+            if (inline.TextDecoration is "underline" or "line-through")
+            {
+                float decThickness = inline.FontSize * 0.07f;
+                float baselineY = pdfYt; // already in PDF coords (Y=0 at bottom)
+                float decY = inline.TextDecoration == "underline"
+                    ? baselineY - inline.FontSize * 0.1f
+                    : baselineY + inline.FontSize * 0.35f;
+                float decX = el.Position.X;
+                float decW = el.Position.Width;
+
+                // Capture current font/size for restatement
+                string savedFamily = currentFamily ?? "";
+                float savedSize = currentSize;
+
+                sb.AppendLine("ET");
+                sb.Append("q").AppendLine();
+                sb.Append(r.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(g.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(b.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" rg");
+                sb.Append(decX.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(decY.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(decW.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(decThickness.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" re");
+                sb.AppendLine("f");
+                sb.AppendLine("Q");
+                sb.AppendLine("BT");
+
+                // Restate font/size after closing and reopening BT
+                if (!string.IsNullOrEmpty(savedFamily))
+                {
+                    string resNameAfterDec = familyToResName.TryGetValue(savedFamily, out string? rnAfterDec) ? rnAfterDec : "F0";
+                    sb.Append('/');
+                    sb.Append(resNameAfterDec);
+                    sb.Append(' ');
+                    sb.Append(savedSize.ToString("F2", CultureInfo.InvariantCulture));
+                    sb.AppendLine(" Tf");
+                }
             }
         }
 
@@ -907,6 +1009,23 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         }
     }
 
+    /// <summary>Escapes a URI string for use inside a PDF literal string ( ... ).</summary>
+    private static string EscapePdfString(string value)
+    {
+        var sb = new StringBuilder(value.Length + 4);
+        foreach (char c in value)
+        {
+            switch (c)
+            {
+                case '(': sb.Append("\\("); break;
+                case ')': sb.Append("\\)"); break;
+                case '\\': sb.Append("\\\\"); break;
+                default: sb.Append(c); break;
+            }
+        }
+        return sb.ToString();
+    }
+
     // ── helper: color ─────────────────────────────────────────────────────────
 
     private static (float R, float G, float B) ParseColor(string? cssColor)
@@ -925,6 +1044,29 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             _ when c.Length == 7 && c[0] == '#' => ParseHexColor(c),
             _ => (0f, 0f, 0f)
         };
+    }
+
+    /// <summary>
+    /// Parses an HR color: accepts "r g b" float triplet (space-separated) or CSS color keyword/hex.
+    /// Null → default gray 0.5 0.5 0.5.
+    /// </summary>
+    private static (float R, float G, float B) ParseHrColor(string? color)
+    {
+        if (string.IsNullOrWhiteSpace(color))
+            return (0.5f, 0.5f, 0.5f);
+
+        // Try "r g b" triplet format first
+        string[] parts = color.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 3 &&
+            float.TryParse(parts[0], System.Globalization.NumberStyles.Float, CultureInfo.InvariantCulture, out float r) &&
+            float.TryParse(parts[1], System.Globalization.NumberStyles.Float, CultureInfo.InvariantCulture, out float g) &&
+            float.TryParse(parts[2], System.Globalization.NumberStyles.Float, CultureInfo.InvariantCulture, out float b))
+        {
+            return (r, g, b);
+        }
+
+        // Fall back to CSS color parsing
+        return ParseColor(color);
     }
 
     private static (float R, float G, float B) ParseHexColor(string c)
