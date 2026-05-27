@@ -16,8 +16,10 @@ internal sealed record FontSubsetResult(
 
 internal sealed class TrueTypeFontSubsetter
 {
-    private const uint SfntVersionTTF = 0x00010000u;
-    private const uint SfntVersionCFF = 0x4F54544Fu; // 'OTTO'
+    private const uint SfntVersionTTF  = 0x00010000u;
+    private const uint SfntVersionCFF  = 0x4F54544Fu; // 'OTTO'
+    private const uint SfntVersionWOFF  = 0x774F4646u; // 'wOFF'
+    private const uint SfntVersionWOFF2 = 0x774F4632u; // 'wOF2'
 
     internal FontSubsetResult Subset(ReadOnlyMemory<byte> fontBytes, IReadOnlySet<int> usedCodepoints)
     {
@@ -26,9 +28,17 @@ internal sealed class TrueTypeFontSubsetter
 
         uint sfntVersion = BinaryPrimitives.ReadUInt32BigEndian(fontBytes.Span);
 
-        // CFF-OTF pass-through — no subsetting; return empty GID mapping (CFF uses different encoding)
+        // OTF-CFF (PostScript outlines): never pass through — would produce a corrupted GID map
         if (sfntVersion == SfntVersionCFF)
-            return new FontSubsetResult(fontBytes, new Dictionary<ushort, ushort>(), Array.Empty<ushort>());
+            throw new PdfFormatException("FONT-OTF-CFF",
+                "OTF font with CFF/PostScript outlines (sfntVersion=0x4F54544F) is not supported. " +
+                "Convert the font to TrueType outlines (.ttf with sfntVersion=0x00010000) before embedding, " +
+                "or use a TTF variant of the same typeface.");
+
+        // WOFF/WOFF2 web fonts: must be converted to TTF before embedding
+        if (sfntVersion == SfntVersionWOFF || sfntVersion == SfntVersionWOFF2)
+            throw new PdfFormatException("FONT-WOFF",
+                "WOFF/WOFF2 web fonts are not supported. Convert to a TrueType (.ttf) font before embedding.");
 
         if (sfntVersion != SfntVersionTTF)
             throw new PdfFormatException("FONT-FORMAT",

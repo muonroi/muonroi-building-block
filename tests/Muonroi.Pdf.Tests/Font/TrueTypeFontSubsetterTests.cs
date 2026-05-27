@@ -17,16 +17,16 @@ public sealed class TrueTypeFontSubsetterTests
     }
 
     [Fact]
-    public void CffOtf_PassthroughUnchanged()
+    public void CffOtf_ThrowsPdfFormatException_FONT_OTF_CFF()
     {
-        // CFF-OTF sfntVersion = 0x4F54544F ('OTTO')
+        // CFF-OTF sfntVersion = 0x4F54544F ('OTTO') — must throw, not pass through
         byte[] cffBytes = [0x4F, 0x54, 0x54, 0x4F, 0x00, 0x05, 0x00, 0x20, 0x00, 0x10, 0x00, 0x10];
 
         var subsetter = new TrueTypeFontSubsetter();
-        FontSubsetResult result = subsetter.Subset(cffBytes, new HashSet<int> { 65, 66 });
+        Action act = () => subsetter.Subset(cffBytes, new HashSet<int> { 65, 66 });
 
-        result.SubsetBytes.Length.Should().Be(cffBytes.Length);
-        result.SubsetBytes.ToArray().Should().Equal(cffBytes);
+        act.Should().Throw<PdfFormatException>()
+            .Which.RuleId.Should().Be("FONT-OTF-CFF");
     }
 
     [Fact]
