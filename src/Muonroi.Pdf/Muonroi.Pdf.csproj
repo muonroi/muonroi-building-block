@@ -29,4 +29,9 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Muonroi.Pdf.Tests" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Muonroi.Pdf.SourceGenerators\Muonroi.Pdf.SourceGenerators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
 </Project>
