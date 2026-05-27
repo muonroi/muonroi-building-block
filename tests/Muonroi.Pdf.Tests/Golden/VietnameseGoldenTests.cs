@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 
 namespace Muonroi.Pdf.Tests.Golden;
@@ -7,7 +7,7 @@ namespace Muonroi.Pdf.Tests.Golden;
 /// Vietnamese golden corpus (TEST-02): byte-equality baselines proving diacritic rendering is
 /// stable across precomposed forms, diacritic stacking, mixed Latin+Vietnamese, line-breaking,
 /// tables, and paged counters. Belongs to the non-parallel <see cref="PdfRenderCollection"/>
-/// (PdfSharpCore FontFactory race). Includes a glyph-coverage guard so the baselines are not
+/// (parallelism-safe). Includes a glyph-coverage guard so the baselines are not
 /// vacuous .notdef boxes (RESEARCH A3 / Pitfall 5, threat T-07-05).
 /// </summary>
 [Collection(PdfRenderCollection.Name)]

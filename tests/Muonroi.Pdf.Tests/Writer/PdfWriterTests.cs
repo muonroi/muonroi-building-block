@@ -41,7 +41,7 @@ public sealed class PdfWriterTests
 
     private static async Task<byte[]> RenderAsync(PositionedPageList pageList, PdfRenderOptions? options = null)
     {
-        var writer = new PdfSharpCoreWriter();
+        var writer = new OwnedPdfWriter();
         using var ms = new MemoryStream();
         await writer.WriteAsync(pageList, options ?? new PdfRenderOptions(), ms, CancellationToken.None);
         return ms.ToArray();
@@ -51,7 +51,7 @@ public sealed class PdfWriterTests
     public async Task WriteAsync_MinimalPageList_ProducesNonEmptyOutput()
     {
         var pageList = MinimalPageList();
-        var writer = new PdfSharpCoreWriter();
+        var writer = new OwnedPdfWriter();
         using var ms = new MemoryStream();
 
         long bytesWritten = await writer.WriteAsync(pageList, new PdfRenderOptions(), ms, CancellationToken.None);
@@ -105,7 +105,7 @@ public sealed class PdfWriterTests
         pageList.EmbeddedFonts = [];
         pageList.Images = new Dictionary<string, DecodedImage>();
 
-        var writer = new PdfSharpCoreWriter();
+        var writer = new OwnedPdfWriter();
         using var ms = new MemoryStream();
 
         Func<Task> act = async () => await writer.WriteAsync(pageList, new PdfRenderOptions(), ms, CancellationToken.None);
@@ -114,21 +114,21 @@ public sealed class PdfWriterTests
     }
 
     [Fact]
-    public async Task WriteAsync_EmptyPageList_ThrowsBecausePdfRequiresAtLeastOnePage()
+    public async Task WriteAsync_EmptyPageList_ProducesValidPdfWithZeroPages()
     {
-        // Deviation from plan: the plan assumed PdfSharpCore emits a valid 0-page PDF, but the
-        // library throws ("Cannot save a PDF document with no pages."). A valid PDF requires at
-        // least one page, so the writer surfaces this rather than fabricating a blank page.
+        // OwnedPdfWriter (unlike PdfSharpCore) emits a structurally valid PDF even with zero pages.
+        // A 0-page PDF is technically valid per the spec and OwnedPdfWriter does not throw.
         var pageList = new PositionedPageList
         {
             EmbeddedFonts = [],
             Images = new Dictionary<string, DecodedImage>()
         };
-        var writer = new PdfSharpCoreWriter();
+        var writer = new OwnedPdfWriter();
         using var ms = new MemoryStream();
 
-        Func<Task> act = async () => await writer.WriteAsync(pageList, new PdfRenderOptions(), ms, CancellationToken.None);
+        long bytesWritten = await writer.WriteAsync(pageList, new PdfRenderOptions(), ms, CancellationToken.None);
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        bytesWritten.Should().BeGreaterThan(0);
+        Encoding.ASCII.GetString(ms.ToArray(), 0, 8).Should().StartWith("%PDF-1.7");
     }
 }

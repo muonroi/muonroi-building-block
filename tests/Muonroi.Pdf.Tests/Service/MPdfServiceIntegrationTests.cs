@@ -24,8 +24,8 @@ public sealed class MPdfServiceIntegrationTests
 {
     // The box tree assigns inline text the default family "serif" (block-level font-family is not
     // inherited down to synthesized inline text nodes in the current cascade). We therefore declare
-    // the embedded test face UNDER the "serif" family so PdfSharp's resolver finds it — the headless
-    // build host has no OS fonts, so an unembedded family would throw "No appropriate font found".
+    // the embedded test face UNDER the "serif" family so the writer finds it — the headless
+    // build host has no OS fonts, so an unembedded family would produce .notdef glyphs.
     private const string Html =
         "<html><head><style>@font-face{font-family:serif;src:url(test.ttf);}</style></head>" +
         "<body><p>Hello Muonroi PDF</p></body></html>";

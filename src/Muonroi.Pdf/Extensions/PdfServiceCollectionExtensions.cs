@@ -60,7 +60,7 @@ public static class PdfServiceCollectionExtensions
         services.TryAddSingleton<IPdfCssPolicy, DefaultStrictPolicy>();
         services.TryAddSingleton<IImageDecoder, PureImageDecoder>();
         services.TryAddSingleton<IResourceResolver, ThrowingResourceResolver>();
-        services.TryAddSingleton<IPdfWriter, PdfSharpCoreWriter>();
+        services.TryAddSingleton<IPdfWriter, OwnedPdfWriter>();
         services.TryAddSingleton<IMPdfService, MPdfService>();
 
         // TEL-01: register the descriptor as ITelemetryDescriptor so OtelSetup discovers the

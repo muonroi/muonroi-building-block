@@ -1,11 +1,11 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Muonroi.Pdf.Tests.Golden;
 
 /// <summary>
 /// Golden byte-equality tests for the table corpus group: 2x2, colspan, rowspan, combined
 /// colspan+rowspan, border-collapse:separate + border-spacing, and auto vs fixed column widths.
-/// Belongs to the non-parallel <see cref="PdfRenderCollection"/> (PdfSharpCore FontFactory race).
+/// Belongs to the non-parallel <see cref="PdfRenderCollection"/> (parallelism-safe).
 /// </summary>
 [Collection(PdfRenderCollection.Name)]
 public sealed class TableGoldenTests

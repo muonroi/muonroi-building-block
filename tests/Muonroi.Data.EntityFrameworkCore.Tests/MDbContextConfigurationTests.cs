@@ -1,6 +1,7 @@
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Helpers;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
@@ -81,16 +82,35 @@ public class MDbContextConfigurationTests
         }
     }
 
+    // When Muonroi.Auth is NOT configured (no MAuthenticateTokenHelper in the container),
+    // auth repositories must NOT be registered — this is the lazy-registration guard that
+    // prevents ValidateOnBuild from failing. See MDbContextConfiguration.SystemDependencyInjectionService.
     [Fact]
-    public void SystemDependencyInjectionService_Registers_Expected_Services()
+    public void SystemDependencyInjectionService_WhenAuthNotConfigured_RegistersNothing()
     {
         ServiceCollection services = [];
 
         _ = InvokeSystemDi(services);
+
+        Assert.Equal(0, services.Count(x => x.ServiceType == typeof(IAuthenticateRepository)));
+        Assert.Equal(0, services.Count(x => x.ServiceType == typeof(IRefreshTokenValidator)));
+    }
+
+    // When Muonroi.Auth IS configured (MAuthenticateTokenHelper present), the auth repositories
+    // are registered — exactly once each, even across repeated calls (TryAddScoped is idempotent).
+    [Fact]
+    public void SystemDependencyInjectionService_WhenAuthConfigured_RegistersAuthRepositoriesOnce()
+    {
+        ServiceCollection services = [];
+        // Mark Auth as configured by registering the gating dependency. A null factory is fine —
+        // the test only inspects registration presence and never builds the provider.
+        _ = services.AddScoped(typeof(MAuthenticateTokenHelper<TestPermission>), _ => null!);
+
+        _ = InvokeSystemDi(services);
         _ = InvokeSystemDi(services);
 
-        Assert.Equal(2, services.Count(x => x.ServiceType == typeof(IAuthenticateRepository)));
-        Assert.Equal(2, services.Count(x => x.ServiceType == typeof(IRefreshTokenValidator)));
+        Assert.Equal(1, services.Count(x => x.ServiceType == typeof(IAuthenticateRepository)));
+        Assert.Equal(1, services.Count(x => x.ServiceType == typeof(IRefreshTokenValidator)));
     }
 
     [Fact]

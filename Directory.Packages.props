@@ -39,11 +39,11 @@
     <PackageVersion Include="Hangfire.MemoryStorage" Version="1.8.1.2" />
     <PackageVersion Include="Jint" Version="4.6.3" />
     <PackageVersion Include="MailKit" Version="4.3.0" />
+    <!-- PINNED at 8.x: v8.x is the last MassTransit line under the Apache-2.0 license; v9+ moves to a commercial license. Stay on v8.x to avoid vendor lock-in / paid upgrade. Mirrors the FluentAssertions 7.2.0 pin above. MassTransit is also fully isolated behind Muonroi.Messaging.Abstractions (vendor-neutral) + the Muonroi.Messaging.MassTransit adapter. -->
     <PackageVersion Include="MassTransit" Version="8.3.6" />
     <PackageVersion Include="MassTransit.Abstractions" Version="8.3.6" />
     <PackageVersion Include="MassTransit.Kafka" Version="8.3.6" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.3.6" />
-    <PackageVersion Include="MediatR" Version="14.1.0" />
     <PackageVersion Include="MessagePack" Version="3.1.4" />
     <!-- Framework-coupled packages: versions governed by build/Version.props (TFM-conditional) -->
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(AspNetCoreVersion)" />

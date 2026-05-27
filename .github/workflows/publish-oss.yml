@@ -120,7 +120,7 @@ jobs:
             "src/Muonroi.Integration.Abstractions"
             "src/Muonroi.Diagnostics.Generator"
             "src/Muonroi.Diagnostics"
-            "src/Muonroi.Services.Abstractions"
+            "src/Muonroi.Services"
             "src/Muonroi.Rules"
             "src/Muonroi.Tenancy.SiteProfile.Grpc"
             "src/Muonroi.AspNetCore.RuleEngine"

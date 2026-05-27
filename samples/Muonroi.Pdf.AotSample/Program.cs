@@ -18,7 +18,7 @@ try
     // internal to Muonroi.Pdf. The open-generic registration satisfies all IMLog<T> requests.
     services.AddSingleton(typeof(IMLog<>), typeof(AotNoOpLog<>));
 
-    // Font resolver: serves an embedded TTF (SampleFont.ttf) so PdfSharpCore can embed a font
+    // Font resolver: serves an embedded TTF (SampleFont.ttf) so OwnedPdfWriter can embed a font
     // with zero dependency on OS-installed fonts (none exist on the Alpine runtime image).
     services.AddSingleton<IFontResolver>(new AotFontResolver());
 
@@ -27,10 +27,9 @@ try
     IMPdfService pdfService = provider.GetRequiredService<IMPdfService>();
 
     // The @font-face declaration drives the FontPipeline to invoke the registered IFontResolver;
-    // without it the writer has no embedded font and PdfSharpCore falls back to PlatformFontResolver,
-    // which finds nothing on Alpine. The face is declared under the "serif" family because the box
-    // tree assigns synthesized inline text the default family "serif" (block-level font-family is not
-    // inherited down to inline text nodes) — so the writer's XFont("serif", …) must resolve here.
+    // without it the writer has no embedded font and text glyphs would not render. The face is
+    // declared under the "serif" family because the box tree assigns synthesized inline text the
+    // default family "serif" (block-level font-family is not inherited down to inline text nodes).
     // The src url is nominal: AotFontResolver returns the embedded SampleFont bytes for any request.
     const string html =
         "<!DOCTYPE html><html><head><style>" +

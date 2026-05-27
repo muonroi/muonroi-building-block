@@ -1,11 +1,11 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Muonroi.Pdf.Tests.Golden;
 
 /// <summary>
 /// Golden byte-equality tests for the font corpus group: embedded subset, bold/italic variants,
 /// size scaling, and @font-face resolution. Belongs to the non-parallel <see cref="PdfRenderCollection"/>
-/// (PdfSharpCore FontFactory race).
+/// (parallelism-safe).
 /// </summary>
 [Collection(PdfRenderCollection.Name)]
 public sealed class FontGoldenTests

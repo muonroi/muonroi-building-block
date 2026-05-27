@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 
 namespace Muonroi.Pdf.Tests.Golden;
@@ -8,7 +8,7 @@ namespace Muonroi.Pdf.Tests.Golden;
 /// render path <see cref="GoldenPdf"/> uses and asserts the two byte arrays are identical. Distinct
 /// from baseline comparison — catches intra-run nondeterminism even for cases without a baseline,
 /// and automatically covers every case later plans append to <see cref="GoldenCorpus.AllCases"/>.
-/// Belongs to the non-parallel <see cref="PdfRenderCollection"/> (PdfSharpCore FontFactory race).
+/// Belongs to the non-parallel <see cref="PdfRenderCollection"/> (parallelism-safe).
 /// </summary>
 [Collection(PdfRenderCollection.Name)]
 public sealed class DeterminismCanaryTests
