@@ -64,9 +64,85 @@ internal static class GoldenCorpus
                 "<div><p>Block with background color.</p></div>")),
     };
 
+    /// <summary>
+    /// Inline-layout golden cases: line wrapping, baseline alignment across font sizes,
+    /// vertical-align, and white-space handling. v0.1 inline subset only.
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> InlineLayout = new[]
+    {
+        new GoldenCase(
+            "inline-single-wrap",
+            Doc("p{width:120px;margin:0;}",
+                "<p>This sentence is long enough to wrap onto a second line inside a narrow box.</p>")),
+        new GoldenCase(
+            "inline-multi-line-wrap",
+            Doc("p{width:90px;margin:0;}",
+                "<p>Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi.</p>")),
+        new GoldenCase(
+            "inline-mixed-font-size-baseline",
+            Doc(".big{font-size:24px;}.small{font-size:10px;}",
+                "<p><span class=\"small\">small</span> <span class=\"big\">BIG</span> <span class=\"small\">small</span></p>")),
+        new GoldenCase(
+            "inline-vertical-align",
+            Doc(".sup{vertical-align:super;font-size:10px;}.sub{vertical-align:sub;font-size:10px;}",
+                "<p>base<span class=\"sup\">up</span> and<span class=\"sub\">down</span> baseline</p>")),
+        new GoldenCase(
+            "white-space-normal-vs-pre",
+            Doc(".pre{white-space:pre;}",
+                "<p>normal   collapses   spaces</p><p class=\"pre\">pre   keeps   spaces</p>")),
+        new GoldenCase(
+            "inline-trailing-space",
+            Doc("p{width:140px;margin:0;}",
+                "<p>Trailing inline spaces should collapse at the end of the line.     </p>")),
+    };
+
+    /// <summary>
+    /// Table golden cases: 2x2 baseline, colspan/rowspan/combined, explicit border-spacing,
+    /// and auto vs fixed column widths. <c>border-collapse:separate</c> only (collapse is policy-rejected).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> Tables = new[]
+    {
+        new GoldenCase(
+            "table-2x2",
+            Doc("table{border-collapse:separate;}td{border:1px solid black;padding:4px;}",
+                "<table><tr><td>A1</td><td>B1</td></tr><tr><td>A2</td><td>B2</td></tr></table>")),
+        new GoldenCase(
+            "table-colspan2",
+            Doc("table{border-collapse:separate;}td{border:1px solid black;padding:4px;}",
+                "<table><tr><td colspan=\"2\">Spanning header</td></tr>" +
+                "<tr><td>Left</td><td>Right</td></tr></table>")),
+        new GoldenCase(
+            "table-rowspan2",
+            Doc("table{border-collapse:separate;}td{border:1px solid black;padding:4px;}",
+                "<table><tr><td rowspan=\"2\">Tall</td><td>Top</td></tr>" +
+                "<tr><td>Bottom</td></tr></table>")),
+        new GoldenCase(
+            "table-colspan-rowspan",
+            Doc("table{border-collapse:separate;}td{border:1px solid black;padding:4px;}",
+                "<table><tr><td colspan=\"2\" rowspan=\"2\">Big</td><td>C1</td></tr>" +
+                "<tr><td>C2</td></tr><tr><td>A3</td><td>B3</td><td>C3</td></tr></table>")),
+        new GoldenCase(
+            "table-border-collapse-separate-spacing",
+            Doc("table{border-collapse:separate;border-spacing:8px;}td{border:1px solid black;padding:4px;}",
+                "<table><tr><td>A1</td><td>B1</td></tr><tr><td>A2</td><td>B2</td></tr></table>")),
+        new GoldenCase(
+            "table-auto-column-width",
+            Doc("table{border-collapse:separate;}td{border:1px solid black;padding:4px;}",
+                "<table><tr><td>short</td><td>a much longer cell content column</td></tr>" +
+                "<tr><td>x</td><td>y</td></tr></table>")),
+        new GoldenCase(
+            "table-fixed-column-width",
+            Doc("table{border-collapse:separate;table-layout:fixed;width:300px;}" +
+                "td{border:1px solid black;padding:4px;width:150px;}",
+                "<table><tr><td>fixed one</td><td>fixed two</td></tr>" +
+                "<tr><td>x</td><td>y</td></tr></table>")),
+    };
+
     /// <summary>Every registered case across all groups. Later plans extend by concatenation.</summary>
     internal static readonly IReadOnlyList<GoldenCase> AllCases =
         BlockLayout
+            .Concat(InlineLayout)
+            .Concat(Tables)
             .ToList();
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for every registered case.</summary>
@@ -76,6 +152,14 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the block-layout group only.</summary>
     public static IEnumerable<object[]> BlockCasesData() =>
         BlockLayout.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the inline-layout group only.</summary>
+    public static IEnumerable<object[]> InlineCasesData() =>
+        InlineLayout.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the table group only.</summary>
+    public static IEnumerable<object[]> TableCasesData() =>
+        Tables.Select(c => new object[] { c.Name });
 
     /// <summary>Looks up a registered case by name.</summary>
     public static GoldenCase ByName(string name) =>
