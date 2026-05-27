@@ -249,7 +249,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Tenancy.SiteProfile
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Mapping.Abstractions", "src\Muonroi.Mapping.Abstractions\Muonroi.Mapping.Abstractions.csproj", "{429DDD9B-FFC8-4B9C-A573-D721B730FC18}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Services.Abstractions", "src\Muonroi.Services.Abstractions\Muonroi.Services.Abstractions.csproj", "{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Services", "src\Muonroi.Services\Muonroi.Services.csproj", "{EB0AF611-CC60-46A4-A3E1-B5EFEC6581D6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Tenancy.SiteProfile.SourceGenerators", "src\Muonroi.Tenancy.SiteProfile.SourceGenerators\Muonroi.Tenancy.SiteProfile.SourceGenerators.csproj", "{A4ADCC8C-CDA2-CD9B-3A7E-2676218A147F}"
 EndProject

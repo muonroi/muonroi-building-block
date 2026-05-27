@@ -4,7 +4,7 @@ using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Data.Abstractions.Entities;
 using Muonroi.Mapping.Abstractions;
 
-namespace Muonroi.Services.Abstractions;
+namespace Muonroi.Services;
 
 /// <summary>
 /// Base service operating on generic entity/DTO types.

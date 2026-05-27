@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <Description>Generic service base with virtual hook methods for schema-divergent multi-tenancy. Core provides CRUD; site overrides hooks.</Description>
+    <Description>Generic EF Core service base with virtual hook methods for schema-divergent multi-tenancy. Core provides CRUD; site overrides hooks. This is an implementation layer (couples to DbContext by design) — not a vendor-neutral contract, hence not an .Abstractions assembly.</Description>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.Data.Abstractions\Muonroi.Data.Abstractions.csproj" />
