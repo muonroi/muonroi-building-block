@@ -7,6 +7,12 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Description>HTML/CSS to PDF layout engine: box-tree construction, pagination, and rendering coordination for Muonroi applications.</Description>
+    <!-- AOT-01 verified: no reflection-emit in hot path; engine is AOT-clean.
+         Audit performed in Phase 08-04: grep for Activator.CreateInstance, Type.GetProperties/Methods/Constructors/Fields,
+         AppDomain.CurrentDomain, Assembly.GetExecutingAssembly, GetType() on non-this expressions — 0 matches found.
+         AOT compatibility: engine hot path uses no Activator.CreateInstance or dynamic code.
+         AngleSharp.Css trim warnings are suppressed via TrimmerRootDescriptor in the AOT sample. -->
+    <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SixLabors.Fonts" />

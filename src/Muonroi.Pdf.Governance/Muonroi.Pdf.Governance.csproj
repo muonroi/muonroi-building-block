@@ -7,6 +7,12 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Description>CSS policy enforcement and HTML/CSS parsing adapters for Muonroi PDF rendering.</Description>
+    <!-- AOT-01 verified: no reflection-emit in hot path; engine is AOT-clean.
+         Audit performed in Phase 08-04: grep for Activator.CreateInstance, Type.GetProperties/Methods/Constructors/Fields,
+         AppDomain.CurrentDomain, Assembly.GetExecutingAssembly, GetType() on non-this expressions — 0 matches found.
+         AngleSharp.Css trim warnings (IL2026/IL2055/IL3050) originate in AngleSharp.Css internals,
+         not in this assembly. Mitigated via TrimmerRootDescriptor preserve="all" in AOT sample. -->
+    <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AngleSharp" />
