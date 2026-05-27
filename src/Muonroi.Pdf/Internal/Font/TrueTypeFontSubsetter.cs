@@ -4,21 +4,31 @@ using Muonroi.Pdf.Abstractions.Exceptions;
 
 namespace Muonroi.Pdf.Internal.Font;
 
+/// <summary>
+/// Result of a TrueType font subset operation. Contains the subset bytes plus the GID mapping
+/// computed during subsetting, which Plan 02 (CID font embedding) needs to emit /W arrays and
+/// 2-byte GID content streams without a redundant cmap parse.
+/// </summary>
+internal sealed record FontSubsetResult(
+    ReadOnlyMemory<byte> SubsetBytes,
+    IReadOnlyDictionary<ushort, ushort> OldToNewGid,
+    IReadOnlyList<ushort> SortedGids);
+
 internal sealed class TrueTypeFontSubsetter
 {
     private const uint SfntVersionTTF = 0x00010000u;
     private const uint SfntVersionCFF = 0x4F54544Fu; // 'OTTO'
 
-    internal ReadOnlyMemory<byte> Subset(ReadOnlyMemory<byte> fontBytes, IReadOnlySet<int> usedCodepoints)
+    internal FontSubsetResult Subset(ReadOnlyMemory<byte> fontBytes, IReadOnlySet<int> usedCodepoints)
     {
         if (fontBytes.Length < 12)
             throw new PdfFormatException("FONT-FORMAT", "Font too short to parse sfntVersion");
 
         uint sfntVersion = BinaryPrimitives.ReadUInt32BigEndian(fontBytes.Span);
 
-        // CFF-OTF pass-through — no subsetting
+        // CFF-OTF pass-through — no subsetting; return empty GID mapping (CFF uses different encoding)
         if (sfntVersion == SfntVersionCFF)
-            return fontBytes;
+            return new FontSubsetResult(fontBytes, new Dictionary<ushort, ushort>(), Array.Empty<ushort>());
 
         if (sfntVersion != SfntVersionTTF)
             throw new PdfFormatException("FONT-FORMAT",
@@ -51,7 +61,7 @@ internal sealed class TrueTypeFontSubsetter
 
         // --- Step 4: composite glyph closure ---
         if (!tables.TryGetValue("loca", out var locaTable) || !tables.TryGetValue("glyf", out _))
-            return fontBytes; // malformed; pass through
+            return new FontSubsetResult(fontBytes, new Dictionary<ushort, ushort>(), Array.Empty<ushort>()); // malformed; pass through
 
         int indexToLocFormat = ReadIndexToLocFormat(fontBytes.Span, tables);
         ExpandCompositeGlyphs(fontBytes.Span, tables, usedGids, indexToLocFormat);
@@ -248,7 +258,7 @@ internal sealed class TrueTypeFontSubsetter
 
     // ── subset font builder ───────────────────────────────────────────────────
 
-    private static ReadOnlyMemory<byte> BuildSubsetFont(
+    private static FontSubsetResult BuildSubsetFont(
         ReadOnlySpan<byte> src,
         Dictionary<string, (uint offset, uint length)> srcTables,
         HashSet<ushort> usedGids,
@@ -352,7 +362,10 @@ internal sealed class TrueTypeFontSubsetter
             BinaryPrimitives.WriteUInt32BigEndian(output.AsSpan(headDataOff), adjustment);
         }
 
-        return new ReadOnlyMemory<byte>(output);
+        return new FontSubsetResult(
+            new ReadOnlyMemory<byte>(output),
+            oldToNew,
+            sortedGids);
     }
 
     // ── table builders ────────────────────────────────────────────────────────

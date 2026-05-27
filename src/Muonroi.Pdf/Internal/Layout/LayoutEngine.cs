@@ -103,13 +103,16 @@ internal sealed class LayoutEngine
                 string family = kvp.Key;
                 IReadOnlySet<int> codepoints = usedCodepoints.TryGetValue(family, out IReadOnlySet<int>? cp) ? cp : new HashSet<int>();
                 var subsetter = new TrueTypeFontSubsetter();
-                ReadOnlyMemory<byte> subsetBytes = subsetter.Subset(kvp.Value, codepoints);
+                FontSubsetResult subsetResult = subsetter.Subset(kvp.Value, codepoints);
 
                 FontFaceDeclaration? decl = doc.FontFaces.FirstOrDefault(f => f.Family == family);
                 if (decl == null)
                     continue;
 
-                embeddedFonts.Add(new EmbeddedFontInfo(decl.Family, decl.Weight, decl.Style, subsetBytes, codepoints));
+                embeddedFonts.Add(new EmbeddedFontInfo(
+                    decl.Family, decl.Weight, decl.Style,
+                    subsetResult.SubsetBytes, codepoints,
+                    subsetResult.OldToNewGid, subsetResult.SortedGids));
             }
         }
 
