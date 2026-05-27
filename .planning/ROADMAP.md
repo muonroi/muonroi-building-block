@@ -180,6 +180,21 @@ the per-word `DrawString` pipeline that dominates render allocations.
 **Plans**: 08.5-01..07 (complete) â€” branch `phase/08.5-owned-pdf-writer`, commit 3ea4348
 **Status**: COMPLETE â€” all 4 success criteria met; verified 7/7 (08.5-VERIFICATION.md, Opus, independently reproduced). Measured SC4 total 51.62 MB. PdfSharpCore removed. Non-blocking: external PDF validator (qpdf/veraPDF) pass recommended before GA.
 
+### Phase 8.6: Rendering Fidelity â€” close CSS/HTML5/font/image gaps (tech-debt paydown)
+**Goal**: Eliminate the silent-drop rendering gaps surfaced by the Phase 8.5 capability audit so they do not harden into tech debt before v1.0. Parsed-but-not-rendered CSS and unsupported inputs should either render correctly or fail loudly under policy â€” never silently produce wrong output.
+**Depends on**: Phase 8.5 (owned writer is the rendering surface these gaps live in)
+**Requirements**: FIDELITY-01..0N (to be derived during research)
+**Scope decided (interview 2026-05-27)**: 3 clusters below. Driver = general coverage before v1.0 (not TCIS-specific). Cross-cutting philosophy = **fail-loud**: any unsupported input (OTF-CFF, PNG RGBA, unknown CSS) must throw a clear `PdfFormatException`/policy violation â€” NEVER silently emit wrong output.
+**Out of scope (deliberate, follow-up candidate)**: `background-color` + `border` drawing (parsed-but-not-drawn) â€” still the largest visual gap; not included this phase.
+**Success Criteria** (what must be TRUE):
+  1. **Text layout fidelity** â€” `text-align` (left/right/center/justify) and `line-height` are honored by the layout engine; `text-decoration` (underline/strikethrough) is drawn by the writer. Golden coverage added.
+  2. **HTML5 semantics** â€” `<br>`/`<hr>` break/rule, `<ul>/<ol>/<li>` markers, and `<a>` link annotations render; anything not implemented is explicitly policy-gated with a clear reason, never silently dropped.
+  3. **Font + image robustness (fail-loud)** â€” OTF-CFF (`.otf` PostScript-outline) fonts either subset+embed correctly OR are rejected with a clear `PdfFormatException` (NO silent Latin-1 fallback that corrupts Vietnamese/Unicode); WOFF/WOFF2 decision documented. PNG alpha/palette/grayscale handled or cleanly rejected; the "8-bit RGB only" boundary enforced loudly.
+  4. No regression: full suite green; golden snapshots re-baselined for any intentional visual change.
+**Fallback**: if budget tightens, prioritize SC3 (font/image fail-loud safety) and SC1 (text layout); SC2 HTML5 semantics rolls to a follow-up.
+**Plans**: TBD (interview done â†’ research â†’ plan â†’ impl)
+**UI hint**: no
+
 ### Phase 9: v1.0 Enterprise
 **Goal**: Enterprise teams govern, version, canary-deploy, and live-preview templates through a self-service Designer; TCIS.ePort runs on the live engine with DinkToPdf removed
 **Depends on**: Phase 8
@@ -196,7 +211,7 @@ the per-word `DrawString` pipeline that dominates render allocations.
 ## Progress
 
 **Execution Order:**
-Phases execute sequentially: 1 â†’ 2 â†’ 3 â†’ 4 â†’ 5 â†’ 6 â†’ 7 â†’ 8 â†’ 8.5 â†’ 9
+Phases execute sequentially: 1 â†’ 2 â†’ 3 â†’ 4 â†’ 5 â†’ 6 â†’ 7 â†’ 8 â†’ 8.5 â†’ 8.6 â†’ 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -209,4 +224,5 @@ Phases execute sequentially: 1 â†’ 2 â†’ 3 â†’ 4 â†’ 5 â†
 | 7. Golden Snapshots + CI Gates + Publishing | 4/5 | In Progress|  |
 | 8. v0.2 â€” Source Generator + AOT + DesignSystem | 5/5 | Complete (SC4 deferred to 8.5) | 2026-05-27 |
 | 8.5. Owned PDF Writer (SC4 carry-over) | 7/7 | Complete (SC4 closed, PdfSharpCore removed) | 2026-05-27 |
+| 8.6. Rendering Fidelity (CSS/HTML5/font/image gaps) | 0/TBD | Interviewing | - |
 | 9. v1.0 Enterprise | 0/TBD | Not started | - |
