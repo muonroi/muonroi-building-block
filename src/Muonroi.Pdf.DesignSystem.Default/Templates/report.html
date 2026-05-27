@@ -2,22 +2,24 @@
 <html>
 <head>
 <style>
-body { font-family: Arial, sans-serif; margin: 0; padding: 20pt; color: #222; }
-.report-title-block { display: block; width: 100%; margin-bottom: 16pt; border-bottom: 2px solid #333; padding-bottom: 8pt; }
-.report-title-block h1 { font-size: 22pt; font-weight: bold; margin: 0 0 4pt 0; }
-.report-meta { display: table; width: 100%; margin-top: 8pt; }
+@font-face { font-family: serif; src: url(ds-default.ttf); font-weight: normal; font-style: normal; }
+@font-face { font-family: serif; src: url(ds-default-bold.ttf); font-weight: bold; font-style: normal; }
+body { font-family: serif; margin: 0; padding: 28px; color: #222; }
+.report-title-block { display: block; width: 100%; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+.report-title-block h1 { font-size: 28px; font-weight: bold; margin: 0 0 5px 0; }
+.report-meta { display: table; width: 100%; margin-top: 10px; }
 .report-meta-row { display: table-row; }
-.report-meta-label { display: table-cell; width: 20%; font-size: 10pt; font-weight: bold; padding: 2pt 0; color: #555; }
-.report-meta-value { display: table-cell; font-size: 10pt; padding: 2pt 0; }
-.section { display: block; width: 100%; margin-top: 20pt; }
-.section h2 { font-size: 16pt; font-weight: bold; margin: 0 0 8pt 0; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
-.summary-text { display: block; font-size: 10pt; line-height: 1.5; margin-top: 8pt; }
-table.data-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 12pt; }
-table.data-table th { background-color: #444; color: #fff; padding: 6pt 8pt; font-size: 10pt; text-align: left; font-weight: bold; }
-table.data-table td { padding: 5pt 8pt; font-size: 10pt; border-bottom: 1px solid #e0e0e0; }
+.report-meta-label { display: table-cell; width: 20%; font-size: 13px; font-weight: bold; padding: 2px 0; color: #555; }
+.report-meta-value { display: table-cell; font-size: 13px; padding: 2px 0; }
+.section { display: block; width: 100%; margin-top: 24px; }
+.section h2 { font-size: 20px; font-weight: bold; margin: 0 0 10px 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+.summary-text { display: block; font-size: 13px; margin-top: 10px; }
+table.data-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; }
+table.data-table th { background-color: #444; color: #fff; padding: 7px 10px; font-size: 13px; text-align: left; font-weight: bold; }
+table.data-table td { padding: 6px 10px; font-size: 13px; border-bottom: 1px solid #e0e0e0; }
 table.data-table tr.alt-row td { background-color: #f9f9f9; }
 .page-break { page-break-before: always; }
-.report-footer { display: block; margin-top: 24pt; font-size: 9pt; color: #888; border-top: 1px solid #ddd; padding-top: 6pt; }
+.report-footer { display: block; margin-top: 30px; font-size: 12px; color: #888; border-top: 1px solid #ddd; padding-top: 7px; }
 @page { margin: 20mm; }
 </style>
 </head>

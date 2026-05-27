@@ -2,29 +2,31 @@
 <html>
 <head>
 <style>
-body { font-family: Arial, sans-serif; margin: 0; padding: 20pt; color: #222; }
-.receipt-header { display: block; text-align: center; margin-bottom: 12pt; }
-.receipt-header h1 { font-size: 20pt; font-weight: bold; margin: 0 0 4pt 0; }
-.receipt-header p { font-size: 10pt; margin: 2pt 0; color: #555; }
-.divider { border-top: 1px solid #ccc; margin: 8pt 0; }
+@font-face { font-family: serif; src: url(ds-default.ttf); font-weight: normal; font-style: normal; }
+@font-face { font-family: serif; src: url(ds-default-bold.ttf); font-weight: bold; font-style: normal; }
+body { font-family: serif; margin: 0; padding: 28px; color: #222; }
+.receipt-header { display: block; text-align: center; margin-bottom: 16px; }
+.receipt-header h1 { font-size: 26px; font-weight: bold; margin: 0 0 5px 0; }
+.receipt-header p { font-size: 13px; margin: 2px 0; color: #555; }
+.divider { border-top: 1px solid #ccc; margin: 10px 0; }
 .items { display: table; width: 100%; border-collapse: separate; border-spacing: 0; }
 .items-header { display: table-row; }
-.items-header .col-desc { display: table-cell; font-weight: bold; font-size: 10pt; padding: 4pt 2pt; border-bottom: 1px solid #333; width: 60%; }
-.items-header .col-qty { display: table-cell; font-weight: bold; font-size: 10pt; padding: 4pt 2pt; border-bottom: 1px solid #333; width: 15%; text-align: right; }
-.items-header .col-price { display: table-cell; font-weight: bold; font-size: 10pt; padding: 4pt 2pt; border-bottom: 1px solid #333; width: 25%; text-align: right; }
+.items-header .col-desc { display: table-cell; font-weight: bold; font-size: 13px; padding: 5px 3px; border-bottom: 1px solid #333; width: 60%; }
+.items-header .col-qty { display: table-cell; font-weight: bold; font-size: 13px; padding: 5px 3px; border-bottom: 1px solid #333; width: 15%; text-align: right; }
+.items-header .col-price { display: table-cell; font-weight: bold; font-size: 13px; padding: 5px 3px; border-bottom: 1px solid #333; width: 25%; text-align: right; }
 .item-row { display: table-row; }
-.item-desc { display: table-cell; font-size: 10pt; padding: 3pt 2pt; }
-.item-qty { display: table-cell; font-size: 10pt; padding: 3pt 2pt; text-align: right; }
-.item-price { display: table-cell; font-size: 10pt; padding: 3pt 2pt; text-align: right; }
-.totals { display: table; width: 100%; margin-top: 8pt; }
+.item-desc { display: table-cell; font-size: 13px; padding: 4px 3px; }
+.item-qty { display: table-cell; font-size: 13px; padding: 4px 3px; text-align: right; }
+.item-price { display: table-cell; font-size: 13px; padding: 4px 3px; text-align: right; }
+.totals { display: table; width: 100%; margin-top: 10px; }
 .total-row { display: table-row; }
 .total-spacer { display: table-cell; width: 60%; }
-.total-label { display: table-cell; font-size: 10pt; font-weight: bold; padding: 2pt; width: 20%; text-align: right; }
-.total-value { display: table-cell; font-size: 10pt; padding: 2pt; width: 20%; text-align: right; }
-.grand-total-label { display: table-cell; font-size: 12pt; font-weight: bold; padding: 2pt; width: 20%; text-align: right; border-top: 2px solid #333; }
-.grand-total-value { display: table-cell; font-size: 12pt; font-weight: bold; padding: 2pt; width: 20%; text-align: right; border-top: 2px solid #333; }
-.payment-info { display: block; margin-top: 12pt; font-size: 10pt; }
-.receipt-footer { display: block; text-align: center; margin-top: 16pt; font-size: 9pt; color: #888; }
+.total-label { display: table-cell; font-size: 13px; font-weight: bold; padding: 2px; width: 20%; text-align: right; }
+.total-value { display: table-cell; font-size: 13px; padding: 2px; width: 20%; text-align: right; }
+.grand-total-label { display: table-cell; font-size: 15px; font-weight: bold; padding: 2px; width: 20%; text-align: right; border-top: 2px solid #333; }
+.grand-total-value { display: table-cell; font-size: 15px; font-weight: bold; padding: 2px; width: 20%; text-align: right; border-top: 2px solid #333; }
+.payment-info { display: block; margin-top: 15px; font-size: 13px; }
+.receipt-footer { display: block; text-align: center; margin-top: 20px; font-size: 12px; color: #888; }
 @page { margin: 15mm; }
 </style>
 </head>

@@ -23,7 +23,19 @@ internal sealed class AngleSharpStyledNode : IStyledNode
         {
             if (_node is IElement el && _window is not null)
             {
-                ICssStyleDeclaration? computed = _window.GetComputedStyle(el);
+                ICssStyleDeclaration? computed;
+                try
+                {
+                    computed = _window.GetComputedStyle(el);
+                }
+                catch (ArgumentException)
+                {
+                    // AngleSharp requires a render device to resolve relative units (em, rem, %)
+                    // when running in a headless context without a browser viewport. The computed
+                    // style is unavailable; return Empty so the layout engine uses its own defaults.
+                    return AngleSharpComputedStyle.Empty;
+                }
+
                 if (computed is not null)
                     return new AngleSharpComputedStyle(computed);
             }

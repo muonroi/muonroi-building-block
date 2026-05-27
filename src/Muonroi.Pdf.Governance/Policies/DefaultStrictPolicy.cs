@@ -95,7 +95,35 @@ public sealed class DefaultStrictPolicy : IPdfCssPolicy
 
         foreach (IElement element in document.All.OfType<IElement>())
         {
-            ICssStyleDeclaration? style = defaultView.GetComputedStyle(element);
+            ICssStyleDeclaration? style;
+            try
+            {
+                style = defaultView.GetComputedStyle(element);
+            }
+            catch (ArgumentException)
+            {
+                // AngleSharp requires a render device to resolve relative units (em, rem, %)
+                // in headless (no-browser) contexts. Fall back to reading keyword-based
+                // CSS values from the matched author-origin rules via the element's
+                // stylesheet-matched styles so that display/float/position are still checked.
+                style = null;
+                foreach (ICssStyleSheet sheet in element.Owner?.StyleSheets.OfType<ICssStyleSheet>()
+                    ?? Enumerable.Empty<ICssStyleSheet>())
+                {
+                    ICssRuleList rules = sheet.Rules;
+                    for (int i = 0; i < rules.Length; i++)
+                    {
+                        if (rules[i] is ICssStyleRule styleRule && element.Matches(styleRule.SelectorText))
+                        {
+                            style = styleRule.Style;
+                            break;
+                        }
+                    }
+
+                    if (style is not null) break;
+                }
+            }
+
             if (style is null) continue;
 
             string selector = element.GetSelector() ?? element.LocalName;
