@@ -13,7 +13,4 @@
     <ProjectReference Include="..\Muonroi.Mediator\Muonroi.Mediator.csproj" />
     <ProjectReference Include="..\Muonroi.Tenancy.Abstractions\Muonroi.Tenancy.Abstractions.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="MassTransit.Abstractions" />
-  </ItemGroup>
 </Project>
