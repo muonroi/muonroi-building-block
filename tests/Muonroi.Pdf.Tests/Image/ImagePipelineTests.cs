@@ -19,7 +19,9 @@ public sealed class ImagePipelineTests
             0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,  // PNG magic
             0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,  // length=13, "IHDR"
             0x00, 0x00, 0x00, 0x64,                            // width = 100
-            0x00, 0x00, 0x00, 0xC8                             // height = 200
+            0x00, 0x00, 0x00, 0xC8,                            // height = 200
+            0x08,                                               // bit_depth = 8
+            0x02                                                // color_type = 2 (RGB)
         ];
 
         var decoder = new PureImageDecoder();
@@ -239,7 +241,7 @@ public sealed class ImagePipelineTests
 
     private static byte[] BuildMinimalPng(int width, int height)
     {
-        byte[] bytes = new byte[24];
+        byte[] bytes = new byte[26];
         bytes[0] = 0x89; bytes[1] = 0x50; bytes[2] = 0x4E; bytes[3] = 0x47;
         bytes[4] = 0x0D; bytes[5] = 0x0A; bytes[6] = 0x1A; bytes[7] = 0x0A;
         bytes[8] = 0x00; bytes[9] = 0x00; bytes[10] = 0x00; bytes[11] = 0x0D;
@@ -248,6 +250,8 @@ public sealed class ImagePipelineTests
         bytes[18] = (byte)(width >> 8); bytes[19] = (byte)width;
         bytes[20] = (byte)(height >> 24); bytes[21] = (byte)(height >> 16);
         bytes[22] = (byte)(height >> 8); bytes[23] = (byte)height;
+        bytes[24] = 0x08; // bit_depth = 8
+        bytes[25] = 0x02; // color_type = 2 (RGB)
         return bytes;
     }
 
