@@ -32,7 +32,7 @@ internal sealed class PureImageDecoder : IImageDecoder
 
     private static DecodedImage DecodePng(ReadOnlySpan<byte> data)
     {
-        if (data.Length < 24)
+        if (data.Length < 26)
             throw new PdfFormatException("IMG-FORMAT", "PNG data too short to contain IHDR");
 
         if (!data[..8].SequenceEqual(PngMagic))
@@ -40,6 +40,28 @@ internal sealed class PureImageDecoder : IImageDecoder
 
         int width  = (int)BinaryPrimitives.ReadUInt32BigEndian(data.Slice(16, 4));
         int height = (int)BinaryPrimitives.ReadUInt32BigEndian(data.Slice(20, 4));
+
+        byte bitDepth  = data[24];
+        byte colorType = data[25];
+
+        if (colorType == 3)
+            throw new PdfFormatException("PNG-PALETTE",
+                "Palette/indexed PNG (color_type=3) is not supported. Convert to 8-bit RGB PNG.");
+        if (colorType == 0)
+            throw new PdfFormatException("PNG-GRAYSCALE",
+                "Grayscale PNG (color_type=0) is not supported. Convert to 8-bit RGB PNG.");
+        if (colorType == 4)
+            throw new PdfFormatException("PNG-GRAYSCALE-ALPHA",
+                "Grayscale+alpha PNG (color_type=4) is not supported. Convert to 8-bit RGB PNG.");
+        if (colorType == 6)
+            throw new PdfFormatException("PNG-RGBA",
+                "RGBA PNG (color_type=6) is not supported. Convert to 8-bit RGB PNG (strip alpha channel).");
+        if (colorType == 2 && bitDepth == 16)
+            throw new PdfFormatException("PNG-16BIT",
+                "16-bit RGB PNG (bit_depth=16) is not supported. Convert to 8-bit RGB PNG.");
+        if (colorType != 2 || bitDepth != 8)
+            throw new PdfFormatException("PNG-FORMAT",
+                $"Unsupported PNG: color_type={colorType}, bit_depth={bitDepth}. Only 8-bit RGB (color_type=2, bit_depth=8) is supported.");
 
         return new DecodedImage(width, height, data.ToArray(), "image/png");
     }

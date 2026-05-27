@@ -112,7 +112,8 @@ internal sealed class LayoutEngine
                 embeddedFonts.Add(new EmbeddedFontInfo(
                     decl.Family, decl.Weight, decl.Style,
                     subsetResult.SubsetBytes, codepoints,
-                    subsetResult.OldToNewGid, subsetResult.SortedGids));
+                    subsetResult.OldToNewGid, subsetResult.SortedGids,
+                    subsetResult.CpToNewGid));
             }
         }
 

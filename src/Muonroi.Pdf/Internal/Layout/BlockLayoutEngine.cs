@@ -59,7 +59,8 @@ internal sealed class BlockLayoutEngine
             CurrentPageIndex = context.CurrentPageIndex,
             TotalPages = context.TotalPages,
             TextMetrics = context.TextMetrics,
-            PageMargins = context.PageMargins
+            PageMargins = context.PageMargins,
+            TextAlign = box.TextAlign ?? context.TextAlign  // inherit text-align from container
         };
 
         foreach (var child in box.Children)
@@ -104,8 +105,25 @@ internal sealed class BlockLayoutEngine
 
         switch (child)
         {
+            case HrBox hr:
+            {
+                float hrHeight = hr.MarginTopHr + hr.Thickness + hr.MarginBottomHr;
+                float hrY = startY + hr.MarginTopHr;
+                output.Add(new PositionedElement
+                {
+                    Source = hr,
+                    Position = new Rect(ctx.PageMarginLeftPt, hrY, ctx.AvailableWidth, hr.Thickness),
+                    PageIndex = pageIndex
+                });
+                ctx.CurrentY = startY + hrHeight;
+                return hrHeight;
+            }
+
             case BlockBox blockChild:
             {
+                // Propagate text-align from this block's context into its child context
+                if (blockChild.TextAlign == null && ctx.TextAlign != null)
+                    blockChild.TextAlign = ctx.TextAlign;
                 float h = Layout(blockChild, ctx, output, pageIndex);
                 output.Add(new PositionedElement
                 {

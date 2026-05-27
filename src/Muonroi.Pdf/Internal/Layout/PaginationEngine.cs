@@ -87,8 +87,27 @@ internal sealed class PaginationEngine
             {
                 Position = new Rect(el.Position.X, localY, el.Position.Width, el.Position.Height),
                 Source = el.Source,
+                RenderedText = el.RenderedText,
                 PageIndex = pageIndex
             });
+        }
+
+        // Collect link annotations: scan positioned elements for InlineBox.LinkHref
+        for (int p = 0; p < result.Pages.Count; p++)
+        {
+            foreach (var el in result.Pages[p].Elements)
+            {
+                if (el.Source is InlineBox linkBox && linkBox.LinkHref != null)
+                {
+                    result.Pages[p].LinkAnnotations.Add(new LinkAnnotation(
+                        linkBox.LinkHref,
+                        el.Position.X,
+                        el.Position.Y,
+                        el.Position.Width,
+                        el.Position.Height,
+                        p));
+                }
+            }
         }
 
         // Counter substitution: replace counter(page) and counter(pages) in InlineBox text.

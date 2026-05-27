@@ -354,6 +354,66 @@ internal static class GoldenCorpus
             new PdfRenderOptions { Margins = PdfMargins.Uniform(25) }),
     };
 
+    /// <summary>
+    /// Fidelity-layout golden cases: text-align (center/right/justify), line-height (unitless/px),
+    /// and text-decoration (underline/line-through). Exercises FIDELITY-01..03.
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> FidelityLayout = new[]
+    {
+        new GoldenCase(
+            "text-align-center",
+            Doc("p{margin:0;}", "<p style=\"text-align:center\">Centered text on the page.</p>")),
+        new GoldenCase(
+            "text-align-right",
+            Doc("p{margin:0;}", "<p style=\"text-align:right\">Right-aligned text on the page.</p>")),
+        new GoldenCase(
+            "text-align-justify",
+            Doc("p{margin:0;width:300px;}",
+                "<p style=\"text-align:justify\">Justified text stretches to fill the full line width. " +
+                "Each interior line should have equal spacing between words. " +
+                "The last line is not stretched per CSS 2.1.</p>")),
+        new GoldenCase(
+            "line-height-factor",
+            Doc("p{margin:0;font-size:14px;}",
+                "<p style=\"line-height:2.0\">Double-spaced line one.<br/>Line two also double spaced.</p>")),
+        new GoldenCase(
+            "line-height-px",
+            Doc("p{margin:0;}",
+                "<p style=\"line-height:32px;font-size:16px\">Explicit 32 px line height text.</p>")),
+        new GoldenCase(
+            "text-decoration-underline",
+            Doc("p{margin:0;}", "<p><u>Underlined text rendered with decoration rule.</u></p>")),
+        new GoldenCase(
+            "text-decoration-strikethrough",
+            Doc("p{margin:0;}", "<p><s>Struck-through text rendered with strikethrough rule.</s></p>")),
+    };
+
+    /// <summary>
+    /// HTML5 semantics golden cases: br, hr, ordered/unordered lists, and link annotations.
+    /// Exercises FIDELITY-04..07.
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> Html5Semantics = new[]
+    {
+        new GoldenCase(
+            "br-line-break",
+            Doc("p{margin:0;}", "<p>Line one.<br/>Line two.<br/>Line three.</p>")),
+        new GoldenCase(
+            "hr-rule",
+            Doc("p{margin:0;}", "<p>Before the rule.</p><hr/><p>After the rule.</p>")),
+        new GoldenCase(
+            "list-unordered",
+            Doc("ul{margin:0;padding-left:20px;}",
+                "<ul><li>Item A</li><li>Item B</li><li>Item C</li></ul>")),
+        new GoldenCase(
+            "list-ordered",
+            Doc("ol{margin:0;padding-left:20px;}",
+                "<ol><li>First</li><li>Second</li><li>Third</li></ol>")),
+        new GoldenCase(
+            "link-annotation",
+            Doc("p{margin:0;}a{color:blue;}",
+                "<p><a href=\"https://example.com\">Click here to visit example.com</a></p>")),
+    };
+
     /// <summary>Every registered case across all groups. Later plans extend by concatenation.</summary>
     internal static readonly IReadOnlyList<GoldenCase> AllCases =
         BlockLayout
@@ -364,6 +424,8 @@ internal static class GoldenCorpus
             .Concat(Fonts)
             .Concat(Security)
             .Concat(Vietnamese)
+            .Concat(FidelityLayout)
+            .Concat(Html5Semantics)
             .ToList();
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for every registered case.</summary>
@@ -397,6 +459,14 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the Vietnamese group only.</summary>
     public static IEnumerable<object[]> VietnameseCasesData() =>
         Vietnamese.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the fidelity-layout group only.</summary>
+    public static IEnumerable<object[]> FidelityLayoutCasesData() =>
+        FidelityLayout.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the HTML5 semantics group only.</summary>
+    public static IEnumerable<object[]> Html5SemanticsCasesData() =>
+        Html5Semantics.Select(c => new object[] { c.Name });
 
     /// <summary>
     /// Per-call <see cref="IResourceResolver"/> stub returning the embedded deterministic PNG for any

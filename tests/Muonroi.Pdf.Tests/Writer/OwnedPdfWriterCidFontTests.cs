@@ -44,7 +44,8 @@ public sealed class OwnedPdfWriterCidFontTests
             subsetResult.SubsetBytes,
             codepoints,
             subsetResult.OldToNewGid,
-            subsetResult.SortedGids);
+            subsetResult.SortedGids,
+            subsetResult.CpToNewGid);
 
         var inline = new InlineBox
         {

@@ -1,10 +1,6 @@
 using SixLabors.Fonts;
-using SixLabors.Fonts.Unicode;
 using Muonroi.Pdf.Internal.Layout;
 using Muonroi.Pdf.Internal.Layout.Boxes;
-using SLFont = SixLabors.Fonts.Font;
-using SLFontFamily = SixLabors.Fonts.FontFamily;
-using SLFontStyle = SixLabors.Fonts.FontStyle;
 
 namespace Muonroi.Pdf.Internal.Font;
 
@@ -29,23 +25,18 @@ internal sealed class GlyphCollector
                 if (!result.ContainsKey(inlineBox.FontFamily))
                     result[inlineBox.FontFamily] = new HashSet<int>();
 
-                SLFontStyle sfStyle = inlineBox.Bold && inlineBox.Italic ? SLFontStyle.BoldItalic
-                    : inlineBox.Bold ? SLFontStyle.Bold
-                    : inlineBox.Italic ? SLFontStyle.Italic
-                    : SLFontStyle.Regular;
-
-                if (!fontCollection.TryGet(inlineBox.FontFamily, out SLFontFamily ff))
-                    continue;
-
-                float fontSize = inlineBox.FontSize > 0 ? inlineBox.FontSize : 12f;
-                SLFont font = ff.CreateFont(fontSize, sfStyle);
-
+                // Collect all non-surrogate codepoints from the inline text.
+                // We do NOT gate on fontCollection.TryGet(inlineBox.FontFamily) here:
+                // FontCollection indexes fonts by their internal TTF name-table value, which
+                // is unrelated to the CSS @font-face family name. Attempting a lookup by CSS
+                // family name always misses and produces an empty codepoint set, which in turn
+                // causes the subsetter to produce an empty cp→newGid map → blank PDF output.
+                // The subsetter itself determines which codepoints it can map; codepoints with
+                // no glyph in the font simply get no entry in the map (they are emitted as
+                // .notdef / 0x0000), so over-collecting here is harmless.
                 foreach (char ch in inlineBox.Text)
                 {
-                    if (char.IsSurrogate(ch))
-                        continue;
-
-                    if (font.TryGetGlyphs(new CodePoint(ch), out _))
+                    if (!char.IsSurrogate(ch))
                         result[inlineBox.FontFamily].Add((int)ch);
                 }
             }
