@@ -277,6 +277,83 @@ internal static class GoldenCorpus
             Doc("p{margin:0;}", "<p>Hardened output: no JavaScript actions, %PDF-1.7 header.</p>")),
     };
 
+    private static string VnLongFlow(int paragraphs)
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int i = 1; i <= paragraphs; i++)
+        {
+            sb.Append("<p>Đoạn ").Append(i)
+              .Append(" của một tài liệu dài tiếng Việt trải qua nhiều trang để kiểm tra phân trang"
+                  + " với các dấu thanh điệu chồng nhau như ế ộ ữ ầ ổ ừ.</p>");
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Vietnamese golden cases (TEST-02): precomposed diacritics, diacritic stacking (vowel + tone),
+    /// mixed Latin+Vietnamese, line-breaking/wrapping, table cells, paged counters, and multi-page
+    /// flow. Exercises the embedded Noto Sans Vietnamese glyph coverage (guarded by
+    /// <c>VietnameseFont_HasGlyphCoverage</c> so baselines are never vacuous .notdef boxes).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> Vietnamese = new[]
+    {
+        new GoldenCase(
+            "vn-diacritic-word",
+            Doc("p{margin:0;}", "<p>Tiếng Việt</p>")),
+        new GoldenCase(
+            "vn-stacked-tone-vowel",
+            Doc("p{margin:0;}", "<p>ế ộ ữ ổ ừ ẹ ầ</p>")),
+        new GoldenCase(
+            "vn-mixed-latin-vn",
+            Doc("p{margin:0;}", "<p>Hello thế giới — mixing Latin and Tiếng Việt in one run.</p>")),
+        new GoldenCase(
+            "vn-line-wrap",
+            Doc("p{width:120px;margin:0;}",
+                "<p>Một câu tiếng Việt đủ dài để ngắt dòng bên trong hộp hẹp với nhiều dấu thanh.</p>")),
+        new GoldenCase(
+            "vn-table-cell",
+            Doc("table{border-collapse:separate;}td{border:1px solid black;padding:4px;}",
+                "<table><tr><td>Tiếng Việt</td><td>ế ộ ữ</td></tr>" +
+                "<tr><td>Ầ Ữ</td><td>Trang</td></tr></table>")),
+        new GoldenCase(
+            "vn-page-header-counter",
+            Doc("p{margin:6px 0;}", VnLongFlow(12)),
+            new PdfRenderOptions
+            {
+                Header = new PdfHeaderFooter(CenterHtml: "Báo cáo Tiếng Việt", ShowLine: true),
+            }),
+        new GoldenCase(
+            "vn-uppercase-diacritics",
+            Doc("p{margin:0;}", "<p>Ầ Ữ Ổ Ừ Ế Ộ</p>")),
+        new GoldenCase(
+            "vn-long-paragraph-pagebreak",
+            Doc("p{margin:6px 0;}", VnLongFlow(60))),
+        new GoldenCase(
+            "vn-digits-trang-x-of-y",
+            Doc("p{margin:6px 0;}", VnLongFlow(20)),
+            new PdfRenderOptions
+            {
+                Footer = new PdfHeaderFooter(CenterHtml: "<span>Trang counter(page) / counter(pages)</span>"),
+            }),
+        new GoldenCase(
+            "vn-bold-italic-runs",
+            Doc(".b{font-weight:bold;}.i{font-style:italic;}",
+                "<p><span class=\"b\">Tiếng Việt đậm</span> và <span class=\"i\">nghiêng ế ộ ữ</span></p>")),
+        new GoldenCase(
+            "vn-counter-footer",
+            Doc("p{margin:6px 0;}", VnLongFlow(15)),
+            new PdfRenderOptions
+            {
+                Margins = PdfMargins.Uniform(30),
+                Footer = new PdfHeaderFooter(RightHtml: "<span>Tài liệu — Trang counter(page)</span>"),
+            }),
+        new GoldenCase(
+            "vn-multi-page-flow",
+            Doc("p{margin:6px 0;}", VnLongFlow(40)),
+            new PdfRenderOptions { Margins = PdfMargins.Uniform(25) }),
+    };
+
     /// <summary>Every registered case across all groups. Later plans extend by concatenation.</summary>
     internal static readonly IReadOnlyList<GoldenCase> AllCases =
         BlockLayout
@@ -286,6 +363,7 @@ internal static class GoldenCorpus
             .Concat(Images)
             .Concat(Fonts)
             .Concat(Security)
+            .Concat(Vietnamese)
             .ToList();
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for every registered case.</summary>
@@ -315,6 +393,10 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the font group only.</summary>
     public static IEnumerable<object[]> FontCasesData() =>
         Fonts.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the Vietnamese group only.</summary>
+    public static IEnumerable<object[]> VietnameseCasesData() =>
+        Vietnamese.Select(c => new object[] { c.Name });
 
     /// <summary>
     /// Per-call <see cref="IResourceResolver"/> stub returning the embedded deterministic PNG for any
