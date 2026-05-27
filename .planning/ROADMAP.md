@@ -10,7 +10,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 2: Parse + Cascade + Policy Gate** — Wire AngleSharp HTML parsing, AngleSharp.Css cascade, and `IPdfCssPolicy.DefaultStrict` in `Muonroi.Pdf.Governance` (completed 2026-05-26)
 - [x] **Phase 3: Box Tree + Layout Engine** — Hand-written box tree with block/inline formatting, table layout, pagination, and page counters (completed 2026-05-26)
 - [x] **Phase 4: Font + Image Pipeline** — `IFontResolver` integration, Vietnamese diacritic shaping via SixLabors.Fonts, PNG/JPEG/data-URI image decoding (completed 2026-05-27)
-- [ ] **Phase 5: PDF Writer + Determinism + Security** — PdfSharpCore writer adapter hardened to PDF 1.7 with deterministic IDs and JS/Launch/EmbeddedFile rejection
+- [x] **Phase 5: PDF Writer + Determinism + Security** — PdfSharpCore writer adapter hardened to PDF 1.7 with deterministic IDs and JS/Launch/EmbeddedFile rejection (completed 2026-05-27)
 - [ ] **Phase 6: DI + Telemetry + Integration** — `AddPdf()` DI registration, OpenTelemetry instrumentation, end-to-end `IMPdfService.RenderAsync()` integration
 - [ ] **Phase 7: Golden Snapshots + CI Gates + Publishing** — 40+ golden tests, Vietnamese corpus, convention gates, NuGet publish at `1.0.0-alpha.N`
 - [ ] **Phase 8: v0.2 — Source Generator + AOT + DesignSystem** — Compile-time `IMPdfRenderer<T>` fast path, trim-safe Alpine container, default design system templates
@@ -111,9 +111,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — PdfSecurityException + ThrowingResourceResolver + <script> policy rejection + PdfSharpCore csproj ref
-- [ ] 05-02-PLAN.md — PdfSharpFontResolverAdapter + PdfSharpCoreWriter (text, image, font, determinism, security hardening)
-- [ ] 05-03-PLAN.md — Tests: PdfWriterTests, DeterminismTests, SecurityTests (≥16 new tests)
+- [x] 05-01-PLAN.md — PdfSecurityException + ThrowingResourceResolver + <script> policy rejection + PdfSharpCore csproj ref
+- [x] 05-02-PLAN.md — PdfSharpFontResolverAdapter + PdfSharpCoreWriter (text, image, font, determinism, security hardening)
+- [x] 05-03-PLAN.md — Tests: PdfWriterTests, DeterminismTests, SecurityTests (≥16 new tests)
 
 ### Phase 6: DI + Telemetry + Integration
 **Goal**: The full pipeline is wired through `AddPdf()` DI, the engine emits correct OpenTelemetry spans and metrics, and a single `RenderAsync()` call drives HTML to a valid PDF stream end-to-end
