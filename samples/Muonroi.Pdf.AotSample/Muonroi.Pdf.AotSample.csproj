@@ -21,12 +21,20 @@
     <TrimmerRootDescriptor Include="TrimmerRootDescriptor.xml" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Self-contained font: embedded so the sample renders on Alpine with zero OS fonts
+         (PdfSharpCore 1.3.65 does not query fontconfig). Resource name:
+         Muonroi.Pdf.AotSample.SampleFont.ttf -->
+    <EmbeddedResource Include="SampleFont.ttf" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- No Muonroi.Observability reference — OtelSetup.cs has AOT-incompatible
          AppDomain.CurrentDomain.GetAssemblies() + Activator.CreateInstance calls.
          No Muonroi.Tenancy reference — ITenantContextPolicy.cs has AppDomain reflection. -->
     <ProjectReference Include="..\..\src\Muonroi.Pdf\Muonroi.Pdf.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj" />
+    <!-- Logging abstractions needed for AotNoOpLog<T> open-generic IMLog<T> no-op implementation -->
+    <ProjectReference Include="..\..\src\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />

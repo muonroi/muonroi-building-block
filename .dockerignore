@@ -1,0 +1,16 @@
+# Slim the Docker build context for the AOT sample image.
+# The publish only needs source + Directory.*.props + nuget config; everything below is noise
+# that bloats the context and stresses buildkit during COPY.
+.git
+.github
+.vs
+.vscode
+.planning
+**/bin
+**/obj
+**/.vs
+**/node_modules
+**/TestResults
+*.user
+artifacts
+docs
