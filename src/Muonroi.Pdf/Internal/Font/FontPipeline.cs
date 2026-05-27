@@ -26,6 +26,13 @@ internal sealed class FontPipeline
         var collection = new FontCollection();
         var fontBytesMap = new Dictionary<string, ReadOnlyMemory<byte>>(StringComparer.Ordinal);
 
+        // Map from CSS @font-face family name → the actual SixLabors FontFamily.
+        // SixLabors indexes fonts under the internal TTF name-table family name, which
+        // often differs from the CSS family name (e.g. CSS "serif" vs TTF "Muon ITst").
+        // Without this map, SixLaborsTextMetrics falls back to the 0.6× heuristic for
+        // all character-width measurements, producing over-wide word spacing.
+        var cssFamilyMap = new Dictionary<string, FontFamily>(StringComparer.OrdinalIgnoreCase);
+
         foreach (FontFaceDeclaration decl in fontFaces)
         {
             ct.ThrowIfCancellationRequested();
@@ -39,10 +46,18 @@ internal sealed class FontPipeline
                 continue;
             }
 
-            collection.Add(new MemoryStream(bytes.Value.ToArray()));
+            FontFamily addedFamily = collection.Add(new MemoryStream(bytes.Value.ToArray()));
             fontBytesMap[decl.Family] = bytes.Value;
+
+            // Register the added family under the CSS @font-face name so metrics lookups
+            // by CSS name (e.g. "serif") resolve to the correct internal FontFamily.
+            // Without this, TryGetFamily("serif") misses because the collection indexes
+            // the font under its internal TTF name-table family (e.g. "Noto Sans"), causing
+            // all char-width measurements to fall back to the 0.6× heuristic.
+            if (!cssFamilyMap.ContainsKey(decl.Family))
+                cssFamilyMap[decl.Family] = addedFamily;
         }
 
-        return (new SixLaborsTextMetrics(collection), fontBytesMap, collection);
+        return (new SixLaborsTextMetrics(collection, cssFamilyMap), fontBytesMap, collection);
     }
 }

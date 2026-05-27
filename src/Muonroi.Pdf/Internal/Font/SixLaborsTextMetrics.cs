@@ -22,6 +22,10 @@ internal sealed class SixLaborsTextMetrics : ITextMetrics
 {
     private readonly FontCollection _collection;
 
+    // CSS family-name → actual SixLabors FontFamily. Populated by FontPipeline when the CSS
+    // @font-face family name differs from the internal TTF name-table family name.
+    private readonly IReadOnlyDictionary<string, SLFontFamily> _cssFamilyMap;
+
     // Per-render memoization. Keyed by the inputs that fully determine each result.
     private readonly Dictionary<(string Family, float Size, SLFontStyle Style), SLFont?> _fontCache = new();
     private readonly Dictionary<(string Family, float Size, SLFontStyle Style, char Ch), float> _charWidthCache = new();
@@ -30,8 +34,14 @@ internal sealed class SixLaborsTextMetrics : ITextMetrics
     private readonly record struct VerticalMetrics(float LineHeight, float Ascender, float Descender);
 
     internal SixLaborsTextMetrics(FontCollection fontCollection)
+        : this(fontCollection, new Dictionary<string, SLFontFamily>(StringComparer.OrdinalIgnoreCase)) { }
+
+    internal SixLaborsTextMetrics(
+        FontCollection fontCollection,
+        IReadOnlyDictionary<string, SLFontFamily> cssFamilyMap)
     {
         _collection = fontCollection;
+        _cssFamilyMap = cssFamilyMap;
     }
 
     public float GetCharWidth(char c, string fontFamily, float fontSize, bool bold, bool italic)
@@ -104,5 +114,15 @@ internal sealed class SixLaborsTextMetrics : ITextMetrics
     }
 
     private bool TryGetFamily(string fontFamily, out SLFontFamily family)
-        => _collection.TryGet(fontFamily, out family);
+    {
+        // First: try the CSS-family-name map built from @font-face declarations.
+        // This resolves the mismatch where the CSS name is "serif" but the font's internal
+        // TTF name-table says "Muon ITst" (or "Noto Sans" etc.) — the collection only
+        // indexes under the internal name, not the CSS family name.
+        if (_cssFamilyMap.TryGetValue(fontFamily, out family))
+            return true;
+
+        // Fall back to direct collection lookup (works when CSS name == internal TTF name).
+        return _collection.TryGet(fontFamily, out family);
+    }
 }

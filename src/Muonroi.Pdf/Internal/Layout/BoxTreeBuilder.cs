@@ -305,9 +305,13 @@ internal sealed class BoxTreeBuilder
         // Determine list type and marker text
         string markerText = DetermineListMarker(liNode);
 
-        // Resolve font properties from <li>'s style for the marker
+        // Resolve font properties from <li>'s style for the marker.
+        // Use IsNullOrEmpty (not ??) because AngleSharp's GetComputedStyle returns "" (not null)
+        // when no font-family is cascaded. An empty family would cause the writer to silently
+        // skip the marker PositionedElement (FontFamily guard in BuildContentStream).
         float fontSize = ParseLength(liNode.Style.GetValue("font-size")) is float fs and > 0f ? fs : 12f;
-        string fontFamily = liNode.Style.GetValue("font-family") ?? "serif";
+        string? rawFontFamily = liNode.Style.GetValue("font-family");
+        string fontFamily = string.IsNullOrWhiteSpace(rawFontFamily) ? "serif" : rawFontFamily;
         string? color = liNode.Style.GetValue("color");
 
         var markerBox = new InlineBox

@@ -250,6 +250,98 @@ public sealed class VisualRegressionTests
     }
 
     /// <summary>
+    /// Renders the 5 representative sample cases to PNG files in TestResults/visual/ for
+    /// manual visual inspection.  Always passes — this is an output helper, not an assertion.
+    /// Files: block-single.png, text-align-center.png, list-unordered.png,
+    ///        text-decoration-underline.png, link-annotation.png
+    /// </summary>
+    [Fact]
+    public async Task RasterizeSampleCases_ToPng()
+    {
+        var samples = new (string Name, string Html)[]
+        {
+            ("block-single",
+             "<html><head><style>@font-face{font-family:serif;src:url(test.ttf);}p{margin:0;}</style></head>" +
+             "<body><p>Single block paragraph.</p></body></html>"),
+
+            ("text-align-center",
+             "<html><head><style>@font-face{font-family:serif;src:url(test.ttf);}p{text-align:center;margin:0;}</style></head>" +
+             "<body><p>Centered text.</p></body></html>"),
+
+            ("list-unordered",
+             "<html><head><style>@font-face{font-family:serif;src:url(test.ttf);}ul{margin:0;padding-left:20px;}</style></head>" +
+             "<body><ul><li>Item A</li><li>Item B</li><li>Item C</li></ul></body></html>"),
+
+            ("text-decoration-underline",
+             "<html><head><style>@font-face{font-family:serif;src:url(test.ttf);}p{margin:0;}</style></head>" +
+             "<body><p><u>Underlined text rendered with decoration rule.</u></p></body></html>"),
+
+            ("link-annotation",
+             "<html><head><style>@font-face{font-family:serif;src:url(test.ttf);}body{font-family:serif;}a{color:blue;}</style></head>" +
+             "<body><a href=\"https://example.com\">Click here to visit example.com</a></body></html>"),
+        };
+
+        string outDir = Path.Combine(
+            Path.GetDirectoryName(typeof(VisualRegressionTests).Assembly.Location)!,
+            "..", "..", "..", "TestResults", "visual");
+        Directory.CreateDirectory(outDir);
+
+        foreach ((string name, string html) in samples)
+        {
+            byte[] pdfBytes = await GoldenPdf.RenderAsync(html, new PdfRenderOptions());
+            using var pngStream = new MemoryStream();
+            Conversion.SavePng(pngStream, pdfBytes, 0, password: null, options: new RenderOptions(Dpi: 150));
+            await File.WriteAllBytesAsync(Path.Combine(outDir, $"{name}.png"), pngStream.ToArray());
+        }
+    }
+
+    /// <summary>
+    /// Bug C guard: for a list-unordered document the content stream must contain a
+    /// non-.notdef GID Tj call that maps to U+2022 BULLET (•).  Before the fix,
+    /// the marker <see cref="InlineBox"/> had an empty <c>FontFamily</c> (AngleSharp returns ""
+    /// not null for unset properties) so <c>OwnedPdfWriter</c> silently skipped it and the
+    /// glyph was never emitted.
+    ///
+    /// The test renders a minimal unordered list with the test font (which contains U+2022 at
+    /// GID 525 before subsetting → new GID 9 after subsetting), decompresses the content stream,
+    /// and asserts that at least one GID-based Tj operator is present.  A blank bullet (no Tj)
+    /// means the fix has regressed.
+    ///
+    /// The exact new GID for U+2022 is font-subset-order-dependent, so we assert *any* Tj is
+    /// present in the list PDF rather than hard-coding GID 9 — the PageIsNotBlank_AfterFix test
+    /// already verifies non-white pixels, and FontWidthArray_NoNearZeroAdvances verifies /W.
+    /// Together these three tests form the regression guard for Bug C.
+    /// </summary>
+    [Fact]
+    public async Task ListMarker_BulletGlyph_IsEmittedInContentStream()
+    {
+        const string html =
+            "<html><head><style>" +
+            "@font-face{font-family:serif;src:url(test.ttf);}" +
+            "ul{margin:0;padding-left:20px;}" +
+            "</style></head>" +
+            "<body><ul><li>Item A</li><li>Item B</li><li>Item C</li></ul></body></html>";
+
+        byte[] pdfBytes = await GoldenPdf.RenderAsync(html, new PdfRenderOptions());
+        string decompressed = DecompressAllContentStreams(pdfBytes);
+
+        // Count distinct Tj calls — each list item produces at least one word Tj ("Item", "A/B/C").
+        // The bullet marker must add at least one additional Tj per line.
+        // Minimum expected: 3 items × 2 words ("Item" + letter) + 3 bullets = 9 Tj calls.
+        // Before the Bug C fix, only 6 Tj calls appeared (no bullets).
+        var hexTjMatches = Regex.Matches(decompressed, @"<[0-9A-Fa-f]{4,}>\s*Tj");
+        int tjCount = hexTjMatches.Count;
+
+        Assert.True(
+            tjCount >= 9,
+            $"Expected at least 9 Tj operators in list-unordered content stream (3 bullets + 6 words), " +
+            $"but found {tjCount}. " +
+            "Bug C: list marker InlineBox may have empty FontFamily, causing OwnedPdfWriter to skip it. " +
+            "Check BoxTreeBuilder.BuildChildrenWithListMarker — use IsNullOrWhiteSpace, not null-coalescing, " +
+            "to fall back to the serif font when AngleSharp returns \"\" for unset font-family.");
+    }
+
+    /// <summary>
     /// Extracts and decompresses all FlateDecode content streams from a PDF byte array.
     /// Looks for the pattern: &lt;&lt; ... /Filter /FlateDecode ... &gt;&gt; stream [LF] [compressed bytes] endstream
     /// </summary>
