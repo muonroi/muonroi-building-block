@@ -129,8 +129,8 @@
 
 ### Performance
 
-- [ ] **PERF-01**: Cold render of a 50 KB single-page template completes in ≤300 ms on a developer machine (single thread)
-- [ ] **PERF-02**: Warm render of a 50 KB single-page template completes in ≤80 ms on a developer machine (single thread)
+- [x] **PERF-01**: Cold render of a 50 KB single-page template completes in ≤300 ms on a developer machine (single thread)
+- [x] **PERF-02**: Warm render of a 50 KB single-page template completes in ≤80 ms on a developer machine (single thread)
 
 ### Convention Gates
 
