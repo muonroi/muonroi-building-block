@@ -13,7 +13,8 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 5: PDF Writer + Determinism + Security** â€” PdfSharpCore writer adapter hardened to PDF 1.7 with deterministic IDs and JS/Launch/EmbeddedFile rejection (completed 2026-05-27)
 - [ ] **Phase 6: DI + Telemetry + Integration** â€” `AddPdf()` DI registration, OpenTelemetry instrumentation, end-to-end `IMPdfService.RenderAsync()` integration
 - [ ] **Phase 7: Golden Snapshots + CI Gates + Publishing** â€” 40+ golden tests, Vietnamese corpus, convention gates, NuGet publish at `1.0.0-alpha.N`
-- [ ] **Phase 8: v0.2 â€” Source Generator + AOT + DesignSystem** â€” Compile-time `IMPdfRenderer<T>` fast path, trim-safe Alpine container, default design system templates
+- [x] **Phase 8: v0.2 â€” Source Generator + AOT + DesignSystem** â€” Compile-time `IMPdfRenderer<T>` fast path, trim-safe Alpine container, default design system templates (completed 2026-05-27; SC4 alloc target deferred to Phase 8.5)
+- [ ] **Phase 8.5: Owned PDF Writer (SC4 carry-over)** â€” Replace PdfSharpCore with an owned, allocation-controlled, AOT-trivial PDF 1.7 writer (per `.planning/research/pdf-writer-strategy.md`); closes ALLOC-01/SC4. Starts with a 2â€“3 day allocation spike.
 - [ ] **Phase 9: v1.0 Enterprise** â€” Postgres template registry, Redis hot-reload, SSIM canary, web designer, TCIS cutover
 
 ## Phase Details
@@ -156,6 +157,26 @@ Plans:
   3. A `PublishAot` sample on Alpine renders the full v0.1 golden snapshot corpus with byte-identical output to the JIT path; published image is <40 MB
   4. Hot-path heap allocations are â‰¥30% lower than the v0.1 baseline (BenchmarkDotNet memory diagnostics)
   5. `Muonroi.Pdf.DesignSystem.Default` ships invoice, receipt, and report templates; all three pass `IPdfCssPolicy.DefaultStrict` with zero violations
+**Plans**: 08-01..08-05 (complete; SC4 carried to Phase 8.5)
+**Note**: SC1/SC2/SC3/SC5 met. SC4 (â‰¥30% alloc reduction) deferred â€” per-stage profiling showed
+the writer (PdfSharpCore `DrawString`, per-word) is 92% of allocations; the localized text-metrics
++ XFont caches landed but cannot reach 30%. Resolution is a strategic writer rebuild (Phase 8.5).
+
+### Phase 8.5: Owned PDF Writer (SC4 carry-over)
+**Goal**: Own the final PDF-serialization layer with an allocation-controlled, deterministic,
+AOT-trivial PDF 1.7 writer that emits content streams (`TJ` per line with precomputed glyph IDs +
+advances) from the positioned glyphs + subset font bytes the engine already produces â€” eliminating
+the per-word `DrawString` pipeline that dominates render allocations.
+**Depends on**: Phase 8
+**Requirements**: ALLOC-01 (SC4 carry-over)
+**Success Criteria** (what must be TRUE):
+  1. A 2â€“3 day spike proves a `TJ`-per-line content-stream emitter cuts WRITE-stage allocations
+     enough to bring total render allocation â‰¥30% below the 412.8 MB v0.1 baseline (BenchmarkDotNet)
+  2. The owned writer produces valid PDF 1.7 with deterministic /ID and font-subset prefixes
+     (folding in the current `NormalizeForDeterminism` behavior natively)
+  3. All golden snapshots are re-baselined and reviewed; Vietnamese diacritic corpus still passes
+  4. PdfSharpCore is removed from the core render path (or retained only behind an adapter seam)
+**Fallback**: migrate to upstream empira PDFsharp 6.x (MIT, net8) if the owned-writer spike misses.
 **Plans**: TBD
 
 ### Phase 9: v1.0 Enterprise
@@ -174,7 +195,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute sequentially: 1 â†’ 2 â†’ 3 â†’ 4 â†’ 5 â†’ 6 â†’ 7 â†’ 8 â†’ 9
+Phases execute sequentially: 1 â†’ 2 â†’ 3 â†’ 4 â†’ 5 â†’ 6 â†’ 7 â†’ 8 â†’ 8.5 â†’ 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -185,5 +206,6 @@ Phases execute sequentially: 1 â†’ 2 â†’ 3 â†’ 4 â†’ 5 â†
 | 5. PDF Writer + Determinism + Security | 0/3 | Not started | - |
 | 6. DI + Telemetry + Integration | 0/TBD | Not started | - |
 | 7. Golden Snapshots + CI Gates + Publishing | 4/5 | In Progress|  |
-| 8. v0.2 â€” Source Generator + AOT + DesignSystem | 0/TBD | Not started | - |
+| 8. v0.2 â€” Source Generator + AOT + DesignSystem | 5/5 | Complete (SC4 deferred to 8.5) | 2026-05-27 |
+| 8.5. Owned PDF Writer (SC4 carry-over) | 0/TBD | Not started | - |
 | 9. v1.0 Enterprise | 0/TBD | Not started | - |
