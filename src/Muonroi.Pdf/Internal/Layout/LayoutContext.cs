@@ -19,4 +19,10 @@ internal sealed class LayoutContext
     public float PageMarginRightPt => (float)(PageMargins.RightMm * Units.MmToPt);
 
     public float RemainingHeight => PageHeight - CurrentY;
+
+    /// <summary>
+    /// CSS text-align value for the current block context.
+    /// Null or "left" = default left alignment.
+    /// </summary>
+    public string? TextAlign { get; set; }
 }
