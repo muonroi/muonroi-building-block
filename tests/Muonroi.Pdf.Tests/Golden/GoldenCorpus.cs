@@ -216,12 +216,76 @@ internal static class GoldenCorpus
             }),
     };
 
+    // Deterministic 4x4 truecolor PNG (red) and 4x4 baseline JPEG (blue), generated once and embedded
+    // as literals so image cases are self-contained — no external fetch, no extra committed asset.
+    private const string PngDataUri =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEElEQVR42mM4oaEBRwzEcQDRQxGBoNNuZAAAAABJRU5ErkJggg==";
+
+    private const string JpegDataUri =
+        "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wCEAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSgBBwcHCggKEwoKEygaFhooKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKP/AABEIAAQABAMBIgACEQEDEQH/xAGiAAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgsQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+gEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEQACAQIEBAMEBwUEBAABAncAAQIDEQQFITEGEkFRB2FxEyIygQgUQpGhscEJIzNS8BVictEKFiQ04SXxFxgZGiYnKCkqNTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqCg4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2dri4+Tl5ufo6ery8/T19vf4+fr/2gAMAwEAAhEDEQA/AOBooor9MPnT/9k=";
+
+    /// <summary>Image golden cases: PNG/JPEG data-URIs, per-call resolver, intrinsic + explicit sizing.</summary>
+    internal static readonly IReadOnlyList<GoldenCase> Images = new[]
+    {
+        new GoldenCase(
+            "image-png-datauri",
+            Doc("img{display:block;}", $"<img src=\"{PngDataUri}\" />")),
+        new GoldenCase(
+            "image-jpeg-datauri",
+            Doc("img{display:block;}", $"<img src=\"{JpegDataUri}\" />")),
+        new GoldenCase(
+            "image-via-resolver",
+            Doc("img{display:block;}", "<img src=\"https://assets.local/logo.png\" />"),
+            new PdfRenderOptions { ResourceResolver = StubPngResolver.Instance }),
+        new GoldenCase(
+            "image-intrinsic-size",
+            Doc("img{display:block;}", $"<img src=\"{PngDataUri}\" />")),
+        new GoldenCase(
+            "image-explicit-wh",
+            Doc("img{display:block;width:48px;height:48px;}", $"<img src=\"{PngDataUri}\" />")),
+    };
+
+    /// <summary>Font golden cases: embedded subset, weight/style variants, scale, @font-face resolution.</summary>
+    internal static readonly IReadOnlyList<GoldenCase> Fonts = new[]
+    {
+        new GoldenCase(
+            "font-embedded-ttf-subset",
+            Doc("p{margin:0;}", "<p>Embedded subset glyph coverage.</p>")),
+        new GoldenCase(
+            "font-bold-weight",
+            Doc("p{margin:0;font-weight:bold;}", "<p>Bold weight text.</p>")),
+        new GoldenCase(
+            "font-italic-style",
+            Doc("p{margin:0;font-style:italic;}", "<p>Italic style text.</p>")),
+        new GoldenCase(
+            "font-size-scale",
+            Doc(".s{font-size:8px;}.m{font-size:16px;}.l{font-size:32px;}",
+                "<p class=\"s\">small</p><p class=\"m\">medium</p><p class=\"l\">large</p>")),
+        new GoldenCase(
+            "font-face-resolved",
+            Doc("p{margin:0;font-family:serif;}", "<p>Resolved via @font-face under serif.</p>")),
+    };
+
+    /// <summary>
+    /// Security golden: a normal document whose output must be a hardened %PDF-1.7 stream carrying no
+    /// /JavaScript token (locks SEC-01/02 into the corpus). SecurityGoldenTests asserts on the bytes.
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> Security = new[]
+    {
+        new GoldenCase(
+            "security-hardened-no-js",
+            Doc("p{margin:0;}", "<p>Hardened output: no JavaScript actions, %PDF-1.7 header.</p>")),
+    };
+
     /// <summary>Every registered case across all groups. Later plans extend by concatenation.</summary>
     internal static readonly IReadOnlyList<GoldenCase> AllCases =
         BlockLayout
             .Concat(InlineLayout)
             .Concat(Tables)
             .Concat(PagedMedia)
+            .Concat(Images)
+            .Concat(Fonts)
+            .Concat(Security)
             .ToList();
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for every registered case.</summary>
@@ -243,6 +307,31 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the paged-media group only.</summary>
     public static IEnumerable<object[]> PagedMediaCasesData() =>
         PagedMedia.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the image group only.</summary>
+    public static IEnumerable<object[]> ImageCasesData() =>
+        Images.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the font group only.</summary>
+    public static IEnumerable<object[]> FontCasesData() =>
+        Fonts.Select(c => new object[] { c.Name });
+
+    /// <summary>
+    /// Per-call <see cref="IResourceResolver"/> stub returning the embedded deterministic PNG for any
+    /// requested URI — exercises the resolver path without touching the shared harness.
+    /// </summary>
+    private sealed class StubPngResolver : IResourceResolver
+    {
+        public static readonly StubPngResolver Instance = new();
+
+        private static readonly byte[] PngBytes = System.Convert.FromBase64String(
+            PngDataUri["data:image/png;base64,".Length..]);
+
+        public System.Threading.Tasks.ValueTask<ResourceResult?> ResolveAsync(
+            System.Uri uri, string? contentTypeHint = null,
+            System.Threading.CancellationToken cancellationToken = default) =>
+            new(new ResourceResult(PngBytes, "image/png"));
+    }
 
     /// <summary>Looks up a registered case by name.</summary>
     public static GoldenCase ByName(string name) =>
