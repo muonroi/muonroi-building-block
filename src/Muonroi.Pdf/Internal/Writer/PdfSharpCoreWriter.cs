@@ -126,9 +126,15 @@ internal sealed class PdfSharpCoreWriter : IPdfWriter
 
         (double w, double h) = GetPageDimensions(options);
 
+        // ALLOC-01: XFont construction (XGlyphTypeface.GetOrCreateFrom) is expensive and was
+        // previously repeated once per text element — the dominant render allocator (~92% of
+        // total bytes). XFont is immutable and reusable across pages/graphics, so cache by
+        // (family, size, style) for the whole document.
+        var fontCache = new Dictionary<(string Family, double Size, XFontStyle Style), XFont>();
+
         foreach (PositionedPage page in pageList.Pages)
         {
-            RenderPage(doc, page, pageList.Images, w, h, ct);
+            RenderPage(doc, page, pageList.Images, w, h, fontCache, ct);
         }
 
         doc.Save(ms);
@@ -147,6 +153,7 @@ internal sealed class PdfSharpCoreWriter : IPdfWriter
         IReadOnlyDictionary<string, DecodedImage> images,
         double w,
         double h,
+        Dictionary<(string Family, double Size, XFontStyle Style), XFont> fontCache,
         CancellationToken ct)
     {
         PdfPage pdfPage = doc.AddPage();
@@ -169,7 +176,12 @@ internal sealed class PdfSharpCoreWriter : IPdfWriter
                         (false, true) => XFontStyle.Italic,
                         _ => XFontStyle.Regular
                     };
-                    var font = new XFont(inline.FontFamily, inline.FontSize, style);
+                    (string, double, XFontStyle) fontKey = (inline.FontFamily, inline.FontSize, style);
+                    if (!fontCache.TryGetValue(fontKey, out XFont? font))
+                    {
+                        font = new XFont(inline.FontFamily, inline.FontSize, style);
+                        fontCache[fontKey] = font;
+                    }
                     XBrush brush = ParseColor(inline.Color) ?? XBrushes.Black;
                     gfx.DrawString(inline.Text, font, brush, new XPoint(el.Position.X, el.Position.Y));
                     break;
