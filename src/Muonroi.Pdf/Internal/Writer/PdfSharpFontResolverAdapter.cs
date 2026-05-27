@@ -15,15 +15,33 @@ internal sealed class PdfSharpFontResolverAdapter : PdfSharpCore.Fonts.IFontReso
     private const int BoldWeightThreshold = 600;
 
     // Face key format: "{family}#{weight}#{style}" e.g. "Roboto#400#Normal".
-    private readonly Dictionary<string, byte[]> _fontBytes = new(StringComparer.OrdinalIgnoreCase);
+    // Volatile swap target: a single resolver instance is installed once into
+    // GlobalFontSettings.FontResolver (which PdfSharpCore forbids reassigning after first
+    // use), and the backing map is swapped per render under the writer's lock.
+    private volatile Dictionary<string, byte[]> _fontBytes = new(StringComparer.OrdinalIgnoreCase);
+
+    public PdfSharpFontResolverAdapter()
+    {
+    }
 
     public PdfSharpFontResolverAdapter(IReadOnlyList<EmbeddedFontInfo> embeddedFonts)
     {
+        SetEmbeddedFonts(embeddedFonts);
+    }
+
+    /// <summary>
+    /// Swaps the backing embedded-font map. Enables one resolver instance to be installed once
+    /// into <c>GlobalFontSettings.FontResolver</c> while still serving per-render font sets.
+    /// </summary>
+    public void SetEmbeddedFonts(IReadOnlyList<EmbeddedFontInfo> embeddedFonts)
+    {
+        var map = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
         foreach (EmbeddedFontInfo font in embeddedFonts)
         {
             string key = BuildKey(font.Family, (int)font.Weight >= BoldWeightThreshold, IsItalic(font.Style));
-            _fontBytes[key] = font.SubsetBytes.ToArray();
+            map[key] = font.SubsetBytes.ToArray();
         }
+        _fontBytes = map;
     }
 
     public FontResolverInfo? ResolveTypeface(string familyName, bool bold, bool italic)

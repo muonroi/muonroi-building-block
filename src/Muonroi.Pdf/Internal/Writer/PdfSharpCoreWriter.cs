@@ -26,6 +26,12 @@ internal sealed class PdfSharpCoreWriter : IPdfWriter
     // GlobalFontSettings.FontResolver is global mutable state — serialize access (T-05-04).
     private static readonly object _fontResolverLock = new();
 
+    // PdfSharpCore permits setting GlobalFontSettings.FontResolver only ONCE per process
+    // ("Must not change font resolver after it was once used."). Install a single stable
+    // adapter instance and swap its backing font map per render instead of reassigning.
+    private static readonly PdfSharpFontResolverAdapter _sharedFontResolver = new();
+    private static bool _fontResolverInstalled;
+
     public async ValueTask<long> WriteAsync(
         IPositionedPageList pages,
         PdfRenderOptions options,
@@ -42,20 +48,38 @@ internal sealed class PdfSharpCoreWriter : IPdfWriter
 
         lock (_fontResolverLock)
         {
-            PdfSharpCore.Fonts.IFontResolver? previous = GlobalFontSettings.FontResolver;
-            try
+            _sharedFontResolver.SetEmbeddedFonts(pageList.EmbeddedFonts);
+            if (!_fontResolverInstalled)
             {
-                GlobalFontSettings.FontResolver = new PdfSharpFontResolverAdapter(pageList.EmbeddedFonts);
-                RenderDocument(pageList, options, ms, ct);
+                GlobalFontSettings.FontResolver = _sharedFontResolver;
+                _fontResolverInstalled = true;
             }
-            finally
-            {
-                GlobalFontSettings.FontResolver = previous;
-            }
+            RenderDocument(pageList, options, ms, ct);
         }
 
-        byte[] pdfBytes = ms.ToArray();
+        byte[] pdfBytes = NormalizeForDeterminism(ms.ToArray());
 
+        await destination.WriteAsync(pdfBytes, 0, pdfBytes.Length, ct).ConfigureAwait(false);
+        return pdfBytes.Length;
+    }
+
+    // PdfSharpCore injects two per-render random tokens that break byte-for-byte determinism
+    // (DET-01/02/03): a 6-letter font-subset prefix ("ABCDEF+FontName") and the trailer
+    // /ID GUID pair. Both are pure-ASCII, fixed-length tokens, so replacing them with fixed
+    // sentinels of identical length preserves byte offsets and the xref table.
+    private static readonly System.Text.RegularExpressions.Regex SubsetPrefixRegex =
+        new(@"/([A-Z]{6})\+", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static readonly System.Text.RegularExpressions.Regex TrailerIdRegex =
+        new(@"/ID \[<[0-9A-Fa-f]{32}><[0-9A-Fa-f]{32}>\]",
+            System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private const string FixedSubsetPrefix = "AAAAAA";
+    private const string FixedTrailerId =
+        "/ID [<00000000000000000000000000000000><00000000000000000000000000000000>]";
+
+    private static byte[] NormalizeForDeterminism(byte[] pdfBytes)
+    {
         // Normalize the PDF version header to 1.7 (PdfSharpCore defaults to 1.3/1.4).
         if (pdfBytes.Length >= 8 &&
             pdfBytes[0] == (byte)'%' && pdfBytes[1] == (byte)'P' && pdfBytes[2] == (byte)'D' &&
@@ -65,8 +89,12 @@ internal sealed class PdfSharpCoreWriter : IPdfWriter
             pdfBytes[7] = (byte)'7';
         }
 
-        await destination.WriteAsync(pdfBytes, 0, pdfBytes.Length, ct).ConfigureAwait(false);
-        return pdfBytes.Length;
+        // Latin1 is a lossless 1:1 byte<->char mapping, so the round-trip preserves all bytes
+        // and same-length token replacements keep every offset (and thus the xref) valid.
+        string text = System.Text.Encoding.Latin1.GetString(pdfBytes);
+        text = SubsetPrefixRegex.Replace(text, "/" + FixedSubsetPrefix + "+");
+        text = TrailerIdRegex.Replace(text, FixedTrailerId);
+        return System.Text.Encoding.Latin1.GetBytes(text);
     }
 
     private static void RenderDocument(
