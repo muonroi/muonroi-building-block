@@ -164,6 +164,35 @@ public sealed class DefaultStrictPolicy : IPdfCssPolicy
                 break; // one violation sufficient; don't enumerate all script tags
             }
         }
+
+        // Pass 3 (continued): dangerous href schemes — FIDELITY-12 / SEC-02 adjacent
+        // Defense-in-depth: BoxTreeBuilder also filters these at the box-tree level.
+        foreach (IElement element in document.All.OfType<IElement>())
+        {
+            if (!element.LocalName.Equals("a", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            string href = element.GetAttribute("href") ?? "";
+            if (string.IsNullOrEmpty(href))
+                continue;
+
+            string scheme = "";
+            if (Uri.TryCreate(href, UriKind.Absolute, out var uri))
+                scheme = uri.Scheme;
+
+            // Empty scheme = relative URL = allowed
+            bool allowed = scheme is "" or "http" or "https" or "mailto";
+            if (!allowed)
+            {
+                violations.Add(new PolicyViolation(
+                    "forbidden.link.scheme",
+                    $"<a> href scheme '{scheme}' is not allowed. Only http, https, and mailto URIs are permitted as link annotations.",
+                    RejectedValue: href,
+                    PropertyName: "href",
+                    CssSelector: "a",
+                    SuggestedAlternative: "Use an http or https URI."));
+            }
+        }
     }
 
     private static PolicyViolation ViolationFor(
