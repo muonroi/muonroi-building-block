@@ -11,6 +11,7 @@ using Muonroi.Pdf.Internal.Writer;
 
 namespace Muonroi.Pdf.Tests.Writer;
 
+[Collection(PdfRenderCollection.Name)]
 public sealed class DeterminismTests
 {
     private static InlineBox Inline(string text) => new()

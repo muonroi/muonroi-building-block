@@ -18,6 +18,7 @@ using Muonroi.Pdf.Internal.Writer;
 
 namespace Muonroi.Pdf.Tests.Writer;
 
+[Collection(PdfRenderCollection.Name)]
 public sealed class SecurityTests
 {
     private static async Task<PolicyValidationResult> ValidateHtmlAsync(string html)

@@ -12,6 +12,7 @@ using Muonroi.Pdf.Internal.Writer;
 
 namespace Muonroi.Pdf.Tests.Writer;
 
+[Collection(PdfRenderCollection.Name)]
 public sealed class PdfWriterTests
 {
     private static PositionedPageList MinimalPageList(string text = "Hello PDF")

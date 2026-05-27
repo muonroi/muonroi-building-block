@@ -19,6 +19,7 @@ namespace Muonroi.Pdf.Tests.Service;
 /// End-to-end coverage through a real <c>AddPdf</c> container: SC2 (PDF-1.7 stream), SC3
 /// (activity tags + page-count / operation metrics), and SC4 (render timeout cancellation).
 /// </summary>
+[Collection(PdfRenderCollection.Name)]
 public sealed class MPdfServiceIntegrationTests
 {
     // The box tree assigns inline text the default family "serif" (block-level font-family is not

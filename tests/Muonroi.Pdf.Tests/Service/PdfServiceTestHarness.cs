@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -131,7 +132,30 @@ internal static class PdfServiceTestHarness
                 ?? throw new System.InvalidOperationException("TestFont.ttf embedded resource not found");
             using var ms = new MemoryStream();
             stream.CopyTo(ms);
-            return ms.ToArray();
+            return RenameFontInternalName(ms.ToArray());
+        }
+
+        // PdfSharpCore keeps a process-global FontFactory cache keyed by the font's internal
+        // FontName. The writer tests embed this same TestFont.ttf ("Noto Sans Regular") in full;
+        // our integration render embeds a SUBSET of it — same FontName, different bytes — which
+        // makes PdfSharpCore throw "same key already added" across test classes. Rewriting the
+        // internal name table to a unique, equal-length token gives our copy a distinct FontName
+        // so both coexist in the shared cache. Equal-length replacement preserves every name-table
+        // offset (and the subsetter copies the name table verbatim).
+        private static byte[] RenameFontInternalName(byte[] font)
+        {
+            ReadOnlySpan<byte> needle = Encoding.BigEndianUnicode.GetBytes("Noto Sans");
+            ReadOnlySpan<byte> replacement = Encoding.BigEndianUnicode.GetBytes("Muon ITst"); // 9 chars
+            for (int i = 0; i + needle.Length <= font.Length; i++)
+            {
+                if (font.AsSpan(i, needle.Length).SequenceEqual(needle))
+                {
+                    replacement.CopyTo(font.AsSpan(i, replacement.Length));
+                    i += needle.Length - 1;
+                }
+            }
+
+            return font;
         }
 
         public ValueTask<ReadOnlyMemory<byte>?> ResolveAsync(FontRequest request, CancellationToken cancellationToken = default)
