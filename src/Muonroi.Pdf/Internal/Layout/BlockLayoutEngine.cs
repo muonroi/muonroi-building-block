@@ -213,6 +213,16 @@ internal sealed class BlockLayoutEngine
         if (child.FloatValue != null && child is BlockBox floatBlock)
         {
             float floatWidth = ResolveWidth(floatBlock, ctx);
+
+            // G19/G21 fix: mark the float width as already resolved so the inner Layout call
+            // does NOT re-apply WidthRaw (e.g. "30%") against the narrowed measureCtx.AvailableWidth.
+            // Without this, "30%" would be resolved twice: once against the page width here
+            // (correct, ≈161pt) and once inside Layout against floatWidth (wrong, ≈48pt).
+            // Setting Width=floatWidth and clearing WidthRaw=null causes ResolveWidth inside
+            // Layout to take the explicit-Width branch instead of the %-branch.
+            floatBlock.Width = floatWidth;
+            floatBlock.WidthRaw = null;
+
             float savedY = ctx.CurrentY;
             float floatY = savedY;
 
