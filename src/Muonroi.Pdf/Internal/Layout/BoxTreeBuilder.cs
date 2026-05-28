@@ -13,6 +13,9 @@ internal sealed class BoxTreeBuilder
         _resolvedImages = resolvedImages;
         var box = new BlockBox { Source = root };
         ResolveCssProperties(root.Style, box);
+        // Mark body element so ResolveWidth can clamp its explicit width to available area (Fix C2).
+        if (string.Equals(root.LocalName, "body", StringComparison.OrdinalIgnoreCase))
+            box.IsBodyRoot = true;
         BuildChildren(root, box);
         return box;
     }
@@ -150,6 +153,39 @@ internal sealed class BoxTreeBuilder
         box.MarginRight = ParseLength(style.GetValue("margin-right"), fontSize);
         box.MarginBottom = ParseLength(style.GetValue("margin-bottom"), fontSize);
         box.MarginLeft = ParseLength(style.GetValue("margin-left"), fontSize);
+
+        // Fix C1: IE-era HTML body legacy margin attributes (leftmargin, topmargin, rightmargin,
+        // bottommargin). These are NOT CSS properties — AngleSharp never puts them in computed style.
+        // Apply them as px margins only when the CSS cascade has not already set a non-zero value.
+        // Ref: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/body
+        // (IE-era attributes deprecated but still used in legacy print-HTML templates, e.g. HSLA_E).
+        if (string.Equals(box.Source?.LocalName, "body", StringComparison.OrdinalIgnoreCase))
+        {
+            if (box.MarginLeft == 0f)
+            {
+                var lm = box.Source?.GetAttribute("leftmargin");
+                if (!string.IsNullOrWhiteSpace(lm))
+                    box.MarginLeft = ParseLength(lm + "px", fontSize);
+            }
+            if (box.MarginTop == 0f)
+            {
+                var tm = box.Source?.GetAttribute("topmargin");
+                if (!string.IsNullOrWhiteSpace(tm))
+                    box.MarginTop = ParseLength(tm + "px", fontSize);
+            }
+            if (box.MarginRight == 0f)
+            {
+                var rm = box.Source?.GetAttribute("rightmargin");
+                if (!string.IsNullOrWhiteSpace(rm))
+                    box.MarginRight = ParseLength(rm + "px", fontSize);
+            }
+            if (box.MarginBottom == 0f)
+            {
+                var bm = box.Source?.GetAttribute("bottommargin");
+                if (!string.IsNullOrWhiteSpace(bm))
+                    box.MarginBottom = ParseLength(bm + "px", fontSize);
+            }
+        }
 
         box.PaddingTop = ParseLength(style.GetValue("padding-top"), fontSize);
         box.PaddingRight = ParseLength(style.GetValue("padding-right"), fontSize);

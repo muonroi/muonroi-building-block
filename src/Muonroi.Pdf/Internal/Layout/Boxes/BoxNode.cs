@@ -56,4 +56,11 @@ internal abstract class BoxNode
     public string? RightRaw { get; set; }
 
     public List<BoxNode> Children { get; } = new();
+
+    /// <summary>
+    /// True when this box represents the HTML &lt;body&gt; element (root document body).
+    /// Used by BlockLayoutEngine.ResolveWidth to clamp explicit body width to the available
+    /// page content area (Fix C2 — CSS 2.1 §10.3.3: body overflowing the page margin area).
+    /// </summary>
+    public bool IsBodyRoot { get; set; }
 }

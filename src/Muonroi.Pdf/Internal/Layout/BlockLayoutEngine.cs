@@ -65,7 +65,8 @@ internal sealed class BlockLayoutEngine
             TextMetrics = context.TextMetrics,
             PageMargins = context.PageMargins,
             TextAlign = box.TextAlign ?? context.TextAlign,  // inherit text-align from container
-            ContainingBlockRect = context.ContainingBlockRect  // propagate from parent by default
+            ContainingBlockRect = context.ContainingBlockRect,  // propagate from parent by default
+            ContentOriginX = context.ContentOriginX  // Fix A2: propagate cell origin into nested blocks
         };
 
         // If this box is a containing block, set it on the child context now.
@@ -203,7 +204,13 @@ internal sealed class BlockLayoutEngine
 
             if (child.FloatValue == "left")
             {
-                float floatX = ctx.PageMarginLeftPt + floatBlock.MarginLeft;
+                // Fix A1 — CSS 2.1 §9.5.1 rule 3: "the left outer edge of a left-floating box may
+                // not be to the left of the right outer edge of any left-floating box generated
+                // earlier in the source document." Stack consecutive left-floats horizontally by
+                // using ctx.LeftFloatRight (the right edge of the previous left float) as the X
+                // origin, rather than always falling back to the page left margin.
+                float originX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
+                float floatX = (ctx.LeftFloatRight > 0f ? ctx.LeftFloatRight : originX) + floatBlock.MarginLeft;
                 output.Add(new PositionedElement
                 {
                     Source = floatBlock,
@@ -215,7 +222,11 @@ internal sealed class BlockLayoutEngine
             }
             else // "right"
             {
-                float floatX = ctx.PageMarginLeftPt + ctx.AvailableWidth - floatWidth - floatBlock.MarginRight;
+                // Fix A1 (symmetric): stack right-floats leftward from ctx.RightFloatLeft when set.
+                float rightOrigin = ctx.RightFloatLeft > 0f
+                    ? ctx.RightFloatLeft
+                    : (ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt) + ctx.AvailableWidth;
+                float floatX = rightOrigin - floatWidth - floatBlock.MarginRight;
                 output.Add(new PositionedElement
                 {
                     Source = floatBlock,
@@ -253,9 +264,12 @@ internal sealed class BlockLayoutEngine
                     blockChild.TextAlign = ctx.TextAlign;
                 float h = Layout(blockChild, ctx, output, pageIndex);
                 // CSS 2.1 §9.5: non-floated block children start after any left-float edge.
+                // Fix A2: use ContentOriginX as the left baseline when inside a table cell
+                // (ContentOriginX > 0 means we are inside a cell, not page normal flow).
+                float xOrigin = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
                 float blockX = ctx.LeftFloatRight > 0f
                     ? ctx.LeftFloatRight + blockChild.MarginLeft
-                    : ctx.PageMarginLeftPt + blockChild.MarginLeft;
+                    : xOrigin + blockChild.MarginLeft;
                 output.Add(new PositionedElement
                 {
                     Source = blockChild,
@@ -375,7 +389,18 @@ internal sealed class BlockLayoutEngine
         }
 
         if (box.Width > 0f)
+        {
+            // Fix C2: clamp body element explicit width to available page content area.
+            // A <body style="width:210mm"> on an A5-landscape page has CSS width = full
+            // page width (595pt) but ctx.AvailableWidth = page - margins (≈538pt).  Per
+            // CSS 2.1 §10.3.3 explicit widths are normally honoured for arbitrary blocks,
+            // but we conservatively clamp the root body to prevent content from rendering
+            // outside the page boundaries.  Non-body blocks with explicit fixed widths
+            // are left unchanged (overflow is intentional, e.g. fixed-width banners).
+            if (box.IsBodyRoot && box.Width > ctx.AvailableWidth)
+                return ctx.AvailableWidth;
             return box.Width;
+        }
 
         // auto width: available minus horizontal margins/padding/border
         return ctx.AvailableWidth - box.MarginLeft - box.MarginRight

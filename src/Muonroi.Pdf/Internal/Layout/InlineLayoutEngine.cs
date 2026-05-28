@@ -14,8 +14,11 @@ internal sealed class InlineLayoutEngine
         // CSS 2.1 §9.5: inline content must be narrowed by any active floats in the same BFC.
         // LeftFloatRight is the right edge of the left float (content starts after it).
         // RightFloatLeft is the left edge of the right float (content ends before it).
-        float leftFloatClearX = context.LeftFloatRight > 0f ? context.LeftFloatRight : context.PageMarginLeftPt;
-        float rightFloatBoundX = context.RightFloatLeft > 0f ? context.RightFloatLeft : (context.PageMarginLeftPt + context.AvailableWidth);
+        // Fix A2: use ContentOriginX as the left baseline inside table cells (ContentOriginX > 0
+        // means the enclosing CellContext has set an absolute cell column X as the origin).
+        float xOrigin = context.ContentOriginX > 0f ? context.ContentOriginX : context.PageMarginLeftPt;
+        float leftFloatClearX = context.LeftFloatRight > 0f ? context.LeftFloatRight : xOrigin;
+        float rightFloatBoundX = context.RightFloatLeft > 0f ? context.RightFloatLeft : (xOrigin + context.AvailableWidth);
         float startX = leftFloatClearX;
         float availWidth = rightFloatBoundX - leftFloatClearX;
         if (availWidth <= 0f) availWidth = context.AvailableWidth; // safety: degenerate float state

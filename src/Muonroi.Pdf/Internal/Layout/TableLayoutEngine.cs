@@ -105,7 +105,12 @@ internal sealed class TableLayoutEngine
                     "bottom" => MathF.Max(0f, cellHeight - contentHeight - cell.PaddingBottom),
                     _ => 0f  // "top" is default
                 };
-                var cellCtx = CellContext(context, cellWidth, cellY + cell.PaddingTop + vAlignOffset);
+                // Fix A2: pass absolute cell content-left X as ContentOriginX so that
+                // inline/block content inside this cell renders at the cell's column position.
+                // cellX = colX[cell.ColumnIndex]; content starts at cellX + PaddingLeft + BorderLeft.
+                float cellContentOriginX = cellX + cell.PaddingLeft + cell.BorderLeft;
+                var cellCtx = CellContext(context, cellWidth, cellY + cell.PaddingTop + vAlignOffset,
+                    cellOriginX: cellContentOriginX);
                 var cellOut = new List<PositionedElement>();
                 _blockEngine.Layout(cell, cellCtx, cellOut, pageIndex);
 
@@ -128,13 +133,19 @@ internal sealed class TableLayoutEngine
     }
 
     // Measure cell content height without emitting output.
+    // cellOriginX is 0 for measurement passes (X doesn't affect height calculation).
     private float MeasureCell(TableCellBox cell, float cellWidth, LayoutContext ctx)
     {
-        var mc = CellContext(ctx, cellWidth, ctx.CurrentY);
+        var mc = CellContext(ctx, cellWidth, ctx.CurrentY, cellOriginX: 0f);
         return _blockEngine.Layout(cell, mc, new List<PositionedElement>(), 0);
     }
 
-    private static LayoutContext CellContext(LayoutContext parent, float cellWidth, float startY) => new()
+    // Fix A2: cellOriginX is the absolute X of the cell's content-left edge (colX + borderLeft + paddingLeft).
+    // Passing it as ContentOriginX into the child LayoutContext ensures inline and block content
+    // inside the cell uses the cell's column X as the left baseline, not the page left margin.
+    // Without this, all cell content renders at PageMarginLeftPt regardless of which column it is in.
+    private static LayoutContext CellContext(LayoutContext parent, float cellWidth, float startY,
+        float cellOriginX = 0f) => new()
     {
         PageWidth = parent.PageWidth,
         PageHeight = parent.PageHeight,
@@ -143,7 +154,8 @@ internal sealed class TableLayoutEngine
         CurrentPageIndex = parent.CurrentPageIndex,
         TotalPages = parent.TotalPages,
         TextMetrics = parent.TextMetrics,
-        PageMargins = parent.PageMargins
+        PageMargins = parent.PageMargins,
+        ContentOriginX = cellOriginX  // Fix A2: cell absolute column X
     };
 
     private static float CellWidth(int colIndex, int colspan, float[] colWidths, float borderSpacing)
