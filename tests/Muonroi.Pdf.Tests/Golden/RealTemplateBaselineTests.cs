@@ -331,12 +331,14 @@ public sealed class RealTemplateBaselineTests
     /// legitimate page-count increases. Updated baselines reflect correct rendering behavior.
     /// Pre-G14: GTND_F=1, GTHA_F=1, HSLA_E=1, HSLA_F=1, HBND_F=1 (tables silently omitted).
     /// Post-G14: GTND_F=4, GTHA_F=4, HSLA_E=3, HSLA_F=2, HBND_F=2 (tables fully rendered).
+    /// Post-G15b (float-epsilon): HSLA_E=3→2 — third float now fits on same row, tightening packing.
     /// </remarks>
     private static readonly Dictionary<string, int> ExpectedPageCounts = new()
     {
         // G14 fix (Wave 8.12b): table content now renders, causing page overflow for
         // templates with substantial table data. These counts reflect correct behavior.
-        ["HSLA_E"] = 3,
+        // G15b fix: float-epsilon recovers a row's worth of horizontal space → HSLA_E packs 2 pages.
+        ["HSLA_E"] = 2,
         ["HSLA_F"] = 2,
         ["HBND_F"] = 2,
         ["GTHA_F"] = 4,
