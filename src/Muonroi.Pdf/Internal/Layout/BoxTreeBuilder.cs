@@ -153,10 +153,33 @@ internal sealed class BoxTreeBuilder
         // G7 fix: AngleSharp returns "" (not null) for display on UA-inline elements in headless
         // mode. The null-coalescing ?? never fires for "". Map null/empty/whitespace to "inline"
         // for known UA-inline tags; otherwise default to "block".
+        // G14 fix: AngleSharp's GetComputedStyle throws for table structure elements with % widths
+        // when no viewport is configured; the catch in AngleSharpStyledNode returns
+        // AngleSharpComputedStyle.Empty, yielding an empty display string. Without this fallback,
+        // <tbody>/<tr>/<td> fall through to BlockBox, TableLayoutEngine.CollectRows finds no
+        // TableRowGroupBox children, and the table renders with zero height (silent omission).
+        // Apply HTML5 UA stylesheet display mapping BEFORE the inline-vs-block fallback. See G14.
         string rawDisplay = node.Style.GetValue("display") ?? "";
-        string effectiveDisplay = string.IsNullOrWhiteSpace(rawDisplay)
-            ? (UaInlineTags.Contains(localName) ? "inline" : "block")
-            : rawDisplay.Trim().ToLowerInvariant();
+        string effectiveDisplay;
+        if (string.IsNullOrWhiteSpace(rawDisplay))
+        {
+            effectiveDisplay = localName switch
+            {
+                "table"   => "table",
+                "tbody"   => "table-row-group",
+                "thead"   => "table-header-group",
+                "tfoot"   => "table-footer-group",
+                "tr"      => "table-row",
+                "td"      => "table-cell",
+                "th"      => "table-cell",
+                "caption" => "table-caption",
+                _         => UaInlineTags.Contains(localName) ? "inline" : "block"
+            };
+        }
+        else
+        {
+            effectiveDisplay = rawDisplay.Trim().ToLowerInvariant();
+        }
         return effectiveDisplay switch
         {
             "block" or "list-item" or "flow-root" => new BlockBox { Source = node },

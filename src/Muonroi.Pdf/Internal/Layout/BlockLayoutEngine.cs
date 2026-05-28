@@ -425,7 +425,11 @@ internal sealed class BlockLayoutEngine
 
             case ReplacedBox replacedChild:
             {
-                float h = replacedChild.NaturalHeight > 0f ? replacedChild.NaturalHeight : ctx.TextMetrics.GetLineHeight("serif", 12f);
+                float h = replacedChild.NaturalHeight > 0f
+                    ? replacedChild.NaturalHeight
+                    : replacedChild.Height > 0f
+                        ? replacedChild.Height
+                        : ctx.TextMetrics.GetLineHeight("serif", 12f);
                 // Fix G2 (phase 8.8): respect ContentOriginX for block-level images inside float
                 // children or table cells (same pattern as HrBox Fix F2).
                 float imgOriginX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
