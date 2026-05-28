@@ -1,6 +1,6 @@
 # Gaps & Tech Debt — Muonroi.Pdf (cross-phase)
 
-> Updated: 2026-05-28 after Phase 8.11 close (Image Rendering Sweep).
+> Updated: 2026-05-28 after Phase 8.12 close (Visual Bug Sweep — lineHeight=0f latent fix).
 > Purpose: prevent silent accumulation of unresolved debt. Every gap/debt
 > item has a source phase, current status, and assigned next phase.
 
@@ -22,6 +22,10 @@ See also: `.planning/ROADMAP.md` for phase timeline.
 | G7b | Block element with mixed text + inline element children — text node dropped by `CollectChildren`; siblings not batched in dispatch | 8.9 (discovered post-G7) | FIXED 8.9 (`df229b8`) | — |
 | G8 | HSLA_E content on page 2, page 1 empty (body `height:148mm`) | 8.8 | FIXED 8.9 (`0b5ca9b`) | — |
 | G9 | Image inside float renders as colored placeholder (HBND_F top-left red rect) — root cause: abs-pos `<img>` inside `overflow:hidden` div fell back to page (0,0) because containing-block gate matched only `position:relative` | 8.9 (discovered) | FIXED 8.11 (`5663bae`) — extended `isContainingBlock` to cover overflow:hidden + TableCellBox.ContainingBlockRect propagation | — |
+| G10 | (reserved — investigate if surfaced) | — | — | — |
+| G11 | HSLA_E / CAPR_E label-value appeared vertically stacked in initial visual review | 8.12 (discovered) | CLOSED 8.12 — NOT engine bug; HSLA_E is template-structure (label/value in two separate floats with barcode between), CAPR_E is correct inline but with vertical whitespace between distinct fields | — |
+| G12 | Cell content overlap in rasterized PNG (HBL, CSLA_F) | 8.12 (discovered) | CLOSED 8.12 — not visible in PDF per user review; rasterization aliasing only | — |
+| G13 | HBL equipment table column misalignment in rasterized PNG | 8.12 (discovered) | CLOSED 8.12 — same as G12; rasterization artifact only | — |
 
 ---
 
@@ -46,7 +50,8 @@ See also: `.planning/ROADMAP.md` for phase timeline.
 
 | ID | Item | Status | Owner phase |
 |----|------|--------|-------------|
-| C1 | 18/18 visual gate | DONE 8.9 — all 18 templates render on page 1 with table grid + inline label-value | — |
+| C1 | 18/18 visual gate | DONE 8.9 — all 18 templates render on page 1 with table grid + inline label-value. VERIFIED again 8.12 via PDF review (G11/G12/G13 closed as not-engine-bugs) | — |
+| C1b | Author guidance: floated siblings do NOT establish inline-flow continuity (see HSLA_E vs HSLA_F) | DOCUMENTED 8.12 (VERIFICATION.md) | — |
 | C2 | Logo data-URI PNG render audit across all 18 templates | PARTIAL — G9 root cause closed (HBND_F + HSLA_F abs-pos position); full visual audit across 18 templates deferred | 8.12+ |
 | C3 | Document v1 Legacy Print-HTML Profile public spec | Not started | After 8.11 stabilization |
 | C4 | Failure mode: "unsupported: \<feature\>" error path for out-of-profile CSS | Not implemented (silent mis-render) | 8.11 or charter sub-phase |
