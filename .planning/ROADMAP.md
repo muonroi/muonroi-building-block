@@ -212,18 +212,29 @@ Plans:
 **Corpus / fixtures**: D:\Data\Template\Htmls\PreviewRegistion (18 templates, e.g. HSLA_E/F) vs reference filled PDFs in Downloads. Representative, NOT scope boundary.
 **Scope (from 18-template census 2026-05-28 — ZERO modern CSS present)**:
   - `float:left/right` + `clear` (gap #1); `position:absolute` (gap #2)
-  - Hardening: `vertical-align` in table cells (673 hits), base64 PNG/JPEG robustness, `rem` units, `white-space:pre-line`
-**Out of scope (fail-loud)**: flexbox, grid, modern CSS (not in corpus); `{{...}}` templating (caller fills via Scriban/Fluid; library stays HTML→PDF). `background-color`/`border` drawing — confirm corpus need during research, else stays deferred.
+  - Hardening: `vertical-align` in table cells (673 hits), `border-collapse:collapse`, background-color/image, `rem` units, `white-space:pre-line/pre-wrap`, `text-transform:uppercase`, `nobr`
+**Out of scope (fail-loud)**: flexbox, grid, modern CSS (not in corpus); `{{...}}` templating (caller fills; library stays HTML→PDF)
 **Success Criteria** (what must be TRUE):
   1. Float multi-column layout renders side-by-side (header logo|title|order-block; `wXX float-left/right` + clearfix) — no vertical-stack collapse.
   2. `position:absolute` honored relative to its containing block.
-  3. Tables render correctly at corpus scale (nested, colspan/rowspan, `vertical-align` in cells, border-collapse) including the heavy 49–55KB `*_F` files.
-  4. base64 PNG + JPEG render at correct size/position.
+  3. Tables render correctly at corpus scale (colspan/rowspan, `vertical-align` in cells, border-collapse) including the heavy 49–55KB `*_F` files.
+  4. base64 PNG + JPEG render at correct size/position; background-color fills render.
   5. Fidelity gate: all 18 templates rasterized and visually confirmed (Opus) + structurally compared against reference PDFs; large divergence = fail.
   6. Fail-loud: out-of-profile input throws a clear `PdfFormatException`/policy violation; never silent wrong output.
   7. No regression: existing suite green; new golden fixtures for the corpus.
   8. **Capability contract** published (supported layout primitives + template format) + layout IR decoupled from CSS — the seam consumed by the Phase 9 Designer (ui-engine) and registry (control-plane).
-**Plans**: TBD (research in progress)
+**Plans**: 8 plans
+
+Plans:
+- [ ] 08.7-01-PLAN.md — Wave 1: Fix TableLayoutEngine IndexOutOfRangeException (AssignColumnIndices bounds guard) + regression test
+- [ ] 08.7-02-PLAN.md — Wave 1: Create LegacyPrintPolicy (float/abs-pos/border-collapse allowed; flex/grid/fixed/script still blocked)
+- [ ] 08.7-03-PLAN.md — Wave 1: Bundle Liberation Fonts (OFL-1.1) as EmbeddedResource; wire family-name fallback mapping in FontPipeline
+- [ ] 08.7-04-PLAN.md — Wave 2: border-collapse:collapse + vertical-align in TableLayoutEngine + golden tests (depends on 01+02)
+- [ ] 08.7-05-PLAN.md — Wave 3: float:left/right + clear BFC accumulator in BlockLayoutEngine + golden tests (depends on 02+04)
+- [ ] 08.7-06-PLAN.md — Wave 3: position:absolute deferred-pass in BlockLayoutEngine + golden tests (depends on 02+04; sequential after 05)
+- [ ] 08.7-07-PLAN.md — Wave 4: background-color/image drawing in OwnedPdfWriter + text-transform/white-space/nobr/rem in InlineLayoutEngine (depends on 05+06)
+- [ ] 08.7-08-PLAN.md — Wave 5: Restore real-template harness (18 fixtures, LegacyPrintPolicy, PNG rasterization) + CAPABILITY-CONTRACT.md + Opus visual gate (depends on 03+07)
+
 **UI hint**: no
 
 ### Phase 9: v1.0 Enterprise — multi-repo workstreams (no new repos)
@@ -262,5 +273,5 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5
 | 8. v0.2 — Source Generator + AOT + DesignSystem | 5/5 | Complete (SC4 deferred to 8.5) | 2026-05-27 |
 | 8.5. Owned PDF Writer (SC4 carry-over) | 7/7 | Complete (SC4 closed, PdfSharpCore removed) | 2026-05-27 |
 | 8.6. Rendering Fidelity (CSS/HTML5/font/image gaps) | 6/6 | Complete (12/12 SC, visual gate, verified Opus) | 2026-05-27 |
-| 8.7. Legacy Print-HTML Profile v1 (float/clear + abs-pos + hardening) | 0/TBD | Research in progress | - |
+| 8.7. Legacy Print-HTML Profile v1 (float/clear + abs-pos + hardening) | 0/8 | Planned | - |
 | 9. v1.0 Enterprise (multi-repo workstreams A–D) | 0/TBD | Not started | - |
