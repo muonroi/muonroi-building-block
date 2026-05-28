@@ -136,6 +136,14 @@ internal static class GoldenCorpus
                 "td{border:1px solid black;padding:4px;width:150px;}",
                 "<table><tr><td>fixed one</td><td>fixed two</td></tr>" +
                 "<tr><td>x</td><td>y</td></tr></table>")),
+        new GoldenCase(
+            "table-large-colspan-rowspan",
+            Doc("table{border-collapse:separate;}td{border:1px solid black;padding:4px;}",
+                "<table>" +
+                "<tr><td colspan=\"10\" rowspan=\"2\">Wide spanning cell</td><td>C1</td><td>D1</td></tr>" +
+                "<tr><td>C2</td><td>D2</td></tr>" +
+                "<tr><td>A3</td><td>B3</td><td>C3</td><td>D3</td></tr>" +
+                "</table>")),
     };
 
     private static string LongFlow(int paragraphs)

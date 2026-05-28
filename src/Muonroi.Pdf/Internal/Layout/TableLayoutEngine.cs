@@ -87,6 +87,9 @@ internal sealed class TableLayoutEngine
         {
             foreach (var cell in rows[r])
             {
+                // Defense-in-depth: skip any cell whose ColumnIndex is out of the grid.
+                if (cell.ColumnIndex < 0 || cell.ColumnIndex >= colX.Length) continue;
+
                 int lastRow = Math.Min(r + cell.Rowspan - 1, rows.Count - 1);
                 float cellHeight = SpannedHeight(rowHeights, r, lastRow, borderSpacing);
                 float cellX = colX[cell.ColumnIndex];
@@ -212,6 +215,10 @@ internal sealed class TableLayoutEngine
             {
                 while (col < columnCount && occupied[r, col])
                     col++;
+
+                // Gap 6: col can equal columnCount after skipping occupied slots or after
+                // col += cell.Colspan advances past the grid boundary. Skip remaining cells.
+                if (col >= columnCount) break;
 
                 cell.ColumnIndex = col;
 
