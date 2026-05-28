@@ -712,6 +712,87 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 continue;
             }
 
+            // TableCellBox: emit PDF stroke commands for visible border sides (G3 fix).
+            // Phase 8.7 Wave 7 added background/border drawing for BlockBox PositionedElements
+            // but never extended the path to TableCellBox. 10 of 17 real templates use
+            // border-collapse:collapse with explicit 1px solid #008080 cell borders that were
+            // silently dropped. This block draws each non-zero border side as a stroked line.
+            if (el.Source is TableCellBox tcb)
+            {
+                bool drawTop    = tcb.BorderTop    > 0f;
+                bool drawRight  = tcb.BorderRight  > 0f;
+                bool drawBottom = tcb.BorderBottom > 0f;
+                bool drawLeft   = tcb.BorderLeft   > 0f;
+                if (drawTop || drawRight || drawBottom || drawLeft)
+                {
+                    sb.AppendLine("ET");
+
+                    // Resolve border color from the source node's computed style.
+                    // AngleSharp normalises border shorthand into individual border-*-color properties.
+                    string? borderColorCss = tcb.Source?.Style?.GetValue("border-top-color")
+                                          ?? tcb.Source?.Style?.GetValue("border-right-color")
+                                          ?? tcb.Source?.Style?.GetValue("border-bottom-color")
+                                          ?? tcb.Source?.Style?.GetValue("border-left-color")
+                                          ?? tcb.Source?.Style?.GetValue("border-color")
+                                          ?? "black";
+                    (float cellR, float cellG, float cellB) = ParseColor(borderColorCss);
+
+                    float cellX = el.Position.X;
+                    float cellY = el.Position.Y;
+                    float cellW = el.Position.Width;
+                    float cellH = el.Position.Height;
+                    // Y-flip: layout Y=0 at top → PDF Y=0 at bottom
+                    float pdfBottom = pageHeightPt - cellY - cellH;
+                    float pdfTop    = pageHeightPt - cellY;
+
+                    // Line width: max of all four border sides (corpus = uniform 0.75pt ≈ 1 CSS px)
+                    float lw = MathF.Max(MathF.Max(tcb.BorderTop, tcb.BorderBottom),
+                                         MathF.Max(tcb.BorderLeft, tcb.BorderRight));
+                    if (lw <= 0f) lw = 0.75f;
+
+                    sb.AppendLine("q");
+                    sb.Append(cellR.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                    sb.Append(cellG.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                    sb.Append(cellB.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" RG"); // stroke color
+                    sb.Append(lw.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" w");
+
+                    if (drawTop)
+                    {
+                        sb.Append(cellX.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                        sb.Append(pdfTop.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(" m ");
+                        sb.Append((cellX + cellW).ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                        sb.Append(pdfTop.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" l S");
+                    }
+                    if (drawBottom)
+                    {
+                        sb.Append(cellX.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                        sb.Append(pdfBottom.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(" m ");
+                        sb.Append((cellX + cellW).ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                        sb.Append(pdfBottom.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" l S");
+                    }
+                    if (drawLeft)
+                    {
+                        sb.Append(cellX.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                        sb.Append(pdfBottom.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(" m ");
+                        sb.Append(cellX.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                        sb.Append(pdfTop.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" l S");
+                    }
+                    if (drawRight)
+                    {
+                        sb.Append((cellX + cellW).ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                        sb.Append(pdfBottom.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(" m ");
+                        sb.Append((cellX + cellW).ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                        sb.Append(pdfTop.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" l S");
+                    }
+
+                    sb.AppendLine("Q");
+                    sb.AppendLine("BT");
+                    currentFamily = null;
+                    currentSize = 0f;
+                }
+                continue; // TableCellBox: no inline text content at this node level
+            }
+
             if (el.Source is not InlineBox inline || string.IsNullOrEmpty(inline.FontFamily))
                 continue;
 
