@@ -15,6 +15,8 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [ ] **Phase 7: Golden Snapshots + CI Gates + Publishing** — 40+ golden tests, Vietnamese corpus, convention gates, NuGet publish at `1.0.0-alpha.N`
 - [x] **Phase 8: v0.2 — Source Generator + AOT + DesignSystem** — Compile-time `IMPdfRenderer<T>` fast path, trim-safe Alpine container, default design system templates (completed 2026-05-27; SC4 alloc target deferred to Phase 8.5)
 - [x] **Phase 8.5: Owned PDF Writer (SC4 carry-over)** — Replaced PdfSharpCore with an owned, allocation-controlled, AOT-trivial PDF 1.7 writer (CID Type0/Identity-H + ToUnicode, FlateDecode via ZLibStream, JPEG/PNG XObjects). Closes ALLOC-01/SC4: total alloc 51.62 MB vs 288.96 threshold (82% headroom). PdfSharpCore fully removed (+ transitives ImageSharp/CodePages). 215/215 tests, 56 snapshots re-baselined. Verified 7/7 (08.5-VERIFICATION.md). Completed 2026-05-27.
+- [x] **Phase 8.7: Legacy Print-HTML Profile v1** — float/clear + position:absolute + table hardening + real-template corpus (completed 2026-05-28; 94% gate, HSLA_E deferred to 8.8)
+- [ ] **Phase 8.8: Layout Hardening** — Root-cause HSLA_E A5 landscape + ExcludedShapes float refactor + nested BFC verification; target 18/18 visual gate
 - [ ] **Phase 9: v1.0 Enterprise** — Postgres template registry, Redis hot-reload, SSIM canary, web designer, TCIS cutover
 
 ## Phase Details
@@ -206,7 +208,7 @@ Plans:
 
 **UI hint**: no
 
-### Phase 8.7: Legacy Print-HTML Profile v1 — real-template layout fidelity (open-core)
+### Phase 8.7: Legacy Print-HTML Profile v1 — real-template layout fidelity (open-core) [COMPLETED]
 **Goal**: Render the real production template corpus faithfully by closing the layout gaps the corpus actually needs, establishing a bounded, document-oriented CSS profile + a clean CSS-decoupled layout IR + a published capability contract. Commercial open-core scope (NOT TCIS-specific). Fail-loud outside the profile; never silently mis-render.
 **Depends on**: Phase 8.6 (rendering surface), Phase 8.5 (owned writer)
 **Corpus / fixtures**: D:\Data\Template\Htmls\PreviewRegistion (18 templates, e.g. HSLA_E/F) vs reference filled PDFs in Downloads. Representative, NOT scope boundary.
@@ -226,16 +228,32 @@ Plans:
 **Plans**: 8 plans
 
 Plans:
-- [ ] 08.7-01-PLAN.md — Wave 1: Fix TableLayoutEngine IndexOutOfRangeException (AssignColumnIndices bounds guard) + regression test
-- [ ] 08.7-02-PLAN.md — Wave 1: Create LegacyPrintPolicy (float/abs-pos/border-collapse allowed; flex/grid/fixed/script still blocked)
-- [ ] 08.7-03-PLAN.md — Wave 1: Bundle Liberation Fonts (OFL-1.1) as EmbeddedResource; wire family-name fallback mapping in FontPipeline
-- [ ] 08.7-04-PLAN.md — Wave 2: border-collapse:collapse + vertical-align in TableLayoutEngine + golden tests (depends on 01+02)
-- [ ] 08.7-05-PLAN.md — Wave 3: float:left/right + clear BFC accumulator in BlockLayoutEngine + golden tests (depends on 02+04)
-- [ ] 08.7-06-PLAN.md — Wave 3: position:absolute deferred-pass in BlockLayoutEngine + golden tests (depends on 02+04; sequential after 05)
-- [ ] 08.7-07-PLAN.md — Wave 4: background-color/image drawing in OwnedPdfWriter + text-transform/white-space/nobr/rem in InlineLayoutEngine (depends on 05+06)
-- [ ] 08.7-08-PLAN.md — Wave 5: Restore real-template harness (18 fixtures, LegacyPrintPolicy, PNG rasterization) + CAPABILITY-CONTRACT.md + Opus visual gate (depends on 03+07)
+- [x] 08.7-01-PLAN.md — Wave 1: Fix TableLayoutEngine IndexOutOfRangeException (AssignColumnIndices bounds guard) + regression test
+- [x] 08.7-02-PLAN.md — Wave 1: Create LegacyPrintPolicy (float/abs-pos/border-collapse allowed; flex/grid/fixed/script still blocked)
+- [x] 08.7-03-PLAN.md — Wave 1: Bundle Liberation Fonts (OFL-1.1) as EmbeddedResource; wire family-name fallback mapping in FontPipeline
+- [x] 08.7-04-PLAN.md — Wave 2: border-collapse:collapse + vertical-align in TableLayoutEngine + golden tests (depends on 01+02)
+- [x] 08.7-05-PLAN.md — Wave 3: float:left/right + clear BFC accumulator in BlockLayoutEngine + golden tests (depends on 02+04)
+- [x] 08.7-06-PLAN.md — Wave 3: position:absolute deferred-pass in BlockLayoutEngine + golden tests (depends on 02+04; sequential after 05)
+- [x] 08.7-07-PLAN.md — Wave 4: background-color/image drawing in OwnedPdfWriter + text-transform/white-space/nobr/rem in InlineLayoutEngine (depends on 05+06)
+- [x] 08.7-08-PLAN.md — Wave 5: Restore real-template harness (18 fixtures, LegacyPrintPolicy, PNG rasterization) + CAPABILITY-CONTRACT.md + Opus visual gate (depends on 03+07)
+
+**Status**: COMPLETE — 94% visual gate (17/18). HSLA_F, HBL, CAPR_E verified visually; HSLA_E A5 landscape deferred to Phase 8.8 as known-issue. 7026/7026 unit tests pass; 17/17 real-template baseline tests pass. 13 goldens re-baselined. Capability contract published. See `.planning/phase-08.7/VERIFICATION.md`. Completed 2026-05-28.
 
 **UI hint**: no
+
+### Phase 8.8: Layout Hardening — A5 landscape + ExcludedShapes refactor
+**Goal**: Close the HSLA_E A5 landscape known-issue and replace the cursor-based float positioning with a correct ExcludedShapes list algorithm to reach 18/18 visual gate and algorithmically clean float positioning matching CSS 2.1 §9.5.
+**Depends on**: Phase 8.7 (all prior fixes, capability contract, real-template harness)
+**Scope**:
+  (a) Root-cause HSLA_E A5 landscape render — instrument layout trace with explicit coordinate logging; fix body+float interaction in landscape orientation (297 mm wide page).
+  (b) Refactor float positioning from cursor model (`LeftFloatRight`/`RightFloatLeft` fields on LayoutContext) to ExcludedShapes list query — WeasyPrint clean-room algorithm (see `.planning/phase-08.7/RESEARCH-OSS-REFS.md` §1). Correct overlap resolution when exclusion zones interact from both sides.
+  (c) Verify float context propagation across nested containing blocks (nested BFC roots with floated children).
+**Success Criteria** (what must be TRUE):
+  1. HSLA_E A5 landscape renders with visible content (body text + floated columns) matching the reference PDF within acceptable visual tolerance.
+  2. Float positioning uses an ExcludedShapes list query; `LeftFloatRight`/`RightFloatLeft` cursor fields removed from LayoutContext.
+  3. Nested BFC float propagation verified by dedicated golden tests.
+  4. 18/18 visual gate (all templates pass); 7026+ unit tests green; goldens re-baselined.
+**Status**: planned
 
 ### Phase 9: v1.0 Enterprise — multi-repo workstreams (no new repos)
 **Goal**: Enterprise teams govern, version, canary-deploy, and live-preview PDF templates through a self-service Designer; TCIS.ePort runs on the live engine with DinkToPdf removed. PDF becomes a second product line riding the EXISTING open-core SaaS rails (see ecosystem topology) — reusing license-server, control-plane, and ui-engine; NO new repos.
@@ -259,7 +277,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5 → 8.6 → 8.7 → 9
+Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5 → 8.6 → 8.7 → 8.8 → 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -273,5 +291,6 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5
 | 8. v0.2 — Source Generator + AOT + DesignSystem | 5/5 | Complete (SC4 deferred to 8.5) | 2026-05-27 |
 | 8.5. Owned PDF Writer (SC4 carry-over) | 7/7 | Complete (SC4 closed, PdfSharpCore removed) | 2026-05-27 |
 | 8.6. Rendering Fidelity (CSS/HTML5/font/image gaps) | 6/6 | Complete (12/12 SC, visual gate, verified Opus) | 2026-05-27 |
-| 8.7. Legacy Print-HTML Profile v1 (float/clear + abs-pos + hardening) | 0/8 | Planned | - |
+| 8.7. Legacy Print-HTML Profile v1 (float/clear + abs-pos + hardening) | 8/8 | Complete (94% gate, HSLA_E deferred to 8.8) | 2026-05-28 |
+| 8.8. Layout Hardening (A5 landscape + ExcludedShapes refactor) | 0/TBD | Planned | - |
 | 9. v1.0 Enterprise (multi-repo workstreams A–D) | 0/TBD | Not started | - |
