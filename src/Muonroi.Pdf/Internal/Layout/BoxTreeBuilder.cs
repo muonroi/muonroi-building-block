@@ -71,6 +71,12 @@ internal sealed class BoxTreeBuilder
                 {
                     BuildChildren(node, blockBox);
                 }
+                // G18: propagate inherited text properties (Bold, TextTransform) from this block
+                // parent down to inline descendants that have not had an explicit author override.
+                // CSS 2.1 §6.2: font-weight and text-transform are inherited properties; a block
+                // heading like <h2> must pass Bold=true to its text-node InlineBox children.
+                if (box.Bold || box.TextTransform != null)
+                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform);
                 break;
             case TableBox tableBox:
                 BuildChildren(node, tableBox);
@@ -83,6 +89,9 @@ internal sealed class BoxTreeBuilder
                 break;
             case TableCellBox cellBox:
                 BuildChildren(node, cellBox);
+                // G18: propagate into table cell's inline children as well.
+                if (box.Bold || box.TextTransform != null)
+                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform);
                 break;
         }
 
@@ -377,6 +386,33 @@ internal sealed class BoxTreeBuilder
         if (!string.IsNullOrEmpty(overflowVal) && overflowVal is "hidden" or "scroll" or "auto")
             box.Overflow = overflowVal;
 
+        // G18: font-weight and text-transform are inherited CSS properties and must be resolved
+        // for ALL box types (block AND inline), not just InlineBox. A block-level heading
+        // like <h2> must carry Bold=true so it can be propagated to its inline text children.
+        // Step 1: read from computed style (works for inline-style declarations and author sheets
+        // that AngleSharp cascades correctly).
+        var fwAll = style.GetValue("font-weight");
+        if (!string.IsNullOrEmpty(fwAll))
+            box.Bold = fwAll is "bold"
+                || (int.TryParse(fwAll, out int fwInt) && fwInt >= 700);
+
+        // Step 2: UA stylesheet — h1..h6 are bold by default unless author CSS overrides.
+        // Only apply when no author-level font-weight was found (empty/null from computed style).
+        if (string.IsNullOrEmpty(fwAll))
+        {
+            string localNameForUa = box.Source?.LocalName?.ToLowerInvariant() ?? "";
+            if (localNameForUa is "h1" or "h2" or "h3" or "h4" or "h5" or "h6")
+                box.Bold = true;
+        }
+
+        // Step 3: text-transform — read for all boxes; also try class-rule fallback so that
+        // .text-uppercase { text-transform: uppercase } is picked up when GetComputedStyle throws.
+        var ttAll = style.GetValue("text-transform");
+        if (string.IsNullOrEmpty(ttAll))
+            ttAll = LookupClassProperty(box.Source, "text-transform");
+        if (!string.IsNullOrEmpty(ttAll) && ttAll == "uppercase")
+            box.TextTransform = "uppercase";
+
         if (box is InlineBox inline)
         {
             // AngleSharp's GetComputedStyle returns "" (not null) when font-family is not cascaded.
@@ -388,9 +424,14 @@ internal sealed class BoxTreeBuilder
             if (!string.IsNullOrWhiteSpace(fontFamily)) inline.FontFamily = fontFamily;
             inline.FontSize = fontSize;
 
+            // G18: inline.Bold was already initialised by the shared code above (which handles
+            // the UA bold default for h1-h6 and explicit author declarations). Only override here
+            // when the computed style provides a non-empty explicit value for this inline box
+            // itself (e.g. <strong> has font-weight:bold in UA; explicit "normal" overrides UA).
             var fontWeight = style.GetValue("font-weight");
-            inline.Bold = fontWeight is "bold"
-                || (int.TryParse(fontWeight, out int weight) && weight >= 700);
+            if (!string.IsNullOrEmpty(fontWeight))
+                inline.Bold = fontWeight is "bold"
+                    || (int.TryParse(fontWeight, out int weight) && weight >= 700);
 
             var fontStyle = style.GetValue("font-style");
             inline.Italic = fontStyle is "italic" or "oblique";
@@ -831,6 +872,39 @@ internal sealed class BoxTreeBuilder
                 result.Add(boxNode);
         }
         return result;
+    }
+
+    // G18: CSS inheritance for font-weight and text-transform.
+    // Walks the subtree rooted at 'node' and copies 'Bold'/'TextTransform' onto each InlineBox
+    // descendant that has not had an explicit author override (i.e. its current value is the
+    // CSS initial/default: Bold=false, TextTransform=null).
+    // This is intentionally narrow — it only propagates these two properties and only in the
+    // downward direction (parent → child), which is sufficient for the h1-h6 heading case.
+    private static void PropagateInheritedTextProps(BoxNode node, bool parentBold, string? parentTextTransform)
+    {
+        foreach (var child in node.Children)
+        {
+            if (child is InlineBox inlineChild)
+            {
+                // Apply parent's Bold only if the child still carries the default (false).
+                // A child with Bold=true already had an explicit override (e.g. <strong>).
+                if (!inlineChild.Bold && parentBold)
+                    inlineChild.Bold = true;
+                // Apply parent's TextTransform only if the child has none set.
+                if (inlineChild.TextTransform == null && parentTextTransform != null)
+                    inlineChild.TextTransform = parentTextTransform;
+            }
+            else
+            {
+                // Recurse through anonymous boxes and nested blocks so that deeply nested
+                // text-node InlineBoxes also receive the inherited values.
+                // Effective inherited value for the child itself (may refine parent's):
+                bool childBold = child.Bold || parentBold;
+                string? childTextTransform = child.TextTransform ?? parentTextTransform;
+                if (childBold || childTextTransform != null)
+                    PropagateInheritedTextProps(child, childBold, childTextTransform);
+            }
+        }
     }
 
     // CSS 2.1 §9.2.1: wrap inline siblings in AnonymousBox when block-level siblings are present

@@ -273,8 +273,20 @@ internal sealed class TableLayoutEngine
         {
             foreach (var cell in rows[0])
             {
-                if (cell.ColumnIndex < columnCount && cell.Colspan == 1 && cell.Width > 0f)
-                    widths[cell.ColumnIndex] = cell.Width;
+                if (cell.ColumnIndex < columnCount && cell.Colspan == 1)
+                {
+                    if (cell.Width > 0f)
+                    {
+                        widths[cell.ColumnIndex] = cell.Width;
+                    }
+                    else if (TryParsePercent(cell.WidthRaw, out float pct))
+                    {
+                        // G20 fix (fixed-mode): resolve WidthRaw % against table width when
+                        // Width=-1f (the % sentinel). CSS 2.1 §17.5.1: in fixed table layout
+                        // percentage widths are resolved against the table's width.
+                        widths[cell.ColumnIndex] = tableWidth * pct / 100f;
+                    }
+                }
             }
         }
 
@@ -309,6 +321,16 @@ internal sealed class TableLayoutEngine
             int c = cell.ColumnIndex;
             if (c >= columnCount) continue;
             (float mn, float pf) = ContentWidths(cell, metrics);
+            // G20 fix (auto-mode): honor cell.WidthRaw % as a preferred-width hint.
+            // CSS 2.1 §17.5.2: percentage widths on td/th are treated as percentages of
+            // the table width. Use max(content-preferred, declared%) so min-content is
+            // still the floor and declared% acts as a preferred-width minimum.
+            if (TryParsePercent(cell.WidthRaw, out float pct))
+            {
+                float declared = tableWidth * pct / 100f;
+                pf = MathF.Max(pf, declared);
+                mn = MathF.Max(mn, declared);
+            }
             if (mn > minW[c]) minW[c] = mn;
             if (pf > prefW[c]) prefW[c] = pf;
         }
@@ -407,5 +429,21 @@ internal sealed class TableLayoutEngine
         }
         foreach (var child in box.Children)
             AccumulateWidths(child, metrics, ref min, ref pref);
+    }
+
+    // G20: parse a CSS percentage string (e.g. "16%", " 16% ") into a float value 0-100.
+    // Returns false (no-op) for null, empty, non-numeric prefix, or bare "%".
+    private static bool TryParsePercent(string? raw, out float percent)
+    {
+        percent = 0f;
+        if (string.IsNullOrWhiteSpace(raw)) return false;
+        ReadOnlySpan<char> span = raw.AsSpan().Trim();
+        if (span.IsEmpty || span[^1] != '%') return false;
+        span = span[..^1].TrimEnd();
+        if (span.IsEmpty) return false;
+        if (!float.TryParse(span, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float val)) return false;
+        percent = val;
+        return true;
     }
 }

@@ -76,4 +76,15 @@ internal abstract class BoxNode
     /// page content area (Fix C2 — CSS 2.1 §10.3.3: body overflowing the page margin area).
     /// </summary>
     public bool IsBodyRoot { get; set; }
+
+    // G18: inherited text properties — resolved in ResolveCssProperties for ALL box types,
+    // then propagated from block ancestors to inline children during BuildNode recursion.
+    // InlineBox reads these to drive font selection and text-run uppercasing.
+
+    /// <summary>CSS font-weight: true when resolved to bold (≥700 or keyword "bold").
+    /// Set by UA stylesheet for h1-h6; overridden by author-level font-weight declarations.</summary>
+    public bool Bold { get; set; }
+
+    /// <summary>CSS text-transform: "uppercase" | null (other values ignored for now).</summary>
+    public string? TextTransform { get; set; }
 }
