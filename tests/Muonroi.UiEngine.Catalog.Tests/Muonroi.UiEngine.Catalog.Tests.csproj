@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+<PackageReference Include="MailKit" />
 <PackageReference Include="Microsoft.AspNetCore.Mvc.ApiExplorer" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Options" />
