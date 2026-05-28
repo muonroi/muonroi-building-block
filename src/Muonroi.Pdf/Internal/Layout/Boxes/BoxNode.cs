@@ -13,6 +13,12 @@ internal abstract class BoxNode
     public string? WidthRaw { get; set; }
     public float Height { get; set; } = -1f;
 
+    /// <summary>CSS max-width in points. -1f = not set (no upper clamp).</summary>
+    public float MaxWidth { get; set; } = -1f;
+
+    /// <summary>CSS min-width in points. -1f = not set (no lower clamp).</summary>
+    public float MinWidth { get; set; } = -1f;
+
     public float MarginTop { get; set; }
     public float MarginRight { get; set; }
     public float MarginBottom { get; set; }

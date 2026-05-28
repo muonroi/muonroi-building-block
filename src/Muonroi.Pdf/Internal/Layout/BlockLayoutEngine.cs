@@ -588,15 +588,16 @@ internal sealed class BlockLayoutEngine
 
     private static float ResolveWidth(BoxNode box, LayoutContext ctx)
     {
+        float width;
+
         if (box.WidthRaw != null && box.WidthRaw.EndsWith('%') &&
             float.TryParse(box.WidthRaw.AsSpan(0, box.WidthRaw.Length - 1),
                 System.Globalization.NumberStyles.Float,
                 System.Globalization.CultureInfo.InvariantCulture, out float pct))
         {
-            return ctx.AvailableWidth * pct / 100f;
+            width = ctx.AvailableWidth * pct / 100f;
         }
-
-        if (box.Width > 0f)
+        else if (box.Width > 0f)
         {
             // Fix C2: clamp body element explicit width to available page content area.
             // A <body style="width:210mm"> on an A5-landscape page has CSS width = full
@@ -605,15 +606,25 @@ internal sealed class BlockLayoutEngine
             // but we conservatively clamp the root body to prevent content from rendering
             // outside the page boundaries.  Non-body blocks with explicit fixed widths
             // are left unchanged (overflow is intentional, e.g. fixed-width banners).
-            if (box.IsBodyRoot && box.Width > ctx.AvailableWidth)
-                return ctx.AvailableWidth;
-            return box.Width;
+            width = (box.IsBodyRoot && box.Width > ctx.AvailableWidth)
+                ? ctx.AvailableWidth
+                : box.Width;
+        }
+        else
+        {
+            // auto width: available minus horizontal margins/padding/border
+            width = ctx.AvailableWidth - box.MarginLeft - box.MarginRight
+                    - box.PaddingLeft - box.PaddingRight
+                    - box.BorderLeft - box.BorderRight;
         }
 
-        // auto width: available minus horizontal margins/padding/border
-        return ctx.AvailableWidth - box.MarginLeft - box.MarginRight
-               - box.PaddingLeft - box.PaddingRight
-               - box.BorderLeft - box.BorderRight;
+        // CSS 2.1 §10.4: apply max-width / min-width clamps when explicitly set.
+        if (box.MaxWidth >= 0f && width > box.MaxWidth)
+            width = box.MaxWidth;
+        if (box.MinWidth >= 0f && width < box.MinWidth)
+            width = box.MinWidth;
+
+        return width;
     }
 
 }
