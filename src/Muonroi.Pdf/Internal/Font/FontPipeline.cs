@@ -58,6 +58,43 @@ internal sealed class FontPipeline
                 cssFamilyMap[decl.Family] = addedFamily;
         }
 
+        // Pre-load all three Liberation families as fallbacks for templates that reference
+        // standard CSS family names (Times New Roman, Arial, Courier New, etc.) without @font-face.
+        // Only registers variants whose canonical family is NOT already covered by @font-face above.
+        // This prevents bundled bytes from shadowing caller-supplied fonts.
+        var registeredCanonicalFamilies = new HashSet<string>(
+            fontBytesMap.Keys.Select(k =>
+                BundledFonts.TryGetFallback(k, FontWeight.Normal, Muonroi.Pdf.Abstractions.FontStyle.Normal, out _, out string canon)
+                    ? canon : k),
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach ((string family, FontWeight weight, Muonroi.Pdf.Abstractions.FontStyle style, ReadOnlyMemory<byte> bytes) in BundledFonts.AllVariants())
+        {
+            if (registeredCanonicalFamilies.Contains(family)) continue;
+
+            FontFamily addedFamily = collection.Add(new MemoryStream(bytes.ToArray()));
+            fontBytesMap.TryAdd(family, bytes);
+
+            // Register canonical name.
+            if (!cssFamilyMap.ContainsKey(family))
+                cssFamilyMap[family] = addedFamily;
+
+            // Register all alias names so InlineBox.FontFamily lookups succeed for e.g. "Times New Roman".
+            string[] aliases = family switch
+            {
+                BundledFonts.FamilySerif => ["Times New Roman", "Times", "Georgia", "serif"],
+                BundledFonts.FamilySans => ["Arial", "Helvetica", "Verdana", "sans-serif"],
+                BundledFonts.FamilyMono => ["Courier New", "Courier", "monospace"],
+                _ => []
+            };
+
+            foreach (string alias in aliases)
+            {
+                if (!cssFamilyMap.ContainsKey(alias))
+                    cssFamilyMap[alias] = addedFamily;
+            }
+        }
+
         return (new SixLaborsTextMetrics(collection, cssFamilyMap), fontBytesMap, collection);
     }
 }

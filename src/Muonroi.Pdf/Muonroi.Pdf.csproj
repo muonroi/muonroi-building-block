@@ -35,6 +35,12 @@
     <InternalsVisibleTo Include="Muonroi.Pdf.Tests" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Liberation Fonts © Red Hat, Inc. — SIL Open Font License 1.1 (OFL-1.1).
+         https://github.com/liberationfonts/liberation-fonts
+         Bundled as embedded resources; no linking required by OFL. -->
+    <EmbeddedResource Include="Internal/Font/Resources/*.ttf" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Muonroi.Pdf.SourceGenerators\Muonroi.Pdf.SourceGenerators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
