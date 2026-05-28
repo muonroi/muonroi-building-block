@@ -26,6 +26,11 @@ internal sealed class LayoutContext
     /// </summary>
     public string? TextAlign { get; set; }
 
+    // ContainingBlock for CSS position:absolute resolution.
+    // Set by BlockLayoutEngine when entering a position:relative box with explicit dimensions.
+    // Null = no positioned ancestor (abs-pos falls back to page coordinates).
+    public Rect? ContainingBlockRect { get; set; }
+
     // Float accumulator — scoped to a BFC; reset to 0f when entering a BFC root.
     /// <summary>X coordinate of the right edge of the current left float.</summary>
     public float LeftFloatRight { get; set; }

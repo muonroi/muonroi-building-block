@@ -41,6 +41,10 @@ internal sealed class BlockLayoutEngine
         float contentX = context.PageMarginLeftPt + box.MarginLeft + box.BorderLeft + box.PaddingLeft;
         float contentY = context.CurrentY + box.PaddingTop + box.BorderTop;
 
+        // Detect if this box establishes a containing block for abs-pos children.
+        bool isContainingBlock = box.Position == "relative" && box.Width > 0f && box.Height > 0f;
+        Rect? savedContainingBlock = context.ContainingBlockRect;
+
         // Empty-block collapse (CSS 2.1 §8.3.1 case 3): no children + no border/padding/min-height → height 0
         if (box.Children.Count == 0 && box.PaddingTop + box.PaddingBottom + box.BorderTop + box.BorderBottom == 0f && box.Height <= 0f)
             return 0f;
@@ -60,8 +64,16 @@ internal sealed class BlockLayoutEngine
             TotalPages = context.TotalPages,
             TextMetrics = context.TextMetrics,
             PageMargins = context.PageMargins,
-            TextAlign = box.TextAlign ?? context.TextAlign  // inherit text-align from container
+            TextAlign = box.TextAlign ?? context.TextAlign,  // inherit text-align from container
+            ContainingBlockRect = context.ContainingBlockRect  // propagate from parent by default
         };
+
+        // If this box is a containing block, set it on the child context now.
+        if (isContainingBlock)
+            childContext.ContainingBlockRect = new Rect(contentX, contentY, box.Width, box.Height);
+
+        // Deferred abs-pos list for post-normal-flow placement (CSS 2.1 §9.6).
+        var deferredAbsPos = new List<(BoxNode Child, Rect ContainingBlock)>();
 
         // Float accumulator: reset when entering a BFC root; propagate from parent otherwise.
         if (bfcRoot)
@@ -104,7 +116,7 @@ internal sealed class BlockLayoutEngine
                 childY = MathF.Max(childY, childContext.RightFloatBottom);
 
             childContext.CurrentY = childY + childMarginTop;
-            float childHeight = DispatchLayout(child, childContext, output, pageIndex);
+            float childHeight = DispatchLayout(child, childContext, output, pageIndex, deferredAbsPos);
 
             prevMarginBottom = child.MarginBottom;
             // childContext.CurrentY was advanced to (childStart + childHeight) inside DispatchLayout
@@ -121,13 +133,64 @@ internal sealed class BlockLayoutEngine
             ? box.Height
             : childY - contentY + box.PaddingBottom + box.BorderBottom;
 
+        // Post-normal-flow: resolve deferred abs-pos children (CSS 2.1 §9.6).
+        foreach (var (absChild, cb) in deferredAbsPos)
+        {
+            float resolvedLeft = ResolvePositionOffset(absChild.LeftRaw, cb.Width);
+            float resolvedRight = ResolvePositionOffset(absChild.RightRaw, cb.Width);
+            float resolvedTop = ResolvePositionOffset(absChild.TopRaw, cb.Height);
+
+            float absWidth = absChild.Width > 0f ? absChild.Width : cb.Width;
+            float absX = !float.IsNaN(resolvedLeft)
+                ? cb.X + resolvedLeft
+                : (!float.IsNaN(resolvedRight) ? cb.X + cb.Width - absWidth - resolvedRight : cb.X);
+            float absY = !float.IsNaN(resolvedTop) ? cb.Y + resolvedTop : cb.Y;
+
+            float absHeight;
+            if (absChild.Height > 0f)
+            {
+                absHeight = absChild.Height;
+            }
+            else
+            {
+                var absCtx = new LayoutContext
+                {
+                    PageWidth = context.PageWidth,
+                    PageHeight = context.PageHeight,
+                    AvailableWidth = absWidth,
+                    CurrentY = absY,
+                    TextMetrics = context.TextMetrics,
+                    PageMargins = context.PageMargins
+                };
+                absHeight = Layout(absChild, absCtx, output, pageIndex);
+            }
+
+            output.Add(new PositionedElement
+            {
+                Source = absChild,
+                Position = new Rect(absX, absY, absWidth, absHeight > 0f ? absHeight : absChild.Height),
+                PageIndex = pageIndex
+            });
+        }
+
+        context.ContainingBlockRect = savedContainingBlock;
+
         return contentHeight + box.PaddingTop + box.PaddingBottom + box.BorderTop + box.BorderBottom;
     }
 
-    private float DispatchLayout(BoxNode child, LayoutContext ctx, List<PositionedElement> output, int pageIndex)
+    private float DispatchLayout(BoxNode child, LayoutContext ctx, List<PositionedElement> output, int pageIndex,
+        List<(BoxNode Child, Rect ContainingBlock)>? deferredAbsPos = null)
     {
         float childWidth = ResolveWidth(child, ctx);
         float startY = ctx.CurrentY;
+
+        // CSS 2.1 §9.6: abs-pos handling — deferred to post-normal-flow pass.
+        if (child.Position == "absolute")
+        {
+            var cb = ctx.ContainingBlockRect ?? new Rect(ctx.PageMarginLeftPt, 0f, ctx.AvailableWidth, ctx.PageHeight);
+            deferredAbsPos?.Add((child, cb));
+            return 0f;
+        }
 
         // CSS 2.1 §9.5: float handling — removed from normal flow, placed at left or right edge.
         if (child.FloatValue != null && child is BlockBox floatBlock)
@@ -243,6 +306,58 @@ internal sealed class BlockLayoutEngine
                 return 0f;
             }
         }
+    }
+
+    /// <summary>
+    /// Resolves a raw CSS position offset string to a float value in points.
+    /// Returns <see cref="float.NaN"/> when the value is null/empty (not specified).
+    /// Percentage values are resolved against <paramref name="containerDimension"/>.
+    /// </summary>
+    private static float ResolvePositionOffset(string? raw, float containerDimension)
+    {
+        if (string.IsNullOrWhiteSpace(raw) || raw == "auto")
+            return float.NaN;
+
+        ReadOnlySpan<char> span = raw.AsSpan().Trim();
+
+        if (span.EndsWith("%", StringComparison.Ordinal))
+        {
+            if (float.TryParse(span[..^1], System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out float pct))
+                return pct / 100f * containerDimension;
+            return float.NaN;
+        }
+
+        if (span.EndsWith("px", StringComparison.Ordinal))
+        {
+            if (float.TryParse(span[..^2], System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out float px))
+                return px * (float)Units.PxToPt;
+            return float.NaN;
+        }
+
+        if (span.EndsWith("pt", StringComparison.Ordinal))
+        {
+            if (float.TryParse(span[..^2], System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out float pt))
+                return pt;
+            return float.NaN;
+        }
+
+        if (span.EndsWith("mm", StringComparison.Ordinal))
+        {
+            if (float.TryParse(span[..^2], System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out float mm))
+                return mm * (float)Units.MmToPt;
+            return float.NaN;
+        }
+
+        // bare number → px
+        if (float.TryParse(span, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float bare))
+            return bare * (float)Units.PxToPt;
+
+        return float.NaN;
     }
 
     private static float ResolveWidth(BoxNode box, LayoutContext ctx)

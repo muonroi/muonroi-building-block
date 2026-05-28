@@ -188,6 +188,18 @@ internal sealed class BoxTreeBuilder
         if (!string.IsNullOrEmpty(clearVal) && clearVal is "left" or "right" or "both")
             box.ClearValue = clearVal;
 
+        // position (CSS 2.1 §9.6)
+        var positionVal = style.GetValue("position");
+        if (!string.IsNullOrEmpty(positionVal) && positionVal is "absolute" or "relative")
+            box.Position = positionVal;
+
+        if (box.Position == "absolute")
+        {
+            box.TopRaw = style.GetValue("top");
+            box.LeftRaw = style.GetValue("left");
+            box.RightRaw = style.GetValue("right");
+        }
+
         if (box is InlineBox inline)
         {
             // AngleSharp's GetComputedStyle returns "" (not null) when font-family is not cascaded.

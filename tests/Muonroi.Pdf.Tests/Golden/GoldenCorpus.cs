@@ -167,6 +167,24 @@ internal static class GoldenCorpus
     };
 
     /// <summary>
+    /// Abs-pos layout golden cases: position:absolute deferred-pass in a position:relative container.
+    /// Added by Plan 06 (Wave 3b).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> PositionedLayout = new[]
+    {
+        new GoldenCase(
+            "abs-pos-image",
+            Doc(".container{position:relative;width:200px;height:100px;}" +
+                ".overlay{position:absolute;top:10px;left:20px;width:50px;height:30px;}",
+                "<div class=\"container\"><div class=\"overlay\">ABS</div><p>Normal flow</p></div>")),
+        new GoldenCase(
+            "abs-pos-percent-top",
+            Doc(".container{position:relative;width:200px;height:100px;}" +
+                ".overlay{position:absolute;top:50%;left:10px;width:50px;height:20px;}",
+                "<div class=\"container\"><div class=\"overlay\">50%</div><p>Normal flow</p></div>")),
+    };
+
+    /// <summary>
     /// Float layout golden cases: float:left/right side-by-side, clear:both.
     /// Added by Plan 05 (Wave 3a).
     /// </summary>
@@ -465,6 +483,7 @@ internal static class GoldenCorpus
             .Concat(Tables)
             .Concat(TablesExtended)
             .Concat(BlockLayoutFloat)
+            .Concat(PositionedLayout)
             .Concat(PagedMedia)
             .Concat(Images)
             .Concat(Fonts)
@@ -497,6 +516,10 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the float layout group only (Plan 05).</summary>
     public static IEnumerable<object[]> BlockLayoutFloatCasesData() =>
         BlockLayoutFloat.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the positioned layout group only (Plan 06).</summary>
+    public static IEnumerable<object[]> PositionedLayoutCasesData() =>
+        PositionedLayout.Select(c => new object[] { c.Name });
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the paged-media group only.</summary>
     public static IEnumerable<object[]> PagedMediaCasesData() =>

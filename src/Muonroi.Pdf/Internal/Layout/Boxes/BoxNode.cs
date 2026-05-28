@@ -39,5 +39,15 @@ internal abstract class BoxNode
     /// <summary>CSS clear: "left" | "right" | "both" | null.</summary>
     public string? ClearValue { get; set; }
 
+    /// <summary>CSS position: "absolute" | "relative" | null (null = static).</summary>
+    public string? Position { get; set; }
+
+    /// <summary>Raw CSS 'top' value for percentage resolution at layout time.</summary>
+    public string? TopRaw { get; set; }
+    /// <summary>Raw CSS 'left' value for percentage resolution at layout time.</summary>
+    public string? LeftRaw { get; set; }
+    /// <summary>Raw CSS 'right' value for percentage resolution at layout time.</summary>
+    public string? RightRaw { get; set; }
+
     public List<BoxNode> Children { get; } = new();
 }
