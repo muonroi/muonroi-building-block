@@ -211,6 +211,45 @@ public sealed class FloatPlacementSolverTests
         FloatPlacementSolver.ClearY(null, []).Should().Be(0f);
     }
 
+    [Fact]
+    public void ClearY_Left_TwoFloatsDifferentHeights()
+    {
+        // Two left-floats with different bottoms; ClearY(Left) returns the max bottom.
+        List<FloatExclusion> exclusions =
+        [
+            new FloatExclusion(Left: 0f, Top: 0f, Right: 30f, Bottom: 15f, Side: FloatSide.Left),
+            new FloatExclusion(Left: 0f, Top: 0f, Right: 20f, Bottom: 35f, Side: FloatSide.Left)
+        ];
+
+        FloatPlacementSolver.ClearY(FloatSide.Left, exclusions).Should().Be(35f);
+    }
+
+    [Fact]
+    public void ClearY_Both_OneLeftOneRight()
+    {
+        // One left float (bottom=22) and one right float (bottom=45).
+        // ClearY(null) — clear:both — returns max of both sides = 45.
+        List<FloatExclusion> exclusions =
+        [
+            new FloatExclusion(Left: 0f, Top: 0f, Right: 25f, Bottom: 22f, Side: FloatSide.Left),
+            new FloatExclusion(Left: 75f, Top: 0f, Right: 100f, Bottom: 45f, Side: FloatSide.Right)
+        ];
+
+        FloatPlacementSolver.ClearY(null, exclusions).Should().Be(45f);
+    }
+
+    [Fact]
+    public void ClearY_Right_NoRightFloats()
+    {
+        // Only left floats present; ClearY(Right) finds no right exclusions → returns 0.
+        List<FloatExclusion> exclusions =
+        [
+            new FloatExclusion(Left: 0f, Top: 0f, Right: 30f, Bottom: 50f, Side: FloatSide.Left)
+        ];
+
+        FloatPlacementSolver.ClearY(FloatSide.Right, exclusions).Should().Be(0f);
+    }
+
     // -------------------------------------------------------------------------
     // Infinite-loop guard
     // -------------------------------------------------------------------------
