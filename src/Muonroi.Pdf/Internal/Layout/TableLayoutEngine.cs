@@ -20,6 +20,8 @@ internal sealed class TableLayoutEngine
     {
         float tableWidth = table.Width > 0f ? table.Width : context.AvailableWidth;
         float borderSpacing = table.BorderSpacing;
+        if (string.Equals(table.BorderCollapse, "collapse", StringComparison.OrdinalIgnoreCase))
+            borderSpacing = 0f;
         float startY = context.CurrentY;
         float tableX = context.PageMarginLeftPt;
 
@@ -87,13 +89,28 @@ internal sealed class TableLayoutEngine
         {
             foreach (var cell in rows[r])
             {
+                // Defense-in-depth: skip any cell whose ColumnIndex is out of the grid.
+                if (cell.ColumnIndex < 0 || cell.ColumnIndex >= colX.Length) continue;
+
                 int lastRow = Math.Min(r + cell.Rowspan - 1, rows.Count - 1);
                 float cellHeight = SpannedHeight(rowHeights, r, lastRow, borderSpacing);
                 float cellX = colX[cell.ColumnIndex];
                 float cellWidth = CellWidth(cell.ColumnIndex, cell.Colspan, colWidths, borderSpacing);
                 float cellY = rowY[r];
 
-                var cellCtx = CellContext(context, cellWidth, cellY + cell.PaddingTop);
+                float contentHeight = MeasureCell(cell, cellWidth, context);
+                float vAlignOffset = cell.VerticalAlign switch
+                {
+                    "middle" => MathF.Max(0f, (cellHeight - contentHeight) / 2f),
+                    "bottom" => MathF.Max(0f, cellHeight - contentHeight - cell.PaddingBottom),
+                    _ => 0f  // "top" is default
+                };
+                // Fix A2: pass absolute cell content-left X as ContentOriginX so that
+                // inline/block content inside this cell renders at the cell's column position.
+                // cellX = colX[cell.ColumnIndex]; content starts at cellX + PaddingLeft + BorderLeft.
+                float cellContentOriginX = cellX + cell.PaddingLeft + cell.BorderLeft;
+                var cellCtx = CellContext(context, cellWidth, cellY + cell.PaddingTop + vAlignOffset,
+                    cellOriginX: cellContentOriginX);
                 var cellOut = new List<PositionedElement>();
                 _blockEngine.Layout(cell, cellCtx, cellOut, pageIndex);
 
@@ -116,13 +133,19 @@ internal sealed class TableLayoutEngine
     }
 
     // Measure cell content height without emitting output.
+    // cellOriginX is 0 for measurement passes (X doesn't affect height calculation).
     private float MeasureCell(TableCellBox cell, float cellWidth, LayoutContext ctx)
     {
-        var mc = CellContext(ctx, cellWidth, ctx.CurrentY);
+        var mc = CellContext(ctx, cellWidth, ctx.CurrentY, cellOriginX: 0f);
         return _blockEngine.Layout(cell, mc, new List<PositionedElement>(), 0);
     }
 
-    private static LayoutContext CellContext(LayoutContext parent, float cellWidth, float startY) => new()
+    // Fix A2: cellOriginX is the absolute X of the cell's content-left edge (colX + borderLeft + paddingLeft).
+    // Passing it as ContentOriginX into the child LayoutContext ensures inline and block content
+    // inside the cell uses the cell's column X as the left baseline, not the page left margin.
+    // Without this, all cell content renders at PageMarginLeftPt regardless of which column it is in.
+    private static LayoutContext CellContext(LayoutContext parent, float cellWidth, float startY,
+        float cellOriginX = 0f) => new()
     {
         PageWidth = parent.PageWidth,
         PageHeight = parent.PageHeight,
@@ -131,7 +154,8 @@ internal sealed class TableLayoutEngine
         CurrentPageIndex = parent.CurrentPageIndex,
         TotalPages = parent.TotalPages,
         TextMetrics = parent.TextMetrics,
-        PageMargins = parent.PageMargins
+        PageMargins = parent.PageMargins,
+        ContentOriginX = cellOriginX  // Fix A2: cell absolute column X
     };
 
     private static float CellWidth(int colIndex, int colspan, float[] colWidths, float borderSpacing)
@@ -212,6 +236,10 @@ internal sealed class TableLayoutEngine
             {
                 while (col < columnCount && occupied[r, col])
                     col++;
+
+                // Gap 6: col can equal columnCount after skipping occupied slots or after
+                // col += cell.Colspan advances past the grid boundary. Skip remaining cells.
+                if (col >= columnCount) break;
 
                 cell.ColumnIndex = col;
 

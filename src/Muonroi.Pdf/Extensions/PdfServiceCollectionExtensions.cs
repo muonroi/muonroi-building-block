@@ -57,7 +57,9 @@ public static class PdfServiceCollectionExtensions
         // IFontResolver (Decision 7): MPdfService's optional ctor param resolves to null.
         services.TryAddSingleton<IHtmlParser, AngleSharpHtmlParser>();
         services.TryAddSingleton<ICssCascadeEngine, AngleSharpCascadeEngine>();
-        services.TryAddSingleton<IPdfCssPolicy, DefaultStrictPolicy>();
+        // Locked decision (Phase 08.7): LegacyPrintPolicy is the default Profile v1 gate.
+        // DefaultStrictPolicy remains available for explicit opt-in (ultra-strict consumers).
+        services.TryAddSingleton<IPdfCssPolicy, LegacyPrintPolicy>();
         services.TryAddSingleton<IImageDecoder, PureImageDecoder>();
         services.TryAddSingleton<IResourceResolver, ThrowingResourceResolver>();
         services.TryAddSingleton<IPdfWriter, OwnedPdfWriter>();

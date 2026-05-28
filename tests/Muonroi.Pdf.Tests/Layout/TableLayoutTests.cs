@@ -140,6 +140,46 @@ public sealed class TableLayoutTests
             because: "rowspan=2 cell height covers both row heights");
     }
 
+    // SC-3 / Gap-6 regression: large colspan exceeding computed columnCount must not throw.
+    [Fact]
+    public void LargeColspanRowspan_DoesNotThrow()
+    {
+        // Row 0: one cell with colspan=36 (exceeds the natural 3-column grid)
+        // Row 1: 3 normal cells (colspan=1)
+        // Row 2: 3 normal cells (colspan=1)
+        // ComputeColumnCount will use max(36, 3, 3) = 36. AssignColumnIndices must
+        // handle rows 1 and 2 where col advances to 3 << 36 — no crash from occupied[].
+        var tableBox = new TableBox { BorderSpacing = 0f };
+        var tbody = new TableRowGroupBox { GroupType = TableRowGroupType.Body };
+
+        var row0 = new TableRowBox();
+        var wideCell = new TableCellBox { Colspan = 36, Rowspan = 1 };
+        var textInline = new InlineBox { Text = "Wide", FontFamily = "serif", FontSize = 12f };
+        wideCell.Children.Add(textInline);
+        row0.Children.Add(wideCell);
+
+        var row1 = new TableRowBox();
+        for (int c = 0; c < 3; c++) row1.Children.Add(new TableCellBox { Colspan = 1, Rowspan = 1 });
+
+        var row2 = new TableRowBox();
+        for (int c = 0; c < 3; c++) row2.Children.Add(new TableCellBox { Colspan = 1, Rowspan = 1 });
+
+        tbody.Children.Add(row0);
+        tbody.Children.Add(row1);
+        tbody.Children.Add(row2);
+        tableBox.Children.Add(tbody);
+
+        var (_, tableEngine) = MakeEngines();
+        var ctx = MakeContext(availableWidth: 400f);
+        var output = new List<PositionedElement>();
+
+        float height = 0f;
+        var ex = Record.Exception(() => height = tableEngine.Layout(tableBox, ctx, output, pageIndex: 0));
+
+        ex.Should().BeNull("TableLayoutEngine must not throw for colspan > columnCount");
+        height.Should().BeGreaterThan(0f, "table with at least one row should have positive height");
+    }
+
     // Helpers
 
     private static (TableBox table, List<TableCellBox> row1Cells, List<TableCellBox> row2Cells)

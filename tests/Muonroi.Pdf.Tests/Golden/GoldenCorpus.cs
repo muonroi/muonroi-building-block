@@ -136,6 +136,101 @@ internal static class GoldenCorpus
                 "td{border:1px solid black;padding:4px;width:150px;}",
                 "<table><tr><td>fixed one</td><td>fixed two</td></tr>" +
                 "<tr><td>x</td><td>y</td></tr></table>")),
+        new GoldenCase(
+            "table-large-colspan-rowspan",
+            Doc("table{border-collapse:separate;}td{border:1px solid black;padding:4px;}",
+                "<table>" +
+                "<tr><td colspan=\"10\" rowspan=\"2\">Wide spanning cell</td><td>C1</td><td>D1</td></tr>" +
+                "<tr><td>C2</td><td>D2</td></tr>" +
+                "<tr><td>A3</td><td>B3</td><td>C3</td><td>D3</td></tr>" +
+                "</table>")),
+    };
+
+    /// <summary>
+    /// Extended table golden cases: border-collapse:collapse and vertical-align variants.
+    /// Added by Plan 04 (Wave 2).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> TablesExtended = new[]
+    {
+        new GoldenCase(
+            "table-border-collapse",
+            Doc("table{border-collapse:collapse;}td{border-left:1px solid black;padding:4px;}",
+                "<table><tr><td>A1</td><td>B1</td></tr><tr><td>A2</td><td>B2</td></tr></table>")),
+        new GoldenCase(
+            "table-vertical-align-top",
+            Doc("table{border-collapse:separate;}td{height:50px;vertical-align:top;padding:4px;border:1px solid black;}",
+                "<table><tr><td>A</td></tr></table>")),
+        new GoldenCase(
+            "table-vertical-align-middle",
+            Doc("table{border-collapse:separate;}td{height:50px;vertical-align:middle;padding:4px;border:1px solid black;}",
+                "<table><tr><td>B</td></tr></table>")),
+    };
+
+    /// <summary>
+    /// Extended fidelity golden cases: background-color fill + background-image data-URI.
+    /// Added by Plan 07 (Wave 4).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> FidelityExtended = new[]
+    {
+        new GoldenCase(
+            "background-color-block",
+            Doc("div{background-color:#EEEEEE;padding:6px;}",
+                "<div><p>HELLO</p></div>")),
+        new GoldenCase(
+            "background-image-data-uri",
+            Doc("div{background-image:url(" + PngDataUri + ");width:50px;height:50px;}",
+                "<div></div>")),
+    };
+
+    /// <summary>
+    /// Extended inline golden cases: text-transform:uppercase, white-space:pre-line, nobr.
+    /// Added by Plan 07 (Wave 4).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> InlineLayoutExtended = new[]
+    {
+        new GoldenCase(
+            "inline-text-transform-uppercase",
+            Doc("div{}", "<div style=\"text-transform:uppercase\">hello world</div>")),
+        new GoldenCase(
+            "inline-whitespace-pre-line",
+            Doc("td{white-space:pre-line;}", "<table><tr><td>line1\nline2</td></tr></table>")),
+        new GoldenCase(
+            "inline-nobr",
+            Doc("div{width:80px;}", "<div><nobr>no break here</nobr></div>")),
+    };
+
+    /// <summary>
+    /// Abs-pos layout golden cases: position:absolute deferred-pass in a position:relative container.
+    /// Added by Plan 06 (Wave 3b).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> PositionedLayout = new[]
+    {
+        new GoldenCase(
+            "abs-pos-image",
+            Doc(".container{position:relative;width:200px;height:100px;}" +
+                ".overlay{position:absolute;top:10px;left:20px;width:50px;height:30px;}",
+                "<div class=\"container\"><div class=\"overlay\">ABS</div><p>Normal flow</p></div>")),
+        new GoldenCase(
+            "abs-pos-percent-top",
+            Doc(".container{position:relative;width:200px;height:100px;}" +
+                ".overlay{position:absolute;top:50%;left:10px;width:50px;height:20px;}",
+                "<div class=\"container\"><div class=\"overlay\">50%</div><p>Normal flow</p></div>")),
+    };
+
+    /// <summary>
+    /// Float layout golden cases: float:left/right side-by-side, clear:both.
+    /// Added by Plan 05 (Wave 3a).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> BlockLayoutFloat = new[]
+    {
+        new GoldenCase(
+            "float-two-column",
+            Doc(".left{float:left;width:40%;}.right{float:right;width:40%;}.clear{clear:both;}",
+                "<div><div class=\"left\">LEFT</div><div class=\"right\">RIGHT</div><div class=\"clear\"></div></div>")),
+        new GoldenCase(
+            "float-clear-below",
+            Doc(".left{float:left;width:40%;}.right{float:right;width:40%;}.clear{clear:both;}",
+                "<div><div class=\"left\">LEFT</div><div class=\"right\">RIGHT</div><div class=\"clear\"></div><div>BELOW</div></div>")),
     };
 
     private static string LongFlow(int paragraphs)
@@ -414,11 +509,44 @@ internal static class GoldenCorpus
                 "<p><a href=\"https://example.com\">Click here to visit example.com</a></p>")),
     };
 
+    /// <summary>
+    /// Wave 7 regression cases: Bug Y (transparent/rgb background-color parsing) and
+    /// Bug X (float side-by-side inline content positioning).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> Wave7Regression = new[]
+    {
+        // Bug Y regression: AngleSharp returns rgb(r,g,b) for color values. Verify the teal
+        // background (#008080 = rgb(0,128,128)) is written as non-zero rg in the content stream,
+        // not as the black (0,0,0) fallback.
+        new GoldenCase(
+            "w7-rgb-background-color",
+            Doc("div{background-color:#008080;padding:4px;}",
+                "<div><p>Teal bg</p></div>")),
+
+        // Bug Y regression: transparent elements (rgba(0,0,0,0)) must not produce a black fill rect.
+        new GoldenCase(
+            "w7-transparent-background-no-fill",
+            Doc("div{background-color:transparent;padding:4px;}",
+                "<div><p>No fill</p></div>")),
+
+        // Bug X regression: inline text that follows a float:left block must start at
+        // LeftFloatRight (i.e. shifted right of the float), not at PageMarginLeft.
+        new GoldenCase(
+            "w7-float-left-inline-beside",
+            Doc(".left{float:left;width:30%;}.text{margin:0;}",
+                "<div><div class=\"left\">FLOAT</div><p class=\"text\">BESIDE</p></div>")),
+    };
+
     /// <summary>Every registered case across all groups. Later plans extend by concatenation.</summary>
     internal static readonly IReadOnlyList<GoldenCase> AllCases =
         BlockLayout
             .Concat(InlineLayout)
             .Concat(Tables)
+            .Concat(TablesExtended)
+            .Concat(BlockLayoutFloat)
+            .Concat(PositionedLayout)
+            .Concat(FidelityExtended)
+            .Concat(InlineLayoutExtended)
             .Concat(PagedMedia)
             .Concat(Images)
             .Concat(Fonts)
@@ -426,6 +554,7 @@ internal static class GoldenCorpus
             .Concat(Vietnamese)
             .Concat(FidelityLayout)
             .Concat(Html5Semantics)
+            .Concat(Wave7Regression)
             .ToList();
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for every registered case.</summary>
@@ -443,6 +572,26 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the table group only.</summary>
     public static IEnumerable<object[]> TableCasesData() =>
         Tables.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the extended table group only (Plan 04).</summary>
+    public static IEnumerable<object[]> TablesExtendedCasesData() =>
+        TablesExtended.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the float layout group only (Plan 05).</summary>
+    public static IEnumerable<object[]> BlockLayoutFloatCasesData() =>
+        BlockLayoutFloat.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the positioned layout group only (Plan 06).</summary>
+    public static IEnumerable<object[]> PositionedLayoutCasesData() =>
+        PositionedLayout.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for extended fidelity cases (Plan 07).</summary>
+    public static IEnumerable<object[]> FidelityExtendedCasesData() =>
+        FidelityExtended.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for extended inline layout cases (Plan 07).</summary>
+    public static IEnumerable<object[]> InlineLayoutExtendedCasesData() =>
+        InlineLayoutExtended.Select(c => new object[] { c.Name });
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the paged-media group only.</summary>
     public static IEnumerable<object[]> PagedMediaCasesData() =>
@@ -467,6 +616,10 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the HTML5 semantics group only.</summary>
     public static IEnumerable<object[]> Html5SemanticsCasesData() =>
         Html5Semantics.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source for Wave 7 regression cases (Bug X float + Bug Y color).</summary>
+    public static IEnumerable<object[]> Wave7RegressionCasesData() =>
+        Wave7Regression.Select(c => new object[] { c.Name });
 
     /// <summary>
     /// Per-call <see cref="IResourceResolver"/> stub returning the embedded deterministic PNG for any

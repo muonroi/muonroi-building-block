@@ -13,6 +13,9 @@ internal sealed class BoxTreeBuilder
         _resolvedImages = resolvedImages;
         var box = new BlockBox { Source = root };
         ResolveCssProperties(root.Style, box);
+        // Mark body element so ResolveWidth can clamp its explicit width to available area (Fix C2).
+        if (string.Equals(root.LocalName, "body", StringComparison.OrdinalIgnoreCase))
+            box.IsBodyRoot = true;
         BuildChildren(root, box);
         return box;
     }
@@ -84,6 +87,10 @@ internal sealed class BoxTreeBuilder
         if (localName == "br")
             return new LineBreakBox { Source = node };
 
+        // <nobr> treated as a single unbreakable inline token (WhiteSpace="nowrap")
+        if (localName == "nobr")
+            return new InlineBox { Source = node, Text = node.TextContent, WhiteSpace = "nowrap" };
+
         if (localName == "hr")
         {
             var hrBox = new HrBox { Source = node };
@@ -147,6 +154,39 @@ internal sealed class BoxTreeBuilder
         box.MarginBottom = ParseLength(style.GetValue("margin-bottom"), fontSize);
         box.MarginLeft = ParseLength(style.GetValue("margin-left"), fontSize);
 
+        // Fix C1: IE-era HTML body legacy margin attributes (leftmargin, topmargin, rightmargin,
+        // bottommargin). These are NOT CSS properties — AngleSharp never puts them in computed style.
+        // Apply them as px margins only when the CSS cascade has not already set a non-zero value.
+        // Ref: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/body
+        // (IE-era attributes deprecated but still used in legacy print-HTML templates, e.g. HSLA_E).
+        if (string.Equals(box.Source?.LocalName, "body", StringComparison.OrdinalIgnoreCase))
+        {
+            if (box.MarginLeft == 0f)
+            {
+                var lm = box.Source?.GetAttribute("leftmargin");
+                if (!string.IsNullOrWhiteSpace(lm))
+                    box.MarginLeft = ParseLength(lm + "px", fontSize);
+            }
+            if (box.MarginTop == 0f)
+            {
+                var tm = box.Source?.GetAttribute("topmargin");
+                if (!string.IsNullOrWhiteSpace(tm))
+                    box.MarginTop = ParseLength(tm + "px", fontSize);
+            }
+            if (box.MarginRight == 0f)
+            {
+                var rm = box.Source?.GetAttribute("rightmargin");
+                if (!string.IsNullOrWhiteSpace(rm))
+                    box.MarginRight = ParseLength(rm + "px", fontSize);
+            }
+            if (box.MarginBottom == 0f)
+            {
+                var bm = box.Source?.GetAttribute("bottommargin");
+                if (!string.IsNullOrWhiteSpace(bm))
+                    box.MarginBottom = ParseLength(bm + "px", fontSize);
+            }
+        }
+
         box.PaddingTop = ParseLength(style.GetValue("padding-top"), fontSize);
         box.PaddingRight = ParseLength(style.GetValue("padding-right"), fontSize);
         box.PaddingBottom = ParseLength(style.GetValue("padding-bottom"), fontSize);
@@ -179,6 +219,46 @@ internal sealed class BoxTreeBuilder
         if (!string.IsNullOrWhiteSpace(textAlignVal))
             box.TextAlign = textAlignVal.Trim().ToLowerInvariant();
 
+        // background-color / background-image
+        var bgColor = style.GetValue("background-color");
+        if (!string.IsNullOrEmpty(bgColor) && !IsTransparentColor(bgColor))
+            box.BackgroundColor = bgColor.Trim();
+
+        var bgImage = style.GetValue("background-image");
+        if (!string.IsNullOrEmpty(bgImage) && bgImage.Contains("data:", StringComparison.OrdinalIgnoreCase)
+            && bgImage.Contains("base64", StringComparison.OrdinalIgnoreCase))
+        {
+            int start = bgImage.IndexOf("url(", StringComparison.OrdinalIgnoreCase) + 4;
+            int end = bgImage.LastIndexOf(')');
+            if (start > 4 && end > start)
+            {
+                string uri = bgImage[start..end].Trim().Trim('\'', '"');
+                if (uri.StartsWith("data:", StringComparison.Ordinal))
+                    box.BackgroundImageSrc = uri;
+            }
+        }
+
+        // float / clear (CSS 2.1 §9.5)
+        var floatVal = style.GetValue("float");
+        if (!string.IsNullOrEmpty(floatVal) && floatVal is "left" or "right")
+            box.FloatValue = floatVal;
+
+        var clearVal = style.GetValue("clear");
+        if (!string.IsNullOrEmpty(clearVal) && clearVal is "left" or "right" or "both")
+            box.ClearValue = clearVal;
+
+        // position (CSS 2.1 §9.6)
+        var positionVal = style.GetValue("position");
+        if (!string.IsNullOrEmpty(positionVal) && positionVal is "absolute" or "relative")
+            box.Position = positionVal;
+
+        if (box.Position == "absolute")
+        {
+            box.TopRaw = style.GetValue("top");
+            box.LeftRaw = style.GetValue("left");
+            box.RightRaw = style.GetValue("right");
+        }
+
         if (box is InlineBox inline)
         {
             // AngleSharp's GetComputedStyle returns "" (not null) when font-family is not cascaded.
@@ -186,7 +266,7 @@ internal sealed class BoxTreeBuilder
             // which the writer recognises. An empty FontFamily causes OwnedPdfWriter to silently
             // skip the element (FontFamily guard at line ~671). See BuildChildrenWithListMarker
             // for the same pattern applied to list markers.
-            var fontFamily = style.GetValue("font-family");
+            var fontFamily = NormalizeFontFamily(style.GetValue("font-family"));
             if (!string.IsNullOrWhiteSpace(fontFamily)) inline.FontFamily = fontFamily;
             inline.FontSize = fontSize;
 
@@ -231,6 +311,18 @@ internal sealed class BoxTreeBuilder
             var textDecoration = style.GetValue("text-decoration");
             if (!string.IsNullOrEmpty(textDecoration))
                 inline.TextDecoration = textDecoration.Trim().ToLowerInvariant();
+
+            var textTransform = style.GetValue("text-transform");
+            if (!string.IsNullOrEmpty(textTransform) && textTransform == "uppercase")
+                inline.TextTransform = "uppercase";
+
+            var whiteSpace = style.GetValue("white-space");
+            if (!string.IsNullOrEmpty(whiteSpace) && whiteSpace is "pre-wrap" or "pre-line" or "nowrap")
+            {
+                // Don't overwrite a CreateBox-set "nowrap" (from <nobr>) with a weaker value
+                if (inline.WhiteSpace != "nowrap" || whiteSpace == "nowrap")
+                    inline.WhiteSpace = whiteSpace;
+            }
         }
         else if (box is TableBox table)
         {
@@ -238,6 +330,10 @@ internal sealed class BoxTreeBuilder
             if (!string.IsNullOrWhiteSpace(tableLayout)) table.TableLayout = tableLayout;
 
             table.BorderSpacing = ParseLength(style.GetValue("border-spacing"), fontSize);
+
+            var borderCollapseVal = style.GetValue("border-collapse");
+            if (!string.IsNullOrEmpty(borderCollapseVal))
+                table.BorderCollapse = borderCollapseVal.Trim().ToLowerInvariant();
         }
         else if (box is TableCellBox cell)
         {
@@ -249,6 +345,10 @@ internal sealed class BoxTreeBuilder
             var rowspanAttr = box.Source?.GetAttribute("rowspan");
             if (rowspanAttr != null && int.TryParse(rowspanAttr, out int rowspan) && rowspan >= 1)
                 cell.Rowspan = rowspan;
+
+            var vAlign = style.GetValue("vertical-align");
+            if (!string.IsNullOrEmpty(vAlign))
+                cell.VerticalAlign = vAlign.Trim().ToLowerInvariant();
         }
         else if (box is ReplacedBox replaced && replaced.Src != null && _resolvedImages != null)
         {
@@ -258,6 +358,38 @@ internal sealed class BoxTreeBuilder
                 replaced.NaturalHeight = decoded.Height * Units.PxToPt;
             }
         }
+    }
+
+    /// <summary>
+    /// Returns true if the CSS color value represents a fully-transparent color that should
+    /// not generate a background-fill rectangle in the PDF content stream.
+    ///
+    /// AngleSharp normalizes CSS 'transparent' to 'rgba(0, 0, 0, 0)' in computed style.
+    /// Without this check, those boxes get BackgroundColor = "rgba(0, 0, 0, 0)" and
+    /// ParseColor falls back to black (0,0,0), producing a solid black fill over the page.
+    /// </summary>
+    private static bool IsTransparentColor(string? color)
+    {
+        if (string.IsNullOrEmpty(color)) return true;
+        string c = color.Trim();
+        if (c.Equals("transparent", StringComparison.OrdinalIgnoreCase)) return true;
+        if (c.Equals("initial", StringComparison.OrdinalIgnoreCase)) return true;
+
+        // AngleSharp normalises CSS transparent to rgba(0, 0, 0, 0) — catch both
+        // the canonical form and any whitespace variants.
+        if (c.StartsWith("rgba(", StringComparison.OrdinalIgnoreCase))
+        {
+            // Extract alpha channel (4th component after the last comma)
+            int lastComma = c.LastIndexOf(',');
+            if (lastComma >= 0)
+            {
+                ReadOnlySpan<char> alphaSpan = c.AsSpan(lastComma + 1).Trim().TrimEnd(')').Trim();
+                if (float.TryParse(alphaSpan, System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out float alpha))
+                    return alpha == 0f;
+            }
+        }
+        return false;
     }
 
     // Pitfall 7: percent widths stored as -1f sentinel — resolved during layout, not here
@@ -284,6 +416,9 @@ internal sealed class BoxTreeBuilder
         if (span.EndsWith("em", StringComparison.Ordinal))
             return TryParseFloat(span[..^2]) * emBase * Units.PxToPt;
 
+        if (span.EndsWith("rem", StringComparison.Ordinal))
+            return TryParseFloat(span[..^3]) * 16f * (float)Units.PxToPt;
+
         // Bare number: treat as px
         return TryParseFloat(span) * Units.PxToPt;
     }
@@ -294,6 +429,22 @@ internal sealed class BoxTreeBuilder
             System.Globalization.CultureInfo.InvariantCulture, out float result))
             return result;
         return 0f;
+    }
+
+    // Normalize a CSS font-family value: pick the FIRST family in a comma-separated stack,
+    // strip enclosing single/double quotes (CSS keeps them in computed value), and trim.
+    // Real templates declare e.g. font-family:"Times New Roman" — without this, the literal
+    // quotes leak into BundledFonts.TryGetFallback and the GID map lookup → silent rendering
+    // failure (FONT-GID-MAP-MISSING).
+    private static string? NormalizeFontFamily(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return raw;
+        ReadOnlySpan<char> s = raw.AsSpan().Trim();
+        int comma = s.IndexOf(',');
+        if (comma >= 0) s = s[..comma].Trim();
+        if (s.Length >= 2 && (s[0] == '"' || s[0] == '\'') && s[^1] == s[0])
+            s = s[1..^1].Trim();
+        return s.ToString();
     }
 
     private void BuildChildren(IStyledNode node, BlockBox parent)
@@ -326,7 +477,7 @@ internal sealed class BoxTreeBuilder
         // when no font-family is cascaded. An empty family would cause the writer to silently
         // skip the marker PositionedElement (FontFamily guard in BuildContentStream).
         float fontSize = ParseLength(liNode.Style.GetValue("font-size")) is float fs and > 0f ? fs : 12f;
-        string? rawFontFamily = liNode.Style.GetValue("font-family");
+        string? rawFontFamily = NormalizeFontFamily(liNode.Style.GetValue("font-family"));
         string fontFamily = string.IsNullOrWhiteSpace(rawFontFamily) ? "serif" : rawFontFamily;
         string? color = liNode.Style.GetValue("color");
 

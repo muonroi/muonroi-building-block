@@ -41,6 +41,10 @@ internal sealed class BlockLayoutEngine
         float contentX = context.PageMarginLeftPt + box.MarginLeft + box.BorderLeft + box.PaddingLeft;
         float contentY = context.CurrentY + box.PaddingTop + box.BorderTop;
 
+        // Detect if this box establishes a containing block for abs-pos children.
+        bool isContainingBlock = box.Position == "relative" && box.Width > 0f && box.Height > 0f;
+        Rect? savedContainingBlock = context.ContainingBlockRect;
+
         // Empty-block collapse (CSS 2.1 §8.3.1 case 3): no children + no border/padding/min-height → height 0
         if (box.Children.Count == 0 && box.PaddingTop + box.PaddingBottom + box.BorderTop + box.BorderBottom == 0f && box.Height <= 0f)
             return 0f;
@@ -60,8 +64,33 @@ internal sealed class BlockLayoutEngine
             TotalPages = context.TotalPages,
             TextMetrics = context.TextMetrics,
             PageMargins = context.PageMargins,
-            TextAlign = box.TextAlign ?? context.TextAlign  // inherit text-align from container
+            TextAlign = box.TextAlign ?? context.TextAlign,  // inherit text-align from container
+            ContainingBlockRect = context.ContainingBlockRect,  // propagate from parent by default
+            ContentOriginX = context.ContentOriginX  // Fix A2: propagate cell origin into nested blocks
         };
+
+        // If this box is a containing block, set it on the child context now.
+        if (isContainingBlock)
+            childContext.ContainingBlockRect = new Rect(contentX, contentY, box.Width, box.Height);
+
+        // Deferred abs-pos list for post-normal-flow placement (CSS 2.1 §9.6).
+        var deferredAbsPos = new List<(BoxNode Child, Rect ContainingBlock)>();
+
+        // Float accumulator: reset when entering a BFC root; propagate from parent otherwise.
+        if (bfcRoot)
+        {
+            childContext.LeftFloatRight = 0f;
+            childContext.RightFloatLeft = 0f;
+            childContext.LeftFloatBottom = 0f;
+            childContext.RightFloatBottom = 0f;
+        }
+        else
+        {
+            childContext.LeftFloatRight = context.LeftFloatRight;
+            childContext.RightFloatLeft = context.RightFloatLeft;
+            childContext.LeftFloatBottom = context.LeftFloatBottom;
+            childContext.RightFloatBottom = context.RightFloatBottom;
+        }
 
         foreach (var child in box.Children)
         {
@@ -81,8 +110,14 @@ internal sealed class BlockLayoutEngine
                 childMarginTop = 0f;
             }
 
+            // CSS 2.1 §9.5.2: clear handling — advance childY past float bottoms
+            if (child.ClearValue is "both" or "left")
+                childY = MathF.Max(childY, childContext.LeftFloatBottom);
+            if (child.ClearValue is "both" or "right")
+                childY = MathF.Max(childY, childContext.RightFloatBottom);
+
             childContext.CurrentY = childY + childMarginTop;
-            float childHeight = DispatchLayout(child, childContext, output, pageIndex);
+            float childHeight = DispatchLayout(child, childContext, output, pageIndex, deferredAbsPos);
 
             prevMarginBottom = child.MarginBottom;
             // childContext.CurrentY was advanced to (childStart + childHeight) inside DispatchLayout
@@ -90,18 +125,121 @@ internal sealed class BlockLayoutEngine
             firstChild = false;
         }
 
+        // Float container height contribution: container must enclose its floated children.
+        float floatBottom = MathF.Max(childContext.LeftFloatBottom, childContext.RightFloatBottom);
+        if (floatBottom > childY) childY = floatBottom;
+
         // If height is explicit, use it; otherwise use computed content height
         float contentHeight = box.Height > 0f
             ? box.Height
             : childY - contentY + box.PaddingBottom + box.BorderBottom;
 
+        // Post-normal-flow: resolve deferred abs-pos children (CSS 2.1 §9.6).
+        foreach (var (absChild, cb) in deferredAbsPos)
+        {
+            float resolvedLeft = ResolvePositionOffset(absChild.LeftRaw, cb.Width);
+            float resolvedRight = ResolvePositionOffset(absChild.RightRaw, cb.Width);
+            float resolvedTop = ResolvePositionOffset(absChild.TopRaw, cb.Height);
+
+            float absWidth = absChild.Width > 0f ? absChild.Width : cb.Width;
+            float absX = !float.IsNaN(resolvedLeft)
+                ? cb.X + resolvedLeft
+                : (!float.IsNaN(resolvedRight) ? cb.X + cb.Width - absWidth - resolvedRight : cb.X);
+            float absY = !float.IsNaN(resolvedTop) ? cb.Y + resolvedTop : cb.Y;
+
+            float absHeight;
+            if (absChild.Height > 0f)
+            {
+                absHeight = absChild.Height;
+            }
+            else
+            {
+                var absCtx = new LayoutContext
+                {
+                    PageWidth = context.PageWidth,
+                    PageHeight = context.PageHeight,
+                    AvailableWidth = absWidth,
+                    CurrentY = absY,
+                    TextMetrics = context.TextMetrics,
+                    PageMargins = context.PageMargins
+                };
+                absHeight = Layout(absChild, absCtx, output, pageIndex);
+            }
+
+            output.Add(new PositionedElement
+            {
+                Source = absChild,
+                Position = new Rect(absX, absY, absWidth, absHeight > 0f ? absHeight : absChild.Height),
+                PageIndex = pageIndex
+            });
+        }
+
+        context.ContainingBlockRect = savedContainingBlock;
+
         return contentHeight + box.PaddingTop + box.PaddingBottom + box.BorderTop + box.BorderBottom;
     }
 
-    private float DispatchLayout(BoxNode child, LayoutContext ctx, List<PositionedElement> output, int pageIndex)
+    private float DispatchLayout(BoxNode child, LayoutContext ctx, List<PositionedElement> output, int pageIndex,
+        List<(BoxNode Child, Rect ContainingBlock)>? deferredAbsPos = null)
     {
         float childWidth = ResolveWidth(child, ctx);
         float startY = ctx.CurrentY;
+
+        // CSS 2.1 §9.6: abs-pos handling — deferred to post-normal-flow pass.
+        if (child.Position == "absolute")
+        {
+            var cb = ctx.ContainingBlockRect ?? new Rect(ctx.PageMarginLeftPt, 0f, ctx.AvailableWidth, ctx.PageHeight);
+            deferredAbsPos?.Add((child, cb));
+            return 0f;
+        }
+
+        // CSS 2.1 §9.5: float handling — removed from normal flow, placed at left or right edge.
+        if (child.FloatValue != null && child is BlockBox floatBlock)
+        {
+            float floatWidth = ResolveWidth(floatBlock, ctx);
+            float savedY = ctx.CurrentY;
+            float floatHeight = Layout(floatBlock, ctx, output, pageIndex);
+            ctx.CurrentY = savedY;  // restore — float does not advance normal flow
+            float floatY = savedY;
+
+            if (child.FloatValue == "left")
+            {
+                // Fix A1 — CSS 2.1 §9.5.1 rule 3: "the left outer edge of a left-floating box may
+                // not be to the left of the right outer edge of any left-floating box generated
+                // earlier in the source document." Stack consecutive left-floats horizontally by
+                // using ctx.LeftFloatRight (the right edge of the previous left float) as the X
+                // origin, rather than always falling back to the page left margin.
+                float originX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
+                float floatX = (ctx.LeftFloatRight > 0f ? ctx.LeftFloatRight : originX) + floatBlock.MarginLeft;
+                output.Add(new PositionedElement
+                {
+                    Source = floatBlock,
+                    Position = new Rect(floatX, floatY, floatWidth, floatHeight),
+                    PageIndex = pageIndex
+                });
+                ctx.LeftFloatRight = floatX + floatWidth;
+                ctx.LeftFloatBottom = floatY + floatHeight;
+            }
+            else // "right"
+            {
+                // Fix A1 (symmetric): stack right-floats leftward from ctx.RightFloatLeft when set.
+                float rightOrigin = ctx.RightFloatLeft > 0f
+                    ? ctx.RightFloatLeft
+                    : (ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt) + ctx.AvailableWidth;
+                float floatX = rightOrigin - floatWidth - floatBlock.MarginRight;
+                output.Add(new PositionedElement
+                {
+                    Source = floatBlock,
+                    Position = new Rect(floatX, floatY, floatWidth, floatHeight),
+                    PageIndex = pageIndex
+                });
+                ctx.RightFloatLeft = floatX;
+                ctx.RightFloatBottom = floatY + floatHeight;
+            }
+
+            // Float is removed from normal flow: do NOT advance ctx.CurrentY.
+            return 0f;
+        }
 
         switch (child)
         {
@@ -125,10 +263,17 @@ internal sealed class BlockLayoutEngine
                 if (blockChild.TextAlign == null && ctx.TextAlign != null)
                     blockChild.TextAlign = ctx.TextAlign;
                 float h = Layout(blockChild, ctx, output, pageIndex);
+                // CSS 2.1 §9.5: non-floated block children start after any left-float edge.
+                // Fix A2: use ContentOriginX as the left baseline when inside a table cell
+                // (ContentOriginX > 0 means we are inside a cell, not page normal flow).
+                float xOrigin = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
+                float blockX = ctx.LeftFloatRight > 0f
+                    ? ctx.LeftFloatRight + blockChild.MarginLeft
+                    : xOrigin + blockChild.MarginLeft;
                 output.Add(new PositionedElement
                 {
                     Source = blockChild,
-                    Position = new Rect(ctx.PageMarginLeftPt + blockChild.MarginLeft, startY, childWidth, h),
+                    Position = new Rect(blockX, startY, childWidth, h),
                     PageIndex = pageIndex
                 });
                 // Do NOT add MarginBottom here — the parent loop handles margin collapsing separately.
@@ -181,6 +326,58 @@ internal sealed class BlockLayoutEngine
         }
     }
 
+    /// <summary>
+    /// Resolves a raw CSS position offset string to a float value in points.
+    /// Returns <see cref="float.NaN"/> when the value is null/empty (not specified).
+    /// Percentage values are resolved against <paramref name="containerDimension"/>.
+    /// </summary>
+    private static float ResolvePositionOffset(string? raw, float containerDimension)
+    {
+        if (string.IsNullOrWhiteSpace(raw) || raw == "auto")
+            return float.NaN;
+
+        ReadOnlySpan<char> span = raw.AsSpan().Trim();
+
+        if (span.EndsWith("%", StringComparison.Ordinal))
+        {
+            if (float.TryParse(span[..^1], System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out float pct))
+                return pct / 100f * containerDimension;
+            return float.NaN;
+        }
+
+        if (span.EndsWith("px", StringComparison.Ordinal))
+        {
+            if (float.TryParse(span[..^2], System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out float px))
+                return px * (float)Units.PxToPt;
+            return float.NaN;
+        }
+
+        if (span.EndsWith("pt", StringComparison.Ordinal))
+        {
+            if (float.TryParse(span[..^2], System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out float pt))
+                return pt;
+            return float.NaN;
+        }
+
+        if (span.EndsWith("mm", StringComparison.Ordinal))
+        {
+            if (float.TryParse(span[..^2], System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out float mm))
+                return mm * (float)Units.MmToPt;
+            return float.NaN;
+        }
+
+        // bare number → px
+        if (float.TryParse(span, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float bare))
+            return bare * (float)Units.PxToPt;
+
+        return float.NaN;
+    }
+
     private static float ResolveWidth(BoxNode box, LayoutContext ctx)
     {
         if (box.WidthRaw != null && box.WidthRaw.EndsWith('%') &&
@@ -192,7 +389,18 @@ internal sealed class BlockLayoutEngine
         }
 
         if (box.Width > 0f)
+        {
+            // Fix C2: clamp body element explicit width to available page content area.
+            // A <body style="width:210mm"> on an A5-landscape page has CSS width = full
+            // page width (595pt) but ctx.AvailableWidth = page - margins (≈538pt).  Per
+            // CSS 2.1 §10.3.3 explicit widths are normally honoured for arbitrary blocks,
+            // but we conservatively clamp the root body to prevent content from rendering
+            // outside the page boundaries.  Non-body blocks with explicit fixed widths
+            // are left unchanged (overflow is intentional, e.g. fixed-width banners).
+            if (box.IsBodyRoot && box.Width > ctx.AvailableWidth)
+                return ctx.AvailableWidth;
             return box.Width;
+        }
 
         // auto width: available minus horizontal margins/padding/border
         return ctx.AvailableWidth - box.MarginLeft - box.MarginRight

@@ -19,4 +19,13 @@ public sealed class FidelityGoldenTests
         GoldenCorpus.GoldenCase c = GoldenCorpus.ByName(name);
         await GoldenPdf.VerifyAsync(c.Name, c.Html, c.Options);
     }
+
+    [Theory]
+    [Trait("Category", "FidelityExtended")]
+    [MemberData(nameof(GoldenCorpus.FidelityExtendedCasesData), MemberType = typeof(GoldenCorpus))]
+    public async Task FidelityExtendedCase_MatchesBaseline(string name)
+    {
+        GoldenCorpus.GoldenCase c = GoldenCorpus.ByName(name);
+        await GoldenPdf.VerifyAsync(c.Name, c.Html, c.Options);
+    }
 }

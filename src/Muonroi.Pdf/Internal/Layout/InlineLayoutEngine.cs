@@ -11,8 +11,17 @@ internal sealed class InlineLayoutEngine
     public float Layout(IEnumerable<BoxNode> inlineChildren, LayoutContext context, List<PositionedElement> output, int pageIndex, PositionedPage? page = null)
     {
         var metrics = context.TextMetrics;
-        float availWidth = context.AvailableWidth;
-        float startX = context.PageMarginLeftPt;
+        // CSS 2.1 §9.5: inline content must be narrowed by any active floats in the same BFC.
+        // LeftFloatRight is the right edge of the left float (content starts after it).
+        // RightFloatLeft is the left edge of the right float (content ends before it).
+        // Fix A2: use ContentOriginX as the left baseline inside table cells (ContentOriginX > 0
+        // means the enclosing CellContext has set an absolute cell column X as the origin).
+        float xOrigin = context.ContentOriginX > 0f ? context.ContentOriginX : context.PageMarginLeftPt;
+        float leftFloatClearX = context.LeftFloatRight > 0f ? context.LeftFloatRight : xOrigin;
+        float rightFloatBoundX = context.RightFloatLeft > 0f ? context.RightFloatLeft : (xOrigin + context.AvailableWidth);
+        float startX = leftFloatClearX;
+        float availWidth = rightFloatBoundX - leftFloatClearX;
+        if (availWidth <= 0f) availWidth = context.AvailableWidth; // safety: degenerate float state
         float lineY = context.CurrentY;
         float totalHeight = 0f;
 
@@ -142,7 +151,65 @@ internal sealed class InlineLayoutEngine
                 // LineBreakBox may also appear inside flattened inline stream
                 if (box is null) continue;
 
-                string text = box.Text ?? string.Empty;
+                string rawText = box.Text ?? string.Empty;
+
+                // text-transform: uppercase applied at measurement time (Pitfall 5 — width must match render)
+                string text = box.TextTransform == "uppercase" ? rawText.ToUpperInvariant() : rawText;
+
+                // white-space:nowrap — treat entire text as one unbreakable token
+                if (box.WhiteSpace == "nowrap")
+                {
+                    if (text.Length == 0) continue;
+                    float nobrWidth = 0f;
+                    foreach (char ch in text)
+                        nobrWidth += metrics.GetCharWidth(ch, box.FontFamily, box.FontSize, box.Bold, box.Italic);
+                    // Place as a single token; if it overflows, it overflows (corpus use-case)
+                    float nobrNeeded = lineX == 0f ? nobrWidth : lineX + metrics.GetCharWidth(' ', box.FontFamily, box.FontSize, box.Bold, box.Italic) + nobrWidth;
+                    if (nobrNeeded > availWidth && lineX > 0f)
+                    {
+                        CommitLine(isLastLine: false);
+                        nobrNeeded = nobrWidth;
+                    }
+                    pendingWords.Add((box, text, nobrWidth));
+                    lineX = nobrNeeded;
+                    continue;
+                }
+
+                // white-space:pre-wrap/pre-line — split on '\n' to get logical lines
+                if (box.WhiteSpace is "pre-wrap" or "pre-line")
+                {
+                    string[] logicalLines = text.Split('\n');
+                    for (int li = 0; li < logicalLines.Length; li++)
+                    {
+                        string logLine = logicalLines[li];
+                        // pre-line: collapse spaces; pre-wrap: preserve spaces (include as tokens)
+                        string[] lineWords = box.WhiteSpace == "pre-line"
+                            ? logLine.Split(WordSeparators, StringSplitOptions.RemoveEmptyEntries)
+                            : logLine.Split(' ');  // pre-wrap: keep spaces as separate tokens
+
+                        float swPre = metrics.GetCharWidth(' ', box.FontFamily, box.FontSize, box.Bold, box.Italic);
+                        foreach (var lw in lineWords)
+                        {
+                            if (lw.Length == 0) continue;
+                            float lwWidth = 0f;
+                            foreach (char ch in lw)
+                                lwWidth += metrics.GetCharWidth(ch, box.FontFamily, box.FontSize, box.Bold, box.Italic);
+                            float lwNeeded = lineX == 0f ? lwWidth : lineX + swPre + lwWidth;
+                            if (lwNeeded > availWidth && lineX > 0f)
+                            {
+                                CommitLine(isLastLine: false);
+                                lwNeeded = lwWidth;
+                            }
+                            pendingWords.Add((box, lw, lwWidth));
+                            lineX = lwNeeded;
+                        }
+                        // Each '\n' in the source forces a CommitLine (except after the last segment)
+                        if (li < logicalLines.Length - 1)
+                            CommitLine(isLastLine: false);
+                    }
+                    continue;
+                }
+
                 string[] words = text.Split(WordSeparators, StringSplitOptions.RemoveEmptyEntries);
                 if (words.Length == 0) continue;
 

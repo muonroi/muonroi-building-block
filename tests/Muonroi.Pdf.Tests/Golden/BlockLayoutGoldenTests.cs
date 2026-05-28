@@ -17,4 +17,12 @@ public sealed class BlockLayoutGoldenTests
         GoldenCorpus.GoldenCase c = GoldenCorpus.ByName(name);
         await GoldenPdf.VerifyAsync(c.Name, c.Html, c.Options);
     }
+
+    [Theory]
+    [MemberData(nameof(GoldenCorpus.BlockLayoutFloatCasesData), MemberType = typeof(GoldenCorpus))]
+    public async Task BlockLayoutFloatCase_MatchesBaseline(string name)
+    {
+        GoldenCorpus.GoldenCase c = GoldenCorpus.ByName(name);
+        await GoldenPdf.VerifyAsync(c.Name, c.Html, c.Options);
+    }
 }

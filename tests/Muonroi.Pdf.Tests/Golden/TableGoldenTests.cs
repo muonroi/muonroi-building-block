@@ -17,4 +17,12 @@ public sealed class TableGoldenTests
         GoldenCorpus.GoldenCase c = GoldenCorpus.ByName(name);
         await GoldenPdf.VerifyAsync(c.Name, c.Html, c.Options);
     }
+
+    [Theory]
+    [MemberData(nameof(GoldenCorpus.TablesExtendedCasesData), MemberType = typeof(GoldenCorpus))]
+    public async Task TableExtendedCase_MatchesBaseline(string name)
+    {
+        GoldenCorpus.GoldenCase c = GoldenCorpus.ByName(name);
+        await GoldenPdf.VerifyAsync(c.Name, c.Html, c.Options);
+    }
 }

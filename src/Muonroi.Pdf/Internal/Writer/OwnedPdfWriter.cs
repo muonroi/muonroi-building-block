@@ -152,7 +152,9 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             var pageImages = new List<(string ResourceName, int ObjectId)>();
             foreach (var (rn, oid, src) in imageResources)
             {
-                if (page.Elements.Any(e => e.Source is ReplacedBox rb && rb.Src == src))
+                if (page.Elements.Any(e =>
+                        (e.Source is ReplacedBox rb && rb.Src == src) ||
+                        (e.Source?.BackgroundImageSrc == src)))
                     pageImages.Add((rn, oid));
             }
 
@@ -620,6 +622,48 @@ internal sealed class OwnedPdfWriter : IPdfWriter
 
         foreach (PositionedElement el in page.Elements)
         {
+            // background-color: fill a solid rectangle before any content
+            if (el.Source?.BackgroundColor is { Length: > 0 } bgColorVal)
+            {
+                sb.AppendLine("ET");
+                (float bgR, float bgG, float bgB) = ParseColor(bgColorVal);
+                float bgX = el.Position.X;
+                float bgY = pageHeightPt - el.Position.Y - el.Position.Height;
+                float bgW = el.Position.Width;
+                float bgH = el.Position.Height;
+                sb.Append("q").AppendLine();
+                sb.Append(bgR.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(bgG.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(bgB.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" rg");
+                sb.Append(bgX.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(bgY.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(bgW.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(bgH.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" re");
+                sb.AppendLine("f");
+                sb.AppendLine("Q");
+                sb.AppendLine("BT");
+                currentFamily = null;
+                currentSize = 0f;
+            }
+
+            // background-image: draw data-URI image as XObject at element bounds
+            if (el.Source?.BackgroundImageSrc is { Length: > 0 } bgSrc &&
+                srcToResName.TryGetValue(bgSrc, out string? bgImgRes))
+            {
+                sb.AppendLine("ET");
+                float bgImgX = el.Position.X;
+                float bgImgY = pageHeightPt - el.Position.Y - el.Position.Height;
+                float bgImgW = el.Position.Width;
+                float bgImgH = el.Position.Height;
+                sb.AppendLine("q");
+                sb.AppendLine($"{bgImgW.ToString("F4", CultureInfo.InvariantCulture)} 0 0 {bgImgH.ToString("F4", CultureInfo.InvariantCulture)} {bgImgX.ToString("F4", CultureInfo.InvariantCulture)} {bgImgY.ToString("F4", CultureInfo.InvariantCulture)} cm");
+                sb.AppendLine($"/{bgImgRes} Do");
+                sb.AppendLine("Q");
+                sb.AppendLine("BT");
+                currentFamily = null;
+                currentSize = 0f;
+            }
+
             if (el.Source is ReplacedBox replaced)
             {
                 // Image — handled outside BT/ET block; close text block temporarily
@@ -916,9 +960,90 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             "blue" => (0f, 0f, 1f),
             "gray" or "grey" => (0.502f, 0.502f, 0.502f),
             "yellow" => (1f, 1f, 0f),
+            "teal" => (0f, 0.502f, 0.502f),
+            "navy" => (0f, 0f, 0.502f),
+            "maroon" => (0.502f, 0f, 0f),
+            "purple" => (0.502f, 0f, 0.502f),
+            "olive" => (0.502f, 0.502f, 0f),
+            "silver" => (0.753f, 0.753f, 0.753f),
+            "lime" => (0f, 1f, 0f),
+            "aqua" or "cyan" => (0f, 1f, 1f),
+            "fuchsia" or "magenta" => (1f, 0f, 1f),
+            "orange" => (1f, 0.647f, 0f),
             _ when c.Length == 7 && c[0] == '#' => ParseHexColor(c),
+            _ when c.Length == 4 && c[0] == '#' => ParseHexColorShort(c),
+            _ when c.StartsWith("rgb(", StringComparison.Ordinal) => ParseRgbColor(c),
+            _ when c.StartsWith("rgba(", StringComparison.Ordinal) => ParseRgbaColor(c),
             _ => (0f, 0f, 0f)
         };
+    }
+
+    /// <summary>
+    /// Parses CSS 3-char shorthand hex color (#rgb → #rrggbb).
+    /// </summary>
+    private static (float R, float G, float B) ParseHexColorShort(string c)
+    {
+        // #abc → #aabbcc
+        if (int.TryParse(c.AsSpan(1, 1), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int r) &&
+            int.TryParse(c.AsSpan(2, 1), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int g) &&
+            int.TryParse(c.AsSpan(3, 1), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int b))
+            return ((r * 17) / 255f, (g * 17) / 255f, (b * 17) / 255f);
+        return (0f, 0f, 0f);
+    }
+
+    /// <summary>
+    /// Parses CSS rgb(R, G, B) where components are 0–255 integers.
+    /// AngleSharp normalises all color values (including hex) to rgb/rgba format.
+    /// </summary>
+    private static (float R, float G, float B) ParseRgbColor(string c)
+    {
+        // c = "rgb(r, g, b)" (lower-cased, trimmed)
+        int open = c.IndexOf('(');
+        int close = c.IndexOf(')');
+        if (open < 0 || close < 0 || close <= open) return (0f, 0f, 0f);
+        ReadOnlySpan<char> inner = c.AsSpan(open + 1, close - open - 1);
+        Span<Range> parts = stackalloc Range[4];
+        int count = inner.Split(parts, ',', StringSplitOptions.TrimEntries);
+        if (count < 3) return (0f, 0f, 0f);
+        if (TryParseColorComponent(inner[parts[0]], out float r) &&
+            TryParseColorComponent(inner[parts[1]], out float g) &&
+            TryParseColorComponent(inner[parts[2]], out float b))
+            return (r, g, b);
+        return (0f, 0f, 0f);
+    }
+
+    /// <summary>
+    /// Parses CSS rgba(R, G, B, A) — ignores alpha (PDF uses opaque fills).
+    /// </summary>
+    private static (float R, float G, float B) ParseRgbaColor(string c)
+    {
+        // rgba(...) shares the same component layout; reuse rgb parser (alpha ignored in PDF)
+        int open = c.IndexOf('(');
+        int close = c.IndexOf(')');
+        if (open < 0 || close < 0 || close <= open) return (0f, 0f, 0f);
+        ReadOnlySpan<char> inner = c.AsSpan(open + 1, close - open - 1);
+        Span<Range> parts = stackalloc Range[5];
+        int count = inner.Split(parts, ',', StringSplitOptions.TrimEntries);
+        if (count < 3) return (0f, 0f, 0f);
+        if (TryParseColorComponent(inner[parts[0]], out float r) &&
+            TryParseColorComponent(inner[parts[1]], out float g) &&
+            TryParseColorComponent(inner[parts[2]], out float b))
+            return (r, g, b);
+        return (0f, 0f, 0f);
+    }
+
+    /// <summary>
+    /// Parses a single CSS color component: integer 0–255 → 0.0–1.0f.
+    /// </summary>
+    private static bool TryParseColorComponent(ReadOnlySpan<char> span, out float value)
+    {
+        if (float.TryParse(span, NumberStyles.Float, CultureInfo.InvariantCulture, out float raw))
+        {
+            value = raw / 255f;
+            return true;
+        }
+        value = 0f;
+        return false;
     }
 
     /// <summary>

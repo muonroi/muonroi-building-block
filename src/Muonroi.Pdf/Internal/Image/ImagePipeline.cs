@@ -75,6 +75,25 @@ internal sealed class ImagePipeline
                 yield return src;
         }
 
+        // Also collect background-image data URIs from CSS
+        if (!node.IsText)
+        {
+            string? bgImage = node.Style?.GetValue("background-image");
+            if (!string.IsNullOrEmpty(bgImage) &&
+                bgImage.Contains("data:", StringComparison.OrdinalIgnoreCase) &&
+                bgImage.Contains("base64", StringComparison.OrdinalIgnoreCase))
+            {
+                int start = bgImage.IndexOf("url(", StringComparison.OrdinalIgnoreCase) + 4;
+                int end = bgImage.LastIndexOf(')');
+                if (start > 4 && end > start)
+                {
+                    string uri = bgImage[start..end].Trim().Trim('\'', '"');
+                    if (uri.StartsWith("data:", StringComparison.Ordinal))
+                        yield return uri;
+                }
+            }
+        }
+
         foreach (IStyledNode child in node.Children)
             foreach (string src in CollectImageSrcs(child))
                 yield return src;
