@@ -79,18 +79,10 @@ internal sealed class BlockLayoutEngine
         // Float accumulator: reset when entering a BFC root; propagate from parent otherwise.
         if (bfcRoot)
         {
-            childContext.LeftFloatRight = 0f;
-            childContext.RightFloatLeft = 0f;
-            childContext.LeftFloatBottom = 0f;
-            childContext.RightFloatBottom = 0f;
             childContext.Exclusions = new List<FloatExclusion>();  // W5: fresh BFC — reset exclusions list
         }
         else
         {
-            childContext.LeftFloatRight = context.LeftFloatRight;
-            childContext.RightFloatLeft = context.RightFloatLeft;
-            childContext.LeftFloatBottom = context.LeftFloatBottom;
-            childContext.RightFloatBottom = context.RightFloatBottom;
             childContext.Exclusions = context.Exclusions;  // W6: propagate exclusions by same reference within BFC
         }
 
@@ -228,10 +220,6 @@ internal sealed class BlockLayoutEngine
                     TextMetrics      = ctx.TextMetrics,
                     PageMargins      = ctx.PageMargins,
                     ContentOriginX   = originX,
-                    LeftFloatRight   = 0f,
-                    RightFloatLeft   = 0f,
-                    LeftFloatBottom  = 0f,
-                    RightFloatBottom = 0f,
                 };
                 var measureOutput = new List<PositionedElement>();
                 float floatHeight = Layout(floatBlock, measureCtx, measureOutput, pageIndex);
@@ -257,10 +245,6 @@ internal sealed class BlockLayoutEngine
                         TextMetrics      = ctx.TextMetrics,
                         PageMargins      = ctx.PageMargins,
                         ContentOriginX   = floatX + floatBlock.PaddingLeft + floatBlock.BorderLeft,
-                        LeftFloatRight   = 0f,
-                        RightFloatLeft   = 0f,
-                        LeftFloatBottom  = 0f,
-                        RightFloatBottom = 0f,
                     };
                     floatHeight = Layout(floatBlock, remeasureCtx, output, pageIndex);
                 }
@@ -285,8 +269,6 @@ internal sealed class BlockLayoutEngine
                     Position = new Rect(floatX, floatY, floatWidth, floatHeight),
                     PageIndex = pageIndex
                 });
-                ctx.LeftFloatRight = floatX + floatWidth;
-                ctx.LeftFloatBottom = floatY + floatHeight;
                 ctx.Exclusions.Add(new FloatExclusion(floatX, floatY, floatX + floatWidth, floatY + floatHeight, FloatSide.Left));  // W9/W10: mirror into exclusions list
             }
             else // "right"
@@ -305,10 +287,6 @@ internal sealed class BlockLayoutEngine
                     TextMetrics      = ctx.TextMetrics,
                     PageMargins      = ctx.PageMargins,
                     ContentOriginX   = originX + ctx.AvailableWidth - floatWidth,
-                    LeftFloatRight   = 0f,
-                    RightFloatLeft   = 0f,
-                    LeftFloatBottom  = 0f,
-                    RightFloatBottom = 0f,
                 };
                 var measureOutput = new List<PositionedElement>();
                 float floatHeight = Layout(floatBlock, measureCtx, measureOutput, pageIndex);
@@ -334,10 +312,6 @@ internal sealed class BlockLayoutEngine
                         TextMetrics      = ctx.TextMetrics,
                         PageMargins      = ctx.PageMargins,
                         ContentOriginX   = floatX + floatBlock.PaddingLeft + floatBlock.BorderLeft,
-                        LeftFloatRight   = 0f,
-                        RightFloatLeft   = 0f,
-                        LeftFloatBottom  = 0f,
-                        RightFloatBottom = 0f,
                     };
                     floatHeight = Layout(floatBlock, remeasureCtx, output, pageIndex);
                 }
@@ -362,8 +336,6 @@ internal sealed class BlockLayoutEngine
                     Position = new Rect(floatX, floatY, floatWidth, floatHeight),
                     PageIndex = pageIndex
                 });
-                ctx.RightFloatLeft = floatX;
-                ctx.RightFloatBottom = floatY + floatHeight;
                 ctx.Exclusions.Add(new FloatExclusion(floatX, floatY, floatX + floatWidth, floatY + floatHeight, FloatSide.Right));  // W11/W12: mirror into exclusions list
             }
 
@@ -412,7 +384,7 @@ internal sealed class BlockLayoutEngine
                     // CSS 2.1 §9.5: non-floated block children start after any left-float edge.
                     // Fix A2: use ContentOriginX as the left baseline when inside a table cell
                     // (ContentOriginX > 0 means we are inside a cell, not page normal flow).
-                    // W13: read startX from FloatPlacementSolver instead of ctx.LeftFloatRight.
+                    // W13: read startX from FloatPlacementSolver (Exclusions list).
                     float xOrigin = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
                     var cbW13 = new ContainingBlock(xOrigin, ctx.AvailableWidth);
                     float blockStartX = FloatPlacementSolver.AvailableWidthAtY(startY, 0f, cbW13, ctx.Exclusions).StartX;

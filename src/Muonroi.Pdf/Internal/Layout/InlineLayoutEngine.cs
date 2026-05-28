@@ -12,8 +12,6 @@ internal sealed class InlineLayoutEngine
     {
         var metrics = context.TextMetrics;
         // CSS 2.1 §9.5: inline content must be narrowed by any active floats in the same BFC.
-        // LeftFloatRight is the right edge of the left float (content starts after it).
-        // RightFloatLeft is the left edge of the right float (content ends before it).
         // Fix A2: use ContentOriginX as the left baseline inside table cells (ContentOriginX > 0
         // means the enclosing CellContext has set an absolute cell column X as the origin).
         // W14: use FloatPlacementSolver.AvailableWidthAtY for line-box X/width instead of cursor fields.
