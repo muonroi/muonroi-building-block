@@ -19,7 +19,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 8.5: Owned PDF Writer (SC4 carry-over)** — Replaced PdfSharpCore with an owned, allocation-controlled, AOT-trivial PDF 1.7 writer (CID Type0/Identity-H + ToUnicode, FlateDecode via ZLibStream, JPEG/PNG XObjects). Closes ALLOC-01/SC4: total alloc 51.62 MB vs 288.96 threshold (82% headroom). PdfSharpCore fully removed (+ transitives ImageSharp/CodePages). 215/215 tests, 56 snapshots re-baselined. Verified 7/7 (08.5-VERIFICATION.md). Completed 2026-05-27.
 - [x] **Phase 8.7: Legacy Print-HTML Profile v1** — float/clear + position:absolute + table hardening + real-template corpus (completed 2026-05-28; 94% gate, HSLA_E deferred to 8.8)
 - [x] **Phase 8.8: Float Child Rendering** — HSLA_E + image-in-float fix (G1+G2), root cause from `RESEARCH-HSLA-E.md` (`ContentOriginX` not propagated to float children). G1+G2 fixed; G8 (page 1 empty) deferred to 8.9 (completed 2026-05-28).
-- [ ] **Phase 8.9: Visual Fidelity Primitives** — G3 table grid lines (`border-collapse:collapse`), G4 checkbox/radio glyphs, G5 form field underline. Goal: form-style templates structurally match reference fill PDFs.
+- [x] **Phase 8.9: Visual Fidelity Primitives + Pagination + Inline Flow** — G3 table grid, G7 UA-inline display, G7b mixed text+inline batching, G8 body height pagination, TD9 page count assertion. 18/18 visual gate achieved. G4+G5 deferred to 8.11 (no template demand). G9 image-in-float placeholder discovered → 8.10. Completed 2026-05-28.
 - [ ] **Phase 8.10: Float Algorithm Refactor (ExcludedShapes)** — Clean-room WeasyPrint `avoid_collisions`. 6 atomic commits. Byte-identical. Foundation for nested BFC + `position:absolute`.
 - [ ] **Phase 8.11: Layout Edge Cases** — Vertical-align edge, nested BFC stacks, `position:absolute` × float, page-break-inside floats, shrink-to-fit auto float, CSS `column-count` interaction. Per-template demand. TBD.
 - [ ] **Phase 9: v1.0 Enterprise** — Postgres template registry, Redis hot-reload, SSIM canary, web designer, TCIS cutover
@@ -278,8 +278,8 @@ Plans:
   3. Checkboxes render as glyphs; stray `×` fragment gone.
   4. Text inputs render with bottom underline.
   5. 335+ unit tests + new tests pass; no regression on HSLA_F/HBL/CAPR_E.
-**Note**: requires RESEARCH.md before execution — TBD at phase entry.
-**Status**: Planned 2026-05-28
+**Note**: G4+G5 deferred to 8.11 (research audit revealed 0 templates use `<input>`). G7b (mixed text+inline batching) discovered post-G7 and fixed in same phase. G9 (image-in-float red placeholder) discovered during visual review → 8.10.
+**Status**: COMPLETE — TD9 (`e95db78`), G8 (`0b5ca9b`), G7 (`0542d76`), G3 (`2ca4830`), G7b (`df229b8`). 18/18 visual gate. 363/363 tests. See `.planning/phases/08.9-fidelity/VERIFICATION.md`. Completed 2026-05-28.
 
 ### Phase 8.10: Float Algorithm Refactor (ExcludedShapes)
 **Goal**: Replace cursor-based float positioning (`LeftFloatRight`/`RightFloatLeft` scalar fields) with a correct ExcludedShapes list query (WeasyPrint clean-room `avoid_collisions`). Pure algorithmic refactor — byte-identical PDF output. Foundation for nested BFC stacks and `position:absolute` × float.
