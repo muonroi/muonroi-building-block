@@ -24,6 +24,8 @@ internal sealed class BlockLayoutEngine
     {
         if (box is TableCellBox) return true;
         if (box.Display == "inline-block") return true;
+        // CSS 2.1 §9.5: floated elements establish a new BFC (TD3).
+        if (!string.IsNullOrEmpty(box.FloatValue) && box.FloatValue != "none") return true;
         var overflow = box.Source?.Style?.GetValue("overflow");
         if (overflow is "hidden" or "scroll" or "auto") return true;
         // Root element: BlockBox at depth 0 has no parent — caller passes root directly
@@ -42,7 +44,17 @@ internal sealed class BlockLayoutEngine
         float contentY = context.CurrentY + box.PaddingTop + box.BorderTop;
 
         // Detect if this box establishes a containing block for abs-pos children.
-        bool isContainingBlock = box.Position == "relative" && box.Width > 0f && box.Height > 0f;
+        // Primary rule: CSS 2.1 §10.1 — position:relative with explicit dimensions.
+        // Pragmatic deviation: overflow:hidden/scroll/auto also establishes a containing block.
+        // Rationale: authors use overflow:hidden as a layout boundary (containing floats,
+        // isolating content). Abs-pos children inside such a box should be anchored to it,
+        // not to the page. CSS 2.1 §10.1 strictly requires position:relative, but
+        // overflow:hidden is the dominant authoring convention for this pattern (e.g. HBND_F
+        // template: <img position:absolute> inside <div style="overflow:hidden"> inside <td>).
+        // Without this deviation the ContainingBlockRect is never set and the image falls back
+        // to page top-left coordinates.
+        bool isContainingBlock = (box.Position == "relative" && box.Width > 0f && box.Height > 0f)
+            || (box.Overflow is "hidden" or "scroll" or "auto" && box.Width > 0f && box.Height > 0f);
         Rect? savedContainingBlock = context.ContainingBlockRect;
 
         // Empty-block collapse (CSS 2.1 §8.3.1 case 3): no children + no border/padding/min-height → height 0
@@ -578,15 +590,16 @@ internal sealed class BlockLayoutEngine
 
     private static float ResolveWidth(BoxNode box, LayoutContext ctx)
     {
+        float width;
+
         if (box.WidthRaw != null && box.WidthRaw.EndsWith('%') &&
             float.TryParse(box.WidthRaw.AsSpan(0, box.WidthRaw.Length - 1),
                 System.Globalization.NumberStyles.Float,
                 System.Globalization.CultureInfo.InvariantCulture, out float pct))
         {
-            return ctx.AvailableWidth * pct / 100f;
+            width = ctx.AvailableWidth * pct / 100f;
         }
-
-        if (box.Width > 0f)
+        else if (box.Width > 0f)
         {
             // Fix C2: clamp body element explicit width to available page content area.
             // A <body style="width:210mm"> on an A5-landscape page has CSS width = full
@@ -595,15 +608,25 @@ internal sealed class BlockLayoutEngine
             // but we conservatively clamp the root body to prevent content from rendering
             // outside the page boundaries.  Non-body blocks with explicit fixed widths
             // are left unchanged (overflow is intentional, e.g. fixed-width banners).
-            if (box.IsBodyRoot && box.Width > ctx.AvailableWidth)
-                return ctx.AvailableWidth;
-            return box.Width;
+            width = (box.IsBodyRoot && box.Width > ctx.AvailableWidth)
+                ? ctx.AvailableWidth
+                : box.Width;
+        }
+        else
+        {
+            // auto width: available minus horizontal margins/padding/border
+            width = ctx.AvailableWidth - box.MarginLeft - box.MarginRight
+                    - box.PaddingLeft - box.PaddingRight
+                    - box.BorderLeft - box.BorderRight;
         }
 
-        // auto width: available minus horizontal margins/padding/border
-        return ctx.AvailableWidth - box.MarginLeft - box.MarginRight
-               - box.PaddingLeft - box.PaddingRight
-               - box.BorderLeft - box.BorderRight;
+        // CSS 2.1 §10.4: apply max-width / min-width clamps when explicitly set.
+        if (box.MaxWidth >= 0f && width > box.MaxWidth)
+            width = box.MaxWidth;
+        if (box.MinWidth >= 0f && width < box.MinWidth)
+            width = box.MinWidth;
+
+        return width;
     }
 
 }

@@ -110,7 +110,7 @@ internal sealed class TableLayoutEngine
                 // cellX = colX[cell.ColumnIndex]; content starts at cellX + PaddingLeft + BorderLeft.
                 float cellContentOriginX = cellX + cell.PaddingLeft + cell.BorderLeft;
                 var cellCtx = CellContext(context, cellWidth, cellY + cell.PaddingTop + vAlignOffset,
-                    cellOriginX: cellContentOriginX);
+                    cellOriginX: cellContentOriginX, cellHeight: cellHeight);
                 var cellOut = new List<PositionedElement>();
                 _blockEngine.Layout(cell, cellCtx, cellOut, pageIndex);
 
@@ -144,8 +144,12 @@ internal sealed class TableLayoutEngine
     // Passing it as ContentOriginX into the child LayoutContext ensures inline and block content
     // inside the cell uses the cell's column X as the left baseline, not the page left margin.
     // Without this, all cell content renders at PageMarginLeftPt regardless of which column it is in.
+    //
+    // G9 (phase 8.11a): also set ContainingBlockRect to the cell's rect so that abs-pos
+    // descendants inside the cell are anchored to the cell, not to the page. Per CSS 2.1 §10.1
+    // table cells always establish a containing block for their abs-pos descendants.
     private static LayoutContext CellContext(LayoutContext parent, float cellWidth, float startY,
-        float cellOriginX = 0f) => new()
+        float cellOriginX = 0f, float cellHeight = 0f) => new()
     {
         PageWidth = parent.PageWidth,
         PageHeight = parent.PageHeight,
@@ -155,7 +159,12 @@ internal sealed class TableLayoutEngine
         TotalPages = parent.TotalPages,
         TextMetrics = parent.TextMetrics,
         PageMargins = parent.PageMargins,
-        ContentOriginX = cellOriginX  // Fix A2: cell absolute column X
+        ContentOriginX = cellOriginX,  // Fix A2: cell absolute column X
+        // G9: cell establishes containing block for abs-pos children (CSS 2.1 §10.1).
+        // Only set when we have real dimensions (non-measurement pass where cellOriginX > 0).
+        ContainingBlockRect = cellOriginX > 0f && (cellWidth > 0f || cellHeight > 0f)
+            ? new Rect(cellOriginX, startY, cellWidth, cellHeight)
+            : null
     };
 
     private static float CellWidth(int colIndex, int colspan, float[] colWidths, float borderSpacing)

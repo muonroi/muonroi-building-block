@@ -227,6 +227,19 @@ internal sealed class BoxTreeBuilder
         box.Width = widthVal is null or "auto" ? -1f : ParseLength(widthVal, fontSize);
         box.WidthRaw = widthVal;
 
+        // max-width / min-width: AngleSharp returns "" (not null) for non-cascaded properties,
+        // so we must guard with IsNullOrEmpty in addition to "auto"/"none" — otherwise
+        // ParseLength("") returns 0f and we'd clamp every box width to 0.
+        var maxWidthVal = style.GetValue("max-width");
+        box.MaxWidth = string.IsNullOrEmpty(maxWidthVal) || maxWidthVal is "auto" or "none"
+            ? -1f
+            : ParseLength(maxWidthVal, fontSize);
+
+        var minWidthVal = style.GetValue("min-width");
+        box.MinWidth = string.IsNullOrEmpty(minWidthVal) || minWidthVal is "auto" or "none"
+            ? -1f
+            : ParseLength(minWidthVal, fontSize);
+
         var heightVal = style.GetValue("height");
         box.Height = heightVal is null or "auto" ? -1f : ParseLength(heightVal, fontSize);
 
@@ -284,6 +297,11 @@ internal sealed class BoxTreeBuilder
             box.LeftRaw = style.GetValue("left");
             box.RightRaw = style.GetValue("right");
         }
+
+        // overflow — stored for containing-block establishment (CSS 2.1 §10.1).
+        var overflowVal = style.GetValue("overflow");
+        if (!string.IsNullOrEmpty(overflowVal) && overflowVal is "hidden" or "scroll" or "auto")
+            box.Overflow = overflowVal;
 
         if (box is InlineBox inline)
         {

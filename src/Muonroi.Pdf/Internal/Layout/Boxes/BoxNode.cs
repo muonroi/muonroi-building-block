@@ -13,6 +13,12 @@ internal abstract class BoxNode
     public string? WidthRaw { get; set; }
     public float Height { get; set; } = -1f;
 
+    /// <summary>CSS max-width in points. -1f = not set (no upper clamp).</summary>
+    public float MaxWidth { get; set; } = -1f;
+
+    /// <summary>CSS min-width in points. -1f = not set (no lower clamp).</summary>
+    public float MinWidth { get; set; } = -1f;
+
     public float MarginTop { get; set; }
     public float MarginRight { get; set; }
     public float MarginBottom { get; set; }
@@ -47,6 +53,13 @@ internal abstract class BoxNode
 
     /// <summary>CSS position: "absolute" | "relative" | null (null = static).</summary>
     public string? Position { get; set; }
+
+    /// <summary>
+    /// CSS overflow value: "hidden" | "scroll" | "auto" | null (null = visible/default).
+    /// Used by BlockLayoutEngine to determine whether this box establishes a containing block
+    /// for absolutely-positioned descendants (CSS 2.1 §10.1 + pragmatic overflow:hidden convention).
+    /// </summary>
+    public string? Overflow { get; set; }
 
     /// <summary>Raw CSS 'top' value for percentage resolution at layout time.</summary>
     public string? TopRaw { get; set; }
