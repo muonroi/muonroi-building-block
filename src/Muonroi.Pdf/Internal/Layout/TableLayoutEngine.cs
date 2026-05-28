@@ -20,6 +20,8 @@ internal sealed class TableLayoutEngine
     {
         float tableWidth = table.Width > 0f ? table.Width : context.AvailableWidth;
         float borderSpacing = table.BorderSpacing;
+        if (string.Equals(table.BorderCollapse, "collapse", StringComparison.OrdinalIgnoreCase))
+            borderSpacing = 0f;
         float startY = context.CurrentY;
         float tableX = context.PageMarginLeftPt;
 
@@ -96,7 +98,14 @@ internal sealed class TableLayoutEngine
                 float cellWidth = CellWidth(cell.ColumnIndex, cell.Colspan, colWidths, borderSpacing);
                 float cellY = rowY[r];
 
-                var cellCtx = CellContext(context, cellWidth, cellY + cell.PaddingTop);
+                float contentHeight = MeasureCell(cell, cellWidth, context);
+                float vAlignOffset = cell.VerticalAlign switch
+                {
+                    "middle" => MathF.Max(0f, (cellHeight - contentHeight) / 2f),
+                    "bottom" => MathF.Max(0f, cellHeight - contentHeight - cell.PaddingBottom),
+                    _ => 0f  // "top" is default
+                };
+                var cellCtx = CellContext(context, cellWidth, cellY + cell.PaddingTop + vAlignOffset);
                 var cellOut = new List<PositionedElement>();
                 _blockEngine.Layout(cell, cellCtx, cellOut, pageIndex);
 

@@ -146,6 +146,26 @@ internal static class GoldenCorpus
                 "</table>")),
     };
 
+    /// <summary>
+    /// Extended table golden cases: border-collapse:collapse and vertical-align variants.
+    /// Added by Plan 04 (Wave 2).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> TablesExtended = new[]
+    {
+        new GoldenCase(
+            "table-border-collapse",
+            Doc("table{border-collapse:collapse;}td{border-left:1px solid black;padding:4px;}",
+                "<table><tr><td>A1</td><td>B1</td></tr><tr><td>A2</td><td>B2</td></tr></table>")),
+        new GoldenCase(
+            "table-vertical-align-top",
+            Doc("table{border-collapse:separate;}td{height:50px;vertical-align:top;padding:4px;border:1px solid black;}",
+                "<table><tr><td>A</td></tr></table>")),
+        new GoldenCase(
+            "table-vertical-align-middle",
+            Doc("table{border-collapse:separate;}td{height:50px;vertical-align:middle;padding:4px;border:1px solid black;}",
+                "<table><tr><td>B</td></tr></table>")),
+    };
+
     private static string LongFlow(int paragraphs)
     {
         var sb = new System.Text.StringBuilder();
@@ -427,6 +447,7 @@ internal static class GoldenCorpus
         BlockLayout
             .Concat(InlineLayout)
             .Concat(Tables)
+            .Concat(TablesExtended)
             .Concat(PagedMedia)
             .Concat(Images)
             .Concat(Fonts)
@@ -451,6 +472,10 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the table group only.</summary>
     public static IEnumerable<object[]> TableCasesData() =>
         Tables.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the extended table group only (Plan 04).</summary>
+    public static IEnumerable<object[]> TablesExtendedCasesData() =>
+        TablesExtended.Select(c => new object[] { c.Name });
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the paged-media group only.</summary>
     public static IEnumerable<object[]> PagedMediaCasesData() =>

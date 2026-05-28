@@ -238,6 +238,10 @@ internal sealed class BoxTreeBuilder
             if (!string.IsNullOrWhiteSpace(tableLayout)) table.TableLayout = tableLayout;
 
             table.BorderSpacing = ParseLength(style.GetValue("border-spacing"), fontSize);
+
+            var borderCollapseVal = style.GetValue("border-collapse");
+            if (!string.IsNullOrEmpty(borderCollapseVal))
+                table.BorderCollapse = borderCollapseVal.Trim().ToLowerInvariant();
         }
         else if (box is TableCellBox cell)
         {
@@ -249,6 +253,10 @@ internal sealed class BoxTreeBuilder
             var rowspanAttr = box.Source?.GetAttribute("rowspan");
             if (rowspanAttr != null && int.TryParse(rowspanAttr, out int rowspan) && rowspan >= 1)
                 cell.Rowspan = rowspan;
+
+            var vAlign = style.GetValue("vertical-align");
+            if (!string.IsNullOrEmpty(vAlign))
+                cell.VerticalAlign = vAlign.Trim().ToLowerInvariant();
         }
         else if (box is ReplacedBox replaced && replaced.Src != null && _resolvedImages != null)
         {
