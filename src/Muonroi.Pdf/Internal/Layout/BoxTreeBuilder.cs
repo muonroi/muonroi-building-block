@@ -179,6 +179,15 @@ internal sealed class BoxTreeBuilder
         if (!string.IsNullOrWhiteSpace(textAlignVal))
             box.TextAlign = textAlignVal.Trim().ToLowerInvariant();
 
+        // float / clear (CSS 2.1 §9.5)
+        var floatVal = style.GetValue("float");
+        if (!string.IsNullOrEmpty(floatVal) && floatVal is "left" or "right")
+            box.FloatValue = floatVal;
+
+        var clearVal = style.GetValue("clear");
+        if (!string.IsNullOrEmpty(clearVal) && clearVal is "left" or "right" or "both")
+            box.ClearValue = clearVal;
+
         if (box is InlineBox inline)
         {
             // AngleSharp's GetComputedStyle returns "" (not null) when font-family is not cascaded.

@@ -63,6 +63,22 @@ internal sealed class BlockLayoutEngine
             TextAlign = box.TextAlign ?? context.TextAlign  // inherit text-align from container
         };
 
+        // Float accumulator: reset when entering a BFC root; propagate from parent otherwise.
+        if (bfcRoot)
+        {
+            childContext.LeftFloatRight = 0f;
+            childContext.RightFloatLeft = 0f;
+            childContext.LeftFloatBottom = 0f;
+            childContext.RightFloatBottom = 0f;
+        }
+        else
+        {
+            childContext.LeftFloatRight = context.LeftFloatRight;
+            childContext.RightFloatLeft = context.RightFloatLeft;
+            childContext.LeftFloatBottom = context.LeftFloatBottom;
+            childContext.RightFloatBottom = context.RightFloatBottom;
+        }
+
         foreach (var child in box.Children)
         {
             float childMarginTop = child.MarginTop;
@@ -81,6 +97,12 @@ internal sealed class BlockLayoutEngine
                 childMarginTop = 0f;
             }
 
+            // CSS 2.1 §9.5.2: clear handling — advance childY past float bottoms
+            if (child.ClearValue is "both" or "left")
+                childY = MathF.Max(childY, childContext.LeftFloatBottom);
+            if (child.ClearValue is "both" or "right")
+                childY = MathF.Max(childY, childContext.RightFloatBottom);
+
             childContext.CurrentY = childY + childMarginTop;
             float childHeight = DispatchLayout(child, childContext, output, pageIndex);
 
@@ -89,6 +111,10 @@ internal sealed class BlockLayoutEngine
             childY = childContext.CurrentY;
             firstChild = false;
         }
+
+        // Float container height contribution: container must enclose its floated children.
+        float floatBottom = MathF.Max(childContext.LeftFloatBottom, childContext.RightFloatBottom);
+        if (floatBottom > childY) childY = floatBottom;
 
         // If height is explicit, use it; otherwise use computed content height
         float contentHeight = box.Height > 0f
@@ -102,6 +128,44 @@ internal sealed class BlockLayoutEngine
     {
         float childWidth = ResolveWidth(child, ctx);
         float startY = ctx.CurrentY;
+
+        // CSS 2.1 §9.5: float handling — removed from normal flow, placed at left or right edge.
+        if (child.FloatValue != null && child is BlockBox floatBlock)
+        {
+            float floatWidth = ResolveWidth(floatBlock, ctx);
+            float savedY = ctx.CurrentY;
+            float floatHeight = Layout(floatBlock, ctx, output, pageIndex);
+            ctx.CurrentY = savedY;  // restore — float does not advance normal flow
+            float floatY = savedY;
+
+            if (child.FloatValue == "left")
+            {
+                float floatX = ctx.PageMarginLeftPt + floatBlock.MarginLeft;
+                output.Add(new PositionedElement
+                {
+                    Source = floatBlock,
+                    Position = new Rect(floatX, floatY, floatWidth, floatHeight),
+                    PageIndex = pageIndex
+                });
+                ctx.LeftFloatRight = floatX + floatWidth;
+                ctx.LeftFloatBottom = floatY + floatHeight;
+            }
+            else // "right"
+            {
+                float floatX = ctx.PageMarginLeftPt + ctx.AvailableWidth - floatWidth - floatBlock.MarginRight;
+                output.Add(new PositionedElement
+                {
+                    Source = floatBlock,
+                    Position = new Rect(floatX, floatY, floatWidth, floatHeight),
+                    PageIndex = pageIndex
+                });
+                ctx.RightFloatLeft = floatX;
+                ctx.RightFloatBottom = floatY + floatHeight;
+            }
+
+            // Float is removed from normal flow: do NOT advance ctx.CurrentY.
+            return 0f;
+        }
 
         switch (child)
         {

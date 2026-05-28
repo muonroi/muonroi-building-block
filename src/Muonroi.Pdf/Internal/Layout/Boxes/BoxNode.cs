@@ -33,5 +33,11 @@ internal abstract class BoxNode
     /// <summary>CSS text-align (inherited). Null = left (default).</summary>
     public string? TextAlign { get; set; }
 
+    /// <summary>CSS float: "left" | "right" | null (null = not floated).</summary>
+    public string? FloatValue { get; set; }
+
+    /// <summary>CSS clear: "left" | "right" | "both" | null.</summary>
+    public string? ClearValue { get; set; }
+
     public List<BoxNode> Children { get; } = new();
 }

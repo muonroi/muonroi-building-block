@@ -25,4 +25,14 @@ internal sealed class LayoutContext
     /// Null or "left" = default left alignment.
     /// </summary>
     public string? TextAlign { get; set; }
+
+    // Float accumulator — scoped to a BFC; reset to 0f when entering a BFC root.
+    /// <summary>X coordinate of the right edge of the current left float.</summary>
+    public float LeftFloatRight { get; set; }
+    /// <summary>X coordinate of the left edge of the current right float.</summary>
+    public float RightFloatLeft { get; set; }
+    /// <summary>Y coordinate of the bottom of the current left float.</summary>
+    public float LeftFloatBottom { get; set; }
+    /// <summary>Y coordinate of the bottom of the current right float.</summary>
+    public float RightFloatBottom { get; set; }
 }

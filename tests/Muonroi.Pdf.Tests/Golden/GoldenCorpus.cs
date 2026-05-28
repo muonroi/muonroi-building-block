@@ -166,6 +166,22 @@ internal static class GoldenCorpus
                 "<table><tr><td>B</td></tr></table>")),
     };
 
+    /// <summary>
+    /// Float layout golden cases: float:left/right side-by-side, clear:both.
+    /// Added by Plan 05 (Wave 3a).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> BlockLayoutFloat = new[]
+    {
+        new GoldenCase(
+            "float-two-column",
+            Doc(".left{float:left;width:40%;}.right{float:right;width:40%;}.clear{clear:both;}",
+                "<div><div class=\"left\">LEFT</div><div class=\"right\">RIGHT</div><div class=\"clear\"></div></div>")),
+        new GoldenCase(
+            "float-clear-below",
+            Doc(".left{float:left;width:40%;}.right{float:right;width:40%;}.clear{clear:both;}",
+                "<div><div class=\"left\">LEFT</div><div class=\"right\">RIGHT</div><div class=\"clear\"></div><div>BELOW</div></div>")),
+    };
+
     private static string LongFlow(int paragraphs)
     {
         var sb = new System.Text.StringBuilder();
@@ -448,6 +464,7 @@ internal static class GoldenCorpus
             .Concat(InlineLayout)
             .Concat(Tables)
             .Concat(TablesExtended)
+            .Concat(BlockLayoutFloat)
             .Concat(PagedMedia)
             .Concat(Images)
             .Concat(Fonts)
@@ -476,6 +493,10 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the extended table group only (Plan 04).</summary>
     public static IEnumerable<object[]> TablesExtendedCasesData() =>
         TablesExtended.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for the float layout group only (Plan 05).</summary>
+    public static IEnumerable<object[]> BlockLayoutFloatCasesData() =>
+        BlockLayoutFloat.Select(c => new object[] { c.Name });
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the paged-media group only.</summary>
     public static IEnumerable<object[]> PagedMediaCasesData() =>
