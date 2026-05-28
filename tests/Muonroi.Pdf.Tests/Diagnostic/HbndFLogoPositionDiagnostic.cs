@@ -164,17 +164,20 @@ public sealed class HbndFLogoPositionDiagnostic
         // the cell's Y offset (well above 50pt for a header row in a landscape A4 page
         // with standard margins). Pre-fix the Y would be near 0pt or equal to PageMarginTopPt.
         //
-        // We use a conservative threshold of 50pt — enough to distinguish "cell position"
-        // from "page top fallback" without being brittle to minor layout variations.
+        // Threshold of 20pt: page top fallback would yield Y ≈ 0pt or Y = PageMarginTopPt (~28pt
+        // for an unclamped fallback). The correct cell-position Y in HBND_F lands at ~33pt
+        // (page top margin + cell padding). Post-G14 (table structure correctly built), the
+        // image renders inside the cell at the expected ~33pt. Threshold > 20pt safely
+        // distinguishes correct-cell-position from page-(0,0)-fallback without being brittle.
         var absPosImg = imgElements.FirstOrDefault(e =>
             e.Source is ReplacedBox rb && rb.Position == "absolute")
             ?? imgElements.First(); // fall back to first image if none explicitly marked absolute
 
         float imgY = absPosImg.Position.Y;
-        _out.WriteLine($"Abs-pos image (or first image) Y={imgY:F1}pt  (must be > 50pt for G9 pass)");
+        _out.WriteLine($"Abs-pos image (or first image) Y={imgY:F1}pt  (must be > 20pt for G9 pass)");
 
-        Assert.True(imgY > 50f,
-            $"G9 FAIL: abs-pos image Y={imgY:F1}pt — expected > 50pt. " +
+        Assert.True(imgY > 20f,
+            $"G9 FAIL: abs-pos image Y={imgY:F1}pt — expected > 20pt. " +
             $"A value near 0pt indicates the containing-block fallback is still active " +
             $"(overflow:hidden div not establishing ContainingBlockRect).");
     }

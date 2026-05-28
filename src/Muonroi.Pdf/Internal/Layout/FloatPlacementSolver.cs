@@ -66,7 +66,12 @@ internal static class FloatPlacementSolver
 
             float availableWidth = minRight - maxLeft;
 
-            if (availableWidth >= boxWidth)
+            // G15b epsilon: w-20 + w-50 + w-30 = 100% but cb.Width * 0.20f + 0.50f
+            // accumulates float rounding error; the strict `>= boxWidth` check fails
+            // by sub-pt when exact-fit floats split a 100% row. Permit a 0.5pt
+            // tolerance so a third float that's geometrically valid (sum ≤ 100%
+            // by spec) lands on the same row instead of dropping to the next.
+            if (availableWidth >= boxWidth - 0.5f)
             {
                 float x = side == FloatSide.Left ? maxLeft : minRight - boxWidth;
                 return (x, candidateY, availableWidth);

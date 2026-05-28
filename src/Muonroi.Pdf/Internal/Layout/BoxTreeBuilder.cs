@@ -7,10 +7,17 @@ internal sealed class BoxTreeBuilder
 {
     private IReadOnlyDictionary<string, DecodedImage>? _resolvedImages;
 
+    // G15/G17 class-rule fallback: keyed by CSS class name, value is property→value dict.
+    // Populated once per Build() call from <style> block text in the document tree.
+    // Used in ResolveCssProperties when GetComputedStyle threw (% widths, no viewport)
+    // and all values come back null through AngleSharpComputedStyle.Empty.
+    private Dictionary<string, Dictionary<string, string>>? _classRules;
+
     /// <summary>Converts an IStyledNode tree into a BlockBox root. Pitfall 6: display:none check happens first in BuildNode.</summary>
     public BlockBox Build(IStyledNode root, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null)
     {
         _resolvedImages = resolvedImages;
+        _classRules = ExtractClassRules(root);
         var box = new BlockBox { Source = root };
         ResolveCssProperties(root.Style, box);
         // Mark body element so ResolveWidth can clamp its explicit width to available area (Fix C2).
@@ -153,10 +160,33 @@ internal sealed class BoxTreeBuilder
         // G7 fix: AngleSharp returns "" (not null) for display on UA-inline elements in headless
         // mode. The null-coalescing ?? never fires for "". Map null/empty/whitespace to "inline"
         // for known UA-inline tags; otherwise default to "block".
+        // G14 fix: AngleSharp's GetComputedStyle throws for table structure elements with % widths
+        // when no viewport is configured; the catch in AngleSharpStyledNode returns
+        // AngleSharpComputedStyle.Empty, yielding an empty display string. Without this fallback,
+        // <tbody>/<tr>/<td> fall through to BlockBox, TableLayoutEngine.CollectRows finds no
+        // TableRowGroupBox children, and the table renders with zero height (silent omission).
+        // Apply HTML5 UA stylesheet display mapping BEFORE the inline-vs-block fallback. See G14.
         string rawDisplay = node.Style.GetValue("display") ?? "";
-        string effectiveDisplay = string.IsNullOrWhiteSpace(rawDisplay)
-            ? (UaInlineTags.Contains(localName) ? "inline" : "block")
-            : rawDisplay.Trim().ToLowerInvariant();
+        string effectiveDisplay;
+        if (string.IsNullOrWhiteSpace(rawDisplay))
+        {
+            effectiveDisplay = localName switch
+            {
+                "table"   => "table",
+                "tbody"   => "table-row-group",
+                "thead"   => "table-header-group",
+                "tfoot"   => "table-footer-group",
+                "tr"      => "table-row",
+                "td"      => "table-cell",
+                "th"      => "table-cell",
+                "caption" => "table-caption",
+                _         => UaInlineTags.Contains(localName) ? "inline" : "block"
+            };
+        }
+        else
+        {
+            effectiveDisplay = rawDisplay.Trim().ToLowerInvariant();
+        }
         return effectiveDisplay switch
         {
             "block" or "list-item" or "flow-root" => new BlockBox { Source = node },
@@ -223,7 +253,45 @@ internal sealed class BoxTreeBuilder
         box.BorderBottom = ParseLength(style.GetValue("border-bottom-width"), fontSize);
         box.BorderLeft = ParseLength(style.GetValue("border-left-width"), fontSize);
 
+        // G17 class-rule fallback: when GetComputedStyle threw (% widths, no viewport),
+        // all border widths land at 0f. Recover them from the parsed <style> block rules.
+        // Only activates when ALL four borders are 0 AND the class-rule dict has a match —
+        // so it cannot incorrectly override a genuinely-zero border.
+        if (box.BorderTop == 0f && box.BorderRight == 0f
+            && box.BorderBottom == 0f && box.BorderLeft == 0f)
+        {
+            // CSS shorthand 'border' expands to 'border-top-width' etc in computed style.
+            // When computed style is unavailable, try individual longhand lookups first,
+            // then fall back to the 'border' shorthand (simple "1px solid color" pattern).
+            string? btwClass = LookupClassProperty(box.Source, "border-top-width")
+                ?? LookupClassProperty(box.Source, "border-width");
+            if (btwClass == null)
+            {
+                // Try 'border' shorthand: "1px solid #008080" — extract first token as width.
+                string? borderShorthand = LookupClassProperty(box.Source, "border");
+                if (!string.IsNullOrEmpty(borderShorthand))
+                {
+                    string firstToken = borderShorthand.Split(' ')[0].Trim();
+                    float bw = ParseLength(firstToken, fontSize);
+                    if (bw > 0f)
+                    {
+                        box.BorderTop = box.BorderRight = box.BorderBottom = box.BorderLeft = bw;
+                    }
+                }
+            }
+            else
+            {
+                float bw = ParseLength(btwClass, fontSize);
+                if (bw > 0f)
+                    box.BorderTop = box.BorderRight = box.BorderBottom = box.BorderLeft = bw;
+            }
+        }
+
         var widthVal = style.GetValue("width");
+        // G15 class-rule fallback: when GetComputedStyle threw (% widths, no viewport),
+        // widthVal is null. Recover it from the parsed class rules so % widths are set.
+        if (string.IsNullOrEmpty(widthVal))
+            widthVal = LookupClassProperty(box.Source, "width");
         box.Width = widthVal is null or "auto" ? -1f : ParseLength(widthVal, fontSize);
         box.WidthRaw = widthVal;
 
@@ -255,6 +323,9 @@ internal sealed class BoxTreeBuilder
 
         // text-align is an inherited property — live on BoxNode base
         var textAlignVal = style.GetValue("text-align");
+        // G15 class-rule fallback: .text-center/.text-left/.text-right come from class rules.
+        if (string.IsNullOrWhiteSpace(textAlignVal))
+            textAlignVal = LookupClassProperty(box.Source, "text-align");
         if (!string.IsNullOrWhiteSpace(textAlignVal))
             box.TextAlign = textAlignVal.Trim().ToLowerInvariant();
 
@@ -279,6 +350,9 @@ internal sealed class BoxTreeBuilder
 
         // float / clear (CSS 2.1 §9.5)
         var floatVal = style.GetValue("float");
+        // G15 class-rule fallback: float comes from .float-left/.float-right class rules.
+        if (string.IsNullOrEmpty(floatVal))
+            floatVal = LookupClassProperty(box.Source, "float");
         if (!string.IsNullOrEmpty(floatVal) && floatVal is "left" or "right")
             box.FloatValue = floatVal;
 
@@ -434,6 +508,128 @@ internal sealed class BoxTreeBuilder
             }
         }
         return false;
+    }
+
+    // G15/G17: Walk the IStyledNode tree to find <style> elements and parse their text into
+    // a class → (property → value) dictionary. Only handles flat .class { prop: value; }
+    // rules — no descendant selectors, no media queries, no combinators. Sufficient for the
+    // utility-class patterns used in real templates (w-20, float-left, text-center, border rules).
+    private static Dictionary<string, Dictionary<string, string>> ExtractClassRules(IStyledNode root)
+    {
+        var result = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+        CollectStyleText(root, result);
+        return result;
+    }
+
+    private static void CollectStyleText(IStyledNode node, Dictionary<string, Dictionary<string, string>> result)
+    {
+        if (string.Equals(node.LocalName, "style", StringComparison.OrdinalIgnoreCase)
+            && node.TextContent is { Length: > 0 } css)
+        {
+            ParseClassRulesFromCss(css, result);
+            return; // don't recurse into <style> text children
+        }
+        foreach (IStyledNode child in node.Children)
+            CollectStyleText(child, result);
+    }
+
+    // Minimal CSS class-rule parser. Handles:
+    //   .cls { prop: val; }
+    //   .cls1, .cls2 { prop: val; }
+    //   .cls th, .cls td { prop: val; }   — only the first .cls token is stored
+    // Does NOT handle descendant combinators as separate keys, but stores the rule under
+    // the first class-name encountered, which is sufficient for per-cell fallback.
+    private static void ParseClassRulesFromCss(string css, Dictionary<string, Dictionary<string, string>> result)
+    {
+        int i = 0;
+        int len = css.Length;
+        while (i < len)
+        {
+            // Skip to start of a rule (look for a '.' that starts a class selector)
+            while (i < len && css[i] != '.') { i++; }
+            if (i >= len) break;
+
+            // Collect the selector block up to '{'
+            int selectorStart = i;
+            while (i < len && css[i] != '{') i++;
+            if (i >= len) break;
+            string selectorBlock = css[selectorStart..i].Trim();
+            i++; // skip '{'
+
+            // Collect declarations up to '}'
+            int bodyStart = i;
+            while (i < len && css[i] != '}') i++;
+            if (i >= len) break;
+            string declarationBlock = css[bodyStart..i].Trim();
+            i++; // skip '}'
+
+            // Parse declarations: "prop: value; prop: value"
+            var props = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string decl in declarationBlock.Split(';', StringSplitOptions.RemoveEmptyEntries))
+            {
+                int colon = decl.IndexOf(':');
+                if (colon <= 0) continue;
+                string prop = decl[..colon].Trim().ToLowerInvariant();
+                string val = decl[(colon + 1)..].Trim().ToLowerInvariant();
+                if (!string.IsNullOrEmpty(prop) && !string.IsNullOrEmpty(val))
+                    props[prop] = val;
+            }
+
+            if (props.Count == 0) continue;
+
+            // Extract class names from the selector block.
+            // Split on ',' for grouped selectors; take the first class name (after '.') in each group.
+            foreach (string selectorGroup in selectorBlock.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            {
+                // Find the first class name token: text starting with '.'
+                string trimmedSel = selectorGroup.Trim();
+                if (!trimmedSel.StartsWith('.')) continue;
+                // Class name ends at whitespace, '.', '#', ':', '[', '>'
+                int classStart = 1;
+                int classEnd = classStart;
+                while (classEnd < trimmedSel.Length
+                    && trimmedSel[classEnd] != ' ' && trimmedSel[classEnd] != '.'
+                    && trimmedSel[classEnd] != ':' && trimmedSel[classEnd] != '['
+                    && trimmedSel[classEnd] != '>' && trimmedSel[classEnd] != '\t'
+                    && trimmedSel[classEnd] != '\r' && trimmedSel[classEnd] != '\n')
+                {
+                    classEnd++;
+                }
+                string className = trimmedSel[classStart..classEnd];
+                if (string.IsNullOrEmpty(className)) continue;
+
+                if (!result.TryGetValue(className, out var existing))
+                {
+                    existing = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    result[className] = existing;
+                }
+                // Later rules win (cascade order) — overwrite earlier declarations.
+                foreach (var kv in props)
+                    existing[kv.Key] = kv.Value;
+            }
+        }
+    }
+
+    // Returns the CSS property value from class rules for an element, or null if not found.
+    // Called only when GetComputedStyle failed (AngleSharpComputedStyle.Empty path).
+    // Iterates the element's space-separated class attribute and returns the first match.
+    private string? LookupClassProperty(IStyledNode? node, string property)
+    {
+        if (_classRules == null || node == null) return null;
+        string? classAttr = node.GetAttribute("class");
+        if (string.IsNullOrWhiteSpace(classAttr)) return null;
+        // Iterate classes in order; last non-null wins (matches CSS specificity for same-weight rules).
+        string? found = null;
+        foreach (string cls in classAttr.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (_classRules.TryGetValue(cls.Trim(), out var props)
+                && props.TryGetValue(property, out string? val)
+                && !string.IsNullOrEmpty(val))
+            {
+                found = val;
+            }
+        }
+        return found;
     }
 
     // Pitfall 7: percent widths stored as -1f sentinel — resolved during layout, not here

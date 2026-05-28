@@ -425,7 +425,15 @@ internal sealed class BlockLayoutEngine
 
             case ReplacedBox replacedChild:
             {
-                float h = replacedChild.NaturalHeight > 0f ? replacedChild.NaturalHeight : ctx.TextMetrics.GetLineHeight("serif", 12f);
+                // CSS 2.1 §10.5: explicit CSS height (author stylesheet) takes priority over
+                // intrinsic NaturalHeight. NaturalHeight is the fallback for un-styled <img>.
+                // Line-height is last resort when the image fails to decode (NaturalHeight=0).
+                // G16: G14 fix had this inverted — NaturalHeight (stub 4px) beat CSS height:100px.
+                float h = replacedChild.Height > 0f
+                    ? replacedChild.Height
+                    : replacedChild.NaturalHeight > 0f
+                        ? replacedChild.NaturalHeight
+                        : ctx.TextMetrics.GetLineHeight("serif", 12f);
                 // Fix G2 (phase 8.8): respect ContentOriginX for block-level images inside float
                 // children or table cells (same pattern as HrBox Fix F2).
                 float imgOriginX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
