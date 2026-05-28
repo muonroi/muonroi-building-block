@@ -15,10 +15,19 @@ internal sealed class InlineLayoutEngine
         // Fix A2: use ContentOriginX as the left baseline inside table cells (ContentOriginX > 0
         // means the enclosing CellContext has set an absolute cell column X as the origin).
         // W14: use FloatPlacementSolver.AvailableWidthAtY for line-box X/width instead of cursor fields.
-        // Use lineHeight=0f for pre-check (conservative per PLAN R1 mitigation); re-query at CommitLine if needed.
+        // 8.12a: pass estimated line-height to the pre-check so float exclusion bands are detected
+        // correctly. Use the dominant font's GetLineHeight from the first inline box; fall back to
+        // 12pt (InlineBox default font size) when no inline box precedes the loop.
         float xOrigin = context.ContentOriginX > 0f ? context.ContentOriginX : context.PageMarginLeftPt;
         var cbInline = new ContainingBlock(xOrigin, context.AvailableWidth);
-        var (solvedStartX, solvedAvailWidth) = FloatPlacementSolver.AvailableWidthAtY(context.CurrentY, 0f, cbInline, context.Exclusions);
+        // Peek at the first InlineBox to derive the estimated line height for the pre-check.
+        InlineBox? firstInlineBox = inlineChildren
+            .SelectMany(FlattenInline)
+            .FirstOrDefault();
+        float estimatedLineHeight = firstInlineBox != null
+            ? metrics.GetLineHeight(firstInlineBox.FontFamily, firstInlineBox.FontSize)
+            : 12f; // conservative default — InlineBox.FontSize default is 12pt
+        var (solvedStartX, solvedAvailWidth) = FloatPlacementSolver.AvailableWidthAtY(context.CurrentY, estimatedLineHeight, cbInline, context.Exclusions);
         float startX = solvedStartX;
         float availWidth = solvedAvailWidth > 0f ? solvedAvailWidth : context.AvailableWidth; // safety: degenerate float state
         float lineY = context.CurrentY;
