@@ -42,24 +42,26 @@ public sealed class RealTemplateBaselineTests
 
     private const string TemplateDir = @"D:\Data\Template\Htmls\PreviewRegistion";
 
-    // Minimal 8-bit RGB (color_type=2, bit_depth=8) 1x1 PNG — passes PureImageDecoder.
-    // The standard "iVBORw0KGgo...fFcSJ..." is RGBA (color_type=6); this is the RGB variant.
+    // 4x4 8-bit RGB PNG — known-good (same one GoldenCorpus.cs:317 uses end-to-end through the
+    // writer's IDAT zlib path). The previous 1x1 RGB variant triggered an InvalidDataException
+    // in Inflater.Inflate on its 12-byte IDAT payload (edge case in the writer's zlib decode path);
+    // moving to a larger, suite-proven sample avoids that without masking real layout regressions.
     private const string TinyRgbPngBase64 =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVQI12P4z8AAAAACAAHiIbwzAAAAAElFTkSuQmCC";
+        "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEElEQVR42mM4oaEBRwzEcQDRQxGBoNNuZAAAAABJRU5ErkJggg==";
 
     // Full set of dummy values covering all 18 templates.
     private static readonly Dictionary<string, string> Dummies = new()
     {
         // Common fields (HSLA_E, HANG_E, NHAR_E, CAPR_E, CRCD_E, CSLA_E, CHNG_E)
-        ["title"]              = "Phieu dang ky lam hang",
+        ["title"]              = "Phiếu đăng ký làm hàng",
         ["logo"]               = TinyRgbPngBase64,
         ["barcode"]            = TinyRgbPngBase64,
-        ["operMethodName"]     = "Giao thang",
+        ["operMethodName"]     = "Giao thẳng",
         ["operMethodCode"]     = "GT",
         ["orderNo"]            = "LO12345",
         ["orderDetailNo"]      = "DK67890",
         ["currentDate"]        = "27/05/2026",
-        ["customerName"]       = "CONG TY ABC",
+        ["customerName"]       = "CÔNG TY ABC",
         ["containerNo"]        = "TGHU1234567",
         ["iso"]                = "45G1",
         ["agent"]              = "ONE",
@@ -67,15 +69,15 @@ public sealed class RealTemplateBaselineTests
         ["fullEmpty"]          = "FULL",
         ["returnDate"]         = "30/05/2026",
         ["billNo"]             = "BL-0001\nBL-0002",
-        ["paymentStatus"]      = "Da thanh toan",
-        ["specialHandlings"]   = "Hang thuong",
-        ["linerRemark"]        = "Ghi chu hang tau",
+        ["paymentStatus"]      = "Đã thanh toán",
+        ["specialHandlings"]   = "Hàng thường",
+        ["linerRemark"]        = "Ghi chú hãng tàu",
         ["vesselVoyage"]       = "VESSEL 001N",
-        ["customerRemark"]     = "Khach yeu cau giao gap",
+        ["customerRemark"]     = "Khách yêu cầu giao gấp",
         ["truckNumber"]        = "51C-12345",
         ["chassisNumber"]      = "RM-6789",
         ["phoneNumber"]        = "0901234567",
-        ["username"]           = "Nguyen Van A",
+        ["username"]           = "Nguyễn Văn A",
         ["registrantPhone"]    = "0901234567",
         ["executeDate"]        = "30/05/2026",
 
@@ -89,9 +91,9 @@ public sealed class RealTemplateBaselineTests
         ["linerExpiryDate"]    = "30/06/2026",
         ["o2"]                 = "21.0",
         ["outVoyage"]          = "VESSEL 002N",
-        ["placeLOfDelivery"]   = "Hai Phong",
+        ["placeLOfDelivery"]   = "Hải Phòng",
         ["pod"]                = "VNHPH",
-        ["registrantName"]     = "Tran Thi B",
+        ["registrantName"]     = "Trần Thị B",
         ["sealNo"]             = "SEAL-9876",
         ["temp"]               = "-18",
         ["vent"]               = "CLOSE",
@@ -105,21 +107,21 @@ public sealed class RealTemplateBaselineTests
         // CHNG_F / CSLA_F / GTHA_F / GTND_F — spaced-key variants
         [" billNumber "]       = "BL-2026-001",
         [" chassisNumber "]    = "RM-6789",
-        [" customerName "]     = "CONG TY XYZ",
-        [" customerNotes "]    = "Ghi chu khach",
+        [" customerName "]     = "CÔNG TY XYZ",
+        [" customerNotes "]    = "Ghi chú khách",
         [" date "]             = "27/05/2026",
         [" expirationDate "]   = "30/06/2026",
         [" linerOper "]        = "ONE",
         [" lotNumber "]        = "LOT-001",
         [" operMethodCode "]   = "GT",
-        [" operMethodName "]   = "Giao thang",
-        [" remarksSubtitle "]  = "Ghi chu phu",
-        [" remarksTitle "]     = "Ghi chu chinh",
-        [" title "]            = "Phieu dang ky lam hang",
+        [" operMethodName "]   = "Giao thẳng",
+        [" remarksSubtitle "]  = "Ghi chú phụ",
+        [" remarksTitle "]     = "Ghi chú chính",
+        [" title "]            = "Phiếu đăng ký làm hàng",
         [" truckNumber "]      = "51C-12345",
         [" vesselVoyage "]     = "VESSEL 001N",
         [" unplugDate "]       = "01/06/2026",
-        [" siteName "]         = "Cang Tan Cang",
+        [" siteName "]         = "Cảng Tân Cảng",
 
         // Container sub-object placeholders (CHNG_F, CSLA_F, GTHA_F, GTND_F, HANG_F, HBCX_F, HBND_F, HSLA_F)
         ["container.containerNumber"] = "TGHU1234567",
@@ -140,9 +142,9 @@ public sealed class RealTemplateBaselineTests
         // HANG_E / NHAR_E
         ["bookingNumber"]      = "BOOK-2026-001",
         ["lotNumber"]          = "LOT-001",
-        ["remarksSubtitle"]    = "Ghi chu phu",
-        ["remarksTitle"]       = "Ghi chu chinh",
-        ["customerNotes"]      = "Ghi chu khach",
+        ["remarksSubtitle"]    = "Ghi chú phụ",
+        ["remarksTitle"]       = "Ghi chú chính",
+        ["customerNotes"]      = "Ghi chú khách",
         ["date"]               = "27/05/2026",
 
         // HANG_F
@@ -157,7 +159,7 @@ public sealed class RealTemplateBaselineTests
         // HBL
         ["houseBill"]          = "HBL-001",
         ["masterBill"]         = "MBL-001",
-        ["releaseTo"]          = "CONG TY ABC",
+        ["releaseTo"]          = "CÔNG TY ABC",
         ["validToDate"]        = "30/06/2026",
         ["time"]               = "08:00",
         ["countEpuip"]         = "2",
@@ -169,24 +171,24 @@ public sealed class RealTemplateBaselineTests
         ["item.VesselName"]    = "EVER FORWARD",
         // HBL empty/full sub-fields
         ["empty.Detention"]       = "10",
-        ["empty.PlaceOfEmpty"]    = "Cang Cat Lai",
-        ["full.PlaceOfDelivery"]  = "Hai Phong",
+        ["empty.PlaceOfEmpty"]    = "Cảng Cát Lái",
+        ["full.PlaceOfDelivery"]  = "Hải Phòng",
 
         // BNTT
-        ["address"]            = "123 Nguyen Van Linh, Q7, HCM",
+        ["address"]            = "123 Nguyễn Văn Linh, Q7, HCM",
         ["billName"]           = "INVOICE",
-        ["billedTo"]           = "CONG TY ABC",
+        ["billedTo"]           = "CÔNG TY ABC",
         ["createdDate"]        = "27/05/2026",
-        ["fullName"]           = "Nguyen Van A",
+        ["fullName"]           = "Nguyễn Văn A",
         ["invoiceNo"]          = "INV-2026-001",
-        ["pattern"]            = "Dich vu cang",
+        ["pattern"]            = "Dịch vụ cảng",
         ["serial"]             = "SER-001",
         ["sumBilledAmount"]    = "1000000",
         ["transactionCode"]    = "TC-001",
         // BNTT loop item sub-fields
         ["item.BilledAmount"]  = "1000000",
         ["item.ContainerNo"]   = "TGHU1234567",
-        ["item.Description"]   = "Phi dich vu cang",
+        ["item.Description"]   = "Phí dịch vụ cảng",
         ["item.DiscountAmount"]= "0",
         ["item.OrderDetailNo"] = "DK67890",
         ["item.Rate"]          = "1000000",

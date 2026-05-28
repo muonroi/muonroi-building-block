@@ -230,7 +230,7 @@ internal sealed class BoxTreeBuilder
             // which the writer recognises. An empty FontFamily causes OwnedPdfWriter to silently
             // skip the element (FontFamily guard at line ~671). See BuildChildrenWithListMarker
             // for the same pattern applied to list markers.
-            var fontFamily = style.GetValue("font-family");
+            var fontFamily = NormalizeFontFamily(style.GetValue("font-family"));
             if (!string.IsNullOrWhiteSpace(fontFamily)) inline.FontFamily = fontFamily;
             inline.FontSize = fontSize;
 
@@ -363,6 +363,22 @@ internal sealed class BoxTreeBuilder
         return 0f;
     }
 
+    // Normalize a CSS font-family value: pick the FIRST family in a comma-separated stack,
+    // strip enclosing single/double quotes (CSS keeps them in computed value), and trim.
+    // Real templates declare e.g. font-family:"Times New Roman" — without this, the literal
+    // quotes leak into BundledFonts.TryGetFallback and the GID map lookup → silent rendering
+    // failure (FONT-GID-MAP-MISSING).
+    private static string? NormalizeFontFamily(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return raw;
+        ReadOnlySpan<char> s = raw.AsSpan().Trim();
+        int comma = s.IndexOf(',');
+        if (comma >= 0) s = s[..comma].Trim();
+        if (s.Length >= 2 && (s[0] == '"' || s[0] == '\'') && s[^1] == s[0])
+            s = s[1..^1].Trim();
+        return s.ToString();
+    }
+
     private void BuildChildren(IStyledNode node, BlockBox parent)
     {
         string nodeName = node.LocalName?.ToLowerInvariant() ?? "";
@@ -393,7 +409,7 @@ internal sealed class BoxTreeBuilder
         // when no font-family is cascaded. An empty family would cause the writer to silently
         // skip the marker PositionedElement (FontFamily guard in BuildContentStream).
         float fontSize = ParseLength(liNode.Style.GetValue("font-size")) is float fs and > 0f ? fs : 12f;
-        string? rawFontFamily = liNode.Style.GetValue("font-family");
+        string? rawFontFamily = NormalizeFontFamily(liNode.Style.GetValue("font-family"));
         string fontFamily = string.IsNullOrWhiteSpace(rawFontFamily) ? "serif" : rawFontFamily;
         string? color = liNode.Style.GetValue("color");
 

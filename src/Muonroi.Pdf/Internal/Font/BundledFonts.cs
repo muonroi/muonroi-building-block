@@ -138,6 +138,21 @@ internal static class BundledFonts
         yield return (FamilyMono, FontWeight.Bold, FontStyle.Normal, _monoBold.Value);
     }
 
+    /// <summary>
+    /// Returns all CSS alias names for a given canonical Liberation family name,
+    /// including the canonical name itself. Used by LayoutEngine to aggregate GlyphCollector
+    /// codepoints collected under CSS alias names (e.g. "Times New Roman") when only the
+    /// canonical name (e.g. "Liberation Serif") appears as a fontBytesMap key.
+    /// Returns an empty array for unrecognised canonical names.
+    /// </summary>
+    internal static string[] GetAliasesForCanonical(string canonicalFamily) => canonicalFamily switch
+    {
+        FamilySerif => [FamilySerif, .. SerifAliases],
+        FamilySans  => [FamilySans, .. SansAliases],
+        FamilyMono  => [FamilyMono, .. MonoAliases],
+        _           => []
+    };
+
     private static bool MatchesAny(string name, string[] aliases) =>
         aliases.Any(a => string.Equals(a, name, StringComparison.OrdinalIgnoreCase));
 }

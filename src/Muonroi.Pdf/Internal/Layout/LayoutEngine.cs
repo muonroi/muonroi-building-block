@@ -101,19 +101,63 @@ internal sealed class LayoutEngine
             foreach (KeyValuePair<string, ReadOnlyMemory<byte>> kvp in fontBytesMap)
             {
                 string family = kvp.Key;
-                IReadOnlySet<int> codepoints = usedCodepoints.TryGetValue(family, out IReadOnlySet<int>? cp) ? cp : new HashSet<int>();
-                var subsetter = new TrueTypeFontSubsetter();
-                FontSubsetResult subsetResult = subsetter.Subset(kvp.Value, codepoints);
 
                 FontFaceDeclaration? decl = doc.FontFaces.FirstOrDefault(f => f.Family == family);
-                if (decl == null)
-                    continue;
 
-                embeddedFonts.Add(new EmbeddedFontInfo(
-                    decl.Family, decl.Weight, decl.Style,
-                    subsetResult.SubsetBytes, codepoints,
-                    subsetResult.OldToNewGid, subsetResult.SortedGids,
-                    subsetResult.CpToNewGid));
+                if (decl != null)
+                {
+                    // @font-face path: family name is the CSS @font-face name. GlyphCollector
+                    // collects under this same name since InlineBox.FontFamily = CSS family.
+                    IReadOnlySet<int> codepoints = usedCodepoints.TryGetValue(family, out IReadOnlySet<int>? cp) ? cp : new HashSet<int>();
+                    var subsetter = new TrueTypeFontSubsetter();
+                    FontSubsetResult subsetResult = subsetter.Subset(kvp.Value, codepoints);
+
+                    embeddedFonts.Add(new EmbeddedFontInfo(
+                        decl.Family, decl.Weight, decl.Style,
+                        subsetResult.SubsetBytes, codepoints,
+                        subsetResult.OldToNewGid, subsetResult.SortedGids,
+                        subsetResult.CpToNewGid));
+                }
+                else
+                {
+                    // No @font-face declaration. The family may be a canonical bundled font name
+                    // (e.g. "Liberation Serif") registered by FontPipeline as a fallback.
+                    // GlyphCollector collects under the CSS alias names that InlineBox uses
+                    // (e.g. "Times New Roman", "serif"), NOT under the canonical name.
+                    // For each CSS alias that was actually used (has collected codepoints), produce
+                    // a separate EmbeddedFontInfo keyed by the alias so OwnedPdfWriter's
+                    // cpToNewGidMap lookup by inline.FontFamily resolves correctly.
+                    // Bundled fonts are always embeddable — @font-face is NOT a precondition.
+                    string[] aliases = BundledFonts.GetAliasesForCanonical(family);
+                    if (aliases.Length == 0)
+                    {
+                        // Not a bundled font and no @font-face — skip (font bytes came from
+                        // fontResolver but no declaration exists to describe it; should not occur
+                        // in practice but guard defensively).
+                        continue;
+                    }
+
+                    foreach (string alias in aliases)
+                    {
+                        if (!usedCodepoints.TryGetValue(alias, out IReadOnlySet<int>? aliasCodepoints)
+                            || aliasCodepoints.Count == 0)
+                        {
+                            // This alias was not referenced by any inline box; skip.
+                            continue;
+                        }
+
+                        var subsetter = new TrueTypeFontSubsetter();
+                        FontSubsetResult subsetResult = subsetter.Subset(kvp.Value, aliasCodepoints);
+
+                        embeddedFonts.Add(new EmbeddedFontInfo(
+                            alias,
+                            Muonroi.Pdf.Abstractions.FontWeight.Normal,
+                            Muonroi.Pdf.Abstractions.FontStyle.Normal,
+                            subsetResult.SubsetBytes, aliasCodepoints,
+                            subsetResult.OldToNewGid, subsetResult.SortedGids,
+                            subsetResult.CpToNewGid));
+                    }
+                }
             }
         }
 
