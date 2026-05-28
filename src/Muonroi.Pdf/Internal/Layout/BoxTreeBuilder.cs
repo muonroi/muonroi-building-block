@@ -84,6 +84,10 @@ internal sealed class BoxTreeBuilder
         if (localName == "br")
             return new LineBreakBox { Source = node };
 
+        // <nobr> treated as a single unbreakable inline token (WhiteSpace="nowrap")
+        if (localName == "nobr")
+            return new InlineBox { Source = node, Text = node.TextContent, WhiteSpace = "nowrap" };
+
         if (localName == "hr")
         {
             var hrBox = new HrBox { Source = node };
@@ -179,6 +183,25 @@ internal sealed class BoxTreeBuilder
         if (!string.IsNullOrWhiteSpace(textAlignVal))
             box.TextAlign = textAlignVal.Trim().ToLowerInvariant();
 
+        // background-color / background-image
+        var bgColor = style.GetValue("background-color");
+        if (!string.IsNullOrEmpty(bgColor) && bgColor != "transparent" && bgColor != "initial")
+            box.BackgroundColor = bgColor.Trim();
+
+        var bgImage = style.GetValue("background-image");
+        if (!string.IsNullOrEmpty(bgImage) && bgImage.Contains("data:", StringComparison.OrdinalIgnoreCase)
+            && bgImage.Contains("base64", StringComparison.OrdinalIgnoreCase))
+        {
+            int start = bgImage.IndexOf("url(", StringComparison.OrdinalIgnoreCase) + 4;
+            int end = bgImage.LastIndexOf(')');
+            if (start > 4 && end > start)
+            {
+                string uri = bgImage[start..end].Trim().Trim('\'', '"');
+                if (uri.StartsWith("data:", StringComparison.Ordinal))
+                    box.BackgroundImageSrc = uri;
+            }
+        }
+
         // float / clear (CSS 2.1 §9.5)
         var floatVal = style.GetValue("float");
         if (!string.IsNullOrEmpty(floatVal) && floatVal is "left" or "right")
@@ -252,6 +275,18 @@ internal sealed class BoxTreeBuilder
             var textDecoration = style.GetValue("text-decoration");
             if (!string.IsNullOrEmpty(textDecoration))
                 inline.TextDecoration = textDecoration.Trim().ToLowerInvariant();
+
+            var textTransform = style.GetValue("text-transform");
+            if (!string.IsNullOrEmpty(textTransform) && textTransform == "uppercase")
+                inline.TextTransform = "uppercase";
+
+            var whiteSpace = style.GetValue("white-space");
+            if (!string.IsNullOrEmpty(whiteSpace) && whiteSpace is "pre-wrap" or "pre-line" or "nowrap")
+            {
+                // Don't overwrite a CreateBox-set "nowrap" (from <nobr>) with a weaker value
+                if (inline.WhiteSpace != "nowrap" || whiteSpace == "nowrap")
+                    inline.WhiteSpace = whiteSpace;
+            }
         }
         else if (box is TableBox table)
         {
@@ -312,6 +347,9 @@ internal sealed class BoxTreeBuilder
             return TryParseFloat(span[..^2]);
         if (span.EndsWith("em", StringComparison.Ordinal))
             return TryParseFloat(span[..^2]) * emBase * Units.PxToPt;
+
+        if (span.EndsWith("rem", StringComparison.Ordinal))
+            return TryParseFloat(span[..^3]) * 16f * (float)Units.PxToPt;
 
         // Bare number: treat as px
         return TryParseFloat(span) * Units.PxToPt;

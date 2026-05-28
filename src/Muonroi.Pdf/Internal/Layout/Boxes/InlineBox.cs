@@ -18,4 +18,10 @@ internal sealed class InlineBox : BoxNode
 
     /// <summary>Non-null if this inline box is inside an &lt;a&gt; element.</summary>
     public string? LinkHref { get; set; }
+
+    /// <summary>CSS text-transform: "uppercase" | null.</summary>
+    public string? TextTransform { get; set; }
+
+    /// <summary>CSS white-space: "pre-wrap" | "pre-line" | "nowrap" | null.</summary>
+    public string? WhiteSpace { get; set; }
 }

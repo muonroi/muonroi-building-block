@@ -39,6 +39,12 @@ internal abstract class BoxNode
     /// <summary>CSS clear: "left" | "right" | "both" | null.</summary>
     public string? ClearValue { get; set; }
 
+    /// <summary>CSS background-color value (e.g. "#CCCCCC"). Null = transparent.</summary>
+    public string? BackgroundColor { get; set; }
+
+    /// <summary>Data URI extracted from CSS background-image: url(data:...). Null = no background image.</summary>
+    public string? BackgroundImageSrc { get; set; }
+
     /// <summary>CSS position: "absolute" | "relative" | null (null = static).</summary>
     public string? Position { get; set; }
 

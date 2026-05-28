@@ -152,7 +152,9 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             var pageImages = new List<(string ResourceName, int ObjectId)>();
             foreach (var (rn, oid, src) in imageResources)
             {
-                if (page.Elements.Any(e => e.Source is ReplacedBox rb && rb.Src == src))
+                if (page.Elements.Any(e =>
+                        (e.Source is ReplacedBox rb && rb.Src == src) ||
+                        (e.Source?.BackgroundImageSrc == src)))
                     pageImages.Add((rn, oid));
             }
 
@@ -620,6 +622,48 @@ internal sealed class OwnedPdfWriter : IPdfWriter
 
         foreach (PositionedElement el in page.Elements)
         {
+            // background-color: fill a solid rectangle before any content
+            if (el.Source?.BackgroundColor is { Length: > 0 } bgColorVal)
+            {
+                sb.AppendLine("ET");
+                (float bgR, float bgG, float bgB) = ParseColor(bgColorVal);
+                float bgX = el.Position.X;
+                float bgY = pageHeightPt - el.Position.Y - el.Position.Height;
+                float bgW = el.Position.Width;
+                float bgH = el.Position.Height;
+                sb.Append("q").AppendLine();
+                sb.Append(bgR.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(bgG.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(bgB.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" rg");
+                sb.Append(bgX.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(bgY.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(bgW.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(bgH.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" re");
+                sb.AppendLine("f");
+                sb.AppendLine("Q");
+                sb.AppendLine("BT");
+                currentFamily = null;
+                currentSize = 0f;
+            }
+
+            // background-image: draw data-URI image as XObject at element bounds
+            if (el.Source?.BackgroundImageSrc is { Length: > 0 } bgSrc &&
+                srcToResName.TryGetValue(bgSrc, out string? bgImgRes))
+            {
+                sb.AppendLine("ET");
+                float bgImgX = el.Position.X;
+                float bgImgY = pageHeightPt - el.Position.Y - el.Position.Height;
+                float bgImgW = el.Position.Width;
+                float bgImgH = el.Position.Height;
+                sb.AppendLine("q");
+                sb.AppendLine($"{bgImgW.ToString("F4", CultureInfo.InvariantCulture)} 0 0 {bgImgH.ToString("F4", CultureInfo.InvariantCulture)} {bgImgX.ToString("F4", CultureInfo.InvariantCulture)} {bgImgY.ToString("F4", CultureInfo.InvariantCulture)} cm");
+                sb.AppendLine($"/{bgImgRes} Do");
+                sb.AppendLine("Q");
+                sb.AppendLine("BT");
+                currentFamily = null;
+                currentSize = 0f;
+            }
+
             if (el.Source is ReplacedBox replaced)
             {
                 // Image — handled outside BT/ET block; close text block temporarily

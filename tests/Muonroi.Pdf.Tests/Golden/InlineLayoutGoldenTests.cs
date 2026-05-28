@@ -17,4 +17,12 @@ public sealed class InlineLayoutGoldenTests
         GoldenCorpus.GoldenCase c = GoldenCorpus.ByName(name);
         await GoldenPdf.VerifyAsync(c.Name, c.Html, c.Options);
     }
+
+    [Theory]
+    [MemberData(nameof(GoldenCorpus.InlineLayoutExtendedCasesData), MemberType = typeof(GoldenCorpus))]
+    public async Task InlineLayoutExtendedCase_MatchesBaseline(string name)
+    {
+        GoldenCorpus.GoldenCase c = GoldenCorpus.ByName(name);
+        await GoldenPdf.VerifyAsync(c.Name, c.Html, c.Options);
+    }
 }

@@ -142,7 +142,65 @@ internal sealed class InlineLayoutEngine
                 // LineBreakBox may also appear inside flattened inline stream
                 if (box is null) continue;
 
-                string text = box.Text ?? string.Empty;
+                string rawText = box.Text ?? string.Empty;
+
+                // text-transform: uppercase applied at measurement time (Pitfall 5 — width must match render)
+                string text = box.TextTransform == "uppercase" ? rawText.ToUpperInvariant() : rawText;
+
+                // white-space:nowrap — treat entire text as one unbreakable token
+                if (box.WhiteSpace == "nowrap")
+                {
+                    if (text.Length == 0) continue;
+                    float nobrWidth = 0f;
+                    foreach (char ch in text)
+                        nobrWidth += metrics.GetCharWidth(ch, box.FontFamily, box.FontSize, box.Bold, box.Italic);
+                    // Place as a single token; if it overflows, it overflows (corpus use-case)
+                    float nobrNeeded = lineX == 0f ? nobrWidth : lineX + metrics.GetCharWidth(' ', box.FontFamily, box.FontSize, box.Bold, box.Italic) + nobrWidth;
+                    if (nobrNeeded > availWidth && lineX > 0f)
+                    {
+                        CommitLine(isLastLine: false);
+                        nobrNeeded = nobrWidth;
+                    }
+                    pendingWords.Add((box, text, nobrWidth));
+                    lineX = nobrNeeded;
+                    continue;
+                }
+
+                // white-space:pre-wrap/pre-line — split on '\n' to get logical lines
+                if (box.WhiteSpace is "pre-wrap" or "pre-line")
+                {
+                    string[] logicalLines = text.Split('\n');
+                    for (int li = 0; li < logicalLines.Length; li++)
+                    {
+                        string logLine = logicalLines[li];
+                        // pre-line: collapse spaces; pre-wrap: preserve spaces (include as tokens)
+                        string[] lineWords = box.WhiteSpace == "pre-line"
+                            ? logLine.Split(WordSeparators, StringSplitOptions.RemoveEmptyEntries)
+                            : logLine.Split(' ');  // pre-wrap: keep spaces as separate tokens
+
+                        float swPre = metrics.GetCharWidth(' ', box.FontFamily, box.FontSize, box.Bold, box.Italic);
+                        foreach (var lw in lineWords)
+                        {
+                            if (lw.Length == 0) continue;
+                            float lwWidth = 0f;
+                            foreach (char ch in lw)
+                                lwWidth += metrics.GetCharWidth(ch, box.FontFamily, box.FontSize, box.Bold, box.Italic);
+                            float lwNeeded = lineX == 0f ? lwWidth : lineX + swPre + lwWidth;
+                            if (lwNeeded > availWidth && lineX > 0f)
+                            {
+                                CommitLine(isLastLine: false);
+                                lwNeeded = lwWidth;
+                            }
+                            pendingWords.Add((box, lw, lwWidth));
+                            lineX = lwNeeded;
+                        }
+                        // Each '\n' in the source forces a CommitLine (except after the last segment)
+                        if (li < logicalLines.Length - 1)
+                            CommitLine(isLastLine: false);
+                    }
+                    continue;
+                }
+
                 string[] words = text.Split(WordSeparators, StringSplitOptions.RemoveEmptyEntries);
                 if (words.Length == 0) continue;
 

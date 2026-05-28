@@ -167,6 +167,39 @@ internal static class GoldenCorpus
     };
 
     /// <summary>
+    /// Extended fidelity golden cases: background-color fill + background-image data-URI.
+    /// Added by Plan 07 (Wave 4).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> FidelityExtended = new[]
+    {
+        new GoldenCase(
+            "background-color-block",
+            Doc("div{background-color:#EEEEEE;padding:6px;}",
+                "<div><p>HELLO</p></div>")),
+        new GoldenCase(
+            "background-image-data-uri",
+            Doc("div{background-image:url(" + PngDataUri + ");width:50px;height:50px;}",
+                "<div></div>")),
+    };
+
+    /// <summary>
+    /// Extended inline golden cases: text-transform:uppercase, white-space:pre-line, nobr.
+    /// Added by Plan 07 (Wave 4).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> InlineLayoutExtended = new[]
+    {
+        new GoldenCase(
+            "inline-text-transform-uppercase",
+            Doc("div{}", "<div style=\"text-transform:uppercase\">hello world</div>")),
+        new GoldenCase(
+            "inline-whitespace-pre-line",
+            Doc("td{white-space:pre-line;}", "<table><tr><td>line1\nline2</td></tr></table>")),
+        new GoldenCase(
+            "inline-nobr",
+            Doc("div{width:80px;}", "<div><nobr>no break here</nobr></div>")),
+    };
+
+    /// <summary>
     /// Abs-pos layout golden cases: position:absolute deferred-pass in a position:relative container.
     /// Added by Plan 06 (Wave 3b).
     /// </summary>
@@ -484,6 +517,8 @@ internal static class GoldenCorpus
             .Concat(TablesExtended)
             .Concat(BlockLayoutFloat)
             .Concat(PositionedLayout)
+            .Concat(FidelityExtended)
+            .Concat(InlineLayoutExtended)
             .Concat(PagedMedia)
             .Concat(Images)
             .Concat(Fonts)
@@ -520,6 +555,14 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the positioned layout group only (Plan 06).</summary>
     public static IEnumerable<object[]> PositionedLayoutCasesData() =>
         PositionedLayout.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for extended fidelity cases (Plan 07).</summary>
+    public static IEnumerable<object[]> FidelityExtendedCasesData() =>
+        FidelityExtended.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source yielding <c>[case.Name]</c> for extended inline layout cases (Plan 07).</summary>
+    public static IEnumerable<object[]> InlineLayoutExtendedCasesData() =>
+        InlineLayoutExtended.Select(c => new object[] { c.Name });
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the paged-media group only.</summary>
     public static IEnumerable<object[]> PagedMediaCasesData() =>
