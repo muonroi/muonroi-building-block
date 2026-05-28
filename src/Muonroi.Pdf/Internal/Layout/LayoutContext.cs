@@ -46,4 +46,12 @@ internal sealed class LayoutContext
     public float LeftFloatBottom { get; set; }
     /// <summary>Y coordinate of the bottom of the current right float.</summary>
     public float RightFloatBottom { get; set; }
+
+    /// <summary>
+    /// Placed floats in the current BFC. Populated by BlockLayoutEngine float placement;
+    /// queried by FloatPlacementSolver for every subsequent float or line box.
+    /// Lifecycle: cleared when entering a BFC root (same reset point as the four old cursor fields).
+    /// Per-phase scope: single BFC per RunLayout call — nested BFC stacks deferred to Phase 8.9.
+    /// </summary>
+    public List<FloatExclusion> Exclusions { get; set; } = new();
 }
