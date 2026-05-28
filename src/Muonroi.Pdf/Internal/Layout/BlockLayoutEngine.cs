@@ -198,8 +198,6 @@ internal sealed class BlockLayoutEngine
         {
             float floatWidth = ResolveWidth(floatBlock, ctx);
             float savedY = ctx.CurrentY;
-            float floatHeight = Layout(floatBlock, ctx, output, pageIndex);
-            ctx.CurrentY = savedY;  // restore — float does not advance normal flow
             float floatY = savedY;
 
             if (child.FloatValue == "left")
@@ -211,6 +209,29 @@ internal sealed class BlockLayoutEngine
                 // origin, rather than always falling back to the page left margin.
                 float originX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
                 float floatX = (ctx.LeftFloatRight > 0f ? ctx.LeftFloatRight : originX) + floatBlock.MarginLeft;
+
+                // Fix F1 (phase 8.8): build a derived context with ContentOriginX set to the
+                // float's content-left edge. Float establishes its own BFC (CSS 2.1 §9.4.1) —
+                // reset float accumulators so nested floats inside this child are independent.
+                var floatCtx = new LayoutContext
+                {
+                    PageWidth        = ctx.PageWidth,
+                    PageHeight       = ctx.PageHeight,
+                    AvailableWidth   = floatWidth,
+                    CurrentY         = savedY,
+                    CurrentPageIndex = ctx.CurrentPageIndex,
+                    TotalPages       = ctx.TotalPages,
+                    TextMetrics      = ctx.TextMetrics,
+                    PageMargins      = ctx.PageMargins,
+                    ContentOriginX   = floatX + floatBlock.PaddingLeft + floatBlock.BorderLeft,
+                    LeftFloatRight   = 0f,
+                    RightFloatLeft   = 0f,
+                    LeftFloatBottom  = 0f,
+                    RightFloatBottom = 0f,
+                };
+                float floatHeight = Layout(floatBlock, floatCtx, output, pageIndex);
+                ctx.CurrentY = savedY;  // restore — float does not advance normal flow
+
                 output.Add(new PositionedElement
                 {
                     Source = floatBlock,
@@ -227,6 +248,27 @@ internal sealed class BlockLayoutEngine
                     ? ctx.RightFloatLeft
                     : (ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt) + ctx.AvailableWidth;
                 float floatX = rightOrigin - floatWidth - floatBlock.MarginRight;
+
+                // Fix F1 (phase 8.8, symmetric): derived context for right-float child.
+                var floatCtx = new LayoutContext
+                {
+                    PageWidth        = ctx.PageWidth,
+                    PageHeight       = ctx.PageHeight,
+                    AvailableWidth   = floatWidth,
+                    CurrentY         = savedY,
+                    CurrentPageIndex = ctx.CurrentPageIndex,
+                    TotalPages       = ctx.TotalPages,
+                    TextMetrics      = ctx.TextMetrics,
+                    PageMargins      = ctx.PageMargins,
+                    ContentOriginX   = floatX + floatBlock.PaddingLeft + floatBlock.BorderLeft,
+                    LeftFloatRight   = 0f,
+                    RightFloatLeft   = 0f,
+                    LeftFloatBottom  = 0f,
+                    RightFloatBottom = 0f,
+                };
+                float floatHeight = Layout(floatBlock, floatCtx, output, pageIndex);
+                ctx.CurrentY = savedY;  // restore — float does not advance normal flow
+
                 output.Add(new PositionedElement
                 {
                     Source = floatBlock,
@@ -247,10 +289,12 @@ internal sealed class BlockLayoutEngine
             {
                 float hrHeight = hr.MarginTopHr + hr.Thickness + hr.MarginBottomHr;
                 float hrY = startY + hr.MarginTopHr;
+                // Fix F2 (phase 8.8): respect ContentOriginX when inside a float child or table cell.
+                float hrOriginX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
                 output.Add(new PositionedElement
                 {
                     Source = hr,
-                    Position = new Rect(ctx.PageMarginLeftPt, hrY, ctx.AvailableWidth, hr.Thickness),
+                    Position = new Rect(hrOriginX, hrY, ctx.AvailableWidth, hr.Thickness),
                     PageIndex = pageIndex
                 });
                 ctx.CurrentY = startY + hrHeight;
@@ -293,10 +337,13 @@ internal sealed class BlockLayoutEngine
             case ReplacedBox replacedChild:
             {
                 float h = replacedChild.NaturalHeight > 0f ? replacedChild.NaturalHeight : ctx.TextMetrics.GetLineHeight("serif", 12f);
+                // Fix G2 (phase 8.8): respect ContentOriginX for block-level images inside float
+                // children or table cells (same pattern as HrBox Fix F2).
+                float imgOriginX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
                 output.Add(new PositionedElement
                 {
                     Source = replacedChild,
-                    Position = new Rect(ctx.PageMarginLeftPt + replacedChild.MarginLeft, startY, childWidth, h),
+                    Position = new Rect(imgOriginX + replacedChild.MarginLeft, startY, childWidth, h),
                     PageIndex = pageIndex
                 });
                 ctx.CurrentY = startY + h;
@@ -308,10 +355,12 @@ internal sealed class BlockLayoutEngine
                 float h = TableEngine != null
                     ? TableEngine.Layout(tableChild, ctx, output, pageIndex)
                     : (tableChild.Height > 0f ? tableChild.Height : 100f);
+                // Fix G2-table (phase 8.8): respect ContentOriginX for tables inside float children.
+                float tableOriginX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
                 output.Add(new PositionedElement
                 {
                     Source = tableChild,
-                    Position = new Rect(ctx.PageMarginLeftPt + tableChild.MarginLeft, startY, childWidth, h),
+                    Position = new Rect(tableOriginX + tableChild.MarginLeft, startY, childWidth, h),
                     PageIndex = pageIndex
                 });
                 ctx.CurrentY = startY + h;

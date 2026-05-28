@@ -413,3 +413,4 @@ tools/MockLicenseServer/server_public_key.pem
 !/.planning/phases/
 !/.planning/REQUIREMENTS.md
 !/.planning/ROADMAP.md
+!/.planning/GAPS-AND-DEBT.md
