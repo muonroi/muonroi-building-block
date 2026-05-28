@@ -48,6 +48,13 @@ internal abstract class BoxNode
     /// <summary>CSS position: "absolute" | "relative" | null (null = static).</summary>
     public string? Position { get; set; }
 
+    /// <summary>
+    /// CSS overflow value: "hidden" | "scroll" | "auto" | null (null = visible/default).
+    /// Used by BlockLayoutEngine to determine whether this box establishes a containing block
+    /// for absolutely-positioned descendants (CSS 2.1 §10.1 + pragmatic overflow:hidden convention).
+    /// </summary>
+    public string? Overflow { get; set; }
+
     /// <summary>Raw CSS 'top' value for percentage resolution at layout time.</summary>
     public string? TopRaw { get; set; }
     /// <summary>Raw CSS 'left' value for percentage resolution at layout time.</summary>

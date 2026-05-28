@@ -42,7 +42,17 @@ internal sealed class BlockLayoutEngine
         float contentY = context.CurrentY + box.PaddingTop + box.BorderTop;
 
         // Detect if this box establishes a containing block for abs-pos children.
-        bool isContainingBlock = box.Position == "relative" && box.Width > 0f && box.Height > 0f;
+        // Primary rule: CSS 2.1 §10.1 — position:relative with explicit dimensions.
+        // Pragmatic deviation: overflow:hidden/scroll/auto also establishes a containing block.
+        // Rationale: authors use overflow:hidden as a layout boundary (containing floats,
+        // isolating content). Abs-pos children inside such a box should be anchored to it,
+        // not to the page. CSS 2.1 §10.1 strictly requires position:relative, but
+        // overflow:hidden is the dominant authoring convention for this pattern (e.g. HBND_F
+        // template: <img position:absolute> inside <div style="overflow:hidden"> inside <td>).
+        // Without this deviation the ContainingBlockRect is never set and the image falls back
+        // to page top-left coordinates.
+        bool isContainingBlock = (box.Position == "relative" && box.Width > 0f && box.Height > 0f)
+            || (box.Overflow is "hidden" or "scroll" or "auto" && box.Width > 0f && box.Height > 0f);
         Rect? savedContainingBlock = context.ContainingBlockRect;
 
         // Empty-block collapse (CSS 2.1 §8.3.1 case 3): no children + no border/padding/min-height → height 0

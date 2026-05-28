@@ -285,6 +285,11 @@ internal sealed class BoxTreeBuilder
             box.RightRaw = style.GetValue("right");
         }
 
+        // overflow — stored for containing-block establishment (CSS 2.1 §10.1).
+        var overflowVal = style.GetValue("overflow");
+        if (!string.IsNullOrEmpty(overflowVal) && overflowVal is "hidden" or "scroll" or "auto")
+            box.Overflow = overflowVal;
+
         if (box is InlineBox inline)
         {
             // AngleSharp's GetComputedStyle returns "" (not null) when font-family is not cascaded.
