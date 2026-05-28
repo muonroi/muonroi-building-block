@@ -206,23 +206,49 @@ Plans:
 
 **UI hint**: no
 
-### Phase 9: v1.0 Enterprise
-**Goal**: Enterprise teams govern, version, canary-deploy, and live-preview templates through a self-service Designer; TCIS.ePort runs on the live engine with DinkToPdf removed
-**Depends on**: Phase 8
+### Phase 8.7: Legacy Print-HTML Profile v1 — real-template layout fidelity (open-core)
+**Goal**: Render the real production template corpus faithfully by closing the layout gaps the corpus actually needs, establishing a bounded, document-oriented CSS profile + a clean CSS-decoupled layout IR + a published capability contract. Commercial open-core scope (NOT TCIS-specific). Fail-loud outside the profile; never silently mis-render.
+**Depends on**: Phase 8.6 (rendering surface), Phase 8.5 (owned writer)
+**Corpus / fixtures**: D:\Data\Template\Htmls\PreviewRegistion (18 templates, e.g. HSLA_E/F) vs reference filled PDFs in Downloads. Representative, NOT scope boundary.
+**Scope (from 18-template census 2026-05-28 — ZERO modern CSS present)**:
+  - `float:left/right` + `clear` (gap #1); `position:absolute` (gap #2)
+  - Hardening: `vertical-align` in table cells (673 hits), base64 PNG/JPEG robustness, `rem` units, `white-space:pre-line`
+**Out of scope (fail-loud)**: flexbox, grid, modern CSS (not in corpus); `{{...}}` templating (caller fills via Scriban/Fluid; library stays HTML→PDF). `background-color`/`border` drawing — confirm corpus need during research, else stays deferred.
+**Success Criteria** (what must be TRUE):
+  1. Float multi-column layout renders side-by-side (header logo|title|order-block; `wXX float-left/right` + clearfix) — no vertical-stack collapse.
+  2. `position:absolute` honored relative to its containing block.
+  3. Tables render correctly at corpus scale (nested, colspan/rowspan, `vertical-align` in cells, border-collapse) including the heavy 49–55KB `*_F` files.
+  4. base64 PNG + JPEG render at correct size/position.
+  5. Fidelity gate: all 18 templates rasterized and visually confirmed (Opus) + structurally compared against reference PDFs; large divergence = fail.
+  6. Fail-loud: out-of-profile input throws a clear `PdfFormatException`/policy violation; never silent wrong output.
+  7. No regression: existing suite green; new golden fixtures for the corpus.
+  8. **Capability contract** published (supported layout primitives + template format) + layout IR decoupled from CSS — the seam consumed by the Phase 9 Designer (ui-engine) and registry (control-plane).
+**Plans**: TBD (research in progress)
+**UI hint**: no
+
+### Phase 9: v1.0 Enterprise — multi-repo workstreams (no new repos)
+**Goal**: Enterprise teams govern, version, canary-deploy, and live-preview PDF templates through a self-service Designer; TCIS.ePort runs on the live engine with DinkToPdf removed. PDF becomes a second product line riding the EXISTING open-core SaaS rails (see ecosystem topology) — reusing license-server, control-plane, and ui-engine; NO new repos.
+**Depends on**: Phase 8.7 (capability contract + layout IR is the Designer/registry seam)
 **Requirements**: REG-01, REG-02, REG-03, LIC-01, LIC-02, HOT-01, HOT-02, CANARY-01, CANARY-02, CANARY-03, DESIGN-01, DESIGN-02, DESIGN-03, TCIS-01, TCIS-02, COMM-01, COMM-02
+**Cross-repo workstreams** (each verifies independently; E2E integration last):
+  - **WS-A — building-block** (C# runtime): `Muonroi.Pdf.Enterprise` (registry client, Redis hot-reload subscriber, capability gates via `EnsureFeatureOrThrow`); pure-managed SSIM scorer; PDF capability keys (`pdf.designer`, `pdf.registry`, `pdf.canary`).
+  - **WS-B — control-plane** (private SaaS): add "PDF templates" domain to `ControlPlane.Api` (registry/versioning/maker-checker approval/hot-reload/audit) REUSING the existing ruleset infra; PDF canary quality-gate invoking the SSIM scorer; host the Designer app in `control-plane-dashboard`.
+  - **WS-C — ui-engine** (frontend): new commercial component `@muonroi/ui-engine-pdf-designer` (`MuPdfTemplateDesignerReact`), mirroring `rule-components`/`MuRuleFlowDesignerReact`; emits only capability-contract-valid layout.
+  - **WS-D — license-server** (private SaaS): PDF commercial entitlements in the RSA-signed ActivationProof (issue/revoke).
+  - **TCIS cutover**: lives in TCIS.ePort repo (outside these four); consumes `IMPdfService` + the registry.
 **Success Criteria** (what must be TRUE):
   1. A template published via `Muonroi.Pdf.Enterprise.Registry` propagates to all N nodes within 5 seconds via Redis hot-reload; Tenant A's publish does not invalidate Tenant B's cache
   2. A Canary rollout where SSIM score drops below the configured threshold triggers automatic rollback before 100% traffic
   3. The Designer edit-preview-publish round-trip completes in <10 s at P95; live preview is pinned to the exact engine version deployed in production
   4. TCIS.ePort renders all invoice templates via `IMPdfService` with `DinkToPdf` removed from its dependency graph and zero wkhtmltopdf CVEs in the production vulnerability scan
   5. At least 3 paid Enterprise customers are active and ARR is ≥$60k at v1.0 GA
-**Plans**: TBD
+**Plans**: TBD (plan per workstream after 8.7 closes)
 **UI hint**: yes
 
 ## Progress
 
 **Execution Order:**
-Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5 → 8.6 → 9
+Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5 → 8.6 → 8.7 → 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -236,4 +262,5 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5
 | 8. v0.2 — Source Generator + AOT + DesignSystem | 5/5 | Complete (SC4 deferred to 8.5) | 2026-05-27 |
 | 8.5. Owned PDF Writer (SC4 carry-over) | 7/7 | Complete (SC4 closed, PdfSharpCore removed) | 2026-05-27 |
 | 8.6. Rendering Fidelity (CSS/HTML5/font/image gaps) | 6/6 | Complete (12/12 SC, visual gate, verified Opus) | 2026-05-27 |
-| 9. v1.0 Enterprise | 0/TBD | Not started | - |
+| 8.7. Legacy Print-HTML Profile v1 (float/clear + abs-pos + hardening) | 0/TBD | Research in progress | - |
+| 9. v1.0 Enterprise (multi-repo workstreams A–D) | 0/TBD | Not started | - |
