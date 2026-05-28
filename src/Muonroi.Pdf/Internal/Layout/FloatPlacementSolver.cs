@@ -32,7 +32,88 @@ internal static class FloatPlacementSolver
         FloatSide side,
         ContainingBlock cb,
         IReadOnlyList<FloatExclusion> exclusions)
-        => throw new NotImplementedException();
+    {
+        int maxIterations = exclusions.Count + 1;
+
+        for (int iteration = 0; iteration < maxIterations; iteration++)
+        {
+            float bandTop = candidateY;
+            float bandBottom = candidateY + boxHeight;
+
+            // Collect bounds from exclusions overlapping [bandTop, bandBottom)
+            float maxLeft = cb.X;
+            float minRight = cb.X + cb.Width;
+            float nearestBottom = float.MaxValue;
+            bool hasCollision = false;
+
+            foreach (FloatExclusion ex in exclusions)
+            {
+                // Overlap: ex.Top < bandBottom AND ex.Bottom > bandTop
+                if (ex.Top >= bandBottom || ex.Bottom <= bandTop)
+                    continue;
+
+                if (ex.Side == FloatSide.Left)
+                {
+                    if (ex.Right > maxLeft)
+                        maxLeft = ex.Right;
+                }
+                else
+                {
+                    if (ex.Left < minRight)
+                        minRight = ex.Left;
+                }
+            }
+
+            float availableWidth = minRight - maxLeft;
+
+            if (availableWidth >= boxWidth)
+            {
+                float x = side == FloatSide.Left ? maxLeft : minRight - boxWidth;
+                return (x, candidateY, availableWidth);
+            }
+
+            // Find the nearest bottom among colliding exclusions to advance candidateY
+            foreach (FloatExclusion ex in exclusions)
+            {
+                if (ex.Top >= bandBottom || ex.Bottom <= bandTop)
+                    continue;
+
+                if (ex.Bottom > candidateY && ex.Bottom < nearestBottom)
+                {
+                    nearestBottom = ex.Bottom;
+                    hasCollision = true;
+                }
+            }
+
+            if (!hasCollision || nearestBottom == float.MaxValue)
+                break;
+
+            candidateY = nearestBottom;
+        }
+
+        // Degenerate: return best-effort placement at final candidateY
+        {
+            float bandTop = candidateY;
+            float bandBottom = candidateY + boxHeight;
+            float maxLeft = cb.X;
+            float minRight = cb.X + cb.Width;
+
+            foreach (FloatExclusion ex in exclusions)
+            {
+                if (ex.Top >= bandBottom || ex.Bottom <= bandTop)
+                    continue;
+
+                if (ex.Side == FloatSide.Left && ex.Right > maxLeft)
+                    maxLeft = ex.Right;
+                else if (ex.Side == FloatSide.Right && ex.Left < minRight)
+                    minRight = ex.Left;
+            }
+
+            float availableWidth = Math.Max(0f, minRight - maxLeft);
+            float x = side == FloatSide.Left ? maxLeft : Math.Max(maxLeft, minRight - boxWidth);
+            return (x, candidateY, availableWidth);
+        }
+    }
 
     /// <summary>
     /// Returns (startX, availableWidth) for a line box at the given Y with the given height.
@@ -48,12 +129,43 @@ internal static class FloatPlacementSolver
         float lineHeight,
         ContainingBlock cb,
         IReadOnlyList<FloatExclusion> exclusions)
-        => throw new NotImplementedException();
+    {
+        float bandTop = lineY;
+        float bandBottom = lineY + lineHeight;
+        float maxLeft = cb.X;
+        float minRight = cb.X + cb.Width;
+
+        foreach (FloatExclusion ex in exclusions)
+        {
+            if (ex.Top >= bandBottom || ex.Bottom <= bandTop)
+                continue;
+
+            if (ex.Side == FloatSide.Left && ex.Right > maxLeft)
+                maxLeft = ex.Right;
+            else if (ex.Side == FloatSide.Right && ex.Left < minRight)
+                minRight = ex.Left;
+        }
+
+        return (maxLeft, Math.Max(0f, minRight - maxLeft));
+    }
 
     /// <summary>
     /// Returns the Y below which all exclusions on the given side have ended —
     /// used to implement clear:left / clear:right / clear:both.
     /// </summary>
     public static float ClearY(FloatSide? side, IReadOnlyList<FloatExclusion> exclusions)
-        => throw new NotImplementedException();
+    {
+        float maxBottom = 0f;
+
+        foreach (FloatExclusion ex in exclusions)
+        {
+            if (side == null || ex.Side == side.Value)
+            {
+                if (ex.Bottom > maxBottom)
+                    maxBottom = ex.Bottom;
+            }
+        }
+
+        return maxBottom;
+    }
 }
