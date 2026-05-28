@@ -9,6 +9,7 @@
 
   <ItemGroup>
 <PackageReference Include="BouncyCastle.Cryptography" />
+<PackageReference Include="MailKit" />
 <PackageReference Include="MimeKit" />
 <PackageReference Include="Scriban" />
 </ItemGroup>

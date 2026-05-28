@@ -8,6 +8,7 @@
     <Description>Polly-based resilience patterns for Muonroi: retry, circuit breaker, timeout, and bulkhead policies with OTel integration.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="Polly" />
     <PackageReference Include="Polly.Extensions" />
   </ItemGroup>

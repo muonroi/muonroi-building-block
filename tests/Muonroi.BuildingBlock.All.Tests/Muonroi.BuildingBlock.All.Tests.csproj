@@ -8,11 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MailKit" />
     <PackageReference Include="Microsoft.Bcl.Memory" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
 <PackageReference Include="Moq" />
+<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
 <PackageReference Include="Scriban" />
 </ItemGroup>
 

@@ -45,6 +45,12 @@ internal sealed class BoxTreeBuilder
         BoxNode box = CreateBox(node);
         ResolveCssProperties(node.Style, box);
 
+        // Mark body element (when built as a child of <html>) so ResolveWidth can clamp
+        // its explicit width and G8 suppression in BlockLayoutEngine can skip emitting
+        // the body PositionedElement when it has no visual content.
+        if (string.Equals(node.LocalName, "body", StringComparison.OrdinalIgnoreCase))
+            box.IsBodyRoot = true;
+
         // Recurse into block containers and table structure — inline boxes are atomic
         switch (box)
         {
@@ -75,6 +81,20 @@ internal sealed class BoxTreeBuilder
 
         return box;
     }
+
+    // HTML5 §15.3 UA stylesheet: elements whose computed display is "inline" by default.
+    // AngleSharp in headless mode returns "" (empty string) for display when the value comes
+    // from the UA stylesheet (no explicit declaration). The switch default would map "" → BlockBox,
+    // breaking inline label-value flow. This table provides the correct UA default.
+    // Note: <input>, <button>, <select>, <textarea>, <img> are inline-replaced elements and are
+    // handled elsewhere — do NOT add them here.
+    private static readonly HashSet<string> UaInlineTags = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "span", "label", "a", "strong", "em", "b", "i", "u",
+        "code", "kbd", "mark", "small", "sub", "sup", "time",
+        "cite", "abbr", "q", "var", "samp", "dfn",
+        "tt", "s", "del", "ins", "bdo", "bdi", "ruby", "rt",
+    };
 
     private static BoxNode CreateBox(IStyledNode node)
     {
@@ -130,8 +150,14 @@ internal sealed class BoxTreeBuilder
             return aBox;
         }
 
-        var display = (node.Style.GetValue("display") ?? "block").Trim().ToLowerInvariant();
-        return display switch
+        // G7 fix: AngleSharp returns "" (not null) for display on UA-inline elements in headless
+        // mode. The null-coalescing ?? never fires for "". Map null/empty/whitespace to "inline"
+        // for known UA-inline tags; otherwise default to "block".
+        string rawDisplay = node.Style.GetValue("display") ?? "";
+        string effectiveDisplay = string.IsNullOrWhiteSpace(rawDisplay)
+            ? (UaInlineTags.Contains(localName) ? "inline" : "block")
+            : rawDisplay.Trim().ToLowerInvariant();
+        return effectiveDisplay switch
         {
             "block" or "list-item" or "flow-root" => new BlockBox { Source = node },
             "inline" or "inline-block" => new InlineBox { Source = node, Text = node.TextContent },
@@ -573,8 +599,19 @@ internal sealed class BoxTreeBuilder
     private List<BoxNode> CollectChildren(IStyledNode node)
     {
         var result = new List<BoxNode>();
+        bool hasElementChild = false;
+        foreach (var child in node.Children)
+            if (!child.IsText) { hasElementChild = true; break; }
+
         foreach (var child in node.Children)
         {
+            // G7b: drop whitespace-only text nodes when mixed with element children (CSS inter-
+            // element whitespace). Keep all non-empty text nodes; whitespace-only text between
+            // block siblings is insignificant per CSS spec.
+            if (child.IsText && hasElementChild &&
+                string.IsNullOrWhiteSpace(child.TextContent))
+                continue;
+
             var boxNode = BuildNode(child);
             if (boxNode != null)
                 result.Add(boxNode);

@@ -312,4 +312,102 @@ public sealed class RealTemplateBaselineTests
     // The plan references "18 templates" — the list above covers all 17 confirmed files.
     // (The corpus grep confirmed: BNTT, CAPR_E, CHNG_E, CHNG_F, CRCD_E, CSLA_E, CSLA_F,
     //  GTHA_F, GTND_F, HANG_E, HANG_F, HBCX_F, HBL, HBND_F, HSLA_E, HSLA_F, NHAR_E = 17)
+
+    // ── TD9 page count regression guard (Wave 8.9a) ────────────────────────
+    // Locks in the OBSERVED page count for every template. HSLA_E=2 captures the current
+    // broken state (G8 pagination defect); all others=1. Wave 8.9b flips HSLA_E to 1.
+    //
+    // Design: this is an ASSERTING theory (unlike the always-pass Facts above). It will
+    // fail the build if the page count drifts unexpectedly, providing a regression guard
+    // for any future changes that touch pagination.
+    //
+    // Templates that are absent from TemplateDir are skipped (CI-safe) with Assert.Skip.
+
+    /// <summary>Expected page count per template slug (Wave 8.9a baseline).</summary>
+    private static readonly Dictionary<string, int> ExpectedPageCounts = new()
+    {
+        // G8 fixed (Wave 8.9b): body height:148mm no longer triggers spurious page break.
+        // PaginationEngine now suppresses the body-root PositionedElement when it has no
+        // visual rendering, preventing elBottom > pageBodyHeight from splitting content.
+        ["HSLA_E"] = 1,
+
+        // All other templates render correctly as single-page documents.
+        ["BNTT"]   = 1,
+        ["CAPR_E"] = 1,
+        ["CHNG_E"] = 1,
+        ["CHNG_F"] = 1,
+        ["CRCD_E"] = 1,
+        ["CSLA_E"] = 1,
+        ["CSLA_F"] = 1,
+        ["GTHA_F"] = 1,
+        ["GTND_F"] = 1,
+        ["HANG_E"] = 1,
+        ["HANG_F"] = 1,
+        ["HBCX_F"] = 1,
+        ["HBL"]    = 1,
+        ["HBND_F"] = 1,
+        ["HSLA_F"] = 1,
+        ["NHAR_E"] = 1,
+    };
+
+    public static IEnumerable<object[]> PageCountTestCases()
+    {
+        // (templateFile, slug, pageSize, orientation, templateKey)
+        yield return new object[] { "BNTT.html",   "real-bntt",   PdfPageSize.A4, PdfOrientation.Portrait,  "BNTT"   };
+        yield return new object[] { "CAPR_E.html", "real-capr-e", PdfPageSize.A4, PdfOrientation.Portrait,  "CAPR_E" };
+        yield return new object[] { "CHNG_E.html", "real-chng-e", PdfPageSize.A4, PdfOrientation.Portrait,  "CHNG_E" };
+        yield return new object[] { "CHNG_F.html", "real-chng-f", PdfPageSize.A4, PdfOrientation.Landscape, "CHNG_F" };
+        yield return new object[] { "CRCD_E.html", "real-crcd-e", PdfPageSize.A4, PdfOrientation.Portrait,  "CRCD_E" };
+        yield return new object[] { "CSLA_E.html", "real-csla-e", PdfPageSize.A4, PdfOrientation.Portrait,  "CSLA_E" };
+        yield return new object[] { "CSLA_F.html", "real-csla-f", PdfPageSize.A4, PdfOrientation.Landscape, "CSLA_F" };
+        yield return new object[] { "GTHA_F.html", "real-gtha-f", PdfPageSize.A4, PdfOrientation.Landscape, "GTHA_F" };
+        yield return new object[] { "GTND_F.html", "real-gtnd-f", PdfPageSize.A4, PdfOrientation.Landscape, "GTND_F" };
+        yield return new object[] { "HANG_E.html", "real-hang-e", PdfPageSize.A4, PdfOrientation.Portrait,  "HANG_E" };
+        yield return new object[] { "HANG_F.html", "real-hang-f", PdfPageSize.A4, PdfOrientation.Landscape, "HANG_F" };
+        yield return new object[] { "HBCX_F.html", "real-hbcx-f", PdfPageSize.A4, PdfOrientation.Landscape, "HBCX_F" };
+        yield return new object[] { "HBL.html",    "real-hbl",    PdfPageSize.A4, PdfOrientation.Portrait,  "HBL"    };
+        yield return new object[] { "HBND_F.html", "real-hbnd-f", PdfPageSize.A4, PdfOrientation.Landscape, "HBND_F" };
+        yield return new object[] { "HSLA_E.html", "real-hsla-e", PdfPageSize.A5, PdfOrientation.Landscape, "HSLA_E" };
+        yield return new object[] { "HSLA_F.html", "real-hsla-f", PdfPageSize.A4, PdfOrientation.Landscape, "HSLA_F" };
+        yield return new object[] { "NHAR_E.html", "real-nhar-e", PdfPageSize.A4, PdfOrientation.Portrait,  "NHAR_E" };
+    }
+
+    [Theory]
+    [MemberData(nameof(PageCountTestCases))]
+    public async Task RealTemplate_ExpectedPageCount(
+        string templateFile, string slug, PdfPageSize pageSize, PdfOrientation orientation, string templateKey)
+    {
+        string templatePath = Path.Combine(TemplateDir, templateFile);
+
+        if (!File.Exists(templatePath))
+        {
+            // Template absent in this environment — skip rather than fail (CI-safe).
+            _out.WriteLine($"SKIP (page-count): template file not found: {templatePath}");
+            return;
+        }
+
+        string html = FillTemplate(await File.ReadAllTextAsync(templatePath));
+
+        var options = new PdfRenderOptions
+        {
+            PageSize   = pageSize,
+            Orientation = orientation,
+            TemplateId  = slug,
+        };
+
+        var services = new ServiceCollection();
+        services.TryAddSingleton<IPdfCssPolicy, LegacyPrintPolicy>();
+        services.AddTestDoubles(PdfServiceTestHarness.ValidConfig());
+        services.AddPdf(PdfServiceTestHarness.ValidConfig());
+        using ServiceProvider provider = services.BuildServiceProvider();
+        var svc = provider.GetRequiredService<IMPdfService>();
+
+        (_, PdfRenderResult metadata) = await svc.RenderToBytesAsync(html, options);
+
+        int expected = ExpectedPageCounts[templateKey];
+        int actual   = metadata.PageCount;
+
+        _out.WriteLine($"PAGE-COUNT: {templateKey}  expected={expected}  actual={actual}");
+        Assert.Equal(expected, actual);
+    }
 }

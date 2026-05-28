@@ -10,7 +10,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AsyncEnumerator" />
+    <PackageReference Include="MailKit" />
     <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="Scriban" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
   </ItemGroup>

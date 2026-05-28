@@ -1,6 +1,6 @@
 # Gaps & Tech Debt — Muonroi.Pdf (cross-phase)
 
-> Updated: 2026-05-28 after Phase 8.8 close.
+> Updated: 2026-05-28 after Phase 8.9 close.
 > Purpose: prevent silent accumulation of unresolved debt. Every gap/debt
 > item has a source phase, current status, and assigned next phase.
 
@@ -14,12 +14,14 @@ See also: `.planning/ROADMAP.md` for phase timeline.
 |----|-----|--------|--------|-------------|
 | G1 | Float child text/HR/block X origin | 8.7 | FIXED 8.8 (a5448de) | — |
 | G2 | Image/table in float X origin | 8.7 | FIXED 8.8 (a5448de) | — |
-| G3 | Table `border-collapse:collapse` grid lines not drawn | 8.7 | OPEN | 8.9 |
-| G4 | `<input type=checkbox>` / `<input type=radio>` glyph render | 8.7 | OPEN | 8.9 |
-| G5 | `<input type=text>` border-bottom underline | 8.7 | OPEN | 8.9 |
+| G3 | Table `border-collapse:collapse` grid lines not drawn | 8.7 | FIXED 8.9 (`2ca4830`) | — |
+| G4 | `<input type=checkbox>` / `<input type=radio>` glyph render | 8.7 | DEFERRED (0 templates use; revisit on demand) | 8.11 |
+| G5 | `<input type=text>` border-bottom underline | 8.7 | DEFERRED (0 templates use) | 8.11 |
 | G6 | `vertical-align` edge cases (multi-line cell, mixed inline) | 8.7 | OPEN (rare) | 8.11 |
-| G7 | `<span>`/`<label>` inline default — empty display string (root cause: `BoxTreeBuilder.cs:133`) | 8.7 | OPEN, root cause known | 8.9 |
-| G8 | HSLA_E content on page 2, page 1 empty (body `height:148mm` → pagination overflow) | 8.8 | OPEN | 8.9 |
+| G7 | `<span>`/`<label>` inline default — empty display string | 8.7 | FIXED 8.9 (`0542d76`) | — |
+| G7b | Block element with mixed text + inline element children — text node dropped by `CollectChildren`; siblings not batched in dispatch | 8.9 (discovered post-G7) | FIXED 8.9 (`df229b8`) | — |
+| G8 | HSLA_E content on page 2, page 1 empty (body `height:148mm`) | 8.8 | FIXED 8.9 (`0b5ca9b`) | — |
+| G9 | Image inside float renders as colored placeholder (HBND_F top-left red rect) — likely incomplete G2 or data-URI PNG decode silent fail | 8.9 (discovered) | OPEN | 8.10 or new sub-phase |
 
 ---
 
@@ -35,7 +37,7 @@ See also: `.planning/ROADMAP.md` for phase timeline.
 | TD6 | `ContentOriginX > 0f` ad-hoc fallback check — fragile (`0` is technically valid). Should use `ContentOriginX.HasValue` or a sentinel | 8.8 | LOW | 8.9 or 8.10 |
 | TD7 | `CellContext.AvailableWidth` compound rounding (RESEARCH-LAYOUT.md Bug 9) — never fully fixed in 8.7 | 8.7 | LOW | 8.11 |
 | TD8 | PNG decoder edge case for 1×1 PNG (12-byte IDAT) — `InvalidDataException`; worked around in test fixtures; engine path not hardened | 8.7 | LOW (test fixture only) | 8.9 |
-| TD9 | `VisualRegressionTests` / `RealTemplateBaselineTests` rasterize page 1 only — multi-page templates can have page 1 visually empty without any test failing (uncovered G8) | 8.8 | HIGH (masking real bugs) | 8.9 — extend harness to render all pages OR add page-count assertion |
+| TD9 | `VisualRegressionTests` / `RealTemplateBaselineTests` rasterize page 1 only — multi-page templates can have page 1 visually empty without any test failing (uncovered G8) | 8.8 | HIGH (masking real bugs) | FIXED 8.9 (`e95db78`) — page count assertion added |
 | TD10 | RESEARCH-LAYOUT.md Bug 7 (table cell content X) — fix landed in 8.7 wave 8a but symmetric `BlockBox` blockX origin still uses `LeftFloatRight \|\| PageMarginLeftPt`, not `ContentOriginX` | 8.7 | LOW | 8.10 |
 
 ---
@@ -44,8 +46,8 @@ See also: `.planning/ROADMAP.md` for phase timeline.
 
 | ID | Item | Status | Owner phase |
 |----|------|--------|-------------|
-| C1 | 18/18 visual gate | 17.5/18 (G8 prevents HSLA_E from being on page 1) | 8.9 (G8 fix) |
-| C2 | Logo data-URI PNG render audit across all 18 templates | Likely partial — full audit not done | 8.9 (G2 follow-up) |
+| C1 | 18/18 visual gate | DONE 8.9 — all 18 templates render on page 1 with table grid + inline label-value | — |
+| C2 | Logo data-URI PNG render audit across all 18 templates | OPEN — G9 surfaced (HBND_F red placeholder); full audit deferred | 8.10 or new sub-phase |
 | C3 | Document v1 Legacy Print-HTML Profile public spec | Not started | After 8.11 stabilization |
 | C4 | Failure mode: "unsupported: \<feature\>" error path for out-of-profile CSS | Not implemented (silent mis-render) | 8.11 or charter sub-phase |
 
