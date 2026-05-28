@@ -599,8 +599,19 @@ internal sealed class BoxTreeBuilder
     private List<BoxNode> CollectChildren(IStyledNode node)
     {
         var result = new List<BoxNode>();
+        bool hasElementChild = false;
+        foreach (var child in node.Children)
+            if (!child.IsText) { hasElementChild = true; break; }
+
         foreach (var child in node.Children)
         {
+            // G7b: drop whitespace-only text nodes when mixed with element children (CSS inter-
+            // element whitespace). Keep all non-empty text nodes; whitespace-only text between
+            // block siblings is insignificant per CSS spec.
+            if (child.IsText && hasElementChild &&
+                string.IsNullOrWhiteSpace(child.TextContent))
+                continue;
+
             var boxNode = BuildNode(child);
             if (boxNode != null)
                 result.Add(boxNode);

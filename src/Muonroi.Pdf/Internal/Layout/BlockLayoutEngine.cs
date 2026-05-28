@@ -92,7 +92,13 @@ internal sealed class BlockLayoutEngine
             childContext.RightFloatBottom = context.RightFloatBottom;
         }
 
-        foreach (var child in box.Children)
+        // G7b: batch consecutive inline children (InlineBox / LineBreakBox) into a single
+        // AnonymousBox so InlineLayoutEngine receives them as one flow, not separate calls.
+        // Without batching, each InlineBox child dispatched individually produces its own
+        // line — breaking mixed text+element content like <p>Mã lô: <a>X</a></p>.
+        var effectiveChildren = BatchInlineChildren(box.Children);
+
+        foreach (var child in effectiveChildren)
         {
             float childMarginTop = child.MarginTop;
 
@@ -441,6 +447,78 @@ internal sealed class BlockLayoutEngine
             return bare * (float)Units.PxToPt;
 
         return float.NaN;
+    }
+
+    /// <summary>
+    /// G7b: Groups consecutive inline children (InlineBox / LineBreakBox) that are NOT
+    /// already inside an AnonymousBox into a single AnonymousBox so they flow on the same
+    /// line through one InlineLayoutEngine call.  Non-inline children (BlockBox, TableBox,
+    /// etc.) are passed through unchanged.  If all children are already separated by block-
+    /// level siblings the list is returned as-is (no unnecessary wrapping).
+    /// </summary>
+    private static IReadOnlyList<BoxNode> BatchInlineChildren(IReadOnlyList<BoxNode> children)
+    {
+        // Fast path: 0 or 1 child — nothing to batch.
+        if (children.Count <= 1)
+            return children;
+
+        // Scan for consecutive inline runs of length >= 2.
+        bool needsBatching = false;
+        int runLength = 0;
+        foreach (var c in children)
+        {
+            if (c is InlineBox or LineBreakBox)
+            {
+                runLength++;
+                if (runLength >= 2) { needsBatching = true; break; }
+            }
+            else
+            {
+                runLength = 0;
+            }
+        }
+
+        if (!needsBatching)
+            return children;
+
+        var result = new List<BoxNode>(children.Count);
+        var pendingInline = new List<BoxNode>();
+
+        foreach (var c in children)
+        {
+            if (c is InlineBox or LineBreakBox)
+            {
+                pendingInline.Add(c);
+            }
+            else
+            {
+                if (pendingInline.Count == 1)
+                {
+                    result.Add(pendingInline[0]);
+                }
+                else if (pendingInline.Count > 1)
+                {
+                    var anon = new AnonymousBox();
+                    anon.Children.AddRange(pendingInline);
+                    result.Add(anon);
+                }
+                pendingInline.Clear();
+                result.Add(c);
+            }
+        }
+
+        if (pendingInline.Count == 1)
+        {
+            result.Add(pendingInline[0]);
+        }
+        else if (pendingInline.Count > 1)
+        {
+            var anon = new AnonymousBox();
+            anon.Children.AddRange(pendingInline);
+            result.Add(anon);
+        }
+
+        return result;
     }
 
     private static float ResolveWidth(BoxNode box, LayoutContext ctx)
