@@ -31,8 +31,17 @@ internal sealed class AngleSharpStyledNode : IStyledNode
                 catch (ArgumentException)
                 {
                     // AngleSharp requires a render device to resolve relative units (em, rem, %)
-                    // when running in a headless context without a browser viewport. The computed
-                    // style is unavailable; return Empty so the layout engine uses its own defaults.
+                    // when running in a headless context without a browser viewport. The full
+                    // computed cascade is unavailable, but the element's inline style attribute
+                    // (el.GetStyle()) is always accessible and never throws — it exposes only the
+                    // declarations in style="..." without cascade/inheritance. This recovers inline
+                    // border/padding/dimension declarations (e.g. table-bodered1 per-cell inline
+                    // borders) that would otherwise be silently lost via the Empty path (G17).
+                    // Class-rule properties (width:%, float, border from class selectors) still
+                    // require the class-rule fallback in BoxTreeBuilder (see G15 fix).
+                    ICssStyleDeclaration? inlineStyle = el.GetStyle();
+                    if (inlineStyle != null)
+                        return new AngleSharpComputedStyle(inlineStyle);
                     return AngleSharpComputedStyle.Empty;
                 }
 
