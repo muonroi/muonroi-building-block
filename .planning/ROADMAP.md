@@ -16,7 +16,10 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 8: v0.2 — Source Generator + AOT + DesignSystem** — Compile-time `IMPdfRenderer<T>` fast path, trim-safe Alpine container, default design system templates (completed 2026-05-27; SC4 alloc target deferred to Phase 8.5)
 - [x] **Phase 8.5: Owned PDF Writer (SC4 carry-over)** — Replaced PdfSharpCore with an owned, allocation-controlled, AOT-trivial PDF 1.7 writer (CID Type0/Identity-H + ToUnicode, FlateDecode via ZLibStream, JPEG/PNG XObjects). Closes ALLOC-01/SC4: total alloc 51.62 MB vs 288.96 threshold (82% headroom). PdfSharpCore fully removed (+ transitives ImageSharp/CodePages). 215/215 tests, 56 snapshots re-baselined. Verified 7/7 (08.5-VERIFICATION.md). Completed 2026-05-27.
 - [x] **Phase 8.7: Legacy Print-HTML Profile v1** — float/clear + position:absolute + table hardening + real-template corpus (completed 2026-05-28; 94% gate, HSLA_E deferred to 8.8)
-- [ ] **Phase 8.8: Layout Hardening** — Root-cause HSLA_E A5 landscape + ExcludedShapes float refactor + nested BFC verification; target 18/18 visual gate
+- [ ] **Phase 8.8: Float Child Rendering** — HSLA_E + image-in-float fix (G1+G2), root cause from `RESEARCH-HSLA-E.md` (`ContentOriginX` not propagated to float children). Goal: 18/18 visual gate + logo visible.
+- [ ] **Phase 8.9: Visual Fidelity Primitives** — G3 table grid lines (`border-collapse:collapse`), G4 checkbox/radio glyphs, G5 form field underline. Goal: form-style templates structurally match reference fill PDFs.
+- [ ] **Phase 8.10: Float Algorithm Refactor (ExcludedShapes)** — Clean-room WeasyPrint `avoid_collisions`. 6 atomic commits. Byte-identical. Foundation for nested BFC + `position:absolute`.
+- [ ] **Phase 8.11: Layout Edge Cases** — Vertical-align edge, nested BFC stacks, `position:absolute` × float, page-break-inside floats, shrink-to-fit auto float, CSS `column-count` interaction. Per-template demand. TBD.
 - [ ] **Phase 9: v1.0 Enterprise** — Postgres template registry, Redis hot-reload, SSIM canary, web designer, TCIS cutover
 
 ## Phase Details
@@ -241,19 +244,62 @@ Plans:
 
 **UI hint**: no
 
-### Phase 8.8: Layout Hardening — A5 landscape + ExcludedShapes refactor
-**Goal**: Close the HSLA_E A5 landscape known-issue and replace the cursor-based float positioning with a correct ExcludedShapes list algorithm to reach 18/18 visual gate and algorithmically clean float positioning matching CSS 2.1 §9.5.
+### Phase 8.8: Float Child Rendering — HSLA_E fix (G1 + G2)
+**Goal**: 18/18 real-template visual gate + logo image visible in float children. Root cause: `ContentOriginX` not propagated into float-child dispatch (same fix pattern as Fix A2 in Wave 8c, missed for float children).
 **Depends on**: Phase 8.7 (all prior fixes, capability contract, real-template harness)
 **Scope**:
-  (a) Root-cause HSLA_E A5 landscape render — instrument layout trace with explicit coordinate logging; fix body+float interaction in landscape orientation (297 mm wide page).
-  (b) Refactor float positioning from cursor model (`LeftFloatRight`/`RightFloatLeft` fields on LayoutContext) to ExcludedShapes list query — WeasyPrint clean-room algorithm (see `.planning/phase-08.7/RESEARCH-OSS-REFS.md` §1). Correct overlap resolution when exclusion zones interact from both sides.
-  (c) Verify float context propagation across nested containing blocks (nested BFC roots with floated children).
+  - G1: text/HR/block inside float uses correct X origin (`ContentOriginX = floatX + paddingLeft + borderLeft`)
+  - G2: image inside float — `ImageBox` dispatch also reads `ContentOriginX`; HSLA_F logo visible
 **Success Criteria** (what must be TRUE):
-  1. HSLA_E A5 landscape renders with visible content (body text + floated columns) matching the reference PDF within acceptable visual tolerance.
-  2. Float positioning uses an ExcludedShapes list query; `LeftFloatRight`/`RightFloatLeft` cursor fields removed from LayoutContext.
-  3. Nested BFC float propagation verified by dedicated golden tests.
-  4. 18/18 visual gate (all templates pass); 7026+ unit tests green; goldens re-baselined.
-**Status**: planned
+  1. HSLA_E renders 3-column header + customer section + table + footer; non-empty, no blank page.
+  2. HSLA_F logo image visible and correctly positioned inside float column.
+  3. All 17 previously-passing templates regression-clean.
+  4. 18/18 visual gate; 7026+ unit tests green.
+**Status**: Planned 2026-05-28 (split from broader 8.8 — HSLA_E float-child fix only)
+
+### Phase 8.9: Visual Fidelity Primitives — table grid + checkbox + form underline
+**Goal**: Form-style templates structurally match reference fill PDFs. Three independent gap items all fixable without touching float algorithm.
+**Depends on**: Phase 8.8
+**Scope**:
+  - G3: `border-collapse:collapse` cells draw cell boundary grid lines (`OwnedPdfWriter` TableCellBox dispatch)
+  - G4: `<input type="checkbox">` / `<input type="radio">` render as glyphs (square + X/✓), not stray text fragments — new `InputControlBox` node + writer dispatch
+  - G5: `<input type="text">` renders with `border-bottom` underline — new `InputFieldBox` node
+**Success Criteria** (what must be TRUE):
+  1. All real templates with `border-collapse:collapse` show grid lines.
+  2. Checkboxes render as glyphs; stray `×` fragment gone.
+  3. Text inputs render with bottom underline.
+  4. 7026+ unit tests + new tests pass; no regression on HSLA_F/HBL/CAPR_E.
+**Note**: requires RESEARCH.md before execution — TBD at phase entry.
+**Status**: Planned 2026-05-28
+
+### Phase 8.10: Float Algorithm Refactor (ExcludedShapes)
+**Goal**: Replace cursor-based float positioning (`LeftFloatRight`/`RightFloatLeft` scalar fields) with a correct ExcludedShapes list query (WeasyPrint clean-room `avoid_collisions`). Pure algorithmic refactor — byte-identical PDF output. Foundation for nested BFC stacks and `position:absolute` × float.
+**Depends on**: Phase 8.9
+**Scope**: 6 atomic commits (see `.planning/phase-08.10/PLAN.md`):
+  1. Add `FloatSide` / `FloatExclusion` / `FloatPlacementSolver` stubs
+  2. Implement solver + 14 synthetic unit tests
+  3. Mirror cursor writes into Exclusions list (cursor still authoritative)
+  4. Flip all reads to FloatPlacementSolver (cursors write-only)
+  5. Remove cursor fields; Exclusions is sole source of truth
+  6. Add `clear:left/right/both` tests + verify `ClearY` behavior
+**Success Criteria** (what must be TRUE):
+  1. Float positioning uses `FloatExclusion` list query; cursor fields removed.
+  2. `FloatPlacementSolverTests` covers ≥10 synthetic scenarios incl. multi-row, mixed-side, clear.
+  3. Byte-identical PDF goldens at steps 3–5.
+  4. 7026+ unit tests + ≥14 new solver tests pass.
+**Status**: Planned 2026-05-28
+
+### Phase 8.11: Layout Edge Cases
+**Goal**: Close remaining layout edge cases surfaced by real templates and CSS 2.1 compliance work. All items are per-template demand — implement as needed.
+**Depends on**: Phase 8.10
+**Scope (TBD — items listed by priority):**
+  - Vertical-align edge cases (non-middle/top/bottom in mixed inline contexts)
+  - Nested BFC stacks (`overflow:hidden`, `inline-block` float isolation)
+  - `position:absolute` × float interaction
+  - Page-break-inside floats (float straddles page boundary)
+  - Shrink-to-fit `width:auto` floats (min-content pre-pass)
+  - CSS `column-count` × float interaction (low priority, not in v1 corpus)
+**Status**: Planned 2026-05-28
 
 ### Phase 9: v1.0 Enterprise — multi-repo workstreams (no new repos)
 **Goal**: Enterprise teams govern, version, canary-deploy, and live-preview PDF templates through a self-service Designer; TCIS.ePort runs on the live engine with DinkToPdf removed. PDF becomes a second product line riding the EXISTING open-core SaaS rails (see ecosystem topology) — reusing license-server, control-plane, and ui-engine; NO new repos.
@@ -277,7 +323,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5 → 8.6 → 8.7 → 8.8 → 9
+Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5 → 8.6 → 8.7 → 8.8 → 8.9 → 8.10 → 8.11 → 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -292,5 +338,8 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5
 | 8.5. Owned PDF Writer (SC4 carry-over) | 7/7 | Complete (SC4 closed, PdfSharpCore removed) | 2026-05-27 |
 | 8.6. Rendering Fidelity (CSS/HTML5/font/image gaps) | 6/6 | Complete (12/12 SC, visual gate, verified Opus) | 2026-05-27 |
 | 8.7. Legacy Print-HTML Profile v1 (float/clear + abs-pos + hardening) | 8/8 | Complete (94% gate, HSLA_E deferred to 8.8) | 2026-05-28 |
-| 8.8. Layout Hardening (A5 landscape + ExcludedShapes refactor) | 0/TBD | Planned | - |
+| 8.8. Float Child Rendering (HSLA_E + image-in-float) | 0/TBD | Planned | - |
+| 8.9. Visual Fidelity Primitives (table grid + checkbox + form underline) | 0/TBD | Planned | - |
+| 8.10. Float Algorithm Refactor (ExcludedShapes) | 0/TBD | Planned | - |
+| 8.11. Layout Edge Cases | 0/TBD | Planned | - |
 | 9. v1.0 Enterprise (multi-repo workstreams A–D) | 0/TBD | Not started | - |
