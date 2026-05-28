@@ -185,7 +185,7 @@ internal sealed class BoxTreeBuilder
 
         // background-color / background-image
         var bgColor = style.GetValue("background-color");
-        if (!string.IsNullOrEmpty(bgColor) && bgColor != "transparent" && bgColor != "initial")
+        if (!string.IsNullOrEmpty(bgColor) && !IsTransparentColor(bgColor))
             box.BackgroundColor = bgColor.Trim();
 
         var bgImage = style.GetValue("background-image");
@@ -322,6 +322,38 @@ internal sealed class BoxTreeBuilder
                 replaced.NaturalHeight = decoded.Height * Units.PxToPt;
             }
         }
+    }
+
+    /// <summary>
+    /// Returns true if the CSS color value represents a fully-transparent color that should
+    /// not generate a background-fill rectangle in the PDF content stream.
+    ///
+    /// AngleSharp normalizes CSS 'transparent' to 'rgba(0, 0, 0, 0)' in computed style.
+    /// Without this check, those boxes get BackgroundColor = "rgba(0, 0, 0, 0)" and
+    /// ParseColor falls back to black (0,0,0), producing a solid black fill over the page.
+    /// </summary>
+    private static bool IsTransparentColor(string? color)
+    {
+        if (string.IsNullOrEmpty(color)) return true;
+        string c = color.Trim();
+        if (c.Equals("transparent", StringComparison.OrdinalIgnoreCase)) return true;
+        if (c.Equals("initial", StringComparison.OrdinalIgnoreCase)) return true;
+
+        // AngleSharp normalises CSS transparent to rgba(0, 0, 0, 0) — catch both
+        // the canonical form and any whitespace variants.
+        if (c.StartsWith("rgba(", StringComparison.OrdinalIgnoreCase))
+        {
+            // Extract alpha channel (4th component after the last comma)
+            int lastComma = c.LastIndexOf(',');
+            if (lastComma >= 0)
+            {
+                ReadOnlySpan<char> alphaSpan = c.AsSpan(lastComma + 1).Trim().TrimEnd(')').Trim();
+                if (float.TryParse(alphaSpan, System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out float alpha))
+                    return alpha == 0f;
+            }
+        }
+        return false;
     }
 
     // Pitfall 7: percent widths stored as -1f sentinel — resolved during layout, not here

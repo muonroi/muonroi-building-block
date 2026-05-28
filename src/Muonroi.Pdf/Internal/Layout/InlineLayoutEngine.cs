@@ -11,8 +11,14 @@ internal sealed class InlineLayoutEngine
     public float Layout(IEnumerable<BoxNode> inlineChildren, LayoutContext context, List<PositionedElement> output, int pageIndex, PositionedPage? page = null)
     {
         var metrics = context.TextMetrics;
-        float availWidth = context.AvailableWidth;
-        float startX = context.PageMarginLeftPt;
+        // CSS 2.1 §9.5: inline content must be narrowed by any active floats in the same BFC.
+        // LeftFloatRight is the right edge of the left float (content starts after it).
+        // RightFloatLeft is the left edge of the right float (content ends before it).
+        float leftFloatClearX = context.LeftFloatRight > 0f ? context.LeftFloatRight : context.PageMarginLeftPt;
+        float rightFloatBoundX = context.RightFloatLeft > 0f ? context.RightFloatLeft : (context.PageMarginLeftPt + context.AvailableWidth);
+        float startX = leftFloatClearX;
+        float availWidth = rightFloatBoundX - leftFloatClearX;
+        if (availWidth <= 0f) availWidth = context.AvailableWidth; // safety: degenerate float state
         float lineY = context.CurrentY;
         float totalHeight = 0f;
 

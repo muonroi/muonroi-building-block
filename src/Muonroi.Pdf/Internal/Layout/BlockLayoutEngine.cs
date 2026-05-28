@@ -252,10 +252,14 @@ internal sealed class BlockLayoutEngine
                 if (blockChild.TextAlign == null && ctx.TextAlign != null)
                     blockChild.TextAlign = ctx.TextAlign;
                 float h = Layout(blockChild, ctx, output, pageIndex);
+                // CSS 2.1 §9.5: non-floated block children start after any left-float edge.
+                float blockX = ctx.LeftFloatRight > 0f
+                    ? ctx.LeftFloatRight + blockChild.MarginLeft
+                    : ctx.PageMarginLeftPt + blockChild.MarginLeft;
                 output.Add(new PositionedElement
                 {
                     Source = blockChild,
-                    Position = new Rect(ctx.PageMarginLeftPt + blockChild.MarginLeft, startY, childWidth, h),
+                    Position = new Rect(blockX, startY, childWidth, h),
                     PageIndex = pageIndex
                 });
                 // Do NOT add MarginBottom here — the parent loop handles margin collapsing separately.

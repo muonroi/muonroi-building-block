@@ -509,6 +509,34 @@ internal static class GoldenCorpus
                 "<p><a href=\"https://example.com\">Click here to visit example.com</a></p>")),
     };
 
+    /// <summary>
+    /// Wave 7 regression cases: Bug Y (transparent/rgb background-color parsing) and
+    /// Bug X (float side-by-side inline content positioning).
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> Wave7Regression = new[]
+    {
+        // Bug Y regression: AngleSharp returns rgb(r,g,b) for color values. Verify the teal
+        // background (#008080 = rgb(0,128,128)) is written as non-zero rg in the content stream,
+        // not as the black (0,0,0) fallback.
+        new GoldenCase(
+            "w7-rgb-background-color",
+            Doc("div{background-color:#008080;padding:4px;}",
+                "<div><p>Teal bg</p></div>")),
+
+        // Bug Y regression: transparent elements (rgba(0,0,0,0)) must not produce a black fill rect.
+        new GoldenCase(
+            "w7-transparent-background-no-fill",
+            Doc("div{background-color:transparent;padding:4px;}",
+                "<div><p>No fill</p></div>")),
+
+        // Bug X regression: inline text that follows a float:left block must start at
+        // LeftFloatRight (i.e. shifted right of the float), not at PageMarginLeft.
+        new GoldenCase(
+            "w7-float-left-inline-beside",
+            Doc(".left{float:left;width:30%;}.text{margin:0;}",
+                "<div><div class=\"left\">FLOAT</div><p class=\"text\">BESIDE</p></div>")),
+    };
+
     /// <summary>Every registered case across all groups. Later plans extend by concatenation.</summary>
     internal static readonly IReadOnlyList<GoldenCase> AllCases =
         BlockLayout
@@ -526,6 +554,7 @@ internal static class GoldenCorpus
             .Concat(Vietnamese)
             .Concat(FidelityLayout)
             .Concat(Html5Semantics)
+            .Concat(Wave7Regression)
             .ToList();
 
     /// <summary>MemberData source yielding <c>[case.Name]</c> for every registered case.</summary>
@@ -587,6 +616,10 @@ internal static class GoldenCorpus
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the HTML5 semantics group only.</summary>
     public static IEnumerable<object[]> Html5SemanticsCasesData() =>
         Html5Semantics.Select(c => new object[] { c.Name });
+
+    /// <summary>MemberData source for Wave 7 regression cases (Bug X float + Bug Y color).</summary>
+    public static IEnumerable<object[]> Wave7RegressionCasesData() =>
+        Wave7Regression.Select(c => new object[] { c.Name });
 
     /// <summary>
     /// Per-call <see cref="IResourceResolver"/> stub returning the embedded deterministic PNG for any
