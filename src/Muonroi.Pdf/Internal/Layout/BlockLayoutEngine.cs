@@ -83,6 +83,7 @@ internal sealed class BlockLayoutEngine
             childContext.RightFloatLeft = 0f;
             childContext.LeftFloatBottom = 0f;
             childContext.RightFloatBottom = 0f;
+            childContext.Exclusions = new List<FloatExclusion>();  // W5: fresh BFC — reset exclusions list
         }
         else
         {
@@ -90,6 +91,7 @@ internal sealed class BlockLayoutEngine
             childContext.RightFloatLeft = context.RightFloatLeft;
             childContext.LeftFloatBottom = context.LeftFloatBottom;
             childContext.RightFloatBottom = context.RightFloatBottom;
+            childContext.Exclusions = context.Exclusions;  // W6: propagate exclusions by same reference within BFC
         }
 
         // G7b: batch consecutive inline children (InlineBox / LineBreakBox) into a single
@@ -246,6 +248,7 @@ internal sealed class BlockLayoutEngine
                 });
                 ctx.LeftFloatRight = floatX + floatWidth;
                 ctx.LeftFloatBottom = floatY + floatHeight;
+                ctx.Exclusions.Add(new FloatExclusion(floatX, floatY, floatX + floatWidth, floatY + floatHeight, FloatSide.Left));  // W9/W10: mirror into exclusions list
             }
             else // "right"
             {
@@ -283,6 +286,7 @@ internal sealed class BlockLayoutEngine
                 });
                 ctx.RightFloatLeft = floatX;
                 ctx.RightFloatBottom = floatY + floatHeight;
+                ctx.Exclusions.Add(new FloatExclusion(floatX, floatY, floatX + floatWidth, floatY + floatHeight, FloatSide.Right));  // W11/W12: mirror into exclusions list
             }
 
             // Float is removed from normal flow: do NOT advance ctx.CurrentY.
