@@ -1,6 +1,6 @@
 # Gaps & Tech Debt — Muonroi.Pdf (cross-phase)
 
-> Updated: 2026-05-28 after Phase 8.9 close.
+> Updated: 2026-05-28 after Phase 8.10 close (ExcludedShapes refactor).
 > Purpose: prevent silent accumulation of unresolved debt. Every gap/debt
 > item has a source phase, current status, and assigned next phase.
 
@@ -30,15 +30,15 @@ See also: `.planning/ROADMAP.md` for phase timeline.
 | ID | Debt | Source | Risk | Owner phase |
 |----|------|--------|------|-------------|
 | TD1 | `HslaERootCauseDiagnostic.cs` committed without `[Skip]` — runs on every CI build | 8.8 | LOW (fast) but pollutes signal | 8.9 — add `[Skip]` OR repurpose as permanent assertion |
-| TD2 | Cursor-based float positioning (`LeftFloatRight` etc.) — fragile for nested BFC, `position:absolute` | 8.7 | MED (foundation for 8.11) | 8.10 (ExcludedShapes refactor) |
-| TD3 | Float does not consistently establish its own BFC — `bfcRoot = isRoot \|\| IsBfcRoot(box)` in `BlockLayoutEngine.Layout` does not detect float boxes | 8.7 | LOW for legacy print templates | 8.10 or 8.11 |
-| TD4 | Float context propagation across nested containing blocks not fully verified | 8.7 | MED | 8.10 |
-| TD5 | Right-float symmetric fix via `LeftFloatRight + ctx.AvailableWidth` math — works but coupled to cursor model | 8.7 | LOW | 8.10 (refactor cleans this) |
+| TD2 | Cursor-based float positioning (`LeftFloatRight` etc.) — fragile for nested BFC, `position:absolute` | 8.7 | MED (foundation for 8.11) | FIXED 8.10 (`289a11f`) — ExcludedShapes |
+| TD3 | Float does not consistently establish its own BFC — `bfcRoot = isRoot \|\| IsBfcRoot(box)` in `BlockLayoutEngine.Layout` does not detect float boxes | 8.7 | LOW for legacy print templates | 8.11 (still open; cursor removal didn't change BFC detection) |
+| TD4 | Float context propagation across nested containing blocks not fully verified | 8.7 | MED | FIXED 8.10 (`807e050`) — shared Exclusions ref |
+| TD5 | Right-float symmetric fix via `LeftFloatRight + ctx.AvailableWidth` math — works but coupled to cursor model | 8.7 | LOW | FIXED 8.10 (`2d61007`) — solver handles both sides uniformly |
 | TD6 | `ContentOriginX > 0f` ad-hoc fallback check — fragile (`0` is technically valid). Should use `ContentOriginX.HasValue` or a sentinel | 8.8 | LOW | 8.9 or 8.10 |
 | TD7 | `CellContext.AvailableWidth` compound rounding (RESEARCH-LAYOUT.md Bug 9) — never fully fixed in 8.7 | 8.7 | LOW | 8.11 |
 | TD8 | PNG decoder edge case for 1×1 PNG (12-byte IDAT) — `InvalidDataException`; worked around in test fixtures; engine path not hardened | 8.7 | LOW (test fixture only) | 8.9 |
 | TD9 | `VisualRegressionTests` / `RealTemplateBaselineTests` rasterize page 1 only — multi-page templates can have page 1 visually empty without any test failing (uncovered G8) | 8.8 | HIGH (masking real bugs) | FIXED 8.9 (`e95db78`) — page count assertion added |
-| TD10 | RESEARCH-LAYOUT.md Bug 7 (table cell content X) — fix landed in 8.7 wave 8a but symmetric `BlockBox` blockX origin still uses `LeftFloatRight \|\| PageMarginLeftPt`, not `ContentOriginX` | 8.7 | LOW | 8.10 |
+| TD10 | RESEARCH-LAYOUT.md Bug 7 (table cell content X) — fix landed in 8.7 wave 8a but symmetric `BlockBox` blockX origin still uses `LeftFloatRight \|\| PageMarginLeftPt`, not `ContentOriginX` | 8.7 | LOW | FIXED 8.10 (`2d61007`) — `AvailableWidthAtY(startY, 0f, cb, exclusions).StartX` |
 
 ---
 

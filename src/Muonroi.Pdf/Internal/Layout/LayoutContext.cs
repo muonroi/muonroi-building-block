@@ -37,13 +37,11 @@ internal sealed class LayoutContext
     // inside cells renders at the correct column position, not at the page left margin.
     public float ContentOriginX { get; set; }
 
-    // Float accumulator — scoped to a BFC; reset to 0f when entering a BFC root.
-    /// <summary>X coordinate of the right edge of the current left float.</summary>
-    public float LeftFloatRight { get; set; }
-    /// <summary>X coordinate of the left edge of the current right float.</summary>
-    public float RightFloatLeft { get; set; }
-    /// <summary>Y coordinate of the bottom of the current left float.</summary>
-    public float LeftFloatBottom { get; set; }
-    /// <summary>Y coordinate of the bottom of the current right float.</summary>
-    public float RightFloatBottom { get; set; }
+    /// <summary>
+    /// Placed floats in the current BFC. Populated by BlockLayoutEngine float placement;
+    /// queried by FloatPlacementSolver for every subsequent float or line box.
+    /// Lifecycle: cleared when entering a BFC root (same reset point as the four old cursor fields).
+    /// Per-phase scope: single BFC per RunLayout call — nested BFC stacks deferred to Phase 8.9.
+    /// </summary>
+    public List<FloatExclusion> Exclusions { get; set; } = new();
 }
