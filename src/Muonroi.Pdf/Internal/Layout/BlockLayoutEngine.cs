@@ -24,6 +24,8 @@ internal sealed class BlockLayoutEngine
     {
         if (box is TableCellBox) return true;
         if (box.Display == "inline-block") return true;
+        // CSS 2.1 §9.5: floated elements establish a new BFC (TD3).
+        if (!string.IsNullOrEmpty(box.FloatValue) && box.FloatValue != "none") return true;
         var overflow = box.Source?.Style?.GetValue("overflow");
         if (overflow is "hidden" or "scroll" or "auto") return true;
         // Root element: BlockBox at depth 0 has no parent — caller passes root directly
