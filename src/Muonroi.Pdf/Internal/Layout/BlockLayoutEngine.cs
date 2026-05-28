@@ -307,19 +307,35 @@ internal sealed class BlockLayoutEngine
                 if (blockChild.TextAlign == null && ctx.TextAlign != null)
                     blockChild.TextAlign = ctx.TextAlign;
                 float h = Layout(blockChild, ctx, output, pageIndex);
-                // CSS 2.1 §9.5: non-floated block children start after any left-float edge.
-                // Fix A2: use ContentOriginX as the left baseline when inside a table cell
-                // (ContentOriginX > 0 means we are inside a cell, not page normal flow).
-                float xOrigin = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
-                float blockX = ctx.LeftFloatRight > 0f
-                    ? ctx.LeftFloatRight + blockChild.MarginLeft
-                    : xOrigin + blockChild.MarginLeft;
-                output.Add(new PositionedElement
+                // Fix G8 (Phase 8.9): Do not emit a PositionedElement for the body-root box when
+                // it has no visual rendering (no background-color, no background-image). The body
+                // element's explicit CSS height (e.g. `height:148mm` on HSLA_E) can equal the full
+                // page height, making elBottom exceed pageBodyHeight in PaginationEngine and
+                // triggering a spurious page break that pushes all content to page 2. The body
+                // container is a layout boundary; its children are paginated independently.
+                // Guard: if the body root HAS a background-color or background-image, emit normally
+                // so the fill/image renders correctly.
+                bool suppressBodyBox = blockChild.IsBodyRoot
+                    && blockChild.BackgroundColor == null
+                    && blockChild.BackgroundImageSrc == null;
+
+                if (!suppressBodyBox)
                 {
-                    Source = blockChild,
-                    Position = new Rect(blockX, startY, childWidth, h),
-                    PageIndex = pageIndex
-                });
+                    // CSS 2.1 §9.5: non-floated block children start after any left-float edge.
+                    // Fix A2: use ContentOriginX as the left baseline when inside a table cell
+                    // (ContentOriginX > 0 means we are inside a cell, not page normal flow).
+                    float xOrigin = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
+                    float blockX = ctx.LeftFloatRight > 0f
+                        ? ctx.LeftFloatRight + blockChild.MarginLeft
+                        : xOrigin + blockChild.MarginLeft;
+                    output.Add(new PositionedElement
+                    {
+                        Source = blockChild,
+                        Position = new Rect(blockX, startY, childWidth, h),
+                        PageIndex = pageIndex
+                    });
+                }
+
                 // Do NOT add MarginBottom here — the parent loop handles margin collapsing separately.
                 ctx.CurrentY = startY + h;
                 return h;

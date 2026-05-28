@@ -326,9 +326,10 @@ public sealed class RealTemplateBaselineTests
     /// <summary>Expected page count per template slug (Wave 8.9a baseline).</summary>
     private static readonly Dictionary<string, int> ExpectedPageCounts = new()
     {
-        // G8 defect: body height:148mm on A5-landscape triggers spurious page break → 2 pages.
-        // Will be updated to 1 in Wave 8.9b after PaginationEngine fix.
-        ["HSLA_E"] = 2,
+        // G8 fixed (Wave 8.9b): body height:148mm no longer triggers spurious page break.
+        // PaginationEngine now suppresses the body-root PositionedElement when it has no
+        // visual rendering, preventing elBottom > pageBodyHeight from splitting content.
+        ["HSLA_E"] = 1,
 
         // All other templates render correctly as single-page documents.
         ["BNTT"]   = 1,

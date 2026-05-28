@@ -45,6 +45,12 @@ internal sealed class BoxTreeBuilder
         BoxNode box = CreateBox(node);
         ResolveCssProperties(node.Style, box);
 
+        // Mark body element (when built as a child of <html>) so ResolveWidth can clamp
+        // its explicit width and G8 suppression in BlockLayoutEngine can skip emitting
+        // the body PositionedElement when it has no visual content.
+        if (string.Equals(node.LocalName, "body", StringComparison.OrdinalIgnoreCase))
+            box.IsBodyRoot = true;
+
         // Recurse into block containers and table structure — inline boxes are atomic
         switch (box)
         {
