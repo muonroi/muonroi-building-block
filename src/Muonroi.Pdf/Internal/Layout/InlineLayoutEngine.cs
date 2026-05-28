@@ -16,12 +16,13 @@ internal sealed class InlineLayoutEngine
         // RightFloatLeft is the left edge of the right float (content ends before it).
         // Fix A2: use ContentOriginX as the left baseline inside table cells (ContentOriginX > 0
         // means the enclosing CellContext has set an absolute cell column X as the origin).
+        // W14: use FloatPlacementSolver.AvailableWidthAtY for line-box X/width instead of cursor fields.
+        // Use lineHeight=0f for pre-check (conservative per PLAN R1 mitigation); re-query at CommitLine if needed.
         float xOrigin = context.ContentOriginX > 0f ? context.ContentOriginX : context.PageMarginLeftPt;
-        float leftFloatClearX = context.LeftFloatRight > 0f ? context.LeftFloatRight : xOrigin;
-        float rightFloatBoundX = context.RightFloatLeft > 0f ? context.RightFloatLeft : (xOrigin + context.AvailableWidth);
-        float startX = leftFloatClearX;
-        float availWidth = rightFloatBoundX - leftFloatClearX;
-        if (availWidth <= 0f) availWidth = context.AvailableWidth; // safety: degenerate float state
+        var cbInline = new ContainingBlock(xOrigin, context.AvailableWidth);
+        var (solvedStartX, solvedAvailWidth) = FloatPlacementSolver.AvailableWidthAtY(context.CurrentY, 0f, cbInline, context.Exclusions);
+        float startX = solvedStartX;
+        float availWidth = solvedAvailWidth > 0f ? solvedAvailWidth : context.AvailableWidth; // safety: degenerate float state
         float lineY = context.CurrentY;
         float totalHeight = 0f;
 

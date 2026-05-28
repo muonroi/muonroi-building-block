@@ -118,11 +118,12 @@ internal sealed class BlockLayoutEngine
                 childMarginTop = 0f;
             }
 
-            // CSS 2.1 §9.5.2: clear handling — advance childY past float bottoms
+            // CSS 2.1 §9.5.2: clear handling — advance childY past float bottoms.
+            // W7: read from FloatPlacementSolver.ClearY instead of cursor fields.
             if (child.ClearValue is "both" or "left")
-                childY = MathF.Max(childY, childContext.LeftFloatBottom);
+                childY = MathF.Max(childY, FloatPlacementSolver.ClearY(FloatSide.Left, childContext.Exclusions));
             if (child.ClearValue is "both" or "right")
-                childY = MathF.Max(childY, childContext.RightFloatBottom);
+                childY = MathF.Max(childY, FloatPlacementSolver.ClearY(FloatSide.Right, childContext.Exclusions));
 
             childContext.CurrentY = childY + childMarginTop;
             float childHeight = DispatchLayout(child, childContext, output, pageIndex, deferredAbsPos);
@@ -134,7 +135,10 @@ internal sealed class BlockLayoutEngine
         }
 
         // Float container height contribution: container must enclose its floated children.
-        float floatBottom = MathF.Max(childContext.LeftFloatBottom, childContext.RightFloatBottom);
+        // W8: use exclusions list instead of cursor fields.
+        float floatBottom = childContext.Exclusions.Count > 0
+            ? childContext.Exclusions.Max(e => e.Bottom)
+            : childY;
         if (floatBottom > childY) childY = floatBottom;
 
         // If height is explicit, use it; otherwise use computed content height
@@ -210,18 +214,10 @@ internal sealed class BlockLayoutEngine
 
             if (child.FloatValue == "left")
             {
-                // Fix A1 — CSS 2.1 §9.5.1 rule 3: "the left outer edge of a left-floating box may
-                // not be to the left of the right outer edge of any left-floating box generated
-                // earlier in the source document." Stack consecutive left-floats horizontally by
-                // using ctx.LeftFloatRight (the right edge of the previous left float) as the X
-                // origin, rather than always falling back to the page left margin.
+                // W9: use FloatPlacementSolver.AvoidCollisions to determine float X (and Y).
+                // Step 1: measure float height with a temporary layout pass (height needed by solver).
                 float originX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
-                float floatX = (ctx.LeftFloatRight > 0f ? ctx.LeftFloatRight : originX) + floatBlock.MarginLeft;
-
-                // Fix F1 (phase 8.8): build a derived context with ContentOriginX set to the
-                // float's content-left edge. Float establishes its own BFC (CSS 2.1 §9.4.1) —
-                // reset float accumulators so nested floats inside this child are independent.
-                var floatCtx = new LayoutContext
+                var measureCtx = new LayoutContext
                 {
                     PageWidth        = ctx.PageWidth,
                     PageHeight       = ctx.PageHeight,
@@ -231,13 +227,56 @@ internal sealed class BlockLayoutEngine
                     TotalPages       = ctx.TotalPages,
                     TextMetrics      = ctx.TextMetrics,
                     PageMargins      = ctx.PageMargins,
-                    ContentOriginX   = floatX + floatBlock.PaddingLeft + floatBlock.BorderLeft,
+                    ContentOriginX   = originX,
                     LeftFloatRight   = 0f,
                     RightFloatLeft   = 0f,
                     LeftFloatBottom  = 0f,
                     RightFloatBottom = 0f,
                 };
-                float floatHeight = Layout(floatBlock, floatCtx, output, pageIndex);
+                var measureOutput = new List<PositionedElement>();
+                float floatHeight = Layout(floatBlock, measureCtx, measureOutput, pageIndex);
+
+                // Step 2: ask solver for placement — may advance Y if collisions found.
+                var cb = new ContainingBlock(originX, ctx.AvailableWidth);
+                var (solvedX, solvedY, _) = FloatPlacementSolver.AvoidCollisions(
+                    savedY, floatWidth, floatHeight, FloatSide.Left, cb, ctx.Exclusions);
+                float floatX = solvedX + floatBlock.MarginLeft;
+                floatY = solvedY;
+
+                // Step 3: if solver advanced Y, re-measure at new Y; otherwise use initial measurement.
+                if (solvedY > savedY)
+                {
+                    var remeasureCtx = new LayoutContext
+                    {
+                        PageWidth        = ctx.PageWidth,
+                        PageHeight       = ctx.PageHeight,
+                        AvailableWidth   = floatWidth,
+                        CurrentY         = solvedY,
+                        CurrentPageIndex = ctx.CurrentPageIndex,
+                        TotalPages       = ctx.TotalPages,
+                        TextMetrics      = ctx.TextMetrics,
+                        PageMargins      = ctx.PageMargins,
+                        ContentOriginX   = floatX + floatBlock.PaddingLeft + floatBlock.BorderLeft,
+                        LeftFloatRight   = 0f,
+                        RightFloatLeft   = 0f,
+                        LeftFloatBottom  = 0f,
+                        RightFloatBottom = 0f,
+                    };
+                    floatHeight = Layout(floatBlock, remeasureCtx, output, pageIndex);
+                }
+                else
+                {
+                    // Offset measured output to final floatX position
+                    float xDelta = floatX - originX;
+                    foreach (var pe in measureOutput)
+                        output.Add(new PositionedElement
+                        {
+                            Source = pe.Source,
+                            RenderedText = pe.RenderedText,
+                            Position = new Rect(pe.Position.X + xDelta, pe.Position.Y, pe.Position.Width, pe.Position.Height),
+                            PageIndex = pe.PageIndex
+                        });
+                }
                 ctx.CurrentY = savedY;  // restore — float does not advance normal flow
 
                 output.Add(new PositionedElement
@@ -252,14 +291,10 @@ internal sealed class BlockLayoutEngine
             }
             else // "right"
             {
-                // Fix A1 (symmetric): stack right-floats leftward from ctx.RightFloatLeft when set.
-                float rightOrigin = ctx.RightFloatLeft > 0f
-                    ? ctx.RightFloatLeft
-                    : (ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt) + ctx.AvailableWidth;
-                float floatX = rightOrigin - floatWidth - floatBlock.MarginRight;
-
-                // Fix F1 (phase 8.8, symmetric): derived context for right-float child.
-                var floatCtx = new LayoutContext
+                // W11: use FloatPlacementSolver.AvoidCollisions to determine right-float X (and Y).
+                // Step 1: measure float height with a temporary layout pass.
+                float originX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
+                var measureCtx = new LayoutContext
                 {
                     PageWidth        = ctx.PageWidth,
                     PageHeight       = ctx.PageHeight,
@@ -269,13 +304,56 @@ internal sealed class BlockLayoutEngine
                     TotalPages       = ctx.TotalPages,
                     TextMetrics      = ctx.TextMetrics,
                     PageMargins      = ctx.PageMargins,
-                    ContentOriginX   = floatX + floatBlock.PaddingLeft + floatBlock.BorderLeft,
+                    ContentOriginX   = originX + ctx.AvailableWidth - floatWidth,
                     LeftFloatRight   = 0f,
                     RightFloatLeft   = 0f,
                     LeftFloatBottom  = 0f,
                     RightFloatBottom = 0f,
                 };
-                float floatHeight = Layout(floatBlock, floatCtx, output, pageIndex);
+                var measureOutput = new List<PositionedElement>();
+                float floatHeight = Layout(floatBlock, measureCtx, measureOutput, pageIndex);
+
+                // Step 2: ask solver for placement.
+                var cb = new ContainingBlock(originX, ctx.AvailableWidth);
+                var (solvedX, solvedY, _) = FloatPlacementSolver.AvoidCollisions(
+                    savedY, floatWidth, floatHeight, FloatSide.Right, cb, ctx.Exclusions);
+                float floatX = solvedX - floatBlock.MarginRight;
+                floatY = solvedY;
+
+                // Step 3: if solver advanced Y, re-measure at new Y; otherwise use initial measurement.
+                if (solvedY > savedY)
+                {
+                    var remeasureCtx = new LayoutContext
+                    {
+                        PageWidth        = ctx.PageWidth,
+                        PageHeight       = ctx.PageHeight,
+                        AvailableWidth   = floatWidth,
+                        CurrentY         = solvedY,
+                        CurrentPageIndex = ctx.CurrentPageIndex,
+                        TotalPages       = ctx.TotalPages,
+                        TextMetrics      = ctx.TextMetrics,
+                        PageMargins      = ctx.PageMargins,
+                        ContentOriginX   = floatX + floatBlock.PaddingLeft + floatBlock.BorderLeft,
+                        LeftFloatRight   = 0f,
+                        RightFloatLeft   = 0f,
+                        LeftFloatBottom  = 0f,
+                        RightFloatBottom = 0f,
+                    };
+                    floatHeight = Layout(floatBlock, remeasureCtx, output, pageIndex);
+                }
+                else
+                {
+                    // Offset measured output to final floatX position
+                    float xDelta = floatX - (originX + ctx.AvailableWidth - floatWidth);
+                    foreach (var pe in measureOutput)
+                        output.Add(new PositionedElement
+                        {
+                            Source = pe.Source,
+                            RenderedText = pe.RenderedText,
+                            Position = new Rect(pe.Position.X + xDelta, pe.Position.Y, pe.Position.Width, pe.Position.Height),
+                            PageIndex = pe.PageIndex
+                        });
+                }
                 ctx.CurrentY = savedY;  // restore — float does not advance normal flow
 
                 output.Add(new PositionedElement
@@ -334,10 +412,11 @@ internal sealed class BlockLayoutEngine
                     // CSS 2.1 §9.5: non-floated block children start after any left-float edge.
                     // Fix A2: use ContentOriginX as the left baseline when inside a table cell
                     // (ContentOriginX > 0 means we are inside a cell, not page normal flow).
+                    // W13: read startX from FloatPlacementSolver instead of ctx.LeftFloatRight.
                     float xOrigin = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
-                    float blockX = ctx.LeftFloatRight > 0f
-                        ? ctx.LeftFloatRight + blockChild.MarginLeft
-                        : xOrigin + blockChild.MarginLeft;
+                    var cbW13 = new ContainingBlock(xOrigin, ctx.AvailableWidth);
+                    float blockStartX = FloatPlacementSolver.AvailableWidthAtY(startY, 0f, cbW13, ctx.Exclusions).StartX;
+                    float blockX = blockStartX + blockChild.MarginLeft;
                     output.Add(new PositionedElement
                     {
                         Source = blockChild,
