@@ -455,6 +455,16 @@ internal sealed class BoxTreeBuilder
                 box.Bold = true;
         }
 
+        // G23g: UA stylesheet: <th> default text-align is center (HTML5 §14.3.9).
+        // Only applied when no author-level text-align was resolved (computed style +
+        // class-rule + descendant-class fallbacks all returned null/empty above).
+        if (string.IsNullOrWhiteSpace(box.TextAlign))
+        {
+            string localNameForUaAlign = box.Source?.LocalName?.ToLowerInvariant() ?? "";
+            if (localNameForUaAlign == "th")
+                box.TextAlign = "center";
+        }
+
         // Step 3: text-transform — read for all boxes; also try class-rule + descendant fallback
         // so that .text-uppercase { text-transform: uppercase } is picked up when GetComputedStyle throws.
         var ttAll = style.GetValue("text-transform");

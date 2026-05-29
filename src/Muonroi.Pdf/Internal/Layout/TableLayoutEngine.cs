@@ -110,7 +110,7 @@ internal sealed class TableLayoutEngine
                 // cellX = colX[cell.ColumnIndex]; content starts at cellX + PaddingLeft + BorderLeft.
                 float cellContentOriginX = cellX + cell.PaddingLeft + cell.BorderLeft;
                 var cellCtx = CellContext(context, cellWidth, cellY + cell.PaddingTop + vAlignOffset,
-                    cellOriginX: cellContentOriginX, cellHeight: cellHeight);
+                    cell: cell, cellOriginX: cellContentOriginX, cellHeight: cellHeight);
                 var cellOut = new List<PositionedElement>();
                 // G23b: prevent double-application of WidthRaw % in the final layout pass.
                 var savedWidthRaw = cell.WidthRaw;
@@ -141,7 +141,7 @@ internal sealed class TableLayoutEngine
     // cellOriginX is 0 for measurement passes (X doesn't affect height calculation).
     private float MeasureCell(TableCellBox cell, float cellWidth, LayoutContext ctx)
     {
-        var mc = CellContext(ctx, cellWidth, ctx.CurrentY, cellOriginX: 0f);
+        var mc = CellContext(ctx, cellWidth, ctx.CurrentY, cell: cell, cellOriginX: 0f);
         // G23b: prevent double-application of WidthRaw % inside BlockLayoutEngine.
         // Column solver has already resolved cell.Width from WidthRaw; clear WidthRaw
         // so ResolveWidth inside Layout does not reapply the % against the column width.
@@ -161,8 +161,11 @@ internal sealed class TableLayoutEngine
     // G9 (phase 8.11a): also set ContainingBlockRect to the cell's rect so that abs-pos
     // descendants inside the cell are anchored to the cell, not to the page. Per CSS 2.1 §10.1
     // table cells always establish a containing block for their abs-pos descendants.
+    // G23h: cell parameter added so TextAlign from the cell box can be seeded into the child
+    // LayoutContext. Without this the cell boundary silently drops text-align even when
+    // BoxTreeBuilder correctly resolved it via class-rule or UA default.
     private static LayoutContext CellContext(LayoutContext parent, float cellWidth, float startY,
-        float cellOriginX = 0f, float cellHeight = 0f) => new()
+        TableCellBox? cell = null, float cellOriginX = 0f, float cellHeight = 0f) => new()
     {
         PageWidth = parent.PageWidth,
         PageHeight = parent.PageHeight,
@@ -177,7 +180,9 @@ internal sealed class TableLayoutEngine
         // Only set when we have real dimensions (non-measurement pass where cellOriginX > 0).
         ContainingBlockRect = cellOriginX > 0f && (cellWidth > 0f || cellHeight > 0f)
             ? new Rect(cellOriginX, startY, cellWidth, cellHeight)
-            : null
+            : null,
+        // G23h: propagate cell's text-align into child context; fall back to parent's alignment.
+        TextAlign = cell?.TextAlign ?? parent.TextAlign,
     };
 
     private static float CellWidth(int colIndex, int colspan, float[] colWidths, float borderSpacing)
