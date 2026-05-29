@@ -44,25 +44,23 @@ internal sealed class PureImageDecoder : IImageDecoder
         byte bitDepth  = data[24];
         byte colorType = data[25];
 
-        if (colorType == 3)
-            throw new PdfFormatException("PNG-PALETTE",
-                "Palette/indexed PNG (color_type=3) is not supported. Convert to 8-bit RGB PNG.");
+        // Grayscale types are out of scope for v1.0.1 — fail loud with actionable message.
         if (colorType == 0)
             throw new PdfFormatException("PNG-GRAYSCALE",
-                "Grayscale PNG (color_type=0) is not supported. Convert to 8-bit RGB PNG.");
+                "Grayscale PNG (color_type=0) not yet supported; convert to RGB.");
         if (colorType == 4)
             throw new PdfFormatException("PNG-GRAYSCALE-ALPHA",
-                "Grayscale+alpha PNG (color_type=4) is not supported. Convert to 8-bit RGB PNG.");
-        if (colorType == 6)
-            throw new PdfFormatException("PNG-RGBA",
-                "RGBA PNG (color_type=6) is not supported. Convert to 8-bit RGB PNG (strip alpha channel).");
+                "Grayscale+alpha PNG (color_type=4) not yet supported; convert to RGB.");
         if (colorType == 2 && bitDepth == 16)
             throw new PdfFormatException("PNG-16BIT",
                 "16-bit RGB PNG (bit_depth=16) is not supported. Convert to 8-bit RGB PNG.");
-        if (colorType != 2 || bitDepth != 8)
+        if (colorType != 2 && colorType != 3 && colorType != 6)
             throw new PdfFormatException("PNG-FORMAT",
-                $"Unsupported PNG: color_type={colorType}, bit_depth={bitDepth}. Only 8-bit RGB (color_type=2, bit_depth=8) is supported.");
+                $"Unsupported PNG: color_type={colorType}, bit_depth={bitDepth}. Supported: 8-bit RGB (type 2), palette (type 3), RGBA (type 6).");
 
+        // color_type=2 (RGB), color_type=3 (palette/indexed), color_type=6 (RGBA):
+        // Pass the raw PNG bytes through to the writer; DecodePngToRawRgb in OwnedPdfWriter
+        // handles per-type expansion and alpha compositing onto white.
         return new DecodedImage(width, height, data.ToArray(), "image/png");
     }
 

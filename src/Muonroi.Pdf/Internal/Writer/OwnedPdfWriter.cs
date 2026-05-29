@@ -478,29 +478,44 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         byte bitDepth = pngData[24];
         byte colorType = pngData[25];
 
-        if (colorType != 2 || bitDepth != 8)
+        if (colorType != 2 && colorType != 3 && colorType != 6)
             throw new PdfFormatException("IMAGE-FORMAT",
-                $"Unsupported PNG: color_type={colorType} bit_depth={bitDepth}. Only 8-bit RGB PNG is supported.");
+                $"Unsupported PNG: color_type={colorType} bit_depth={bitDepth}. Supported: 8-bit RGB (type 2), palette (type 3), RGBA (type 6).");
 
-        // Collect all IDAT chunk payloads by scanning chunks
+        // Scan all chunks: collect IDAT payload and (for palette) PLTE + tRNS chunks.
         var idatPayload = new List<byte>();
+        byte[]? plteData = null;   // PLTE: 3 bytes per entry (R, G, B), up to 256 entries
+        byte[]? trnsData = null;   // tRNS for palette: 1 byte per entry (alpha), partial arrays allowed
+
         int pos = 8; // skip PNG magic signature
         while (pos + 8 <= pngData.Length)
         {
             int chunkLen = (int)BinaryPrimitives.ReadUInt32BigEndian(pngData.AsSpan(pos, 4));
             string chunkType = Encoding.ASCII.GetString(pngData, pos + 4, 4);
-            if (chunkType == "IDAT")
+            int dataStart = pos + 8;
+            int dataEnd = dataStart + chunkLen;
+            if (dataEnd > pngData.Length) break;
+
+            switch (chunkType)
             {
-                int dataStart = pos + 8;
-                int dataEnd = dataStart + chunkLen;
-                if (dataEnd > pngData.Length) break;
-                for (int i = dataStart; i < dataEnd; i++)
-                    idatPayload.Add(pngData[i]);
+                case "PLTE":
+                    plteData = pngData[dataStart..dataEnd];
+                    break;
+                case "tRNS":
+                    trnsData = pngData[dataStart..dataEnd];
+                    break;
+                case "IDAT":
+                    for (int i = dataStart; i < dataEnd; i++)
+                        idatPayload.Add(pngData[i]);
+                    break;
+                case "IEND":
+                    goto doneChunks;
             }
-            else if (chunkType == "IEND")
-                break;
+
             pos += 8 + chunkLen + 4; // length + type + data + CRC
         }
+
+        doneChunks:
 
         if (idatPayload.Count == 0)
             throw new PdfFormatException("IMAGE-FORMAT", "PNG has no IDAT chunks");
@@ -516,12 +531,24 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             filteredScanlines = outMs.ToArray();
         }
 
-        // Un-filter rows: each row is (1 filter byte) + (width * 3 bytes for RGB)
+        return colorType switch
+        {
+            2 => DecodePngRgb(filteredScanlines, width, height),
+            3 => DecodePngPalette(filteredScanlines, width, height, plteData, trnsData),
+            6 => DecodePngRgba(filteredScanlines, width, height),
+            _ => throw new PdfFormatException("IMAGE-FORMAT", $"Unreachable color_type={colorType}")
+        };
+    }
+
+    /// <summary>
+    /// Decode 8-bit RGB (color_type=2) PNG scanlines to raw RGB pixel buffer.
+    /// </summary>
+    private static byte[] DecodePngRgb(byte[] filteredScanlines, int width, int height)
+    {
         int bytesPerRow = width * 3;
         int rowStride = bytesPerRow + 1; // +1 for filter byte
         byte[] rawPixels = new byte[height * bytesPerRow];
-
-        byte[] prevRow = new byte[bytesPerRow]; // initialized to zeros
+        byte[] prevRow = new byte[bytesPerRow];
 
         for (int row = 0; row < height; row++)
         {
@@ -531,15 +558,125 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             byte filterType = filteredScanlines[srcRowStart];
             int dstRowStart = row * bytesPerRow;
 
-            // Copy raw filtered data for this row
             int copyLen = Math.Min(bytesPerRow, filteredScanlines.Length - srcRowStart - 1);
             for (int x = 0; x < copyLen; x++)
                 rawPixels[dstRowStart + x] = filteredScanlines[srcRowStart + 1 + x];
 
-            // Apply reverse filter
             byte[] curRow = rawPixels.AsSpan(dstRowStart, bytesPerRow).ToArray();
             ApplyPngUnFilter(filterType, curRow, prevRow, bytesPerRow, 3);
             curRow.CopyTo(rawPixels, dstRowStart);
+            prevRow = curRow;
+        }
+
+        return rawPixels;
+    }
+
+    /// <summary>
+    /// Decode 8-bit palette/indexed (color_type=3) PNG scanlines to raw RGB pixel buffer.
+    /// Each scanline byte is an index into the PLTE table.
+    /// If a tRNS chunk is present, pixels with alpha &lt; 255 are composited onto a white background
+    /// using the alpha-over formula: out = (alpha/255)*color + (1 - alpha/255)*255.
+    /// </summary>
+    private static byte[] DecodePngPalette(
+        byte[] filteredScanlines,
+        int width,
+        int height,
+        byte[]? plteData,
+        byte[]? trnsData)
+    {
+        if (plteData == null || plteData.Length < 3)
+            throw new PdfFormatException("IMAGE-FORMAT", "Palette PNG (color_type=3) has no PLTE chunk.");
+
+        int paletteCount = plteData.Length / 3;
+        int rowStride = width + 1; // 1 filter byte + 1 byte per pixel (index)
+        byte[] rawPixels = new byte[height * width * 3];
+        byte[] prevRow = new byte[width]; // index-domain prev row for un-filtering
+
+        for (int row = 0; row < height; row++)
+        {
+            int srcRowStart = row * rowStride;
+            if (srcRowStart >= filteredScanlines.Length) break;
+
+            byte filterType = filteredScanlines[srcRowStart];
+
+            // Copy raw index bytes
+            byte[] curRow = new byte[width];
+            int copyLen = Math.Min(width, filteredScanlines.Length - srcRowStart - 1);
+            for (int x = 0; x < copyLen; x++)
+                curRow[x] = filteredScanlines[srcRowStart + 1 + x];
+
+            // Un-filter in index domain (bpp=1 for palette)
+            ApplyPngUnFilter(filterType, curRow, prevRow, width, 1);
+
+            // Expand palette indices to RGB, compositing alpha onto white if tRNS present
+            int dstRowStart = row * width * 3;
+            for (int x = 0; x < width; x++)
+            {
+                int idx = curRow[x];
+                if (idx >= paletteCount)
+                    idx = paletteCount - 1; // clamp out-of-range index
+
+                byte r = plteData[idx * 3];
+                byte g = plteData[idx * 3 + 1];
+                byte b = plteData[idx * 3 + 2];
+
+                if (trnsData != null && idx < trnsData.Length)
+                {
+                    // Alpha-over composite onto white: out = (alpha/255)*color + (1 - alpha/255)*255
+                    float alpha = trnsData[idx] / 255f;
+                    r = (byte)(alpha * r + (1f - alpha) * 255f + 0.5f);
+                    g = (byte)(alpha * g + (1f - alpha) * 255f + 0.5f);
+                    b = (byte)(alpha * b + (1f - alpha) * 255f + 0.5f);
+                }
+
+                rawPixels[dstRowStart + x * 3]     = r;
+                rawPixels[dstRowStart + x * 3 + 1] = g;
+                rawPixels[dstRowStart + x * 3 + 2] = b;
+            }
+
+            prevRow = curRow;
+        }
+
+        return rawPixels;
+    }
+
+    /// <summary>
+    /// Decode 8-bit RGBA (color_type=6) PNG scanlines to raw RGB pixel buffer.
+    /// Each pixel is 4 bytes (R, G, B, A). Alpha is composited onto a white background:
+    /// out = (alpha/255)*color + (1 - alpha/255)*255.
+    /// </summary>
+    private static byte[] DecodePngRgba(byte[] filteredScanlines, int width, int height)
+    {
+        int bpp = 4; // bytes per pixel: R, G, B, A
+        int bytesPerFilteredRow = width * bpp;
+        int rowStride = bytesPerFilteredRow + 1; // +1 for filter byte
+        byte[] rawPixels = new byte[height * width * 3];
+        byte[] prevRow = new byte[bytesPerFilteredRow];
+
+        for (int row = 0; row < height; row++)
+        {
+            int srcRowStart = row * rowStride;
+            if (srcRowStart >= filteredScanlines.Length) break;
+
+            byte filterType = filteredScanlines[srcRowStart];
+
+            byte[] curRow = new byte[bytesPerFilteredRow];
+            int copyLen = Math.Min(bytesPerFilteredRow, filteredScanlines.Length - srcRowStart - 1);
+            for (int x = 0; x < copyLen; x++)
+                curRow[x] = filteredScanlines[srcRowStart + 1 + x];
+
+            // Un-filter in RGBA domain (bpp=4)
+            ApplyPngUnFilter(filterType, curRow, prevRow, bytesPerFilteredRow, bpp);
+
+            // Composite RGBA onto white
+            int dstRowStart = row * width * 3;
+            for (int x = 0; x < width; x++)
+            {
+                float alpha = curRow[x * bpp + 3] / 255f;
+                rawPixels[dstRowStart + x * 3]     = (byte)(alpha * curRow[x * bpp]     + (1f - alpha) * 255f + 0.5f);
+                rawPixels[dstRowStart + x * 3 + 1] = (byte)(alpha * curRow[x * bpp + 1] + (1f - alpha) * 255f + 0.5f);
+                rawPixels[dstRowStart + x * 3 + 2] = (byte)(alpha * curRow[x * bpp + 2] + (1f - alpha) * 255f + 0.5f);
+            }
 
             prevRow = curRow;
         }
