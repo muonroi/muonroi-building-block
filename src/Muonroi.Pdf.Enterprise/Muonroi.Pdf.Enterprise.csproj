@@ -1,11 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsCommercialPackage>true</IsCommercialPackage>
     <PackageLicenseFile>LICENSE-COMMERCIAL</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <Description>Commercial enterprise extension for Muonroi.Pdf. Empty stub — locks namespace and CI assembly hash pipeline.</Description>
+    <Description>Enterprise extensions for Muonroi.Pdf: template registry client, Redis hot-reload, SSIM quality scorer, and capability gates.</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- One-way reference: Enterprise -> OSS. The OSS engine must never reference Enterprise (SC5). -->
+    <ProjectReference Include="..\Muonroi.Pdf\Muonroi.Pdf.csproj" />
+  </ItemGroup>
 </Project>
