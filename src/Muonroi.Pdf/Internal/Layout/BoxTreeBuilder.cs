@@ -1070,13 +1070,16 @@ internal sealed class BoxTreeBuilder
         }
     }
 
-    // CSS 2.1 §9.2.1: wrap inline siblings in AnonymousBox when block-level siblings are present
+    // CSS 2.1 §9.2.1: wrap inline siblings in AnonymousBox when block-level siblings are present.
+    // ReplacedBox (e.g. <img>) is block-level for purposes of this normalization — otherwise an
+    // <img> sibling to <p> blocks gets wrapped in AnonymousBox, dispatched to InlineLayoutEngine,
+    // which cannot render ReplacedBox and emits nothing (silent drop). G26 fix (Phase 12.2).
     private static List<BoxNode> NormalizeChildren(List<BoxNode> children)
     {
         bool hasBlockLevel = false;
         foreach (var child in children)
         {
-            if (child is BlockBox or AnonymousBox or TableBox)
+            if (child is BlockBox or AnonymousBox or TableBox or ReplacedBox)
             {
                 hasBlockLevel = true;
                 break;
@@ -1091,7 +1094,7 @@ internal sealed class BoxTreeBuilder
 
         foreach (var child in children)
         {
-            if (child is BlockBox or AnonymousBox or TableBox)
+            if (child is BlockBox or AnonymousBox or TableBox or ReplacedBox)
             {
                 if (pendingInline.Count > 0)
                 {
