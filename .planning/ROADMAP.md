@@ -23,6 +23,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [ ] **Phase 8.10: Float Algorithm Refactor (ExcludedShapes)** — Clean-room WeasyPrint `avoid_collisions`. 6 atomic commits. Byte-identical. Foundation for nested BFC + `position:absolute`.
 - [ ] **Phase 8.11: Layout Edge Cases** — Vertical-align edge, nested BFC stacks, `position:absolute` × float, page-break-inside floats, shrink-to-fit auto float, CSS `column-count` interaction. Per-template demand. TBD.
 - [x] **Phase 9: v1.0 Enterprise** — Postgres template registry, Redis hot-reload, SSIM canary, web designer, TCIS cutover — CLOSED 2026-05-29; see `.planning/PHASE-09-CLOSEOUT.md`
+- [x] **Phase 10: TCIS Cutover Sweep + v1.0 GA** — Full DinkToPdf/libwkhtmltox removal from TCIS (10.1-10.4) + v1.0.0 version stamp (10.6); publish (10.7-10.9) deferred to ops — CLOSED 2026-05-29; see `.planning/PHASE-10-CLOSEOUT.md`
 
 ## Phase Details
 
