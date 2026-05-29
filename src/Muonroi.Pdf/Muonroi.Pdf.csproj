@@ -33,6 +33,7 @@
     <ProjectReference Include="..\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj" />
     <ProjectReference Include="..\Muonroi.Tenancy.Abstractions\Muonroi.Tenancy.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Logging\Muonroi.Logging.csproj" />
     <!-- ITelemetryDescriptor lives in Muonroi.Core.Abstractions (net8.0). The PDF Abstractions
          project is netstandard2.0 and cannot reference a net8.0 assembly, so the descriptor is
          hosted here in the net8.0 engine where OtelSetup's AppDomain assembly scan still discovers it. -->
