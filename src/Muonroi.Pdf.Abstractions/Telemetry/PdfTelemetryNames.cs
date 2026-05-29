@@ -15,4 +15,11 @@ public static class PdfTelemetryNames
     public const string TemplateIdTag = "pdf.template_id";
     /// <summary>Tag key for the tenant identifier (snake_case).</summary>
     public const string TenantIdTag = "tenant.id";
+
+    /// <summary>
+    /// Counter metric name incremented once per page when <c>LegacyPrintPolicy</c>
+    /// soft-degrade substitutes a flex or grid element as <c>display:block</c>.
+    /// Tag key <c>"kind"</c> carries <c>"flex"</c> or <c>"grid"</c>.
+    /// </summary>
+    public const string PolicySoftDegradeMetric = "muonroi_pdf_policy_soft_degrade_total";
 }

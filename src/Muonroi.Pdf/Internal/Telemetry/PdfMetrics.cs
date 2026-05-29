@@ -28,4 +28,13 @@ internal static class PdfMetrics
         PdfTelemetryNames.PageCountMetric,
         unit: "{page}",
         description: "Distribution of page count per PDF render.");
+
+    /// <summary>
+    /// Counts pages where LegacyPrintPolicy soft-degrade was triggered.
+    /// Tag key <c>"kind"</c>: <c>"flex"</c> or <c>"grid"</c>.
+    /// </summary>
+    internal static readonly Counter<long> PolicySoftDegradeCounter = _meter.CreateCounter<long>(
+        PdfTelemetryNames.PolicySoftDegradeMetric,
+        unit: "{page}",
+        description: "Counts pages where LegacyPrintPolicy soft-degrade substituted flex/grid as block.");
 }
