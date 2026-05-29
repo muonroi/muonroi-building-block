@@ -34,7 +34,15 @@ internal sealed class GlyphCollector
                 // The subsetter itself determines which codepoints it can map; codepoints with
                 // no glyph in the font simply get no entry in the map (they are emitted as
                 // .notdef / 0x0000), so over-collecting here is harmless.
-                foreach (char ch in inlineBox.Text)
+                //
+                // G22: apply the same text-transform that InlineLayoutEngine applies at emit time
+                // so the font subsetter sees the post-transform codepoints. InlineBox.Text remains
+                // the source-of-truth lowercase string; we transform only for collection purposes.
+                string collectionText = inlineBox.TextTransform == "uppercase"
+                    ? inlineBox.Text.ToUpperInvariant()
+                    : inlineBox.Text;
+
+                foreach (char ch in collectionText)
                 {
                     if (!char.IsSurrogate(ch))
                         result[inlineBox.FontFamily].Add((int)ch);
