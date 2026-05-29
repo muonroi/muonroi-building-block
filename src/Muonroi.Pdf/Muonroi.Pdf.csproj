@@ -5,10 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.1.0</FileVersion>
+    <FileVersion>1.0.2.0</FileVersion>
     <!-- NuGet packaging metadata -->
     <PackageId>Muonroi.Pdf</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Description>HTML/CSS to PDF layout engine: box-tree construction, pagination, and rendering coordination for Muonroi applications.</Description>
     <!-- OSS: use SPDX expression — overrides the global PackageLicenseFile set in Directory.Build.props -->
     <PackageLicenseFile></PackageLicenseFile>
