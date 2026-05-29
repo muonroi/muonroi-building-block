@@ -112,7 +112,12 @@ internal sealed class TableLayoutEngine
                 var cellCtx = CellContext(context, cellWidth, cellY + cell.PaddingTop + vAlignOffset,
                     cellOriginX: cellContentOriginX, cellHeight: cellHeight);
                 var cellOut = new List<PositionedElement>();
+                // G23b: prevent double-application of WidthRaw % in the final layout pass.
+                var savedWidthRaw = cell.WidthRaw;
+                cell.Width = cellWidth;
+                cell.WidthRaw = null;
                 _blockEngine.Layout(cell, cellCtx, cellOut, pageIndex);
+                cell.WidthRaw = savedWidthRaw;  // restore defensively
 
                 output.Add(new PositionedElement
                 {
@@ -137,7 +142,15 @@ internal sealed class TableLayoutEngine
     private float MeasureCell(TableCellBox cell, float cellWidth, LayoutContext ctx)
     {
         var mc = CellContext(ctx, cellWidth, ctx.CurrentY, cellOriginX: 0f);
-        return _blockEngine.Layout(cell, mc, new List<PositionedElement>(), 0);
+        // G23b: prevent double-application of WidthRaw % inside BlockLayoutEngine.
+        // Column solver has already resolved cell.Width from WidthRaw; clear WidthRaw
+        // so ResolveWidth inside Layout does not reapply the % against the column width.
+        var savedWidthRaw = cell.WidthRaw;
+        cell.Width = cellWidth;
+        cell.WidthRaw = null;
+        float height = _blockEngine.Layout(cell, mc, new List<PositionedElement>(), 0);
+        cell.WidthRaw = savedWidthRaw;  // restore defensively for any subsequent reads
+        return height;
     }
 
     // Fix A2: cellOriginX is the absolute X of the cell's content-left edge (colX + borderLeft + paddingLeft).
