@@ -91,8 +91,8 @@ internal sealed class BoxTreeBuilder
                 // parent down to inline descendants that have not had an explicit author override.
                 // CSS 2.1 §6.2: font-weight and text-transform are inherited properties; a block
                 // heading like <h2> must pass Bold=true to its text-node InlineBox children.
-                if (box.Bold || box.TextTransform != null)
-                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform);
+                if (box.Bold || box.TextTransform != null || box.WordBreak != null)
+                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak);
                 break;
             case TableBox tableBox:
                 BuildChildren(node, tableBox);
@@ -105,9 +105,9 @@ internal sealed class BoxTreeBuilder
                 break;
             case TableCellBox cellBox:
                 BuildChildren(node, cellBox);
-                // G18: propagate into table cell's inline children as well.
-                if (box.Bold || box.TextTransform != null)
-                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform);
+                // G18 + Phase 12.4b: propagate Bold/TextTransform/WordBreak into cell's inline children.
+                if (box.Bold || box.TextTransform != null || box.WordBreak != null)
+                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak);
                 break;
         }
 
@@ -600,6 +600,12 @@ internal sealed class BoxTreeBuilder
             var vAlign = style.GetValue("vertical-align");
             if (!string.IsNullOrEmpty(vAlign))
                 cell.VerticalAlign = vAlign.Trim().ToLowerInvariant();
+
+            // Phase 12.4b: parse word-break / overflow-wrap on the cell with the G23 class-rule
+            // fallback. Real templates (e.g. TCIS HBCX) declare it on `.table-bodered2 td` — a
+            // class-descendant selector that AngleSharp.Css does not surface through
+            // GetComputedStyle. Propagation to inline children happens in BuildNode below.
+            cell.WordBreak = ResolveWordBreakWithFallback(cell, style);
         }
         else if (box is ReplacedBox replaced && replaced.Src != null && _resolvedImages != null)
         {
@@ -1069,7 +1075,7 @@ internal sealed class BoxTreeBuilder
     // CSS initial/default: Bold=false, TextTransform=null).
     // This is intentionally narrow — it only propagates these two properties and only in the
     // downward direction (parent → child), which is sufficient for the h1-h6 heading case.
-    private static void PropagateInheritedTextProps(BoxNode node, bool parentBold, string? parentTextTransform)
+    private static void PropagateInheritedTextProps(BoxNode node, bool parentBold, string? parentTextTransform, string? parentWordBreak = null)
     {
         foreach (var child in node.Children)
         {
@@ -1082,6 +1088,9 @@ internal sealed class BoxTreeBuilder
                 // Apply parent's TextTransform only if the child has none set.
                 if (inlineChild.TextTransform == null && parentTextTransform != null)
                     inlineChild.TextTransform = parentTextTransform;
+                // Phase 12.4b: same selective-override pattern for word-break.
+                if (inlineChild.WordBreak == null && parentWordBreak != null)
+                    inlineChild.WordBreak = parentWordBreak;
             }
             else
             {
@@ -1090,10 +1099,36 @@ internal sealed class BoxTreeBuilder
                 // Effective inherited value for the child itself (may refine parent's):
                 bool childBold = child.Bold || parentBold;
                 string? childTextTransform = child.TextTransform ?? parentTextTransform;
-                if (childBold || childTextTransform != null)
-                    PropagateInheritedTextProps(child, childBold, childTextTransform);
+                string? childWordBreak = child.WordBreak ?? parentWordBreak;
+                if (childBold || childTextTransform != null || childWordBreak != null)
+                    PropagateInheritedTextProps(child, childBold, childTextTransform, childWordBreak);
             }
         }
+    }
+
+    /// <summary>
+    /// Phase 12.4b: read word-break/overflow-wrap/word-wrap with the G23 class-rule fallback
+    /// pattern. Returns normalized "break-all" | "break-word" | null.
+    /// word-break takes precedence; overflow-wrap and the legacy word-wrap alias collapse
+    /// to "break-word" when their value is "break-word" or "anywhere".
+    /// </summary>
+    private string? ResolveWordBreakWithFallback(BoxNode box, IComputedStyle style)
+    {
+        string? Read(string prop)
+        {
+            var v = style.GetValue(prop);
+            if (string.IsNullOrEmpty(v))
+                v = LookupClassProperty(box.Source, prop);
+            return string.IsNullOrEmpty(v) ? null : v.Trim().ToLowerInvariant();
+        }
+
+        var wb = Read("word-break");
+        if (wb is "break-all") return "break-all";
+        if (wb is "break-word") return "break-word";
+
+        var ow = Read("overflow-wrap") ?? Read("word-wrap");
+        if (ow is "break-word" or "anywhere") return "break-word";
+        return null;
     }
 
     // CSS 2.1 §9.2.1: wrap inline siblings in AnonymousBox when block-level siblings are present.

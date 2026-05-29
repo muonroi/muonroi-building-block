@@ -87,4 +87,16 @@ internal abstract class BoxNode
 
     /// <summary>CSS text-transform: "uppercase" | null (other values ignored for now).</summary>
     public string? TextTransform { get; set; }
+
+    /// <summary>
+    /// Phase 12.4b: inherited normalized word-break/overflow-wrap.
+    /// "break-all"  — split at any character boundary (word-break: break-all)
+    /// "break-word" — split only when a token would otherwise overflow
+    ///                (word-break:break-word | overflow-wrap:break-word|anywhere | word-wrap:break-word)
+    /// null         — default whitespace-only break.
+    /// Resolved on any box that the cascade reaches; propagated to InlineBox descendants
+    /// by PropagateInheritedTextProps because production templates declare it on `td` via
+    /// class-descendant selectors that AngleSharp.Css fails to inherit through.
+    /// </summary>
+    public string? WordBreak { get; set; }
 }
