@@ -827,14 +827,45 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             sb.Append(b.ToString("F4", CultureInfo.InvariantCulture));
             sb.AppendLine(" rg");
 
-            // Absolute positioning via Tm
+            // Synthetic bold: set stroke color = fill color and stroke width scaled to font size.
+            // Only applied when font size >= 8pt to avoid noisy artifacts at tiny sizes.
+            bool syntheticBold = inline.Bold && inline.FontSize >= 8f;
+            if (syntheticBold)
+            {
+                // Stroke color equals fill color (RG = stroke counterpart of rg)
+                sb.Append(r.ToString("F4", CultureInfo.InvariantCulture));
+                sb.Append(' ');
+                sb.Append(g.ToString("F4", CultureInfo.InvariantCulture));
+                sb.Append(' ');
+                sb.Append(b.ToString("F4", CultureInfo.InvariantCulture));
+                sb.AppendLine(" RG");
+
+                // Stroke width scaled with font size; clamped to [0.2, 0.8]
+                float strokeWidth = MathF.Max(0.2f, MathF.Min(0.8f, (inline.FontSize / 13f) * 0.4f));
+                sb.Append(strokeWidth.ToString("F4", CultureInfo.InvariantCulture));
+                sb.AppendLine(" w");
+            }
+
+            // Absolute positioning via Tm.
+            // Synthetic italic: skew the text matrix with c=0.2 (≈11° slant).
             float pdfXt = el.Position.X;
             float pdfYt = pageHeightPt - el.Position.Y - inline.FontSize;
-            sb.Append("1 0 0 1 ");
+            if (inline.Italic)
+            {
+                sb.Append("1 0 0.2 1 ");
+            }
+            else
+            {
+                sb.Append("1 0 0 1 ");
+            }
             sb.Append(pdfXt.ToString("F4", CultureInfo.InvariantCulture));
             sb.Append(' ');
             sb.Append(pdfYt.ToString("F4", CultureInfo.InvariantCulture));
             sb.AppendLine(" Tm");
+
+            // Synthetic bold: switch to fill+stroke rendering mode (Tr=2) before Tj.
+            if (syntheticBold)
+                sb.AppendLine("2 Tr");
 
             // Text as 2-byte GID hex string using CID encoding.
             // Use renderText (the per-word segment), NOT inline.Text (the full source line).
@@ -862,6 +893,11 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                     "Ensure the font is declared in @font-face, the font file is resolvable, " +
                     "and the subsetter produced a valid cp→newGid mapping.");
             }
+
+            // Synthetic bold: restore fill-only rendering mode immediately after Tj.
+            // Critical — without this reset, subsequent non-bold text would render bold.
+            if (syntheticBold)
+                sb.AppendLine("0 Tr");
 
             // text-decoration: draw underline or strikethrough outside BT/ET
             if (inline.TextDecoration is "underline" or "line-through")
