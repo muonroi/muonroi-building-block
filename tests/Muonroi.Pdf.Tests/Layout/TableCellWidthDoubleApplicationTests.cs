@@ -120,11 +120,16 @@ public sealed class TableCellWidthDoubleApplicationTests
             .ToList();
 
         var col0Pe = output.First(e => e.Source == cells[0]);
-        float expectedColumnWidth = TableWidthPt * 0.16f; // 115.2pt
 
-        // Cell element width = column width (not double-applied ≈ 19pt)
+        // G23e: two columns declared at 16%+16%=32% of 720pt. Per CSS 2.1 §17.5.2.1 the
+        // engine scales them proportionally to fill the table — each becomes 50% = 360pt.
+        // The double-application check (G23b) is still valid: the inner layout receives
+        // the scaled column width (360pt), not 16% of 360pt (≈57.6pt).
+        float expectedColumnWidth = TableWidthPt / 2f; // 360pt (scaled from 16%/32% * 720pt)
+
+        // Cell element width = scaled column width (not double-applied)
         col0Pe.Position.Width.Should().BeApproximately(expectedColumnWidth, precision: 2f,
-            because: "cell PositionedElement width must equal the column width resolved by the solver");
+            because: "G23e: 2 cols declared 16%+16%=32% are scaled to fill 720pt → each 360pt; no double-application");
     }
 
     // -------------------------------------------------------------------------
@@ -168,7 +173,8 @@ public sealed class TableCellWidthDoubleApplicationTests
     public void ColumnSolver_StillReadsWidthRaw_AfterFix()
     {
         // The fix clears WidthRaw only inside MeasureCell / final-pass, AFTER the solver runs.
-        // Verify that column widths are still solved correctly from WidthRaw.
+        // Verify that column widths are still solved correctly from WidthRaw, and that G23e
+        // proportional scaling is applied (two 16% cols sum to 32% → scaled to 50% each).
         var tableBox = BuildTwoThTable(tableWidth: TableWidthPt);
 
         var (_, tableEngine) = MakeEngines();
@@ -183,11 +189,13 @@ public sealed class TableCellWidthDoubleApplicationTests
         var col0Pe = output.First(e => e.Source == cells[0]);
         var col1Pe = output.First(e => e.Source == cells[1]);
 
-        float expectedWidth = TableWidthPt * 0.16f; // 115.2pt
+        // G23e: columns declared 16%+16%=32% are scaled proportionally to fill 720pt.
+        // Each column: 720 * (16/32) = 360pt. Solver must still read WidthRaw; G23e scales up.
+        float expectedWidth = TableWidthPt / 2f; // 360pt
         col0Pe.Position.Width.Should().BeApproximately(expectedWidth, precision: 2f,
-            because: "column solver must still read WidthRaw=16% correctly");
+            because: "G23e: col declared 16% of 32% total → scaled to 360pt in 720pt table");
         col1Pe.Position.Width.Should().BeApproximately(expectedWidth, precision: 2f,
-            because: "second column must also be solved from WidthRaw=16%");
+            because: "G23e: both columns are equal-weight so each gets half of 720pt");
     }
 
     // -------------------------------------------------------------------------
