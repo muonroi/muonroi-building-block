@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <!-- NuGet packaging metadata -->
     <PackageId>Muonroi.Pdf.Enterprise</PackageId>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <IsCommercialPackage>true</IsCommercialPackage>
     <PackageLicenseFile>LICENSE-COMMERCIAL</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>

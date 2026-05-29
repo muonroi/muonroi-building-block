@@ -320,11 +320,13 @@ internal sealed class TableLayoutEngine
         for (int c = 0; c < columnCount; c++)
             if (widths[c] <= 0f) widths[c] = autoWidth;
 
-        // G23e: CSS 2.1 §17.5.2.1 — when all columns have declared widths and their sum
-        // is less than the available width, scale them up proportionally to fill the table.
-        // This only applies when there are no auto columns (autoCols == 0) and the declared
-        // widths sum to less than the available space.
-        if (autoCols == 0 && assigned > 0f && assigned < available)
+        // G23e + Phase 12.3 (G27b/G30/G31/G32): CSS 2.1 §17.5.2.1 — when all columns have
+        // declared widths and their sum differs from available, scale proportionally to fit.
+        // Original G23e only handled scale-up (sum < available). Real templates (e.g. TCIS
+        // HBCX_F with header widths summing to 108%) also need scale-DOWN to prevent the
+        // rightmost columns overflowing the table container. Chrome's PDF render normalizes
+        // both directions; we now mirror that.
+        if (autoCols == 0 && assigned > 0f && MathF.Abs(assigned - available) > 0.5f)
         {
             float scale = available / assigned;
             for (int c = 0; c < columnCount; c++)

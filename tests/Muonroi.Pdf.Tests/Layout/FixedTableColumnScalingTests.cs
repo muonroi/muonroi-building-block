@@ -104,15 +104,18 @@ public sealed class FixedTableColumnScalingTests
 
     // -------------------------------------------------------------------------
     // Case 2: Declared widths sum > 100% (60%+60%=120%).
-    // Per CSS 2.1 §17.5.2.1 the fixed algorithm assigns declared widths as-is
-    // for the first row; columns may overflow the table box. No shrinking.
-    // Design choice: we do NOT shrink over-declared columns (they render as
-    // declared and may overflow), consistent with Chrome behaviour for fixed-layout.
+    // Phase 12.3 update: scale DOWN proportionally so the table fits its container.
+    // Original design (no-shrink) caused production TCIS templates with header widths
+    // summing to 108% to overflow page width — last columns rendered past the right
+    // margin, producing phantom border rectangles + content merging into adjacent cells.
+    // Chrome's PDF render normalizes both directions (scale-up when sum < 100%,
+    // scale-down when sum > 100%); engine now mirrors that.
     // -------------------------------------------------------------------------
     [Fact]
-    public void FixedTable_TwoCols_SumGreaterThanTableWidth_NoDivisionByScale()
+    public void FixedTable_TwoCols_SumGreaterThanTableWidth_ScalesDownProportionally()
     {
         // 60% + 60% = 120% of 500pt = 600pt total declared — exceeds table width (500pt).
+        // Expected: scale = 500/600 ≈ 0.8333 → each column becomes 250pt; sum = 500pt.
         var tableBox = BuildFixedTable(0f, "60%", "60%");
 
         var (_, tableEngine) = MakeEngines();
@@ -128,11 +131,15 @@ public sealed class FixedTableColumnScalingTests
         float col0Width = output.First(e => e.Source == cells[0]).Position.Width;
         float col1Width = output.First(e => e.Source == cells[1]).Position.Width;
 
-        // Each column should stay at its declared width (300pt), not be shrunk.
-        col0Width.Should().BeApproximately(300f, precision: 1f,
-            because: "over-declared column (60% of 500pt=300pt) must not be shrunk — may overflow");
-        col1Width.Should().BeApproximately(300f, precision: 1f,
-            because: "over-declared column (60% of 500pt=300pt) must not be shrunk — may overflow");
+        // 600 → 500 scale: each 300pt column becomes 250pt.
+        col0Width.Should().BeApproximately(250f, precision: 1f,
+            because: "over-declared column (60% × 2 = 120%) must be scaled down to fit 100%");
+        col1Width.Should().BeApproximately(250f, precision: 1f,
+            because: "over-declared column (60% × 2 = 120%) must be scaled down to fit 100%");
+
+        // Sum must equal table width exactly.
+        (col0Width + col1Width).Should().BeApproximately(500f, precision: 1f,
+            because: "scaled columns must fill the full table width without overflow");
     }
 
     // -------------------------------------------------------------------------
