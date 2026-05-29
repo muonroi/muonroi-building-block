@@ -502,16 +502,22 @@ public sealed class RealTemplateBaselineTests
             _out.WriteLine($"CONTENT-PRESENCE: text excerpt = {text.Replace('\n', ' ').Replace('\r', ' ')[..Math.Min(300, text.Length)]}");
 
             // The custom font encoding in the Muonroi PDF writer remaps code-points, so
-            // pdftotext cannot reconstruct the original Unicode strings verbatim (e.g.
-            // "Container" appears as "Con ainer", "TGHU1234567" as "GH" + digit fragments).
+            // pdftotext cannot reconstruct the original Unicode strings verbatim. Before G22
+            // (G14 era) "Container" appeared as "Con ainer" because uppercase diacritic glyphs
+            // were absent from the subset. After G22 the font subset is built from post-transform
+            // codepoints, so pdftotext now decodes "Container" fully. Accept both forms so the
+            // test remains valid across both pre- and post-G22 builds.
             // Assert instead on structural evidence that the table was rendered:
             //   1. The text layer is non-trivial (> 200 chars) — a zero-height table produces ~0.
-            //   2. The "Con ainer" fragment from the table header column is present.
+            //   2. A "Container" or "Con ainer" fragment from the table header column is present.
             // This detects the G14 silent-omission regression while tolerating font encoding.
             Assert.True(text.Length > 200,
                 $"CONTENT-PRESENCE: text layer too short ({text.Length} chars) — table likely still omitted.");
-            Assert.Contains("Con ainer", text);
-            _out.WriteLine("CONTENT-PRESENCE: PASS — text layer non-trivial and table 'Con ainer' header fragment found.");
+            bool hasContainerFragment = text.Contains("Container", StringComparison.Ordinal)
+                                     || text.Contains("Con ainer", StringComparison.Ordinal);
+            Assert.True(hasContainerFragment,
+                "CONTENT-PRESENCE: neither 'Container' nor 'Con ainer' found in text layer — table likely still omitted.");
+            _out.WriteLine("CONTENT-PRESENCE: PASS — text layer non-trivial and table 'Container' header fragment found.");
         }
         finally
         {
