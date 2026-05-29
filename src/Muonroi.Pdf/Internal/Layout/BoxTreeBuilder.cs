@@ -13,11 +13,20 @@ internal sealed class BoxTreeBuilder
     // and all values come back null through AngleSharpComputedStyle.Empty.
     private Dictionary<string, Dictionary<string, string>>? _classRules;
 
+    // G23c descendant-selector class rules: keyed by (ancestorClass, descendantTag).
+    // Populated alongside _classRules from rules of the form ".cls TAG { ... }" or ".cls > TAG { ... }".
+    // Used by LookupDescendantClassProperty to match e.g. ".t th" against a <th> inside a <table class="t">.
+    private Dictionary<(string ancestorClass, string descendantTag), Dictionary<string, string>>? _descendantClassRules;
+
+    // G23c: stack of DOM ancestor nodes pushed/popped during BuildNode recursion.
+    // Allows LookupDescendantClassProperty to walk up ancestors without a Parent pointer on IStyledNode.
+    private readonly Stack<IStyledNode> _ancestorStack = new();
+
     /// <summary>Converts an IStyledNode tree into a BlockBox root. Pitfall 6: display:none check happens first in BuildNode.</summary>
     public BlockBox Build(IStyledNode root, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null)
     {
         _resolvedImages = resolvedImages;
-        _classRules = ExtractClassRules(root);
+        (_classRules, _descendantClassRules) = ExtractClassRules(root);
         var box = new BlockBox { Source = root };
         ResolveCssProperties(root.Style, box);
         // Mark body element so ResolveWidth can clamp its explicit width to available area (Fix C2).
@@ -49,6 +58,13 @@ internal sealed class BoxTreeBuilder
             return textBox;
         }
 
+        // G23c: push this element onto the ancestor stack before resolving its properties
+        // (BuildChildren will push it again for its children — the stack tracks the build path).
+        // We push here so that when we call ResolveCssProperties for THIS node, _ancestorStack
+        // already contains its ancestors (not itself — we push AFTER creating the box but the
+        // property resolution for this node's CHILDREN will see this node on the stack).
+        // Actually: push before BuildChildren so children see this node as their ancestor.
+        _ancestorStack.Push(node);
         BoxNode box = CreateBox(node);
         ResolveCssProperties(node.Style, box);
 
@@ -94,6 +110,9 @@ internal sealed class BoxTreeBuilder
                     PropagateInheritedTextProps(box, box.Bold, box.TextTransform);
                 break;
         }
+
+        // G23c: pop after all children have been built — this node is no longer an active ancestor.
+        _ancestorStack.Pop();
 
         return box;
     }
@@ -257,6 +276,23 @@ internal sealed class BoxTreeBuilder
         box.PaddingBottom = ParseLength(style.GetValue("padding-bottom"), fontSize);
         box.PaddingLeft = ParseLength(style.GetValue("padding-left"), fontSize);
 
+        // G23c padding fallback: when computed style is empty (% widths / no viewport), try
+        // class rules then descendant-selector rules. The 'padding' shorthand maps to all four sides.
+        if (box.PaddingTop == 0f && box.PaddingRight == 0f
+            && box.PaddingBottom == 0f && box.PaddingLeft == 0f)
+        {
+            string? paddingClass = LookupClassProperty(box.Source, "padding")
+                ?? LookupDescendantClassProperty(box.Source, "padding");
+            if (!string.IsNullOrEmpty(paddingClass))
+            {
+                // Shorthand: use first token (or the whole value if no spaces).
+                string firstToken = paddingClass.Split(' ')[0].Trim();
+                float pv = ParseLength(firstToken, fontSize);
+                if (pv > 0f)
+                    box.PaddingTop = box.PaddingRight = box.PaddingBottom = box.PaddingLeft = pv;
+            }
+        }
+
         box.BorderTop = ParseLength(style.GetValue("border-top-width"), fontSize);
         box.BorderRight = ParseLength(style.GetValue("border-right-width"), fontSize);
         box.BorderBottom = ParseLength(style.GetValue("border-bottom-width"), fontSize);
@@ -273,11 +309,14 @@ internal sealed class BoxTreeBuilder
             // When computed style is unavailable, try individual longhand lookups first,
             // then fall back to the 'border' shorthand (simple "1px solid color" pattern).
             string? btwClass = LookupClassProperty(box.Source, "border-top-width")
-                ?? LookupClassProperty(box.Source, "border-width");
+                ?? LookupClassProperty(box.Source, "border-width")
+                ?? LookupDescendantClassProperty(box.Source, "border-top-width")
+                ?? LookupDescendantClassProperty(box.Source, "border-width");
             if (btwClass == null)
             {
                 // Try 'border' shorthand: "1px solid #008080" — extract first token as width.
-                string? borderShorthand = LookupClassProperty(box.Source, "border");
+                string? borderShorthand = LookupClassProperty(box.Source, "border")
+                    ?? LookupDescendantClassProperty(box.Source, "border");
                 if (!string.IsNullOrEmpty(borderShorthand))
                 {
                     string firstToken = borderShorthand.Split(' ')[0].Trim();
@@ -340,7 +379,8 @@ internal sealed class BoxTreeBuilder
         var textAlignVal = style.GetValue("text-align");
         // G15 class-rule fallback: .text-center/.text-left/.text-right come from class rules.
         if (string.IsNullOrWhiteSpace(textAlignVal))
-            textAlignVal = LookupClassProperty(box.Source, "text-align");
+            textAlignVal = LookupClassProperty(box.Source, "text-align")
+                ?? LookupDescendantClassProperty(box.Source, "text-align");
         if (!string.IsNullOrWhiteSpace(textAlignVal))
             box.TextAlign = textAlignVal.Trim().ToLowerInvariant();
 
@@ -396,26 +436,31 @@ internal sealed class BoxTreeBuilder
         // for ALL box types (block AND inline), not just InlineBox. A block-level heading
         // like <h2> must carry Bold=true so it can be propagated to its inline text children.
         // Step 1: read from computed style (works for inline-style declarations and author sheets
-        // that AngleSharp cascades correctly).
+        // that AngleSharp cascades correctly). G23c: also try class-rule and descendant fallbacks.
         var fwAll = style.GetValue("font-weight");
+        if (string.IsNullOrEmpty(fwAll))
+            fwAll = LookupClassProperty(box.Source, "font-weight")
+                ?? LookupDescendantClassProperty(box.Source, "font-weight");
         if (!string.IsNullOrEmpty(fwAll))
             box.Bold = fwAll is "bold"
                 || (int.TryParse(fwAll, out int fwInt) && fwInt >= 700);
 
-        // Step 2: UA stylesheet — h1..h6 are bold by default unless author CSS overrides.
-        // Only apply when no author-level font-weight was found (empty/null from computed style).
+        // Step 2: UA stylesheet defaults — apply when no author-level font-weight was found.
+        // h1..h6 are bold by UA spec; <th> is also bold by UA spec (HTML5 §14.3.9).
+        // G23d: added "th" alongside h1-h6 so table header cells default to bold.
         if (string.IsNullOrEmpty(fwAll))
         {
             string localNameForUa = box.Source?.LocalName?.ToLowerInvariant() ?? "";
-            if (localNameForUa is "h1" or "h2" or "h3" or "h4" or "h5" or "h6")
+            if (localNameForUa is "h1" or "h2" or "h3" or "h4" or "h5" or "h6" or "th")
                 box.Bold = true;
         }
 
-        // Step 3: text-transform — read for all boxes; also try class-rule fallback so that
-        // .text-uppercase { text-transform: uppercase } is picked up when GetComputedStyle throws.
+        // Step 3: text-transform — read for all boxes; also try class-rule + descendant fallback
+        // so that .text-uppercase { text-transform: uppercase } is picked up when GetComputedStyle throws.
         var ttAll = style.GetValue("text-transform");
         if (string.IsNullOrEmpty(ttAll))
-            ttAll = LookupClassProperty(box.Source, "text-transform");
+            ttAll = LookupClassProperty(box.Source, "text-transform")
+                ?? LookupDescendantClassProperty(box.Source, "text-transform");
         if (!string.IsNullOrEmpty(ttAll) && ttAll == "uppercase")
             box.TextTransform = "uppercase";
 
@@ -562,36 +607,47 @@ internal sealed class BoxTreeBuilder
         return false;
     }
 
-    // G15/G17: Walk the IStyledNode tree to find <style> elements and parse their text into
-    // a class → (property → value) dictionary. Only handles flat .class { prop: value; }
-    // rules — no descendant selectors, no media queries, no combinators. Sufficient for the
-    // utility-class patterns used in real templates (w-20, float-left, text-center, border rules).
-    private static Dictionary<string, Dictionary<string, string>> ExtractClassRules(IStyledNode root)
+    // G15/G17/G23c: Walk the IStyledNode tree to find <style> elements and parse their text.
+    // Returns both flat class rules (.cls { ... }) and descendant-selector rules (.cls TAG { ... }).
+    // Descendant rule keys are stored as lowercase strings so lookup is always case-insensitive.
+    private static (
+        Dictionary<string, Dictionary<string, string>> classRules,
+        Dictionary<(string ancestorClass, string descendantTag), Dictionary<string, string>> descendantClassRules
+    ) ExtractClassRules(IStyledNode root)
     {
-        var result = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
-        CollectStyleText(root, result);
-        return result;
+        var classRules = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+        var descendantClassRules = new Dictionary<(string, string), Dictionary<string, string>>();
+        CollectStyleText(root, classRules, descendantClassRules);
+        return (classRules, descendantClassRules);
     }
 
-    private static void CollectStyleText(IStyledNode node, Dictionary<string, Dictionary<string, string>> result)
+    private static void CollectStyleText(
+        IStyledNode node,
+        Dictionary<string, Dictionary<string, string>> classRules,
+        Dictionary<(string, string), Dictionary<string, string>> descendantClassRules)
     {
         if (string.Equals(node.LocalName, "style", StringComparison.OrdinalIgnoreCase)
             && node.TextContent is { Length: > 0 } css)
         {
-            ParseClassRulesFromCss(css, result);
+            ParseClassRulesFromCss(css, classRules, descendantClassRules);
             return; // don't recurse into <style> text children
         }
         foreach (IStyledNode child in node.Children)
-            CollectStyleText(child, result);
+            CollectStyleText(child, classRules, descendantClassRules);
     }
 
     // Minimal CSS class-rule parser. Handles:
     //   .cls { prop: val; }
     //   .cls1, .cls2 { prop: val; }
-    //   .cls th, .cls td { prop: val; }   — only the first .cls token is stored
-    // Does NOT handle descendant combinators as separate keys, but stores the rule under
-    // the first class-name encountered, which is sufficient for per-cell fallback.
-    private static void ParseClassRulesFromCss(string css, Dictionary<string, Dictionary<string, string>> result)
+    //   .cls TAG { prop: val; }       — G23c: stored as descendant rule (ancestorClass="cls", tag="tag")
+    //   .cls > TAG { prop: val; }     — G23c: child combinator treated same as descendant
+    // For each selector group, if the remainder after the class name is a bare tag name (possibly
+    // preceded by '>' whitespace), the rule is stored in descendantClassRules; otherwise it falls
+    // through to the existing flat class-rule store (first class name key).
+    private static void ParseClassRulesFromCss(
+        string css,
+        Dictionary<string, Dictionary<string, string>> result,
+        Dictionary<(string, string), Dictionary<string, string>> descendantResult)
     {
         int i = 0;
         int len = css.Length;
@@ -629,8 +685,7 @@ internal sealed class BoxTreeBuilder
 
             if (props.Count == 0) continue;
 
-            // Extract class names from the selector block.
-            // Split on ',' for grouped selectors; take the first class name (after '.') in each group.
+            // Process each comma-separated selector group.
             foreach (string selectorGroup in selectorBlock.Split(',', StringSplitOptions.RemoveEmptyEntries))
             {
                 // Find the first class name token: text starting with '.'
@@ -650,16 +705,50 @@ internal sealed class BoxTreeBuilder
                 string className = trimmedSel[classStart..classEnd];
                 if (string.IsNullOrEmpty(className)) continue;
 
-                if (!result.TryGetValue(className, out var existing))
+                // G23c: check if what follows the class name is a bare tag descendant.
+                // Remainder after the class name token, stripped of leading whitespace and '>'.
+                string remainder = trimmedSel[classEnd..].Trim();
+                // Strip optional '>' combinator (direct-child — treat same as descendant here)
+                if (remainder.StartsWith('>'))
+                    remainder = remainder[1..].Trim();
+
+                if (!string.IsNullOrEmpty(remainder) && IsBareSelectorTag(remainder))
                 {
-                    existing = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                    result[className] = existing;
+                    // Descendant rule: .className TAG
+                    string tagName = remainder.ToLowerInvariant();
+                    var key = (className.ToLowerInvariant(), tagName);
+                    if (!descendantResult.TryGetValue(key, out var descExisting))
+                    {
+                        descExisting = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        descendantResult[key] = descExisting;
+                    }
+                    foreach (var kv in props)
+                        descExisting[kv.Key] = kv.Value;
                 }
-                // Later rules win (cascade order) — overwrite earlier declarations.
-                foreach (var kv in props)
-                    existing[kv.Key] = kv.Value;
+                else
+                {
+                    // Flat class rule (original behavior): store under className.
+                    if (!result.TryGetValue(className, out var existing))
+                    {
+                        existing = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        result[className] = existing;
+                    }
+                    // Later rules win (cascade order) — overwrite earlier declarations.
+                    foreach (var kv in props)
+                        existing[kv.Key] = kv.Value;
+                }
             }
         }
+    }
+
+    // Returns true if 'token' looks like a bare HTML tag name (letters only, e.g. "th", "td", "tr").
+    // Used to distinguish ".cls TAG" descendant selectors from compound class selectors ".cls.other".
+    private static bool IsBareSelectorTag(string token)
+    {
+        if (string.IsNullOrEmpty(token)) return false;
+        foreach (char c in token)
+            if (!char.IsAsciiLetter(c)) return false;
+        return true;
     }
 
     // Returns the CSS property value from class rules for an element, or null if not found.
@@ -682,6 +771,38 @@ internal sealed class BoxTreeBuilder
             }
         }
         return found;
+    }
+
+    // G23c: descendant-selector fallback for a node (e.g. <th>) that has no class of its own
+    // but inherits styling from a ".cls TAG" rule on an ancestor element.
+    // Walks the _ancestorStack (nearest ancestor first) and tries (ancestorClass, node.LocalName)
+    // against _descendantClassRules. Returns the first match found, or null.
+    private string? LookupDescendantClassProperty(IStyledNode? node, string property)
+    {
+        if (_descendantClassRules == null || _descendantClassRules.Count == 0 || node == null) return null;
+        string tagName = node.LocalName?.ToLowerInvariant() ?? "";
+        if (string.IsNullOrEmpty(tagName)) return null;
+
+        foreach (IStyledNode ancestor in _ancestorStack)
+        {
+            string? ancestorClass = ancestor.GetAttribute("class");
+            if (string.IsNullOrWhiteSpace(ancestorClass)) continue;
+
+            // Try each class on the ancestor — last non-null wins (same cascade order as LookupClassProperty).
+            string? found = null;
+            foreach (string cls in ancestorClass.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var key = (cls.Trim().ToLowerInvariant(), tagName);
+                if (_descendantClassRules.TryGetValue(key, out var props)
+                    && props.TryGetValue(property, out string? val)
+                    && !string.IsNullOrEmpty(val))
+                {
+                    found = val;
+                }
+            }
+            if (found != null) return found;
+        }
+        return null;
     }
 
     // G23: last-resort fallback — parse a single CSS property value from a raw style="..."
