@@ -6,7 +6,14 @@
     <Nullable>enable</Nullable>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
+    <!-- NuGet packaging metadata -->
+    <PackageId>Muonroi.Pdf</PackageId>
+    <Version>0.1.0-alpha</Version>
     <Description>HTML/CSS to PDF layout engine: box-tree construction, pagination, and rendering coordination for Muonroi applications.</Description>
+    <!-- OSS: use SPDX expression — overrides the global PackageLicenseFile set in Directory.Build.props -->
+    <PackageLicenseFile></PackageLicenseFile>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>pdf;html;css;pure-managed;muonroi</PackageTags>
     <!-- AOT-01 verified: no reflection-emit in hot path; engine is AOT-clean.
          Audit performed in Phase 08-04: grep for Activator.CreateInstance, Type.GetProperties/Methods/Constructors/Fields,
          AppDomain.CurrentDomain, Assembly.GetExecutingAssembly, GetType() on non-this expressions — 0 matches found.
