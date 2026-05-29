@@ -301,6 +301,12 @@ internal sealed class BoxTreeBuilder
         // widthVal is null. Recover it from the parsed class rules so % widths are set.
         if (string.IsNullOrEmpty(widthVal))
             widthVal = LookupClassProperty(box.Source, "width");
+        // G23 inline-style attribute fallback: when both computed-style AND class rules
+        // return empty for width (e.g. <th style="width:16%"> inside a table whose
+        // GetComputedStyle fails), parse the element's raw style="..." attribute directly.
+        // Runs only when both prior sources are empty so it cannot override a real value.
+        if (string.IsNullOrEmpty(widthVal))
+            widthVal = ParseInlineStyleProperty(box.Source?.GetAttribute("style"), "width");
         box.Width = widthVal is null or "auto" ? -1f : ParseLength(widthVal, fontSize);
         box.WidthRaw = widthVal;
 
@@ -486,6 +492,11 @@ internal sealed class BoxTreeBuilder
         else if (box is TableBox table)
         {
             var tableLayout = style.GetValue("table-layout");
+            // G23 class-rule fallback: .table-bodered2 { table-layout: fixed } comes from a
+            // class rule; GetComputedStyle fails on tables with width:% (no viewport), so
+            // table-layout is never seen without this fallback. Same pattern as text-align/float/width.
+            if (string.IsNullOrWhiteSpace(tableLayout))
+                tableLayout = LookupClassProperty(box.Source, "table-layout");
             if (!string.IsNullOrWhiteSpace(tableLayout)) table.TableLayout = tableLayout;
 
             table.BorderSpacing = ParseLength(style.GetValue("border-spacing"), fontSize);
@@ -671,6 +682,27 @@ internal sealed class BoxTreeBuilder
             }
         }
         return found;
+    }
+
+    // G23: last-resort fallback — parse a single CSS property value from a raw style="..."
+    // attribute string when both GetComputedStyle and class-rule lookup returned empty.
+    // Uses a lightweight split on ';' + ':' to avoid adding AngleSharp or Regex dependencies.
+    // Only called when the prior sources already failed, so there is no risk of overriding a
+    // real computed or class-rule value.
+    private static string? ParseInlineStyleProperty(string? styleAttr, string property)
+    {
+        if (string.IsNullOrWhiteSpace(styleAttr)) return null;
+        foreach (string declaration in styleAttr.Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            int colon = declaration.IndexOf(':');
+            if (colon < 0) continue;
+            string propName = declaration[..colon].Trim();
+            if (!string.Equals(propName, property, StringComparison.OrdinalIgnoreCase)) continue;
+            string propValue = declaration[(colon + 1)..].Trim();
+            if (!string.IsNullOrEmpty(propValue))
+                return propValue;
+        }
+        return null;
     }
 
     // Pitfall 7: percent widths stored as -1f sentinel — resolved during layout, not here
