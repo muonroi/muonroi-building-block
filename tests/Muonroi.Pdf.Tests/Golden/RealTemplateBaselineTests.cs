@@ -46,15 +46,21 @@ public sealed class RealTemplateBaselineTests
     // writer's IDAT zlib path). The previous 1x1 RGB variant triggered an InvalidDataException
     // in Inflater.Inflate on its 12-byte IDAT payload (edge case in the writer's zlib decode path);
     // moving to a larger, suite-proven sample avoids that without masking real layout regressions.
+    // Retained for {{barcode}} and other image slots where visual fidelity of the image itself
+    // is not under test.
     private const string TinyRgbPngBase64 =
         "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEElEQVR42mM4oaEBRwzEcQDRQxGBoNNuZAAAAABJRU5ErkJggg==";
+
+    // 32x32 8-bit RGB PNG (color_type=2, no alpha) — real recognizable logo stub (#33).
+    // Used for {{logo}} so visual-diff renders show a non-trivial image region.
+    private const string RealLogoPngBase64 = LogoStubTests.RealLogoBase64;
 
     // Full set of dummy values covering all 18 templates.
     private static readonly Dictionary<string, string> Dummies = new()
     {
         // Common fields (HSLA_E, HANG_E, NHAR_E, CAPR_E, CRCD_E, CSLA_E, CHNG_E)
         ["title"]              = "Phiếu đăng ký làm hàng",
-        ["logo"]               = TinyRgbPngBase64,
+        ["logo"]               = RealLogoPngBase64,
         ["barcode"]            = TinyRgbPngBase64,
         ["operMethodName"]     = "Giao thẳng",
         ["operMethodCode"]     = "GT",
