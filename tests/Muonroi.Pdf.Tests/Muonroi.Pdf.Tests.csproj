@@ -11,6 +11,7 @@
     <ProjectReference Include="..\..\src\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Pdf.DesignSystem.Default\Muonroi.Pdf.DesignSystem.Default.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.Enterprise\Muonroi.Pdf.Enterprise.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
