@@ -190,9 +190,33 @@ public sealed class OwnedPdfWriterImageTests
     [Fact]
     public async Task WriteAsync_PngImage_UnsupportedFormat_ThrowsPdfFormatException()
     {
-        // RGBA PNG (color_type=6) is not supported
-        byte[] rgbaPng = MakeMinimalPng(colorType: 6, bitDepth: 8);
-        var image = new DecodedImage(1, 1, rgbaPng, "image/png");
+        // Grayscale PNG (color_type=0) is still unsupported in v1.0.1
+        // Build a minimal but structurally valid 1x1 grayscale PNG (color_type=0)
+        // We use a raw DecodedImage with the PNG bytes so the writer's DecodePngToRawRgb is exercised.
+        byte[] sig = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+        byte[] ihdrData = new byte[13];
+        ihdrData[0] = 0; ihdrData[1] = 0; ihdrData[2] = 0; ihdrData[3] = 1; // width=1
+        ihdrData[4] = 0; ihdrData[5] = 0; ihdrData[6] = 0; ihdrData[7] = 1; // height=1
+        ihdrData[8] = 8; // bit_depth=8
+        ihdrData[9] = 0; // color_type=0 (grayscale)
+        byte[] ihdrChunk = BuildPngChunk("IHDR", ihdrData);
+        byte[] rawRow = new byte[] { 0, 128 }; // filter=None, 1 gray byte
+        byte[] compressedIdat;
+        using (var cMs = new MemoryStream())
+        {
+            using (var zlib = new System.IO.Compression.ZLibStream(cMs, System.IO.Compression.CompressionLevel.Fastest, leaveOpen: true))
+                zlib.Write(rawRow, 0, rawRow.Length);
+            compressedIdat = cMs.ToArray();
+        }
+        byte[] idatChunk = BuildPngChunk("IDAT", compressedIdat);
+        byte[] iendChunk = BuildPngChunk("IEND", Array.Empty<byte>());
+        var grayscaleBytes = new List<byte>();
+        grayscaleBytes.AddRange(sig);
+        grayscaleBytes.AddRange(ihdrChunk);
+        grayscaleBytes.AddRange(idatChunk);
+        grayscaleBytes.AddRange(iendChunk);
+
+        var image = new DecodedImage(1, 1, grayscaleBytes.ToArray(), "image/png");
 
         var writer = new OwnedPdfWriter();
         using var ms = new MemoryStream();

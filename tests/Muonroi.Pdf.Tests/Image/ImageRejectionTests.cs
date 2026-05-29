@@ -27,27 +27,31 @@ public sealed class ImageRejectionTests
     }
 
     [Fact]
-    public void DecodePng_Rgba_ThrowsPdfFormatException_PNG_RGBA()
+    public void DecodePng_Rgba_PassesThroughWithOriginalBytes()
     {
-        byte[] pngBytes = BuildMinimalPng(bitDepth: 0x08, colorType: 0x06); // color_type=6 (RGBA)
+        // color_type=6 (RGBA) is now supported — PureImageDecoder passes through original bytes.
+        byte[] pngBytes = BuildMinimalPng(bitDepth: 0x08, colorType: 0x06);
         var decoder = new PureImageDecoder();
 
-        Action act = () => decoder.Decode(pngBytes, "image/png");
+        DecodedImage result = decoder.Decode(pngBytes, "image/png");
 
-        act.Should().Throw<PdfFormatException>()
-            .Which.RuleId.Should().Be("PNG-RGBA");
+        result.Should().NotBeNull();
+        result.Width.Should().Be(1);
+        result.Height.Should().Be(1);
     }
 
     [Fact]
-    public void DecodePng_Palette_ThrowsPdfFormatException_PNG_PALETTE()
+    public void DecodePng_Palette_PassesThroughWithOriginalBytes()
     {
-        byte[] pngBytes = BuildMinimalPng(bitDepth: 0x08, colorType: 0x03); // color_type=3 (palette/indexed)
+        // color_type=3 (palette/indexed) is now supported — PureImageDecoder passes through original bytes.
+        byte[] pngBytes = BuildMinimalPng(bitDepth: 0x08, colorType: 0x03);
         var decoder = new PureImageDecoder();
 
-        Action act = () => decoder.Decode(pngBytes, "image/png");
+        DecodedImage result = decoder.Decode(pngBytes, "image/png");
 
-        act.Should().Throw<PdfFormatException>()
-            .Which.RuleId.Should().Be("PNG-PALETTE");
+        result.Should().NotBeNull();
+        result.Width.Should().Be(1);
+        result.Height.Should().Be(1);
     }
 
     [Fact]
