@@ -38,12 +38,14 @@ public sealed class HslaERootCauseDiagnostic
     private const string TemplatePath = @"D:\Data\Template\Htmls\PreviewRegistion\HSLA_E.html";
 
     // Minimal dummy values — enough to render a structurally representative page.
+    // {{barcode}} still uses the 4×4 placeholder; {{logo}} is upgraded to the real 32×32
+    // stub so visual-diff output shows a recognizable logo region (not a solid red block).
     private const string TinyPng =
         "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEElEQVR42mM4oaEBRwzEcQDRQxGBoNNuZAAAAABJRU5ErkJggg==";
 
     private static string FillTemplate(string html) => html
         .Replace("{{title}}", "Test")
-        .Replace("{{logo}}", TinyPng)
+        .Replace("{{logo}}", LogoStubTests.RealLogoBase64)
         .Replace("{{barcode}}", TinyPng)
         .Replace("{{operMethodName}}", "Giao thẳng")
         .Replace("{{operMethodCode}}", "GT")

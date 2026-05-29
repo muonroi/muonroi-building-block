@@ -207,6 +207,8 @@ public sealed class TableCellWidthDoubleApplicationTests
     private const string ChngETemplatePath = @"D:\Data\Template\Htmls\PreviewRegistion\CHNG_E.html";
     private const string PdfToTextExe = @"C:\Users\phila\AppData\Local\poppler\Library\bin\pdftotext.exe";
 
+    // 4×4 red placeholder — retained for {{barcode}} and other non-logo image slots
+    // where the layout regression under test is independent of the image's visual content.
     private const string TinyPng =
         "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEElEQVR42mM4oaEBRwzEcQDRQxGBoNNuZAAAAABJRU5ErkJggg==";
 
@@ -215,7 +217,7 @@ public sealed class TableCellWidthDoubleApplicationTests
         var dummies = new Dictionary<string, string>
         {
             ["title"]                     = "Phiếu đăng ký làm hàng",
-            ["logo"]                      = TinyPng,
+            ["logo"]                      = LogoStubTests.RealLogoBase64,
             ["barcode"]                   = TinyPng,
             ["operMethodName"]            = "Giao thẳng",
             ["operMethodCode"]            = "GT",

@@ -47,7 +47,7 @@ See also: `.planning/ROADMAP.md` for phase timeline.
 | G23h | `<td class="text-center">` content left-aligned — `TableLayoutEngine.CellContext` never copied `cell.TextAlign` into child `LayoutContext` (cascade gap at cell boundary) | 8.15 (research) | FIXED 8.15 (`cf0b548`) — `CellContext` factory accepts `TableCellBox` and seeds `TextAlign = cell?.TextAlign ?? parent.TextAlign` | — |
 | G23i | (closed — false alarm) `Units.PxToPt = 0.75f` correct per CSS spec (13px → 9.75pt) | 8.15 (research) | NO-FIX 8.15 — closed during research | — |
 | G23j | (closed — no corpus exposure) overline silently ignored; `font-variant`/`letter-spacing`/`word-spacing` unimplemented but used in zero templates | 8.15 (research) | DEFERRED — track if future template uses any | — |
-| G24 | `<img>` without CSS width/height stretches to container width instead of using intrinsic pixel size (px→pt) | 8.16 (post-8.15 logo render audit) | PLANNED 8.16 Wave A — `BoxTreeBuilder.CreateBox` seeds `NaturalWidth/Height` from `DecodedImage` × `Units.PxToPt` | 8.16 |
+| G24 | `<img>` without CSS width/height stretches to container width instead of using intrinsic pixel size (px→pt) | 8.16 (post-8.15 logo render audit) | FIXED 8.16 (`1bc6a09`) — `BlockLayoutEngine.ResolveWidth` adds `ReplacedBox { NaturalWidth: > 0f }` branch before auto-width fallback; `NaturalWidth/Height` seeded by `BoxTreeBuilder` from `DecodedImage × Units.PxToPt` | — |
 
 ---
 
@@ -74,7 +74,7 @@ See also: `.planning/ROADMAP.md` for phase timeline.
 |----|------|--------|-------------|
 | C1 | 18/18 visual gate | DONE 8.9 — all 18 templates render on page 1 with table grid + inline label-value. VERIFIED again 8.12 via PDF review (G11/G12/G13 closed as not-engine-bugs) | — |
 | C1b | Author guidance: floated siblings do NOT establish inline-flow continuity (see HSLA_E vs HSLA_F) | DOCUMENTED 8.12 (VERIFICATION.md) | — |
-| C2 | Logo data-URI PNG render audit across all 18 templates | PARTIAL — G9 root cause closed (HBND_F + HSLA_F abs-pos position); full visual audit across 18 templates deferred | 8.12+ |
+| C2 | Logo data-URI PNG render audit across all 18 templates | COMPLETE 8.16 (`cdbb526`) — 17/17 templates render OK, no new gaps; see `.planning/phases/08.16-image-polish/AUDIT.md` | — |
 | C3 | Document v1 Legacy Print-HTML Profile public spec | Not started | After 8.11 stabilization |
 | C4 | Failure mode: "unsupported: \<feature\>" error path for out-of-profile CSS | Not implemented (silent mis-render) | 8.11 or charter sub-phase |
 

@@ -42,6 +42,8 @@ public sealed class HbndFLogoPositionDiagnostic
 
     private const string TemplatePath = @"D:\Data\Template\Htmls\PreviewRegistion\HBND_F.html";
 
+    // 4×4 red placeholder — retained for {{barcode}} and other non-logo image slots
+    // where the layout under test is independent of the image's visual content.
     private const string TinyPng =
         "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEElEQVR42mM4oaEBRwzEcQDRQxGBoNNuZAAAAABJRU5ErkJggg==";
 
@@ -51,7 +53,7 @@ public sealed class HbndFLogoPositionDiagnostic
         var dummies = new Dictionary<string, string>
         {
             ["title"]                     = "Phiếu đăng ký làm hàng",
-            ["logo"]                      = TinyPng,
+            ["logo"]                      = LogoStubTests.RealLogoBase64,
             ["barcode"]                   = TinyPng,
             ["operMethodName"]            = "Giao thẳng",
             ["operMethodCode"]            = "GT",

@@ -630,6 +630,14 @@ internal sealed class BlockLayoutEngine
                 ? ctx.AvailableWidth
                 : box.Width;
         }
+        else if (box is ReplacedBox { NaturalWidth: > 0f } replaced)
+        {
+            // G24: <img> with no CSS width — use intrinsic pixel→pt size instead of
+            // stretching to the full container width (CSS 2.1 §10.3.2 replaced elements).
+            // NaturalWidth is seeded by BoxTreeBuilder from DecodedImage.Width * Units.PxToPt.
+            // max-width/min-width clamps below still apply (e.g. max-width:200pt constrains it).
+            width = replaced.NaturalWidth;
+        }
         else
         {
             // auto width: available minus horizontal margins/padding/border
