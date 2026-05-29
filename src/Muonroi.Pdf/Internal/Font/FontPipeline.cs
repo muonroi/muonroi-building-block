@@ -56,6 +56,22 @@ internal sealed class FontPipeline
             // all char-width measurements to fall back to the 0.6× heuristic.
             if (!cssFamilyMap.ContainsKey(decl.Family))
                 cssFamilyMap[decl.Family] = addedFamily;
+
+            // FONT-ALIAS-02 (Phase 12.1): when consumer @font-face matches a bundled canonical
+            // (e.g. "Times New Roman" → Liberation Serif), also register the canonical's CSS
+            // aliases (serif, Georgia, Times) pointing at the consumer's FontFamily. Without
+            // this, elements that default to InlineBox.FontFamily="serif" hit the 0.6× width
+            // heuristic, producing over-wide word spacing and incorrect column-width
+            // allocation in tables. Parallel to LayoutEngine fix in commit 4bc0465 (11.6),
+            // which addressed cpToNewGidMap; this addresses cssFamilyMap (metrics side).
+            if (BundledFonts.TryGetFallback(decl.Family, decl.Weight, decl.Style, out _, out string canonical))
+            {
+                foreach (string alias in BundledFonts.GetAliasesForCanonical(canonical))
+                {
+                    if (!cssFamilyMap.ContainsKey(alias))
+                        cssFamilyMap[alias] = addedFamily;
+                }
+            }
         }
 
         // Pre-load all three Liberation families as fallbacks for templates that reference
