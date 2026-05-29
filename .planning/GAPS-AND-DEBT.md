@@ -43,6 +43,11 @@ See also: `.planning/ROADMAP.md` for phase timeline.
 | G23d | `<th>` not UA-bold — Phase 8.13 G18 added UA bold for `h1`-`h6` only | 8.14 (research) | FIXED 8.14 (`395e430`) — `"th"` added to UA bold switch | — |
 | G23e | Fixed-layout column widths with declared sum < 100% don't scale to fill table width — CSS 2.1 §17.5.2.1 violated, 34% slack dropped | 8.14 (post-Wave-D pixel review) | FIXED 8.14 (`6c17d8f`) — proportional-scaling pass in `ComputeFixedColumnWidths` when `autoCols==0 && assigned<available` | — |
 | G23f | `InlineBox.Bold=true` not visually rendered when font lacks bold variant — writer emitted identical glyphs regardless | 8.14 (post-Wave-E visual review) | FIXED 8.14 (`e20d67e`) — synthetic bold via `2 Tr` + stroke and italic via `Tm` skew `1 0 0.2 1` in `OwnedPdfWriter` | — |
+| G23g | `<th>` content rendered left-aligned despite HTML5 UA `th { text-align: center }` | 8.15 (research) | FIXED 8.15 (`cf0b548`) — UA `text-align: center` added to `<th>` UA-defaults block in `BoxTreeBuilder.ResolveCssProperties` | — |
+| G23h | `<td class="text-center">` content left-aligned — `TableLayoutEngine.CellContext` never copied `cell.TextAlign` into child `LayoutContext` (cascade gap at cell boundary) | 8.15 (research) | FIXED 8.15 (`cf0b548`) — `CellContext` factory accepts `TableCellBox` and seeds `TextAlign = cell?.TextAlign ?? parent.TextAlign` | — |
+| G23i | (closed — false alarm) `Units.PxToPt = 0.75f` correct per CSS spec (13px → 9.75pt) | 8.15 (research) | NO-FIX 8.15 — closed during research | — |
+| G23j | (closed — no corpus exposure) overline silently ignored; `font-variant`/`letter-spacing`/`word-spacing` unimplemented but used in zero templates | 8.15 (research) | DEFERRED — track if future template uses any | — |
+| G24 | `<img>` without CSS width/height stretches to container width instead of using intrinsic pixel size (px→pt) | 8.16 (post-8.15 logo render audit) | PLANNED 8.16 Wave A — `BoxTreeBuilder.CreateBox` seeds `NaturalWidth/Height` from `DecodedImage` × `Units.PxToPt` | 8.16 |
 
 ---
 
