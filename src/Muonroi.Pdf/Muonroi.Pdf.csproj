@@ -8,7 +8,7 @@
     <FileVersion>1.0.0.0</FileVersion>
     <!-- NuGet packaging metadata -->
     <PackageId>Muonroi.Pdf</PackageId>
-    <Version>0.1.0-alpha</Version>
+    <Version>1.0.0</Version>
     <Description>HTML/CSS to PDF layout engine: box-tree construction, pagination, and rendering coordination for Muonroi applications.</Description>
     <!-- OSS: use SPDX expression — overrides the global PackageLicenseFile set in Directory.Build.props -->
     <PackageLicenseFile></PackageLicenseFile>
