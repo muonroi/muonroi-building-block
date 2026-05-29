@@ -543,6 +543,32 @@ internal sealed class BoxTreeBuilder
                 if (inline.WhiteSpace != "nowrap" || whiteSpace == "nowrap")
                     inline.WhiteSpace = whiteSpace;
             }
+
+            // Phase 12.4: parse word-break / overflow-wrap / word-wrap.
+            // All three CSS properties produce character-break behavior on overflow; we
+            // normalize to two values: "break-all" (always break) or "break-word" (break only
+            // when a token would otherwise overflow the line). word-break has highest precedence.
+            string? wb = null;
+            var wordBreak = style.GetValue("word-break");
+            if (!string.IsNullOrEmpty(wordBreak))
+            {
+                wb = wordBreak switch
+                {
+                    "break-all" => "break-all",
+                    "break-word" => "break-word",
+                    _ => null,
+                };
+            }
+            if (wb is null)
+            {
+                var overflowWrap = style.GetValue("overflow-wrap");
+                if (string.IsNullOrEmpty(overflowWrap))
+                    overflowWrap = style.GetValue("word-wrap"); // legacy alias
+                if (!string.IsNullOrEmpty(overflowWrap) && overflowWrap is "break-word" or "anywhere")
+                    wb = "break-word";
+            }
+            if (wb is not null)
+                inline.WordBreak = wb;
         }
         else if (box is TableBox table)
         {

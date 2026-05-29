@@ -22,4 +22,13 @@ internal sealed class InlineBox : BoxNode
 
     /// <summary>CSS white-space: "pre-wrap" | "pre-line" | "nowrap" | null.</summary>
     public string? WhiteSpace { get; set; }
+
+    /// <summary>
+    /// Normalized word-break/overflow-wrap behavior:
+    /// "break-all"   — split at any character boundary (CSS word-break: break-all)
+    /// "break-word"  — split only when a single token would otherwise overflow
+    ///                  (CSS word-break: break-word, overflow-wrap: break-word|anywhere, word-wrap: break-word)
+    /// null/"normal" — break only at whitespace (default)
+    /// </summary>
+    public string? WordBreak { get; set; }
 }

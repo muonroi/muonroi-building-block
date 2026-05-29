@@ -239,6 +239,48 @@ internal sealed class InlineLayoutEngine
                         neededWidth = wordWidth;
                     }
 
+                    // Phase 12.4: word-break / overflow-wrap support.
+                    // If the word alone is still wider than availWidth and the box requests
+                    // character-level breaking (break-all always; break-word only when the
+                    // token would otherwise overflow — both conditions are true here), split
+                    // the word at character boundaries so cells don't bleed into neighbors.
+                    bool charBreakAll = box.WordBreak == "break-all";
+                    bool charBreakOnOverflow = box.WordBreak == "break-word" && wordWidth > availWidth;
+                    if (charBreakAll || charBreakOnOverflow)
+                    {
+                        // Emit per-character chunks, committing each line at availWidth.
+                        // For break-all we re-measure from scratch ignoring the prior word commit;
+                        // for break-word the token was placed on a fresh line by the guard above.
+                        float chunkWidth = 0f;
+                        var chunkChars = new System.Text.StringBuilder(word.Length);
+                        foreach (char ch in word)
+                        {
+                            float chW = metrics.GetCharWidth(ch, box.FontFamily, box.FontSize, box.Bold, box.Italic);
+                            float trial = lineX == 0f
+                                ? chunkWidth + chW
+                                : (chunkChars.Length == 0 ? lineX + spaceWidth + chW : lineX + chW);
+                            if (trial > availWidth && (chunkChars.Length > 0 || lineX > 0f))
+                            {
+                                if (chunkChars.Length > 0)
+                                {
+                                    pendingWords.Add((box, chunkChars.ToString(), chunkWidth));
+                                    lineX = lineX == 0f ? chunkWidth : lineX + spaceWidth + chunkWidth;
+                                    chunkChars.Clear();
+                                    chunkWidth = 0f;
+                                }
+                                CommitLine(isLastLine: false);
+                            }
+                            chunkChars.Append(ch);
+                            chunkWidth += chW;
+                        }
+                        if (chunkChars.Length > 0)
+                        {
+                            pendingWords.Add((box, chunkChars.ToString(), chunkWidth));
+                            lineX = lineX == 0f ? chunkWidth : lineX + spaceWidth + chunkWidth;
+                        }
+                        continue;
+                    }
+
                     // Force-break after a word that is wider than the full line (prevents infinite loop)
                     pendingWords.Add((box, word, wordWidth));
                     lineX = neededWidth;
