@@ -117,6 +117,34 @@ internal sealed class LayoutEngine
                         subsetResult.SubsetBytes, codepoints,
                         subsetResult.OldToNewGid, subsetResult.SortedGids,
                         subsetResult.CpToNewGid));
+
+                    // FONT-ALIAS-01: When a consumer @font-face matches a bundled canonical family
+                    // (e.g. "Times New Roman" → Liberation Serif), elements lacking an explicit
+                    // font-family still default to the canonical's CSS aliases ("serif"). Without
+                    // alias EmbeddedFontInfo entries, cpToNewGidMap["serif"] is empty and the writer
+                    // throws "Font GID map missing or empty for family 'serif'". Generate alias
+                    // EmbeddedFontInfo entries that share the same bytes but subset against the
+                    // codepoints collected under each alias.
+                    if (BundledFonts.TryGetFallback(decl.Family, decl.Weight, decl.Style, out _, out string canonical))
+                    {
+                        foreach (string alias in BundledFonts.GetAliasesForCanonical(canonical))
+                        {
+                            if (string.Equals(alias, decl.Family, StringComparison.OrdinalIgnoreCase))
+                                continue; // already handled above
+
+                            if (!usedCodepoints.TryGetValue(alias, out IReadOnlySet<int>? aliasCp) || aliasCp.Count == 0)
+                                continue; // alias not referenced by any inline box
+
+                            var aliasSubsetter = new TrueTypeFontSubsetter();
+                            FontSubsetResult aliasSubset = aliasSubsetter.Subset(kvp.Value, aliasCp);
+
+                            embeddedFonts.Add(new EmbeddedFontInfo(
+                                alias, decl.Weight, decl.Style,
+                                aliasSubset.SubsetBytes, aliasCp,
+                                aliasSubset.OldToNewGid, aliasSubset.SortedGids,
+                                aliasSubset.CpToNewGid));
+                        }
+                    }
                 }
                 else
                 {
