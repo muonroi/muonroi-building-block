@@ -199,7 +199,15 @@ public class AuthService<TPermission, TDbContext>(
         CancellationToken cancellationToken)
     {
         MResponse<RefreshTokenResponseModel> result = new();
-        if (!Guid.TryParse(_context.CurrentUserGuid, out Guid currentUserId))
+
+        // The refresh-token endpoint is [AllowAnonymous] and is, by design, called
+        // with an already-EXPIRED access token (that is the whole point of a refresh
+        // token). At that point JWT authentication has failed, so the request context
+        // carries no user id. Fall back to recovering the user from the expired access
+        // token in the request body — its signature, issuer and audience are still
+        // validated here and again in ResolveRefreshToken; only the lifetime is ignored.
+        if (!Guid.TryParse(_context.CurrentUserGuid, out Guid currentUserId)
+            && !AuthorizeInternal.TryGetUserIdFromExpiredToken(request.AccessToken, tokenInfo, out currentUserId))
         {
             result.AddError(nameof(SystemEnum.InvalidCredentials), _context.Language);
             return result;

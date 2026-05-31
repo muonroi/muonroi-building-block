@@ -465,6 +465,37 @@ public static class AuthorizeInternal
         return tokenHandler.ValidateToken(accessToken, validationParameters, out _);
     }
 
+    /// <summary>
+    /// Extracts the user identifier from an access token while ignoring its
+    /// lifetime (signature, issuer and audience are still validated). The
+    /// refresh-token endpoint is <c>[AllowAnonymous]</c> and is, by design,
+    /// called with an already-EXPIRED access token, so the authenticated request
+    /// context carries no user id — the identity must be recovered from the token
+    /// itself. Returns <c>false</c> for a missing, malformed or untrusted token.
+    /// </summary>
+    public static bool TryGetUserIdFromExpiredToken(string? accessToken, MTokenInfo mTokenInfo, out Guid userId)
+    {
+        userId = Guid.Empty;
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            return false;
+        }
+
+        string token = accessToken.Replace(BearerPrefix, string.Empty);
+        try
+        {
+            TokenValidationParameters validationParameters = CreateValidationParameters(mTokenInfo);
+            ClaimsPrincipal principal = ValidateAndGetPrincipal(token, validationParameters);
+            List<Claim> claims = [.. principal.Claims];
+            string? value = claims.Find(c => c.Type == ClaimConstants.UserIdentifier)?.Value;
+            return Guid.TryParse(value, out userId);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
 
     /// <summary>Updates login attempt counters and lockout state after a failed login.</summary>
     public static async Task HandleFailedLoginAttempt<TDbContext>(MUser existedUser,
