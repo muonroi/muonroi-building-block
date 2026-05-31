@@ -26,13 +26,14 @@ public class RuleEngineTelemetryTests
     [Fact]
     public async Task RulesFiredCounter_Increments_WhenRuleExecuted()
     {
+        // NOTE: no OTLP exporter here. This test asserts the in-process "rules.fired"
+        // counter increments, observed via the MeterListener below. Wiring an
+        // AddOtlpExporter to localhost:4317 (no collector in CI/local) made the gRPC
+        // exporter fail on flush/dispose and crashed the test host (empty error,
+        // "VSTestTask returned false"). A MeterProvider listening to the meter is
+        // enough to keep the instruments alive for the listener.
         using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("Muonroi.RuleEngine")
-            .AddOtlpExporter(o =>
-            {
-                o.Endpoint = new Uri("http://localhost:4317");
-                o.ExportProcessorType = ExportProcessorType.Simple;
-            })
             .Build();
 
         long firedBefore = 0;

@@ -18,6 +18,11 @@ namespace Muonroi.BuildingBlock.IntegrationTests.Security;
 /// Tests for HostRoleAndUserCreator SEC-01 security fix: env-based seed password.
 /// Uses a minimal MDbContext subclass backed by InMemory database.
 /// </summary>
+// Shares the "EcosystemSecurity" collection with EcosystemSecurityIntegrationTests so the
+// two classes never run in parallel. Both capture process-global Console.Out via
+// Console.SetOut; running them concurrently let one class's SetOut/restore steal the other's
+// redirection, so Create_WithLoggingCapability_WritesWarnLog intermittently saw empty output.
+[Collection("EcosystemSecurity")]
 public class HostRoleAndUserCreatorTests : IDisposable
 {
     private readonly SecurityTestDbContext _context;
