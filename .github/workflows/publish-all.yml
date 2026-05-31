@@ -119,6 +119,7 @@ jobs:
             "src/Muonroi.Tenancy.SiteProfile.Web"
             "src/Muonroi.RuleEngine.Abstractions"
             "src/Muonroi.RuleEngine.Core"
+            "src/Muonroi.RuleEngine.EntityFrameworkCore"
             "src/Muonroi.RuleEngine.SourceGenerators"
             "src/Muonroi.RuleEngine.Testing"
             "src/Muonroi.RuleEngine.DecisionTable"
@@ -155,6 +156,11 @@ jobs:
             # Shared projects (in both OSS and Commercial)
             "src/Muonroi.BackgroundJobs.Hangfire"
             "src/Muonroi.BackgroundJobs.Quartz"
+            # Pdf subsystem — transitive dependencies of Muonroi.BuildingBlock.All
+            # (Pdf.Enterprise is intentionally excluded: not part of the .All closure)
+            "src/Muonroi.Pdf.Abstractions"
+            "src/Muonroi.Pdf.Governance"
+            "src/Muonroi.Pdf"
             "src/Muonroi.Bff"
             "src/Muonroi.BuildingBlock.All"
             "src/Muonroi.Caching.Redis"
