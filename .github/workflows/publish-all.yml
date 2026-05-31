@@ -41,6 +41,9 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Restore strong-name key
+        run: echo "${{ secrets.MUONROI_SNK_BASE64 }}" | base64 -d > Muonroi.snk
+
       - name: Check modular boundaries
         run: pwsh scripts/check-modular-boundaries.ps1 -RepoRoot .
 
@@ -66,6 +69,9 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
+      - name: Restore strong-name key
+        run: echo "${{ secrets.MUONROI_SNK_BASE64 }}" | base64 -d > Muonroi.snk
 
       - name: Restore
         run: dotnet restore Muonroi.BuildingBlock.sln
