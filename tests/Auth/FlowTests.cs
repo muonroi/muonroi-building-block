@@ -36,7 +36,8 @@ public class FlowTests
             Scopes = ["openid"]
         };
         PkceClient client = new(options);
-        await Assert.ThrowsAsync<MInternalException>(() =>
+        // MGuard.Against throws MArgumentException (redirect URI is a method argument).
+        await Assert.ThrowsAsync<MArgumentException>(() =>
             client.RedeemCodeForTokenAsync("code", "verifier", "https://wrong", new HttpClient(new StubHandler())));
     }
 

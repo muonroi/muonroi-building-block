@@ -374,6 +374,34 @@ public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactional
         base.OnModelCreating(modelBuilder);
         modelBuilder.UseUtcDateTime();
 
+        // Normalize all Guid properties to lowercase string for SQLite compatibility.
+        // SQLite TEXT comparisons are case-sensitive; without normalization, a Guid written
+        // as "9415A44A-..." cannot be matched by a query using "9415a44a-..." — causing
+        // silent 401 failures during token validation. Applying this once at the model level
+        // fixes all Guid columns (EntityId, CreatorUserId, RefreshToken.CreatorUserId, etc.)
+        // consistently across every entity without touching any query code.
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite" || Database.IsInMemory())
+        {
+            ValueConverter<Guid, string> guidConverter = new(
+                v => v.ToString("D").ToLowerInvariant(),
+                v => Guid.Parse(v));
+
+            ValueConverter<Guid?, string?> nullableGuidConverter = new(
+                v => v.HasValue ? v.Value.ToString("D").ToLowerInvariant() : null,
+                v => string.IsNullOrEmpty(v) ? null : Guid.Parse(v));
+
+            foreach (IMutableEntityType entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (IMutableProperty property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(Guid))
+                        property.SetValueConverter(guidConverter);
+                    else if (property.ClrType == typeof(Guid?))
+                        property.SetValueConverter(nullableGuidConverter);
+                }
+            }
+        }
+
         // Explicit discovery for robust schema creation
         modelBuilder.Entity<MUser>();
         modelBuilder.Entity<MRole>();

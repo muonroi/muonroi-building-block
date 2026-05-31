@@ -40,7 +40,8 @@ public class FlowTests
 
         Func<Task> action = () => client.RedeemCodeForTokenAsync("code", "verifier", "https://wrong", new HttpClient(new StubHandler()));
 
-        await action.Should().ThrowAsync<MInternalException>();
+        // MGuard.Against throws MArgumentException (redirect URI is a method argument).
+        await action.Should().ThrowAsync<MArgumentException>();
     }
 
     [Fact]

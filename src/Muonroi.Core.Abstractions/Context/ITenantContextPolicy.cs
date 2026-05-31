@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 
@@ -33,16 +34,21 @@ public interface ITenantContextPolicy
 /// Initializes a new instance of the <see cref="DefaultTenantContextPolicy"/> class.
 /// </remarks>
 /// <param name="resolver">The context resolver.</param>
-public sealed class DefaultTenantContextPolicy(IContextResolver resolver) : ITenantContextPolicy
+/// <param name="configuration">Optional configuration — used to check MultiTenantConfigs:Enabled.</param>
+public sealed class DefaultTenantContextPolicy(IContextResolver resolver, IConfiguration? configuration = null) : ITenantContextPolicy
 {
     private readonly IContextResolver _resolver = MGuard.NotNull(resolver);
     private static readonly bool TenancyInstalled = IsAssemblyLoaded("Muonroi.Tenancy");
     private static readonly bool AuthInstalled = IsAssemblyLoaded("Muonroi.Auth");
+    // Multi-tenancy is required only when the Tenancy assembly is loaded AND the feature is explicitly enabled in config.
+    // This prevents MISSING_TENANT_CONTEXT errors in apps that reference Muonroi.Tenancy for DI purposes
+    // but have not enabled multi-tenancy via MultiTenantConfigs:Enabled.
+    private readonly bool _multiTenancyEnabled = configuration?.GetValue<bool>("MultiTenantConfigs:Enabled") ?? TenancyInstalled;
 
     /// <summary>
     /// Gets a value indicating whether a tenant identifier is required.
     /// </summary>
-    public bool IsTenantRequired => TenancyInstalled;
+    public bool IsTenantRequired => TenancyInstalled && _multiTenancyEnabled;
 
     /// <summary>
     /// Gets a value indicating whether a user identifier is required.

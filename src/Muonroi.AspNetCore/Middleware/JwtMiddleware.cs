@@ -118,6 +118,8 @@ public class JwtMiddleware(
         }
 
         context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, JwtBearerDefaults.AuthenticationScheme));
+        // Signal DefaultAuthContextFactory that this request is authenticated.
+        context.Items[nameof(MAuthenticateInfoContext.IsAuthenticated)] = true;
         using SystemExecutionContextScope scopeWithContext = new(executionContextAccessor, resolvedContext);
         using ContextMirrorScope contextMirrorScope = ContextMirrorScope.Apply(resolvedContext, logScopeFactory);
         await next(context);

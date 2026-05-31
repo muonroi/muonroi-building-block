@@ -37,7 +37,9 @@ public static class AuthServiceCollectionExtensions
         services.TryAddSingleton<IRsaKeyStore, InMemoryRsaKeyStore>();
         services.TryAddSingleton<ITokenRevocationStore, TokenRevocationStore>();
         RegisterJwtService(services);
-        services.TryAddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+        // Replace any fallback hasher (NotConfiguredPasswordHasher) registered by AddDbContextConfigure.
+        services.RemoveAll<IPasswordHasher>();
+        services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         return services;
     }
 
@@ -61,7 +63,9 @@ public static class AuthServiceCollectionExtensions
                 sp.GetRequiredService<IMJsonSerializeService>()));
         services.TryAddSingleton<ITokenRevocationStore, RedisTokenRevocationStore>();
         RegisterJwtService(services);
-        services.TryAddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+        // Replace any fallback hasher (NotConfiguredPasswordHasher) registered by AddDbContextConfigure.
+        services.RemoveAll<IPasswordHasher>();
+        services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         return services;
     }
 

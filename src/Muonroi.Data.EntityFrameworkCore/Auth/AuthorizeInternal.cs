@@ -96,12 +96,26 @@ public static class AuthorizeInternal
 
         if (refresh is null)
         {
+            // Query by TokenValidityKey only — then validate CreatorUserId in-memory.
+            // SQLite stores Guid as TEXT and the comparison is case-sensitive, so an EF
+            // Guid equality check against a TEXT column can silently miss rows when the
+            // stored value was written in a different casing (e.g. upper vs lower).
+            // Fetching by the unique TokenValidityKey and verifying ownership in memory
+            // avoids the case-sensitivity pitfall without forcing a provider-specific workaround.
             refresh = await dbContext.RefreshTokens
                 .AsNoTracking()
-                .Where(x => x.TokenValidityKey == tokenValidity && x.CreatorUserId == userGuid && !x.IsDeleted)
+                .Where(x => x.TokenValidityKey == tokenValidity && !x.IsDeleted)
                 .OrderByDescending(x => x.CreationTime)
                 .FirstOrDefaultAsync()
                 .ConfigureAwait(false);
+
+            // Validate ownership in-memory (Guid.Equals is always case-insensitive)
+            if (refresh is not null && refresh.CreatorUserId != userGuid)
+            {
+                logger?.Warn("Token validity key ownership mismatch for user {User}", userGuid);
+                refresh = null;
+            }
+
             if (refresh is not null)
             {
                 await cacheService.SetAsync(cacheKey, refresh, 5);
@@ -169,11 +183,16 @@ public static class AuthorizeInternal
         try
         {
             ClaimsPrincipal principal = ValidateAndGetPrincipal(token, validationParameters);
+
             claims = [.. principal.Claims];
             return claims.Count > 0;
         }
-        catch
+        catch (Exception ex)
         {
+            // Surface JWT validation failures so they are visible in dev logs.
+            // Re-silence after diagnosis is complete.
+            System.Diagnostics.Debug.WriteLine($"[TryGetValidatedClaims] JWT validation failed: {ex.GetType().Name}: {ex.Message}");
+            Console.Error.WriteLine($"[TryGetValidatedClaims] JWT validation failed: {ex.GetType().Name}: {ex.Message}");
             return false;
         }
     }

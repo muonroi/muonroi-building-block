@@ -3,6 +3,10 @@ namespace Muonroi.Auth.Tests;
 using Muonroi.Data.EntityFrameworkCore.Auth;
 using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 public class DefaultRefreshTokenValidatorTests
 {
@@ -59,14 +63,17 @@ public class DefaultRefreshTokenValidatorTests
     [Fact]
     public async Task ValidateAsync_ShouldReturnInfo_WhenTokenIsValid()
     {
-        // Arrange
+        // Arrange — the validator verifies the JWT signature + claims, so mint a real signed token
+        // (issuer/audience/key matching _tokenInfo) carrying the user_identifier + token_validity_key claims.
         var userId = Guid.NewGuid();
-        var token = "valid-token";
+        const string validityKey = "key";
+        string token = CreateSignedJwt(userId, validityKey);
+
         var refresh = new MRefreshToken
         {
             Token = token,
             CreatorUserId = userId,
-            TokenValidityKey = "key",
+            TokenValidityKey = validityKey,
             ExpiredDate = DateTime.UtcNow.AddDays(1)
         };
         await _dbContext.RefreshTokens.AddAsync(refresh);
@@ -81,5 +88,23 @@ public class DefaultRefreshTokenValidatorTests
         // Assert
         result.Should().NotBeNull();
         result!.CurrentUserGuid.Should().Be(userId.ToString());
+    }
+
+    private string CreateSignedJwt(Guid userId, string validityKey)
+    {
+        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(_tokenInfo.SymmetricSecretKey));
+        SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);
+        JwtSecurityToken jwt = new(
+            issuer: _tokenInfo.Issuer,
+            audience: _tokenInfo.Audience,
+            claims:
+            [
+                new Claim("user_identifier", userId.ToString()),
+                new Claim("token_validity_key", validityKey)
+            ],
+            notBefore: DateTime.UtcNow.AddMinutes(-1),
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: creds);
+        return new JwtSecurityTokenHandler().WriteToken(jwt);
     }
 }

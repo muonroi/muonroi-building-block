@@ -73,26 +73,35 @@ public static class MDbContextConfiguration
         where TDbContext : MDbContext
         where TPermission : Enum
     {
-        // Auth repositories are registered lazily — only if their key dependency
-        // (MAuthenticateTokenHelper) is already in the container. This prevents
-        // ValidateOnBuild from failing when Muonroi.Auth is not configured.
-        // When Muonroi.Auth IS registered (via AddValidateBearerToken), it provides
-        // MAuthenticateTokenHelper and these registrations will be present.
-        bool authConfigured = services.Any(d => d.ServiceType.IsGenericType &&
-            d.ServiceType.GetGenericTypeDefinition() == typeof(MAuthenticateTokenHelper<>).GetGenericTypeDefinition()
-            || d.ServiceType == typeof(MAuthenticateTokenHelper<TPermission>));
-        if (authConfigured)
-        {
-            services.TryAddScoped<IAuthenticateRepository, AuthenticateRepository<TDbContext, TPermission>>();
-            services.TryAddScoped<IRefreshTokenValidator, DefaultRefreshTokenValidator<TDbContext, TPermission>>();
-        }
+        // Always register auth repositories unconditionally.
+        // MAuthenticateTokenHelper depends on ITokenSigner + MTokenInfo which are registered by
+        // AddValidateBearerToken — both are resolved at request time (not at startup), so
+        // registration order does not matter.
+        services.TryAddScoped<MAuthenticateTokenHelper<TPermission>>();
+        services.TryAddScoped<IAuthenticateRepository, AuthenticateRepository<TDbContext, TPermission>>();
+        services.TryAddScoped<IRefreshTokenValidator, DefaultRefreshTokenValidator<TDbContext, TPermission>>();
+
+        // Fallback hasher — throws a clear error if used without Muonroi.Auth configured.
+        // AddInMemoryRsaKeyStore / AddRedisRsaKeyStore override this with BCryptPasswordHasher.
+        services.TryAddSingleton<IPasswordHasher, NotConfiguredPasswordHasher>();
     }
 
-    /// <summary>No-op hasher — Auth features disabled until Muonroi.Auth is registered.</summary>
-    private sealed class NoOpPasswordHasher : IPasswordHasher
+    /// <summary>
+    /// Fallback hasher registered when Muonroi.Auth has not been configured.
+    /// Throws a clear error so developers know exactly what to do.
+    /// Overridden by BCryptPasswordHasher when AddInMemoryRsaKeyStore / AddRedisRsaKeyStore is called.
+    /// </summary>
+    private sealed class NotConfiguredPasswordHasher : IPasswordHasher
     {
-        public string HashPassword(string password, out string salt) { salt = string.Empty; return string.Empty; }
-        public bool VerifyPassword(string enteredPassword, string storedHash) => false;
+        private const string Msg =
+            "IPasswordHasher is not configured. Call services.AddInMemoryRsaKeyStore() or " +
+            "services.AddRedisRsaKeyStore() to register BCryptPasswordHasher.";
+
+        public string HashPassword(string password, out string salt)
+            => throw new InvalidOperationException(Msg);
+
+        public bool VerifyPassword(string enteredPassword, string storedHash)
+            => throw new InvalidOperationException(Msg);
     }
 
 

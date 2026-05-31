@@ -149,6 +149,24 @@ public static class InfrastructureExtensions
         return services;
     }
 
+    /// <summary>
+    /// Registers <see cref="IAuthService{TPermission,TDbContext}"/> and
+    /// <see cref="IPermissionService{TPermission}"/> for the given DbContext and Permission type.
+    /// Call this after <see cref="AddDbContextConfigure{TDbContext,TPermission}"/> and
+    /// <see cref="AddValidateBearerToken"/> so that all auth dependencies are wired up
+    /// automatically without manual registration in the consumer app.
+    /// </summary>
+    public static IServiceCollection AddAuthServices<TDbContext, TPermission>(
+        this IServiceCollection services)
+        where TDbContext : MDbContext
+        where TPermission : Enum
+    {
+        MGuard.NotNull(services);
+        services.TryAddScoped<IAuthService<TPermission, TDbContext>, AuthService<TPermission, TDbContext>>();
+        services.TryAddScoped<IPermissionService<TPermission>, PermissionService<TPermission, TDbContext>>();
+        return services;
+    }
+
 /// <inheritdoc />
     public static IApplicationBuilder UseDefaultMiddleware(this IApplicationBuilder app)
     {
@@ -310,22 +328,25 @@ public static class InfrastructureExtensions
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(options =>
-        {
-            ServiceProvider sp = services.BuildServiceProvider();
-            MTokenInfo tokenConfigs = sp.GetRequiredService<MTokenInfo>();
-            ITokenSigner signer = sp.GetRequiredService<ITokenSigner>();
-            SecurityKey defaultSigningKey = signer.GetCredentials().Key;
-            options.TokenValidationParameters = new TokenValidationParameters
+        }).AddJwtBearer();
+
+        // Configure JwtBearer options via the options system so MTokenInfo + ITokenSigner are resolved
+        // LAZILY from the real application container. This avoids services.BuildServiceProvider(), which
+        // would spin up a second DI container (duplicate singletons + disposal hazards).
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<MTokenInfo, ITokenSigner>((options, tokenConfigs, signer) =>
             {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = tokenConfigs.Issuer,
-                ValidAudience = tokenConfigs.Audience,
-                IssuerSigningKey = defaultSigningKey,
-                IssuerSigningKeyResolver = (_, _, kid, _) =>
+                SecurityKey defaultSigningKey = signer.GetCredentials().Key;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = tokenConfigs.Issuer,
+                    ValidAudience = tokenConfigs.Audience,
+                    IssuerSigningKey = defaultSigningKey,
+                    IssuerSigningKeyResolver = (_, _, kid, _) =>
                     {
                         if (tokenConfigs.UseRsa || string.IsNullOrWhiteSpace(kid))
                         {
@@ -344,9 +365,9 @@ public static class InfrastructureExtensions
 
                         return [defaultSigningKey];
                     },
-                ClockSkew = TimeSpan.Zero
-            };
-        });
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
         services.AddAuthorization();
         return services;
     }

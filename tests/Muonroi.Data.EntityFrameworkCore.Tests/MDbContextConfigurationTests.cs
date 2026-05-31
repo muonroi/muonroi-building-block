@@ -82,29 +82,27 @@ public class MDbContextConfigurationTests
         }
     }
 
-    // When Muonroi.Auth is NOT configured (no MAuthenticateTokenHelper in the container),
-    // auth repositories must NOT be registered — this is the lazy-registration guard that
-    // prevents ValidateOnBuild from failing. See MDbContextConfiguration.SystemDependencyInjectionService.
+    // Auth repositories are registered UNCONDITIONALLY by SystemDependencyInjectionService so consumer
+    // apps get ecosystem auth without manual wiring. MAuthenticateTokenHelper's dependencies
+    // (ITokenSigner, MTokenInfo) resolve at request time, and IPasswordHasher has a safe fallback
+    // (NotConfiguredPasswordHasher), so ValidateOnBuild stays green even when Muonroi.Auth is not set up.
     [Fact]
-    public void SystemDependencyInjectionService_WhenAuthNotConfigured_RegistersNothing()
+    public void SystemDependencyInjectionService_RegistersAuthRepositories()
     {
         ServiceCollection services = [];
 
         _ = InvokeSystemDi(services);
 
-        Assert.Equal(0, services.Count(x => x.ServiceType == typeof(IAuthenticateRepository)));
-        Assert.Equal(0, services.Count(x => x.ServiceType == typeof(IRefreshTokenValidator)));
+        Assert.Equal(1, services.Count(x => x.ServiceType == typeof(IAuthenticateRepository)));
+        Assert.Equal(1, services.Count(x => x.ServiceType == typeof(IRefreshTokenValidator)));
     }
 
-    // When Muonroi.Auth IS configured (MAuthenticateTokenHelper present), the auth repositories
-    // are registered — exactly once each, even across repeated calls (TryAddScoped is idempotent).
+    // Registration is idempotent — repeated calls register each auth repository exactly once
+    // (TryAddScoped/TryAddSingleton are idempotent).
     [Fact]
-    public void SystemDependencyInjectionService_WhenAuthConfigured_RegistersAuthRepositoriesOnce()
+    public void SystemDependencyInjectionService_IsIdempotent_RegistersAuthRepositoriesOnce()
     {
         ServiceCollection services = [];
-        // Mark Auth as configured by registering the gating dependency. A null factory is fine —
-        // the test only inspects registration presence and never builds the provider.
-        _ = services.AddScoped(typeof(MAuthenticateTokenHelper<TestPermission>), _ => null!);
 
         _ = InvokeSystemDi(services);
         _ = InvokeSystemDi(services);

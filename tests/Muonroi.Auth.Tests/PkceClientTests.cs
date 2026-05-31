@@ -40,8 +40,8 @@ public class PkceClientTests
         // Act
         Func<Task> act = () => _client.RedeemCodeForTokenAsync("code", "verifier", "wrong-uri", new HttpClient());
 
-        // Assert
-        await act.Should().ThrowAsync<MInternalException>()
+        // Assert — MGuard.Against throws MArgumentException (redirect URI is a method argument).
+        await act.Should().ThrowAsync<MArgumentException>()
             .WithMessage("Redirect URI must exactly match configured redirect URI.");
     }
 }
