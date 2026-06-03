@@ -22,38 +22,62 @@ public class HostRoleAndUserCreator<TContext>(
     where TContext : MDbContext
 {
     /// <summary>
+    /// Declarative description of a host role to seed and the permission names it must hold.
+    /// </summary>
+    private sealed record SeedRole(
+        string Name,
+        string DisplayName,
+        string NormalizedName,
+        IReadOnlyList<string> Permissions);
+
+    /// <summary>
+    /// The complete set of host roles seeded on bootstrap. To add a role, add an entry here —
+    /// no new method or query is required.
+    /// </summary>
+    private static readonly IReadOnlyList<SeedRole> HostRoles =
+    [
+        new SeedRole(
+            StaticRoleAndUserNames.Host.Admin,
+            StaticRoleAndUserNames.Host.AdminDisplayName,
+            StaticRoleAndUserNames.Host.AdminNormalizedName,
+            [StaticPermissionNames.AuthAll])
+    ];
+
+    /// <summary>
     /// Creates the host admin role and user, plus default permissions when missing.
     /// </summary>
     public void Create()
     {
-        // SEC-01: Fail fast if env-supplied password is insecure, before any other logic
+        // SEC-01: Fail fast if env-supplied password is insecure, before any other logic.
         ValidateEnvPasswordComplexity();
 
-        List<string> permissionName =
-        [
-            "Auth_All"
-        ];
-        if (!context.Users.Any(u => u.UserName == StaticRoleAndUserNames.Host.AdminUserName)) CreateHostRoleAndUsers();
+        // Seeding runs before any user is authenticated. The runtime tenant/creator query
+        // filters are fail-closed, so without this scope they would hide already-seeded rows
+        // from the existence checks below while the unfiltered unique indexes still reject a
+        // re-insert — crashing on every boot after the first. MSeedingScope bypasses those
+        // filters for the whole operation, so individual queries need no IgnoreQueryFilters().
+        using MSeedingScope _ = new();
 
-        if (!context.Set<MRole>().Any(r => r.Name == "Admin")) CreateDefaultRolesAndPermissions();
-
-        if (!context.Set<MRolePermission>().Any()) AssignPermissionsToRoles(permissionName);
+        EnsureHostAdminUser();
+        EnsureRolesAndPermissions();
+        EnsureRolePermissionAssignments();
     }
 
-    private void CreateHostRoleAndUsers()
+    private void EnsureHostAdminUser()
     {
-        MUser? adminUserForHost = context.Users.IgnoreQueryFilters()
-            .FirstOrDefault(u => u.UserName == StaticRoleAndUserNames.Host.AdminUserName);
-        if (adminUserForHost is not null) return;
+        if (context.Users.Any(u => u.UserName == StaticRoleAndUserNames.Host.AdminUserName))
+        {
+            return;
+        }
 
         string seedPassword = ResolveSeedPassword();
 
         MUser user = new()
         {
             UserName = StaticRoleAndUserNames.Host.AdminUserName,
-            Name = "Admin",
-            Surname = "User",
-            EmailAddress = "admin@muonroi.com",
+            Name = StaticRoleAndUserNames.Host.Admin,
+            Surname = StaticRoleAndUserNames.Host.User,
+            EmailAddress = StaticRoleAndUserNames.Host.AdminEmail,
             Password = BCrypts.HashPassword(seedPassword),
             IsEmailConfirmed = true,
             ShouldChangePasswordOnNextLogin = true, // Always require password change on first login (D-02)
@@ -104,70 +128,108 @@ public class HostRoleAndUserCreator<TContext>(
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
     }
 
-    private void CreateDefaultRolesAndPermissions()
+    private void EnsureRolesAndPermissions()
     {
-        MRole adminRole = new()
+        bool changed = false;
+
+        foreach (SeedRole seed in HostRoles)
         {
-            Name = "Admin",
-            DisplayName = "Administrator",
-            NormalizedName = "ADMIN",
-            IsStatic = true,
-            IsDefault = true
-        };
+            if (context.Set<MRole>().Any(r => r.Name == seed.Name))
+            {
+                continue;
+            }
 
-        if (context.Set<MRole>().Any(r => r.Name == adminRole.Name)) return;
+            _ = context.Set<MRole>().Add(new MRole
+            {
+                Name = seed.Name,
+                DisplayName = seed.DisplayName,
+                NormalizedName = seed.NormalizedName,
+                IsStatic = true,
+                IsDefault = true
+            });
+            changed = true;
+        }
 
-        _ = context.Set<MRole>().Add(adminRole);
-        _ = context.SaveChanges();
-
-        MPermission mPermission = new()
+        foreach (string permissionName in HostRoles.SelectMany(r => r.Permissions).Distinct())
         {
-            Name = "Auth_All",
-            IsGranted = true
-        };
-        List<MPermission> permissions =
-        [
-            mPermission
-        ];
+            if (context.Set<MPermission>().Any(p => p.Name == permissionName))
+            {
+                continue;
+            }
 
-        foreach (MPermission? permission in permissions.Where(permission =>
-                     !context.Set<MPermission>().Any(p => p.Name == permission.Name)))
-            _ = context.Set<MPermission>().Add(permission);
+            _ = context.Set<MPermission>().Add(new MPermission
+            {
+                Name = permissionName,
+                IsGranted = true
+            });
+            changed = true;
+        }
 
-        _ = context.SaveChanges();
+        if (changed)
+        {
+            _ = context.SaveChanges();
+        }
     }
 
-
-    private void AssignPermissionsToRoles(IEnumerable<string> permissionNames)
+    private void EnsureRolePermissionAssignments()
     {
-        MRole? adminRole = context.Set<MRole>().FirstOrDefault(r => r.Name == "Admin");
+        bool changed = false;
 
-        List<MPermission> permissions = [.. context.Set<MPermission>().Where(p => permissionNames.Contains(p.Name))];
+        MUser? adminUser = context.Users
+            .FirstOrDefault(u => u.UserName == StaticRoleAndUserNames.Host.AdminUserName);
 
-        if (adminRole != null)
+        foreach (SeedRole seed in HostRoles)
         {
-            foreach (MPermission permission in permissions)
+            MRole? role = context.Set<MRole>().FirstOrDefault(r => r.Name == seed.Name);
+            if (role is null)
+            {
+                continue;
+            }
+
+            foreach (string permissionName in seed.Permissions)
+            {
+                MPermission? permission = context.Set<MPermission>()
+                    .FirstOrDefault(p => p.Name == permissionName);
+                if (permission is null)
+                {
+                    continue;
+                }
+
+                bool alreadyLinked = context.Set<MRolePermission>()
+                    .Any(rp => rp.RoleId == role.EntityId && rp.PermissionId == permission.EntityId);
+                if (alreadyLinked)
+                {
+                    continue;
+                }
+
                 _ = context.Set<MRolePermission>().Add(new MRolePermission
                 {
-                    RoleId = adminRole.EntityId,
+                    RoleId = role.EntityId,
                     PermissionId = permission.EntityId
                 });
+                changed = true;
+            }
 
-            MUser? adminUser = context.Users.IgnoreQueryFilters()
-                .FirstOrDefault(u => u.UserName == StaticRoleAndUserNames.Host.AdminUserName);
-            if (adminUser != null)
+            // The seeded host admin user is granted the Admin role.
+            if (adminUser is not null && seed.Name == StaticRoleAndUserNames.Host.Admin)
             {
-                bool existingUserRole = context.Set<MUserRole>()
-                    .Any(ur => ur.UserId == adminUser.EntityId && ur.RoleId == adminRole.EntityId);
-                if (!existingUserRole)
+                bool userAlreadyLinked = context.Set<MUserRole>()
+                    .Any(ur => ur.UserId == adminUser.EntityId && ur.RoleId == role.EntityId);
+                if (!userAlreadyLinked)
+                {
                     _ = context.Set<MUserRole>().Add(new MUserRole
                     {
                         UserId = adminUser.EntityId,
-                        RoleId = adminRole.EntityId
+                        RoleId = role.EntityId
                     });
+                    changed = true;
+                }
             }
         }
 
-        _ = context.SaveChanges();
+        if (changed)
+        {
+            _ = context.SaveChanges();
+        }
     }
 }
