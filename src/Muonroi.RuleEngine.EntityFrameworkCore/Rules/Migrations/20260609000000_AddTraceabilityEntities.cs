@@ -15,12 +15,15 @@ namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules.Migrations
         // this array would silently fail open — dotnet build cannot catch that, so the names
         // are grep-verified in the 03-01 plan acceptance criteria and asserted by RlsPoliciesTests.
         //
-        // A1 (pg_policies.tablename casing): Postgres stores unquoted catalog identifiers
-        // lowercased. EF Core creates tables with quoted PascalCase DDL (e.g. "Requirements"),
-        // but pg_policies.tablename stores the unquoted lowercase form ("requirements"). The
-        // 03-01 Task 3 RlsPoliciesTests query therefore matches against the lowercase names
-        // ("requirements", "rulelinks", "testlinks", "dryrunexamples"). If a live-DB run shows
-        // otherwise, adjust the test's expected-table casing.
+        // A1 (pg_policies.tablename casing): Postgres lowercases only UNQUOTED identifiers.
+        // EF Core creates these tables with QUOTED PascalCase DDL (CREATE TABLE "Requirements"),
+        // and the CREATE POLICY statements below also target the quoted form (ON "Requirements").
+        // Quoting PRESERVES case, so pg_policies.tablename stores the PascalCase form
+        // ("Requirements", "RuleLinks", "TestLinks", "DryRunExamples") — NOT lowercase. The CR-02
+        // parity DO-block and RlsPoliciesTests must therefore match the PascalCase names.
+        // (Proven against live Postgres 2026-06-09: a quoted "ZzPolicyCaseTest" appears in
+        // pg_policies.tablename as 'ZzPolicyCaseTest'. The earlier lowercase assumption was wrong
+        // and made the parity guard RAISE 'RLS policy missing …' on every real-DB migration run.)
         private static readonly string[] TenantScopedTables =
         [
             "Requirements",
@@ -157,16 +160,17 @@ CREATE POLICY tenant_isolation ON ""{table}""
             // dotnet build cannot catch that. This final statement of Up() converts that silent
             // fail-open into a HARD migration failure: it RAISEs (aborting the migration) if any of
             // the four scoped tables lacks a tenant_isolation policy in pg_policies. Catalog names
-            // are matched lowercase per the A1 convention documented in the header (lines 18-23) —
-            // pg_policies.tablename stores the unquoted lowercase form. This runs only on relational
-            // Postgres; the EF InMemory provider used by the EFCore test project cannot execute it
-            // (covered instead by control-plane RlsPoliciesTests against real Postgres).
+            // are matched in the PascalCase form per the A1 convention documented in the header —
+            // pg_policies.tablename preserves the quoted case the tables were created with. This
+            // runs only on relational Postgres; the EF InMemory provider used by the EFCore test
+            // project cannot execute it (covered instead by control-plane RlsPoliciesTests against
+            // real Postgres).
             migrationBuilder.Sql(@"
 DO $$
 DECLARE missing text;
 BEGIN
   SELECT string_agg(t, ', ') INTO missing
-  FROM unnest(ARRAY['requirements','rulelinks','testlinks','dryrunexamples']) AS t
+  FROM unnest(ARRAY['Requirements','RuleLinks','TestLinks','DryRunExamples']) AS t
   WHERE NOT EXISTS (
     SELECT 1 FROM pg_policies p
     WHERE p.tablename = t AND p.policyname = 'tenant_isolation');
