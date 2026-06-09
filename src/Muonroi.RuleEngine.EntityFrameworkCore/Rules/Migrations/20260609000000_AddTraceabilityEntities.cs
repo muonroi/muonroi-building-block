@@ -149,6 +149,31 @@ CREATE POLICY tenant_isolation ON ""{table}""
     USING (""TenantId"" = current_setting('app.current_tenant_id', true))
     WITH CHECK (""TenantId"" = current_setting('app.current_tenant_id', true));");
             }
+
+            // CR-02 (03-REVIEW.md): table↔policy parity assertion. The CREATE POLICY loop above is
+            // the ONLY place RLS is attached to the four tenant-scoped tables. A future divergence
+            // (a table renamed in Up() but not in TenantScopedTables, or a new table added but
+            // forgotten) would ship a table fail-open (world-readable across tenants) silently —
+            // dotnet build cannot catch that. This final statement of Up() converts that silent
+            // fail-open into a HARD migration failure: it RAISEs (aborting the migration) if any of
+            // the four scoped tables lacks a tenant_isolation policy in pg_policies. Catalog names
+            // are matched lowercase per the A1 convention documented in the header (lines 18-23) —
+            // pg_policies.tablename stores the unquoted lowercase form. This runs only on relational
+            // Postgres; the EF InMemory provider used by the EFCore test project cannot execute it
+            // (covered instead by control-plane RlsPoliciesTests against real Postgres).
+            migrationBuilder.Sql(@"
+DO $$
+DECLARE missing text;
+BEGIN
+  SELECT string_agg(t, ', ') INTO missing
+  FROM unnest(ARRAY['requirements','rulelinks','testlinks','dryrunexamples']) AS t
+  WHERE NOT EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.tablename = t AND p.policyname = 'tenant_isolation');
+  IF missing IS NOT NULL THEN
+    RAISE EXCEPTION 'RLS policy missing for tenant-scoped tables: %', missing;
+  END IF;
+END $$;");
         }
 
         /// <inheritdoc />
