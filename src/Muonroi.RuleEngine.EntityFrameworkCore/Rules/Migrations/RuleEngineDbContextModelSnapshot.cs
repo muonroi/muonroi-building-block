@@ -678,6 +678,15 @@ namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules.Migrations
 
                     b.ToTable("TestLinks");
                 });
+
+            modelBuilder.Entity("Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities.RuleLinkRecord", b =>
+                {
+                    b.HasOne("Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities.RequirementRecord", null)
+                        .WithMany()
+                        .HasForeignKey("RequirementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
 #pragma warning restore 612, 618
         }
     }

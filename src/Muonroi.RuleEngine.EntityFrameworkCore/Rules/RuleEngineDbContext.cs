@@ -323,6 +323,16 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
             entity.Property(x => x.Workflow).HasMaxLength(256);
             entity.Property(x => x.NodeId).HasMaxLength(256);
             entity.Property(x => x.CreatedBy).HasMaxLength(256);
+            // WR-01 (03-REVIEW.md): referential integrity for the requirement↔rule edge.
+            // Without this FK an orphan RuleLink (RequirementId pointing at a deleted/non-existent
+            // requirement) could be persisted and then silently dropped from the matrix
+            // (TraceabilityMatrixBuilder.resolveRequirements) — an invisible hole. Cascade aligns
+            // with D-01 (links are mutable/deletable): deleting a requirement removes its links
+            // rather than leaving them dangling. The FK rides on the existing IX_RuleLinks_RequirementId.
+            entity.HasOne<RequirementRecord>()
+                  .WithMany()
+                  .HasForeignKey(x => x.RequirementId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TestLinkRecord>(entity =>
