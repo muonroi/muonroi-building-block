@@ -1,3 +1,4 @@
+using Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities;
 
 namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules;
 
@@ -167,6 +168,20 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
     /// <summary>Gets the PDF template approval-event entities.</summary>
     public DbSet<PdfTemplateApprovalRecord> PdfTemplateApprovals => Set<PdfTemplateApprovalRecord>();
 
+    // ── Traceability domain (Phase 3 — requirement ↔ rule ↔ test) ─────────────
+
+    /// <summary>Gets the requirement entities.</summary>
+    public DbSet<RequirementRecord> Requirements => Set<RequirementRecord>();
+
+    /// <summary>Gets the rule-link entities (requirement ↔ rule).</summary>
+    public DbSet<RuleLinkRecord> RuleLinks => Set<RuleLinkRecord>();
+
+    /// <summary>Gets the test-link entities (rule ↔ test).</summary>
+    public DbSet<TestLinkRecord> TestLinks => Set<TestLinkRecord>();
+
+    /// <summary>Gets the dry-run example entities.</summary>
+    public DbSet<DryRunExampleRecord> DryRunExamples => Set<DryRunExampleRecord>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -281,6 +296,55 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
             entity.Property(x => x.ApprovedBy).HasMaxLength(256);
             entity.Property(x => x.RejectedBy).HasMaxLength(256);
             entity.Property(x => x.RejectionReason).HasColumnType("text");
+        });
+
+        // ── Traceability domain (Phase 3) ───────────────────────────────────
+        // These entities are intentionally mutable — no ValidateImmutability guard
+        // (requirements can be edited, links can be deleted). See PATTERNS C-05/D-03.
+
+        modelBuilder.Entity<RequirementRecord>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.TenantId, x.Title });
+            entity.Property(x => x.TenantId).HasMaxLength(128);
+            entity.Property(x => x.Title).HasMaxLength(512);
+            entity.Property(x => x.SourceSystem).HasMaxLength(128);
+            entity.Property(x => x.SourceRef).HasMaxLength(1024);
+            entity.Property(x => x.Approver).HasMaxLength(256);
+            entity.Property(x => x.CreatedBy).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<RuleLinkRecord>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.TenantId, x.Workflow });
+            entity.HasIndex(x => x.RequirementId);
+            entity.Property(x => x.TenantId).HasMaxLength(128);
+            entity.Property(x => x.Workflow).HasMaxLength(256);
+            entity.Property(x => x.NodeId).HasMaxLength(256);
+            entity.Property(x => x.CreatedBy).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<TestLinkRecord>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.TenantId, x.Workflow });
+            entity.Property(x => x.TenantId).HasMaxLength(128);
+            entity.Property(x => x.Workflow).HasMaxLength(256);
+            entity.Property(x => x.NodeId).HasMaxLength(256);
+            entity.Property(x => x.CaseId).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<DryRunExampleRecord>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.TenantId, x.Workflow });
+            entity.Property(x => x.TenantId).HasMaxLength(128);
+            entity.Property(x => x.Workflow).HasMaxLength(256);
+            entity.Property(x => x.NodeId).HasMaxLength(256);
+            entity.Property(x => x.InputsJson).HasColumnType("text");
+            entity.Property(x => x.ContextType).HasMaxLength(256);
+            entity.Property(x => x.PromotedBy).HasMaxLength(256);
         });
     }
 }
