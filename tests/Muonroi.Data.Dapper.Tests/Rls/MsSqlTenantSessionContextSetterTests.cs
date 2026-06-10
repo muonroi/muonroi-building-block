@@ -26,12 +26,13 @@ public sealed class MsSqlTenantSessionContextSetterTests
         // Act
         sut.Apply(conn, "tenant-abc");
 
-        // Assert
-        conn.ExecutedCommands.Should().ContainSingle();
+        // Assert — normal path issues TWO commands (D-05): cmd[0] sets N'TenantId', cmd[1] clears N'TenantBypass'=0
+        conn.ExecutedCommands.Should().HaveCount(2,
+            "normal path issues two commands: N'TenantId' then N'TenantBypass'=0 (D-05)");
         conn.ExecutedCommands[0].CommandText.Should().Contain("sp_set_session_context",
             "MSSQL uses sp_set_session_context to set the per-session tenant context");
         conn.ExecutedCommands[0].CommandText.Should().Contain("N'TenantId'",
-            "the key literal N'TenantId' must appear in the command text");
+            "the key literal N'TenantId' must appear in the first command text");
         conn.ExecutedCommands[0].CommandText.Should().NotContain("read_only",
             "CR-02: @read_only=1 must NOT be set — re-setting a read-only key on a reused connection " +
             "throws SQL error 15664 under the set-per-open model");
@@ -56,9 +57,10 @@ public sealed class MsSqlTenantSessionContextSetterTests
         sut.Apply(conn, "tenant-abc");
         sut.Apply(conn, "tenant-abc");
 
-        // Assert — both commands ran; neither carries @read_only, so SQL Server would not throw 15664.
-        conn.ExecutedCommands.Should().HaveCount(2,
-            "set-per-open must re-apply the session context on each call without error");
+        // Assert — each normal Apply issues 2 commands (D-05), so two calls = 4 total.
+        // No command carries @read_only, so SQL Server would not throw 15664.
+        conn.ExecutedCommands.Should().HaveCount(4,
+            "each normal Apply issues 2 commands (N'TenantId' + N'TenantBypass'=0); two calls = 4 total");
         conn.ExecutedCommands.Should().OnlyContain(c => !c.CommandText.Contains("read_only"),
             "no command may set @read_only=1 — that would break the second-and-later re-set");
     }
@@ -75,9 +77,9 @@ public sealed class MsSqlTenantSessionContextSetterTests
         await sut.ApplyAsync(conn, "tenant-abc", CancellationToken.None);
         await sut.ApplyAsync(conn, "tenant-abc", CancellationToken.None);
 
-        // Assert
-        conn.ExecutedCommands.Should().HaveCount(2,
-            "async set-per-open must re-apply on each call without error");
+        // Assert — each async normal Apply issues 2 commands (D-05), so two calls = 4 total.
+        conn.ExecutedCommands.Should().HaveCount(4,
+            "each async normal Apply issues 2 commands; two calls = 4 total");
         conn.ExecutedCommands.Should().OnlyContain(c => !c.CommandText.Contains("read_only"));
     }
 
@@ -96,8 +98,9 @@ public sealed class MsSqlTenantSessionContextSetterTests
         // Act
         sut.Apply(conn, null);
 
-        // Assert
-        conn.ExecutedCommands.Should().ContainSingle();
+        // Assert — two commands: cmd[0] sets N'TenantId'=empty, cmd[1] clears N'TenantBypass'=0
+        conn.ExecutedCommands.Should().HaveCount(2,
+            "normal path issues two commands even when tenant is null (D-05)");
         conn.ExecutedCommands[0].ParameterValue.Should().Be(string.Empty,
             "null tenant id must map to empty string so RLS blocks all rows downstream");
     }
@@ -118,8 +121,9 @@ public sealed class MsSqlTenantSessionContextSetterTests
         // Act
         sut.Apply(conn, malicious);
 
-        // Assert
-        conn.ExecutedCommands.Should().ContainSingle();
+        // Assert — two commands on normal path; injection must not appear in either command text
+        conn.ExecutedCommands.Should().HaveCount(2,
+            "normal path issues two commands (D-05)");
         conn.ExecutedCommands[0].CommandText.Should().NotContain("DROP TABLE",
             "SQL injection must not appear in command text — only the @tid/@value placeholder is present");
         conn.ExecutedCommands[0].ParameterValue.Should().Be(malicious,
@@ -131,7 +135,7 @@ public sealed class MsSqlTenantSessionContextSetterTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public async Task ApplyAsync_WhenTenantSet_RecordsSameCommandAsSyncPath()
+    public async Task ApplyAsync_WhenTenantSet_RecordsSameCommandsAsSyncPath()
     {
         // Arrange
         SpyIMLog<MsSqlTenantSessionContextSetter> spy = new();
@@ -141,8 +145,9 @@ public sealed class MsSqlTenantSessionContextSetterTests
         // Act
         await sut.ApplyAsync(conn, "tenant-abc", CancellationToken.None);
 
-        // Assert
-        conn.ExecutedCommands.Should().ContainSingle();
+        // Assert — async normal path also issues two commands (D-05)
+        conn.ExecutedCommands.Should().HaveCount(2,
+            "async normal path issues same two commands as sync path (D-05)");
         conn.ExecutedCommands[0].CommandText.Should().Contain("sp_set_session_context");
         conn.ExecutedCommands[0].ParameterValue.Should().Be("tenant-abc");
     }
