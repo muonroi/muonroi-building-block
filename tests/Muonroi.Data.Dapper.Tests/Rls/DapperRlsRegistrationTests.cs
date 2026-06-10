@@ -1,5 +1,6 @@
 using Dapper.Extensions;
 using FluentAssertions;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Data.Dapper.Rls;
@@ -170,24 +171,45 @@ public sealed class DapperRlsRegistrationTests
     }
 
     // -------------------------------------------------------------------------
-    // WR-03 fail-fast: MSSQL/MySQL are not wired end-to-end this phase. Selecting
-    // them must throw NotSupportedException at registration time rather than
-    // silently wiring the Npgsql-typed IDapper override against the wrong provider.
+    // D-01: MSSQL is now wired end-to-end — resolves TenantRlsDapper<SqlConnection>
+    // + MsSqlTenantSessionContextSetter (no longer throws NotSupportedException).
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void AddMuonroiDapperRls_WhenEnabledWithMsSql_ThrowsNotSupported()
+    public void AddMuonroiDapperRls_WhenEnabledWithMsSql_ResolvedIDapperIsTenantRlsDapperSqlConnection()
     {
         // Arrange
         IServiceCollection services = BuildBaseline(enableRls: true, provider: "MsSql");
+        services.AddMuonroiDapperRls();
 
         // Act
-        Action act = () => services.AddMuonroiDapperRls();
+        using ServiceProvider sp = services.BuildServiceProvider();
+        IDapper resolved = sp.GetRequiredService<IDapper>();
 
         // Assert
-        act.Should().Throw<NotSupportedException>(
-            "WR-03: MsSql is not wired end-to-end (arrives in Phase 3) and must fail fast at registration");
+        resolved.Should().BeAssignableTo<TenantRlsDapper<SqlConnection>>(
+            "enabled + MsSql must resolve TenantRlsDapper<SqlConnection> as IDapper (D-01)");
     }
+
+    [Fact]
+    public void AddMuonroiDapperRls_WhenEnabledWithMsSql_SetterIsMsSqlSetter()
+    {
+        // Arrange
+        IServiceCollection services = BuildBaseline(enableRls: true, provider: "MsSql");
+        services.AddMuonroiDapperRls();
+
+        // Act
+        using ServiceProvider sp = services.BuildServiceProvider();
+        ITenantSessionContextSetter setter = sp.GetRequiredService<ITenantSessionContextSetter>();
+
+        // Assert
+        setter.Should().BeOfType<MsSqlTenantSessionContextSetter>(
+            "provider=MsSql must register MsSqlTenantSessionContextSetter (D-01 / CFG-02)");
+    }
+
+    // -------------------------------------------------------------------------
+    // WR-03 fail-fast: MySQL is deferred to v2+.
+    // -------------------------------------------------------------------------
 
     [Fact]
     public void AddMuonroiDapperRls_WhenEnabledWithMySql_ThrowsNotSupported()
