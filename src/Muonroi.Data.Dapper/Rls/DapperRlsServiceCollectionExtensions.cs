@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Muonroi.Core.Abstractions.Guards;
+using Muonroi.Data.Dapper.Dapper;
 using Muonroi.Data.Dapper.Rls.Setters;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Tenancy.Abstractions;
@@ -156,6 +157,16 @@ public static class DapperRlsServiceCollectionExtensions
         // HARD-04: register the static guarantee-level introspection service (D-09/D-10).
         // Capture rlsOpts.Provider at registration time — no IOptions, no BuildServiceProvider.
         services.TryAddSingleton<IRlsGuaranteeProvider>(new RlsGuaranteeProvider(rlsOpts.Provider));
+
+        // HARD-01: register the startup verifier (D-02/D-03). The verifier is always registered
+        // on the enabled branch; the VerifyRlsObjectsOnStartup opt-out is enforced inside
+        // RlsStartupVerifier.StartingAsync (no DB round-trip when verify = false).
+        // Captured reg-time values are passed via a factory delegate — no BuildServiceProvider.
+        services.AddHostedService(sp => new RlsStartupVerifier(
+            provider: rlsOpts.Provider,
+            verify: rlsOpts.VerifyRlsObjectsOnStartup,
+            connStrings: sp.GetRequiredService<IConnectionStringProvider>(),
+            log: sp.GetService<IMLog<RlsStartupVerifier>>()));
 
         return services;
     }
