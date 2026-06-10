@@ -22,7 +22,7 @@ public sealed class PostgreSqlTenantSessionContextSetterTests
     {
         // Arrange
         SpyIMLog<PostgreSqlTenantSessionContextSetter> spy = new();
-        PostgreSqlTenantSessionContextSetter sut = new(spy);
+        PostgreSqlTenantSessionContextSetter sut = new(bypassRoleName: "app_rls_bypass", log: spy);
         FakeDbConnection conn = new();
 
         // Act
@@ -43,7 +43,7 @@ public sealed class PostgreSqlTenantSessionContextSetterTests
     {
         // Arrange
         SpyIMLog<PostgreSqlTenantSessionContextSetter> spy = new();
-        PostgreSqlTenantSessionContextSetter sut = new(spy);
+        PostgreSqlTenantSessionContextSetter sut = new(bypassRoleName: "app_rls_bypass", log: spy);
         FakeDbConnection conn = new();
 
         // Act
@@ -64,7 +64,7 @@ public sealed class PostgreSqlTenantSessionContextSetterTests
     {
         // Arrange
         SpyIMLog<PostgreSqlTenantSessionContextSetter> spy = new();
-        PostgreSqlTenantSessionContextSetter sut = new(spy);
+        PostgreSqlTenantSessionContextSetter sut = new(bypassRoleName: "app_rls_bypass", log: spy);
         FakeDbConnection conn = new();
         const string malicious = "'; DROP TABLE x; --";
 
@@ -88,7 +88,7 @@ public sealed class PostgreSqlTenantSessionContextSetterTests
     {
         // Arrange
         SpyIMLog<PostgreSqlTenantSessionContextSetter> spy = new();
-        PostgreSqlTenantSessionContextSetter sut = new(spy);
+        PostgreSqlTenantSessionContextSetter sut = new(bypassRoleName: "app_rls_bypass", log: spy);
         FakeDbConnection conn = new();
 
         // Act
@@ -109,7 +109,7 @@ public sealed class PostgreSqlTenantSessionContextSetterTests
     {
         // Arrange
         SpyIMLog<PostgreSqlTenantSessionContextSetter> spy = new();
-        PostgreSqlTenantSessionContextSetter sut = new(spy);
+        PostgreSqlTenantSessionContextSetter sut = new(bypassRoleName: "app_rls_bypass", log: spy);
         FakeDbConnection conn = new();
 
         // Act
@@ -129,7 +129,7 @@ public sealed class PostgreSqlTenantSessionContextSetterTests
     {
         // Arrange
         SpyIMLog<PostgreSqlTenantSessionContextSetter> spy = new();
-        PostgreSqlTenantSessionContextSetter sut = new(spy);
+        PostgreSqlTenantSessionContextSetter sut = new(bypassRoleName: "app_rls_bypass", log: spy);
         FakeDbConnection conn = new();
 
         // Act

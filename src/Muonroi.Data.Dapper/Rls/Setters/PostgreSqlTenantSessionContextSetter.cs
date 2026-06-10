@@ -1,5 +1,7 @@
 using System.Data;
 using System.Data.Common;
+using Muonroi.Core.Abstractions.Guards;
+using Muonroi.Data.Dapper.Rls.Bypass;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Data.Dapper.Rls.Setters;
@@ -24,16 +26,24 @@ namespace Muonroi.Data.Dapper.Rls.Setters;
 public sealed class PostgreSqlTenantSessionContextSetter : ITenantSessionContextSetter
 {
     private readonly IMLog<PostgreSqlTenantSessionContextSetter>? _log;
+    private readonly string _bypassRoleName;
 
     /// <summary>
     /// Initializes a new instance of <see cref="PostgreSqlTenantSessionContextSetter"/>.
     /// </summary>
-    /// <param name="log">
-    /// Optional logger. When supplied, logs applied tenant id at Info level and warns when
-    /// no tenant context is present (OBS-01).
+    /// <param name="bypassRoleName">
+    /// The PostgreSQL role (with <c>BYPASSRLS</c>) entered via <c>SET ROLE</c> when a
+    /// <c>DapperRlsBypass</c> scope is active. Must not be <see langword="null"/> or empty.
     /// </param>
-    public PostgreSqlTenantSessionContextSetter(IMLog<PostgreSqlTenantSessionContextSetter>? log = null)
+    /// <param name="log">
+    /// Optional logger. When supplied, logs applied tenant id at Info level, warns when
+    /// no tenant context is present (OBS-01), and warns on every bypass entry (D-06).
+    /// </param>
+    public PostgreSqlTenantSessionContextSetter(
+        string bypassRoleName,
+        IMLog<PostgreSqlTenantSessionContextSetter>? log = null)
     {
+        _bypassRoleName = MGuard.NotNull(bypassRoleName);
         _log = log;
     }
 
@@ -41,6 +51,17 @@ public sealed class PostgreSqlTenantSessionContextSetter : ITenantSessionContext
     public void Apply(IDbConnection connection, string? tenantId)
     {
         DbConnection dbConnection = (DbConnection)connection;
+
+        if (DapperRlsBypass.IsActive)
+        {
+            using DbCommand bypassCmd = dbConnection.CreateCommand();
+            // SET ROLE takes a SQL identifier, not a data parameter. _bypassRoleName is trusted
+            // config (DapperRlsOptions.BypassRoleName), never user input — see options XML doc.
+            bypassCmd.CommandText = $"SET ROLE {_bypassRoleName}";
+            bypassCmd.ExecuteNonQuery();
+            _log?.Warn("[DapperRls] BYPASS entered — SET ROLE {BypassRole} issued. Cross-tenant access active.", _bypassRoleName);
+            return;
+        }
 
         using DbCommand cmd = dbConnection.CreateCommand();
         cmd.CommandText = "SET app.current_tenant_id = @tid";
@@ -57,6 +78,17 @@ public sealed class PostgreSqlTenantSessionContextSetter : ITenantSessionContext
     public async Task ApplyAsync(IDbConnection connection, string? tenantId, CancellationToken ct = default)
     {
         DbConnection dbConnection = (DbConnection)connection;
+
+        if (DapperRlsBypass.IsActive)
+        {
+            await using DbCommand bypassCmd = dbConnection.CreateCommand();
+            // SET ROLE takes a SQL identifier, not a data parameter. _bypassRoleName is trusted
+            // config (DapperRlsOptions.BypassRoleName), never user input — see options XML doc.
+            bypassCmd.CommandText = $"SET ROLE {_bypassRoleName}";
+            await bypassCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            _log?.Warn("[DapperRls] BYPASS entered — SET ROLE {BypassRole} issued. Cross-tenant access active.", _bypassRoleName);
+            return;
+        }
 
         await using DbCommand cmd = dbConnection.CreateCommand();
         cmd.CommandText = "SET app.current_tenant_id = @tid";

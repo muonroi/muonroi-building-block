@@ -53,4 +53,22 @@ public sealed class DapperRlsOptions
     /// provider in the Muonroi stack.
     /// </summary>
     public DapperRlsProvider Provider { get; set; } = DapperRlsProvider.PostgreSql;
+
+    /// <summary>
+    /// The PostgreSQL role name granted the <c>BYPASSRLS</c> attribute, entered via
+    /// <c>SET ROLE</c> when <c>DapperRlsBypass.IsActive</c> is <see langword="true"/>.
+    /// Defaults to <c>app_rls_bypass</c> (the role provisioned by migration 0002).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The role name is used directly in the <c>SET ROLE</c> command text — it is a SQL
+    /// identifier, NOT a data parameter (PostgreSQL does not accept a bound parameter for an
+    /// identifier). It MUST therefore come from trusted configuration, never from user input.
+    /// </para>
+    /// <para>
+    /// Validate that this value matches the role provisioned in migration 0002. Configurable
+    /// via <c>MultiTenantConfigs:DapperRls:BypassRoleName</c> or the options delegate.
+    /// </para>
+    /// </remarks>
+    public string BypassRoleName { get; set; } = "app_rls_bypass";
 }

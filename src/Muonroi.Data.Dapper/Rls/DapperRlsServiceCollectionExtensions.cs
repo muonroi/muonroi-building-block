@@ -107,7 +107,10 @@ public static class DapperRlsServiceCollectionExtensions
 
             case DapperRlsProvider.PostgreSql:
             default:
-                services.TryAddScoped<ITenantSessionContextSetter, PostgreSqlTenantSessionContextSetter>();
+                services.TryAddScoped<ITenantSessionContextSetter>(sp =>
+                    new PostgreSqlTenantSessionContextSetter(
+                        bypassRoleName: rlsOpts.BypassRoleName,
+                        log: sp.GetService<IMLog<PostgreSqlTenantSessionContextSetter>>()));
                 break;
         }
 
