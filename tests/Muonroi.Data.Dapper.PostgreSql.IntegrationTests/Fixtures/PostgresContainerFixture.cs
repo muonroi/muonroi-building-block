@@ -52,29 +52,26 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
         await using NpgsqlConnection superuser = new(SuperuserConnectionString);
         await superuser.OpenAsync().ConfigureAwait(false);
 
-        // 1. Apply shipped migrations in order: 0001 (ENABLE/FORCE RLS + USING policy),
-        //    then 0002 (roles app_rls/app_rls_bypass + WITH CHECK + DML grants).
-        await ExecuteSqlAsync(superuser, ReadMigration("0001_enable_rls_postgres.sql")).ConfigureAwait(false);
-        await ExecuteSqlAsync(superuser, ReadMigration("0002_postgres_rls_writecheck_roles.sql")).ConfigureAwait(false);
-
-        // 2. Create the rls_items table AFTER the migrations (the 0001/0002 DO-blocks only
-        //    cover tables that existed at migration time), then apply RLS + the policy + grants
-        //    explicitly so the policy binds for the freshly-created table.
+        // 1. Create the rls_items table FIRST, BEFORE the migrations run. The 0001/0002
+        //    DO-blocks only touch tables that exist at migration time (their
+        //    information_schema.columns loops). Creating rls_items up front means the
+        //    shipped migrations themselves ENABLE/FORCE RLS, attach the tenant_isolation
+        //    USING + WITH CHECK policy, and GRANT DML on it — so TST-01..05 prove the
+        //    EXACT policy the product ships, not a bespoke fixture-authored one (CR-01).
         const string tableDdl = @"
             CREATE TABLE IF NOT EXISTS rls_items (
                 id        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
                 tenant_id uuid NOT NULL,
                 name      text NOT NULL
-            );
-            ALTER TABLE rls_items ENABLE ROW LEVEL SECURITY;
-            ALTER TABLE rls_items FORCE ROW LEVEL SECURITY;
-            DROP POLICY IF EXISTS tenant_isolation ON rls_items;
-            CREATE POLICY tenant_isolation ON rls_items
-                USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid)
-                WITH CHECK (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid);
-            GRANT SELECT, INSERT, UPDATE, DELETE ON rls_items TO app_rls;
-            GRANT SELECT, INSERT, UPDATE, DELETE ON rls_items TO app_rls_bypass;";
+            );";
         await ExecuteSqlAsync(superuser, tableDdl).ConfigureAwait(false);
+
+        // 2. Apply shipped migrations in order: 0001 (ENABLE/FORCE RLS + USING policy on
+        //    every tenant_id table, now including rls_items), then 0002 (roles
+        //    app_rls/app_rls_bypass + WITH CHECK + DML grants). No hand-written policy or
+        //    grant is added here — the migrations are the single source of truth under test.
+        await ExecuteSqlAsync(superuser, ReadMigration("0001_enable_rls_postgres.sql")).ConfigureAwait(false);
+        await ExecuteSqlAsync(superuser, ReadMigration("0002_postgres_rls_writecheck_roles.sql")).ConfigureAwait(false);
 
         // 3. Seed one row per tenant (parameterized — no string interpolation).
         await using (NpgsqlCommand seed = superuser.CreateCommand())
