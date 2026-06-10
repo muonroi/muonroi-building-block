@@ -71,4 +71,30 @@ public sealed class DapperRlsOptions
     /// </para>
     /// </remarks>
     public string BypassRoleName { get; set; } = "app_rls_bypass";
+
+    /// <summary>
+    /// When <see langword="true"/>, <see cref="TenantRlsDapper{TConn}"/> throws a
+    /// <c>MissingTenantContextException</c> at query time if the ambient tenant id is
+    /// <see langword="null"/> or whitespace and no bypass scope is active.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to <see langword="false"/> — behavior is byte-identical to v1.0 when off
+    /// (ROADMAP criterion #3). Enable to make misconfigured deployments fail loud instead
+    /// of silently filtering all rows. The sanctioned <c>DapperRlsBypass</c> scope always
+    /// suppresses the throw regardless of this setting.
+    /// </remarks>
+    public bool StrictMode { get; set; } = false;
+
+    /// <summary>
+    /// When <see langword="true"/> (the default), <c>RlsStartupVerifier</c> checks that the
+    /// required RLS database objects exist for the configured provider during host startup
+    /// and throws if any are missing (HARD-01).
+    /// </summary>
+    /// <remarks>
+    /// Defaults to <see langword="true"/> — the primary purpose is catching
+    /// enabled-but-DDL-not-applied deployments at startup before any query runs.
+    /// Set to <see langword="false"/> only as an escape hatch for edge cases such as a
+    /// database that is unreachable at boot or DDL applied by a later migration step.
+    /// </remarks>
+    public bool VerifyRlsObjectsOnStartup { get; set; } = true;
 }
