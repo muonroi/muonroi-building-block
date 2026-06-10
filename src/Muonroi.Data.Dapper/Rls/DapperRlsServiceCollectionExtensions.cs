@@ -153,6 +153,10 @@ public static class DapperRlsServiceCollectionExtensions
                 break;
         }
 
+        // HARD-04: register the static guarantee-level introspection service (D-09/D-10).
+        // Capture rlsOpts.Provider at registration time — no IOptions, no BuildServiceProvider.
+        services.TryAddSingleton<IRlsGuaranteeProvider>(new RlsGuaranteeProvider(rlsOpts.Provider));
+
         return services;
     }
 }
