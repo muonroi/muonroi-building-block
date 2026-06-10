@@ -6,7 +6,7 @@ namespace Muonroi.Data.Dapper.Rls.Setters;
 
 /// <summary>
 /// MSSQL implementation of <see cref="ITenantSessionContextSetter"/>.
-/// Executes <c>EXEC sp_set_session_context @key=N'TenantId', @value=@tid, @read_only=1</c>
+/// Executes <c>EXEC sp_set_session_context @key=N'TenantId', @value=@tid</c>
 /// on every connection open, setting a connection-scoped session context that SQL Server
 /// RLS policies read via <c>SESSION_CONTEXT(N'TenantId')</c>.
 /// </summary>
@@ -22,8 +22,12 @@ namespace Muonroi.Data.Dapper.Rls.Setters;
 /// SQL Server RLS FILTER predicate blocks all rows for an empty tenant id.
 /// </para>
 /// <para>
-/// Requires SQL Server 2016+ / Azure SQL. The <c>@read_only=1</c> flag prevents the
-/// session context value from being overwritten before the connection returns to the pool.
+/// Requires SQL Server 2016+ / Azure SQL. The setter is applied on EVERY Query/Execute
+/// (set-per-open) against a pooled, possibly already-set physical connection, so
+/// <c>@read_only=1</c> is intentionally NOT used: re-setting a read-only session-context
+/// key on the same physical session raises SQL error 15664 and would fail every
+/// second-and-later command on a reused connection. Tamper-protection of the value is
+/// instead delegated to the SQL Server RLS policy (the authoritative enforcement layer).
 /// </para>
 /// </remarks>
 public sealed class MsSqlTenantSessionContextSetter : ITenantSessionContextSetter
@@ -48,7 +52,7 @@ public sealed class MsSqlTenantSessionContextSetter : ITenantSessionContextSette
         DbConnection dbConnection = (DbConnection)connection;
 
         using DbCommand cmd = dbConnection.CreateCommand();
-        cmd.CommandText = "EXEC sp_set_session_context @key=N'TenantId', @value=@tid, @read_only=1";
+        cmd.CommandText = "EXEC sp_set_session_context @key=N'TenantId', @value=@tid";
         DbParameter param = cmd.CreateParameter();
         param.ParameterName = "@tid";
         param.Value = tenantId ?? string.Empty;
@@ -64,7 +68,7 @@ public sealed class MsSqlTenantSessionContextSetter : ITenantSessionContextSette
         DbConnection dbConnection = (DbConnection)connection;
 
         await using DbCommand cmd = dbConnection.CreateCommand();
-        cmd.CommandText = "EXEC sp_set_session_context @key=N'TenantId', @value=@tid, @read_only=1";
+        cmd.CommandText = "EXEC sp_set_session_context @key=N'TenantId', @value=@tid";
         DbParameter param = cmd.CreateParameter();
         param.ParameterName = "@tid";
         param.Value = tenantId ?? string.Empty;

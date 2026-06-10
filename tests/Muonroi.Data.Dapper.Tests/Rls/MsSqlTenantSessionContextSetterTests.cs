@@ -32,8 +32,53 @@ public sealed class MsSqlTenantSessionContextSetterTests
             "MSSQL uses sp_set_session_context to set the per-session tenant context");
         conn.ExecutedCommands[0].CommandText.Should().Contain("N'TenantId'",
             "the key literal N'TenantId' must appear in the command text");
+        conn.ExecutedCommands[0].CommandText.Should().NotContain("read_only",
+            "CR-02: @read_only=1 must NOT be set — re-setting a read-only key on a reused connection " +
+            "throws SQL error 15664 under the set-per-open model");
         conn.ExecutedCommands[0].ParameterValue.Should().Be("tenant-abc",
             "tenant id must be bound as the @value/@tid parameter");
+    }
+
+    // -------------------------------------------------------------------------
+    // CR-02: Set-per-open compatibility — applying twice on the SAME connection
+    //        must succeed (no @read_only=1 lock that would throw on re-set)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Apply_TwiceOnSameConnection_BothSucceed_NoReadOnlyLock()
+    {
+        // Arrange
+        SpyIMLog<MsSqlTenantSessionContextSetter> spy = new();
+        MsSqlTenantSessionContextSetter sut = new(spy);
+        FakeDbConnection conn = new();
+
+        // Act — set-per-open re-applies on every command against the SAME physical connection.
+        sut.Apply(conn, "tenant-abc");
+        sut.Apply(conn, "tenant-abc");
+
+        // Assert — both commands ran; neither carries @read_only, so SQL Server would not throw 15664.
+        conn.ExecutedCommands.Should().HaveCount(2,
+            "set-per-open must re-apply the session context on each call without error");
+        conn.ExecutedCommands.Should().OnlyContain(c => !c.CommandText.Contains("read_only"),
+            "no command may set @read_only=1 — that would break the second-and-later re-set");
+    }
+
+    [Fact]
+    public async Task ApplyAsync_TwiceOnSameConnection_BothSucceed_NoReadOnlyLock()
+    {
+        // Arrange
+        SpyIMLog<MsSqlTenantSessionContextSetter> spy = new();
+        MsSqlTenantSessionContextSetter sut = new(spy);
+        FakeDbConnection conn = new();
+
+        // Act
+        await sut.ApplyAsync(conn, "tenant-abc", CancellationToken.None);
+        await sut.ApplyAsync(conn, "tenant-abc", CancellationToken.None);
+
+        // Assert
+        conn.ExecutedCommands.Should().HaveCount(2,
+            "async set-per-open must re-apply on each call without error");
+        conn.ExecutedCommands.Should().OnlyContain(c => !c.CommandText.Contains("read_only"));
     }
 
     // -------------------------------------------------------------------------
