@@ -11,8 +11,21 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// </summary>
 public sealed class RuleGraphParser(IMJsonSerializeService json)
 {
+    /// <summary>
+    /// Node type strings that the rule graph executor can execute.
+    ///
+    /// <para>
+    /// <b>"feel"</b> is included alongside <b>"condition"</b> because they are the same semantics —
+    /// a FEEL-expression condition node. Rule Studio exports FEEL-condition nodes with
+    /// <c>type: "feel"</c> while some authoring tools / seed fixtures use <c>type: "condition"</c>.
+    /// Both must execute identically: the FEEL expression is read from <c>data.expression.body</c>
+    /// and the expression language from <c>data.expression.language</c>. Omitting <c>"feel"</c>
+    /// caused the entire FCD_V4 flow-graph to produce zero executable nodes (all nodes skipped)
+    /// which broke behavioral flip detection in ImpactAnalysisService.
+    /// </para>
+    /// </summary>
     private static readonly HashSet<string> ExecutableTypes =
-        new(["condition", "action", "decision-table", "sub-flow", "liquid", "connector"],
+        new(["feel", "condition", "action", "decision-table", "sub-flow", "liquid", "connector"],
             StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Returns true when the payload contains a flow graph.</summary>

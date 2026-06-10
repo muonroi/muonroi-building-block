@@ -1064,12 +1064,9 @@ public sealed class RulesEngineService(
         // Type B-1b: FEEL condition
         if (!string.IsNullOrEmpty(entry.FeelExpression))
         {
-            IMLog<FeelRuleAdapter<TContext>>? feelLog =
-                _serviceProvider?.GetService<IMLog<FeelRuleAdapter<TContext>>>();
-            if (feelLog is null)
-            {
-                return null;
-            }
+            IMLog<FeelRuleAdapter<TContext>> feelLog =
+                _serviceProvider?.GetService<IMLog<FeelRuleAdapter<TContext>>>()
+                ?? NoOpMLog<FeelRuleAdapter<TContext>>.Instance;
 
             _log?.Info("Resolved node '{NodeId}' as FEEL adapter.", entry.NodeId);
             return WrapRuleEntry(
@@ -1085,15 +1082,12 @@ public sealed class RulesEngineService(
         // Type B-2: Liquid/Scriban action
         if (!string.IsNullOrEmpty(entry.LiquidTemplate))
         {
-            IMLog<LiquidRuleAdapter<TContext>>? liquidLog =
-                _serviceProvider?.GetService<IMLog<LiquidRuleAdapter<TContext>>>();
+            IMLog<LiquidRuleAdapter<TContext>> liquidLog =
+                _serviceProvider?.GetService<IMLog<LiquidRuleAdapter<TContext>>>()
+                ?? NoOpMLog<LiquidRuleAdapter<TContext>>.Instance;
             IMJsonSerializeService jsonSvc =
                 _serviceProvider?.GetService<IMJsonSerializeService>()
                 ?? new Muonroi.Core.Abstractions.SeedWorks.MJsonSerializeService();
-            if (liquidLog is null)
-            {
-                return null;
-            }
 
             IEnumerable<IScribanFunctionProvider>? functionProviders =
                 _serviceProvider?.GetServices<IScribanFunctionProvider>();
@@ -1564,4 +1558,37 @@ public sealed class RulesEngineService(
         Workflow[]? LegacyWorkflows,
         ExecutionMode? ExecutionMode,
         DateTime LastAccessedUtc = default);
+
+    /// <summary>
+    /// No-op <see cref="IMLog{T}"/> used as a fallback when the logger is not registered in DI.
+    /// Allows FEEL and Liquid adapters to execute in dry-run and test contexts without requiring
+    /// full logging infrastructure.
+    /// </summary>
+    private sealed class NoOpMLog<T> : IMLog<T>
+    {
+        public static readonly NoOpMLog<T> Instance = new();
+
+        private sealed class NullScope : IMLogContextScope
+        {
+            public static readonly NullScope Instance = new();
+            public void Dispose() { }
+        }
+
+        public IMLogContextScope BeginProperty(string key, object? value) => NullScope.Instance;
+        public void Info(string messageTemplate, params object?[] args) { }
+        public void Warn(string messageTemplate, params object?[] args) { }
+        public void Error(Exception? ex, string messageTemplate, params object?[] args) { }
+        public void Debug(string messageTemplate, params object?[] args) { }
+        public void InfoTrace(string messageTemplate, params object?[] args) { }
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+        public bool IsEnabled(LogLevel logLevel) => false;
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        { }
+    }
 }

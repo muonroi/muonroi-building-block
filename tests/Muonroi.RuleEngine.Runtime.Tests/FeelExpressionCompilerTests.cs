@@ -111,6 +111,54 @@ public sealed class FeelExpressionCompilerTests
     }
 
     /// <summary>
+    /// Regression: nested fields from a JSON-deserialized <c>Dictionary&lt;string, object?&gt;</c>
+    /// context (the dry-run / dynamic flow-graph path) arrive as <see cref="System.Text.Json.JsonElement"/>.
+    /// Nested member access (<c>vgm.isVgm</c>, <c>vgm.wgt</c>) must resolve to native CLR values so a
+    /// nested boolean condition evaluates correctly. Before the <c>UnwrapJsonElement</c> fix in
+    /// <see cref="FeelRuleAdapter{TContext}"/>, the nested JsonElement could not be navigated and
+    /// <c>vgm.isVgm</c> resolved to null → <c>vgm.isVgm = true</c> was false even when isVgm was true.
+    /// </summary>
+    [Fact]
+    public async Task FeelRuleAdapter_ShouldResolveNestedFieldsFromJsonElementContext()
+    {
+        ServiceCollection services = new();
+        services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
+        services.AddLogging(builder => builder.AddMuonroiLogging());
+        await using ServiceProvider provider = services.BuildServiceProvider();
+        IMLog<FeelRuleAdapter<Dictionary<string, object?>>> log =
+            provider.GetRequiredService<IMLog<FeelRuleAdapter<Dictionary<string, object?>>>>();
+
+        // Mirrors RuleDryRunService: object? values deserialize as JsonElement, nested object as JsonElement(Object).
+        Dictionary<string, object?> ctx = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object?>>(
+            "{\"vgm\":{\"isVgm\":true,\"wgt\":29990},\"maxGross\":30000}")!;
+
+        FeelRuleAdapter<Dictionary<string, object?>> passAdapter = new(
+            "vgm-check",
+            "vgm.isVgm = true and vgm.wgt <= maxGross",
+            null,
+            new ReflectionContextProjector<Dictionary<string, object?>>(),
+            log);
+
+        RuleResult pass = await passAdapter.EvaluateAsync(ctx, new FactBag(), CancellationToken.None);
+        pass.IsSuccess.Should().BeTrue(
+            because: "nested boolean vgm.isVgm and nested number vgm.wgt must resolve from a JsonElement-backed Dictionary context");
+
+        // Negative guard: proves vgm.wgt resolves to the REAL number, not null. Before the fix
+        // vgm.wgt was null and "null <= 100" was true (false positive masking the nested bug);
+        // after the fix 29990 <= 100 is correctly false.
+        FeelRuleAdapter<Dictionary<string, object?>> failAdapter = new(
+            "vgm-check-tight",
+            "vgm.wgt <= 100",
+            null,
+            new ReflectionContextProjector<Dictionary<string, object?>>(),
+            log);
+
+        RuleResult fail = await failAdapter.EvaluateAsync(ctx, new FactBag(), CancellationToken.None);
+        fail.IsSuccess.Should().BeFalse(
+            because: "vgm.wgt (29990) must resolve to the real number so 29990 <= 100 is false (not a null-comparison false positive)");
+    }
+
+    /// <summary>
     /// Test context used by adapter integration tests.
     /// </summary>
     public sealed class FeelContext
