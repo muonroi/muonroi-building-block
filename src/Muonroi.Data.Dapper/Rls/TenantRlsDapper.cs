@@ -8,6 +8,8 @@ using Muonroi.Logging.Abstractions;
 using Muonroi.Tenancy.Abstractions;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Muonroi.Data.Dapper.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Muonroi.Data.Dapper.PostgreSql.IntegrationTests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Muonroi.Data.Dapper.MsSql.IntegrationTests")]
 
 namespace Muonroi.Data.Dapper.Rls;
 
