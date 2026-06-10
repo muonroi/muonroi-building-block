@@ -16,8 +16,10 @@ public enum DapperRlsProvider
 
     /// <summary>
     /// Microsoft SQL Server — issues
-    /// <c>EXEC sp_set_session_context @key=N'TenantId', @value=@tid, @read_only=1</c>
+    /// <c>EXEC sp_set_session_context @key=N'TenantId', @value=@tid</c>
     /// (connection-scoped, native RLS via <c>CREATE SECURITY POLICY</c> + inline TVF).
+    /// <c>@read_only=1</c> is intentionally NOT used: it is incompatible with the
+    /// set-per-open model (re-setting a read-only key on a reused connection throws).
     /// Requires SQL Server 2016+ / Azure SQL.
     /// </summary>
     MsSql,
