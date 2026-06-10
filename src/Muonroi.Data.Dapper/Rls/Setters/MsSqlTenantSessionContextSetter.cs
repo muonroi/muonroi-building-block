@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.Common;
+using Muonroi.Data.Dapper.Rls.Bypass;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Data.Dapper.Rls.Setters;
@@ -29,6 +30,14 @@ namespace Muonroi.Data.Dapper.Rls.Setters;
 /// second-and-later command on a reused connection. Tamper-protection of the value is
 /// instead delegated to the SQL Server RLS policy (the authoritative enforcement layer).
 /// </para>
+/// <para>
+/// On every normal open, a second <c>sp_set_session_context</c> call clears the
+/// <c>N'TenantBypass'</c> flag to 0. This prevents a pooled physical connection that
+/// previously ran a bypass scope from leaking cross-tenant access on the next acquisition.
+/// The two calls must be separate <see cref="DbCommand"/> executions —
+/// <c>sp_set_session_context</c> is a stored procedure and cannot be batched via
+/// semicolons in a single <see cref="DbCommand.CommandText"/>.
+/// </para>
 /// </remarks>
 public sealed class MsSqlTenantSessionContextSetter : ITenantSessionContextSetter
 {
@@ -51,6 +60,19 @@ public sealed class MsSqlTenantSessionContextSetter : ITenantSessionContextSette
     {
         DbConnection dbConnection = (DbConnection)connection;
 
+        if (DapperRlsBypass.IsActive)
+        {
+            using DbCommand bypassCmd = dbConnection.CreateCommand();
+            bypassCmd.CommandText = "EXEC sp_set_session_context @key=N'TenantBypass', @value=@v";
+            DbParameter bp = bypassCmd.CreateParameter();
+            bp.ParameterName = "@v";
+            bp.Value = 1;
+            bypassCmd.Parameters.Add(bp);
+            bypassCmd.ExecuteNonQuery();
+            _log?.Warn("[DapperRls] BYPASS entered — TenantBypass=1 set in SESSION_CONTEXT. Cross-tenant access active.");
+            return;
+        }
+
         using DbCommand cmd = dbConnection.CreateCommand();
         cmd.CommandText = "EXEC sp_set_session_context @key=N'TenantId', @value=@tid";
         DbParameter param = cmd.CreateParameter();
@@ -58,6 +80,14 @@ public sealed class MsSqlTenantSessionContextSetter : ITenantSessionContextSette
         param.Value = tenantId ?? string.Empty;
         cmd.Parameters.Add(param);
         cmd.ExecuteNonQuery();
+
+        using DbCommand bypCmd = dbConnection.CreateCommand();
+        bypCmd.CommandText = "EXEC sp_set_session_context @key=N'TenantBypass', @value=@byp";
+        DbParameter bypParam = bypCmd.CreateParameter();
+        bypParam.ParameterName = "@byp";
+        bypParam.Value = 0;
+        bypCmd.Parameters.Add(bypParam);
+        bypCmd.ExecuteNonQuery();
 
         LogResult(tenantId);
     }
@@ -67,6 +97,19 @@ public sealed class MsSqlTenantSessionContextSetter : ITenantSessionContextSette
     {
         DbConnection dbConnection = (DbConnection)connection;
 
+        if (DapperRlsBypass.IsActive)
+        {
+            await using DbCommand bypassCmd = dbConnection.CreateCommand();
+            bypassCmd.CommandText = "EXEC sp_set_session_context @key=N'TenantBypass', @value=@v";
+            DbParameter bp = bypassCmd.CreateParameter();
+            bp.ParameterName = "@v";
+            bp.Value = 1;
+            bypassCmd.Parameters.Add(bp);
+            await bypassCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            _log?.Warn("[DapperRls] BYPASS entered — TenantBypass=1 set in SESSION_CONTEXT. Cross-tenant access active.");
+            return;
+        }
+
         await using DbCommand cmd = dbConnection.CreateCommand();
         cmd.CommandText = "EXEC sp_set_session_context @key=N'TenantId', @value=@tid";
         DbParameter param = cmd.CreateParameter();
@@ -74,6 +117,14 @@ public sealed class MsSqlTenantSessionContextSetter : ITenantSessionContextSette
         param.Value = tenantId ?? string.Empty;
         cmd.Parameters.Add(param);
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+
+        await using DbCommand bypCmd = dbConnection.CreateCommand();
+        bypCmd.CommandText = "EXEC sp_set_session_context @key=N'TenantBypass', @value=@byp";
+        DbParameter bypParam = bypCmd.CreateParameter();
+        bypParam.ParameterName = "@byp";
+        bypParam.Value = 0;
+        bypCmd.Parameters.Add(bypParam);
+        await bypCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
 
         LogResult(tenantId);
     }
