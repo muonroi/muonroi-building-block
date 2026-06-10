@@ -191,7 +191,7 @@ public class MDbContextConfigurationTests
     }
 
     [Fact]
-    public void DecryptConnectionString_Encrypted_WithWrongKey_Throws()
+    public void DecryptConnectionString_Encrypted_WithWrongKey_DoesNotRecoverPlaintext()
     {
         const string plain = "Data Source=enc.db";
         string cipher = MCryptographyExtension.Encrypt("correct", plain);
@@ -213,7 +213,23 @@ public class MDbContextConfigurationTests
             }
         };
 
-        Assert.ThrowsAny<Exception>(() => InvokeDecrypt(configs, configuration));
+        // MCryptographyExtension uses unauthenticated AES-CBC + PKCS7. A wrong key usually throws
+        // (invalid padding on the final block), but ~1/256 of random IVs decrypt to coincidentally
+        // valid padding and return garbage WITHOUT throwing. Asserting "throws" was therefore a
+        // ~0.4% flake. The deterministic security invariant is: a wrong key must never recover the
+        // original plaintext — it either throws or yields a value that differs from it.
+        string recovered;
+        try
+        {
+            recovered = InvokeDecrypt(configs, configuration);
+        }
+        catch (Exception)
+        {
+            // Threw on invalid padding — wrong key rejected, invariant satisfied.
+            return;
+        }
+
+        Assert.NotEqual(plain, recovered);
     }
 
     [Fact]
