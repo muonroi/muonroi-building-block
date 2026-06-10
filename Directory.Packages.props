@@ -108,7 +108,11 @@
     <PackageVersion Include="Muonroi.RuleEngine.DecisionTable.Web" Version="1.0.0-alpha.1" />
     <PackageVersion Include="Muonroi.RuleEngine.Runtime" Version="1.0.0-alpha.1" />
     <PackageVersion Include="Muonroi.Rules" Version="1.0.0-alpha.1" />
-    <PackageVersion Include="Npgsql" Version="8.0.11" />
+    <!-- WR-03: Npgsql 8.0.11 does not exist (8.0.x line ends at 8.0.9), causing NU1603 and a silent
+         resolve to 9.0.0 — a version-graph split vs the EF path. The EF adapter
+         Npgsql.EntityFrameworkCore.PostgreSQL 8.0.11 depends on Npgsql >= 8.0.6 (8.x major), so this
+         is pinned to 8.0.9 (latest real 8.0.x) to match the EF path's Npgsql major and restore with no NU1603. -->
+    <PackageVersion Include="Npgsql" Version="8.0.9" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(NpgsqlEfCoreVersion)" />
     <PackageVersion Include="NRules" Version="1.0.3" />
     <PackageVersion Include="NSubstitute" Version="5.3.0" />
