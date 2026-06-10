@@ -108,6 +108,7 @@
     <PackageVersion Include="Muonroi.RuleEngine.DecisionTable.Web" Version="1.0.0-alpha.1" />
     <PackageVersion Include="Muonroi.RuleEngine.Runtime" Version="1.0.0-alpha.1" />
     <PackageVersion Include="Muonroi.Rules" Version="1.0.0-alpha.1" />
+    <PackageVersion Include="Npgsql" Version="8.0.11" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(NpgsqlEfCoreVersion)" />
     <PackageVersion Include="NRules" Version="1.0.3" />
     <PackageVersion Include="NSubstitute" Version="5.3.0" />
