@@ -48,9 +48,11 @@ END $$;
 GRANT app_rls_bypass TO app_rls;
 
 -- SECTION 3 — Extend tenant_isolation with WITH CHECK on every tenant_id table.
--- The WITH CHECK predicate is byte-identical to 0001's USING predicate (no cast,
--- no null-tolerant escape branch — fail-closed preserved per D-04/ISO-01: an unset
--- GUC yields NULL, the equality fails, and zero rows pass the check).
+-- The WITH CHECK predicate is byte-identical to 0001's USING predicate: both compare
+-- tenant_id::text = current_setting('app.current_tenant_id', true). Casting tenant_id to
+-- text makes the comparison type-agnostic (works for uuid and non-uuid columns) while
+-- preserving fail-closed semantics per D-04/ISO-01: an unset GUC yields NULL, the
+-- equality fails, and zero rows pass the check. No null-tolerant escape branch is added.
 DO $$
 DECLARE
     r record;
@@ -61,7 +63,7 @@ BEGIN
         WHERE column_name = 'tenant_id'
           AND table_schema NOT IN ('pg_catalog','information_schema')
     LOOP
-        EXECUTE format('ALTER POLICY tenant_isolation ON %I.%I WITH CHECK (tenant_id = current_setting(''app.current_tenant_id'', true))', r.table_schema, r.table_name);
+        EXECUTE format('ALTER POLICY tenant_isolation ON %I.%I WITH CHECK (tenant_id::text = current_setting(''app.current_tenant_id'', true))', r.table_schema, r.table_name);
     END LOOP;
 END $$;
 
