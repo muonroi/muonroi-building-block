@@ -154,8 +154,10 @@
     <PackageVersion Include="System.Management" Version="8.0.0" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
     <PackageVersion Include="System.Text.Json" Version="8.0.5" />
-    <!-- Integration tests for Dapper RLS (Phase 2 only) -->
+    <!-- Integration tests for Dapper RLS (Phases 2 + 3) -->
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.12.0" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.1.7" />
+    <PackageVersion Include="Testcontainers.MsSql" Version="4.12.0" />
     <PackageVersion Include="xunit" Version="2.9.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
