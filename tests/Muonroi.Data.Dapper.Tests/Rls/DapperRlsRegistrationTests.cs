@@ -169,83 +169,37 @@ public sealed class DapperRlsRegistrationTests
             "provider=PostgreSql must register PostgreSqlTenantSessionContextSetter (CFG-02)");
     }
 
-    [Fact]
-    public void AddMuonroiDapperRls_WhenEnabledWithMsSql_SetterIsMsSqlSetter()
-    {
-        // Arrange
-        IServiceCollection services = BuildBaseline(enableRls: true, provider: "MsSql");
-        services.AddMuonroiDapperRls();
-
-        // Act
-        using ServiceProvider sp = services.BuildServiceProvider();
-        ITenantSessionContextSetter setter = sp.GetRequiredService<ITenantSessionContextSetter>();
-
-        // Assert
-        setter.Should().BeOfType<MsSqlTenantSessionContextSetter>(
-            "provider=MsSql must register MsSqlTenantSessionContextSetter (CFG-02)");
-    }
-
-    [Fact]
-    public void AddMuonroiDapperRls_WhenEnabledWithMySql_SetterIsMySqlSetter()
-    {
-        // Arrange
-        IServiceCollection services = BuildBaseline(enableRls: true, provider: "MySql");
-        services.AddMuonroiDapperRls();
-
-        // Act
-        using ServiceProvider sp = services.BuildServiceProvider();
-        ITenantSessionContextSetter setter = sp.GetRequiredService<ITenantSessionContextSetter>();
-
-        // Assert
-        setter.Should().BeOfType<MySqlTenantSessionContextSetter>(
-            "provider=MySql must register MySqlTenantSessionContextSetter (CFG-02)");
-    }
-
     // -------------------------------------------------------------------------
-    // T-03-06 / Phase-1 deferral: MSSQL/MySQL setter still resolves even though
-    // only the PostgreSQL TConn IDapper override is wired this phase.
+    // WR-03 fail-fast: MSSQL/MySQL are not wired end-to-end this phase. Selecting
+    // them must throw NotSupportedException at registration time rather than
+    // silently wiring the Npgsql-typed IDapper override against the wrong provider.
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void AddMuonroiDapperRls_WhenEnabledWithMsSql_SetterResolvesAndIDapperIsPostgreSqlOverride()
+    public void AddMuonroiDapperRls_WhenEnabledWithMsSql_ThrowsNotSupported()
     {
-        // Arrange — MsSql provider selected but Phase 1 only wires the PostgreSQL TConn override.
+        // Arrange
         IServiceCollection services = BuildBaseline(enableRls: true, provider: "MsSql");
-        services.AddMuonroiDapperRls();
 
         // Act
-        using ServiceProvider sp = services.BuildServiceProvider();
-        ITenantSessionContextSetter setter = sp.GetRequiredService<ITenantSessionContextSetter>();
-        IDapper dapper = sp.GetRequiredService<IDapper>();
+        Action act = () => services.AddMuonroiDapperRls();
 
-        // Assert — setter type is correct for the provider
-        setter.Should().BeOfType<MsSqlTenantSessionContextSetter>(
-            "the MsSql setter must register successfully even though full TConn wiring is deferred");
-
-        // The IDapper override is a TenantRlsDapper wired with NpgsqlConnection for Phase 1.
-        // MSSQL TConn wiring arrives in Phase 3.
-        dapper.Should().BeAssignableTo(typeof(TenantRlsDapper<NpgsqlConnection>),
-            "Phase-1 deferred: MSSQL TConn wiring arrives in Phase 3; the enabled override is still wired as NpgsqlConnection for Phase 1");
+        // Assert
+        act.Should().Throw<NotSupportedException>(
+            "WR-03: MsSql is not wired end-to-end (arrives in Phase 3) and must fail fast at registration");
     }
 
     [Fact]
-    public void AddMuonroiDapperRls_WhenEnabledWithMySql_SetterResolvesAndIDapperIsPostgreSqlOverride()
+    public void AddMuonroiDapperRls_WhenEnabledWithMySql_ThrowsNotSupported()
     {
-        // Arrange — MySql provider selected but Phase 1 only wires the PostgreSQL TConn override.
+        // Arrange
         IServiceCollection services = BuildBaseline(enableRls: true, provider: "MySql");
-        services.AddMuonroiDapperRls();
 
         // Act
-        using ServiceProvider sp = services.BuildServiceProvider();
-        ITenantSessionContextSetter setter = sp.GetRequiredService<ITenantSessionContextSetter>();
-        IDapper dapper = sp.GetRequiredService<IDapper>();
+        Action act = () => services.AddMuonroiDapperRls();
 
-        // Assert — setter resolves for MySql
-        setter.Should().BeOfType<MySqlTenantSessionContextSetter>(
-            "the MySql setter must register successfully even though full TConn wiring is deferred");
-
-        // IDapper override still wired as NpgsqlConnection for Phase 1
-        dapper.Should().BeAssignableTo(typeof(TenantRlsDapper<NpgsqlConnection>),
-            "Phase-1 deferred: MySQL TConn wiring arrives in Phase 4; the enabled override is still wired as NpgsqlConnection for Phase 1");
+        // Assert
+        act.Should().Throw<NotSupportedException>(
+            "WR-03: MySql is not wired end-to-end (arrives in Phase 4) and must fail fast at registration");
     }
 }

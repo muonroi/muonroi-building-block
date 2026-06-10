@@ -27,15 +27,15 @@ namespace Muonroi.Data.Dapper.Rls;
 /// <c>AddDapperForXxx</c> is left byte-for-byte untouched (CFG-01 zero-impact).
 /// </para>
 /// <para>
-/// <b>Phase 1 deferral note</b> (MSSQL/MySQL TConn wiring):
-/// The <c>IDapper</c> override is wired with <see cref="NpgsqlConnection"/> as <c>TConn</c>
-/// for all providers in Phase 1. MSSQL <c>TConn</c> wiring (<c>SqlConnection</c>) is
-/// deferred to Phase 3; MySQL <c>TConn</c> wiring (<c>MySqlConnection</c>) is deferred to
-/// Phase 4. The matching provider <see cref="ITenantSessionContextSetter"/> IS registered
-/// correctly for MSSQL/MySQL in Phase 1 — only the <c>TConn</c> type parameter of the
-/// <c>IDapper</c> override is temporarily shared with PostgreSQL. This deferral is
-/// observable and documented; no reader should mistake MSSQL/MySQL for end-to-end-wired
-/// after reading this comment.
+/// <b>Provider support (MSSQL/MySQL deferral)</b>:
+/// Only <see cref="DapperRlsProvider.PostgreSql"/> is wired end-to-end. The <c>IDapper</c>
+/// override is <see cref="TenantRlsDapper{TConn}"/> with <see cref="NpgsqlConnection"/> as
+/// <c>TConn</c>. Selecting <see cref="DapperRlsProvider.MsSql"/> or
+/// <see cref="DapperRlsProvider.MySql"/> throws <see cref="NotSupportedException"/> at
+/// registration time (WR-03 fail-fast): wiring the Npgsql-typed override for those providers
+/// would run their session SQL against an <see cref="NpgsqlConnection"/>, a silent
+/// wrong-provider hazard. MSSQL <c>TConn</c> wiring (<c>SqlConnection</c>) arrives in Phase 3;
+/// MySQL <c>TConn</c> wiring (<c>MySqlConnection</c>) in Phase 4.
 /// </para>
 /// </remarks>
 public static class DapperRlsServiceCollectionExtensions
@@ -60,16 +60,20 @@ public static class DapperRlsServiceCollectionExtensions
         // -----------------------------------------------------------------------
         // CFG-01 GATE — read registration-time options and return early if disabled.
         //
-        // We build a transient service provider scoped only to this registration call
-        // so we can read IConfiguration and resolve MultiTenantOptions without
-        // side-effects on the caller's container.
+        // WR-02: read IConfiguration directly off the already-registered singleton
+        // descriptor instead of calling services.BuildServiceProvider(). Building a
+        // throwaway container at registration time eagerly instantiates/validates every
+        // singleton registered so far, can trigger side effects, and produces a provider
+        // whose singletons differ from the real container. IConfiguration is registered
+        // as a singleton instance (AddSingleton<IConfiguration>(config)), so we can pull
+        // it straight out of the descriptor with no container build.
         //
         // This is the ONLY place the gate decision is made. The services.Replace call
         // that follows is statically unreachable on the disabled path.
         // -----------------------------------------------------------------------
-        using ServiceProvider tempSp = services.BuildServiceProvider();
-
-        IConfiguration? configuration = tempSp.GetService<IConfiguration>();
+        IConfiguration? configuration = (IConfiguration?)services
+            .LastOrDefault(sd => sd.ServiceType == typeof(IConfiguration))
+            ?.ImplementationInstance;
 
         MultiTenantOptions multiTenantOpts = new();
         configuration?.GetSection(MultiTenantOptions.SectionName).Bind(multiTenantOpts);
@@ -98,12 +102,17 @@ public static class DapperRlsServiceCollectionExtensions
         switch (rlsOpts.Provider)
         {
             case DapperRlsProvider.MsSql:
-                services.TryAddScoped<ITenantSessionContextSetter, MsSqlTenantSessionContextSetter>();
-                break;
-
             case DapperRlsProvider.MySql:
-                services.TryAddScoped<ITenantSessionContextSetter, MySqlTenantSessionContextSetter>();
-                break;
+                // WR-03: fail fast. The IDapper override below is hard-wired to
+                // TenantRlsDapper<NpgsqlConnection>; selecting MsSql/MySql would run
+                // sp_set_session_context / SET @app_current_tenant_id against an
+                // NpgsqlConnection — a confusing runtime failure or silent wrong-provider
+                // behavior. Until Phases 3/4 wire the correct TConn, reject the
+                // configuration explicitly rather than registering a half-wired pipeline.
+                throw new NotSupportedException(
+                    $"Dapper RLS for provider '{rlsOpts.Provider}' is not yet available. " +
+                    "Only PostgreSql is wired end-to-end in this phase; MsSql wiring arrives " +
+                    "in Phase 3 and MySql in Phase 4.");
 
             case DapperRlsProvider.PostgreSql:
             default:
