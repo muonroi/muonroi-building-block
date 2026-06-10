@@ -121,10 +121,10 @@ public class TenantRlsDapper<TConn> : BaseDapper<TConn>
     }
 
     /// <inheritdoc />
-    public override Task<int> ExecuteAsync(CommandDefinition command)
+    public override async Task<int> ExecuteAsync(CommandDefinition command)
     {
-        EnsureTenantContext();
-        return base.ExecuteAsync(command);
+        await EnsureTenantContextAsync().ConfigureAwait(false);
+        return await base.ExecuteAsync(command).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -156,10 +156,10 @@ public class TenantRlsDapper<TConn> : BaseDapper<TConn>
     }
 
     /// <inheritdoc />
-    public override Task<IDataReader> ExecuteReaderAsync(CommandDefinition command)
+    public override async Task<IDataReader> ExecuteReaderAsync(CommandDefinition command)
     {
-        EnsureTenantContext();
-        return base.ExecuteReaderAsync(command);
+        await EnsureTenantContextAsync().ConfigureAwait(false);
+        return await base.ExecuteReaderAsync(command).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -191,10 +191,10 @@ public class TenantRlsDapper<TConn> : BaseDapper<TConn>
     }
 
     /// <inheritdoc />
-    public override Task<TReturn> ExecuteScalarAsync<TReturn>(CommandDefinition command)
+    public override async Task<TReturn> ExecuteScalarAsync<TReturn>(CommandDefinition command)
     {
-        EnsureTenantContext();
-        return base.ExecuteScalarAsync<TReturn>(command);
+        await EnsureTenantContextAsync().ConfigureAwait(false);
+        return await base.ExecuteScalarAsync<TReturn>(command).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -360,10 +360,10 @@ public class TenantRlsDapper<TConn> : BaseDapper<TConn>
     // =========================================================================
 
     /// <inheritdoc />
-    public override Task<List<object>> QueryAsync(CommandDefinition command, bool? enableCache = null, TimeSpan? cacheExpire = null, string cacheKey = null!, bool forceUpdateCache = false)
+    public override async Task<List<object>> QueryAsync(CommandDefinition command, bool? enableCache = null, TimeSpan? cacheExpire = null, string cacheKey = null!, bool forceUpdateCache = false)
     {
-        EnsureTenantContext();
-        return base.QueryAsync(command, enableCache, cacheExpire, cacheKey, forceUpdateCache);
+        await EnsureTenantContextAsync().ConfigureAwait(false);
+        return await base.QueryAsync(command, enableCache, cacheExpire, cacheKey, forceUpdateCache).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -655,10 +655,10 @@ public class TenantRlsDapper<TConn> : BaseDapper<TConn>
     }
 
     /// <inheritdoc />
-    public override Task QueryMultipleAsync(CommandDefinition command, Action<SqlMapper.GridReader> reader)
+    public override async Task QueryMultipleAsync(CommandDefinition command, Action<SqlMapper.GridReader> reader)
     {
-        EnsureTenantContext();
-        return base.QueryMultipleAsync(command, reader);
+        await EnsureTenantContextAsync().ConfigureAwait(false);
+        await base.QueryMultipleAsync(command, reader).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
