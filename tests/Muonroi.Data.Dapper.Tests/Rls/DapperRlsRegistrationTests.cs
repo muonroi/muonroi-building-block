@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Data.Dapper.Rls;
 using Muonroi.Data.Dapper.Rls.Setters;
 using Muonroi.Tenancy.Abstractions;
+using NSubstitute;
 using Npgsql;
 using Xunit;
 
@@ -46,12 +47,13 @@ public sealed class DapperRlsRegistrationTests
         sc.AddLogging();
 
         // Simulate what AddDapperForPostgreSQL would register — a scoped IDapper.
-        // Using a factory (not ImplementationType) so we can capture the exact descriptor instance.
+        // Use NSubstitute so the baseline type is definitively NOT TenantRlsDapper<>,
+        // allowing the disabled-path assertion to hold regardless of test setup.
+        // Use a factory delegate so we can capture the exact descriptor instance.
+        sc.AddScoped<IDapper>(_ => Substitute.For<IDapper>());
+
+        // IConnectionStringProvider is required by TenantRlsDapper (via BaseDapper) on the enabled path.
         sc.AddScoped<IConnectionStringProvider, TestConnectionStringProvider>();
-        sc.AddScoped<IDapper>(sp => new TestableTenantRlsDapper(
-            sp,
-            new SpyITenantSessionContextSetter(),
-            new SpyITenantContext("baseline")));
 
         // ITenantContext required by TenantRlsDapper when enabled
         sc.AddScoped<ITenantContext>(_ => new SpyITenantContext("test-tenant"));
