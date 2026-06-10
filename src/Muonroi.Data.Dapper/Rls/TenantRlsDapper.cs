@@ -94,9 +94,21 @@ public class TenantRlsDapper<TConn> : BaseDapper<TConn>
     /// </summary>
     internal void EnsureTenantContext()
     {
+        // HARD-03: strict-mode guard — fail loud before the setter runs.
+        // Guard fires only when strict-mode is on, the tenant id is absent,
+        // AND no sanctioned bypass scope is active (D-07).
+        // The strict-off path is byte-identical to v1.0 (criterion #3, Pitfall 5).
+        var tenantId = _tenantContext.TenantId;
+        if (_strictMode
+            && string.IsNullOrWhiteSpace(tenantId)
+            && !Bypass.DapperRlsBypass.IsActive)
+        {
+            throw new MissingTenantContextException();
+        }
+
         // Accessing Conn.Value triggers BaseDapper's synchronous Open() if not yet open.
         var conn = (DbConnection)Conn.Value;
-        _setter.Apply(conn, _tenantContext.TenantId);
+        _setter.Apply(conn, tenantId);
     }
 
     /// <summary>
@@ -106,9 +118,18 @@ public class TenantRlsDapper<TConn> : BaseDapper<TConn>
     /// </summary>
     internal async Task EnsureTenantContextAsync(CancellationToken ct = default)
     {
+        // HARD-03: strict-mode guard — same logic as the sync path (D-07, criterion #3).
+        var tenantId = _tenantContext.TenantId;
+        if (_strictMode
+            && string.IsNullOrWhiteSpace(tenantId)
+            && !Bypass.DapperRlsBypass.IsActive)
+        {
+            throw new MissingTenantContextException();
+        }
+
         // Accessing Conn.Value triggers BaseDapper's synchronous Open() (ZeeLyn 5.3.1 limitation).
         var conn = (DbConnection)Conn.Value;
-        await _setter.ApplyAsync(conn, _tenantContext.TenantId, ct).ConfigureAwait(false);
+        await _setter.ApplyAsync(conn, tenantId, ct).ConfigureAwait(false);
     }
 
     // =========================================================================
