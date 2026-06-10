@@ -76,8 +76,28 @@ public sealed class PostgreSqlTenantSessionContextSetterBypassTests
         conn.ExecutedCommands.Should().ContainSingle();
         conn.ExecutedCommands[0].CommandText.Should().Contain("app.current_tenant_id",
             "without an active bypass scope the existing GUC path runs unchanged");
-        conn.ExecutedCommands[0].CommandText.Should().NotContain("SET ROLE");
+        conn.ExecutedCommands[0].CommandText.Should().Contain("RESET ROLE",
+            "the normal path must RESET ROLE so a reused pooled connection is re-isolated (CR-03)");
+        conn.ExecutedCommands[0].CommandText.Should().NotContain("SET ROLE app",
+            "the normal path must not SET ROLE to the bypass role");
         conn.ExecutedCommands[0].ParameterValue.Should().Be("tenant-abc");
+    }
+
+    [Fact]
+    public void Apply_WhenBypassNotActive_IssuesResetRoleBeforeGuc()
+    {
+        SpyIMLog<PostgreSqlTenantSessionContextSetter> spy = new();
+        PostgreSqlTenantSessionContextSetter sut = new(bypassRoleName: "app_rls_bypass", log: spy);
+        FakeDbConnection conn = new();
+
+        sut.Apply(conn, "tenant-abc");
+
+        conn.ExecutedCommands.Should().ContainSingle();
+        string text = conn.ExecutedCommands[0].CommandText;
+        text.Should().Contain("RESET ROLE");
+        text.IndexOf("RESET ROLE", StringComparison.Ordinal)
+            .Should().BeLessThan(text.IndexOf("app.current_tenant_id", StringComparison.Ordinal),
+                "RESET ROLE must precede the GUC set so a bypass-elevated connection is re-isolated before the tenant predicate is applied (CR-03)");
     }
 
     [Fact]
@@ -91,14 +111,40 @@ public sealed class PostgreSqlTenantSessionContextSetterBypassTests
 
         conn.ExecutedCommands.Should().ContainSingle();
         conn.ExecutedCommands[0].CommandText.Should().Contain("app.current_tenant_id");
-        conn.ExecutedCommands[0].CommandText.Should().NotContain("SET ROLE");
+        conn.ExecutedCommands[0].CommandText.Should().Contain("RESET ROLE");
+        conn.ExecutedCommands[0].CommandText.Should().NotContain("SET ROLE app");
     }
 
     [Fact]
     public void Constructor_WhenBypassRoleNameNull_Throws()
     {
         Action act = () => _ = new PostgreSqlTenantSessionContextSetter(bypassRoleName: null!);
-        act.Should().Throw<Exception>("MGuard.NotNull rejects a null bypass role name");
+        act.Should().Throw<Exception>("MGuard.NotEmpty rejects a null bypass role name");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("app rls")]              // space
+    [InlineData("app_rls; DROP TABLE x")] // semicolon / injection-shaped
+    [InlineData("1app_rls")]             // leading digit
+    [InlineData("app-rls")]              // hyphen
+    [InlineData("\"app_rls\"")]          // quotes
+    public void Constructor_WhenBypassRoleNameNotSafeIdentifier_Throws(string roleName)
+    {
+        Action act = () => _ = new PostgreSqlTenantSessionContextSetter(bypassRoleName: roleName);
+        act.Should().Throw<Exception>(
+            "WR-01: BypassRoleName must be a well-formed unquoted SQL identifier for SET ROLE");
+    }
+
+    [Theory]
+    [InlineData("app_rls_bypass")]
+    [InlineData("custom_bypass")]
+    [InlineData("_role1")]
+    public void Constructor_WhenBypassRoleNameIsSafeIdentifier_DoesNotThrow(string roleName)
+    {
+        Action act = () => _ = new PostgreSqlTenantSessionContextSetter(bypassRoleName: roleName);
+        act.Should().NotThrow();
     }
 
     [Fact]

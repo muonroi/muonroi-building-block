@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.Common;
+using System.Text.RegularExpressions;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Data.Dapper.Rls.Bypass;
 using Muonroi.Logging.Abstractions;
@@ -28,6 +29,13 @@ public sealed class PostgreSqlTenantSessionContextSetter : ITenantSessionContext
     private readonly IMLog<PostgreSqlTenantSessionContextSetter>? _log;
     private readonly string _bypassRoleName;
 
+    // Defense-in-depth (WR-01): the bypass role name is interpolated into "SET ROLE {name}"
+    // (SET ROLE takes an identifier, not a data parameter), so even though it is sourced from
+    // trusted config it must be a well-formed unquoted SQL identifier. This rejects empty,
+    // whitespace, semicolons, spaces, and any other character that could yield malformed or
+    // surprising SQL if config is ever sourced from a partially-trusted layer.
+    private static readonly Regex SafeIdentifier = new("^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.Compiled);
+
     /// <summary>
     /// Initializes a new instance of <see cref="PostgreSqlTenantSessionContextSetter"/>.
     /// </summary>
@@ -43,7 +51,14 @@ public sealed class PostgreSqlTenantSessionContextSetter : ITenantSessionContext
         string bypassRoleName,
         IMLog<PostgreSqlTenantSessionContextSetter>? log = null)
     {
-        _bypassRoleName = MGuard.NotNull(bypassRoleName);
+        _bypassRoleName = MGuard.NotEmpty(bypassRoleName);
+        if (!SafeIdentifier.IsMatch(_bypassRoleName))
+        {
+            throw new ArgumentException(
+                $"BypassRoleName '{_bypassRoleName}' is not a valid PostgreSQL identifier. " +
+                "It must match ^[A-Za-z_][A-Za-z0-9_]*$ (WR-01 defense-in-depth for SET ROLE).",
+                nameof(bypassRoleName));
+        }
         _log = log;
     }
 
@@ -64,7 +79,13 @@ public sealed class PostgreSqlTenantSessionContextSetter : ITenantSessionContext
         }
 
         using DbCommand cmd = dbConnection.CreateCommand();
-        cmd.CommandText = "SET app.current_tenant_id = @tid";
+        // RESET ROLE first: if this pooled physical connection previously entered a bypass
+        // scope (SET ROLE app_rls_bypass) and was reused before Npgsql's DISCARD ALL ran,
+        // the elevated BYPASSRLS role would still be active and the GUC predicate would be
+        // irrelevant. RESET ROLE returns the connection to the unprivileged app role so the
+        // tenant_isolation policy binds. Parameter-free SQL combined with the GUC set so the
+        // normal path still issues exactly one round-trip (CR-03).
+        cmd.CommandText = "RESET ROLE; SET app.current_tenant_id = @tid";
         DbParameter param = cmd.CreateParameter();
         param.ParameterName = "@tid";
         param.Value = tenantId ?? string.Empty;
@@ -91,7 +112,9 @@ public sealed class PostgreSqlTenantSessionContextSetter : ITenantSessionContext
         }
 
         await using DbCommand cmd = dbConnection.CreateCommand();
-        cmd.CommandText = "SET app.current_tenant_id = @tid";
+        // RESET ROLE first: re-isolate a pooled connection that may still be running as the
+        // bypass role from a prior scope (see sync Apply for the full rationale — CR-03).
+        cmd.CommandText = "RESET ROLE; SET app.current_tenant_id = @tid";
         DbParameter param = cmd.CreateParameter();
         param.ParameterName = "@tid";
         param.Value = tenantId ?? string.Empty;
