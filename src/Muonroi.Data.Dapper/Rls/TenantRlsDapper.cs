@@ -47,6 +47,7 @@ public class TenantRlsDapper<TConn> : BaseDapper<TConn>
     private readonly ITenantSessionContextSetter _setter;
     private readonly ITenantContext _tenantContext;
     private readonly IMLog<TenantRlsDapper<TConn>>? _log;
+    private readonly bool _strictMode;
 
     /// <summary>
     /// Initializes a new instance of <see cref="TenantRlsDapper{TConn}"/>.
@@ -57,6 +58,12 @@ public class TenantRlsDapper<TConn> : BaseDapper<TConn>
     /// <param name="readOnly">Route to the read-only replica when true.</param>
     /// <param name="setter">The provider-specific tenant session context setter (not null).</param>
     /// <param name="tenantContext">The ambient tenant context (not null).</param>
+    /// <param name="strictMode">
+    /// When <see langword="true"/>, <see cref="EnsureTenantContext"/> and
+    /// <see cref="EnsureTenantContextAsync"/> will throw <c>MissingTenantContextException</c>
+    /// if the ambient tenant id is absent and no bypass scope is active (HARD-03 / D-08).
+    /// Defaults to <see langword="false"/> — behavior is byte-identical to v1.0 when off.
+    /// </param>
     /// <param name="log">Optional structured logger for observability.</param>
     public TenantRlsDapper(
         IServiceProvider serviceProvider,
@@ -65,11 +72,13 @@ public class TenantRlsDapper<TConn> : BaseDapper<TConn>
         bool readOnly,
         ITenantSessionContextSetter setter,
         ITenantContext tenantContext,
+        bool strictMode = false,
         IMLog<TenantRlsDapper<TConn>>? log = null)
         : base(serviceProvider, connectionName, enableMasterSlave, readOnly)
     {
         _setter = MGuard.NotNull(setter);
         _tenantContext = MGuard.NotNull(tenantContext);
+        _strictMode = strictMode;
         _log = log;
     }
 

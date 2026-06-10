@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -98,21 +99,40 @@ public static class DapperRlsServiceCollectionExtensions
         // is only registered once even if AddMuonroiDapperRls is called multiple times.
         // -----------------------------------------------------------------------
 
-        // MSSQL/MySQL TConn wiring deferred to Phases 3/4 (see class-level remarks).
+        // -----------------------------------------------------------------------
+        // CFG-02: Register the provider-specific ITenantSessionContextSetter and
+        // perform the last-wins IDapper override with the correct TConn per provider.
+        //
+        // D-01: MSSQL is now wired end-to-end with TenantRlsDapper<SqlConnection> +
+        // MsSqlTenantSessionContextSetter. The IDapper Replace lives INSIDE each
+        // provider branch so the TConn is provider-correct (no wrong-provider hazard).
+        // MySQL remains deferred (NotSupportedException).
+        // -----------------------------------------------------------------------
         switch (rlsOpts.Provider)
         {
             case DapperRlsProvider.MsSql:
+                services.TryAddScoped<ITenantSessionContextSetter>(sp =>
+                    new MsSqlTenantSessionContextSetter(
+                        log: sp.GetService<IMLog<MsSqlTenantSessionContextSetter>>()));
+                services.Replace(ServiceDescriptor.Scoped<IDapper>(sp =>
+                    new TenantRlsDapper<SqlConnection>(
+                        sp,
+                        connectionName: "default",
+                        enableMasterSlave: false,
+                        readOnly: false,
+                        setter: sp.GetRequiredService<ITenantSessionContextSetter>(),
+                        tenantContext: sp.GetRequiredService<ITenantContext>(),
+                        strictMode: rlsOpts.StrictMode,
+                        log: sp.GetService<IMLog<TenantRlsDapper<SqlConnection>>>())));
+                break;
+
             case DapperRlsProvider.MySql:
-                // WR-03: fail fast. The IDapper override below is hard-wired to
-                // TenantRlsDapper<NpgsqlConnection>; selecting MsSql/MySql would run
-                // sp_set_session_context / SET @app_current_tenant_id against an
-                // NpgsqlConnection — a confusing runtime failure or silent wrong-provider
-                // behavior. Until Phases 3/4 wire the correct TConn, reject the
-                // configuration explicitly rather than registering a half-wired pipeline.
+                // WR-03: fail fast. MySQL emulated isolation is deferred to v2+.
+                // Accepting the configuration explicitly rather than wiring a half-baked pipeline.
                 throw new NotSupportedException(
                     $"Dapper RLS for provider '{rlsOpts.Provider}' is not yet available. " +
-                    "Only PostgreSql is wired end-to-end in this phase; MsSql wiring arrives " +
-                    "in Phase 3 and MySql in Phase 4.");
+                    "MySQL emulated isolation is deferred to v2+. " +
+                    "Use DapperRlsProvider.MsSql or DapperRlsProvider.PostgreSql.");
 
             case DapperRlsProvider.PostgreSql:
             default:
@@ -120,25 +140,18 @@ public static class DapperRlsServiceCollectionExtensions
                     new PostgreSqlTenantSessionContextSetter(
                         bypassRoleName: rlsOpts.BypassRoleName,
                         log: sp.GetService<IMLog<PostgreSqlTenantSessionContextSetter>>()));
+                services.Replace(ServiceDescriptor.Scoped<IDapper>(sp =>
+                    new TenantRlsDapper<NpgsqlConnection>(
+                        sp,
+                        connectionName: "default",
+                        enableMasterSlave: false,
+                        readOnly: false,
+                        setter: sp.GetRequiredService<ITenantSessionContextSetter>(),
+                        tenantContext: sp.GetRequiredService<ITenantContext>(),
+                        strictMode: rlsOpts.StrictMode,
+                        log: sp.GetService<IMLog<TenantRlsDapper<NpgsqlConnection>>>())));
                 break;
         }
-
-        // -----------------------------------------------------------------------
-        // Last-wins IDapper override: replace the vanilla IDapper from AddDapperForXxx
-        // with TenantRlsDapper<NpgsqlConnection> (Phase 1 TConn).
-        //
-        // Phase 1 wires NpgsqlConnection for all providers. MSSQL/MySQL TConn wiring
-        // deferred to Phases 3/4 as documented above.
-        // -----------------------------------------------------------------------
-        services.Replace(ServiceDescriptor.Scoped<IDapper>(sp =>
-            new TenantRlsDapper<NpgsqlConnection>(
-                sp,
-                connectionName: "default",
-                enableMasterSlave: false,
-                readOnly: false,
-                setter: sp.GetRequiredService<ITenantSessionContextSetter>(),
-                tenantContext: sp.GetRequiredService<ITenantContext>(),
-                log: sp.GetService<IMLog<TenantRlsDapper<NpgsqlConnection>>>())));
 
         return services;
     }
