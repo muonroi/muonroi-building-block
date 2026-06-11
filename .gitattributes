@@ -1,5 +1,11 @@
 * text=auto
 
+# Shell scripts MUST be LF on every platform. CI runs them with `bash scripts/*.sh`
+# on Linux; a CRLF script makes bash read `set -euo pipefail\r`, which fails with
+# "set: pipefail: invalid option name" and aborts the job. eol=lf forces LF in the
+# working tree and the repo regardless of a contributor's core.autocrlf setting.
+*.sh text eol=lf
+
 # Golden snapshot baselines must survive checkout byte-exact: no CRLF/LF mangling.
 *.pdf binary
 *.ttf binary
