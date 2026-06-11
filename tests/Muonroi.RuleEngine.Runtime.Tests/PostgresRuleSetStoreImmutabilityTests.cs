@@ -113,6 +113,46 @@ public sealed class PostgresRuleSetStoreImmutabilityTests
         updated.Status.Should().Be(RuleSetStatus.Draft);
     }
 
+    [Fact]
+    public async Task StatusTransition_DraftToRejected_Succeeds()
+    {
+        // Copilot-draft discard path (D-04 / VRF-02): a Draft version may be soft-rejected
+        // without ever touching engine activation semantics.
+        await using ImmutabilityFixture fixture = await ImmutabilityFixture.CreateAsync(RuleSetStatus.Draft);
+
+        RuleSetRecord record = await fixture.DbContext.RuleSets
+            .FirstAsync(x => x.WorkflowName == "workflow-a");
+        record.Status = RuleSetStatus.Rejected;
+        record.RejectedBy = "checker";
+        record.RejectedReason = "copilot draft discarded";
+        record.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Should not throw — Draft -> Rejected is the copilot discard arm.
+        await fixture.DbContext.SaveChangesAsync();
+
+        RuleSetRecord updated = await fixture.DbContext.RuleSets
+            .AsNoTracking()
+            .FirstAsync(x => x.WorkflowName == "workflow-a");
+        updated.Status.Should().Be(RuleSetStatus.Rejected);
+    }
+
+    [Fact]
+    public async Task StatusTransition_RejectedToActive_Throws()
+    {
+        // Never-Active invariant (07-04 / T-08-02): Rejected is terminal — it must NOT
+        // be able to reach Active. The (Draft,Rejected) arm is additive and one-way.
+        await using ImmutabilityFixture fixture = await ImmutabilityFixture.CreateAsync(RuleSetStatus.Rejected);
+
+        RuleSetRecord record = await fixture.DbContext.RuleSets
+            .FirstAsync(x => x.WorkflowName == "workflow-a");
+        record.Status = RuleSetStatus.Active;
+
+        Func<Task> action = () => fixture.DbContext.SaveChangesAsync();
+
+        await action.Should().ThrowAsync<MInternalException>()
+            .WithMessage("*Invalid status transition*");
+    }
+
     // ── Vault Model Tests ────────────────────────────────────────────────────
 
     [Fact]

@@ -118,6 +118,9 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
         (RuleSetStatus.Approved, RuleSetStatus.Active) => true,
         // Supersede when a new version becomes active
         (RuleSetStatus.Active, RuleSetStatus.Superseded) => true,
+        // Copilot-draft discard path (D-04 / VRF-02): a never-published Draft may be soft-rejected.
+        // Rejected is terminal — no onward arm reaches Active, preserving the never-Active invariant (07-04 / T-08-02).
+        (RuleSetStatus.Draft, RuleSetStatus.Rejected) => true,
         // Resubmit after rejection via Draft -> PendingApproval (handled above)
         _ => false
     };
@@ -181,6 +184,9 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
 
     /// <summary>Gets the dry-run example entities.</summary>
     public DbSet<DryRunExampleRecord> DryRunExamples => Set<DryRunExampleRecord>();
+
+    /// <summary>Gets the copilot-draft provenance entities (Phase 8 — VRF-03 exit metric).</summary>
+    public DbSet<CopilotDraftProvenanceRecord> CopilotDraftProvenance => Set<CopilotDraftProvenanceRecord>();
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -355,6 +361,19 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
             entity.Property(x => x.InputsJson).HasColumnType("text");
             entity.Property(x => x.ContextType).HasMaxLength(256);
             entity.Property(x => x.PromotedBy).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<CopilotDraftProvenanceRecord>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            // Unique composite: one provenance row per (tenant, workflow, version) — supports the
+            // activation O(1) lookup and prevents duplicate provenance rows (RESEARCH Pitfall 5).
+            entity.HasIndex(x => new { x.TenantId, x.Workflow, x.Version }).IsUnique();
+            entity.Property(x => x.TenantId).HasMaxLength(128);
+            entity.Property(x => x.Workflow).HasMaxLength(256);
+            entity.Property(x => x.AiOriginalHash).HasMaxLength(64);
+            entity.Property(x => x.AiOriginalSnapshot).HasColumnType("text");
+            entity.Property(x => x.GeneratedBy).HasMaxLength(256);
         });
     }
 }
