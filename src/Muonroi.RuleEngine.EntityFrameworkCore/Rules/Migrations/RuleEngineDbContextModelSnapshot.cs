@@ -506,6 +506,56 @@ namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules.Migrations
                     b.ToTable("TenantRuleAssignments");
                 });
 
+            modelBuilder.Entity("Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities.CopilotDraftProvenanceRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AiOriginalHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("AiOriginalSnapshot")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool?>("EditedBeforeApproval")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("GeneratedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GeneratedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Workflow")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Workflow", "Version")
+                        .IsUnique();
+
+                    b.ToTable("CopilotDraftProvenance");
+                });
+
             modelBuilder.Entity("Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities.DryRunExampleRecord", b =>
                 {
                     b.Property<Guid>("Id")
