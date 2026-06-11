@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-<ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.Data.Dapper\Muonroi.Data.Dapper.csproj" />
   </ItemGroup>
 </Project>

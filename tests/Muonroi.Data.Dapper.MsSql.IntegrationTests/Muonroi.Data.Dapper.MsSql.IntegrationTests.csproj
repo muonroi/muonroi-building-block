@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <IsMuonroiTestProject>true</IsMuonroiTestProject>
+  </PropertyGroup>
+  <!--
+    Microsoft.NET.Test.Sdk, xunit, xunit.runner.visualstudio, coverlet.collector,
+    FluentAssertions, and NSubstitute are injected automatically for every
+    IsMuonroiTestProject by the repo-root Directory.Build.props. Only the
+    project-specific integration packages are declared here to avoid NU1504.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.MsSql" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.Data.Dapper\Muonroi.Data.Dapper.csproj" />
+  </ItemGroup>
+</Project>
