@@ -16,6 +16,24 @@ public enum LicenseMode
 }
 
 /// <summary>
+/// Controls which factors the runtime fingerprint is derived from.
+/// </summary>
+public enum LicenseFingerprintScope
+{
+    /// <summary>
+    /// Default. Fingerprint includes machine hardware + OS + ApplicationName + ProjectSeed + FingerprintSalt.
+    /// Binds a license to a specific project AND a specific machine.
+    /// </summary>
+    MachineAndProject,
+
+    /// <summary>
+    /// Fingerprint includes only ApplicationName + ProjectSeed + FingerprintSalt (no hardware/OS).
+    /// Binds a license to a project but lets it run on any machine (dev / UAT / prod).
+    /// </summary>
+    ProjectOnly
+}
+
+/// <summary>
 /// Represents the License Fail Mode.
 /// </summary>
 public enum LicenseFailMode

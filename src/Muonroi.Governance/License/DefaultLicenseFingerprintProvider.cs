@@ -12,14 +12,24 @@ internal sealed class DefaultLicenseFingerprintProvider(
 {
     public string GetFingerprint()
     {
-        string hardwareId = GetHardwareId();
-        string[] parts =
-        [
-            hardwareId,
-            Environment.OSVersion.Platform.ToString(),
-            environment?.ApplicationName ?? "MUONROI_APP",
-            configs.ProjectSeed ?? "DEFAULT_SEED"
-        ];
+        string appName = environment?.ApplicationName ?? "MUONROI_APP";
+        string projectSeed = configs.ProjectSeed ?? "DEFAULT_SEED";
+
+        // ProjectOnly: bind to project identity only (no hardware/OS) so the same license
+        // runs on any machine (dev / UAT / prod). MachineAndProject (default) also binds hardware.
+        string[] parts = configs.FingerprintScope == LicenseFingerprintScope.ProjectOnly
+            ?
+            [
+                appName,
+                projectSeed
+            ]
+            :
+            [
+                GetHardwareId(),
+                Environment.OSVersion.Platform.ToString(),
+                appName,
+                projectSeed
+            ];
 
         string raw = string.Join("|", parts) + "|" + (configs.FingerprintSalt ?? string.Empty);
         using SHA256 sha = SHA256.Create();
