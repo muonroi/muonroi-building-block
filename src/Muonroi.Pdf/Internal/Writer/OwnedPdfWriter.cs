@@ -414,8 +414,17 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         sb.AppendLine("end");
         sb.AppendLine("end");
 
-        return Encoding.ASCII.GetBytes(sb.ToString());
+        return AsciiBytesLf(sb);
     }
+
+    // PDF content & CMap streams MUST use a fixed LF newline. StringBuilder.AppendLine emits
+    // Environment.NewLine — CRLF on Windows, LF on Linux — which made the rendered PDF bytes
+    // platform-dependent and broke cross-platform golden snapshots (baselines generated on
+    // Windows failed on Linux CI; intra-run DeterminismCanary could not catch it). Canonicalize
+    // to LF at the byte boundary so output is byte-identical on every OS regardless of which
+    // AppendLine produced the break. (The xref/trailer skeleton already hard-codes "\n".)
+    private static byte[] AsciiBytesLf(StringBuilder sb)
+        => Encoding.ASCII.GetBytes(sb.ToString().Replace("\r\n", "\n"));
 
     // ── Image XObject emission ────────────────────────────────────────────────
 
@@ -1079,7 +1088,7 @@ internal sealed class OwnedPdfWriter : IPdfWriter
 
         sb.AppendLine("ET");
 
-        return Encoding.ASCII.GetBytes(sb.ToString());
+        return AsciiBytesLf(sb);
     }
 
     // ── helper: FlateDecode compression ───────────────────────────────────────
