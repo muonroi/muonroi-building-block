@@ -23,6 +23,7 @@
     <PackageReference Include="Grpc.Net.ClientFactory" />
     <PackageReference Include="Grpc.Net.Common" />
     <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="Polly" />
   </ItemGroup>
 </Project>

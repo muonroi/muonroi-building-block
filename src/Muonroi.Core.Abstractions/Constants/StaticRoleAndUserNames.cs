@@ -16,6 +16,16 @@ public static class StaticRoleAndUserNames
         public const string Admin = "Admin";
 
         /// <summary>
+        /// The display name of the host administrator role.
+        /// </summary>
+        public const string AdminDisplayName = "Administrator";
+
+        /// <summary>
+        /// The normalized (upper-cased) name of the host administrator role.
+        /// </summary>
+        public const string AdminNormalizedName = "ADMIN";
+
+        /// <summary>
         /// The name of the host user role.
         /// </summary>
         public const string User = "User";
@@ -24,5 +34,10 @@ public static class StaticRoleAndUserNames
         /// The default user name for the host administrator.
         /// </summary>
         public const string AdminUserName = "admin";
+
+        /// <summary>
+        /// The default email address for the seeded host administrator.
+        /// </summary>
+        public const string AdminEmail = "admin@muonroi.com";
     }
 }

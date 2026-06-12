@@ -93,7 +93,7 @@ public static class MSerilogAction
                 Directory.CreateDirectory(dir);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             throw new MConfigurationException("Invalid log file path.", "Serilog:LogFilePath");
         }

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Description>HTML/CSS to PDF rendering contracts: IMPdfService, PdfConfigs, IPdfCssPolicy, and adapter seams (IHtmlParser, ICssCascadeEngine, IPdfWriter) for Muonroi applications.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- System.Memory and System.Threading.Tasks.Extensions are not in netstandard2.0 BCL;
+         these polyfill packages provide ReadOnlyMemory<T>, ReadOnlySpan<T>, and ValueTask<T>. -->
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" />
+  </ItemGroup>
+</Project>

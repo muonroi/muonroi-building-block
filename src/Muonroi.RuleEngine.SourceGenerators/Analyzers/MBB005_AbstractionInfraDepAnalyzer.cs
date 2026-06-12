@@ -48,12 +48,12 @@ public sealed class Mbb005_AbstractionInfraDepAnalyzer : DiagnosticAnalyzer
 
         foreach (string reference in references)
         {
-            if (reference.StartsWith("Microsoft", StringComparison.Ordinal) ||
-                reference.StartsWith("System", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
+            // Gate purely on the forbidden-token list. Do NOT short-circuit on a
+            // "Microsoft."/"System." prefix first: infrastructure packages such as
+            // Microsoft.EntityFrameworkCore ship under the Microsoft.* namespace, so a
+            // prefix skip creates a blind spot and lets EF Core leak into an
+            // .Abstractions contract layer. None of the forbidden tokens match benign
+            // framework references (Microsoft.Extensions.*, System.*), so those stay allowed.
             if (ForbiddenDependencyTokens.Any(token => reference.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0))
             {
                 context.ReportDiagnostic(Diagnostic.Create(

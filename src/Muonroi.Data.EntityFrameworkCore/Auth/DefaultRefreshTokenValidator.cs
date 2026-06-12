@@ -89,8 +89,8 @@ public class DefaultRefreshTokenValidator<TDbContext, TPermission>(
 
         try
         {
-            System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler handler = new();
-            System.IdentityModel.Tokens.Jwt.JwtSecurityToken jwt = handler.ReadJwtToken(token);
+            JwtSecurityTokenHandler handler = new();
+            JwtSecurityToken jwt = handler.ReadJwtToken(token);
             return [.. jwt.Claims];
         }
         catch

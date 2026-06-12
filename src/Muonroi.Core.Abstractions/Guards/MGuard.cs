@@ -309,36 +309,52 @@ public static class MGuard
     /// <summary>
     /// Asserts an internal state invariant. Throws <see cref="MInternalException"/> when the condition is false.
     /// Use for "should never happen" checks and internal assertions.
+    /// Caller context (method, file, line) is automatically captured and propagated to the exception.
     /// </summary>
     /// <param name="condition">The condition that must be true.</param>
     /// <param name="errorMessage">The error message if the condition is false.</param>
     /// <param name="errorCode">Optional specific error code (defaults to INTERNAL_ERROR).</param>
+    /// <param name="callerMember">Compiler-injected: name of the calling member.</param>
+    /// <param name="callerFile">Compiler-injected: source file path of the caller.</param>
+    /// <param name="callerLine">Compiler-injected: source line number of the caller.</param>
     /// <exception cref="MInternalException">Thrown when the condition is false.</exception>
     public static void State(
         bool condition,
         string errorMessage,
-        string? errorCode = null)
+        string? errorCode = null,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0)
     {
         if (!condition)
         {
-            throw new MInternalException(errorMessage, errorCode);
+            throw new MInternalException(errorMessage, errorCode, callerMember, callerFile, callerLine);
         }
     }
 
     /// <summary>
     /// Ensures a required configuration value is present.
     /// Throws <see cref="MConfigurationException"/> when the value is null.
+    /// Caller context (method, file, line) is automatically captured and propagated to the exception.
     /// </summary>
     /// <typeparam name="T">The type of the configuration value.</typeparam>
     /// <param name="value">The configuration value to check.</param>
     /// <param name="configKey">The configuration key or description for diagnostics.</param>
+    /// <param name="callerMember">Compiler-injected: name of the calling member.</param>
+    /// <param name="callerFile">Compiler-injected: source file path of the caller.</param>
+    /// <param name="callerLine">Compiler-injected: source line number of the caller.</param>
     /// <returns>The non-null configuration value.</returns>
     /// <exception cref="MConfigurationException">Thrown when the value is null.</exception>
-    public static T Configured<T>(T? value, string configKey) where T : class
+    public static T Configured<T>(
+        T? value,
+        string configKey,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0) where T : class
     {
         if (value is null)
         {
-            throw new MConfigurationException($"Required configuration '{configKey}' is missing or null.", configKey);
+            throw new MConfigurationException($"Required configuration '{configKey}' is missing or null.", configKey, callerMember, callerFile, callerLine);
         }
 
         return value;
@@ -347,18 +363,154 @@ public static class MGuard
     /// <summary>
     /// Ensures a required configuration string is present and not empty.
     /// Throws <see cref="MConfigurationException"/> when the value is null or whitespace.
+    /// Caller context (method, file, line) is automatically captured and propagated to the exception.
     /// </summary>
     /// <param name="value">The configuration string to check.</param>
     /// <param name="configKey">The configuration key or description for diagnostics.</param>
+    /// <param name="callerMember">Compiler-injected: name of the calling member.</param>
+    /// <param name="callerFile">Compiler-injected: source file path of the caller.</param>
+    /// <param name="callerLine">Compiler-injected: source line number of the caller.</param>
     /// <returns>The non-empty configuration string.</returns>
     /// <exception cref="MConfigurationException">Thrown when the value is null or whitespace.</exception>
-    public static string Configured(string? value, string configKey)
+    public static string Configured(
+        string? value,
+        string configKey,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
-            throw new MConfigurationException($"Required configuration '{configKey}' is missing or empty.", configKey);
+            throw new MConfigurationException($"Required configuration '{configKey}' is missing or empty.", configKey, callerMember, callerFile, callerLine);
         }
 
         return value;
+    }
+
+    /// <summary>
+    /// Ensures the caller is authenticated. Throws <see cref="MUnauthorizedException"/> when not.
+    /// </summary>
+    /// <param name="isAuthenticated">Whether the caller is authenticated.</param>
+    /// <param name="message">The error message if not authenticated.</param>
+    /// <param name="callerMember">Compiler-injected: name of the calling member.</param>
+    /// <param name="callerFile">Compiler-injected: source file path of the caller.</param>
+    /// <param name="callerLine">Compiler-injected: source line number of the caller.</param>
+    /// <exception cref="MUnauthorizedException">Thrown when <paramref name="isAuthenticated"/> is false.</exception>
+    public static void Authorized(
+        bool isAuthenticated,
+        string message,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0)
+    {
+        if (!isAuthenticated)
+        {
+            throw new MUnauthorizedException(message, callerMember, callerFile, callerLine);
+        }
+    }
+
+    /// <summary>
+    /// Ensures the caller has required permissions. Throws <see cref="MForbiddenException"/> when not.
+    /// </summary>
+    /// <param name="hasPermission">Whether the caller has permission.</param>
+    /// <param name="message">The error message if not permitted.</param>
+    /// <param name="callerMember">Compiler-injected: name of the calling member.</param>
+    /// <param name="callerFile">Compiler-injected: source file path of the caller.</param>
+    /// <param name="callerLine">Compiler-injected: source line number of the caller.</param>
+    /// <exception cref="MForbiddenException">Thrown when <paramref name="hasPermission"/> is false.</exception>
+    public static void Permitted(
+        bool hasPermission,
+        string message,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0)
+    {
+        if (!hasPermission)
+        {
+            throw new MForbiddenException(message, callerMember, callerFile, callerLine);
+        }
+    }
+
+    /// <summary>
+    /// Ensures the entity was found. Returns the non-null value or throws <see cref="MNotFoundException"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of the entity.</typeparam>
+    /// <param name="value">The entity value to check.</param>
+    /// <param name="entityName">The name of the entity for diagnostics.</param>
+    /// <param name="callerMember">Compiler-injected: name of the calling member.</param>
+    /// <param name="callerFile">Compiler-injected: source file path of the caller.</param>
+    /// <param name="callerLine">Compiler-injected: source line number of the caller.</param>
+    /// <returns>The non-null entity value.</returns>
+    /// <exception cref="MNotFoundException">Thrown when <paramref name="value"/> is null.</exception>
+    public static T Found<T>(
+        T? value,
+        string entityName,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0) where T : class
+    {
+        if (value is null)
+        {
+            throw new MNotFoundException(entityName, "(not specified)")
+            {
+                CallerMethod = callerMember,
+                CallerFile = callerFile,
+                CallerLine = callerLine,
+                SourcePackage = MException.ExtractPackageName(callerFile)
+            };
+        }
+
+        return value;
+    }
+
+    /// <summary>
+    /// Ensures no conflict exists. Throws <see cref="MConflictException"/> when conflict is true.
+    /// </summary>
+    /// <param name="isConflict">Whether a conflict exists.</param>
+    /// <param name="message">The error message if conflict exists.</param>
+    /// <param name="callerMember">Compiler-injected: name of the calling member.</param>
+    /// <param name="callerFile">Compiler-injected: source file path of the caller.</param>
+    /// <param name="callerLine">Compiler-injected: source line number of the caller.</param>
+    /// <exception cref="MConflictException">Thrown when <paramref name="isConflict"/> is true.</exception>
+    public static void NotConflict(
+        bool isConflict,
+        string message,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0)
+    {
+        if (isConflict)
+        {
+            throw new MConflictException(message)
+            {
+                CallerMethod = callerMember,
+                CallerFile = callerFile,
+                CallerLine = callerLine,
+                SourcePackage = MException.ExtractPackageName(callerFile)
+            };
+        }
+    }
+
+    /// <summary>
+    /// Ensures a tenant ID is present and valid. Returns the non-empty value or throws <see cref="MArgumentException"/>.
+    /// </summary>
+    /// <param name="tenantId">The tenant ID to validate.</param>
+    /// <param name="callerMember">Compiler-injected: name of the calling member.</param>
+    /// <param name="callerFile">Compiler-injected: source file path of the caller.</param>
+    /// <param name="callerLine">Compiler-injected: source line number of the caller.</param>
+    /// <returns>The validated tenant ID.</returns>
+    /// <exception cref="MArgumentException">Thrown when <paramref name="tenantId"/> is null, empty, or whitespace.</exception>
+    public static string ValidTenant(
+        string? tenantId,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0)
+    {
+        if (string.IsNullOrWhiteSpace(tenantId))
+        {
+            throw new MArgumentException("tenantId", "Tenant ID is required and cannot be empty.", callerMember, callerFile, callerLine);
+        }
+
+        return tenantId;
     }
 }

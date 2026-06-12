@@ -1,0 +1,254 @@
+using Muonroi.Pdf.Abstractions.Exceptions;
+using Muonroi.Pdf.Internal.Font;
+using Muonroi.Pdf.Internal.Image;
+using Muonroi.Pdf.Internal.Layout.Geometry;
+using SixLabors.Fonts;
+
+namespace Muonroi.Pdf.Internal.Layout;
+
+internal sealed class LayoutEngine
+{
+    private readonly BoxTreeBuilder _boxTreeBuilder;
+    private readonly BlockLayoutEngine _blockEngine;
+    private readonly PaginationEngine _paginationEngine;
+    private readonly ITextMetrics _textMetrics;
+
+    public LayoutEngine() : this(EstimatedTextMetrics.Instance) { }
+
+    public LayoutEngine(ITextMetrics textMetrics)
+    {
+        _textMetrics = textMetrics;
+        _boxTreeBuilder = new BoxTreeBuilder();
+        _blockEngine = new BlockLayoutEngine();
+        var tableEngine = new TableLayoutEngine(_blockEngine, _blockEngine.InlineEngine);
+        _blockEngine.TableEngine = tableEngine;
+        _paginationEngine = new PaginationEngine();
+    }
+
+    public IPositionedPageList Layout(
+        IStyledDocument doc,
+        PdfRenderOptions options,
+        PdfConfigs.PdfLimits limits,
+        CancellationToken ct)
+    {
+        var pass1 = RunLayout(doc, options, totalPages: 0);
+
+        if (pass1.PageCount > PdfConfigs.PdfLimits.Defaults.MaxPages)
+            throw new PdfInputLimitException(
+                "PAGE-MAX-PAGES",
+                "MaxPages",
+                pass1.PageCount,
+                PdfConfigs.PdfLimits.Defaults.MaxPages);
+
+        ct.ThrowIfCancellationRequested();
+
+        return RunLayout(doc, options, totalPages: pass1.PageCount);
+    }
+
+    public async Task<IPositionedPageList> LayoutAsync(
+        IStyledDocument doc,
+        PdfRenderOptions options,
+        PdfConfigs.PdfLimits limits,
+        IFontResolver? fontResolver,
+        IResourceResolver? imageResolver,
+        IImageDecoder imageDecoder,
+        CancellationToken ct)
+    {
+        SixLaborsTextMetrics? realMetrics = null;
+        IReadOnlyDictionary<string, ReadOnlyMemory<byte>> fontBytesMap = new Dictionary<string, ReadOnlyMemory<byte>>();
+        FontCollection? fontCollection = null;
+
+        if (fontResolver != null)
+        {
+            var fontPipeline = new FontPipeline();
+            (realMetrics, fontBytesMap, fontCollection) = await fontPipeline.ResolveAsync(doc, fontResolver, limits, ct).ConfigureAwait(false);
+        }
+
+        IReadOnlyDictionary<string, DecodedImage> resolvedImages;
+        if (imageResolver != null)
+        {
+            var imagePipeline = new ImagePipeline();
+            resolvedImages = await imagePipeline.ResolveAsync(doc, imageResolver, imageDecoder, limits, ct).ConfigureAwait(false);
+        }
+        else
+        {
+            resolvedImages = new Dictionary<string, DecodedImage>();
+        }
+
+        LayoutEngine engineToUse = fontResolver != null && realMetrics != null
+            ? new LayoutEngine(realMetrics)
+            : this;
+
+        var pass1 = engineToUse.RunLayout(doc, options, totalPages: 0, resolvedImages);
+
+        if (pass1.PageCount > PdfConfigs.PdfLimits.Defaults.MaxPages)
+            throw new PdfInputLimitException(
+                "PAGE-MAX-PAGES",
+                "MaxPages",
+                pass1.PageCount,
+                PdfConfigs.PdfLimits.Defaults.MaxPages);
+
+        ct.ThrowIfCancellationRequested();
+
+        var pass2 = engineToUse.RunLayout(doc, options, totalPages: pass1.PageCount, resolvedImages);
+
+        var embeddedFonts = new List<EmbeddedFontInfo>();
+        if (fontResolver != null && fontBytesMap.Count > 0 && fontCollection != null)
+        {
+            var collector = new GlyphCollector();
+            IReadOnlyDictionary<string, IReadOnlySet<int>> usedCodepoints = collector.Collect(pass2, fontCollection);
+
+            foreach (KeyValuePair<string, ReadOnlyMemory<byte>> kvp in fontBytesMap)
+            {
+                string family = kvp.Key;
+
+                FontFaceDeclaration? decl = doc.FontFaces.FirstOrDefault(f => f.Family == family);
+
+                if (decl != null)
+                {
+                    // @font-face path: family name is the CSS @font-face name. GlyphCollector
+                    // collects under this same name since InlineBox.FontFamily = CSS family.
+                    IReadOnlySet<int> codepoints = usedCodepoints.TryGetValue(family, out IReadOnlySet<int>? cp) ? cp : new HashSet<int>();
+                    var subsetter = new TrueTypeFontSubsetter();
+                    FontSubsetResult subsetResult = subsetter.Subset(kvp.Value, codepoints);
+
+                    embeddedFonts.Add(new EmbeddedFontInfo(
+                        decl.Family, decl.Weight, decl.Style,
+                        subsetResult.SubsetBytes, codepoints,
+                        subsetResult.OldToNewGid, subsetResult.SortedGids,
+                        subsetResult.CpToNewGid));
+
+                    // FONT-ALIAS-01: When a consumer @font-face matches a bundled canonical family
+                    // (e.g. "Times New Roman" → Liberation Serif), elements lacking an explicit
+                    // font-family still default to the canonical's CSS aliases ("serif"). Without
+                    // alias EmbeddedFontInfo entries, cpToNewGidMap["serif"] is empty and the writer
+                    // throws "Font GID map missing or empty for family 'serif'". Generate alias
+                    // EmbeddedFontInfo entries that share the same bytes but subset against the
+                    // codepoints collected under each alias.
+                    if (BundledFonts.TryGetFallback(decl.Family, decl.Weight, decl.Style, out _, out string canonical))
+                    {
+                        foreach (string alias in BundledFonts.GetAliasesForCanonical(canonical))
+                        {
+                            if (string.Equals(alias, decl.Family, StringComparison.OrdinalIgnoreCase))
+                                continue; // already handled above
+
+                            if (!usedCodepoints.TryGetValue(alias, out IReadOnlySet<int>? aliasCp) || aliasCp.Count == 0)
+                                continue; // alias not referenced by any inline box
+
+                            var aliasSubsetter = new TrueTypeFontSubsetter();
+                            FontSubsetResult aliasSubset = aliasSubsetter.Subset(kvp.Value, aliasCp);
+
+                            embeddedFonts.Add(new EmbeddedFontInfo(
+                                alias, decl.Weight, decl.Style,
+                                aliasSubset.SubsetBytes, aliasCp,
+                                aliasSubset.OldToNewGid, aliasSubset.SortedGids,
+                                aliasSubset.CpToNewGid));
+                        }
+                    }
+                }
+                else
+                {
+                    // No @font-face declaration. The family may be a canonical bundled font name
+                    // (e.g. "Liberation Serif") registered by FontPipeline as a fallback.
+                    // GlyphCollector collects under the CSS alias names that InlineBox uses
+                    // (e.g. "Times New Roman", "serif"), NOT under the canonical name.
+                    // For each CSS alias that was actually used (has collected codepoints), produce
+                    // a separate EmbeddedFontInfo keyed by the alias so OwnedPdfWriter's
+                    // cpToNewGidMap lookup by inline.FontFamily resolves correctly.
+                    // Bundled fonts are always embeddable — @font-face is NOT a precondition.
+                    string[] aliases = BundledFonts.GetAliasesForCanonical(family);
+                    if (aliases.Length == 0)
+                    {
+                        // Not a bundled font and no @font-face — skip (font bytes came from
+                        // fontResolver but no declaration exists to describe it; should not occur
+                        // in practice but guard defensively).
+                        continue;
+                    }
+
+                    foreach (string alias in aliases)
+                    {
+                        if (!usedCodepoints.TryGetValue(alias, out IReadOnlySet<int>? aliasCodepoints)
+                            || aliasCodepoints.Count == 0)
+                        {
+                            // This alias was not referenced by any inline box; skip.
+                            continue;
+                        }
+
+                        var subsetter = new TrueTypeFontSubsetter();
+                        FontSubsetResult subsetResult = subsetter.Subset(kvp.Value, aliasCodepoints);
+
+                        embeddedFonts.Add(new EmbeddedFontInfo(
+                            alias,
+                            Muonroi.Pdf.Abstractions.FontWeight.Normal,
+                            Muonroi.Pdf.Abstractions.FontStyle.Normal,
+                            subsetResult.SubsetBytes, aliasCodepoints,
+                            subsetResult.OldToNewGid, subsetResult.SortedGids,
+                            subsetResult.CpToNewGid));
+                    }
+                }
+            }
+        }
+
+        pass2.EmbeddedFonts = embeddedFonts;
+        pass2.Images = resolvedImages;
+
+        return pass2;
+    }
+
+    private PositionedPageList RunLayout(IStyledDocument doc, PdfRenderOptions options, int totalPages, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null)
+    {
+        var (pageWidthPt, pageHeightPt) = GetPageDimensions(options);
+        var margins = ResolveMargins(options, doc.PageRule);
+
+        float topMarginPt = (float)(margins.TopMm * Units.MmToPt);
+        float bottomMarginPt = (float)(margins.BottomMm * Units.MmToPt);
+        float leftMarginPt = (float)(margins.LeftMm * Units.MmToPt);
+        float rightMarginPt = (float)(margins.RightMm * Units.MmToPt);
+        float pageBodyHeight = pageHeightPt - topMarginPt - bottomMarginPt;
+        float availableWidth = pageWidthPt - leftMarginPt - rightMarginPt;
+
+        var rootBox = _boxTreeBuilder.Build(doc.Root, resolvedImages);
+
+        var context = new LayoutContext
+        {
+            PageWidth = pageWidthPt,
+            PageHeight = pageHeightPt,
+            AvailableWidth = availableWidth,
+            CurrentY = topMarginPt,
+            CurrentPageIndex = 0,
+            TotalPages = totalPages,
+            TextMetrics = _textMetrics,
+            PageMargins = margins
+        };
+
+        var elements = new List<PositionedElement>();
+        _blockEngine.Layout(rootBox, context, elements, 0, isRoot: true);
+
+        return _paginationEngine.Paginate(
+            elements,
+            pageBodyHeight,
+            topMarginPt,
+            bottomMarginPt,
+            pageWidthPt,
+            totalPages,
+            doc.PageRule,
+            options);
+    }
+
+    private static (float Width, float Height) GetPageDimensions(PdfRenderOptions options)
+    {
+        var (w, h) = PdfPageSizeDimensions.Get(options.PageSize);
+        return options.Orientation == PdfOrientation.Landscape ? (h, w) : (w, h);
+    }
+
+    // Decision 3: options.Margins wins if explicitly set (differs from Default10mm);
+    // otherwise @page margins apply; finally fall back to Default10mm.
+    private static PdfMargins ResolveMargins(PdfRenderOptions options, IPageRule? pageRule)
+    {
+        if (options.Margins != PdfMargins.Default10mm)
+            return options.Margins;
+        if (pageRule != null)
+            return pageRule.Margins;
+        return PdfMargins.Default10mm;
+    }
+}

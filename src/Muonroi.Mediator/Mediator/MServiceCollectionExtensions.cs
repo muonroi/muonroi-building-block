@@ -1,5 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Mediator.Behaviours;
+using Muonroi.Mediator.Diagnostics;
 using Muonroi.Mediator.Mediator.Context;
 using Muonroi.Mediator.Mediator.Interfaces;
 using System.Reflection;
@@ -56,8 +59,10 @@ public static class ServiceCollectionExtensions
         configure?.Invoke(options);
 
         // ── Core ─────────────────────────────────────────────────────────────────
-        services.AddSingleton<IMediator, MMediator>();
-        services.AddTransient<ServiceFactory>(sp => new ServiceFactory(sp.GetService));
+        // MMediator + ServiceFactory are Scoped so they resolve from the per-request
+        // DI scope. This allows handlers to inject scoped services (DbContext, repos).
+        services.AddScoped<IMediator, MMediator>();
+        services.AddScoped(sp => new ServiceFactory(sp.GetService));
         services.AddScoped<IRequestContextBag, MRequestContextBag>();
 
         // ── Scan assemblies ──────────────────────────────────────────────────────
@@ -102,6 +107,14 @@ public static class ServiceCollectionExtensions
         {
             services.AddTransient(typeof(IPipelineBehavior<,>), behaviorType);
         }
+
+        // ── Diagnostics fallback ────────────────────────────────────────────────
+        // MDiagnosticsBehavior needs IMTraceContext + ITraceSessionStore. If consumer
+        // hasn't called AddMuonroiDiagnostics(), register no-op defaults so the
+        // behavior resolves gracefully (traces disabled, no persistence).
+        // TryAdd = won't overwrite real implementations if already registered.
+        services.TryAddSingleton<IMTraceContext>(new NoOpTraceContext());
+        services.TryAddSingleton<ITraceSessionStore>(new NoOpTraceSessionStore());
 
         return services;
     }

@@ -86,7 +86,7 @@ public sealed class FactBagTests
         FactBag bag = new();
         bag.Set("key", "value");
 
-        bool found = bag.TryGet<string>("key", out string? value);
+        bool found = bag.TryGet("key", out string? value);
 
         found.Should().BeTrue();
         value.Should().Be("value");
@@ -97,7 +97,7 @@ public sealed class FactBagTests
     {
         FactBag bag = new();
 
-        bool found = bag.TryGet<string>("missing", out string? value);
+        bool found = bag.TryGet("missing", out string? value);
 
         found.Should().BeFalse();
         value.Should().BeNull();
@@ -109,7 +109,7 @@ public sealed class FactBagTests
         FactBag bag = new();
         bag.Set("key", 42);
 
-        bool found = bag.TryGet<string>("key", out string? value);
+        bool found = bag.TryGet("key", out string? value);
 
         found.Should().BeFalse();
         value.Should().BeNull();

@@ -86,7 +86,7 @@ public static class GrpcHandler
     {
         MGuard.NotNull(services);
         MGuard.NotNull(configuration);
-        _ = clients ?? throw new NullReferenceException(nameof(clients));
+        _ = MGuard.NotNull(clients);
 
         GrpcServicesConfig grpcServicesConfig = GrpcServicesConfigBinding.Bind(configuration);
         services.TryAddSingleton(_ => Options.Create(grpcServicesConfig));
@@ -96,8 +96,7 @@ public static class GrpcHandler
             if (!grpcServicesConfig.Services!.TryGetValue(client.Key, out GrpcServiceConfig? serviceConfig) ||
                 string.IsNullOrWhiteSpace(serviceConfig.Uri))
             {
-                throw new KeyNotFoundException(
-                    $"Service '{client.Key}' not found or Uri is not configured in GrpcServicesConfig.");
+                throw new MNotFoundException("GrpcClient", client.Key);
             }
 
             services.AddGrpcClientConfigured(client.Value, serviceConfig, grpcServicesConfig.ClientDefaults);
@@ -272,7 +271,7 @@ public static class GrpcHandler
 
         if (retryCount > 0)
         {
-            methodConfig.RetryPolicy = new global::Grpc.Net.Client.Configuration.RetryPolicy
+            methodConfig.RetryPolicy = new RetryPolicy
             {
                 MaxAttempts = Math.Max(2, retryCount + 1),
                 InitialBackoff = TimeSpan.FromSeconds(Math.Max(1, initialBackoffSeconds)),

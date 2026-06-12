@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+<PackageReference Include="MailKit" />
 <PackageReference Include="Scriban" />
 </ItemGroup>
 

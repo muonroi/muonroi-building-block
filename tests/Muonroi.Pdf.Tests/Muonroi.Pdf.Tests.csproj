@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.Pdf\Muonroi.Pdf.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.DesignSystem.Default\Muonroi.Pdf.DesignSystem.Default.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.Enterprise\Muonroi.Pdf.Enterprise.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="PDFtoImage" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TestResources/**" />
+  </ItemGroup>
+</Project>

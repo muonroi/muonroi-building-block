@@ -1,6 +1,6 @@
+using Muonroi.Core.Abstractions.Guards;
 using System.Globalization;
 using System.Text;
-using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Core.Extensions;
 
@@ -41,12 +41,11 @@ public static class MStringExtension
     /// <param name="str">The string to truncate.</param>
     /// <param name="maxLength">The maximum length of the string.</param>
     /// <returns>The truncated string.</returns>
-    /// <exception cref="MArgumentException">Thrown if <paramref name="str"/> is null.</exception>
     public static string? Truncate(this string? str, int maxLength)
     {
         MGuard.NotNull(str);
 
-        return str.Length > maxLength
+        return str?.Length > maxLength
             ? str.Left(maxLength)
             : str;
     }
@@ -117,13 +116,11 @@ public static class MStringExtension
     /// <param name="str">The source string.</param>
     /// <param name="len">The number of characters to return.</param>
     /// <returns>The leftmost part of the string.</returns>
-    /// <exception cref="MArgumentException">Thrown if <paramref name="str"/> is null.</exception>
-    /// <exception cref="MArgumentException">Thrown if <paramref name="len"/> is greater than the string length.</exception>
     public static string Left(this string? str, int len)
     {
         MGuard.NotNull(str);
-        MGuard.Against(str.Length < len, "len argument can not be bigger than given string's length!");
+        MGuard.Against(str?.Length < len, "len argument can not be bigger than given string's length!");
 
-        return str[..len];
+        return str?[..len] ?? string.Empty;
     }
 }

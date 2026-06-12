@@ -73,7 +73,7 @@ internal sealed class ScribanFactBagScriptObject : ScriptObject
         ScriptObject result = new();
         if (depth > 3) return result; // prevent stack overflow on deep/circular object graphs
 
-        foreach (System.Reflection.PropertyInfo prop in obj.GetType()
+        foreach (PropertyInfo prop in obj.GetType()
             .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
         {
             try

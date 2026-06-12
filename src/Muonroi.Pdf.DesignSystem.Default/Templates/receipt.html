@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+@font-face { font-family: serif; src: url(ds-default.ttf); font-weight: normal; font-style: normal; }
+@font-face { font-family: serif; src: url(ds-default-bold.ttf); font-weight: bold; font-style: normal; }
+body { font-family: serif; margin: 0; padding: 28px; color: #222; }
+.receipt-header { display: block; text-align: center; margin-bottom: 16px; }
+.receipt-header h1 { font-size: 26px; font-weight: bold; margin: 0 0 5px 0; }
+.receipt-header p { font-size: 13px; margin: 2px 0; color: #555; }
+.divider { border-top: 1px solid #ccc; margin: 10px 0; }
+.items { display: table; width: 100%; border-collapse: separate; border-spacing: 0; }
+.items-header { display: table-row; }
+.items-header .col-desc { display: table-cell; font-weight: bold; font-size: 13px; padding: 5px 3px; border-bottom: 1px solid #333; width: 60%; }
+.items-header .col-qty { display: table-cell; font-weight: bold; font-size: 13px; padding: 5px 3px; border-bottom: 1px solid #333; width: 15%; text-align: right; }
+.items-header .col-price { display: table-cell; font-weight: bold; font-size: 13px; padding: 5px 3px; border-bottom: 1px solid #333; width: 25%; text-align: right; }
+.item-row { display: table-row; }
+.item-desc { display: table-cell; font-size: 13px; padding: 4px 3px; }
+.item-qty { display: table-cell; font-size: 13px; padding: 4px 3px; text-align: right; }
+.item-price { display: table-cell; font-size: 13px; padding: 4px 3px; text-align: right; }
+.totals { display: table; width: 100%; margin-top: 10px; }
+.total-row { display: table-row; }
+.total-spacer { display: table-cell; width: 60%; }
+.total-label { display: table-cell; font-size: 13px; font-weight: bold; padding: 2px; width: 20%; text-align: right; }
+.total-value { display: table-cell; font-size: 13px; padding: 2px; width: 20%; text-align: right; }
+.grand-total-label { display: table-cell; font-size: 15px; font-weight: bold; padding: 2px; width: 20%; text-align: right; border-top: 2px solid #333; }
+.grand-total-value { display: table-cell; font-size: 15px; font-weight: bold; padding: 2px; width: 20%; text-align: right; border-top: 2px solid #333; }
+.payment-info { display: block; margin-top: 15px; font-size: 13px; }
+.receipt-footer { display: block; text-align: center; margin-top: 20px; font-size: 12px; color: #888; }
+@page { margin: 15mm; }
+</style>
+</head>
+<body>
+<div class="receipt-header">
+  <h1>{{MerchantName}}</h1>
+  <p>Receipt #{{ReceiptNumber}}</p>
+  <p>{{Date}}</p>
+</div>
+<div class="divider"></div>
+<div class="items">
+  <div class="items-header">
+    <div class="col-desc">Item</div>
+    <div class="col-qty">Qty</div>
+    <div class="col-price">Price</div>
+  </div>
+  {{ItemsRows}}
+</div>
+<div class="divider"></div>
+<div class="totals">
+  <div class="total-row">
+    <div class="total-spacer"></div>
+    <div class="total-label">Subtotal:</div>
+    <div class="total-value">{{Subtotal}}</div>
+  </div>
+  <div class="total-row">
+    <div class="total-spacer"></div>
+    <div class="total-label">Tax:</div>
+    <div class="total-value">{{Tax}}</div>
+  </div>
+  <div class="total-row">
+    <div class="total-spacer"></div>
+    <div class="grand-total-label">Total:</div>
+    <div class="grand-total-value">{{Total}}</div>
+  </div>
+</div>
+<div class="payment-info">Payment Method: {{PaymentMethod}}</div>
+<div class="divider"></div>
+<div class="receipt-footer">Thank you for your purchase!</div>
+</body>
+</html>

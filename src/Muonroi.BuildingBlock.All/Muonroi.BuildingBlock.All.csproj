@@ -13,7 +13,9 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="MailKit" />
     <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="Scriban" />
   </ItemGroup>
   <ItemGroup>
@@ -44,5 +46,8 @@
     <ProjectReference Include="..\Muonroi.Governance.Enterprise\Muonroi.Governance.Enterprise.csproj" />
     <ProjectReference Include="..\Muonroi.BackgroundJobs.Hangfire\Muonroi.BackgroundJobs.Hangfire.csproj" />
     <ProjectReference Include="..\Muonroi.BackgroundJobs.Quartz\Muonroi.BackgroundJobs.Quartz.csproj" />
+    <ProjectReference Include="..\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Pdf\Muonroi.Pdf.csproj" />
+    <ProjectReference Include="..\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj" />
   </ItemGroup>
 </Project>

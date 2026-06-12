@@ -5,5 +5,5 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Muonroi.Tenancy.SiteProfile;
 global using System.Reflection;
 global using System.Collections.Concurrent;
-global using GrpcClientFactory = global::Grpc.Net.ClientFactory.GrpcClientFactory;
+global using GrpcClientFactory = Grpc.Net.ClientFactory.GrpcClientFactory;
 global using Microsoft.Extensions.Options;

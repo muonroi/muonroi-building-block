@@ -1,6 +1,5 @@
 using Microsoft.OpenApi.Models;
-using Microsoft.Net.Http.Headers;
-using Muonroi.AspNetCore.OpenApi;
+using Muonroi.AspNetCore.OpenApi.OpenApi;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Helpers;
@@ -14,7 +13,7 @@ namespace Muonroi.AspNetCore.Extensions;
 /// <inheritdoc />
 public static class ApplicationExtensions
 {
-/// <inheritdoc />
+    /// <inheritdoc />
     public static IServiceCollection AddApplication(this IServiceCollection services, params Assembly[]? assemblies)
     {
         _ = services.AddHttpContextAccessor();
@@ -44,7 +43,7 @@ public static class ApplicationExtensions
         return services;
     }
 
-/// <inheritdoc />
+    /// <inheritdoc />
     public static IServiceCollection AddConfigureHttpJson(this IServiceCollection services)
     {
         MGuard.NotNull(services);
@@ -65,60 +64,28 @@ public static class ApplicationExtensions
         return services;
     }
 
-/// <inheritdoc />
+    /// <inheritdoc />
     public static IServiceCollection AddMediator(this IServiceCollection services, params Assembly[]? assemblies)
     {
-        services.AddSingleton<IMediator, MMediator>();
-        services.AddTransient<ServiceFactory>(sp => sp.GetService);
-        if (assemblies is not { Length: > 0 })
+        // Keep the legacy API surface, but route registration through AddMMediator()
+        // so IMediator and ServiceFactory use the correct scoped lifetime.
+        return Muonroi.Mediator.Mediator.ServiceCollectionExtensions.AddMMediator(services, o =>
         {
-            return services;
-        }
+            o.Assemblies = assemblies ?? [];
+        });
+    }
 
-        foreach (Assembly assembly in assemblies)
-        {
-            foreach (TypeInfo type in assembly.DefinedTypes)
-            {
-                if (type.IsAbstract || type.IsInterface)
-                {
-                    continue;
-                }
-
-                foreach (Type face in type.ImplementedInterfaces)
-                {
-                    if (!face.IsGenericType)
-                    {
-                        continue;
-                    }
-
-                    Type def = face.GetGenericTypeDefinition();
-                    if (def != typeof(IRequestHandler<,>) &&
-                        def != typeof(INotificationHandler<>) &&
-                        def != typeof(IStreamRequestHandler<,>) &&
-                        def != typeof(IPipelineBehavior<,>))
-                    {
-                        continue;
-                    }
-
-                    services.AddTransient(type.IsGenericTypeDefinition ? def : face, type.AsType());
-                }
-            }
-        }
-
-        return services;
-        }
-
-/// <inheritdoc />
-        public static WebApplication AddLocalization(this WebApplication app, Assembly assembly)
-        {
+    /// <inheritdoc />
+    public static WebApplication AddLocalization(this WebApplication app, Assembly assembly)
+    {
         ResourceSetting resourceSetting = app.Services.GetRequiredService<ResourceSetting>();
         MHelpers.Initialize(resourceSetting, assembly);
 
         return app;
-        }
+    }
 
-/// <inheritdoc />
-        public static IServiceCollection SwaggerConfig(this IServiceCollection services, string serviceName)
+    /// <inheritdoc />
+    public static IServiceCollection SwaggerConfig(this IServiceCollection services, string serviceName)
     {
         _ = services.AddSwaggerGen(config =>
         {
@@ -155,7 +122,7 @@ public static class ApplicationExtensions
         return services;
     }
 
-/// <inheritdoc />
+    /// <inheritdoc />
     public static WebApplicationBuilder AddAppConfiguration(this WebApplicationBuilder builder)
     {
         _ = builder.Configuration

@@ -39,7 +39,7 @@ public interface IRoutingContext
     /// <summary>
     /// Gets the tenant identifier associated with the current message.
     /// </summary>
-    string TenantId { get; }
+    string? TenantId { get; }
 
     /// <summary>
     /// Gets the correlation identifier associated with the current message.

@@ -50,10 +50,9 @@ public class EnterpriseGovernanceServiceExtensionsTests
 
         services.AddMEnterpriseGovernance(configuration);
 
-        List<Type> hostedServices = services
+        List<Type> hostedServices = [.. services
             .Where(x => x.ServiceType == typeof(IHostedService) && x.ImplementationType != null)
-            .Select(x => x.ImplementationType!)
-            .ToList();
+            .Select(x => x.ImplementationType!)];
 
         Assert.Contains(typeof(LicenseActivationHostedService), hostedServices);
         Assert.Contains(typeof(ChainSubmissionHostedService), hostedServices);
@@ -73,10 +72,9 @@ public class EnterpriseGovernanceServiceExtensionsTests
 
         services.AddMEnterpriseGovernance(configuration);
 
-        List<Type> hostedServices = services
+        List<Type> hostedServices = [.. services
             .Where(x => x.ServiceType == typeof(IHostedService) && x.ImplementationType != null)
-            .Select(x => x.ImplementationType!)
-            .ToList();
+            .Select(x => x.ImplementationType!)];
 
         Assert.Contains(typeof(ChainSubmissionHostedService), hostedServices);
     }

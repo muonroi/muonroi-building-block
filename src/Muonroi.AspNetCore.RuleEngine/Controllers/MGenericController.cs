@@ -8,6 +8,7 @@ using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 using Muonroi.Governance.Authorization;
 using Muonroi.Governance.License;
+using Muonroi.Mediator.Exceptions;
 using Muonroi.Tenancy.Abstractions;
 using Muonroi.Tenancy.Abstractions.Interfaces;
 
@@ -377,7 +378,7 @@ public class MGenericController<TEntity, TDbContext>(
         string? currentTenantId = TenantContext.CurrentTenantId;
         if (string.IsNullOrWhiteSpace(currentTenantId))
         {
-            throw new UnauthorizedAccessException("Tenant context is required for this resource.");
+            throw new MUnauthorizedException("Tenant context is required for this resource.");
         }
 
         // Use reflection to build the filter expression
@@ -403,7 +404,7 @@ public class MGenericController<TEntity, TDbContext>(
         string? currentTenantId = TenantContext.CurrentTenantId;
         if (string.IsNullOrWhiteSpace(currentTenantId))
         {
-            throw new UnauthorizedAccessException("Tenant context is required for this resource.");
+            throw new MUnauthorizedException("Tenant context is required for this resource.");
         }
 
         _tenantIdProperty.SetValue(entity, currentTenantId);

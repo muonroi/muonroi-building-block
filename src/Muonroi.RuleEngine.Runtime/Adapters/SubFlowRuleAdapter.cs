@@ -92,7 +92,7 @@ public sealed class SubFlowRuleAdapter<TContext>(
         // Merge child output facts into parent FactBag (only ExposeToParent = true)
         foreach (SubFlowOutputMapping mapping in _outputMappings.Where(m => m.ExposeToParent))
         {
-            if (childResult.OutputFacts.TryGet<object>(mapping.ChildPath, out object? value))
+            if (childResult.OutputFacts.TryGet(mapping.ChildPath, out object? value))
             {
                 string parentKey = string.IsNullOrEmpty(mapping.ParentPath)
                     ? mapping.ChildPath
@@ -120,7 +120,7 @@ public sealed class SubFlowRuleAdapter<TContext>(
             object? value = null;
 
             // FactBag takes priority over context projection
-            if (!parentFacts.TryGet<object>(mapping.SourcePath, out value))
+            if (!parentFacts.TryGet(mapping.SourcePath, out value))
             {
                 contextDict.TryGetValue(mapping.SourcePath, out value);
             }

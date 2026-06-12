@@ -83,7 +83,7 @@ public abstract class BaseCommandHandler(
     /// Executes the Publish Async {TNotification} operation.
     /// </summary>
     protected async Task PublishAsync<TNotification>(TNotification notification, CancellationToken cancellationToken)
-        where TNotification : Mediator.Interfaces.INotification
+        where TNotification : INotification
     {
         await Mediator.Publish(notification, cancellationToken);
     }
@@ -152,8 +152,8 @@ public abstract class BaseCommandHandler(
     /// </summary>
     protected T Map<T>(object source, T destination)
     {
-        ArgumentNullException.ThrowIfNull(destination);
-        object? mapped = Mapper.Map(source, (object)destination);
+        MGuard.Against(destination is null, "Destination cannot be null.");
+        object? mapped = Mapper.Map(source, (object)destination!);
         return mapped is null ? throw new MInternalException("Mapping resulted in null.") : (T)mapped;
     }
 }

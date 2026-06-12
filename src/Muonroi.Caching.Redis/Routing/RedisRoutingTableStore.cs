@@ -157,7 +157,7 @@ public sealed class RedisRoutingTableStore : IRedisRoutingTableStore, IDisposabl
     private static string NormalizeRequired(string value, string paramName)
     {
         return string.IsNullOrWhiteSpace(value)
-            ? throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(paramName, "Value is required.")
+            ? throw new Core.Abstractions.Exceptions.MArgumentException(paramName, "Value is required.")
             : value.Trim();
     }
 

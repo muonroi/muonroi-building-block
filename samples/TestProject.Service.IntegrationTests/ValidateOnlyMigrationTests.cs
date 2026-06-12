@@ -35,7 +35,7 @@ public sealed class ValidateOnlyMigrationTests
     /// as pending and throw MInternalException.
     /// </summary>
     [DbContext(typeof(PendingMigrationContext))]
-    private sealed class PendingMigrationContext(DbContextOptions<ValidateOnlyMigrationTests.PendingMigrationContext> options) : DbContext(options)
+    private sealed class PendingMigrationContext(DbContextOptions<PendingMigrationContext> options) : DbContext(options)
     {
     }
 
@@ -88,14 +88,14 @@ public sealed class ValidateOnlyMigrationTests
         // Register PendingMigrationContext if needed
         if (contextTypes.Contains(typeof(PendingMigrationContext)))
         {
-            services.AddScoped<DbContextOptions<PendingMigrationContext>>(sp =>
+            services.AddScoped(sp =>
             {
                 var builder = new DbContextOptionsBuilder<PendingMigrationContext>();
                 builder.UseNpgsql(DefaultConnStr);
                 return builder.Options;
             });
 
-            services.AddScoped<PendingMigrationContext>(sp =>
+            services.AddScoped(sp =>
             {
                 var opts = sp.GetRequiredService<DbContextOptions<PendingMigrationContext>>();
                 return new PendingMigrationContext(opts);

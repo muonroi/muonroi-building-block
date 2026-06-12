@@ -331,7 +331,7 @@ public class FactBagTests
         var bag = new FactBag();
 
         // Act
-        void Act() => bag.Set<string>(null!, "value");
+        void Act() => bag.Set(null!, "value");
 
         // Assert
         Assert.Throws<ArgumentNullException>(Act);

@@ -14,7 +14,13 @@
     <ProjectReference Include="..\Muonroi.RuleEngine.Runtime\Muonroi.RuleEngine.Runtime.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="MailKit" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Scriban" />
   </ItemGroup>
 </Project>

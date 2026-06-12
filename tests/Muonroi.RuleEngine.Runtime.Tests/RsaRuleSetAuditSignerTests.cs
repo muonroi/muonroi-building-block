@@ -102,7 +102,7 @@ public sealed class RsaRuleSetAuditSignerTests
     {
         Action act = () => RsaRuleSetAuditSigner.FromPrivateKeyFile("/nonexistent/path.pem");
 
-        act.Should().Throw<FileNotFoundException>();
+        act.Should().Throw<MConfigurationException>();
     }
 
     [Fact]

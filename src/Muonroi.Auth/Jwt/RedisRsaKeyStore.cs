@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Caching.Distributed;
 using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Auth.Jwt;
@@ -229,7 +228,14 @@ public class RedisRsaKeyStore : IRsaKeyStore
 
         return key;
     }
-
+    /// <summary>
+    /// Encrypts the specified RSA private key parameters using the configured master key.
+    /// </summary>
+    /// <remarks>The encrypted output includes a randomly generated nonce and authentication tag, and is
+    /// suitable for secure storage or transmission. The method uses AES-GCM for authenticated encryption. The caller is
+    /// responsible for securely managing the master key used for encryption.</remarks>
+    /// <param name="parameters">The <see cref="RSAParameters"/> structure containing the private key parameters to encrypt.</param>
+    /// <returns>A Base64-encoded string representing the encrypted private key parameters.</returns>
     protected virtual string EncryptPrivateParameters(RSAParameters parameters)
     {
         byte[] plain = JsonSerializer.SerializeToUtf8Bytes(parameters);
@@ -246,7 +252,16 @@ public class RedisRsaKeyStore : IRsaKeyStore
         Buffer.BlockCopy(cipher, 0, payload, nonce.Length + tag.Length, cipher.Length);
         return Convert.ToBase64String(payload);
     }
-
+    /// <summary>
+    /// Decrypts an encrypted, base64-encoded payload containing RSA private key parameters.
+    /// </summary>
+    /// <remarks>The method expects the payload to be encrypted using AES-GCM with a master key and to contain
+    /// all required RSA private key fields. The caller is responsible for ensuring that the input is a valid, correctly
+    /// formatted payload.</remarks>
+    /// <param name="encodedPayload">The base64-encoded string representing the encrypted RSA private key parameters.</param>
+    /// <returns>An <see cref="RSAParameters"/> structure containing the decrypted RSA private key parameters.</returns>
+    /// <exception cref="SecurityTokenException">Thrown if <paramref name="encodedPayload"/> is not a valid encrypted RSA payload or if the decrypted data does
+    /// not contain valid RSA private key parameters.</exception>
     protected virtual RSAParameters DecryptPrivateParameters(string encodedPayload)
     {
         byte[] payload = Convert.FromBase64String(encodedPayload);

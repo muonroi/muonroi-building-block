@@ -1,13 +1,6 @@
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeActions;
-using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
-using System.Collections.Immutable;
 using System.Composition;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Muonroi.RuleEngine.SourceGenerators.CodeFixes;
 
@@ -21,7 +14,10 @@ public sealed class MBB002_JsonSerializerCodeFix : CodeFixProvider
     public override ImmutableArray<string> FixableDiagnosticIds => ["MBB002"];
 
     /// <inheritdoc/>
-    public override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
+    public override FixAllProvider GetFixAllProvider()
+    {
+        return WellKnownFixAllProviders.BatchFixer;
+    }
 
     /// <inheritdoc/>
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)

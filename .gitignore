@@ -408,4 +408,9 @@ tools/MockLicenseServer/server_public_key.pem
 *.snk
 /git_token.txt
 /.planning/quick/260325-o35-fix-3-remaining-deep-research-findings-o
-/.planning
+/.planning/*
+!/.planning/research/
+!/.planning/phases/
+!/.planning/REQUIREMENTS.md
+!/.planning/ROADMAP.md
+!/.planning/GAPS-AND-DEBT.md

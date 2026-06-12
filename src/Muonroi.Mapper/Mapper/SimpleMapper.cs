@@ -21,11 +21,11 @@ public sealed class SimpleMapper(MappingConfiguration configuration) : IMapper
     /// <inheritdoc/>
     public TDestination Map<TSource, TDestination>(TSource source, TDestination destination)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(destination);
+        MGuard.Against(source is null, "Source cannot be null.");
+        MGuard.Against(destination is null, "Destination cannot be null.");
 
         Action<object, object> action = configuration.GetOrAdd(typeof(TSource), typeof(TDestination));
-        action(source, destination);
+        action(source!, destination!);
         return destination;
     }
 

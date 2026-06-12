@@ -1,3 +1,5 @@
+using Muonroi.Core.Abstractions.Security;
+
 namespace Muonroi.Core.Abstractions.Models.Common;
 
 /// <summary> Represents the configuration for tokens. </summary>
@@ -63,14 +65,7 @@ public class MTokenInfo
     {
         if (!string.IsNullOrWhiteSpace(PrivateKeyPath))
         {
-            string fullPath = Path.IsPathRooted(PrivateKeyPath)
-                ? PrivateKeyPath
-                : Path.Combine(AppContext.BaseDirectory, PrivateKeyPath);
-
-            if (File.Exists(fullPath))
-            {
-                return File.ReadAllText(fullPath);
-            }
+            return MSecureFileReader.ReadKeyFile(PrivateKeyPath);
         }
         return PrivateKey;
     }
@@ -81,14 +76,7 @@ public class MTokenInfo
     {
         if (!string.IsNullOrWhiteSpace(PublicKeyPath))
         {
-            string fullPath = Path.IsPathRooted(PublicKeyPath)
-                ? PublicKeyPath
-                : Path.Combine(AppContext.BaseDirectory, PublicKeyPath);
-
-            if (File.Exists(fullPath))
-            {
-                return File.ReadAllText(fullPath);
-            }
+            return MSecureFileReader.ReadKeyFile(PublicKeyPath);
         }
         return PublicKey;
     }

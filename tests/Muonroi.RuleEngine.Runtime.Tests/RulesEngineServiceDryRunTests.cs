@@ -17,7 +17,9 @@ public sealed class RulesEngineServiceDryRunTests
     {
         string dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         FileRuleSetStore store = new(dir);
-        RulesEngineService service = new(store);
+        MRuleContextJsonRegistry registry = new();
+        registry.AddRuleContext<DryRunCodeContext>();
+        RulesEngineService service = new(store, contextRegistry: registry);
 
         const string json = """
                             [
@@ -53,7 +55,9 @@ public sealed class RulesEngineServiceDryRunTests
     {
         string dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         FileRuleSetStore store = new(dir);
-        RulesEngineService service = new(store);
+        MRuleContextJsonRegistry registry = new();
+        registry.AddRuleContext<DryRunCodeContext>();
+        RulesEngineService service = new(store, contextRegistry: registry);
 
         const string json = """
                             {
@@ -73,7 +77,9 @@ public sealed class RulesEngineServiceDryRunTests
     {
         string dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         FileRuleSetStore store = new(dir);
-        RulesEngineService service = new(store);
+        MRuleContextJsonRegistry registry = new();
+        registry.AddRuleContext<DryRunCodeContext>();
+        RulesEngineService service = new(store, contextRegistry: registry);
 
         const string json = """
                             {
@@ -97,7 +103,9 @@ public sealed class RulesEngineServiceDryRunTests
     {
         string dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         FileRuleSetStore store = new(dir);
-        RulesEngineService service = new(store);
+        MRuleContextJsonRegistry registry = new();
+        registry.AddRuleContext<DryRunCodeContext>();
+        RulesEngineService service = new(store, contextRegistry: registry);
 
         const string json = """
                             {
@@ -114,7 +122,7 @@ public sealed class RulesEngineServiceDryRunTests
             "Muonroi.RuleEngine.Runtime.Tests.DoesNotExistContext");
 
         await action.Should().ThrowAsync<MConfigurationException>()
-            .WithMessage("*Cannot resolve contextType*");
+            .WithMessage("*is not registered*");
     }
 
     [Fact]
@@ -122,7 +130,9 @@ public sealed class RulesEngineServiceDryRunTests
     {
         string dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         FileRuleSetStore store = new(dir);
-        RulesEngineService service = new(store);
+        MRuleContextJsonRegistry registry = new();
+        registry.AddRuleContext<DryRunCodeContext>();
+        RulesEngineService service = new(store, contextRegistry: registry);
 
         const string json = """
                             {
@@ -146,7 +156,9 @@ public sealed class RulesEngineServiceDryRunTests
     {
         string dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         FileRuleSetStore store = new(dir);
-        RulesEngineService service = new(store);
+        MRuleContextJsonRegistry registry = new();
+        registry.AddRuleContext<DryRunCodeContext>();
+        RulesEngineService service = new(store, contextRegistry: registry);
 
         const string json = """
                             [
@@ -208,7 +220,7 @@ public sealed class RulesEngineServiceDryRunTests
             "Muonroi.RuleEngine.Runtime.Tests.DoesNotExistGraphContext");
 
         await action.Should().ThrowAsync<MConfigurationException>()
-            .WithMessage("*Cannot resolve contextType*");
+            .WithMessage("*is not registered*");
     }
 
     public sealed class DryRunCodeContext

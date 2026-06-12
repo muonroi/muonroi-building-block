@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Muonroi.Core.Abstractions.Constants;
 using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.License;
 using Muonroi.Logging.Abstractions;
 
@@ -17,7 +18,7 @@ public class GrpcServerInterceptor(
     LicenseState? licenseState = null,
     IOptions<GrpcServicesConfig>? grpcConfigOptions = null,
     GrpcRateLimiter? rateLimiter = null,
-    IOptions<Muonroi.Tenancy.Core.Legacy.MultiTenantConfigs>? multiTenantOptions = null,
+    IOptions<Tenancy.Core.Legacy.MultiTenantConfigs>? multiTenantOptions = null,
     ILicenseGuard? licenseGuard = null,
     ILogScopeFactory? logScopeFactory = null)
     : Interceptor
@@ -38,7 +39,7 @@ public class GrpcServerInterceptor(
         ServerCallContext context,
         UnaryServerMethod<TRequest, TResponse> continuation)
     {
-        _ = context ?? throw new NullReferenceException(nameof(context));
+        _ = MGuard.NotNull(context);
         EnsureGrpcLicensed();
 
         SystemExecutionContext executionContext = NormalizeExecutionContext(context, allowCorrelationTrailer: true);
@@ -84,7 +85,7 @@ public class GrpcServerInterceptor(
         ServerCallContext context,
         ClientStreamingServerMethod<TRequest, TResponse> continuation)
     {
-        _ = context ?? throw new NullReferenceException(nameof(context));
+        _ = MGuard.NotNull(context);
         EnsureGrpcLicensed();
 
         SystemExecutionContext executionContext = NormalizeExecutionContext(context, allowCorrelationTrailer: false);
@@ -125,7 +126,7 @@ public class GrpcServerInterceptor(
         ServerCallContext context,
         ServerStreamingServerMethod<TRequest, TResponse> continuation)
     {
-        _ = context ?? throw new NullReferenceException(nameof(context));
+        _ = MGuard.NotNull(context);
         EnsureGrpcLicensed();
 
         SystemExecutionContext executionContext = NormalizeExecutionContext(context, allowCorrelationTrailer: false);
@@ -165,7 +166,7 @@ public class GrpcServerInterceptor(
         ServerCallContext context,
         DuplexStreamingServerMethod<TRequest, TResponse> continuation)
     {
-        _ = context ?? throw new NullReferenceException(nameof(context));
+        _ = MGuard.NotNull(context);
         EnsureGrpcLicensed();
 
         SystemExecutionContext executionContext = NormalizeExecutionContext(context, allowCorrelationTrailer: false);
@@ -261,10 +262,10 @@ public class GrpcServerInterceptor(
             throw tenantError switch
             {
                 TenantSecurityValidator.MissingTenantContext => new RpcException(
-                    new global::Grpc.Core.Status(StatusCode.Unauthenticated, "Tenant ID is required.")),
+                    new Status(StatusCode.Unauthenticated, "Tenant ID is required.")),
                 TenantSecurityValidator.MissingTenantClaim => new RpcException(
-                    new global::Grpc.Core.Status(StatusCode.Unauthenticated, "Tenant claim is required.")),
-                _ => new RpcException(new global::Grpc.Core.Status(StatusCode.PermissionDenied, "Tenant mismatch."))
+                    new Status(StatusCode.Unauthenticated, "Tenant claim is required.")),
+                _ => new RpcException(new Status(StatusCode.PermissionDenied, "Tenant mismatch."))
             };
         }
     }
@@ -276,7 +277,7 @@ public class GrpcServerInterceptor(
             return;
         }
 
-        throw new RpcException(new global::Grpc.Core.Status(StatusCode.ResourceExhausted, "[RATE_LIMIT] gRPC request rate exceeded."));
+        throw new RpcException(new Status(StatusCode.ResourceExhausted, "[RATE_LIMIT] gRPC request rate exceeded."));
     }
 
     private void ValidateMutualTls(ServerCallContext context)
@@ -288,7 +289,7 @@ public class GrpcServerInterceptor(
 
         System.Security.Cryptography.X509Certificates.X509Certificate2? cert =
             (TryGetHttpContext(context)?.Connection.ClientCertificate) ?? throw new RpcException(
-                new global::Grpc.Core.Status(StatusCode.Unauthenticated, "[SECURITY] Client certificate is required."));
+                new Status(StatusCode.Unauthenticated, "[SECURITY] Client certificate is required."));
 
         string[] allowed = _serverConfig.AllowedClientCertificateThumbprints;
         if (allowed.Length == 0)
@@ -302,7 +303,7 @@ public class GrpcServerInterceptor(
                            string.Equals(x.Replace(":", string.Empty, StringComparison.Ordinal), thumbprint, StringComparison.OrdinalIgnoreCase));
         if (!matched)
         {
-            throw new RpcException(new global::Grpc.Core.Status(StatusCode.PermissionDenied, "[SECURITY] Client certificate is not trusted."));
+            throw new RpcException(new Status(StatusCode.PermissionDenied, "[SECURITY] Client certificate is not trusted."));
         }
     }
 
@@ -316,7 +317,7 @@ public class GrpcServerInterceptor(
 
         if (!_licenseState.HasFeature(FreeTierFeatures.Premium.Grpc))
         {
-            throw new RpcException(new global::Grpc.Core.Status(StatusCode.PermissionDenied,
+            throw new RpcException(new Status(StatusCode.PermissionDenied,
                 "[LICENSE] Feature 'grpc' is not available under your current license."));
         }
     }
@@ -331,7 +332,7 @@ public class GrpcServerInterceptor(
 
         if (!_licenseState.HasFeature(FreeTierFeatures.Premium.MultiTenant))
         {
-            throw new RpcException(new global::Grpc.Core.Status(StatusCode.PermissionDenied,
+            throw new RpcException(new Status(StatusCode.PermissionDenied,
                 "[LICENSE] Feature 'multi-tenant' is not available under your current license."));
         }
     }

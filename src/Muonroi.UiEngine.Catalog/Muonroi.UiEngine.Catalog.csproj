@@ -13,6 +13,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="MailKit" />
     <PackageReference Include="Scriban" />
   </ItemGroup>
   <ItemGroup>

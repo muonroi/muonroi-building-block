@@ -83,6 +83,13 @@ internal static class CliProcess
             buildInfo.ArgumentList.Add("Debug");
             buildInfo.ArgumentList.Add("-nologo");
 
+            // Disable MSBuild node reuse / build server so this one-shot build does not leave
+            // long-lived "dotnet" worker nodes behind. Orphaned nodes keep the test host's
+            // process tree alive after tests complete, causing `dotnet test` to hang until the
+            // node-reuse timeout (~15 min) elapses.
+            buildInfo.Environment["MSBUILDDISABLENODEREUSE"] = "1";
+            buildInfo.Environment["DOTNET_CLI_USE_MSBUILD_SERVER"] = "0";
+
             using Process process = Process.Start(buildInfo) ?? throw new InvalidOperationException("Cannot build Muonroi.RuleGen for tests.");
             string stdout = await process.StandardOutput.ReadToEndAsync();
             string stderr = await process.StandardError.ReadToEndAsync();

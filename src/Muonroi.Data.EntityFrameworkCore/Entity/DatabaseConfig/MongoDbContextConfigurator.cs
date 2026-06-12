@@ -15,8 +15,9 @@ public class MongoDbContextConfigurator<T> : IDbContextConfigurator<T> where T :
     /// <exception cref="NotSupportedException">Always thrown for MongoDB.</exception>
     public void Configure(DbContextOptionsBuilder<T> options, string connectionString)
     {
-        throw new NotSupportedException(
-            "MongoDB does not use DbContextOptionsBuilder. Configure MongoDB services directly in the IServiceCollection.");
+        throw new MInternalException(
+            "MongoDB does not use DbContextOptionsBuilder. Configure MongoDB services directly in the IServiceCollection.",
+            MErrorCodes.Data.MongoNotSupported);
     }
 
     /// <summary>

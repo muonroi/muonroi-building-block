@@ -8,8 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+<PackageReference Include="MailKit" />
 <PackageReference Include="Microsoft.Bcl.Memory" />
 <PackageReference Include="Moq" />
+<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="Scriban" />
 </ItemGroup>
 
@@ -19,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.Caching.Memory\Muonroi.Caching.Memory.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Integration.Connectors\Muonroi.Integration.Connectors.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Tenancy.Core\Muonroi.Tenancy.Core.csproj" />
     <ProjectReference Include="..\Muonroi.BuildingBlock.IntegrationTests\Muonroi.BuildingBlock.IntegrationTests.csproj" />
   </ItemGroup>

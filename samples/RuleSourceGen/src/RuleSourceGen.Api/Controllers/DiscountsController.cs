@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Core;
 using RuleSourceGen.Api.Models;
@@ -24,6 +25,7 @@ public sealed class DiscountsController(RuleOrchestrator<DiscountRequest> orches
     {
         try
         {
+            MGuard.NotNull(request, nameof(request));
             FactBag facts = await orchestrator.ExecuteAsync(request, cancellationToken: cancellationToken);
             decimal premium = facts.Get<decimal>("DISCOUNT_PREMIUM:result");
             decimal loyalty = facts.Get<decimal>("DISCOUNT_LOYALTY:result");

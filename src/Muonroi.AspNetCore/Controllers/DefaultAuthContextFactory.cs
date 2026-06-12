@@ -23,8 +23,32 @@ public class DefaultAuthContextFactory(
 
         if (_httpContextAccessor.HttpContext != null)
         {
-            MAuthenticateInfoContext mAuth = new(_httpContextAccessor.HttpContext.Items[nameof(MAuthenticateInfoContext.IsAuthenticated)] is bool and true);
-            HttpContext? context = _httpContextAccessor.HttpContext;
+            HttpContext context = _httpContextAccessor.HttpContext;
+
+            // SINGLE SOURCE OF TRUTH: DefaultRefreshTokenValidator.ValidateAsync stores the fully
+            // validated auth context (JWT signature verified + refresh-token revocation checked) under
+            // the type's full name. If it already ran for this request, reuse that context verbatim —
+            // this is the authoritative, signature-validated identity and avoids divergence between the
+            // validator and this factory.
+            if (context.Items.TryGetValue(typeof(MAuthenticateInfoContext).FullName!, out object? cachedCtx)
+                && cachedCtx is MAuthenticateInfoContext validated
+                && validated.IsAuthenticated)
+            {
+                _resourceSetting[ResourceSettingKeys.Lang] = string.IsNullOrWhiteSpace(validated.Language)
+                    ? "vi-VN"
+                    : validated.Language;
+                return validated;
+            }
+
+            // FALLBACK (order-independence): the factory can be resolved BEFORE the validator runs
+            // (e.g. LicenseMiddleware injects MAuthenticateInfoContext earlier in the pipeline). Because
+            // this context is scoped/cached, an early resolution would otherwise snapshot an
+            // unauthenticated context for the whole request. Derive identity from the Bearer token and
+            // DB-validate the user so the result is correct regardless of middleware ordering. Protected
+            // routes are still gated by the JwtBearer handler + [Authorize], so a forged/unsigned token
+            // never reaches business code.
+            bool itemAuthenticated = context.Items[nameof(MAuthenticateInfoContext.IsAuthenticated)] is bool and true;
+            MAuthenticateInfoContext mAuth = new(itemAuthenticated);
 
             mAuth.CorrelationId = context.Request.Headers[CustomHeader.CorrelationId].FirstOrDefault() ?? Guid.NewGuid().ToString();
             mAuth.AccessToken = context.Request.Headers.Authorization;
@@ -35,8 +59,10 @@ public class DefaultAuthContextFactory(
 
             _resourceSetting[ResourceSettingKeys.Lang] = mAuth.Language;
 
-            if (mAuth.IsAuthenticated && !string.IsNullOrEmpty(mAuth.AccessToken))
+            if (!string.IsNullOrEmpty(mAuth.AccessToken))
             {
+                // InitializeFromToken decodes claims, DB-validates the user (exists + active),
+                // and sets IsAuthenticated accordingly — independent of middleware ordering.
                 InitializeFromToken(mAuth, mAuth.AccessToken, _dbContext);
             }
             else
@@ -74,6 +100,8 @@ public class DefaultAuthContextFactory(
             mAuth.CurrentUserGuid = GetClaimValue<string>(claims, ClaimConstants.UserIdentifier) ?? string.Empty;
             mAuth.CurrentUsername = GetClaimValue<string>(claims, ClaimConstants.Username) ?? string.Empty;
             mAuth.TenantId = GetClaimValue<string>(claims, ClaimConstants.TenantId) ?? string.Empty;
+            mAuth.TokenValidityKey = GetClaimValue<string>(claims, ClaimConstants.TokenValidityKey) ?? string.Empty;
+            mAuth.Permission = GetClaimValue<string>(claims, ClaimConstants.Permission) ?? string.Empty;
 
             if (Guid.TryParse(mAuth.CurrentUserGuid, out Guid userGuid))
             {
@@ -89,16 +117,30 @@ public class DefaultAuthContextFactory(
 
                 if (user == null || !user.IsActive)
                 {
+                    // Token references a user that no longer exists or is disabled.
                     mAuth.IsAuthenticated = false;
                     return;
                 }
 
                 mAuth.CurrentUserGuid = user.EntityId.ToString();
                 mAuth.CurrentUsername = user.UserName;
-
+                // User is valid and active — mark the context authenticated regardless of
+                // which middleware resolved it first (order-independent).
+                mAuth.IsAuthenticated = true;
+            }
+            else
+            {
+                // No usable user identifier in the token.
+                mAuth.IsAuthenticated = false;
             }
         }
-        catch { /* Ignore token parsing errors */ }
+        catch (Exception ex)
+        {
+            // No silent catch: surface decode/DB errors so auth failures are diagnosable.
+            mAuth.IsAuthenticated = false;
+            Console.Error.WriteLine(
+                $"[DefaultAuthContextFactory] InitializeFromToken failed: {ex.GetType().Name}: {ex.Message}");
+        }
     }
 
     private static List<Claim> ExtractClaimsFromToken(string token)

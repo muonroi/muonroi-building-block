@@ -21,8 +21,7 @@ public class MEcosystemStartupFilterTests
         var registry = new MEcosystemRegistry();
         var filter = CreateFilter(registry);
 
-        bool nextCalled = false;
-        Action<IApplicationBuilder> next = _ => nextCalled = true;
+        Action<IApplicationBuilder> next = _ => { };
 
         Action<IApplicationBuilder> result = filter.Configure(next);
 

@@ -275,7 +275,7 @@ public partial class {model.ClassName}
         List<string> behaviorTypeNames,
         bool isPartial,
         bool skipDbContextRegistration = false,
-        List<SiteProfileScaffoldingGenerator.EntityMapModel>? entityMaps = null)
+        List<EntityMapModel>? entityMaps = null)
     {
         public string ClassName { get; } = className;
         public string NamespaceName { get; } = namespaceName;

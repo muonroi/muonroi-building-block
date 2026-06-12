@@ -1,9 +1,3 @@
-using System.Security.Claims;
-using Muonroi.Core.Abstractions.Constants;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models;
-using Muonroi.Tenancy.Core;
-
 namespace Muonroi.AspNetCore.Services;
 
 /// <summary>
@@ -73,7 +67,7 @@ public sealed class MDefaultControllerExecutionContextResolver(IConfiguration co
         if (!string.IsNullOrWhiteSpace(rawPermissions))
         {
             result.AddRange(rawPermissions
-                .Split([',', ';', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
         }
 
         result.AddRange(user.Claims
@@ -88,7 +82,7 @@ public sealed class MDefaultControllerExecutionContextResolver(IConfiguration co
 
     private static string? ReadHeader(HttpContext httpContext, string key)
     {
-        if (!httpContext.Request.Headers.TryGetValue(key, out Microsoft.Extensions.Primitives.StringValues values))
+        if (!httpContext.Request.Headers.TryGetValue(key, out StringValues values))
         {
             return null;
         }

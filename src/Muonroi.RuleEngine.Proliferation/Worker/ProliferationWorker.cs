@@ -1,11 +1,10 @@
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Proliferation.Brain;
 using Muonroi.RuleEngine.Proliferation.Models;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace Muonroi.RuleEngine.Proliferation.Worker;
 
@@ -74,7 +73,6 @@ public sealed class ProliferationWorker(
         IRuleProliferationBrain brain = scope.ServiceProvider.GetRequiredService<IRuleProliferationBrain>();
         IProliferationChangeNotifier? notifier = scope.ServiceProvider.GetService<IProliferationChangeNotifier>();
         IFailureAnalyzer? failureAnalyzer = scope.ServiceProvider.GetService<IFailureAnalyzer>();
-        IScenarioDeduplicator? deduplicator = scope.ServiceProvider.GetService<IScenarioDeduplicator>();
         ICoverageTracker? coverageTracker = scope.ServiceProvider.GetService<ICoverageTracker>();
         IBudgetAllocator? budgetAllocator = scope.ServiceProvider.GetService<IBudgetAllocator>();
 
@@ -96,7 +94,10 @@ public sealed class ProliferationWorker(
 
         foreach (NeuronScenario scenario in pending)
         {
-            if (ct.IsCancellationRequested) break;
+            if (ct.IsCancellationRequested)
+            {
+                break;
+            }
 
             string ruleSetJson = scenario.GeneratedRuleFlowGraph ?? "{}";
             RuleSetKind kind = RuleSetKindDetector.Detect(ruleSetJson);
@@ -127,9 +128,13 @@ public sealed class ProliferationWorker(
                 await store.UpdateStatusAsync(scenario.Id, finalStatus, ct);
 
                 if (result.IsSuccess)
+                {
                     ScenariosPassed.Add(1);
+                }
                 else
+                {
                     ScenariosFailed.Add(1);
+                }
 
                 logger?.Debug("[Proliferation] Scenario {Id} -> {Status} (matches: {Matches})",
                     scenario.Id, finalStatus, result.MatchesExpectation);
@@ -150,7 +155,7 @@ public sealed class ProliferationWorker(
                     && scenario.GenerationDepth < options.MaxGenerationDepth
                     && stats.TotalScenarios < options.MaxTotalScenarios)
                 {
-                    await GenerateNextGenerationAsync(scenario, result, stats, store, brain, notifier, deduplicator, coverageTracker, budgetAllocator, ct);
+                    await GenerateNextGenerationAsync(scenario, result, stats, store, brain, notifier, scope.ServiceProvider.GetService<IScenarioDeduplicator>(), coverageTracker, budgetAllocator, ct);
                 }
 
                 if (!result.IsSuccess
@@ -158,7 +163,7 @@ public sealed class ProliferationWorker(
                     && stats.TotalScenarios < options.MaxTotalScenarios
                     && failureAnalyzer is not null)
                 {
-                    await AnalyzeFailureAndSaveAsync(scenario, result, stats, store, failureAnalyzer, deduplicator, ct);
+                    await AnalyzeFailureAndSaveAsync(scenario, result, stats, store, failureAnalyzer, scope.ServiceProvider.GetService<IScenarioDeduplicator>(), ct);
                 }
             }
             catch (Exception ex)
@@ -167,7 +172,10 @@ public sealed class ProliferationWorker(
                 await store.UpdateStatusAsync(scenario.Id, ScenarioStatus.Error, ct);
                 _consecutiveErrors++;
 
-                if (_consecutiveErrors >= 3) break;
+                if (_consecutiveErrors >= 3)
+                {
+                    break;
+                }
             }
         }
     }
@@ -180,13 +188,16 @@ public sealed class ProliferationWorker(
         IProliferationStore store,
         IRuleProliferationBrain brain,
         IProliferationChangeNotifier? notifier,
-        IScenarioDeduplicator? deduplicator,
+        IScenarioDeduplicator? deduplication,
         ICoverageTracker? coverageTracker,
         IBudgetAllocator? budgetAllocator,
         CancellationToken ct)
     {
         int remainingBudget = options.MaxTotalScenarios - currentStats.TotalScenarios;
-        if (remainingBudget <= 0) return;
+        if (remainingBudget <= 0)
+        {
+            return;
+        }
 
         int perRuleBudget = options.MaxScenariosPerRule;
         if (options.EnableSmartBudget && budgetAllocator is not null)
@@ -259,10 +270,10 @@ public sealed class ProliferationWorker(
                     GenerationDepth = parentScenario.GenerationDepth + 1
                 })];
 
-                if (deduplicator is not null)
+                if (deduplication is not null)
                 {
                     IReadOnlyList<NeuronScenario> existing = await store.GetScenariosBySeedAsync(parentScenario.SeedRuleCode, ct);
-                    children = [.. deduplicator.Deduplicate(children, existing)];
+                    children = [.. deduplication.Deduplicate(children, existing)];
                 }
 
                 if (children.Count > 0)
@@ -306,7 +317,10 @@ public sealed class ProliferationWorker(
         CancellationToken ct)
     {
         int remainingBudget = options.MaxTotalScenarios - currentStats.TotalScenarios;
-        if (remainingBudget <= 0) return;
+        if (remainingBudget <= 0)
+        {
+            return;
+        }
 
         try
         {
@@ -322,7 +336,10 @@ public sealed class ProliferationWorker(
             IReadOnlyList<NeuronScenario> children = await failureAnalyzer.AnalyzeFailureAsync(
                 failedScenario, failureResult, ruleSetJson, context, ct);
 
-            if (children.Count == 0) return;
+            if (children.Count == 0)
+            {
+                return;
+            }
 
             List<NeuronScenario> toSave = [.. children];
             if (deduplicator is not null)

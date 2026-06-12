@@ -9,7 +9,7 @@ public sealed class RoslynRuleExtractorTests
     [Fact]
     public async Task ExtractAsync_WithEmptySources_ReturnsEmpty()
     {
-        IReadOnlyList<Muonroi.RuleGen.Models.ExtractedRuleDefinition> result = await RoslynRuleExtractor.ExtractAsync(
+        IReadOnlyList<Models.ExtractedRuleDefinition> result = await RoslynRuleExtractor.ExtractAsync(
             [],
             "Demo.Generated",
             contextOverride: null,
@@ -28,7 +28,7 @@ public sealed class RoslynRuleExtractorTests
             string sourceFile = Path.Combine(root, "OrderHandler.cs");
             File.WriteAllText(sourceFile, CreateRichSource());
 
-            IReadOnlyList<Muonroi.RuleGen.Models.ExtractedRuleDefinition> result = await RoslynRuleExtractor.ExtractAsync(
+            IReadOnlyList<Models.ExtractedRuleDefinition> result = await RoslynRuleExtractor.ExtractAsync(
                 [sourceFile],
                 "Demo.Generated",
                 contextOverride: null,
@@ -36,7 +36,7 @@ public sealed class RoslynRuleExtractorTests
                 CancellationToken.None);
 
             result.Should().ContainSingle();
-            Muonroi.RuleGen.Models.ExtractedRuleDefinition rule = result[0];
+            Models.ExtractedRuleDefinition rule = result[0];
 
             rule.Code.Should().Be("Validate");
             rule.MethodName.Should().Be("ValidateAsync");
@@ -108,7 +108,7 @@ public sealed class RoslynRuleExtractorTests
                 }
                 """);
 
-            IReadOnlyList<Muonroi.RuleGen.Models.ExtractedRuleDefinition> result = await RoslynRuleExtractor.ExtractAsync(
+            IReadOnlyList<Models.ExtractedRuleDefinition> result = await RoslynRuleExtractor.ExtractAsync(
                 [firstFile, secondFile],
                 "Demo.Generated",
                 contextOverride: "CustomContext",

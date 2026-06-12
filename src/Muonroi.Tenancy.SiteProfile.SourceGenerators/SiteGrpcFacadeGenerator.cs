@@ -178,24 +178,17 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
 
         // Collision resolution: extend wins — remove shared methods that have same name as extend
         HashSet<string> extendNames = new HashSet<string>(extendMethods.Select(m => m.MethodName));
-        List<RpcMethodModel> filteredShared = sharedMethods
-            .Where(m => !extendNames.Contains(m.MethodName))
-            .ToList();
+        List<RpcMethodModel> filteredShared = [.. sharedMethods.Where(m => !extendNames.Contains(m.MethodName))];
 
         // Track collisions for diagnostic comment
-        List<string> collisions = sharedMethods
+        List<string> collisions = [.. sharedMethods
             .Where(m => extendNames.Contains(m.MethodName))
-            .Select(m => m.MethodName)
-            .ToList();
+            .Select(m => m.MethodName)];
 
         // Split shared methods into inherited (skip in interface) vs own (emit in interface)
         // The facade impl still generates ALL methods — only the interface skips inherited ones.
-        List<RpcMethodModel> ownSharedMethods = filteredShared
-            .Where(m => !inheritedMethodNames.Contains(m.MethodName))
-            .ToList();
-        List<RpcMethodModel> ownExtendMethods = extendMethods
-            .Where(m => !inheritedMethodNames.Contains(m.MethodName))
-            .ToList();
+        List<RpcMethodModel> ownSharedMethods = [.. filteredShared.Where(m => !inheritedMethodNames.Contains(m.MethodName))];
+        List<RpcMethodModel> ownExtendMethods = [.. extendMethods.Where(m => !inheritedMethodNames.Contains(m.MethodName))];
 
         return new FacadeModel(
             interfaceName,
@@ -593,10 +586,10 @@ public sealed class SiteGrpcFacadeGenerator : IIncrementalGenerator
         string interfaceName,
         string ns,
         string facadeClassName,
-        IReadOnlyList<SiteGrpcFacadeGenerator.RpcMethodModel> sharedMethods,
-        IReadOnlyList<SiteGrpcFacadeGenerator.RpcMethodModel> extendMethods,
-        IReadOnlyList<SiteGrpcFacadeGenerator.RpcMethodModel> ownSharedMethods,
-        IReadOnlyList<SiteGrpcFacadeGenerator.RpcMethodModel> ownExtendMethods,
+        IReadOnlyList<RpcMethodModel> sharedMethods,
+        IReadOnlyList<RpcMethodModel> extendMethods,
+        IReadOnlyList<RpcMethodModel> ownSharedMethods,
+        IReadOnlyList<RpcMethodModel> ownExtendMethods,
         string sharedClientFullName,
         IReadOnlyList<string> extendClientFullNames,
         IReadOnlyList<string> collisions)

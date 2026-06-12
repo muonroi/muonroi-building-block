@@ -14,7 +14,6 @@ namespace Muonroi.Tenancy.SiteProfile.Web;
 /// <c>EFCoreStoreDbContext&lt;TenantInfo&gt;</c> (the tenant store) which resolves the non-generic
 /// <c>DbContextOptions</c> and ends up with the wrong factory.
 ///
-/// Fix: <see cref="AddSiteDbContext{TContext}"/> registers ONLY <c>DbContextOptions&lt;T&gt;</c>
 /// (generic), leaving <c>DbContextOptions</c> non-generic untouched. Multiple site DbContexts can
 /// coexist safely without conflicting in the Autofac container.
 /// </summary>
@@ -96,7 +95,7 @@ public static class SiteProfileDbContextExtensions
     {
         // Register ONLY the generic DbContextOptions<TContext> — NOT the non-generic DbContextOptions base.
         // This is the key difference from AddDbContext<T>() which registers both.
-        services.AddScoped<DbContextOptions<TContext>>(sp =>
+        services.AddScoped(sp =>
         {
             ITenantContext tenantContext = sp.GetRequiredService<ITenantContext>();
             ITenantConnectionStringFactory connFactory = sp.GetRequiredService<ITenantConnectionStringFactory>();
@@ -127,7 +126,7 @@ public static class SiteProfileDbContextExtensions
         // Register TContext itself as scoped, resolving the generic options from the provider.
         // ActivatorUtilities.CreateInstance allows TContext to have additional constructor parameters
         // resolved from the service provider (e.g., ILogger, domain services).
-        services.AddScoped<TContext>(sp =>
+        services.AddScoped(sp =>
         {
             DbContextOptions<TContext> options = sp.GetRequiredService<DbContextOptions<TContext>>();
             return ActivatorUtilities.CreateInstance<TContext>(sp, options);

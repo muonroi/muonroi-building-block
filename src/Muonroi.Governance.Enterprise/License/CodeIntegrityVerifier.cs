@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Abstractions.Integrity;
 using Muonroi.Logging.Abstractions;
@@ -60,7 +61,7 @@ public sealed class CodeIntegrityVerifier(
         logger?.Warn(message);
         if (throwOnFailure)
         {
-            throw new SecurityException(message);
+            throw new MInternalException(message, MErrorCodes.Governance.CodeIntegrityFailed);
         }
 
         return false;

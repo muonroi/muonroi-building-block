@@ -36,7 +36,7 @@ public static class EventBridgeServiceCollectionExtensions
 
     /// <summary>
     /// Registers the HTTP webhook notifier for rule events.
-    /// Adds a named <see cref="System.Net.Http.HttpClient"/> called "RuleWebhook"
+    /// Adds a named <see cref="HttpClient"/> called "RuleWebhook"
     /// and registers <see cref="IRuleWebhookNotifier"/> as <see cref="HttpRuleWebhookNotifier"/> (singleton).
     /// </summary>
     /// <param name="services">The service collection to add services to.</param>

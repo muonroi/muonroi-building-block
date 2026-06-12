@@ -149,12 +149,22 @@ public sealed class ProtoCompilationTests
             CreateNoWindow = true
         };
 
+        // One-shot build: disable MSBuild node reuse / build server so this spawned build does
+        // not leave long-lived "dotnet" worker nodes behind. Orphaned nodes keep the test host's
+        // process tree alive after tests complete, hanging `dotnet test` until the node-reuse
+        // timeout (~15 min) elapses.
+        psi.Environment["MSBUILDDISABLENODEREUSE"] = "1";
+        psi.Environment["DOTNET_CLI_USE_MSBUILD_SERVER"] = "0";
+
         using var process = Process.Start(psi)
             ?? throw new InvalidOperationException("Failed to start dotnet process");
 
-        var stdout = process.StandardOutput.ReadToEnd();
-        var stderr = process.StandardError.ReadToEnd();
+        // Read stdout/stderr concurrently before waiting, so a full pipe buffer cannot deadlock.
+        var stdoutTask = process.StandardOutput.ReadToEndAsync();
+        var stderrTask = process.StandardError.ReadToEndAsync();
         process.WaitForExit();
+        var stdout = stdoutTask.GetAwaiter().GetResult();
+        var stderr = stderrTask.GetAwaiter().GetResult();
 
         var combined = stdout + "\n" + stderr;
         return (process.ExitCode, combined);

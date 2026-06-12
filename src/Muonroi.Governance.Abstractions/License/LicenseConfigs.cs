@@ -51,6 +51,13 @@ public sealed class LicenseConfigs
     /// Gets or sets the Fingerprint Salt.
     /// </summary>
     public string? FingerprintSalt { get; set; }
+
+    /// <summary>
+    /// Controls which factors the runtime fingerprint is derived from. Default: MachineAndProject.
+    /// Use <see cref="LicenseFingerprintScope.ProjectOnly"/> to bind a license to a project but
+    /// allow it to run on any machine (dev / UAT / prod), excluding hardware + OS from the fingerprint.
+    /// </summary>
+    public LicenseFingerprintScope FingerprintScope { get; set; } = LicenseFingerprintScope.MachineAndProject;
     private string? _projectSeed;
     /// <summary>
     /// The Project Seed.

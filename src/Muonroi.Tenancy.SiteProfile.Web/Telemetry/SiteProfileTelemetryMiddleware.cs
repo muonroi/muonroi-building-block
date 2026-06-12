@@ -1,8 +1,6 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Logging.Abstractions;
-using Muonroi.Tenancy.SiteProfile;
+using System.Diagnostics;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.Telemetry;
 
@@ -23,6 +21,11 @@ public sealed class SiteProfileTelemetryMiddleware(
     private readonly RequestDelegate _next = next;
     private readonly IMLog<SiteProfileTelemetryMiddleware> _log = log;
 
+    /// <summary>
+    /// Enriches the HTTP request with site profile telemetry if <see cref="ISiteProfileResolver"/> is available:
+    /// </summary>
+    /// <param name="context"></param>
+    /// <returns></returns>
     public async Task InvokeAsync(HttpContext context)
     {
         var resolver = context.RequestServices.GetService<ISiteProfileResolver>();

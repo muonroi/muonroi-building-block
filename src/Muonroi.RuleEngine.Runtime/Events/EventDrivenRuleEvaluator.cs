@@ -56,7 +56,7 @@ public sealed class EventDrivenRuleEvaluator(
 
             if (_eventPublisher is not null)
             {
-                result.Facts.TryGet<string>("__tenantId", out string? tenantIdFact);
+                result.Facts.TryGet("__tenantId", out string? tenantIdFact);
                 await _eventPublisher.PublishExecutionResultAsync(
                     tenantId: tenantIdFact ?? string.Empty,
                     workflowName: workflowName!,
@@ -126,7 +126,7 @@ public sealed class EventDrivenRuleEvaluator(
 
         // Try via reflection for anonymous/typed objects
         Type dataType = data.GetType();
-        System.Reflection.PropertyInfo? wfProp = dataType.GetProperty("workflowName")
+        PropertyInfo? wfProp = dataType.GetProperty("workflowName")
             ?? dataType.GetProperty("WorkflowName");
         workflowName = wfProp?.GetValue(data) as string;
 
@@ -135,7 +135,7 @@ public sealed class EventDrivenRuleEvaluator(
             return false;
         }
 
-        System.Reflection.PropertyInfo? factsProp = dataType.GetProperty("inputFacts")
+        PropertyInfo? factsProp = dataType.GetProperty("inputFacts")
             ?? dataType.GetProperty("InputFacts");
         if (factsProp?.GetValue(data) is Dictionary<string, object?> facts)
         {

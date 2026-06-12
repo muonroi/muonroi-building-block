@@ -1,4 +1,3 @@
-global using Muonroi.Diagnostics.Abstractions;
 global using Microsoft.Extensions.DependencyInjection;
 global using Muonroi.Core.Abstractions.Diagnostics;
 global using Muonroi.Diagnostics.Context;

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <!-- Benchmarks are not test projects; IsTestProject must be false to suppress xunit/FluentAssertions injection -->
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.Pdf\Muonroi.Pdf.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj" />
+    <!-- SG analyzer: emits IMPdfRenderer<InvoiceBenchModel> from [PdfTemplate] for the SC2 slot. -->
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.SourceGenerators\Muonroi.Pdf.SourceGenerators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="reference-50kb.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <!-- Inlined at compile time by the SG (matched by path suffix to PdfTemplate templateResourceName). -->
+    <AdditionalFiles Include="invoice-bench.html" />
+  </ItemGroup>
+</Project>

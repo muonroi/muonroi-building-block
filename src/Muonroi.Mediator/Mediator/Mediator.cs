@@ -68,11 +68,11 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
     public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
         where TNotification : INotification
     {
-        ArgumentNullException.ThrowIfNull(notification);
+        MGuard.Against(notification is null, "Notification cannot be null.");
         MNotificationStrategy strategy = notification is IMStrategyNotification s
             ? s.Strategy
             : MNotificationStrategy.Sequential;
-        return PublishInternal(notification, strategy, cancellationToken);
+        return PublishInternal(notification!, strategy, cancellationToken);
     }
 
     /// <summary>
@@ -82,8 +82,8 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
         CancellationToken cancellationToken = default)
         where TNotification : INotification
     {
-        ArgumentNullException.ThrowIfNull(notification);
-        return PublishInternal(notification, strategy, cancellationToken);
+        MGuard.Against(notification is null, "Notification cannot be null.");
+        return PublishInternal(notification!, strategy, cancellationToken);
     }
 
     /// <summary>
@@ -91,7 +91,7 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
     /// </summary>
     public Task Publish(object notification, CancellationToken cancellationToken = default)
     {
-        MGuard.NotNull(notification);
+        MGuard.Against(notification is null, "Notification cannot be null.");
         if (notification is not INotification n)
             throw new MInternalException("Notification does not implement INotification.");
         

@@ -1,11 +1,10 @@
-using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace Muonroi.Tenancy.SiteProfile;
 
 /// <summary>
 /// Convention-based site service registration.
-/// Reduces per-site boilerplate by auto-discovering <typeparamref name="TServiceInterface"/> implementations
 /// and registering them as keyed services using the site ID of the enclosing ISiteProfile (D-06).
 /// </summary>
 public static class SiteProfileConventionExtensions
@@ -35,7 +34,9 @@ public static class SiteProfileConventionExtensions
         where TServiceInterface : class
     {
         if (assemblies is null || assemblies.Length == 0)
+        {
             return services;
+        }
 
         var tracker = SiteProfileExtensions.SharedTracker;
         var serviceInterface = typeof(TServiceInterface);
@@ -46,7 +47,9 @@ public static class SiteProfileConventionExtensions
         foreach (var assembly in assemblies)
         {
             if (assembly is null || !seen.Add(assembly))
+            {
                 continue;
+            }
 
             // Find all ISiteProfile implementations in this assembly
             var profileTypes = assembly.GetTypes()

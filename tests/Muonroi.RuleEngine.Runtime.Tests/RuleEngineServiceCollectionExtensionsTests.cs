@@ -26,7 +26,7 @@ public sealed class RuleEngineServiceCollectionExtensionsTests
             IHostEnvironment environment = Substitute.For<IHostEnvironment>();
             environment.ContentRootPath.Returns(root);
             services.AddSingleton(environment);
-            services.AddSingleton<IOptions<MemoryCacheOptions>>(Options.Create(new MemoryCacheOptions()));
+            services.AddSingleton(Options.Create(new MemoryCacheOptions()));
 
             IConfiguration configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?>
@@ -47,7 +47,7 @@ public sealed class RuleEngineServiceCollectionExtensionsTests
             provider.GetRequiredService<IRuleSetChangeNotifier>().Should().BeOfType<InMemoryRuleSetChangeNotifier>();
             provider.GetRequiredService<IRuleSetRuntimeCache>().Should().BeOfType<RuleSetRuntimeCache>();
             provider.GetRequiredService<IRuleSetDefinitionValidator>().Should().BeOfType<RuleSetDefinitionValidator>();
-            provider.GetService(typeof(Muonroi.RuleEngine.Runtime.Adapters.RuleGraphParser)).Should().NotBeNull();
+            provider.GetService(typeof(Adapters.RuleGraphParser)).Should().NotBeNull();
 
             RuleControlPlaneOptions controlPlane = provider.GetRequiredService<IOptions<RuleControlPlaneOptions>>().Value;
             controlPlane.RequireApproval.Should().BeTrue();

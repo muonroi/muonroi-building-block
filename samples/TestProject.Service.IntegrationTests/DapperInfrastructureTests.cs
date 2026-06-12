@@ -46,8 +46,8 @@ public sealed class DapperInfrastructureTests
         var mockAlphaDapper = new Mock<IDapper>();
         var mockBravoDapper = new Mock<IDapper>();
 
-        services.AddKeyedScoped<IDapper>("ALPHA", (_, _) => mockAlphaDapper.Object);
-        services.AddKeyedScoped<IDapper>("BRAVO", (_, _) => mockBravoDapper.Object);
+        services.AddKeyedScoped("ALPHA", (_, _) => mockAlphaDapper.Object);
+        services.AddKeyedScoped("BRAVO", (_, _) => mockBravoDapper.Object);
 
         return services.BuildServiceProvider(validateScopes: true);
     }

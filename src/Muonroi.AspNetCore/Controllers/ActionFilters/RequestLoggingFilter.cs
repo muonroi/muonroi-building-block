@@ -73,12 +73,12 @@ public class RequestLoggingFilter(
             return $"[{value.GetType().Name}]";
         }
 
-        if (value is System.Security.Claims.ClaimsPrincipal)
+        if (value is ClaimsPrincipal)
         {
             return "[ClaimsPrincipal]";
         }
 
-        if (value is System.IO.Stream)
+        if (value is Stream)
         {
             return $"[{value.GetType().Name}]";
         }

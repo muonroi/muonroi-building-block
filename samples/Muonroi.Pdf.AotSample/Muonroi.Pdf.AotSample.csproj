@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <PublishAot>true</PublishAot>
+    <RuntimeIdentifier>linux-musl-x64</RuntimeIdentifier>
+    <StripSymbols>true</StripSymbols>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Do not treat trim warnings from AngleSharp.Css as errors — they are expected.
+         TrimmerRootDescriptor below preserves the required types at link time. -->
+    <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- This project is an AOT smoke-test sample; exclude from NuGet packaging. -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <TrimmerRootDescriptor Include="TrimmerRootDescriptor.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Self-contained font: embedded so the sample renders on Alpine with zero OS fonts.
+         Resource name: Muonroi.Pdf.AotSample.SampleFont.ttf -->
+    <EmbeddedResource Include="SampleFont.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- No Muonroi.Observability reference — OtelSetup.cs has AOT-incompatible
+         AppDomain.CurrentDomain.GetAssemblies() + Activator.CreateInstance calls.
+         No Muonroi.Tenancy reference — ITenantContextPolicy.cs has AppDomain reflection. -->
+    <ProjectReference Include="..\..\src\Muonroi.Pdf\Muonroi.Pdf.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj" />
+    <!-- Logging abstractions needed for AotNoOpLog<T> open-generic IMLog<T> no-op implementation -->
+    <ProjectReference Include="..\..\src\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+  </ItemGroup>
+</Project>

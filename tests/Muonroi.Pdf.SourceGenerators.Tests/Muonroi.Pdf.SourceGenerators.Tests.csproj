@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Roslyn analyzer testing framework — provides CSharpGeneratorDriver, etc. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.XUnit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Reference the SG project as a regular project reference so
+       CSharpGeneratorDriver can load the IIncrementalGenerator type directly.
+       Do NOT use OutputItemType=Analyzer here — that would apply it to the
+       test project's own compilation, not to the harness compilation. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.SourceGenerators\Muonroi.Pdf.SourceGenerators.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

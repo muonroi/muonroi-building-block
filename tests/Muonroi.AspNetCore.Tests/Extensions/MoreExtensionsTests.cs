@@ -43,7 +43,7 @@ public class MoreExtensionsTests
         services.AddCors(config);
 
         var sp = services.BuildServiceProvider();
-        Assert.NotNull(sp.GetService<Microsoft.AspNetCore.Cors.Infrastructure.ICorsService>());
+        Assert.NotNull(sp.GetService<ICorsService>());
     }
 
     [Fact]
@@ -56,6 +56,6 @@ public class MoreExtensionsTests
         services.AddCors(config);
 
         var sp = services.BuildServiceProvider();
-        Assert.NotNull(sp.GetService<Microsoft.AspNetCore.Cors.Infrastructure.ICorsService>());
+        Assert.NotNull(sp.GetService<ICorsService>());
     }
 }

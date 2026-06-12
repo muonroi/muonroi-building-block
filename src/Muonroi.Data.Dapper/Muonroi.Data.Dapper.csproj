@@ -11,12 +11,16 @@
     <ProjectReference Include="..\Muonroi.Core\Muonroi.Core.csproj" />
     <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Data.Abstractions\Muonroi.Data.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Tenancy.Abstractions\Muonroi.Tenancy.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Dapper" />
     <PackageReference Include="Dapper.Extensions.NetCore" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Npgsql" />
   </ItemGroup>
 </Project>

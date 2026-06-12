@@ -361,7 +361,7 @@ public abstract class MAuthControllerBase<TPermission, TDbContext>(
     private static string BuildManifestEtag(MUiEngineManifest manifest)
     {
         MUiEngineManifest normalized = CloneForEtag(manifest);
-        string payload = System.Text.Json.JsonSerializer.Serialize(normalized, new System.Text.Json.JsonSerializerOptions
+        string payload = System.Text.Json.JsonSerializer.Serialize(normalized, new JsonSerializerOptions
         {
             PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
             WriteIndented = false

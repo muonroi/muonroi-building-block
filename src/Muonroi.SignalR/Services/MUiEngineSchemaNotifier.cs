@@ -36,7 +36,7 @@ public sealed class MUiEngineHub : Hub
 /// </summary>
 /// <param name="hubContext">SignalR hub context.</param>
 public sealed class MUiEngineSchemaNotifier(
-    IHubContext<MUiEngineHub> hubContext) : Muonroi.Core.Abstractions.Interfaces.IUiEngineSchemaNotifier
+    IHubContext<MUiEngineHub> hubContext) : Core.Abstractions.Interfaces.IUiEngineSchemaNotifier
 {
     /// <summary>
     /// Notifies clients that a schema change occurred.

@@ -134,8 +134,8 @@ public abstract class MRuleFlowExecuteController(
         // A graph node stores its result at __graph.node.{nodeId}.result — if the result contains
         // the rule's success/failure state, they match. Use execution order as fallback.
         HashSet<string> mappedNodeIds = new(ruleCodeToNodeId.Values, StringComparer.OrdinalIgnoreCase);
-        List<string> unmappedRuleCodes = ruleResultKeys.Where(rc => !ruleCodeToNodeId.ContainsKey(rc)).ToList();
-        List<string> unmappedNodeIds = graphNodeIds.Where(nid => !mappedNodeIds.Contains(nid)).ToList();
+        List<string> unmappedRuleCodes = [.. ruleResultKeys.Where(rc => !ruleCodeToNodeId.ContainsKey(rc))];
+        List<string> unmappedNodeIds = [.. graphNodeIds.Where(nid => !mappedNodeIds.Contains(nid))];
 
         // Correlate by checking __graph.node.{nodeId}.passed matches RuleResult.IsSuccess
         // When multiple matches exist, use ordering (both are execution-order).

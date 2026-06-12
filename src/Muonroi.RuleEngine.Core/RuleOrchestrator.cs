@@ -1,7 +1,8 @@
+using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
-using Muonroi.Core.Abstractions.Diagnostics;
+using Muonroi.Governance.License;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.RuleEngine.Core;
@@ -19,7 +20,8 @@ public sealed class RuleOrchestrator<TContext>(
     ITenantQuotaTracker? quotaTracker = null,
     IRuleExecutionTracer? tracer = null,
     ISystemExecutionContextAccessor? contextAccessor = null,
-    IMTraceContext? traceContext = null)
+    IMTraceContext? traceContext = null,
+    ILicenseGuard? licenseGuard = null)
 {
 
     /// <summary>
@@ -47,6 +49,7 @@ public sealed class RuleOrchestrator<TContext>(
     }
 
     private readonly IReadOnlyList<IRule<TContext>> _rules = [.. Order(rules)];
+    private readonly ILicenseGuard? _licenseGuard = licenseGuard;
 
     private readonly IEnumerable<IRuleEventListener<TContext>> _listeners = listeners ?? [];
     private readonly IMJsonSerializeService _jsonSerializeService =
@@ -65,6 +68,7 @@ public sealed class RuleOrchestrator<TContext>(
     /// <returns>A <see cref="Task{FactBag}"/> representing the asynchronous operation.</returns>
     public async Task<FactBag> ExecuteAsync(TContext context, HookPoint? filterPoint = null, CancellationToken cancellationToken = default)
     {
+        _licenseGuard?.EnsureFeature(FreeTierFeatures.Premium.RuleEngine);
         FactBag facts = new();
         bool hasFilter = filterPoint.HasValue;
         string? tenantId = ResolveTenantId(context);
@@ -272,6 +276,7 @@ public sealed class RuleOrchestrator<TContext>(
     /// <param name="context">Execution context.</param>
     /// <param name="executionMode">Failure-handling strategy for orchestration.</param>
     /// <param name="filterPoint">Optional hook point filter.</param>
+    /// <param name="initialFacts">Optional facts</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Detailed execution outcome with per-rule results, errors, and compensation errors.</returns>
     public async Task<OrchestratorResult> ExecuteWithResultAsync(
@@ -281,6 +286,7 @@ public sealed class RuleOrchestrator<TContext>(
         IReadOnlyDictionary<string, object?>? initialFacts = null,
         CancellationToken cancellationToken = default)
     {
+        _licenseGuard?.EnsureFeature(FreeTierFeatures.Premium.RuleEngine);
         FactBag facts = new();
         if (initialFacts is not null)
         {

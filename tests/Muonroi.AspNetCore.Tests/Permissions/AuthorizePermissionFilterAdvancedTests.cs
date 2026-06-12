@@ -126,7 +126,7 @@ public class AuthorizePermissionFilterAdvancedTests
         var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimConstants.UserIdentifier, userId.ToString()) }));
         var (context, next) = CreateContext(endpoint, user);
 
-        _cache.GetOrSetAsync<List<string>>(Arg.Any<string>(), Arg.Any<Func<Task<List<string>?>>>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _cache.GetOrSetAsync(Arg.Any<string>(), Arg.Any<Func<Task<List<string>?>>>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<string> { "p1" });
 
         await Assert.ThrowsAsync<PermissionDeniedException>(() => _filter.OnActionExecutionAsync(context, next));
@@ -143,7 +143,7 @@ public class AuthorizePermissionFilterAdvancedTests
         var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimConstants.UserIdentifier, userId.ToString()) }));
         var (context, next) = CreateContext(endpoint, user);
 
-        _cache.GetOrSetAsync<List<string>>(Arg.Any<string>(), Arg.Any<Func<Task<List<string>?>>>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _cache.GetOrSetAsync(Arg.Any<string>(), Arg.Any<Func<Task<List<string>?>>>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<string> { "p2" });
 
         await _filter.OnActionExecutionAsync(context, next);

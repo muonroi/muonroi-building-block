@@ -1,8 +1,5 @@
-using System.Reflection;
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Muonroi.Data.EntityFrameworkCore.Entity;
-using Muonroi.Logging.Abstractions;
 using Muonroi.Messaging.Abstractions.Attributes;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
@@ -10,11 +7,17 @@ namespace Muonroi.Messaging.MassTransit.Messaging;
 /// <summary>
 /// MassTransit filter that implements the inbox pattern for consumer deduplication.
 /// </summary>
-public class MuonroiInboxFilter<TConsumer, TMessage>(IMLog<MuonroiInboxFilter<TConsumer, TMessage>> logger) 
+public class MuonroiInboxFilter<TConsumer, TMessage>(IMLog<MuonroiInboxFilter<TConsumer, TMessage>> logger)
     : IFilter<ConsumerConsumeContext<TConsumer, TMessage>>
     where TConsumer : class
     where TMessage : class
 {
+    /// <summary>
+    /// Intercepts the message consumption pipeline to implement the inbox pattern for idempotent consumers.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="next"></param>
+    /// <returns></returns>
     public async Task Send(ConsumerConsumeContext<TConsumer, TMessage> context, IPipe<ConsumerConsumeContext<TConsumer, TMessage>> next)
     {
         var consumerType = typeof(TConsumer);
@@ -47,7 +50,7 @@ public class MuonroiInboxFilter<TConsumer, TMessage>(IMLog<MuonroiInboxFilter<TC
 
         if (alreadyProcessed)
         {
-            logger.Info("Message {MessageId} already processed by {ConsumerName}. Skipping.", 
+            logger.Info("Message {MessageId} already processed by {ConsumerName}. Skipping.",
                 messageId, consumerType.Name);
             return;
         }
@@ -64,6 +67,7 @@ public class MuonroiInboxFilter<TConsumer, TMessage>(IMLog<MuonroiInboxFilter<TC
         });
     }
 
+    /// <inheritdoc/>
     public void Probe(ProbeContext context)
     {
         context.CreateFilterScope("muonroi-inbox");

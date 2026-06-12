@@ -53,8 +53,8 @@ public static class MDbContextConfiguration
             services.TryAddSingleton<TenantSchemaSelector>();
             services.TryAddScoped<ISaveChangesInterceptor>(sp =>
             {
-                ILicenseGuard guard = sp.GetRequiredService<ILicenseGuard>();
-                LicenseConfigs configs = sp.GetRequiredService<LicenseConfigs>();
+                ILicenseGuard? guard = sp.GetService<ILicenseGuard>();
+                LicenseConfigs? configs = sp.GetService<LicenseConfigs>();
                 return new LicenseSaveChangesInterceptor(guard, configs);
             });
 
@@ -73,8 +73,35 @@ public static class MDbContextConfiguration
         where TDbContext : MDbContext
         where TPermission : Enum
     {
-        _ = services.AddScoped<IAuthenticateRepository, AuthenticateRepository<TDbContext, TPermission>>();
-        _ = services.AddScoped<IRefreshTokenValidator, DefaultRefreshTokenValidator<TDbContext, TPermission>>();
+        // Always register auth repositories unconditionally.
+        // MAuthenticateTokenHelper depends on ITokenSigner + MTokenInfo which are registered by
+        // AddValidateBearerToken — both are resolved at request time (not at startup), so
+        // registration order does not matter.
+        services.TryAddScoped<MAuthenticateTokenHelper<TPermission>>();
+        services.TryAddScoped<IAuthenticateRepository, AuthenticateRepository<TDbContext, TPermission>>();
+        services.TryAddScoped<IRefreshTokenValidator, DefaultRefreshTokenValidator<TDbContext, TPermission>>();
+
+        // Fallback hasher — throws a clear error if used without Muonroi.Auth configured.
+        // AddInMemoryRsaKeyStore / AddRedisRsaKeyStore override this with BCryptPasswordHasher.
+        services.TryAddSingleton<IPasswordHasher, NotConfiguredPasswordHasher>();
+    }
+
+    /// <summary>
+    /// Fallback hasher registered when Muonroi.Auth has not been configured.
+    /// Throws a clear error so developers know exactly what to do.
+    /// Overridden by BCryptPasswordHasher when AddInMemoryRsaKeyStore / AddRedisRsaKeyStore is called.
+    /// </summary>
+    private sealed class NotConfiguredPasswordHasher : IPasswordHasher
+    {
+        private const string Msg =
+            "IPasswordHasher is not configured. Call services.AddInMemoryRsaKeyStore() or " +
+            "services.AddRedisRsaKeyStore() to register BCryptPasswordHasher.";
+
+        public string HashPassword(string password, out string salt)
+            => throw new InvalidOperationException(Msg);
+
+        public bool VerifyPassword(string enteredPassword, string storedHash)
+            => throw new InvalidOperationException(Msg);
     }
 
 
@@ -129,8 +156,8 @@ public static class MDbContextConfiguration
         _ = services.AddDbContext<T>((serviceProvider, options) =>
         {
             IDbContextConfigurator<T> configurator = serviceProvider.GetRequiredService<IDbContextConfigurator<T>>();
-            ITenantContext tenantContext = serviceProvider.GetRequiredService<ITenantContext>();
-            ILicenseGuard guard = serviceProvider.GetRequiredService<ILicenseGuard>();
+            ITenantContext tenantContext = serviceProvider.GetService<ITenantContext>() ?? new NoOpTenantContext();
+            ILicenseGuard? guard = serviceProvider.GetService<ILicenseGuard>();
             IConfiguration config = serviceProvider.GetRequiredService<IConfiguration>();
 
             DatabaseConfigs dbConfigs = config.GetSection(nameof(DatabaseConfigs)).Get<DatabaseConfigs>()
@@ -142,6 +169,8 @@ public static class MDbContextConfiguration
             if (enableEncryption)
             {
                 // ENTANGLEMENT: Perform the decryption inside the guard's secure scope using LIVE key
+                if (guard is null)
+                    throw new MConfigurationException("ILicenseGuard is required when encryption is enabled.", "EnableEncryption");
                 connectionString = guard.DecryptSecurely("db_connection", "dummy", (key, _) =>
                     DecryptConnectionString(dbConfigs, config, isSecretDefault, secretKey, key));
             }

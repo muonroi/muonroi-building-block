@@ -1,4 +1,6 @@
 using System.Xml.Linq;
+using Muonroi.RuleEngine.DecisionTable.Models;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.RuleEngine.DecisionTable.Dmn;
 
@@ -42,7 +44,7 @@ public static class DmnExporter
     /// <returns>A well-formed DMN 1.3 XML string with UTF-8 XML declaration.</returns>
     public static string ExportToDmnXml(DecisionTableModel table)
     {
-        ArgumentNullException.ThrowIfNull(table);
+        MGuard.NotNull(table);
 
         (string hitPolicyStr, string? aggregation) = DmnHitPolicyMapper.ToDmnString(table.HitPolicy);
 
@@ -58,7 +60,7 @@ public static class DmnExporter
 
         // Add one <input> per input column
         int inputIdx = 0;
-        foreach (Models.DecisionTableColumn col in table.InputColumns)
+        foreach (DecisionTableColumn col in table.InputColumns)
         {
             decisionTable.Add(BuildInputElement(col, inputIdx));
             inputIdx++;
@@ -66,14 +68,14 @@ public static class DmnExporter
 
         // Add one <output> per output column
         int outputIdx = 0;
-        foreach (Models.DecisionTableColumn col in table.OutputColumns)
+        foreach (DecisionTableColumn col in table.OutputColumns)
         {
             decisionTable.Add(BuildOutputElement(col, outputIdx));
             outputIdx++;
         }
 
         // Add one <rule> per row (ordered)
-        foreach (Models.DecisionTableRow row in table.Rows.OrderBy(r => r.Order))
+        foreach (DecisionTableRow row in table.Rows.OrderBy(r => r.Order))
         {
             decisionTable.Add(BuildRuleElement(row));
         }
@@ -100,7 +102,7 @@ public static class DmnExporter
 
     // ── Private builders ────────────────────────────────────────────────────
 
-    private static XElement BuildInputElement(Models.DecisionTableColumn col, int index)
+    private static XElement BuildInputElement(DecisionTableColumn col, int index)
     {
         return new XElement(Ns + DmnConstants.Input,
             new XAttribute(DmnConstants.AttrId, $"input_{col.Id}"),
@@ -111,7 +113,7 @@ public static class DmnExporter
                 new XElement(Ns + DmnConstants.Text, col.Name ?? string.Empty)));
     }
 
-    private static XElement BuildOutputElement(Models.DecisionTableColumn col, int index)
+    private static XElement BuildOutputElement(DecisionTableColumn col, int index)
     {
         return new XElement(Ns + DmnConstants.Output,
             new XAttribute(DmnConstants.AttrId, $"output_{col.Id}"),
@@ -120,7 +122,7 @@ public static class DmnExporter
             new XAttribute(DmnConstants.AttrTypeRef, col.DataType ?? "string"));
     }
 
-    private static XElement BuildRuleElement(Models.DecisionTableRow row)
+    private static XElement BuildRuleElement(DecisionTableRow row)
     {
         XElement rule = new(Ns + DmnConstants.Rule,
             new XAttribute(DmnConstants.AttrId, row.Id));
@@ -131,7 +133,7 @@ public static class DmnExporter
         }
 
         int inputIdx = 0;
-        foreach (Models.DecisionTableCell cell in row.InputCells)
+        foreach (DecisionTableCell cell in row.InputCells)
         {
             rule.Add(new XElement(Ns + DmnConstants.InputEntry,
                 new XAttribute(DmnConstants.AttrId, $"ie_{row.Id}_{inputIdx}"),
@@ -140,7 +142,7 @@ public static class DmnExporter
         }
 
         int outputIdx = 0;
-        foreach (Models.DecisionTableCell cell in row.OutputCells)
+        foreach (DecisionTableCell cell in row.OutputCells)
         {
             rule.Add(new XElement(Ns + DmnConstants.OutputEntry,
                 new XAttribute(DmnConstants.AttrId, $"oe_{row.Id}_{outputIdx}"),

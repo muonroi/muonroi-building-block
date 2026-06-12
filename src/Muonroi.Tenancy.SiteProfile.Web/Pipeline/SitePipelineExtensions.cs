@@ -23,7 +23,7 @@ public static class SitePipelineExtensions
         // Ensure options bag is registered even if no hooks are added
         services.AddOptions<SitePipelineHookOptions>();
 
-        services.TryAddSingleton<SitePipelineHookRegistry>(sp =>
+        services.TryAddSingleton(sp =>
         {
             IOptions<SitePipelineHookOptions> options = sp.GetRequiredService<IOptions<SitePipelineHookOptions>>();
             return new SitePipelineHookRegistry(options);

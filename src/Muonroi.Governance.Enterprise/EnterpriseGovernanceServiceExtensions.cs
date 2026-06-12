@@ -30,7 +30,7 @@ public static class EnterpriseGovernanceServiceExtensions
 
         services.AddLicenseProtection(configuration);
 
-        services.TryAddSingleton<PolicyEnforcer>(sp =>
+        services.TryAddSingleton(sp =>
         {
             IPolicyStore store = sp.GetRequiredService<IPolicyStore>();
             PolicyVerifier verifier = sp.GetRequiredService<PolicyVerifier>();

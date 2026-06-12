@@ -66,15 +66,7 @@ public sealed class RulesEngineServiceInternalTests
         GetProperty<ExecutionMode?>(result, "ExecutionMode").Should().BeNull();
     }
 
-    [Fact]
-    public void ResolveContextType_CanResolveByFullNameAndSimpleName()
-    {
-        Type byFullName = (Type)InvokePrivateStatic(nameof(RulesEngineService), "ResolveContextType", typeof(InternalContext).FullName!);
-        Type bySimpleName = (Type)InvokePrivateStatic(nameof(RulesEngineService), "ResolveContextType", nameof(InternalContext));
 
-        byFullName.Should().Be(typeof(InternalContext));
-        bySimpleName.Should().Be(typeof(InternalContext));
-    }
 
     [Fact]
     public void ConvertJsonElement_ConvertsNestedObjectsAndArrays()
@@ -170,11 +162,11 @@ public sealed class RulesEngineServiceInternalTests
     [Fact]
     public void ResolveContextType_Throws_WhenTypeCannotBeFound()
     {
-        Action act = () => InvokePrivateStatic(nameof(RulesEngineService), "ResolveContextType", "Missing.Context.Type");
+        MRuleContextJsonRegistry registry = new();
+        Action act = () => registry.DeserializeContext("Missing.Context.Type", "{}");
 
-        act.Should().Throw<TargetInvocationException>()
-            .WithInnerException<MConfigurationException>()
-            .WithMessage("*Cannot resolve contextType*");
+        act.Should().Throw<MConfigurationException>()
+            .WithMessage("*not registered*");
     }
 
     [Fact]

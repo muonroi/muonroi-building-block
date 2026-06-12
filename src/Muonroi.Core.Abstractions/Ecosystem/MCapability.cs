@@ -1,8 +1,8 @@
 namespace Muonroi.Core.Abstractions.Ecosystem;
 
 /// <summary>
-/// Defines the four ecosystem anchors for Muonroi capability detection.
-/// Each bit represents one pillar of the ecosystem. Bits 4-15 are reserved
+/// Defines the ecosystem anchors for Muonroi capability detection.
+/// Each bit represents one pillar of the ecosystem. Bits 5-15 are reserved
 /// for consumer-defined extension capabilities.
 /// </summary>
 /// <remarks>
@@ -26,4 +26,7 @@ public enum MCapability
 
     /// <summary>Auth governance (license guard, HMAC chain, anti-tamper) is present in the ecosystem.</summary>
     Auth = 1 << 3,
+
+    /// <summary>License governance (license guard integration with rule engine) is present in the ecosystem.</summary>
+    Governance = 1 << 4,
 }

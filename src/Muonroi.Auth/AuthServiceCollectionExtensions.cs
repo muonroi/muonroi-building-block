@@ -12,6 +12,19 @@ namespace Muonroi.Auth;
 public static class AuthServiceCollectionExtensions
 {
     /// <summary>
+    /// Ensures a default in-memory <see cref="ITokenRevocationStore"/> is registered if none has been provided.
+    /// Called automatically by <see cref="AddInMemoryRsaKeyStore"/> and <see cref="AddRedisRsaKeyStore"/>,
+    /// but can be called standalone for applications that manage their own key stores.
+    /// </summary>
+    /// <param name="services">The service collection to add services to.</param>
+    /// <returns>The updated service collection.</returns>
+    public static IServiceCollection AddDefaultTokenRevocationStore(this IServiceCollection services)
+    {
+        services.TryAddSingleton<ITokenRevocationStore, TokenRevocationStore>();
+        return services;
+    }
+
+    /// <summary>
     /// Registers an in-memory RSA key store and token revocation store.
     /// </summary>
     /// <param name="services">The service collection to add services to.</param>
@@ -24,7 +37,9 @@ public static class AuthServiceCollectionExtensions
         services.TryAddSingleton<IRsaKeyStore, InMemoryRsaKeyStore>();
         services.TryAddSingleton<ITokenRevocationStore, TokenRevocationStore>();
         RegisterJwtService(services);
-        services.TryAddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+        // Replace any fallback hasher (NotConfiguredPasswordHasher) registered by AddDbContextConfigure.
+        services.RemoveAll<IPasswordHasher>();
+        services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         return services;
     }
 
@@ -48,12 +63,15 @@ public static class AuthServiceCollectionExtensions
                 sp.GetRequiredService<IMJsonSerializeService>()));
         services.TryAddSingleton<ITokenRevocationStore, RedisTokenRevocationStore>();
         RegisterJwtService(services);
-        services.TryAddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+        // Replace any fallback hasher (NotConfiguredPasswordHasher) registered by AddDbContextConfigure.
+        services.RemoveAll<IPasswordHasher>();
+        services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         return services;
     }
 
     private static void RegisterJwtService(IServiceCollection services)
     {
+        services.TryAddSingleton<ITokenRevocationStore, TokenRevocationStore>();
         services.RemoveAll<JwtService>();
         services.AddSingleton(sp =>
         {

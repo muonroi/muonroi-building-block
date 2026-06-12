@@ -1,12 +1,6 @@
-using System.Diagnostics;
-using System.Text;
-using Microsoft.Extensions.Caching.Distributed;
-using Muonroi.Caching.Abstractions.Distributed;
 using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Tenancy.Abstractions;
-using Muonroi.Tenancy.Core;
 
 namespace Muonroi.Caching.Redis.Redis;
 
@@ -16,20 +10,25 @@ namespace Muonroi.Caching.Redis.Redis;
 public sealed class RedisCacheService(
     IDistributedCache distributedCache,
     IMJsonSerializeService jsonSerializeService,
-    IMDateTimeService dateTimeService,
     ITenantContext tenantContext,
     ILicenseGuard licenseGuard,
     IMLog<RedisCacheService> logger) : IMCacheService
 {
     private const string FeatureKey = "distributed-cache";
     private const string Layer = "distributed";
-
+    /// <summary>
+    /// Gets a cached value from the distributed cache.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="key"></param>
+    /// <param name="token"></param>
+    /// <returns></returns>
     public async Task<T?> GetAsync<T>(string key, CancellationToken token = default)
     {
         EnsureLicensed();
         string cacheKey = BuildKey(key);
         string? tenantId = GetNormalizedTenantId();
-        
+
         using var activity = StartActivity("get", cacheKey, tenantId);
         var sw = Stopwatch.StartNew();
         string status = "ok";
@@ -38,7 +37,10 @@ public sealed class RedisCacheService(
         try
         {
             var data = await distributedCache.GetAsync(cacheKey, token);
-            if (data is null) return default;
+            if (data is null)
+            {
+                return default;
+            }
 
             hit = true;
             string valueString = Encoding.UTF8.GetString(data);
@@ -58,6 +60,7 @@ public sealed class RedisCacheService(
         }
     }
 
+    /// <inheritdoc/>
     public async Task SetAsync<T>(string key, T value, CacheEntryOptions? options = null, CancellationToken token = default)
     {
         EnsureLicensed();
@@ -100,6 +103,7 @@ public sealed class RedisCacheService(
         }
     }
 
+    /// <inheritdoc/>
     public async Task RemoveAsync(string key, CancellationToken token = default)
     {
         EnsureLicensed();
@@ -127,6 +131,7 @@ public sealed class RedisCacheService(
         }
     }
 
+    /// <inheritdoc/>
     public async Task RefreshAsync(string key, CancellationToken token = default)
     {
         EnsureLicensed();
@@ -154,6 +159,7 @@ public sealed class RedisCacheService(
         }
     }
 
+    /// <inheritdoc/>
     public async Task<T?> GetOrSetAsync<T>(string key, Func<Task<T?>> factory, CacheEntryOptions? options = null, CancellationToken token = default) where T : class
     {
         EnsureLicensed();

@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Security;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 using System.Net.Http.Json;
@@ -275,10 +276,10 @@ public sealed class ChainSubmitter(
     {
         try
         {
-            // If PublicKeyPath is configured, load from file
-            if (!string.IsNullOrEmpty(configs.PublicKeyPath) && File.Exists(configs.PublicKeyPath))
+            // If PublicKeyPath is configured, load from file using MSecureFileReader for path traversal safety
+            if (!string.IsNullOrEmpty(configs.PublicKeyPath))
             {
-                string pemContent = File.ReadAllText(configs.PublicKeyPath);
+                string pemContent = MSecureFileReader.ReadKeyFile(configs.PublicKeyPath);
                 RSA rsa = RSA.Create();
                 rsa.ImportFromPem(pemContent.ToCharArray());
                 return rsa;

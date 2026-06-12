@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Mediator.Exceptions;
 using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
@@ -230,7 +231,7 @@ public sealed class RuleEngine<T>(
             if (!string.IsNullOrWhiteSpace(current) &&
                 !string.Equals(contextTenantId, current, StringComparison.OrdinalIgnoreCase))
             {
-                throw new UnauthorizedAccessException("Cross tenant rule execution detected.");
+                throw new Muonroi.Core.Abstractions.Exceptions.MUnauthorizedException("Cross tenant rule execution detected.");
             }
         }
 

@@ -10,7 +10,7 @@ namespace Muonroi.Tenancy.SiteProfile.Web;
 /// services.AddSiteDapperInfrastructure(o =>
 /// {
 ///     o.WriteConnectionString = sp => sp.GetRequiredService&lt;IWorkContextAccessor&gt;()
-///         .WorkContext?.ConnectionString ?? throw new InvalidOperationException("No site");
+///         .WorkContext?.ConnectionString ?? throw new MInternalException("No site");
 ///     o.ReadConnectionString = sp => sp.GetRequiredService&lt;IWorkContextAccessor&gt;()
 ///         .WorkContext?.ReadOnlyConnectionString;
 ///     o.ConnectionStringTransform = cs => Cryptography.Decrypt(secretKey, cs);

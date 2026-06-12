@@ -1,8 +1,8 @@
 using FluentAssertions;
-using global::Hangfire;
-using global::Hangfire.Common;
-using global::Hangfire.Server;
-using global::Hangfire.Storage;
+using Hangfire;
+using Hangfire.Common;
+using Hangfire.Server;
+using Hangfire.Storage;
 using Muonroi.BackgroundJobs.Abstractions;
 using Muonroi.BackgroundJobs.Hangfire.Hangfire;
 using Muonroi.Core.Abstractions.Context;

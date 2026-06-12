@@ -117,9 +117,8 @@ public static class MigrationManager
     {
         try
         {
-            // Try to query from a core table to check if it exists
-            _ = context.Database.ExecuteSqlRaw("SELECT 1 FROM MRoles LIMIT 1");
-            return true;
+            IRelationalDatabaseCreator databaseCreator = context.GetService<IRelationalDatabaseCreator>();
+            return databaseCreator.HasTables();
         }
         catch
         {

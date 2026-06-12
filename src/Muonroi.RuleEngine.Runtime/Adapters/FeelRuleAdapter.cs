@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Adapters;
 using Muonroi.RuleEngine.Runtime.Compilation.Feel;
@@ -134,21 +135,67 @@ public sealed class FeelRuleAdapter<TContext>(
 
         foreach (KeyValuePair<string, object?> kv in _projector.Project(ctx))
         {
-            if (kv.Value is not null)
+            object? unwrapped = UnwrapJsonElement(kv.Value);
+            if (unwrapped is not null)
             {
-                vars[kv.Key] = kv.Value;
+                vars[kv.Key] = unwrapped;
             }
         }
 
         foreach (string key in facts.Keys)
         {
-            object? val = facts.Get<object>(key);
-            if (val is not null)
+            object? unwrapped = UnwrapJsonElement(facts.Get<object>(key));
+            if (unwrapped is not null)
             {
-                vars[key] = val;
+                vars[key] = unwrapped;
             }
         }
 
         return vars;
+    }
+
+    /// <summary>
+    /// Recursively converts <see cref="JsonElement"/> values (and nested objects/arrays) into native
+    /// CLR types so FEEL path navigation, boolean coercion, and comparison work uniformly.
+    ///
+    /// <para>
+    /// When the execution context is a <c>Dictionary&lt;string, object?&gt;</c> (the dry-run / dynamic
+    /// flow-graph path), <c>System.Text.Json</c> deserializes every value as a <see cref="JsonElement"/>.
+    /// A nested object such as <c>vgm</c> therefore arrives as a <c>JsonElement</c> (ValueKind.Object),
+    /// not a dictionary — so <c>vgm.isVgm</c> could not be navigated (reflection found no CLR property
+    /// and returned <c>null</c>). A nested number masked the defect because <c>Compare(null, x)</c>
+    /// treats null as less-than (so <c>vgm.wgt &lt;= maxGross</c> was true regardless of the value),
+    /// while a nested boolean exposed it (<c>vgm.isVgm = true</c> compared null against true → false).
+    /// Unwrapping to <c>Dictionary&lt;string, object?&gt;</c> / native scalars restores correct nested
+    /// access. Already-native values pass through unchanged (no-op for typed POCO contexts).
+    /// </para>
+    /// </summary>
+    private static object? UnwrapJsonElement(object? value)
+    {
+        if (value is not JsonElement element)
+        {
+            return value;
+        }
+
+        return element.ValueKind switch
+        {
+            JsonValueKind.Null or JsonValueKind.Undefined => null,
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number when element.TryGetInt32(out int i) => i,
+            JsonValueKind.Number when element.TryGetInt64(out long l) => l,
+            JsonValueKind.Number when element.TryGetDecimal(out decimal dec) => dec,
+            JsonValueKind.Number when element.TryGetDouble(out double d) => d,
+            JsonValueKind.Array => element.EnumerateArray()
+                .Select(e => UnwrapJsonElement(e))
+                .ToList(),
+            JsonValueKind.Object => element.EnumerateObject()
+                .ToDictionary(
+                    p => p.Name,
+                    p => UnwrapJsonElement(p.Value),
+                    StringComparer.OrdinalIgnoreCase),
+            _ => element.GetRawText()
+        };
     }
 }

@@ -1,6 +1,7 @@
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Helpers;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
@@ -81,16 +82,33 @@ public class MDbContextConfigurationTests
         }
     }
 
+    // Auth repositories are registered UNCONDITIONALLY by SystemDependencyInjectionService so consumer
+    // apps get ecosystem auth without manual wiring. MAuthenticateTokenHelper's dependencies
+    // (ITokenSigner, MTokenInfo) resolve at request time, and IPasswordHasher has a safe fallback
+    // (NotConfiguredPasswordHasher), so ValidateOnBuild stays green even when Muonroi.Auth is not set up.
     [Fact]
-    public void SystemDependencyInjectionService_Registers_Expected_Services()
+    public void SystemDependencyInjectionService_RegistersAuthRepositories()
+    {
+        ServiceCollection services = [];
+
+        _ = InvokeSystemDi(services);
+
+        Assert.Equal(1, services.Count(x => x.ServiceType == typeof(IAuthenticateRepository)));
+        Assert.Equal(1, services.Count(x => x.ServiceType == typeof(IRefreshTokenValidator)));
+    }
+
+    // Registration is idempotent — repeated calls register each auth repository exactly once
+    // (TryAddScoped/TryAddSingleton are idempotent).
+    [Fact]
+    public void SystemDependencyInjectionService_IsIdempotent_RegistersAuthRepositoriesOnce()
     {
         ServiceCollection services = [];
 
         _ = InvokeSystemDi(services);
         _ = InvokeSystemDi(services);
 
-        Assert.Equal(2, services.Count(x => x.ServiceType == typeof(IAuthenticateRepository)));
-        Assert.Equal(2, services.Count(x => x.ServiceType == typeof(IRefreshTokenValidator)));
+        Assert.Equal(1, services.Count(x => x.ServiceType == typeof(IAuthenticateRepository)));
+        Assert.Equal(1, services.Count(x => x.ServiceType == typeof(IRefreshTokenValidator)));
     }
 
     [Fact]
@@ -173,7 +191,7 @@ public class MDbContextConfigurationTests
     }
 
     [Fact]
-    public void DecryptConnectionString_Encrypted_WithWrongKey_Throws()
+    public void DecryptConnectionString_Encrypted_WithWrongKey_DoesNotRecoverPlaintext()
     {
         const string plain = "Data Source=enc.db";
         string cipher = MCryptographyExtension.Encrypt("correct", plain);
@@ -195,7 +213,23 @@ public class MDbContextConfigurationTests
             }
         };
 
-        Assert.ThrowsAny<Exception>(() => InvokeDecrypt(configs, configuration));
+        // MCryptographyExtension uses unauthenticated AES-CBC + PKCS7. A wrong key usually throws
+        // (invalid padding on the final block), but ~1/256 of random IVs decrypt to coincidentally
+        // valid padding and return garbage WITHOUT throwing. Asserting "throws" was therefore a
+        // ~0.4% flake. The deterministic security invariant is: a wrong key must never recover the
+        // original plaintext — it either throws or yields a value that differs from it.
+        string recovered;
+        try
+        {
+            recovered = InvokeDecrypt(configs, configuration);
+        }
+        catch (Exception)
+        {
+            // Threw on invalid padding — wrong key rejected, invariant satisfied.
+            return;
+        }
+
+        Assert.NotEqual(plain, recovered);
     }
 
     [Fact]

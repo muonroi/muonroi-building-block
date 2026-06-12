@@ -34,7 +34,7 @@ public class MResponse<T> : MVoidMethodResult
     /// <param name="errorCode">The error code.</param>
     public void SetError(string errorCode)
     {
-        SetError(errorCode, []);
+        SetError(errorCode, System.Array.Empty<object>());
     }
 
     /// <summary>

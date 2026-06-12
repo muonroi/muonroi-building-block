@@ -9,3 +9,5 @@ global using System.Threading.Tasks;
 global using Muonroi.Data.Dapper.Dapper;
 global using Muonroi.Data.Dapper.Dapper.EntityFrameworkCore.Storage.Converters;
 global using Xunit;
+global using Muonroi.Data.Dapper.Dapper.Handlers;
+global using Muonroi.Core.Abstractions.Exceptions;

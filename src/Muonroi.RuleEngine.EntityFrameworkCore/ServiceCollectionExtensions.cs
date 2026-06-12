@@ -37,7 +37,7 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IRuleSetDefinitionValidator, RuleSetDefinitionValidator>();
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
         services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
-        services.TryAddSingleton<IRuleSetAuditSigner>(sp => CreateAuditSigner(sp.GetRequiredService<IOptions<RuleControlPlaneOptions>>().Value));
+        services.TryAddSingleton(sp => CreateAuditSigner(sp.GetRequiredService<IOptions<RuleControlPlaneOptions>>().Value));
 
         // Graph parser and context adapters for flow graph execution
         services.TryAddSingleton<RuleGraphParser>();
@@ -47,7 +47,7 @@ public static class ServiceCollectionExtensions
 
         // Register RLS interceptor as a singleton so it can be injected into DbContext options.
         services.AddOptions<MultiTenantOptions>().BindConfiguration(MultiTenantOptions.SectionName);
-        services.TryAddSingleton<TenantRlsConnectionInterceptor>(sp =>
+        services.TryAddSingleton(sp =>
             new TenantRlsConnectionInterceptor(sp.GetRequiredService<IOptions<MultiTenantOptions>>()));
 
         services.AddDbContext<RuleEngineDbContext>((sp, options) =>
@@ -60,7 +60,15 @@ public static class ServiceCollectionExtensions
             }
         });
 
-        services.Replace(ServiceDescriptor.Scoped<IRuleSetStore, PostgresRuleSetStore>());
+        // Resolve options via IOptions so RuleControlPlaneOptions.RequireApproval (and the other
+        // configured values) actually reach the store. Type-based activation would bind the
+        // optional constructor parameter to null and silently fall back to a default
+        // RuleControlPlaneOptions (RequireApproval=false), making the approval gate a no-op even
+        // when the consumer opts in. Behaviour-neutral for the default; only makes opt-in real.
+        services.Replace(ServiceDescriptor.Scoped<IRuleSetStore>(sp => new PostgresRuleSetStore(
+            sp.GetRequiredService<RuleEngineDbContext>(),
+            sp.GetRequiredService<IOptions<RuleControlPlaneOptions>>().Value,
+            sp.GetRequiredService<ISystemExecutionContextAccessor>())));
         services.Replace(ServiceDescriptor.Scoped<IRuleSetAuditStore, PostgresRuleSetAuditStore>());
         services.TryAddScoped<IRuleSetApprovalService, RuleSetApprovalService>();
         services.TryAddScoped<ICanaryRolloutService, CanaryRolloutService>();

@@ -84,7 +84,7 @@ internal sealed class RuleFlowNodeData
     public string? ConnectorType { get; init; }
 
     [JsonPropertyName("connectorConfig")]
-    public System.Text.Json.JsonElement? ConnectorConfig { get; init; }
+    public JsonElement? ConnectorConfig { get; init; }
 
     [JsonPropertyName("credentialId")]
     public string? CredentialId { get; init; }

@@ -27,13 +27,8 @@ public static class RuleSetChangeTypes
 /// Describes a ruleset lifecycle change event.
 /// </summary>
 public sealed record RuleSetChangeEvent(
-    /// <summary>Tenant identifier.</summary>
     string TenantId,
-    /// <summary>Workflow name.</summary>
     string WorkflowName,
-    /// <summary>Change type.</summary>
     string ChangeType,
-    /// <summary>Optional version number.</summary>
     int? Version,
-    /// <summary>UTC timestamp of the change.</summary>
     DateTimeOffset OccurredAtUtc);

@@ -1,8 +1,8 @@
 using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.BackgroundJobs.Hangfire.Tests;
 
-using HangfireConfigs = Muonroi.BackgroundJobs.Hangfire.Hangfire.BackgroundJobConfigs;
-using HangfireHandler = Muonroi.BackgroundJobs.Hangfire.Hangfire.BackgroundJobHandler;
+using HangfireConfigs = Hangfire.BackgroundJobConfigs;
+using HangfireHandler = Hangfire.BackgroundJobHandler;
 using Muonroi.BackgroundJobs.Abstractions;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;

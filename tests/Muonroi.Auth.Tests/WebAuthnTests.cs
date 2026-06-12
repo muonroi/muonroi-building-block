@@ -1,19 +1,14 @@
 namespace Muonroi.Auth.Tests;
 
 using Muonroi.Auth.Mfa.WebAuthenticate;
+using Muonroi.Core.Abstractions.Interfaces;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.EntityFrameworkCore;
-using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 
 public class WebAuthnTests
 {
-    private class TestDbContext(DbContextOptions options) : MDbContext(options)
-    {
-    }
-
-    private readonly TestDbContext _dbContext;
+    private readonly IWebAuthnCredentialStore _credentialStore = Substitute.For<IWebAuthnCredentialStore>();
     private readonly IFido2 _fido2 = Substitute.For<IFido2>();
     private readonly IDistributedCache _cache = Substitute.For<IDistributedCache>();
     private readonly IMJsonSerializeService _jsonService = Substitute.For<IMJsonSerializeService>();
@@ -22,12 +17,14 @@ public class WebAuthnTests
 
     public WebAuthnTests()
     {
-        var options = new DbContextOptionsBuilder<TestDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _dbContext = new TestDbContext(options);
+        _credentialStore.GetCredentialIdsByUserAsync(Arg.Any<string?>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<byte[]>());
+        _credentialStore.GetCredentialsByUserAsync(Arg.Any<string?>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<WebAuthnCredentialInfo>());
+        _credentialStore.GetAllCredentialIdsAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new List<byte[]>());
 
-        _service = new WebAuthenticateService(_fido2, _cache, _dbContext, _jsonService, _dateTimeService);
+        _service = new WebAuthenticateService(_fido2, _cache, _credentialStore, _jsonService, _dateTimeService);
     }
 
     [Fact]
@@ -55,8 +52,8 @@ public class WebAuthnTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var options = new CredentialCreateOptions 
-        { 
+        var options = new CredentialCreateOptions
+        {
             Rp = new PublicKeyCredentialRpEntity("id", "name"),
             User = new Fido2User { Id = [1], Name = "name", DisplayName = "display" },
             Challenge = [1],
@@ -78,8 +75,8 @@ public class WebAuthnTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var options = new AssertionOptions 
-        { 
+        var options = new AssertionOptions
+        {
             Challenge = [1]
         };
         _fido2.GetAssertionOptions(Arg.Any<GetAssertionOptionsParams>())

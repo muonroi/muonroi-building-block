@@ -1,7 +1,5 @@
-using Dapper;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Tenancy.Abstractions;
-using System.Data;
 
 namespace Muonroi.Data.Dapper.Dapper;
 
@@ -15,7 +13,18 @@ public abstract class MDapperRepositoryBase<T>(
     ITenantContext tenantContext,
     IMLog<T>? logger = null)
 {
+    /// <summary>
+    /// Provides access to the tenant-specific context for the current operation.
+    /// </summary>
+    /// <remarks>This field is intended for use by derived classes to interact with tenant-related
+    /// information, such as tenant identifiers or configuration. The value is set at construction and does not change
+    /// during the lifetime of the instance.</remarks>
     protected readonly ITenantContext TenantContext = tenantContext;
+    /// <summary>
+    /// Provides access to the logger instance used for recording diagnostic or operational messages.
+    /// </summary>
+    /// <remarks>The logger may be <see langword="null"/> if logging is not configured. Use this field to
+    /// write log entries relevant to the current context or operation.</remarks>
     protected readonly IMLog<T>? Logger = logger;
 
     /// <summary>
@@ -27,13 +36,13 @@ public abstract class MDapperRepositoryBase<T>(
     /// <param name="commandType">Optional command type.</param>
     /// <returns>A configured <see cref="MDapperCommand"/>.</returns>
     protected virtual MDapperCommand CreateCommand(
-        string sql, 
-        object? parameters = null, 
-        IDbTransaction? transaction = null, 
+        string sql,
+        object? parameters = null,
+        IDbTransaction? transaction = null,
         CommandType? commandType = null)
     {
         var dynamicParams = new DynamicParameters(parameters);
-        
+
         // Better Together: Automatically inject TenantId into Dapper queries
         if (!string.IsNullOrWhiteSpace(TenantContext.TenantId))
         {
@@ -59,7 +68,7 @@ public abstract class MDapperRepositoryBase<T>(
     /// <param name="sql">The SQL that failed.</param>
     protected void LogError(Exception ex, string sql)
     {
-        Logger?.Error(ex, "[Dapper] Query failed for Tenant {TenantId}. SQL: {Sql}", 
+        Logger?.Error(ex, "[Dapper] Query failed for Tenant {TenantId}. SQL: {Sql}",
             TenantContext.TenantId ?? "None", sql);
     }
 }

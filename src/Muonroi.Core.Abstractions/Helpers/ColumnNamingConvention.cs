@@ -1,10 +1,7 @@
-using System.Text;
-
 namespace Muonroi.Core.Abstractions.Helpers;
 
 /// <summary>
 /// Single source of truth for PascalCase → UPPER_SNAKE_CASE conversion.
-/// Used by both EF Core (<see cref="SiteColumnExtensions"/>) and Dapper (<see cref="DefaultSiteColumnMap"/>)
 /// to guarantee identical column name derivation across all data access layers.
 /// <para>
 /// <b>Acronym handling:</b> Consecutive uppercase letters are treated as an acronym.
@@ -32,7 +29,9 @@ public static class ColumnNamingConvention
     public static string ToUpperSnakeCase(string pascalCase)
     {
         if (string.IsNullOrEmpty(pascalCase))
+        {
             return pascalCase;
+        }
 
         var sb = new StringBuilder(pascalCase.Length + 4);
 

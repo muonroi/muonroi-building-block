@@ -125,7 +125,7 @@ public sealed class SiteConfigurationIntegrationTests
         var siteConfig = scope.ServiceProvider.GetRequiredService<ISiteConfiguration>();
 
         // Act
-        string result = siteConfig.GetValue<string>("NonExistentKey", "fallback-value");
+        string result = siteConfig.GetValue("NonExistentKey", "fallback-value");
 
         // Assert
         Assert.Equal("fallback-value", result);

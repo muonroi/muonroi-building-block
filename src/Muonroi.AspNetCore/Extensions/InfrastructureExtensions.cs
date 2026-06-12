@@ -13,7 +13,6 @@ using Muonroi.Core.Abstractions.Guards;
 using Muonroi.AspNetCore.DI.Autofac;
 using Muonroi.AspNetCore.Filters;
 using Muonroi.AspNetCore.Middleware;
-using Muonroi.Auth.BearerToken.Signers;
 using Muonroi.Core.Extensions;
 using Muonroi.Tenancy.Core.Legacy;
 using Muonroi.UiEngine.Catalog.Services;
@@ -93,7 +92,8 @@ public static class InfrastructureExtensions
             options.ConstraintMap.Add("apiVersion", typeof(Asp.Versioning.Routing.ApiVersionRouteConstraint));
         });
 
-        _ = services.AddScoped<MCookieAuthMiddleware>();
+        // MCookieAuthMiddleware: activated by UseMiddleware<T>() (receives RequestDelegate from pipeline).
+        // Do NOT register as scoped service — causes ValidateOnBuild failure since RequestDelegate isn't in DI.
         services.TryAddScoped<ICatalogScanService, NoopCatalogScanService>();
         services.TryAddSingleton<IUiEngineSchemaNotifier, NoopUiEngineSchemaNotifier>();
         services.TryAddScoped<IMControllerExecutionContextResolver, MDefaultControllerExecutionContextResolver>();
@@ -116,6 +116,9 @@ public static class InfrastructureExtensions
     }
     internal static IServiceCollection AddControllerConfiguration(this IServiceCollection services, params Assembly[] assemblies)
     {
+        // MAuthenticateInfoContext required by RequestLoggingFilter.
+        // TryAdd = won't overwrite if consumer registers a real auth context (e.g. via JWT middleware).
+        services.TryAddScoped(_ => new MAuthenticateInfoContext(false));
         services.AddScoped<RequestLoggingFilter>();
         _ = services.AddControllers(options =>
         {
@@ -143,6 +146,24 @@ public static class InfrastructureExtensions
         MGuard.NotNull(services);
         _ = services.AddScoped<PermissionFilter<TPermission>>();
         _ = services.AddMvc(options => { _ = options.Filters.AddService<PermissionFilter<TPermission>>(); });
+        return services;
+    }
+
+    /// <summary>
+    /// Registers <see cref="IAuthService{TPermission,TDbContext}"/> and
+    /// <see cref="IPermissionService{TPermission}"/> for the given DbContext and Permission type.
+    /// Call this after <see cref="AddDbContextConfigure{TDbContext,TPermission}"/> and
+    /// <see cref="AddValidateBearerToken"/> so that all auth dependencies are wired up
+    /// automatically without manual registration in the consumer app.
+    /// </summary>
+    public static IServiceCollection AddAuthServices<TDbContext, TPermission>(
+        this IServiceCollection services)
+        where TDbContext : MDbContext
+        where TPermission : Enum
+    {
+        MGuard.NotNull(services);
+        services.TryAddScoped<IAuthService<TPermission, TDbContext>, AuthService<TPermission, TDbContext>>();
+        services.TryAddScoped<IPermissionService<TPermission>, PermissionService<TPermission, TDbContext>>();
         return services;
     }
 
@@ -252,12 +273,14 @@ public static class InfrastructureExtensions
         return app;
     }
 
-/// <inheritdoc />
-    public static IServiceCollection AddValidateBearerToken<TDbContext, TPermission>(
+/// <summary>
+    /// Registers bearer token validation with JWT authentication.
+    /// Signer implementations are internal — no dependency on Muonroi.Auth required.
+    /// When IRefreshTokenValidator is not registered (Auth absent), refresh falls through to ClaimsPrincipal.
+    /// </summary>
+    public static IServiceCollection AddValidateBearerToken(
         this IServiceCollection services,
         IConfiguration configuration)
-        where TDbContext : MDbContext
-        where TPermission : Enum
     {
         MGuard.NotNull(services);
         MGuard.NotNull(configuration);
@@ -278,36 +301,52 @@ public static class InfrastructureExtensions
             MTokenInfo configs = sp.GetRequiredService<MTokenInfo>();
             if (configs.UseRsa)
             {
-                RSA rsa = RSA.Create();
                 string privateKeyStr = configs.GetEffectivePrivateKey();
+                if (string.IsNullOrWhiteSpace(privateKeyStr))
+                {
+                    throw new MConfigurationException(
+                        "TokenConfigs.UseRsa is true but no RSA private key was provided. " +
+                        "Set TokenConfigs:PrivateKey (inline PEM) or TokenConfigs:PrivateKeyPath (file path), " +
+                        "or set TokenConfigs:UseRsa=false to use HMAC with SymmetricSecretKey.",
+                        "TokenConfigs:PrivateKey");
+                }
+                RSA rsa = RSA.Create();
                 rsa.ImportFromPem(privateKeyStr.ToCharArray());
                 return new RsaTokenSigner(rsa);
             }
 
+            if (string.IsNullOrWhiteSpace(configs.SymmetricSecretKey))
+            {
+                throw new MConfigurationException(
+                    "TokenConfigs.UseRsa is false but TokenConfigs.SymmetricSecretKey is empty. " +
+                    "Set TokenConfigs:SymmetricSecretKey or set TokenConfigs:UseRsa=true with a private key.",
+                    "TokenConfigs:SymmetricSecretKey");
+            }
             return new HmacTokenSigner(configs.SymmetricSecretKey);
         });
-        services.TryAddScoped<MAuthenticateTokenHelper<TPermission>>();
-        services.TryAddScoped<IRefreshTokenValidator, Muonroi.Data.EntityFrameworkCore.Auth.DefaultRefreshTokenValidator<TDbContext, TPermission>>();
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(options =>
-        {
-            ServiceProvider sp = services.BuildServiceProvider();
-            MTokenInfo tokenConfigs = sp.GetRequiredService<MTokenInfo>();
-            ITokenSigner signer = sp.GetRequiredService<ITokenSigner>();
-            SecurityKey defaultSigningKey = signer.GetCredentials().Key;
-            options.TokenValidationParameters = new TokenValidationParameters
+        }).AddJwtBearer();
+
+        // Configure JwtBearer options via the options system so MTokenInfo + ITokenSigner are resolved
+        // LAZILY from the real application container. This avoids services.BuildServiceProvider(), which
+        // would spin up a second DI container (duplicate singletons + disposal hazards).
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<MTokenInfo, ITokenSigner>((options, tokenConfigs, signer) =>
             {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = tokenConfigs.Issuer,
-                ValidAudience = tokenConfigs.Audience,
-                IssuerSigningKey = defaultSigningKey,
-                IssuerSigningKeyResolver = (_, _, kid, _) =>
+                SecurityKey defaultSigningKey = signer.GetCredentials().Key;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = tokenConfigs.Issuer,
+                    ValidAudience = tokenConfigs.Audience,
+                    IssuerSigningKey = defaultSigningKey,
+                    IssuerSigningKeyResolver = (_, _, kid, _) =>
                     {
                         if (tokenConfigs.UseRsa || string.IsNullOrWhiteSpace(kid))
                         {
@@ -326,11 +365,48 @@ public static class InfrastructureExtensions
 
                         return [defaultSigningKey];
                     },
-                ClockSkew = TimeSpan.Zero
-            };
-        });
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
         services.AddAuthorization();
         return services;
+    }
+
+    /// <summary>
+    /// Backward-compatible overload. Generic parameters are no longer needed —
+    /// MAuthenticateTokenHelper and DefaultRefreshTokenValidator should be registered
+    /// by the consuming application when Auth package is used.
+    /// </summary>
+    [Obsolete("Use AddValidateBearerToken(services, configuration) instead. Generic parameters are no longer needed.")]
+    public static IServiceCollection AddValidateBearerToken<TDbContext, TPermission>(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        where TDbContext : MDbContext
+        where TPermission : Enum
+        => AddValidateBearerToken(services, configuration);
+
+    /// <summary>
+    /// Internal RSA token signer — decoupled from Muonroi.Auth.
+    /// </summary>
+    private sealed class RsaTokenSigner(RSA rsa) : ITokenSigner
+    {
+        public SigningCredentials GetCredentials()
+        {
+            SecurityKey key = new RsaSecurityKey(rsa);
+            return new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
+        }
+    }
+
+    /// <summary>
+    /// Internal HMAC token signer — decoupled from Muonroi.Auth.
+    /// </summary>
+    private sealed class HmacTokenSigner(string signingKey) : ITokenSigner
+    {
+        public SigningCredentials GetCredentials()
+        {
+            SecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+            return new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        }
     }
 
     private static void VerifyEnterpriseSecurityRequirements(IConfiguration configuration)
@@ -365,7 +441,7 @@ public static class InfrastructureExtensions
         bool enableEncryption = configuration.GetValue<bool>("EnableEncryption");
         if (!enableEncryption)
         {
-            throw new SecurityException("[SEC_FATAL] EnableEncryption must be true in Production with paid license.");
+            throw new MInternalException("[SEC_FATAL] EnableEncryption must be true in Production with paid license.", MErrorCodes.AspNetCore.EncryptionRequired);
         }
     }
 }

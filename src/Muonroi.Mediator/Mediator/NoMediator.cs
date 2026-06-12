@@ -36,7 +36,7 @@ public class NoMediator : IMediator
     /// Executes the Publish{TNotification} operation.
     /// </summary>
     public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
-        where TNotification : Interfaces.INotification
+        where TNotification : INotification
     {
         return Task.CompletedTask;
     }

@@ -6,9 +6,21 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity;
 /// <summary>
 /// Represents the base database context for the Muonroi application, providing audit, soft-delete, and multi-tenancy support.
 /// </summary>
-public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnitOfWork, IMDataContext, ITransactionalRuleContext, IIdentityAuth
+public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactionalRuleContext, IIdentityAuth
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.Data.EntityFrameworkCore");
+    private static readonly HashSet<Type> CreatorFilterExemptEntityTypes =
+    [
+        typeof(MPermission),
+        typeof(MPermissionGroup),
+        typeof(MRole),
+        typeof(MRolePermission),
+        typeof(MUser),
+        typeof(MUserLoginAttempt),
+        typeof(MUserRole),
+        typeof(MUserToken),
+        typeof(MWebAuthnCredential)
+    ];
     private readonly IMediator? _mediator;
     private readonly IMLog<MDbContext>? _logger;
     private readonly ILicenseGuard? _licenseGuard;
@@ -362,6 +374,34 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
         base.OnModelCreating(modelBuilder);
         modelBuilder.UseUtcDateTime();
 
+        // Normalize all Guid properties to lowercase string for SQLite compatibility.
+        // SQLite TEXT comparisons are case-sensitive; without normalization, a Guid written
+        // as "9415A44A-..." cannot be matched by a query using "9415a44a-..." — causing
+        // silent 401 failures during token validation. Applying this once at the model level
+        // fixes all Guid columns (EntityId, CreatorUserId, RefreshToken.CreatorUserId, etc.)
+        // consistently across every entity without touching any query code.
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite" || Database.IsInMemory())
+        {
+            ValueConverter<Guid, string> guidConverter = new(
+                v => v.ToString("D").ToLowerInvariant(),
+                v => Guid.Parse(v));
+
+            ValueConverter<Guid?, string?> nullableGuidConverter = new(
+                v => v.HasValue ? v.Value.ToString("D").ToLowerInvariant() : null,
+                v => string.IsNullOrEmpty(v) ? null : Guid.Parse(v));
+
+            foreach (IMutableEntityType entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (IMutableProperty property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(Guid))
+                        property.SetValueConverter(guidConverter);
+                    else if (property.ClrType == typeof(Guid?))
+                        property.SetValueConverter(nullableGuidConverter);
+                }
+            }
+        }
+
         // Explicit discovery for robust schema creation
         modelBuilder.Entity<MUser>();
         modelBuilder.Entity<MRole>();
@@ -429,7 +469,9 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
             if (typeof(MEntity).IsAssignableFrom(entityType.ClrType))
             {
                 PropertyInfo? creatorProp = entityType.ClrType.GetProperty("CreatorUserId");
-                if (creatorProp != null && creatorProp.PropertyType == typeof(Guid))
+                if (creatorProp != null &&
+                    creatorProp.PropertyType == typeof(Guid) &&
+                    ShouldApplyCreatorFilter(entityType.ClrType))
                 {
                     bool isTestProvider = Database.IsInMemory() || Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite";
                     LambdaExpression creatorFilter = BuildCreatorFilter(entityType.ClrType, creatorProp, isTestProvider);
@@ -489,6 +531,11 @@ public class MDbContext : DbContext, Muonroi.Data.Abstractions.UnitOfWork.IMUnit
 
         BinaryExpression body = Expression.OrElse(isEqual, bypassExpression);
         return Expression.Lambda(body, parameter);
+    }
+
+    private static bool ShouldApplyCreatorFilter(Type entityType)
+    {
+        return !CreatorFilterExemptEntityTypes.Contains(entityType);
     }
 
     private static LambdaExpression CombineWithAnd(LambdaExpression? existing, LambdaExpression added, Type entityType)

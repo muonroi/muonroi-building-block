@@ -37,7 +37,17 @@ public static class EcosystemServiceCollectionExtensions
             return registry;
         }
 
-        // Already registered — resolve from a temporary provider to get the existing instance.
+        // Already registered — the first registration above stores the registry as an
+        // instance singleton, so we can hand back the exact same object without building a
+        // temporary provider (which would be the BuildServiceProvider-during-registration
+        // anti-pattern this codebase otherwise avoids).
+        if (existing.ImplementationInstance is IMEcosystemRegistry instance)
+        {
+            return instance;
+        }
+
+        // Fallback (rare): registry was registered via a factory/type rather than an instance.
+        // Resolve from a temporary provider as a last resort.
         using var sp = services.BuildServiceProvider(
             new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = false });
 

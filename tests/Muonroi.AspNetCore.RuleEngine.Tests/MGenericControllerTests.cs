@@ -8,7 +8,7 @@ public class MGenericControllerTests
         public string TenantId { get; set; } = string.Empty;
     }
 
-    public class TestDbContext(DbContextOptions<MGenericControllerTests.TestDbContext> options) : MDbContext(options)
+    public class TestDbContext(DbContextOptions<TestDbContext> options) : MDbContext(options)
     {
         public DbSet<TestEntity> TestEntities => Set<TestEntity>();
 

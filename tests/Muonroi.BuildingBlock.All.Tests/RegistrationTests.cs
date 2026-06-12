@@ -33,8 +33,8 @@ public class RegistrationTests
         envMock.Setup(x => x.EnvironmentName).Returns("Development");
         envMock.Setup(x => x.ContentRootPath).Returns(AppContext.BaseDirectory);
 
-        services.AddSingleton<IWebHostEnvironment>(envMock.Object);
-        services.AddSingleton<Microsoft.Extensions.Hosting.IHostEnvironment>(envMock.Object);
+        services.AddSingleton(envMock.Object);
+        services.AddSingleton<IHostEnvironment>(envMock.Object);
         
         services.AddSingleton<IConfiguration>(config);
         services.AddLogging();

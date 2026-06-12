@@ -20,7 +20,9 @@ public class ExceptionHandlingTests
     public void GlobalExceptionFilter_OnException_SetsResult()
     {
         var logger = Substitute.For<IMLog<GlobalExceptionFilter>>();
-        var filter = new GlobalExceptionFilter(logger);
+        var env = Substitute.For<IHostEnvironment>();
+        env.EnvironmentName.Returns("Development");
+        var filter = new GlobalExceptionFilter(logger, env);
         var actionContext = new ActionContext(new DefaultHttpContext(), new RouteData(), new ActionDescriptor());
         var exceptionContext = new ExceptionContext(actionContext, new List<IFilterMetadata>())
         {
@@ -45,11 +47,11 @@ public class ExceptionHandlingTests
         var env = Substitute.For<IHostEnvironment>();
         env.EnvironmentName.Returns("Production");
 
-        var middleware = new MExceptionMiddleware(next, logger, serializeService, authContext, env);
+        var middleware = new MExceptionMiddleware(next);
         var httpContext = new DefaultHttpContext();
         httpContext.Response.Body = new MemoryStream();
 
-        await middleware.InvokeAsync(httpContext);
+        await middleware.InvokeAsync(httpContext, logger, serializeService, authContext, env);
 
         Assert.Equal(StatusCodes.Status500InternalServerError, httpContext.Response.StatusCode);
         serializeService.Received(1).Serialize(Arg.Any<object>());

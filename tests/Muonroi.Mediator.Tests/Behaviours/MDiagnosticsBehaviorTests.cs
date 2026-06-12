@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Diagnostics.Abstractions;
+using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Mediator.Behaviours;
 

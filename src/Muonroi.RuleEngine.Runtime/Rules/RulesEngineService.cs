@@ -19,7 +19,8 @@ public sealed class RulesEngineService(
     ICanaryRolloutService? canaryRolloutService = null,
     ISystemExecutionContextAccessor? executionContextAccessor = null,
     RuleGraphParser? graphParser = null,
-    IMLog<RulesEngineService>? log = null)
+    IMLog<RulesEngineService>? log = null,
+    MRuleContextJsonRegistry? contextRegistry = null)
 {
     private readonly ReSettings _settings = settings ?? new ReSettings();
     private readonly ILicenseGuard? _licenseGuard = licenseGuard;
@@ -36,6 +37,10 @@ public sealed class RulesEngineService(
         graphParser ??
         serviceProvider?.GetService<RuleGraphParser>();
     private readonly IMLog<RulesEngineService>? _log = log;
+    private readonly MRuleContextJsonRegistry _contextRegistry =
+        contextRegistry ??
+        serviceProvider?.GetService<MRuleContextJsonRegistry>() ??
+        new MRuleContextJsonRegistry();
 
     private static readonly ConcurrentDictionary<string, CachedWorkflowDefinition> WorkflowCache =
         new(StringComparer.OrdinalIgnoreCase);
@@ -265,13 +270,7 @@ public sealed class RulesEngineService(
                     "Graph-based dry-run requires 'contextType' (assembly-qualified name or full type name).");
             }
 
-            Type resolvedGraphContext = ResolveContextType(contextType);
-            object? graphContext = JsonSerializer.Deserialize(context.GetRawText(), resolvedGraphContext, // MBB002-exempt: requires Type-based overload with custom options not available in wrapper
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (graphContext is null)
-            {
-                throw new MConfigurationException("Dry-run context payload could not be deserialized to the requested contextType.");
-            }
+            object graphContext = _contextRegistry.DeserializeContext(contextType, context.GetRawText());
 
             return await ExecuteFlowGraphDynamicAsync(workflowName, json, graphContext, cancellationToken);
         }
@@ -285,13 +284,7 @@ public sealed class RulesEngineService(
                     "Code-based ruleset dry-run requires 'contextType' (assembly-qualified name or full type name).");
             }
 
-            Type resolved = ResolveContextType(contextType);
-            object? contextValue = JsonSerializer.Deserialize(context.GetRawText(), resolved, // MBB002-exempt: requires Type-based overload with custom options not available in wrapper
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (contextValue is null)
-            {
-                throw new MConfigurationException("Dry-run context payload could not be deserialized to the requested contextType.");
-            }
+            object contextValue = _contextRegistry.DeserializeContext(contextType, context.GetRawText());
 
             return await ExecuteCodeWorkflowDynamicAsync(
                 definition.RuleCodes,
@@ -419,11 +412,11 @@ public sealed class RulesEngineService(
         IEnumerable<IHookHandler<TContext>> hooks = _serviceProvider?.GetServices<IHookHandler<TContext>>() ?? [];
         IEnumerable<IRuleEventListener<TContext>> listeners =
             _serviceProvider?.GetServices<IRuleEventListener<TContext>>() ?? [];
-        IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>? logger =
-            _serviceProvider?.GetService<IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>>();
+        IMLog<Core.RuleOrchestrator<TContext>>? logger =
+            _serviceProvider?.GetService<IMLog<Core.RuleOrchestrator<TContext>>>();
         ITenantQuotaTracker? quotaTracker = _serviceProvider?.GetService<ITenantQuotaTracker>();
         IRuleExecutionTracer? tracer = _serviceProvider?.GetService<IRuleExecutionTracer>();
-        Muonroi.RuleEngine.Core.RuleOrchestrator<TContext> orchestrator =
+        Core.RuleOrchestrator<TContext> orchestrator =
             new(resolvedRules, hooks, logger, listeners, quotaTracker, tracer, _executionContext);
         return await orchestrator.ExecuteWithResultAsync(
             context,
@@ -442,7 +435,7 @@ public sealed class RulesEngineService(
             BindingFlags.Instance | BindingFlags.NonPublic);
         if (bridge is null)
         {
-            throw new MissingMethodException(nameof(ExecuteCodeWorkflowBridgeAsync));
+            throw new MConfigurationException($"Method {nameof(ExecuteCodeWorkflowBridgeAsync)} not available — code workflow bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
@@ -478,7 +471,7 @@ public sealed class RulesEngineService(
             BindingFlags.Instance | BindingFlags.NonPublic);
         if (bridge is null)
         {
-            throw new MissingMethodException(nameof(ExecuteLegacyWorkflowBridgeAsync));
+            throw new MConfigurationException($"Method {nameof(ExecuteLegacyWorkflowBridgeAsync)} not available — legacy workflow bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
@@ -521,7 +514,7 @@ public sealed class RulesEngineService(
         {
             if (!string.IsNullOrEmpty(result.ExceptionMessage))
             {
-                throw new Exception(result.ExceptionMessage);
+                throw new MInternalException(result.ExceptionMessage ?? "Rule execution failed.", MErrorCodes.Rule.ExecutionFailed);
             }
 
             if (result.ActionResult?.Exception is not null)
@@ -564,34 +557,6 @@ public sealed class RulesEngineService(
             JsonValueKind.Object => je.EnumerateObject().ToDictionary(x => x.Name, x => ConvertJsonElement(x.Value), StringComparer.OrdinalIgnoreCase),
             _ => output
         };
-    }
-
-    private static Type ResolveContextType(string contextTypeName)
-    {
-        Type? resolved = Type.GetType(contextTypeName, throwOnError: false, ignoreCase: true);
-        if (resolved is not null)
-        {
-            return resolved;
-        }
-
-        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            resolved = assembly.GetType(contextTypeName, throwOnError: false, ignoreCase: true);
-            if (resolved is not null)
-            {
-                return resolved;
-            }
-
-            resolved = GetLoadableTypes(assembly).FirstOrDefault(x =>
-                string.Equals(x.FullName, contextTypeName, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(x.Name, contextTypeName, StringComparison.OrdinalIgnoreCase));
-            if (resolved is not null)
-            {
-                return resolved;
-            }
-        }
-
-        throw new MConfigurationException($"Cannot resolve contextType '{contextTypeName}'.");
     }
 
     private static object? ConvertJsonElement(JsonElement element)
@@ -688,11 +653,10 @@ public sealed class RulesEngineService(
         {
             if (WorkflowCache.Count <= MaxWorkflowCacheEntries) return; // Double-checked after acquiring lock
 
-            string[] toEvict = WorkflowCache.ToArray()
+            string[] toEvict = [.. WorkflowCache.ToArray()
                 .OrderBy(kv => kv.Value.LastAccessedUtc)
                 .Take(MaxWorkflowCacheEntries / 4) // 512 entries = 25%
-                .Select(kv => kv.Key)
-                .ToArray();
+                .Select(kv => kv.Key)];
 
             foreach (string key in toEvict)
             {
@@ -739,8 +703,8 @@ public sealed class RulesEngineService(
 
             Workflow[] workflows = rawRoot.ValueKind switch
             {
-                JsonValueKind.Array => JsonSerializer.Deserialize<Workflow[]>(json) ?? [], // MBB002-exempt: static workflow parsing — Workflow type requires direct JsonSerializer
-                JsonValueKind.Object => JsonSerializer.Deserialize<Workflow>(json) is Workflow single ? [single] : [], // MBB002-exempt: static workflow parsing
+                JsonValueKind.Array => JsonSerializer.Deserialize<Workflow[]>(json) ?? [],
+                JsonValueKind.Object => JsonSerializer.Deserialize<Workflow>(json) is Workflow single ? [single] : [],
                 _ => []
             };
             return new CachedWorkflowDefinition(json, null, workflows, ParseExecutionMode(root));
@@ -1038,12 +1002,12 @@ public sealed class RulesEngineService(
         IEnumerable<IHookHandler<TContext>> hooks = _serviceProvider?.GetServices<IHookHandler<TContext>>() ?? [];
         IEnumerable<IRuleEventListener<TContext>> listeners =
             _serviceProvider?.GetServices<IRuleEventListener<TContext>>() ?? [];
-        IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>? logger =
-            _serviceProvider?.GetService<IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<TContext>>>();
+        IMLog<Core.RuleOrchestrator<TContext>>? logger =
+            _serviceProvider?.GetService<IMLog<Core.RuleOrchestrator<TContext>>>();
         ITenantQuotaTracker? quotaTracker = _serviceProvider?.GetService<ITenantQuotaTracker>();
         IRuleExecutionTracer? tracer = _serviceProvider?.GetService<IRuleExecutionTracer>();
 
-        Muonroi.RuleEngine.Core.RuleOrchestrator<TContext> orchestrator =
+        Core.RuleOrchestrator<TContext> orchestrator =
             new(rules, hooks, logger, listeners, quotaTracker, tracer, _executionContext);
 
         return await orchestrator.ExecuteWithResultAsync(
@@ -1100,12 +1064,9 @@ public sealed class RulesEngineService(
         // Type B-1b: FEEL condition
         if (!string.IsNullOrEmpty(entry.FeelExpression))
         {
-            IMLog<FeelRuleAdapter<TContext>>? feelLog =
-                _serviceProvider?.GetService<IMLog<FeelRuleAdapter<TContext>>>();
-            if (feelLog is null)
-            {
-                return null;
-            }
+            IMLog<FeelRuleAdapter<TContext>> feelLog =
+                _serviceProvider?.GetService<IMLog<FeelRuleAdapter<TContext>>>()
+                ?? NoOpMLog<FeelRuleAdapter<TContext>>.Instance;
 
             _log?.Info("Resolved node '{NodeId}' as FEEL adapter.", entry.NodeId);
             return WrapRuleEntry(
@@ -1121,15 +1082,12 @@ public sealed class RulesEngineService(
         // Type B-2: Liquid/Scriban action
         if (!string.IsNullOrEmpty(entry.LiquidTemplate))
         {
-            IMLog<LiquidRuleAdapter<TContext>>? liquidLog =
-                _serviceProvider?.GetService<IMLog<LiquidRuleAdapter<TContext>>>();
+            IMLog<LiquidRuleAdapter<TContext>> liquidLog =
+                _serviceProvider?.GetService<IMLog<LiquidRuleAdapter<TContext>>>()
+                ?? NoOpMLog<LiquidRuleAdapter<TContext>>.Instance;
             IMJsonSerializeService jsonSvc =
                 _serviceProvider?.GetService<IMJsonSerializeService>()
                 ?? new Muonroi.Core.Abstractions.SeedWorks.MJsonSerializeService();
-            if (liquidLog is null)
-            {
-                return null;
-            }
 
             IEnumerable<IScribanFunctionProvider>? functionProviders =
                 _serviceProvider?.GetServices<IScribanFunctionProvider>();
@@ -1203,10 +1161,10 @@ public sealed class RulesEngineService(
         // Type B-5: Connector
         if (!string.IsNullOrEmpty(entry.ConnectorType) && _serviceProvider is not null)
         {
-            Muonroi.Integration.Abstractions.IConnectorRegistry? registry =
-                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorRegistry>();
-            Muonroi.Integration.Abstractions.IConnectorCredentialStore? credStore =
-                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorCredentialStore>();
+            Integration.Abstractions.IConnectorRegistry? registry =
+                _serviceProvider.GetService<Integration.Abstractions.IConnectorRegistry>();
+            Integration.Abstractions.IConnectorCredentialStore? credStore =
+                _serviceProvider.GetService<Integration.Abstractions.IConnectorCredentialStore>();
             IMLog<ConnectorRuleAdapter<TContext>>? connLog =
                 _serviceProvider.GetService<IMLog<ConnectorRuleAdapter<TContext>>>();
 
@@ -1306,11 +1264,11 @@ public sealed class RulesEngineService(
 
         IEnumerable<IHookHandler<FactBagRuleContext>> hooks =
             _serviceProvider?.GetServices<IHookHandler<FactBagRuleContext>>() ?? [];
-        IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<FactBagRuleContext>>? logger =
-            _serviceProvider?.GetService<IMLog<Muonroi.RuleEngine.Core.RuleOrchestrator<FactBagRuleContext>>>();
+        IMLog<Core.RuleOrchestrator<FactBagRuleContext>>? logger =
+            _serviceProvider?.GetService<IMLog<Core.RuleOrchestrator<FactBagRuleContext>>>();
         IRuleExecutionTracer? tracer = _serviceProvider?.GetService<IRuleExecutionTracer>();
 
-        Muonroi.RuleEngine.Core.RuleOrchestrator<FactBagRuleContext> orchestrator =
+        Core.RuleOrchestrator<FactBagRuleContext> orchestrator =
             new(rules, hooks, logger, [], null, tracer, _executionContext);
 
         FactBagRuleContext ctx = new(inputFacts);
@@ -1453,10 +1411,10 @@ public sealed class RulesEngineService(
         // Type B-5: Connector
         if (!string.IsNullOrEmpty(entry.ConnectorType) && _serviceProvider is not null)
         {
-            Muonroi.Integration.Abstractions.IConnectorRegistry? registry =
-                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorRegistry>();
-            Muonroi.Integration.Abstractions.IConnectorCredentialStore? credStore =
-                _serviceProvider.GetService<Muonroi.Integration.Abstractions.IConnectorCredentialStore>();
+            Integration.Abstractions.IConnectorRegistry? registry =
+                _serviceProvider.GetService<Integration.Abstractions.IConnectorRegistry>();
+            Integration.Abstractions.IConnectorCredentialStore? credStore =
+                _serviceProvider.GetService<Integration.Abstractions.IConnectorCredentialStore>();
             IMLog<ConnectorRuleAdapter<FactBagRuleContext>>? log =
                 _serviceProvider.GetService<IMLog<ConnectorRuleAdapter<FactBagRuleContext>>>();
 
@@ -1493,7 +1451,7 @@ public sealed class RulesEngineService(
             BindingFlags.Instance | BindingFlags.NonPublic);
         if (bridge is null)
         {
-            throw new MissingMethodException(nameof(ExecuteFlowGraphBridgeAsync));
+            throw new MConfigurationException($"Method {nameof(ExecuteFlowGraphBridgeAsync)} not available — flow graph bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
@@ -1600,4 +1558,37 @@ public sealed class RulesEngineService(
         Workflow[]? LegacyWorkflows,
         ExecutionMode? ExecutionMode,
         DateTime LastAccessedUtc = default);
+
+    /// <summary>
+    /// No-op <see cref="IMLog{T}"/> used as a fallback when the logger is not registered in DI.
+    /// Allows FEEL and Liquid adapters to execute in dry-run and test contexts without requiring
+    /// full logging infrastructure.
+    /// </summary>
+    private sealed class NoOpMLog<T> : IMLog<T>
+    {
+        public static readonly NoOpMLog<T> Instance = new();
+
+        private sealed class NullScope : IMLogContextScope
+        {
+            public static readonly NullScope Instance = new();
+            public void Dispose() { }
+        }
+
+        public IMLogContextScope BeginProperty(string key, object? value) => NullScope.Instance;
+        public void Info(string messageTemplate, params object?[] args) { }
+        public void Warn(string messageTemplate, params object?[] args) { }
+        public void Error(Exception? ex, string messageTemplate, params object?[] args) { }
+        public void Debug(string messageTemplate, params object?[] args) { }
+        public void InfoTrace(string messageTemplate, params object?[] args) { }
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+        public bool IsEnabled(LogLevel logLevel) => false;
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        { }
+    }
 }

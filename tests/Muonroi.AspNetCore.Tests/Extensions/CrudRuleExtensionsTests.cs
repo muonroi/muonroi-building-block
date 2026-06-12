@@ -14,7 +14,7 @@ public class CrudRuleExtensionsTests
 
         // Verify the RuleOrchestrator<CrudContext<TestEntity>> was registered
         services.Should().Contain(d =>
-            d.ServiceType == typeof(Muonroi.RuleEngine.Core.RuleOrchestrator<CrudContext<TestEntity>>));
+            d.ServiceType == typeof(RuleEngine.Core.RuleOrchestrator<CrudContext<TestEntity>>));
     }
 
     [Fact]

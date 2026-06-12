@@ -45,7 +45,7 @@ public class MediatorExceptionTests
     {
         MMediator mediator = new(new EmptyServiceFactory());
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() => mediator.Publish<TestNotification>(null!));
+        await Assert.ThrowsAsync<MArgumentException>(() => mediator.Publish<TestNotification>(null!));
     }
 
     [Fact]

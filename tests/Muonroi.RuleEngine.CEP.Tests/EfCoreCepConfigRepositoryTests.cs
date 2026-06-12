@@ -90,7 +90,7 @@ public sealed class EfCoreCepConfigRepositoryTests
     {
         ServiceCollection services = new();
 
-        services.AddSingleton<Muonroi.Mediator.Mediator.Interfaces.IMediator, StubMediator>();
+        services.AddSingleton<Mediator.Mediator.Interfaces.IMediator, StubMediator>();
         services.AddCepWeb(options => options.PostgresConnectionString = "Host=localhost;Database=cep;Username=test;Password=test");
 
         ServiceDescriptor descriptor = Assert.Single(

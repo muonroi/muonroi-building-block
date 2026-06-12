@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+<PackageReference Include="MailKit" />
 <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" VersionOverride="9.0.1" />
 <PackageReference Include="Moq" />
     <PackageReference Include="Scriban" />

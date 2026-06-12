@@ -60,7 +60,7 @@ public sealed class SmtpConnector : IServiceTaskConnector
             await client.ConnectAsync(host, port, MailKit.Security.SecureSocketOptions.StartTlsWhenAvailable, ct);
             if (!string.IsNullOrEmpty(username))
             {
-                await client.AuthenticateAsync(username, password, ct);
+                await client.AuthenticateAsync(username, password ?? string.Empty, ct);
             }
             await client.SendAsync(message, ct);
             await client.DisconnectAsync(true, ct);

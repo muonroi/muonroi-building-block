@@ -47,7 +47,6 @@ public interface IMSiteService<TContext, TEntity>
 
     /// <summary>
     /// Wraps a unit of work in a database transaction scoped to the site's write context.
-    /// Delegates to the underlying <see cref="IMSiteRepository{TContext,TEntity}"/> transaction pattern.
     /// </summary>
     /// <param name="action">
     /// The operation to execute inside the transaction.

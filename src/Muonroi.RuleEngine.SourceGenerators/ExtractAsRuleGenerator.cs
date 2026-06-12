@@ -147,11 +147,28 @@ public sealed class ExtractAsRuleGenerator : IIncrementalGenerator
 
             INamedTypeSymbol classSymbol = methodSymbol.ContainingType;
             string? sourceNamespace = classSymbol.ContainingNamespace.IsGlobalNamespace ? null : classSymbol.ContainingNamespace.ToDisplayString();
-            List<ParameterModel> parameters = [.. methodSymbol.Parameters.Select(parameter => new ParameterModel(
-                parameter.Name,
-                parameter.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
-                parameter.HasExplicitDefaultValue,
-                parameter.HasExplicitDefaultValue ? (parameter.ExplicitDefaultValue?.ToString() ?? "null") : null))];
+            List<ParameterModel> parameters = [.. methodSymbol.Parameters.Select(parameter =>
+            {
+                string? defaultValueExpression = null;
+                if (parameter.HasExplicitDefaultValue)
+                {
+                    // For struct types (e.g. CancellationToken), ExplicitDefaultValue is null even for `= default`.
+                    // Emit "default" instead of "null" to avoid CS1750.
+                    if (parameter.ExplicitDefaultValue is null && parameter.Type.IsValueType)
+                    {
+                        defaultValueExpression = "default";
+                    }
+                    else
+                    {
+                        defaultValueExpression = parameter.ExplicitDefaultValue?.ToString() ?? "null";
+                    }
+                }
+                return new ParameterModel(
+                    parameter.Name,
+                    parameter.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+                    parameter.HasExplicitDefaultValue,
+                    defaultValueExpression);
+            })];
             string contextType = parameters.FirstOrDefault(parameter => !IsFactBag(parameter.TypeName) && !IsCancellationToken(parameter.TypeName))?.TypeName ?? "object";
             List<ServiceDependency> dependencies = ExtractDependencies(method, classSymbol, model, context);
             List<HelperMethodDefinition> helpers = ExtractHelperMethods(method, classSymbol, compilation, context);

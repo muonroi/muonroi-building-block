@@ -1,6 +1,6 @@
-using System.Data;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
+using System.Data;
 
 namespace Muonroi.Data.EntityFrameworkCore.Repositories;
 
@@ -441,7 +441,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
     /// </summary>
     /// <param name="action">The action to execute.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public virtual async Task ExecuteTransactionAsync(Func<Task<Muonroi.Core.Abstractions.Response.MVoidMethodResult>> action)
+    public virtual async Task ExecuteTransactionAsync(Func<Task<MVoidMethodResult>> action)
     {
         if (DbBaseContext.Database.IsInMemory() || DbBaseContext.HasActiveTransaction)
         {
@@ -455,7 +455,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
             await using IDbContextTransaction? transaction = await DbBaseContext.BeginTransactionAsync().ConfigureAwait(false);
             try
             {
-                Muonroi.Core.Abstractions.Response.MVoidMethodResult result = await action().ConfigureAwait(false);
+                MVoidMethodResult result = await action().ConfigureAwait(false);
 
                 if (result?.IsOk ?? false)
                 {
@@ -543,78 +543,9 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
                 DbBaseContext.TrackEntity(entity);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             throw new MInternalException("Bulk insert failed.");
         }
-    }
-
-    /// <summary>
-    /// Executes a stored procedure asynchronously.
-    /// </summary>
-    /// <param name="storedProcedureName">The name of the stored procedure.</param>
-    /// <param name="parameters">The parameters for the stored procedure.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the number of rows affected.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="storedProcedureName"/> is null or empty.</exception>
-    [Obsolete("Raw SQL bypasses EF tenant query filters. Use the overload with explicit tenantId parameter, or ensure TenantContext.CurrentTenantId is set.")]
-    public virtual async Task<int> ExecuteStoredProcedureAsync(string storedProcedureName, params object[] parameters)
-    {
-        MGuard.NotEmpty(storedProcedureName);
-
-        if (string.IsNullOrEmpty(TenantContext.CurrentTenantId) && !TenantContext.AllowCrossTenantAccess)
-        {
-            _logger?.LogWarning("[SAFE-10] Raw SQL execution '{StoredProcedureName}' without TenantContext. Set CurrentTenantId or AllowCrossTenantAccess.", storedProcedureName);
-        }
-
-        string commandText = $"EXEC {storedProcedureName}";
-        return await DbBaseContext.Database
-            .ExecuteSqlRawAsync(commandText, parameters)
-            .ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Executes a stored procedure and returns a scalar value asynchronously.
-    /// </summary>
-    /// <typeparam name="TResult">The type of the result.</typeparam>
-    /// <param name="storedProcedureName">The name of the stored procedure.</param>
-    /// <param name="parameters">The parameters for the stored procedure.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the scalar value returned by the stored procedure.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="storedProcedureName"/> is null or empty.</exception>
-    [Obsolete("Raw SQL bypasses EF tenant query filters. Use the overload with explicit tenantId parameter, or ensure TenantContext.CurrentTenantId is set.")]
-    public virtual async Task<TResult> ExecuteStoredProcedureScalarAsync<TResult>(string storedProcedureName,
-        params object[]? parameters)
-    {
-        MGuard.NotEmpty(storedProcedureName);
-
-        if (string.IsNullOrEmpty(TenantContext.CurrentTenantId) && !TenantContext.AllowCrossTenantAccess)
-        {
-            _logger?.LogWarning("[SAFE-10] Raw SQL scalar execution '{StoredProcedureName}' without TenantContext. Set CurrentTenantId or AllowCrossTenantAccess.", storedProcedureName);
-        }
-
-        using System.Data.Common.DbCommand command = DbBaseContext.Database.GetDbConnection().CreateCommand();
-        command.CommandText = storedProcedureName;
-        command.CommandType = CommandType.StoredProcedure;
-
-        if (parameters != null && parameters.Length != 0)
-        {
-            foreach (object param in parameters)
-            {
-                command.Parameters.Add(param);
-            }
-        }
-
-        if (command.Connection is not null && command.Connection.State != ConnectionState.Open)
-        {
-            await command.Connection.OpenAsync();
-        }
-
-        object? result = await command.ExecuteScalarAsync();
-
-        if (result == null || result == DBNull.Value)
-        {
-            return default!;
-        }
-
-        return (TResult)Convert.ChangeType(result, typeof(TResult));
     }
 }

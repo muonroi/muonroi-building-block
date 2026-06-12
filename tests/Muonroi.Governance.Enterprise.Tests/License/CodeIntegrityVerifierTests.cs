@@ -1,6 +1,7 @@
 using Muonroi.Governance.Abstractions.Integrity;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.License;
+using Muonroi.Core.Abstractions.Exceptions;
 using NSubstitute;
 using System.Security;
 
@@ -112,6 +113,6 @@ public class CodeIntegrityVerifierTests
         _collector.Collect().Returns([runtime]);
 
         // Act & Assert
-        Assert.Throws<SecurityException>(() => _verifier.VerifyIntegrity(state, true));
+        Assert.Throws<MInternalException>(() => _verifier.VerifyIntegrity(state, true));
     }
 }

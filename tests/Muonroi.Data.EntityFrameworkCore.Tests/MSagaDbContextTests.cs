@@ -1,11 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Data.EntityFrameworkCore.Saga;
-using Muonroi.Mediator.Mediator.Interfaces;
 using Muonroi.Messaging.Abstractions.Contracts;
 using NSubstitute;
-using Xunit;
 
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
@@ -14,7 +10,7 @@ public class MSagaDbContextTests
     public class TestSaga : IMuonroiSaga
     {
         public Guid CorrelationId { get; set; }
-        public string TenantId { get; set; } = string.Empty;
+        public string? TenantId { get; set; } = string.Empty;
         public DateTime CreationTime { get; set; }
         public DateTime? LastModificationTime { get; set; }
     }

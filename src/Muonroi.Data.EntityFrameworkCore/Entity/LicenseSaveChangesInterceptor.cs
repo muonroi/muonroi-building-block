@@ -8,8 +8,8 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity;
 /// <param name="guard">The license guard.</param>
 /// <param name="configs">License configuration.</param>
 public sealed class LicenseSaveChangesInterceptor(
-    ILicenseGuard guard,
-    LicenseConfigs configs)
+    ILicenseGuard? guard,
+    LicenseConfigs? configs)
     : SaveChangesInterceptor
 {
     private const string ActionType = "db.savechanges";
@@ -32,7 +32,7 @@ public sealed class LicenseSaveChangesInterceptor(
         {
             using (LicenseExecutionContext.BeginScope())
             {
-                guard.EnsureValid(ActionType, eventData.Context?.GetType().Name);
+                guard!.EnsureValid(ActionType, eventData.Context?.GetType().Name);
                 LicenseActionContext context = new()
                 {
                     ActionType = ActionType,
@@ -40,7 +40,7 @@ public sealed class LicenseSaveChangesInterceptor(
                     PayloadHash = ComputeChangeHash(eventData.Context),
                     TenantId = TenantContext.CurrentTenantId
                 };
-                guard.RecordAction(context);
+                guard!.RecordAction(context);
             }
         }
 
@@ -66,7 +66,7 @@ public sealed class LicenseSaveChangesInterceptor(
         {
             using (LicenseExecutionContext.BeginScope())
             {
-                guard.EnsureValid(ActionType, eventData.Context?.GetType().Name);
+                guard!.EnsureValid(ActionType, eventData.Context?.GetType().Name);
                 LicenseActionContext context = new()
                 {
                     ActionType = ActionType,
@@ -74,7 +74,7 @@ public sealed class LicenseSaveChangesInterceptor(
                     PayloadHash = ComputeChangeHash(eventData.Context),
                     TenantId = TenantContext.CurrentTenantId
                 };
-                guard.RecordAction(context);
+                guard!.RecordAction(context);
             }
         }
 
@@ -83,7 +83,7 @@ public sealed class LicenseSaveChangesInterceptor(
 
     private bool ShouldEnforceOnDatabase()
     {
-        return configs.EnforceOnDatabase;
+        return guard is not null && (configs?.EnforceOnDatabase ?? false);
     }
 
     private static string ComputeChangeHash(DbContext? context)

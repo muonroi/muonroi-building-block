@@ -20,7 +20,7 @@ public sealed class RuleSetHotReloadOptions
     /// <summary>
     /// When true, subscribes to the global all-tenants group to receive events for ALL tenants.
     /// Use for multi-tenant consumer apps that serve multiple tenants.
-    /// The handler receives <see cref="Rules.RuleSetChangeEvent"/> with TenantId per event,
+    /// The handler receives <see cref="RuleSetChangeEvent"/> with TenantId per event,
     /// so the consumer can invalidate the correct tenant's cache.
     /// </summary>
     public bool SubscribeAllTenants { get; set; }

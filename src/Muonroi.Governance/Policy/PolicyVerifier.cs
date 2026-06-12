@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Security;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 
@@ -30,13 +31,22 @@ public sealed class PolicyVerifier(
         try
         {
             string? keyPath = ResolvePath(configs.PublicKeyPath, environment);
-            if (string.IsNullOrWhiteSpace(keyPath) || !File.Exists(keyPath))
+            if (string.IsNullOrWhiteSpace(keyPath))
             {
                 logger?.Warn("[Policy] Public key not found for policy verification.");
                 return false;
             }
 
-            string publicKey = File.ReadAllText(keyPath);
+            string publicKey;
+            try
+            {
+                publicKey = MSecureFileReader.ReadKeyFile(keyPath);
+            }
+            catch
+            {
+                logger?.Warn("[Policy] Public key not found for policy verification.");
+                return false;
+            }
             using RSA rsa = RSA.Create();
             rsa.ImportFromPem(publicKey.ToCharArray());
 

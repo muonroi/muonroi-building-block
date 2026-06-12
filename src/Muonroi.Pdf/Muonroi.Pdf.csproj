@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.7.0</FileVersion>
+    <!-- NuGet packaging metadata -->
+    <PackageId>Muonroi.Pdf</PackageId>
+    <Version>1.0.7</Version>
+    <Description>HTML/CSS to PDF layout engine: box-tree construction, pagination, and rendering coordination for Muonroi applications.</Description>
+    <!-- OSS: use SPDX expression — overrides the global PackageLicenseFile set in Directory.Build.props -->
+    <PackageLicenseFile></PackageLicenseFile>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>pdf;html;css;pure-managed;muonroi</PackageTags>
+    <!-- AOT-01 verified: no reflection-emit in hot path; engine is AOT-clean.
+         Audit performed in Phase 08-04: grep for Activator.CreateInstance, Type.GetProperties/Methods/Constructors/Fields,
+         AppDomain.CurrentDomain, Assembly.GetExecutingAssembly, GetType() on non-this expressions — 0 matches found.
+         AOT compatibility: engine hot path uses no Activator.CreateInstance or dynamic code.
+         AngleSharp.Css trim warnings are suppressed via TrimmerRootDescriptor in the AOT sample. -->
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SixLabors.Fonts" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj" />
+    <ProjectReference Include="..\Muonroi.Tenancy.Abstractions\Muonroi.Tenancy.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Logging\Muonroi.Logging.csproj" />
+    <!-- ITelemetryDescriptor lives in Muonroi.Core.Abstractions (net8.0). The PDF Abstractions
+         project is netstandard2.0 and cannot reference a net8.0 assembly, so the descriptor is
+         hosted here in the net8.0 engine where OtelSetup's AppDomain assembly scan still discovers it. -->
+    <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Muonroi.Pdf.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Liberation Fonts © Red Hat, Inc. — SIL Open Font License 1.1 (OFL-1.1).
+         https://github.com/liberationfonts/liberation-fonts
+         Bundled as embedded resources; no linking required by OFL. -->
+    <EmbeddedResource Include="Internal/Font/Resources/*.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Muonroi.Pdf.SourceGenerators\Muonroi.Pdf.SourceGenerators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>

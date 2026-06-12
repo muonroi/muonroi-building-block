@@ -36,7 +36,7 @@ public static partial class DecisionTableImporter
     {
         MGuard.NotEmpty(csvContent, nameof(csvContent));
 
-        string[] lines = csvContent.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        string[] lines = csvContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 3)
         {
             throw new MConfigurationException("Table must contain hit policy, headers and at least one rule");

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+@font-face { font-family: serif; src: url(ds-default.ttf); font-weight: normal; font-style: normal; }
+@font-face { font-family: serif; src: url(ds-default-bold.ttf); font-weight: bold; font-style: normal; }
+body { font-family: serif; margin: 0; padding: 28px; color: #222; }
+.header { display: table; width: 100%; }
+.header-left { display: table-cell; width: 60%; vertical-align: top; }
+.header-right { display: table-cell; width: 40%; vertical-align: top; text-align: right; }
+h1 { font-size: 32px; font-weight: bold; margin: 0 0 5px 0; }
+h2 { font-size: 18px; font-weight: normal; margin: 0; color: #555; }
+.meta { display: table; width: 100%; margin-top: 20px; }
+.meta-row { display: table-row; }
+.meta-label { display: table-cell; width: 30%; font-weight: bold; padding: 2px 0; }
+.meta-value { display: table-cell; padding: 2px 0; }
+table.items { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; }
+table.items th { background-color: #333; color: #fff; padding: 8px; font-size: 13px; text-align: left; }
+table.items td { padding: 8px; border-bottom: 1px solid #ddd; font-size: 13px; }
+table.items td.amount { text-align: right; }
+.totals { display: table; width: 40%; margin-top: 10px; }
+.total-row { display: table-row; }
+.total-label { display: table-cell; padding: 4px 0; font-weight: bold; }
+.total-value { display: table-cell; text-align: right; padding: 4px 0; }
+.grand-total .total-label,
+.grand-total .total-value { font-weight: bold; font-size: 16px; border-top: 2px solid #333; }
+.footer { margin-top: 30px; font-size: 12px; color: #888; }
+@page { margin: 20mm; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>{{CompanyName}}</h1>
+    <h2>{{CompanyAddress}}</h2>
+  </div>
+  <div class="header-right">
+    <h1>INVOICE</h1>
+    <p>#{{InvoiceNumber}}</p>
+  </div>
+</div>
+<div class="meta">
+  <div class="meta-row">
+    <div class="meta-label">Bill To:</div>
+    <div class="meta-value">{{CustomerName}}</div>
+  </div>
+  <div class="meta-row">
+    <div class="meta-label">Date:</div>
+    <div class="meta-value">{{InvoiceDate}}</div>
+  </div>
+  <div class="meta-row">
+    <div class="meta-label">Due Date:</div>
+    <div class="meta-value">{{DueDate}}</div>
+  </div>
+</div>
+<table class="items">
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th>Qty</th>
+      <th>Unit Price</th>
+      <th class="amount">Amount</th>
+    </tr>
+  </thead>
+  <tbody>{{LineItemsRows}}</tbody>
+</table>
+<div class="totals">
+  <div class="total-row">
+    <div class="total-label">Subtotal:</div>
+    <div class="total-value">{{Subtotal}}</div>
+  </div>
+  <div class="total-row">
+    <div class="total-label">Tax ({{TaxRate}}):</div>
+    <div class="total-value">{{TaxAmount}}</div>
+  </div>
+  <div class="total-row grand-total">
+    <div class="total-label">Total:</div>
+    <div class="total-value">{{Total}}</div>
+  </div>
+</div>
+<div class="footer">{{FooterNote}}</div>
+</body>
+</html>

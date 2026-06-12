@@ -62,7 +62,7 @@ public static class ProliferationServiceCollectionExtensions
         }
 
         // Brain provider factory — single or composite
-        services.TryAddSingleton<IRuleProliferationBrain>(sp =>
+        services.TryAddSingleton(sp =>
         {
             var opts = sp.GetRequiredService<ProliferationOptions>();
 
@@ -146,9 +146,9 @@ public static class ProliferationServiceCollectionExtensions
         services.TryAddScoped<IAuthStrategyResolver, AuthStrategyResolver>();
 
         services.TryAddScoped<ScenarioExecutor>(); // Concrete internal executor
-        services.TryAddScoped<ExternalScenarioExecutor>(sp =>
+        services.TryAddScoped(sp =>
         {
-            var connector = sp.GetRequiredService<Muonroi.Integration.Abstractions.IServiceTaskConnector>();
+            var connector = sp.GetRequiredService<Integration.Abstractions.IServiceTaskConnector>();
             var authResolver = sp.GetRequiredService<IAuthStrategyResolver>();
             var oauth2Provider = sp.GetRequiredService<IOAuth2TokenProvider>();
             var logFactory = sp.GetService<IMLogFactory>();

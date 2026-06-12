@@ -54,6 +54,13 @@ internal static class CompileCheckService
         psi.ArgumentList.Add("-v");
         psi.ArgumentList.Add("minimal");
 
+        // This is a one-shot compile-check: the tool exits immediately after the build, so
+        // MSBuild node reuse / the persistent build server provide no benefit and instead leak
+        // long-lived child "dotnet" worker nodes (~15 min lifetime) that outlive this process.
+        // Disable both so the spawned build leaves no orphaned process behind.
+        psi.Environment["MSBUILDDISABLENODEREUSE"] = "1";
+        psi.Environment["DOTNET_CLI_USE_MSBUILD_SERVER"] = "0";
+
         using Process process = Process.Start(psi)
             ?? throw new InvalidOperationException("Unable to start dotnet build process for compile-check.");
 

@@ -32,3 +32,6 @@ global using Muonroi.Mediator.Mediator.Interfaces;
 global using Muonroi.Messaging.Abstractions.Events;
 global using Muonroi.Tenancy.Core;
 global using Xunit;
+global using Muonroi.Core.Abstractions.Context;
+global using NSubstitute;
+global using Muonroi.Messaging.Abstractions.Contracts;

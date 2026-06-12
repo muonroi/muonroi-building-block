@@ -359,36 +359,6 @@ public class MRepositoryAdditionalTests
     }
 
     [Fact]
-    public async Task ExecuteStoredProcedureAsync_Throws_On_Empty_Name()
-    {
-        DbContextOptions<TestDbContext> options = new DbContextOptionsBuilder<TestDbContext>()
-            .UseInMemoryDatabase("TestDb_" + Guid.NewGuid())
-            .Options;
-
-        using TestDbContext db = new(options);
-        MRepository<MUser> repo = CreateRepository(db);
-
-        Func<Task> act = () => repo.ExecuteStoredProcedureAsync("");
-
-        await act.Should().ThrowAsync<MArgumentException>();
-    }
-
-    [Fact]
-    public async Task ExecuteStoredProcedureScalarAsync_Throws_On_Empty_Name()
-    {
-        DbContextOptions<TestDbContext> options = new DbContextOptionsBuilder<TestDbContext>()
-            .UseInMemoryDatabase("TestDb_" + Guid.NewGuid())
-            .Options;
-
-        using TestDbContext db = new(options);
-        MRepository<MUser> repo = CreateRepository(db);
-
-        Func<Task> act = () => repo.ExecuteStoredProcedureScalarAsync<int>("");
-
-        await act.Should().ThrowAsync<MArgumentException>();
-    }
-
-    [Fact]
     public void CurrentUserId_Returns_Auth_Value()
     {
         string userId = Guid.NewGuid().ToString();

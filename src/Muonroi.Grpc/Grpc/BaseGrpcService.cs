@@ -74,7 +74,7 @@ public abstract class BaseGrpcService(
         Func<Metadata, Task<MResponse>> grpcCall,
         GrpcMethodPolicyConfig? policy)
     {
-        _ = grpcCall ?? throw new NullReferenceException(nameof(grpcCall));
+        _ = MGuard.NotNull(grpcCall);
         EnsureGrpcLicensed();
 
         Metadata metadata = CreateMetadata();
@@ -143,7 +143,7 @@ public abstract class BaseGrpcService(
 
         if (!_licenseState.HasFeature(FreeTierFeatures.Premium.Grpc))
         {
-            throw new RpcException(new global::Grpc.Core.Status(
+            throw new RpcException(new Status(
                 StatusCode.PermissionDenied,
                 "[LICENSE] Feature 'grpc' is not available under your current license."));
         }
