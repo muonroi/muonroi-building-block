@@ -1,11 +1,3 @@
-using FluentAssertions;
-using Microsoft.Extensions.Options;
-using Muonroi.Experience.Abstractions;
-using Muonroi.Experience.Runtime;
-using Muonroi.Experience.Runtime.File;
-using Muonroi.Experience.Runtime.Interception;
-using Xunit;
-
 namespace Muonroi.Experience.Tests;
 
 [Trait("Category", "Interception")]
@@ -16,7 +8,9 @@ public sealed class InterceptionIntegrationTests : IDisposable
     public void Dispose()
     {
         if (Directory.Exists(_tempDir))
+        {
             Directory.Delete(_tempDir, recursive: true);
+        }
     }
 
     private FileExperienceStore MakeStore()
@@ -31,7 +25,7 @@ public sealed class InterceptionIntegrationTests : IDisposable
     [Fact]
     public async Task INT01_Interceptor_ReturnsNonEmpty_WhenRelevantExperienceExists()
     {
-        var store = MakeStore();
+        FileExperienceStore store = MakeStore();
         // Store entry with many overlapping keywords for high relevance score
         await store.StoreAsync(new NeuronExperience
         {
@@ -57,7 +51,7 @@ public sealed class InterceptionIntegrationTests : IDisposable
     [Fact]
     public async Task INT02_Interceptor_ReturnsEmpty_WhenStoreIsEmpty()
     {
-        var store = MakeStore();
+        FileExperienceStore store = MakeStore();
         var interceptor = new DefaultExperienceInterceptor(store);
 
         var result = await interceptor.InterceptAsync("Edit", "some context");
@@ -68,7 +62,7 @@ public sealed class InterceptionIntegrationTests : IDisposable
     [Fact]
     public async Task INT03_Interceptor_ReturnsEmpty_OnCancelledToken()
     {
-        var store = MakeStore();
+        FileExperienceStore store = MakeStore();
         var interceptor = new DefaultExperienceInterceptor(store);
         var cancelledToken = new CancellationToken(canceled: true);
 
