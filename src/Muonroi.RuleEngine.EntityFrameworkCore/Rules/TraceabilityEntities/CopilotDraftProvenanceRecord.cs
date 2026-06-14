@@ -44,4 +44,19 @@ public sealed class CopilotDraftProvenanceRecord
 
     /// <summary>Gets or sets the UTC approval timestamp; null until approved.</summary>
     public DateTimeOffset? ApprovedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the id of the originating ingested source document, when this draft was produced
+    /// from an ingested document (Phase 17 / TRACE-01). Null = NL-copilot / manual path; non-null =
+    /// ingested path. This non-null discriminator is the only ingested-vs-NL signal and powers the
+    /// TRACE-02 ingestion edit-rate slice (D-01).
+    /// </summary>
+    public Guid? SourceDocumentId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the human-readable source reference (issue/page key) of the originating ingested
+    /// document, for display in the traceability matrix (max 512). Null on the NL/manual path; set
+    /// from <c>document.SourceRef</c> on the ingestion path (D-01).
+    /// </summary>
+    public string? SourceRef { get; set; }
 }

@@ -535,6 +535,13 @@ namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<Guid?>("SourceDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceRef")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
                     b.Property<string>("TenantId")
                         .IsRequired()
                         .HasMaxLength(128)
