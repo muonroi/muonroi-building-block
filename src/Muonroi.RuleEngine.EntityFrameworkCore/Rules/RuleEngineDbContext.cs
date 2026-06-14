@@ -192,6 +192,9 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
     /// <summary>Gets the ingested-source-document entities (Phase 15 — INGEST-01/02/03).</summary>
     public DbSet<IngestedSourceDocumentRecord> IngestedSourceDocuments => Set<IngestedSourceDocumentRecord>();
 
+    /// <summary>Gets the outbound-sync job entities (Phase 17 — SYNC-02, tenant-scoped + retriable).</summary>
+    public DbSet<OutboundSyncJobRecord> OutboundSyncJobs => Set<OutboundSyncJobRecord>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -392,6 +395,18 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
             entity.Property(x => x.NormalizedContent).HasColumnType("text");
             entity.Property(x => x.CorrelationId).HasMaxLength(64);
             entity.Property(x => x.IngestedBy).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<OutboundSyncJobRecord>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            // Index on (tenant, status) — the processor claims Pending/retriable rows per tenant (Phase 17 D-03).
+            entity.HasIndex(x => new { x.TenantId, x.Status });
+            entity.Property(x => x.TenantId).HasMaxLength(128);
+            entity.Property(x => x.Workflow).HasMaxLength(256);
+            entity.Property(x => x.Approver).HasMaxLength(256);
+            entity.Property(x => x.Status).HasMaxLength(32);
+            entity.Property(x => x.LastError).HasColumnType("text");
         });
     }
 }
