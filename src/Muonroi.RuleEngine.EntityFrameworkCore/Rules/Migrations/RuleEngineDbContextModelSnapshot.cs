@@ -556,6 +556,53 @@ namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules.Migrations
                     b.ToTable("CopilotDraftProvenance");
                 });
 
+            modelBuilder.Entity("Muonroi.RuleEngine.EntityFrameworkCore.Rules.IngestedSourceEntities.IngestedSourceDocumentRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConnectorId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("IngestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IngestedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedContent")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RedactedContent")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SourceRef")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ConnectorId", "SourceRef");
+
+                    b.ToTable("IngestedSourceDocument");
+                });
+
             modelBuilder.Entity("Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities.DryRunExampleRecord", b =>
                 {
                     b.Property<Guid>("Id")
