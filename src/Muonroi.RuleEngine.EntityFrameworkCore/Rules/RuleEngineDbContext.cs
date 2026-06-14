@@ -1,3 +1,4 @@
+using Muonroi.RuleEngine.EntityFrameworkCore.Rules.IngestedSourceEntities;
 using Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities;
 
 namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules;
@@ -188,6 +189,9 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
     /// <summary>Gets the copilot-draft provenance entities (Phase 8 — VRF-03 exit metric).</summary>
     public DbSet<CopilotDraftProvenanceRecord> CopilotDraftProvenance => Set<CopilotDraftProvenanceRecord>();
 
+    /// <summary>Gets the ingested-source-document entities (Phase 15 — INGEST-01/02/03).</summary>
+    public DbSet<IngestedSourceDocumentRecord> IngestedSourceDocuments => Set<IngestedSourceDocumentRecord>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -374,6 +378,20 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
             entity.Property(x => x.AiOriginalHash).HasMaxLength(64);
             entity.Property(x => x.AiOriginalSnapshot).HasColumnType("text");
             entity.Property(x => x.GeneratedBy).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<IngestedSourceDocumentRecord>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            // Composite index: tenant + connector + sourceRef for fast per-tenant lookups (Phase 15 D-07).
+            entity.HasIndex(x => new { x.TenantId, x.ConnectorId, x.SourceRef });
+            entity.Property(x => x.TenantId).HasMaxLength(128);
+            entity.Property(x => x.ConnectorId).HasMaxLength(128);
+            entity.Property(x => x.SourceRef).HasMaxLength(512);
+            entity.Property(x => x.RedactedContent).HasColumnType("text");
+            entity.Property(x => x.NormalizedContent).HasColumnType("text");
+            entity.Property(x => x.CorrelationId).HasMaxLength(64);
+            entity.Property(x => x.IngestedBy).HasMaxLength(256);
         });
     }
 }
