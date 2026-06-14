@@ -386,6 +386,10 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
         modelBuilder.Entity<IngestedSourceDocumentRecord>(entity =>
         {
             entity.HasKey(x => x.Id);
+            // Map to the singular table the Phase 15 migration + RLS policy created. The DbSet property is plural
+            // ("IngestedSourceDocuments") and there is no pluralization convention here, so without this the EF
+            // model targets a non-existent "IngestedSourceDocuments" table and any real-Postgres read 42P01s.
+            entity.ToTable("IngestedSourceDocument");
             // Composite index: tenant + connector + sourceRef for fast per-tenant lookups (Phase 15 D-07).
             entity.HasIndex(x => new { x.TenantId, x.ConnectorId, x.SourceRef });
             entity.Property(x => x.TenantId).HasMaxLength(128);
@@ -400,6 +404,10 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
         modelBuilder.Entity<OutboundSyncJobRecord>(entity =>
         {
             entity.HasKey(x => x.Id);
+            // Map to the singular table the migration + RLS policy + parity DO-block reference. Without this
+            // explicit name EF Core defaults to the DbSet property name ("OutboundSyncJobs", plural) — there is
+            // NO global pluralization convention in this context — which 42P01-crashes the background processor.
+            entity.ToTable("OutboundSyncJob");
             // Index on (tenant, status) — the processor claims Pending/retriable rows per tenant (Phase 17 D-03).
             entity.HasIndex(x => new { x.TenantId, x.Status });
             entity.Property(x => x.TenantId).HasMaxLength(128);
