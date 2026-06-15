@@ -21,15 +21,4 @@ public sealed class ConnectorMetadata
     public string? Format { get; init; }
     /// <summary>Ordered form-field descriptors. Null = advanced raw JSON textarea (preserved).</summary>
     public IReadOnlyList<ConnectorFieldDescriptor>? FieldSchema { get; init; }
-    /// <summary>Ordered credential-capture field descriptors. Null = no credential form.</summary>
-    public IReadOnlyList<ConnectorFieldDescriptor>? CredentialFields { get; init; }
-    /// <summary>
-    /// Server-side auth header builder key. Values:
-    ///   "bearer"        → Authorization: Bearer {token}
-    ///   "basic-email"   → Authorization: Basic base64(email:token)  (Jira/Confluence Cloud)
-    ///   "basic-pat"     → Authorization: Basic base64("":PAT)       (Azure DevOps)
-    ///   "apikey"        → {apiKeyHeader}: {apiKey}
-    /// Null = no auth required.
-    /// </summary>
-    public string? AuthBuilder { get; init; }
 }

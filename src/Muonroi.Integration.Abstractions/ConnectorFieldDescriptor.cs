@@ -16,6 +16,4 @@ public sealed record ConnectorFieldDescriptor
     public string? Placeholder { get; init; }
     /// <summary>Whether the field is required before the connector can be saved.</summary>
     public bool Required { get; init; }
-    /// <summary>Deep-link URL to the provider's token creation page. Opens in new tab.</summary>
-    public string? HelpUrl { get; init; }
 }
