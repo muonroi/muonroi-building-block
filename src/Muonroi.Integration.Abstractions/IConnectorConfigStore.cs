@@ -10,10 +10,11 @@ public interface IConnectorConfigStore
     /// <param name="tenantId">Tenant identifier, or null for global.</param>
     /// <param name="ct">Cancellation token.</param>
     Task<ConnectorConfigDto?> GetByIdAsync(string id, string? tenantId, CancellationToken ct);
-    /// <summary>Lists connector configurations for a tenant.</summary>
+    /// <summary>Lists connector configurations for a tenant, optionally scoped to an owner.</summary>
     /// <param name="tenantId">Tenant identifier, or null for global.</param>
+    /// <param name="ownerId">Owner (user) identifier; null = admin bypass (return all for tenant).</param>
     /// <param name="ct">Cancellation token.</param>
-    Task<IReadOnlyList<ConnectorConfigDto>> ListAsync(string? tenantId, CancellationToken ct);
+    Task<IReadOnlyList<ConnectorConfigDto>> ListAsync(string? tenantId, string? ownerId, CancellationToken ct);
     /// <summary>Saves a connector configuration.</summary>
     /// <param name="config">Configuration to save.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -48,4 +49,6 @@ public sealed class ConnectorConfigDto
     public DateTime CreatedAt { get; init; }
     /// <summary>Last update timestamp in UTC.</summary>
     public DateTime UpdatedAt { get; init; }
+    /// <summary>User ID of the BA who owns this connector. Null = legacy/admin-created.</summary>
+    public string? OwnerId { get; init; }
 }
