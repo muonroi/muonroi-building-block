@@ -20,4 +20,26 @@ public interface IServiceTaskConnector
     Task<bool> TestConnectionAsync(ConnectorContext context, CancellationToken ct);
     /// <summary>Returns a JSON schema describing the connector configuration.</summary>
     JsonElement GetConfigSchema();
+
+    /// <summary>
+    /// Discovers documents available to the connected credential.
+    /// The remote query (JQL / CQL / Notion search / etc.) is built server-side inside each
+    /// preset — the BA never supplies raw platform query syntax.
+    /// <para>
+    /// Returns <see langword="null"/> when this preset does not support browse (graceful degrade).
+    /// The browse endpoint maps null to <c>{ "supported": false }</c> — never a 500.
+    /// </para>
+    /// </summary>
+    /// <param name="context">Connector execution context (config, credentials, tenant).</param>
+    /// <param name="query">Typed browse query (SearchText / Scope / TypeFilter / paging).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A <see cref="ConnectorBrowseResult"/> with the discovered items and paging cursor,
+    /// or <see langword="null"/> if browse is not supported by this preset.
+    /// </returns>
+    Task<ConnectorBrowseResult?> ListDocumentsAsync(
+        ConnectorContext context,
+        ConnectorBrowseQuery query,
+        CancellationToken ct)
+        => Task.FromResult<ConnectorBrowseResult?>(null); // default: browse not supported
 }

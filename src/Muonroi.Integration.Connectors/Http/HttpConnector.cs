@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Integration.Abstractions;
 
@@ -16,9 +16,10 @@ namespace Muonroi.Integration.Connectors.Http;
 /// Creates an HTTP connector with the provided client factory.
 /// </remarks>
 /// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
-public sealed class HttpConnector(IHttpClientFactory httpClientFactory) : IServiceTaskConnector
+public sealed class HttpConnector(IHttpClientFactory httpClientFactory, ILogger<HttpConnector> logger) : IServiceTaskConnector
 {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly ILogger<HttpConnector> _logger = logger;
 
     /// <summary>
     /// Connector metadata describing capabilities and configuration.
@@ -180,6 +181,103 @@ public sealed class HttpConnector(IHttpClientFactory httpClientFactory) : IServi
         }
         """;
         return JsonDocument.Parse(schema).RootElement.Clone();
+    }
+
+    /// <summary>
+    /// Performs an authenticated JSON read using the Phase 22 <c>credentials["authorization"]</c>
+    /// header. Reuses <see cref="ExecuteAsync"/> so all auth wiring is in one place.
+    /// </summary>
+    /// <param name="context">
+    /// Connector execution context supplying credentials (including the pre-built authorization header).
+    /// </param>
+    /// <param name="url">Full URL to GET (or POST to).</param>
+    /// <param name="method">HTTP method — "GET" or "POST".</param>
+    /// <param name="jsonBody">Optional JSON body string (used for POST requests).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// <c>(JsonDocument? doc, bool isPermissionDenied)</c>.
+    /// <c>doc</c> is null on failure; <c>isPermissionDenied</c> is true when the remote returned
+    /// 401 or 403 so the caller can surface <see cref="ConnectorBrowseResult.IsPermissionDenied"/>.
+    /// Never logs the response body — only the URL host and status code are logged on failure.
+    /// </returns>
+    public async Task<(JsonDocument? Document, bool IsPermissionDenied)> ReadJsonAsync(
+        ConnectorContext context,
+        string url,
+        string method,
+        string? jsonBody,
+        CancellationToken ct)
+    {
+        // Build config JSON through a Utf8JsonWriter so the URL is correctly escaped.
+        string safeConfigJson = BuildConfigJson(url, method, jsonBody);
+
+        ConnectorContext readContext = new()
+        {
+            Config = JsonDocument.Parse(safeConfigJson),
+            InputFacts = context.InputFacts,
+            Credentials = context.Credentials,
+            TenantId = context.TenantId,
+            CorrelationId = context.CorrelationId
+        };
+
+        ConnectorResult result = await ExecuteAsync(readContext, ct);
+
+        if (!result.Success)
+        {
+            // Surface permission-denied to caller — do NOT log the response body.
+            bool isPermissionDenied = result.ErrorMessage is not null &&
+                (result.ErrorMessage.Contains("HTTP 401", StringComparison.Ordinal) ||
+                 result.ErrorMessage.Contains("HTTP 403", StringComparison.Ordinal));
+
+            string host = TryGetHost(url);
+            _logger.LogWarning(
+                "[HttpConnector] ReadJsonAsync failed. module=HttpConnector op=ReadJsonAsync host={Host} status={StatusCode} permissionDenied={PermissionDenied}",
+                host, result.StatusCode, isPermissionDenied);
+
+            return (null, isPermissionDenied);
+        }
+
+        if (result.OutputFacts.TryGetValue("httpResponseBody", out object? bodyObj) &&
+            bodyObj is string bodyStr && !string.IsNullOrWhiteSpace(bodyStr))
+        {
+            try
+            {
+                return (JsonDocument.Parse(bodyStr), false);
+            }
+            catch (JsonException ex)
+            {
+                string host = TryGetHost(url);
+                _logger.LogWarning(ex,
+                    "[HttpConnector] ReadJsonAsync response is not valid JSON. module=HttpConnector op=ReadJsonAsync host={Host}",
+                    host);
+                return (null, false);
+            }
+        }
+
+        return (null, false);
+    }
+
+    private static string BuildConfigJson(string url, string method, string? jsonBody)
+    {
+        using System.IO.MemoryStream ms = new();
+        using Utf8JsonWriter writer = new(ms);
+        writer.WriteStartObject();
+        writer.WriteString("url", url);
+        writer.WriteString("method", method);
+        if (jsonBody is not null)
+        {
+            writer.WriteString("contentType", "application/json");
+            // body must be a JSON string value that ExecuteAsync reads as the request body string
+            writer.WriteString("body", jsonBody);
+        }
+        writer.WriteEndObject();
+        writer.Flush();
+        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+    }
+
+    private static string TryGetHost(string url)
+    {
+        try { return new Uri(url).Host; }
+        catch { return "(invalid-url)"; }
     }
 
     private static object? ConvertJsonElement(JsonElement element)
