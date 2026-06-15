@@ -9,6 +9,14 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Serialize test collections in this assembly: SiteProfileExtensions.s_tracker is a process-wide
+         static populated by AddSiteProfile/AddSiteResolvedService. Production registration is
+         single-threaded, but xUnit runs test classes in parallel by default, which mutates the
+         non-concurrent tracker collections concurrently and intermittently corrupts them
+         ("Operations that change non-concurrent collections must have exclusive access"). -->
+    <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />

@@ -2,6 +2,7 @@ using Xunit;
 
 namespace Muonroi.RuleGen.Tests;
 
+[Collection(BuildSerialCollection.Name)]
 public sealed class ProliferateCommandTests
 {
     [Fact]

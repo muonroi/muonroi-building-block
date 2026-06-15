@@ -19,7 +19,6 @@ internal sealed class TempProjectContext : IDisposable
 
     public static TempProjectContext Create(string handlerContent, string runtimeRuleJson)
     {
-        string repoRoot = CliProcess.GetRepoRoot();
         string root = Path.Combine(Path.GetTempPath(), "muonroi-rulegen-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
 
@@ -27,7 +26,20 @@ internal sealed class TempProjectContext : IDisposable
         Directory.CreateDirectory(sourceDir);
 
         string csproj = Path.Combine(root, "Sample.csproj");
-        string abstractionsCsproj = Path.Combine(repoRoot, "src", "Muonroi.RuleEngine.Abstractions", "Muonroi.RuleEngine.Abstractions.csproj");
+
+        // Reference the already-built Muonroi assemblies from this test assembly's output directory
+        // instead of a <ProjectReference> to the in-repo Muonroi.RuleEngine.Abstractions.csproj.
+        // A ProjectReference makes the spawned `dotnet build` (compile-check) rebuild the shared
+        // in-repo src/*/obj, which races other concurrent builds during a full-solution `dotnet test`
+        // and fails non-deterministically with CS0006/CS2001 on the regenerated ref assemblies. The
+        // prebuilt DLLs are copied here transitively, so a binary <Reference> gives the compile-check
+        // the same API surface without touching any shared on-disk build artifact.
+        string referenceDir = AppContext.BaseDirectory;
+        IEnumerable<string> referenceItems = Directory
+            .EnumerateFiles(referenceDir, "Muonroi.*.dll")
+            .Select(dll =>
+                $"    <Reference Include=\"{Path.GetFileNameWithoutExtension(dll)}\"><HintPath>{dll}</HintPath></Reference>");
+        string references = string.Join(Environment.NewLine, referenceItems);
 
         string projectXml = $$"""
 <Project Sdk="Microsoft.NET.Sdk">
@@ -37,7 +49,7 @@ internal sealed class TempProjectContext : IDisposable
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="{{abstractionsCsproj}}" />
+{{references}}
   </ItemGroup>
 </Project>
 """;

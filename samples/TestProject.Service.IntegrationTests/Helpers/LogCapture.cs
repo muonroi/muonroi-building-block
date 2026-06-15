@@ -23,27 +23,56 @@ public sealed class LogEntry
 /// </summary>
 public sealed class LogCapture : ILoggerProvider
 {
+    // The ASP.NET TestServer host logs from background threads (Kestrel/host lifetime/etc.) while the
+    // test thread reads the captured entries, so every access to this list must be synchronized.
+    // Reads materialize a snapshot under the lock — returning a lazy LINQ query over the live list
+    // would re-enumerate it outside the lock and throw "Collection was modified" when a concurrent
+    // log write Adds during enumeration.
     private readonly List<LogEntry> _entries = new();
+    private readonly object _sync = new();
 
-    /// <summary>All captured log entries since this instance was created.</summary>
-    public IReadOnlyList<LogEntry> Entries => _entries;
+    /// <summary>All captured log entries since this instance was created (point-in-time snapshot).</summary>
+    public IReadOnlyList<LogEntry> Entries
+    {
+        get { lock (_sync) { return _entries.ToArray(); } }
+    }
 
-    public ILogger CreateLogger(string categoryName) => new CaptureLogger(categoryName, _entries);
+    public ILogger CreateLogger(string categoryName) => new CaptureLogger(categoryName, Add);
 
     public void Dispose() { }
 
+    private void Add(LogEntry entry)
+    {
+        lock (_sync) { _entries.Add(entry); }
+    }
+
     /// <summary>Returns true if any captured entry contains the given substring (case-insensitive).</summary>
     public bool HasMessage(string substring)
-        => _entries.Any(e => e.Message.Contains(substring, StringComparison.OrdinalIgnoreCase));
+    {
+        lock (_sync)
+        {
+            return _entries.Any(e => e.Message.Contains(substring, StringComparison.OrdinalIgnoreCase));
+        }
+    }
 
     /// <summary>Returns all entries whose message contains the given substring (case-insensitive).</summary>
-    public IEnumerable<LogEntry> FindEntries(string substring)
-        => _entries.Where(e => e.Message.Contains(substring, StringComparison.OrdinalIgnoreCase));
+    public IReadOnlyList<LogEntry> FindEntries(string substring)
+    {
+        lock (_sync)
+        {
+            return _entries
+                .Where(e => e.Message.Contains(substring, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+    }
 
     /// <summary>Clears all captured entries.</summary>
-    public void Clear() => _entries.Clear();
+    public void Clear()
+    {
+        lock (_sync) { _entries.Clear(); }
+    }
 
-    private sealed class CaptureLogger(string category, List<LogEntry> entries) : ILogger
+    private sealed class CaptureLogger(string category, Action<LogEntry> add) : ILogger
     {
         // Tracks the active scope key-value pairs for this logger instance.
         // CaptureLogger is created per-category so this is safe for single-threaded test pipelines.
@@ -69,7 +98,7 @@ public sealed class LogCapture : ILoggerProvider
             Exception? exception,
             Func<TState, Exception?, string> formatter)
         {
-            entries.Add(new LogEntry
+            add(new LogEntry
             {
                 Level = logLevel,
                 Category = category,

@@ -10,7 +10,6 @@ internal sealed record CliRunResult(int ExitCode, string StdOut, string StdErr)
 internal static class CliProcess
 {
     private static readonly SemaphoreSlim BuildGate = new(1, 1);
-    private static bool _built;
 
     public static async Task<CliRunResult> RunAsync(params string[] args)
     {
@@ -63,7 +62,14 @@ internal static class CliProcess
         try
         {
             string toolDll = Path.Combine(repoRoot, "tools", "Muonroi.RuleGen", "bin", "Debug", "net8.0", "Muonroi.RuleGen.dll");
-            if (_built && File.Exists(toolDll))
+
+            // The outer `dotnet test` build always produces this DLL (the test project has a
+            // ProjectReference to the tool), so when it already exists we MUST NOT shell out to
+            // `dotnet build` again: that nested build transitively rebuilds the shared in-repo
+            // src/*/obj (Muonroi.RuleEngine.Abstractions + dependency chain), which races other
+            // concurrent builds during a full-solution run and fails with CS0006/CS2001. Building
+            // here is only a fallback for the rare case the DLL is genuinely absent.
+            if (File.Exists(toolDll))
             {
                 return toolDll;
             }
@@ -105,7 +111,6 @@ internal static class CliProcess
                 throw new FileNotFoundException($"Built RuleGen DLL not found: {toolDll}");
             }
 
-            _built = true;
             return toolDll;
         }
         finally
