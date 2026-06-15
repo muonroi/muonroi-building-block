@@ -17,4 +17,8 @@ public sealed class ConnectorMetadata
     public string? Description { get; init; }
     /// <summary>Whether credentials are required for execution.</summary>
     public bool RequiresCredentials { get; init; }
+    /// <summary>Format registry key for source-content normalization ("adf", "xhtml", "json-path", "markdown", "plain"). Null for non-ingestion connectors.</summary>
+    public string? Format { get; init; }
+    /// <summary>Ordered form-field descriptors. Null = advanced raw JSON textarea (preserved).</summary>
+    public IReadOnlyList<ConnectorFieldDescriptor>? FieldSchema { get; init; }
 }
