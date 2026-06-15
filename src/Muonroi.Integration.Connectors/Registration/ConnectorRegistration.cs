@@ -35,6 +35,13 @@ public static class ConnectorRegistration
         services.AddSingleton<IServiceTaskConnector, ConfluencePresetConnector>();
         services.AddSingleton<IServiceTaskConnector, GenericRestPresetConnector>();
 
+        // Phase 22 preset connectors (CONN-01) — 5 new paste-token auth presets.
+        services.AddSingleton<IServiceTaskConnector, JiraServerPresetConnector>();
+        services.AddSingleton<IServiceTaskConnector, ConfluenceServerPresetConnector>();
+        services.AddSingleton<IServiceTaskConnector, AzureDevOpsPresetConnector>();
+        services.AddSingleton<IServiceTaskConnector, NotionPresetConnector>();
+        services.AddSingleton<IServiceTaskConnector, GitHubPresetConnector>();
+
         services.TryAddSingleton<IConnectorRegistry, DefaultConnectorRegistry>();
 
         return services;
