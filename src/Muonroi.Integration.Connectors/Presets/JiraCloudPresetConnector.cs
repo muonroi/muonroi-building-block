@@ -19,6 +19,7 @@ public sealed class JiraCloudPresetConnector(HttpConnector inner) : IServiceTask
         Description = "Jira Cloud API v3 only. Jira Server / Data Center is not supported.",
         RequiresCredentials = true,
         Format = "adf",
+        AuthBuilder = "basic-email",
         FieldSchema =
         [
             new ConnectorFieldDescriptor
@@ -36,6 +37,24 @@ public sealed class JiraCloudPresetConnector(HttpConnector inner) : IServiceTask
                 FieldType = "text",
                 Placeholder = "GET",
                 Required = false
+            },
+        ],
+        CredentialFields =
+        [
+            new ConnectorFieldDescriptor
+            {
+                Key = "email",
+                Label = "Email đăng nhập",
+                FieldType = "text",
+                Required = true
+            },
+            new ConnectorFieldDescriptor
+            {
+                Key = "apiToken",
+                Label = "Mã truy cập (API token)",
+                FieldType = "password",
+                Required = true,
+                HelpUrl = "https://id.atlassian.com/manage-profile/security/api-tokens"
             },
         ]
     };
