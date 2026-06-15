@@ -388,6 +388,7 @@ Samples/
 !samples/**
 samples/**/bin/
 samples/**/obj/
+samples/**/.vs/
 docfx.json
 index.md
 index.vi.md
