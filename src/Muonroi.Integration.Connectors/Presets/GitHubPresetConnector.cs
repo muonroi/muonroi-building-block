@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Muonroi.Integration.Abstractions;
 using Muonroi.Integration.Connectors.Http;
 
@@ -6,8 +8,9 @@ namespace Muonroi.Integration.Connectors.Presets;
 /// <summary>
 /// GitHub preset connector. Delegates 100% to <see cref="HttpConnector"/>.
 /// Declares Format="markdown" and AuthBuilder="bearer" (PAT authentication).
+/// ListDocumentsAsync uses GET /search/code?q={q}+repo:{owner}/{repo} to browse files.
 /// </summary>
-public sealed class GitHubPresetConnector(HttpConnector inner) : IServiceTaskConnector
+public sealed class GitHubPresetConnector(HttpConnector inner, ILogger<GitHubPresetConnector>? logger = null) : IServiceTaskConnector
 {
     public ConnectorMetadata Metadata => new()
     {
@@ -75,4 +78,96 @@ public sealed class GitHubPresetConnector(HttpConnector inner) : IServiceTaskCon
 
     public System.Text.Json.JsonElement GetConfigSchema()
         => inner.GetConfigSchema();
+
+    /// <inheritdoc/>
+    public async Task<ConnectorBrowseResult?> ListDocumentsAsync(
+        ConnectorContext context,
+        ConnectorBrowseQuery query,
+        CancellationToken ct)
+    {
+        // Derive GitHub API base from config url — always api.github.com.
+        string? configUrl = context.Config.RootElement
+            .TryGetProperty("url", out JsonElement urlEl) ? urlEl.GetString() : null;
+        if (string.IsNullOrWhiteSpace(configUrl)) return null;
+
+        // Always use api.github.com as the search base (same pattern as Notion using api.notion.com).
+        Uri configUri = new(configUrl);
+        string apiBase = $"{configUri.Scheme}://{configUri.Host}";
+
+        // Determine owner/repo from query.Scope or parse from config URL path.
+        // Config URL form: https://api.github.com/repos/{owner}/{repo}/contents/{path}
+        string? ownerRepo = query.Scope;
+        if (string.IsNullOrWhiteSpace(ownerRepo))
+        {
+            string[] segments = configUri.AbsolutePath.Trim('/').Split('/');
+            // path: repos/{owner}/{repo}/contents/...
+            if (segments.Length >= 3 && segments[0].Equals("repos", StringComparison.OrdinalIgnoreCase))
+                ownerRepo = $"{segments[1]}/{segments[2]}";
+        }
+
+        if (string.IsNullOrWhiteSpace(ownerRepo)) return null;
+
+        // Build /search/code query server-side — BA never sees the raw query string.
+        string repoFilter = $"repo:{ownerRepo}";
+        string qParam = query.SearchText is { Length: > 0 } q
+            ? $"{Uri.EscapeDataString(q)}+{Uri.EscapeDataString(repoFilter)}"
+            : Uri.EscapeDataString(repoFilter);
+
+        string searchUrl = $"{apiBase}/search/code?q={qParam}&per_page={query.PageSize}";
+
+        if (query.Cursor is { Length: > 0 } page && int.TryParse(page, out int pageNum))
+            searchUrl += $"&page={pageNum}";
+
+        (JsonDocument? doc, bool isPermissionDenied) = await inner.ReadJsonAsync(context, searchUrl, "GET", null, ct);
+
+        if (isPermissionDenied)
+            return new ConnectorBrowseResult([], null, IsPermissionDenied: true);
+
+        if (doc is null)
+            return new ConnectorBrowseResult([], null, IsPermissionDenied: false);
+
+        try
+        {
+            JsonElement root = doc.RootElement;
+            List<ConnectorBrowseItem> items = [];
+
+            if (root.TryGetProperty("items", out JsonElement searchItems))
+            {
+                foreach (JsonElement item in searchItems.EnumerateArray())
+                {
+                    string? path = item.TryGetProperty("path", out JsonElement pathEl) ? pathEl.GetString() : null;
+                    if (path is null) continue;
+
+                    string? name = item.TryGetProperty("name", out JsonElement nameEl) ? nameEl.GetString() : null;
+                    string? htmlUrl = item.TryGetProperty("html_url", out JsonElement htmlEl) ? htmlEl.GetString() : null;
+
+                    string? repoFullName = null;
+                    if (item.TryGetProperty("repository", out JsonElement repo) &&
+                        repo.TryGetProperty("full_name", out JsonElement fn))
+                        repoFullName = fn.GetString();
+
+                    items.Add(new ConnectorBrowseItem(
+                        ExternalId: path,
+                        Title: name ?? path,
+                        Type: "file",
+                        LastModified: null,
+                        Author: null,
+                        Url: htmlUrl,
+                        Breadcrumb: repoFullName ?? ownerRepo));
+                }
+            }
+
+            // GitHub /search/code does not return a cursor in the body — pagination via page= param.
+            // We don't have total_count easily mapped to a cursor here; return null for now.
+            doc.Dispose();
+            return new ConnectorBrowseResult(items, null, IsPermissionDenied: false);
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex,
+                "[GitHubPresetConnector] ListDocumentsAsync JSON mapping failed. module=GitHubPresetConnector op=ListDocumentsAsync type=github");
+            doc?.Dispose();
+            return new ConnectorBrowseResult([], null, IsPermissionDenied: false);
+        }
+    }
 }

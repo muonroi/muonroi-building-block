@@ -76,7 +76,7 @@ public class ListDocumentsServerTests
         };
         (HttpConnector inner, FakeHttpMessageHandler handler) = MakeConnector(response);
         IServiceTaskConnector preset = new JiraServerPresetConnector(inner);
-        ConnectorContext ctx = MakeContext("https://jira.corp.com/rest/api/2/issue");
+        ConnectorContext ctx = MakeContext("https://jira.example.com/rest/api/2/issue");
 
         // Act — null SearchText = recent-items default
         ConnectorBrowseResult? result = await preset.ListDocumentsAsync(
@@ -113,7 +113,7 @@ public class ListDocumentsServerTests
         };
         (HttpConnector inner, FakeHttpMessageHandler handler) = MakeConnector(response);
         IServiceTaskConnector preset = new JiraServerPresetConnector(inner);
-        ConnectorContext ctx = MakeContext("https://jira.corp.com/rest/api/2/issue");
+        ConnectorContext ctx = MakeContext("https://jira.example.com/rest/api/2/issue");
 
         // Act
         ConnectorBrowseResult? result = await preset.ListDocumentsAsync(
@@ -141,7 +141,7 @@ public class ListDocumentsServerTests
         };
         (HttpConnector inner, _) = MakeConnector(response);
         IServiceTaskConnector preset = new JiraServerPresetConnector(inner);
-        ConnectorContext ctx = MakeContext("https://jira.corp.com/rest/api/2/issue");
+        ConnectorContext ctx = MakeContext("https://jira.example.com/rest/api/2/issue");
 
         // Act
         ConnectorBrowseResult? result = await preset.ListDocumentsAsync(
@@ -181,7 +181,7 @@ public class ListDocumentsServerTests
         };
         (HttpConnector inner, FakeHttpMessageHandler handler) = MakeConnector(response);
         IServiceTaskConnector preset = new ConfluenceServerPresetConnector(inner);
-        ConnectorContext ctx = MakeContext("https://confluence.corp.com/rest/api/content?expand=body.storage");
+        ConnectorContext ctx = MakeContext("https://confluence.example.com/rest/api/content?expand=body.storage");
 
         // Act — with scope
         ConnectorBrowseResult? result = await preset.ListDocumentsAsync(
@@ -216,7 +216,7 @@ public class ListDocumentsServerTests
         };
         (HttpConnector inner, _) = MakeConnector(response);
         IServiceTaskConnector preset = new ConfluenceServerPresetConnector(inner);
-        ConnectorContext ctx = MakeContext("https://confluence.corp.com/rest/api/content?expand=body.storage");
+        ConnectorContext ctx = MakeContext("https://confluence.example.com/rest/api/content?expand=body.storage");
 
         // Act
         ConnectorBrowseResult? result = await preset.ListDocumentsAsync(

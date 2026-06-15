@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Muonroi.Integration.Abstractions;
 using Muonroi.Integration.Connectors.Http;
 
@@ -6,8 +8,9 @@ namespace Muonroi.Integration.Connectors.Presets;
 /// <summary>
 /// Azure DevOps preset connector. Delegates 100% to <see cref="HttpConnector"/>.
 /// Declares Format="markdown" and AuthBuilder="basic-pat" (empty-username Basic auth with PAT).
+/// ListDocumentsAsync posts a WIQL query to /_apis/wit/wiql to browse work items.
 /// </summary>
-public sealed class AzureDevOpsPresetConnector(HttpConnector inner) : IServiceTaskConnector
+public sealed class AzureDevOpsPresetConnector(HttpConnector inner, ILogger<AzureDevOpsPresetConnector>? logger = null) : IServiceTaskConnector
 {
     public ConnectorMetadata Metadata => new()
     {
@@ -67,4 +70,104 @@ public sealed class AzureDevOpsPresetConnector(HttpConnector inner) : IServiceTa
 
     public System.Text.Json.JsonElement GetConfigSchema()
         => inner.GetConfigSchema();
+
+    /// <inheritdoc/>
+    public async Task<ConnectorBrowseResult?> ListDocumentsAsync(
+        ConnectorContext context,
+        ConnectorBrowseQuery query,
+        CancellationToken ct)
+    {
+        // Derive org URL from config — extract https://{host}/{org} prefix.
+        string? configUrl = context.Config.RootElement
+            .TryGetProperty("url", out JsonElement urlEl) ? urlEl.GetString() : null;
+        if (string.IsNullOrWhiteSpace(configUrl)) return null;
+
+        // Parse org URL: strip /_apis/... path to get https://dev.azure.com/{org}
+        string orgUrl = configUrl.TrimEnd('/');
+        int apisIdx = orgUrl.IndexOf("/_apis/", StringComparison.OrdinalIgnoreCase);
+        if (apisIdx > 0) orgUrl = orgUrl[..apisIdx];
+
+        // Determine team project scope — from query.Scope or parsed from config url.
+        string? project = query.Scope;
+        if (string.IsNullOrWhiteSpace(project))
+        {
+            // Try to parse project from config URL path segment after org.
+            // e.g. https://dev.azure.com/org/project/_apis/... → project
+            Uri configUri = new(configUrl);
+            string[] segments = configUri.AbsolutePath.Trim('/').Split('/');
+            // dev.azure.com path: segments[0]=org, segments[1]=project
+            // for hosted: segments[1] is the project name when > 1 segment
+            if (segments.Length > 1) project = segments[1];
+        }
+
+        // Build WIQL query server-side — BA never sees it (BROWSE-01).
+        // SELECT [System.Id],[System.Title] FROM WorkItems WHERE ...
+        System.Text.StringBuilder wiqlSb = new(
+            "SELECT [System.Id],[System.Title],[System.ChangedDate] FROM WorkItems");
+
+        List<string> whereClauses = [];
+
+        if (!string.IsNullOrWhiteSpace(project))
+            whereClauses.Add($"[System.TeamProject] = '{project.Replace("'", "''")}'");
+
+        if (query.SearchText is { Length: > 0 } q)
+            whereClauses.Add($"[System.Title] CONTAINS '{q.Replace("'", "''")}'");
+
+        if (whereClauses.Count > 0)
+        {
+            wiqlSb.Append(" WHERE ");
+            wiqlSb.Append(string.Join(" AND ", whereClauses));
+        }
+
+        wiqlSb.Append(" ORDER BY [System.ChangedDate] DESC");
+
+        string wiql = wiqlSb.ToString();
+        string wiqlBody = System.Text.Json.JsonSerializer.Serialize(new { query = wiql });
+        string wiqlUrl = $"{orgUrl}/_apis/wit/wiql?api-version=7.1";
+
+        (JsonDocument? doc, bool isPermissionDenied) = await inner.ReadJsonAsync(context, wiqlUrl, "POST", wiqlBody, ct);
+
+        if (isPermissionDenied)
+            return new ConnectorBrowseResult([], null, IsPermissionDenied: true);
+
+        if (doc is null)
+            return new ConnectorBrowseResult([], null, IsPermissionDenied: false);
+
+        try
+        {
+            JsonElement root = doc.RootElement;
+            List<ConnectorBrowseItem> items = [];
+
+            if (root.TryGetProperty("workItems", out JsonElement workItems))
+            {
+                foreach (JsonElement wi in workItems.EnumerateArray())
+                {
+                    int? id = wi.TryGetProperty("id", out JsonElement idEl) && idEl.TryGetInt32(out int parsedId)
+                        ? parsedId : null;
+                    if (id is null) continue;
+
+                    string? itemUrl = wi.TryGetProperty("url", out JsonElement itemUrlEl) ? itemUrlEl.GetString() : null;
+
+                    items.Add(new ConnectorBrowseItem(
+                        ExternalId: id.Value.ToString(),
+                        Title: $"Work Item #{id}",
+                        Type: "work-item",
+                        LastModified: null,
+                        Author: null,
+                        Url: itemUrl,
+                        Breadcrumb: project));
+                }
+            }
+
+            doc.Dispose();
+            return new ConnectorBrowseResult(items, null, IsPermissionDenied: false);
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex,
+                "[AzureDevOpsPresetConnector] ListDocumentsAsync JSON mapping failed. module=AzureDevOpsPresetConnector op=ListDocumentsAsync type=azure-devops");
+            doc?.Dispose();
+            return new ConnectorBrowseResult([], null, IsPermissionDenied: false);
+        }
+    }
 }
