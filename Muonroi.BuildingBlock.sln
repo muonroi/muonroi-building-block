@@ -310,6 +310,82 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Experience.Abstract
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Experience.Sample", "samples\Muonroi.Experience.Sample\Muonroi.Experience.Sample.csproj", "{9CF2198E-75DE-4039-91CE-EAF266076E05}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.BackgroundJobs.Api", "samples\Quickstart.BackgroundJobs\src\Quickstart.BackgroundJobs.Api\Quickstart.BackgroundJobs.Api.csproj", "{A1B2C3D4-0001-4000-8000-000000000001}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Caching.Api", "samples\Quickstart.Caching\src\Quickstart.Caching.Api\Quickstart.Caching.Api.csproj", "{A1B2C3D4-0002-4000-8000-000000000002}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Mediator.Api", "samples\Quickstart.Mediator\src\Quickstart.Mediator.Api\Quickstart.Mediator.Api.csproj", "{A1B2C3D4-0003-4000-8000-000000000003}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Messaging.Api", "samples\Quickstart.Messaging\src\Quickstart.Messaging.Api\Quickstart.Messaging.Api.csproj", "{A1B2C3D4-0004-4000-8000-000000000004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Observability.Api", "samples\Quickstart.Observability\src\Quickstart.Observability.Api\Quickstart.Observability.Api.csproj", "{A1B2C3D4-0005-4000-8000-000000000005}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Resilience.Api", "samples\Quickstart.Resilience\src\Quickstart.Resilience.Api\Quickstart.Resilience.Api.csproj", "{A1B2C3D4-0006-4000-8000-000000000006}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Integration.Api", "samples\Quickstart.Integration\src\Quickstart.Integration.Api\Quickstart.Integration.Api.csproj", "{A1B2C3D4-0007-4000-8000-000000000007}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.CEP.Api", "samples\Quickstart.CEP\src\Quickstart.CEP.Api\Quickstart.CEP.Api.csproj", "{A1B2C3D4-0008-4000-8000-000000000008}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.AspNetCore.Api", "samples\Quickstart.AspNetCore\src\Quickstart.AspNetCore.Api\Quickstart.AspNetCore.Api.csproj", "{A1B2C3D4-0009-4000-8000-000000000009}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.OpenApi.Api", "samples\Quickstart.OpenApi\src\Quickstart.OpenApi.Api\Quickstart.OpenApi.Api.csproj", "{A1B2C3D4-0010-4000-8000-000000000010}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.AspNetCore.RuleEngine.Api", "samples\Quickstart.AspNetCore.RuleEngine\src\Quickstart.AspNetCore.RuleEngine.Api\Quickstart.AspNetCore.RuleEngine.Api.csproj", "{A1B2C3D4-0011-4000-8000-000000000011}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Bff.Api", "samples\Quickstart.Bff\src\Quickstart.Bff.Api\Quickstart.Bff.Api.csproj", "{A1B2C3D4-0012-4000-8000-000000000012}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Grpc.Api", "samples\Quickstart.Grpc\src\Quickstart.Grpc.Api\Quickstart.Grpc.Api.csproj", "{A1B2C3D4-0013-4000-8000-000000000013}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Http.Api", "samples\Quickstart.Http\src\Quickstart.Http.Api\Quickstart.Http.Api.csproj", "{A1B2C3D4-0014-4000-8000-000000000014}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.SignalR.Api", "samples\Quickstart.SignalR\src\Quickstart.SignalR.Api\Quickstart.SignalR.Api.csproj", "{A1B2C3D4-0015-4000-8000-000000000015}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Core.Api", "samples\Quickstart.Core\src\Quickstart.Core.Api\Quickstart.Core.Api.csproj", "{A1B2C3D4-0016-4000-8000-000000000016}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Logging.Api", "samples\Quickstart.Logging\src\Quickstart.Logging.Api\Quickstart.Logging.Api.csproj", "{A1B2C3D4-0017-4000-8000-000000000017}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Diagnostics.Api", "samples\Quickstart.Diagnostics\src\Quickstart.Diagnostics.Api\Quickstart.Diagnostics.Api.csproj", "{A1B2C3D4-0018-4000-8000-000000000018}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Mapper.Api", "samples\Quickstart.Mapper\src\Quickstart.Mapper.Api\Quickstart.Mapper.Api.csproj", "{A1B2C3D4-0019-4000-8000-000000000019}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Secrets.Api", "samples\Quickstart.Secrets\src\Quickstart.Secrets.Api\Quickstart.Secrets.Api.csproj", "{A1B2C3D4-0020-4000-8000-000000000020}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Services.Api", "samples\Quickstart.Services\src\Quickstart.Services.Api\Quickstart.Services.Api.csproj", "{A1B2C3D4-0021-4000-8000-000000000021}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Auth.Api", "samples\Quickstart.Auth\src\Quickstart.Auth.Api\Quickstart.Auth.Api.csproj", "{A1B2C3D4-0022-4000-8000-000000000022}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.AuthZ.Api", "samples\Quickstart.AuthZ\src\Quickstart.AuthZ.Api\Quickstart.AuthZ.Api.csproj", "{A1B2C3D4-0023-4000-8000-000000000023}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Governance.Api", "samples\Quickstart.Governance\src\Quickstart.Governance.Api\Quickstart.Governance.Api.csproj", "{A1B2C3D4-0024-4000-8000-000000000024}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Governance.Enterprise.Api", "samples\Quickstart.Governance.Enterprise\src\Quickstart.Governance.Enterprise.Api\Quickstart.Governance.Enterprise.Api.csproj", "{A1B2C3D4-0025-4000-8000-000000000025}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Data.Dapper.Api", "samples\Quickstart.Data.Dapper\src\Quickstart.Data.Dapper.Api\Quickstart.Data.Dapper.Api.csproj", "{A1B2C3D4-0026-4000-8000-000000000026}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Data.EntityFrameworkCore.Api", "samples\Quickstart.Data.EntityFrameworkCore\src\Quickstart.Data.EntityFrameworkCore.Api\Quickstart.Data.EntityFrameworkCore.Api.csproj", "{A1B2C3D4-0027-4000-8000-000000000027}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Data.Events.Api", "samples\Quickstart.Data.Events\src\Quickstart.Data.Events.Api\Quickstart.Data.Events.Api.csproj", "{A1B2C3D4-0028-4000-8000-000000000028}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Tenancy.Api", "samples\Quickstart.Tenancy\src\Quickstart.Tenancy.Api\Quickstart.Tenancy.Api.csproj", "{A1B2C3D4-0029-4000-8000-000000000029}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Kubernetes.Api", "samples\Quickstart.Kubernetes\src\Quickstart.Kubernetes.Api\Quickstart.Kubernetes.Api.csproj", "{A1B2C3D4-0030-4000-8000-000000000030}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.ServiceDiscovery.Api", "samples\Quickstart.ServiceDiscovery\src\Quickstart.ServiceDiscovery.Api\Quickstart.ServiceDiscovery.Api.csproj", "{A1B2C3D4-0031-4000-8000-000000000031}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.RuleEngine.Runtime.Web.Api", "samples\Quickstart.RuleEngine.Runtime.Web\src\Quickstart.RuleEngine.Runtime.Web.Api\Quickstart.RuleEngine.Runtime.Web.Api.csproj", "{A1B2C3D4-0032-4000-8000-000000000032}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.RuleEngine.EntityFrameworkCore.Api", "samples\Quickstart.RuleEngine.EntityFrameworkCore\src\Quickstart.RuleEngine.EntityFrameworkCore.Api\Quickstart.RuleEngine.EntityFrameworkCore.Api.csproj", "{A1B2C3D4-0033-4000-8000-000000000033}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.RuleEngine.NRules.Api", "samples\Quickstart.RuleEngine.NRules\src\Quickstart.RuleEngine.NRules.Api\Quickstart.RuleEngine.NRules.Api.csproj", "{A1B2C3D4-0034-4000-8000-000000000034}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.RuleEngine.Proliferation.Api", "samples\Quickstart.RuleEngine.Proliferation\src\Quickstart.RuleEngine.Proliferation.Api\Quickstart.RuleEngine.Proliferation.Api.csproj", "{A1B2C3D4-0035-4000-8000-000000000035}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Integration.Persistence.Api", "samples\Quickstart.Integration.Persistence\src\Quickstart.Integration.Persistence.Api\Quickstart.Integration.Persistence.Api.csproj", "{A1B2C3D4-0036-4000-8000-000000000036}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.Pdf.Advanced.Api", "samples\Quickstart.Pdf.Advanced\src\Quickstart.Pdf.Advanced.Api\Quickstart.Pdf.Advanced.Api.csproj", "{A1B2C3D4-0037-4000-8000-000000000037}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickstart.UiEngine.Catalog.Api", "samples\Quickstart.UiEngine.Catalog\src\Quickstart.UiEngine.Catalog.Api\Quickstart.UiEngine.Catalog.Api.csproj", "{A1B2C3D4-0038-4000-8000-000000000038}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Pdf.Governance", "src\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj", "{11F522B3-9DBA-4F43-B055-29396173A043}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Muonroi.Pdf.Abstractions", "src\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj", "{22F4099C-75E7-4AB9-8671-05D609023676}"
@@ -2283,6 +2359,44 @@ Global
 		{5342343C-C806-4F3E-BA20-5D5707695F3D} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{2293B2D7-3CFC-438D-8888-5B7A1DA2BBD0} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{9CF2198E-75DE-4039-91CE-EAF266076E05} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0001-4000-8000-000000000001} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0002-4000-8000-000000000002} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0003-4000-8000-000000000003} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0004-4000-8000-000000000004} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0005-4000-8000-000000000005} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0006-4000-8000-000000000006} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0007-4000-8000-000000000007} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0008-4000-8000-000000000008} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0009-4000-8000-000000000009} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0010-4000-8000-000000000010} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0011-4000-8000-000000000011} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0012-4000-8000-000000000012} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0013-4000-8000-000000000013} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0014-4000-8000-000000000014} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0015-4000-8000-000000000015} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0016-4000-8000-000000000016} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0017-4000-8000-000000000017} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0018-4000-8000-000000000018} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0019-4000-8000-000000000019} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0020-4000-8000-000000000020} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0021-4000-8000-000000000021} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0022-4000-8000-000000000022} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0023-4000-8000-000000000023} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0024-4000-8000-000000000024} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0025-4000-8000-000000000025} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0026-4000-8000-000000000026} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0027-4000-8000-000000000027} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0028-4000-8000-000000000028} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0029-4000-8000-000000000029} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0030-4000-8000-000000000030} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0031-4000-8000-000000000031} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0032-4000-8000-000000000032} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0033-4000-8000-000000000033} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0034-4000-8000-000000000034} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0035-4000-8000-000000000035} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0036-4000-8000-000000000036} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0037-4000-8000-000000000037} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{A1B2C3D4-0038-4000-8000-000000000038} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 		{11F522B3-9DBA-4F43-B055-29396173A043} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{22F4099C-75E7-4AB9-8671-05D609023676} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{B3500720-3EC8-4257-A674-81005215A87A} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
