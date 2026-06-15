@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Muonroi.Observability/Muonroi.Observability.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.Core/Muonroi.Core.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.Logging/Muonroi.Logging.csproj" />
+    <!--
+      Muonroi.Governance provides AddLicenseProtection, which is called by the
+      "Approach A" (licensed) path in Program.cs before AddObservability.
+      It is not needed for the default Approach B (UseMuonroiSetup=false) path,
+      but including it here keeps the project compilable for both paths.
+    -->
+    <ProjectReference Include="../../../../src/Muonroi.Governance/Muonroi.Governance.csproj" />
+  </ItemGroup>
+</Project>

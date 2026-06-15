@@ -1,3 +1,4 @@
+using Muonroi.RuleEngine.EntityFrameworkCore.Rules.IngestedSourceEntities;
 using Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities;
 
 namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules;
@@ -188,6 +189,12 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
     /// <summary>Gets the copilot-draft provenance entities (Phase 8 — VRF-03 exit metric).</summary>
     public DbSet<CopilotDraftProvenanceRecord> CopilotDraftProvenance => Set<CopilotDraftProvenanceRecord>();
 
+    /// <summary>Gets the ingested-source-document entities (Phase 15 — INGEST-01/02/03).</summary>
+    public DbSet<IngestedSourceDocumentRecord> IngestedSourceDocuments => Set<IngestedSourceDocumentRecord>();
+
+    /// <summary>Gets the outbound-sync job entities (Phase 17 — SYNC-02, tenant-scoped + retriable).</summary>
+    public DbSet<OutboundSyncJobRecord> OutboundSyncJobs => Set<OutboundSyncJobRecord>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -374,6 +381,40 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
             entity.Property(x => x.AiOriginalHash).HasMaxLength(64);
             entity.Property(x => x.AiOriginalSnapshot).HasColumnType("text");
             entity.Property(x => x.GeneratedBy).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<IngestedSourceDocumentRecord>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            // Map to the singular table the Phase 15 migration + RLS policy created. The DbSet property is plural
+            // ("IngestedSourceDocuments") and there is no pluralization convention here, so without this the EF
+            // model targets a non-existent "IngestedSourceDocuments" table and any real-Postgres read 42P01s.
+            entity.ToTable("IngestedSourceDocument");
+            // Composite index: tenant + connector + sourceRef for fast per-tenant lookups (Phase 15 D-07).
+            entity.HasIndex(x => new { x.TenantId, x.ConnectorId, x.SourceRef });
+            entity.Property(x => x.TenantId).HasMaxLength(128);
+            entity.Property(x => x.ConnectorId).HasMaxLength(128);
+            entity.Property(x => x.SourceRef).HasMaxLength(512);
+            entity.Property(x => x.RedactedContent).HasColumnType("text");
+            entity.Property(x => x.NormalizedContent).HasColumnType("text");
+            entity.Property(x => x.CorrelationId).HasMaxLength(64);
+            entity.Property(x => x.IngestedBy).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<OutboundSyncJobRecord>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            // Map to the singular table the migration + RLS policy + parity DO-block reference. Without this
+            // explicit name EF Core defaults to the DbSet property name ("OutboundSyncJobs", plural) — there is
+            // NO global pluralization convention in this context — which 42P01-crashes the background processor.
+            entity.ToTable("OutboundSyncJob");
+            // Index on (tenant, status) — the processor claims Pending/retriable rows per tenant (Phase 17 D-03).
+            entity.HasIndex(x => new { x.TenantId, x.Status });
+            entity.Property(x => x.TenantId).HasMaxLength(128);
+            entity.Property(x => x.Workflow).HasMaxLength(256);
+            entity.Property(x => x.Approver).HasMaxLength(256);
+            entity.Property(x => x.Status).HasMaxLength(32);
+            entity.Property(x => x.LastError).HasColumnType("text");
         });
     }
 }

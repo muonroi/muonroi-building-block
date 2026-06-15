@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Target packages: default design-system templates + Enterprise toolkit
+         (SSIM scorer, PNG decoder, capability gate, template-registry contracts). -->
+    <ProjectReference Include="../../../../src/Muonroi.Pdf.DesignSystem.Default/Muonroi.Pdf.DesignSystem.Default.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.Pdf.Enterprise/Muonroi.Pdf.Enterprise.csproj" />
+    <!-- Supporting: the OSS PDF engine (AddPdf + IMPdfService) and its abstractions. -->
+    <ProjectReference Include="../../../../src/Muonroi.Pdf/Muonroi.Pdf.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.Pdf.Abstractions/Muonroi.Pdf.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

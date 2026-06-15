@@ -50,7 +50,10 @@ public sealed class TenantRlsConnectionInterceptor(IOptions<MultiTenantOptions> 
         }
 
         using DbCommand cmd = connection.CreateCommand();
-        cmd.CommandText = "SET app.current_tenant_id = @tid";
+        // PostgreSQL's SET command cannot take a bind parameter (SET x = $1 -> 42601 syntax error).
+        // set_config(setting, value, is_local=false) is the parameterizable, session-scoped equivalent
+        // and reads back via current_setting('app.current_tenant_id', true) in the RLS policies.
+        cmd.CommandText = "SELECT set_config('app.current_tenant_id', @tid, false)";
         DbParameter param = cmd.CreateParameter();
         param.ParameterName = "@tid";
         param.Value = TenantContext.CurrentTenantId ?? string.Empty;
@@ -69,7 +72,10 @@ public sealed class TenantRlsConnectionInterceptor(IOptions<MultiTenantOptions> 
         }
 
         using DbCommand cmd = connection.CreateCommand();
-        cmd.CommandText = "SET app.current_tenant_id = @tid";
+        // PostgreSQL's SET command cannot take a bind parameter (SET x = $1 -> 42601 syntax error).
+        // set_config(setting, value, is_local=false) is the parameterizable, session-scoped equivalent
+        // and reads back via current_setting('app.current_tenant_id', true) in the RLS policies.
+        cmd.CommandText = "SELECT set_config('app.current_tenant_id', @tid, false)";
         DbParameter param = cmd.CreateParameter();
         param.ParameterName = "@tid";
         param.Value = TenantContext.CurrentTenantId ?? string.Empty;

@@ -3,6 +3,7 @@ using Xunit;
 
 namespace Muonroi.RuleGen.Tests;
 
+[Collection(BuildSerialCollection.Name)]
 public class MergeSplitWorkflowTests
 {
     [Fact]

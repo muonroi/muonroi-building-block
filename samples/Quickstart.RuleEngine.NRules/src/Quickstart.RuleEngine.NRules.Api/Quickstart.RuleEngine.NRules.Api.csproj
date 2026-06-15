@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+    <!-- Muonroi.RuleEngine.NRules is [FROZEN] / [Obsolete]; suppress CS0618 in this demo. -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Target package: NRules engine + frozen NRules HTTP controllers. -->
+    <ProjectReference Include="../../../../src/Muonroi.RuleEngine.NRules/Muonroi.RuleEngine.NRules.csproj" />
+    <!-- Supporting: core abstractions (IMDateTimeService used by NRulesController). -->
+    <ProjectReference Include="../../../../src/Muonroi.Core/Muonroi.Core.csproj" />
+  </ItemGroup>
+</Project>

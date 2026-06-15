@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!--
+    Muonroi BackgroundJobs package references.
+
+    Muonroi.BackgroundJobs.Hangfire:
+      - Provides HangfireJobScheduler (IBackgroundJobScheduler implementation)
+      - Its [ModuleInitializer] self-registers the Hangfire provider with BackgroundJobHandler
+        at assembly load time — no manual registration needed beyond referencing the assembly.
+
+    Muonroi.BackgroundJobs.Quartz:
+      - Included to show how to swap providers via config (JobType = "Quartz").
+      - Its own [ModuleInitializer] self-registers the Quartz provider.
+
+    Muonroi.Core:
+      - Brings in ISystemExecutionContextAccessor, SystemExecutionContextAccessor,
+        ITenantContextPolicy, DefaultTenantContextPolicy, NullContextResolver,
+        SystemExecutionContextScope, ContextMirrorScope, etc.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Muonroi.BackgroundJobs.Hangfire/Muonroi.BackgroundJobs.Hangfire.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.BackgroundJobs.Quartz/Muonroi.BackgroundJobs.Quartz.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.Core/Muonroi.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Swagger/OpenAPI UI for trying the job endpoints interactively -->
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <!-- In-memory Hangfire storage — no database required for the quickstart -->
+    <PackageReference Include="Hangfire.MemoryStorage" />
+  </ItemGroup>
+</Project>

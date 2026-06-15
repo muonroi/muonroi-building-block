@@ -39,9 +39,41 @@ public sealed class AuditMetadataServiceTests
         }
         finally
         {
-            if (Directory.Exists(tempRoot))
+            // ResolveGitCommit spawns a `git` child process whose working directory is tempRoot. On
+            // Windows the child can keep a transient handle on that directory for a short window after
+            // it exits, so an immediate recursive delete intermittently throws
+            // IOException("...because it is being used by another process") under full-suite load. Retry
+            // briefly, then give up — leaving a temp dir behind must not fail an otherwise-passing test.
+            DeleteDirectoryBestEffort(tempRoot);
+        }
+    }
+
+    private static void DeleteDirectoryBestEffort(string path)
+    {
+        // Best-effort only: the assertion under test has already completed by the time cleanup runs, so
+        // a failure to delete the throwaway temp directory must never fail the test. The `git` child
+        // process spawned by ResolveGitCommit (working directory = path) can keep a transient handle on
+        // the directory for a while after it exits, so retry for a bounded window and then give up
+        // silently — the OS reclaims the temp directory regardless.
+        for (int attempt = 0; attempt < 40; attempt++)
+        {
+            try
             {
-                Directory.Delete(tempRoot, recursive: true);
+                if (!Directory.Exists(path))
+                {
+                    return;
+                }
+
+                Directory.Delete(path, recursive: true);
+                return;
+            }
+            catch (IOException)
+            {
+                Thread.Sleep(100);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Thread.Sleep(100);
             }
         }
     }

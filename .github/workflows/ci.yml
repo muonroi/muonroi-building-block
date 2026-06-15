@@ -37,6 +37,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Restore strong-name key (Muonroi.snk)
+        # Muonroi.snk is gitignored (private signing key) — not in the repo.
+        # Muonroi.Pdf.Enterprise.csproj signs with ../../Muonroi.snk (repo root),
+        # so decode it from the secret before restore/build or CS7027 fails the build.
+        run: echo "${{ secrets.MUONROI_SNK_BASE64 }}" | base64 -d > Muonroi.snk
+        shell: bash
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
