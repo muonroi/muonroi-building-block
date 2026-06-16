@@ -72,6 +72,69 @@ public sealed class JiraServerPresetConnector(HttpConnector inner, ILogger<JiraS
         => inner.GetConfigSchema();
 
     /// <inheritdoc/>
+    public async Task<ConnectorDocumentContent?> FetchDocumentAsync(
+        ConnectorContext context,
+        string sourceRef,
+        CancellationToken ct)
+    {
+        // Derive Jira root from config url — same resolution as ListDocumentsAsync.
+        string? baseUrl = context.Config.RootElement
+            .TryGetProperty("url", out JsonElement urlEl) ? urlEl.GetString() : null;
+        if (string.IsNullOrWhiteSpace(baseUrl)) return null;
+
+        string jiraRoot = baseUrl.TrimEnd('/');
+        int issueIdx = jiraRoot.IndexOf("/rest/api/2/issue", StringComparison.OrdinalIgnoreCase);
+        if (issueIdx > 0) jiraRoot = jiraRoot[..issueIdx];
+
+        string fetchUrl = $"{jiraRoot}/rest/api/2/issue/{Uri.EscapeDataString(sourceRef)}?fields=summary,description";
+
+        (JsonDocument? doc, bool isPermissionDenied) = await inner.ReadJsonAsync(context, fetchUrl, "GET", null, ct);
+
+        if (isPermissionDenied || doc is null)
+            return new ConnectorDocumentContent(string.Empty, "plain");
+
+        try
+        {
+            // Extract fields.summary and fields.description (plain wiki string, NOT ADF on Server).
+            // Never log the values (D-06).
+            string summary = string.Empty;
+            string description = string.Empty;
+
+            if (doc.RootElement.TryGetProperty("fields", out JsonElement fieldsEl))
+            {
+                if (fieldsEl.TryGetProperty("summary", out JsonElement summaryEl) &&
+                    summaryEl.ValueKind == JsonValueKind.String)
+                    summary = summaryEl.GetString() ?? string.Empty;
+
+                if (fieldsEl.TryGetProperty("description", out JsonElement descEl) &&
+                    descEl.ValueKind == JsonValueKind.String)
+                    description = descEl.GetString() ?? string.Empty;
+            }
+
+            // Compose body — omit blank parts gracefully.
+            string body = (summary, description) switch
+            {
+                ({ Length: > 0 }, { Length: > 0 }) => $"{summary}\n\n{description}",
+                ({ Length: > 0 }, _) => summary,
+                (_, { Length: > 0 }) => description,
+                _ => string.Empty
+            };
+
+            return new ConnectorDocumentContent(body, "plain");
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex,
+                "[JiraServerPresetConnector] FetchDocumentAsync JSON mapping failed. module=JiraServerPresetConnector op=FetchDocumentAsync type=jira-server");
+            return new ConnectorDocumentContent(string.Empty, "plain");
+        }
+        finally
+        {
+            doc?.Dispose();
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<ConnectorBrowseResult?> ListDocumentsAsync(
         ConnectorContext context,
         ConnectorBrowseQuery query,

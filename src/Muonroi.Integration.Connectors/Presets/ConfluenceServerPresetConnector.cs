@@ -72,6 +72,54 @@ public sealed class ConfluenceServerPresetConnector(HttpConnector inner, ILogger
         => inner.GetConfigSchema();
 
     /// <inheritdoc/>
+    public async Task<ConnectorDocumentContent?> FetchDocumentAsync(
+        ConnectorContext context,
+        string sourceRef,
+        CancellationToken ct)
+    {
+        // Derive Confluence root from config url — same resolution as ListDocumentsAsync.
+        string? configUrl = context.Config.RootElement
+            .TryGetProperty("url", out JsonElement urlEl) ? urlEl.GetString() : null;
+        if (string.IsNullOrWhiteSpace(configUrl)) return null;
+
+        string confluenceRoot = configUrl.TrimEnd('/');
+        int restIdx = confluenceRoot.IndexOf("/rest/api/content", StringComparison.OrdinalIgnoreCase);
+        if (restIdx > 0) confluenceRoot = confluenceRoot[..restIdx];
+
+        string fetchUrl = $"{confluenceRoot}/rest/api/content/{Uri.EscapeDataString(sourceRef)}?expand=body.storage";
+
+        (JsonDocument? doc, bool isPermissionDenied) = await inner.ReadJsonAsync(context, fetchUrl, "GET", null, ct);
+
+        if (isPermissionDenied || doc is null)
+            return new ConnectorDocumentContent(string.Empty, "xhtml");
+
+        try
+        {
+            // Extract body.storage.value — never log the value (D-06).
+            string value = string.Empty;
+            if (doc.RootElement.TryGetProperty("body", out JsonElement bodyEl) &&
+                bodyEl.TryGetProperty("storage", out JsonElement storageEl) &&
+                storageEl.TryGetProperty("value", out JsonElement valueEl) &&
+                valueEl.ValueKind == JsonValueKind.String)
+            {
+                value = valueEl.GetString() ?? string.Empty;
+            }
+
+            return new ConnectorDocumentContent(value, "xhtml");
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex,
+                "[ConfluenceServerPresetConnector] FetchDocumentAsync JSON mapping failed. module=ConfluenceServerPresetConnector op=FetchDocumentAsync type=confluence-server");
+            return new ConnectorDocumentContent(string.Empty, "xhtml");
+        }
+        finally
+        {
+            doc?.Dispose();
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<ConnectorBrowseResult?> ListDocumentsAsync(
         ConnectorContext context,
         ConnectorBrowseQuery query,

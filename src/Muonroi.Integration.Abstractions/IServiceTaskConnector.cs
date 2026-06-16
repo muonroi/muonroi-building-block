@@ -44,6 +44,35 @@ public interface IServiceTaskConnector
         => Task.FromResult<ConnectorBrowseResult?>(null); // default: browse not supported
 
     /// <summary>
+    /// Fetches a single document by its external reference (page ID, issue key, etc.)
+    /// using the preset-specific REST API — Confluence Server: <c>/rest/api/content/{id}?expand=body.storage</c>;
+    /// Jira Server: <c>/rest/api/2/issue/{key}?fields=summary,description</c>.
+    /// <para>
+    /// Returns <see langword="null"/> when this preset does not support per-document fetch (graceful
+    /// degrade). A null result instructs the ingestion pipeline to fall back to the legacy
+    /// <c>BuildConfigWithSourceRef + ExecuteAsync</c> path — all presets that do not override this
+    /// method continue to work byte-for-byte unchanged.
+    /// </para>
+    /// <para>
+    /// Implementations MUST NOT log the document body (D-06). On permission-denied or parse failure
+    /// they MUST return a <see cref="ConnectorDocumentContent"/> with an empty <c>Body</c> rather
+    /// than throwing, so the caller always stores an empty-but-safe record instead of a 500.
+    /// </para>
+    /// </summary>
+    /// <param name="context">Connector execution context (config, credentials, tenant).</param>
+    /// <param name="sourceRef">External document identifier (page ID, issue key, etc.).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A <see cref="ConnectorDocumentContent"/> containing the raw body and its normalizer format key,
+    /// or <see langword="null"/> if this preset does not support direct document fetch.
+    /// </returns>
+    Task<ConnectorDocumentContent?> FetchDocumentAsync(
+        ConnectorContext context,
+        string sourceRef,
+        CancellationToken ct)
+        => Task.FromResult<ConnectorDocumentContent?>(null); // default: use legacy ExecuteAsync path
+
+    /// <summary>
     /// Enumerates the scopes (projects, spaces, etc.) available to the connected credential.
     /// The BA selects a scope to narrow document browse results.
     /// <para>
