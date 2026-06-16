@@ -42,6 +42,15 @@ public sealed class IngestedSourceDocumentRecord
     /// <summary>Gets or sets the correlation ID linking this ingestion run to connector logs (max 64).</summary>
     public string? CorrelationId { get; set; }
 
+    /// <summary>
+    /// Gets or sets the BA-confirmed document classification — <c>"rule"</c> (decision logic, routed to
+    /// the rule-draft pipeline) or <c>"business"</c> (narrative/spec, routed to the clean reading view +
+    /// traceability attach). Null = unclassified (legacy rows / not yet chosen), treated as rule by default.
+    /// Persisted from the BA's choice at import time; a deterministic heuristic only SUGGESTS, never writes
+    /// this column (no AI in classification, Phase 25 DOC-01). Max 16.
+    /// </summary>
+    public string? DocType { get; set; }
+
     /// <summary>Gets or sets the UTC timestamp the ingestion completed.</summary>
     public DateTimeOffset IngestedAt { get; set; } = DateTimeOffset.UtcNow;
 
