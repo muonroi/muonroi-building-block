@@ -423,6 +423,149 @@ public class ListDocumentsServerTests
     }
 
     // ---------------------------------------------------------------------------
+    // Jira Server — JQL scope filter correctness (gap-fix 260616)
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task JiraServer_ScopeOnly_NoSearchText_JqlHasNoAndBeforeOrderBy()
+    {
+        // Arrange — scope set, no search text; historically produced "project = TTOS AND ORDER BY updated DESC" (invalid)
+        string cannedJson = """{"issues":[],"total":0,"startAt":0,"maxResults":20}""";
+        HttpResponseMessage response = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(cannedJson, Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, FakeHttpMessageHandler handler) = MakeConnector(response);
+        IServiceTaskConnector preset = new JiraServerPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://jira.example.com/rest/api/2/issue");
+
+        // Act
+        await preset.ListDocumentsAsync(
+            ctx,
+            new ConnectorBrowseQuery(SearchText: null, Scope: "TTOS", TypeFilter: null, Cursor: null),
+            CancellationToken.None);
+
+        // Assert — JQL must be: project = "TTOS" ORDER BY updated DESC (no AND before ORDER BY)
+        string requestUrl = Uri.UnescapeDataString(handler.LastRequestUri!.ToString());
+        requestUrl.Should().Contain("project = \"TTOS\"", "scope must be quoted project filter");
+        requestUrl.Should().Contain("ORDER BY updated DESC", "ORDER BY clause must be present");
+        requestUrl.Should().NotContain("AND ORDER BY",
+            "AND immediately before ORDER BY is invalid JQL — this was the bug");
+    }
+
+    [Fact]
+    public async Task JiraServer_ScopeAndSearchText_JqlHasScopeAndTextBeforeOrderBy()
+    {
+        // Arrange — scope + search text; must produce: project = "TTOS" AND text ~ "..." ORDER BY updated DESC
+        string cannedJson = """{"issues":[],"total":0,"startAt":0,"maxResults":20}""";
+        HttpResponseMessage response = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(cannedJson, Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, FakeHttpMessageHandler handler) = MakeConnector(response);
+        IServiceTaskConnector preset = new JiraServerPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://jira.example.com/rest/api/2/issue");
+
+        // Act
+        await preset.ListDocumentsAsync(
+            ctx,
+            new ConnectorBrowseQuery(SearchText: "delivery", Scope: "TTOS", TypeFilter: null, Cursor: null),
+            CancellationToken.None);
+
+        // Assert — must have scope AND text ~ before ORDER BY
+        string requestUrl = Uri.UnescapeDataString(handler.LastRequestUri!.ToString());
+        requestUrl.Should().Contain("project = \"TTOS\"", "scope clause must be present");
+        requestUrl.Should().Contain("text ~", "text search clause must be present");
+        requestUrl.Should().Contain("ORDER BY updated DESC", "ORDER BY must be present");
+        // The AND that joins scope and text is valid; the ORDER BY must come after both
+        int orderByIdx = requestUrl.IndexOf("ORDER BY updated DESC", StringComparison.Ordinal);
+        int textIdx = requestUrl.IndexOf("text ~", StringComparison.Ordinal);
+        orderByIdx.Should().BeGreaterThan(textIdx, "ORDER BY must appear after the text ~ clause");
+    }
+
+    // ---------------------------------------------------------------------------
+    // Confluence Server — ListScopesAsync (gap-fix 260616)
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task ConfluenceServer_ListScopesAsync_MapsSortedSpaces()
+    {
+        // Arrange — canned /rest/api/space response with two spaces
+        string cannedJson = """
+            {
+              "results": [
+                { "key": "ZSPACE", "name": "Z Space" },
+                { "key": "ASPACE", "name": "A Space" }
+              ]
+            }
+            """;
+        HttpResponseMessage response = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(cannedJson, Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, FakeHttpMessageHandler handler) = MakeConnector(response);
+        ConfluenceServerPresetConnector preset = new(inner);
+        ConnectorContext ctx = MakeContext("https://confluence.example.com/rest/api/content?expand=body.storage");
+
+        // Act
+        IReadOnlyList<ConnectorScope>? scopes = await preset.ListScopesAsync(ctx, CancellationToken.None);
+
+        // Assert — hits /rest/api/space endpoint
+        string requestUrl = handler.LastRequestUri!.ToString();
+        requestUrl.Should().Contain("/rest/api/space", "must query the spaces endpoint");
+
+        // Assert — maps key/name and sorts alphabetically by label
+        scopes.Should().NotBeNull();
+        scopes!.Should().HaveCount(2);
+        scopes[0].Id.Should().Be("ASPACE", "A Space sorts before Z Space");
+        scopes[0].Label.Should().Be("A Space (ASPACE)");
+        scopes[1].Id.Should().Be("ZSPACE");
+        scopes[1].Label.Should().Be("Z Space (ZSPACE)");
+    }
+
+    [Fact]
+    public async Task ConfluenceServer_ListScopesAsync_ReturnsEmptyOnPermissionDenied()
+    {
+        // Arrange — 403 from Confluence space endpoint
+        HttpResponseMessage response = new(HttpStatusCode.Forbidden)
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, _) = MakeConnector(response);
+        ConfluenceServerPresetConnector preset = new(inner);
+        ConnectorContext ctx = MakeContext("https://confluence.example.com/rest/api/content?expand=body.storage");
+
+        // Act
+        IReadOnlyList<ConnectorScope>? scopes = await preset.ListScopesAsync(ctx, CancellationToken.None);
+
+        // Assert — empty list (not null) because the preset DOES support scopes; permission just denied
+        scopes.Should().NotBeNull("empty list ≠ null — null means 'not supported'; empty means 'no access'");
+        scopes!.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ConfluenceServer_ListScopesAsync_ReturnsNullWhenConfigUrlAbsent()
+    {
+        // Arrange — context with no "url" key in config
+        (HttpConnector inner, _) = MakeConnector(new HttpResponseMessage(HttpStatusCode.OK));
+        ConfluenceServerPresetConnector preset = new(inner);
+        ConnectorContext ctx = new()
+        {
+            Config = JsonDocument.Parse("{}"),
+            InputFacts = new FactBag(),
+            Credentials = new Dictionary<string, string>(),
+            TenantId = "tenant-1",
+            CorrelationId = "corr-1"
+        };
+
+        // Act
+        IReadOnlyList<ConnectorScope>? scopes = await preset.ListScopesAsync(ctx, CancellationToken.None);
+
+        // Assert — null = "cannot resolve root URL, scopes cannot be fetched"
+        scopes.Should().BeNull("null signals that scopes cannot be resolved without a config url");
+    }
+
+    // ---------------------------------------------------------------------------
     // Generic REST — honest degrade: no override → default null (BROWSE-01 gate)
     // ---------------------------------------------------------------------------
 

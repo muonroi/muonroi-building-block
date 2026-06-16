@@ -165,4 +165,58 @@ public sealed class ConfluenceServerPresetConnector(HttpConnector inner, ILogger
             return new ConnectorBrowseResult([], null, IsPermissionDenied: false);
         }
     }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<ConnectorScope>?> ListScopesAsync(
+        ConnectorContext context,
+        CancellationToken ct)
+    {
+        // Derive Confluence root from config url — same resolution as ListDocumentsAsync.
+        string? configUrl = context.Config.RootElement
+            .TryGetProperty("url", out JsonElement urlEl) ? urlEl.GetString() : null;
+        if (string.IsNullOrWhiteSpace(configUrl)) return null;
+
+        string confluenceRoot = configUrl.TrimEnd('/');
+        int restIdx = confluenceRoot.IndexOf("/rest/api/content", StringComparison.OrdinalIgnoreCase);
+        if (restIdx > 0) confluenceRoot = confluenceRoot[..restIdx];
+
+        string spacesUrl = $"{confluenceRoot}/rest/api/space?limit=200";
+
+        (JsonDocument? doc, bool isPermissionDenied) = await inner.ReadJsonAsync(context, spacesUrl, "GET", null, ct);
+
+        // Permission denied or network failure — return empty list (not null: preset DOES support scopes).
+        if (isPermissionDenied || doc is null)
+            return Array.Empty<ConnectorScope>();
+
+        try
+        {
+            List<ConnectorScope> scopes = [];
+
+            if (doc.RootElement.TryGetProperty("results", out JsonElement results))
+            {
+                foreach (JsonElement space in results.EnumerateArray())
+                {
+                    string? key = space.TryGetProperty("key", out JsonElement keyEl) ? keyEl.GetString() : null;
+                    if (string.IsNullOrWhiteSpace(key)) continue;
+
+                    string? name = space.TryGetProperty("name", out JsonElement nameEl) ? nameEl.GetString() : null;
+                    string label = !string.IsNullOrWhiteSpace(name) ? $"{name} ({key})" : key!;
+
+                    scopes.Add(new ConnectorScope(Id: key!, Label: label));
+                }
+            }
+
+            scopes.Sort((a, b) => StringComparer.OrdinalIgnoreCase.Compare(a.Label, b.Label));
+
+            doc.Dispose();
+            return scopes;
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex,
+                "[ConfluenceServerPresetConnector] ListScopesAsync JSON mapping failed. module=ConfluenceServerPresetConnector op=ListScopesAsync type=confluence-server");
+            doc?.Dispose();
+            return Array.Empty<ConnectorScope>();
+        }
+    }
 }

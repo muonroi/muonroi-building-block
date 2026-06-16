@@ -88,12 +88,18 @@ public sealed class JiraServerPresetConnector(HttpConnector inner, ILogger<JiraS
         if (issueIdx > 0) jiraRoot = jiraRoot[..issueIdx];
 
         // Build JQL server-side — BA never sees it (BROWSE-01).
-        string jql = query.SearchText is { Length: > 0 } q
-            ? $"text ~ \"{q.Replace("\"", "\\\"")}\" ORDER BY updated DESC"
-            : "ORDER BY updated DESC";
+        // WHERE and ORDER BY are kept separate so ORDER BY is always the final clause.
+        // Prepending scope to a jql that already starts with "ORDER BY" produces invalid JQL.
+        string? whereClause = query.SearchText is { Length: > 0 } q
+            ? $"text ~ \"{q.Replace("\"", "\\\"")}\"" : null;
 
         if (query.Scope is { Length: > 0 } project)
-            jql = $"project = {project} AND {jql}";
+        {
+            string scopeClause = $"project = \"{project.Replace("\"", "\\\"")}\"";
+            whereClause = whereClause is null ? scopeClause : $"{scopeClause} AND {whereClause}";
+        }
+
+        string jql = (whereClause is null ? string.Empty : whereClause + " ") + "ORDER BY updated DESC";
 
         int startAt = 0;
         if (query.Cursor is { Length: > 0 } cursor && int.TryParse(cursor, out int parsed))
