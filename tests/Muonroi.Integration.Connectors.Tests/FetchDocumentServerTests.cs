@@ -131,6 +131,50 @@ public class FetchDocumentServerTests
     }
 
     [Fact]
+    public async Task ConfluenceServer_FetchDocumentAsync_TagsOnlyExportView_FallsBackToStorage()
+    {
+        // Arrange — export_view.value is tags/whitespace only (macro page 96377660 pattern).
+        // body.export_view.value = "<ac:structured-macro ac:name=\"x\"/>" → strips to 0 visible chars.
+        // body.storage.value = real content (69 chars on the real page).
+        // The ingest path MUST use storage, not return empty content.
+        const string cannedJson = """
+            {
+              "id": "96377660",
+              "title": "SNP Macro Page",
+              "body": {
+                "export_view": {
+                  "value": "<ac:structured-macro ac:name=\"include\"><ac:parameter ac:name=\"\"><ri:page ri:content-title=\"x\"/></ac:parameter></ac:structured-macro>",
+                  "representation": "export_view"
+                },
+                "storage": {
+                  "value": "<p>Container delivery requirement step 3: verify seal number against manifest.</p>",
+                  "representation": "storage"
+                }
+              }
+            }
+            """;
+        HttpResponseMessage response = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(cannedJson, Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, _) = MakeConnector(response);
+        IServiceTaskConnector preset = new ConfluenceServerPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://confluence.example.com/rest/api/content?expand=body.storage");
+
+        // Act
+        ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "96377660", CancellationToken.None);
+
+        // Assert — must fall back to storage.value because export_view has no visible text after tag-stripping.
+        // Before the fix: export_view was non-whitespace (tags), so code used export_view → 0 ingested chars.
+        // After the fix: HasVisibleText(export_view) = false → falls back to storage → prose returned.
+        result.Should().NotBeNull();
+        result!.Body.Should().Be(
+            "<p>Container delivery requirement step 3: verify seal number against manifest.</p>",
+            "macro-page export_view (tags-only) must fall back to storage.value");
+        result.Format.Should().Be("xhtml");
+    }
+
+    [Fact]
     public async Task ConfluenceServer_FetchDocumentAsync_EmptyExportView_FallsBackToStorage()
     {
         // Arrange — export_view.value is empty string; must fall back to storage.value.

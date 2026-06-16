@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Muonroi.Integration.Abstractions;
 using Muonroi.Integration.Connectors.Http;
@@ -107,8 +108,8 @@ public sealed class ConfluenceServerPresetConnector(HttpConnector inner, ILogger
                     exportValueEl.ValueKind == JsonValueKind.String)
                 {
                     string? exportStr = exportValueEl.GetString();
-                    if (!string.IsNullOrWhiteSpace(exportStr))
-                        value = exportStr;
+                    if (HasVisibleText(exportStr))
+                        value = exportStr!;
                 }
 
                 // Fallback: use body.storage.value when export_view is null/empty/absent.
@@ -228,6 +229,21 @@ public sealed class ConfluenceServerPresetConnector(HttpConnector inner, ILogger
             doc?.Dispose();
             return new ConnectorBrowseResult([], null, IsPermissionDenied: false);
         }
+    }
+
+    /// <summary>
+    /// Returns true when <paramref name="html"/> contains at least one non-whitespace character
+    /// after stripping all HTML/XML tags. Used to detect macro pages whose export_view value
+    /// consists only of tag markup with no prose (e.g. <c>&lt;ac:structured-macro .../&gt;</c>),
+    /// so the ingest path can fall back to body.storage rather than ingesting 0 visible chars.
+    /// </summary>
+    private static readonly Regex HtmlTagPattern = new("<[^>]+>", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+
+    private static bool HasVisibleText(string? html)
+    {
+        if (html is null) return false;
+        string stripped = HtmlTagPattern.Replace(html, " ");
+        return !string.IsNullOrWhiteSpace(stripped);
     }
 
     /// <inheritdoc/>
