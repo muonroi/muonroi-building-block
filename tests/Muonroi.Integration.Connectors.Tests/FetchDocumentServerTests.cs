@@ -1,0 +1,244 @@
+using System.Net;
+using System.Text;
+using System.Text.Json;
+using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
+using Muonroi.Integration.Abstractions;
+using Muonroi.Integration.Connectors.Http;
+using Muonroi.Integration.Connectors.Presets;
+
+namespace Muonroi.Integration.Connectors.Tests;
+
+/// <summary>
+/// Unit tests for Plan fc9: FetchDocumentAsync on Confluence Server, Jira Server,
+/// and the default-null honest-degrade proof on a preset that does not override.
+/// Uses the same MakeConnector / MakeContext / FakeHttpMessageHandler helpers as
+/// ListDocumentsServerTests.cs (Plan 23-02).
+/// </summary>
+public class FetchDocumentServerTests
+{
+    // ---------------------------------------------------------------------------
+    // Helpers — identical pattern to ListDocumentsServerTests.cs
+    // ---------------------------------------------------------------------------
+
+    private static (HttpConnector connector, FakeHttpMessageHandler handler) MakeConnector(
+        HttpResponseMessage response)
+    {
+        FakeHttpMessageHandler handler = new(response);
+        HttpClient client = new(handler);
+        FakeHttpClientFactory factory = new(client);
+        HttpConnector connector = new(factory, NullLogger<HttpConnector>.Instance);
+        return (connector, handler);
+    }
+
+    private static ConnectorContext MakeContext(string baseUrl, string authHeader = "Bearer test-pat")
+    {
+        string configJson = $$"""{"url":"{{baseUrl}}","method":"GET"}""";
+        return new ConnectorContext
+        {
+            Config = JsonDocument.Parse(configJson),
+            InputFacts = new Muonroi.RuleEngine.Abstractions.FactBag(),
+            Credentials = new Dictionary<string, string> { ["authorization"] = authHeader },
+            TenantId = "tenant-1",
+            CorrelationId = "corr-1"
+        };
+    }
+
+    // ---------------------------------------------------------------------------
+    // Confluence Server
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task ConfluenceServer_FetchDocumentAsync_ExtractsStorageValue_AndSetsXhtmlFormat()
+    {
+        // Arrange — canned Confluence Server /rest/api/content/{id}?expand=body.storage response
+        const string cannedJson = """
+            {
+              "id": "65592",
+              "title": "FCD Process Specification",
+              "body": {
+                "storage": {
+                  "value": "<p>hi</p>",
+                  "representation": "storage"
+                }
+              }
+            }
+            """;
+        HttpResponseMessage response = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(cannedJson, Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, FakeHttpMessageHandler handler) = MakeConnector(response);
+        IServiceTaskConnector preset = new ConfluenceServerPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://confluence.example.com/rest/api/content?expand=body.storage");
+
+        // Act
+        ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "65592", CancellationToken.None);
+
+        // Assert — URL must hit /rest/api/content/{id}?expand=body.storage
+        handler.LastRequestUri.Should().NotBeNull();
+        string requestUrl = handler.LastRequestUri!.ToString();
+        requestUrl.Should().Contain("/rest/api/content/65592", "must fetch the specific page by id");
+        requestUrl.Should().Contain("expand=body.storage", "must request storage format expansion");
+
+        result.Should().NotBeNull();
+        result!.Body.Should().Be("<p>hi</p>", "must return the raw storage.value");
+        result.Format.Should().Be("xhtml", "Confluence Server returns XHTML storage format");
+    }
+
+    [Fact]
+    public async Task ConfluenceServer_FetchDocumentAsync_PermissionDenied_ReturnsEmptyBodyXhtml()
+    {
+        // Arrange — 403 from Confluence Server
+        HttpResponseMessage response = new(HttpStatusCode.Forbidden)
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, _) = MakeConnector(response);
+        IServiceTaskConnector preset = new ConfluenceServerPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://confluence.example.com/rest/api/content?expand=body.storage");
+
+        // Act
+        ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "65592", CancellationToken.None);
+
+        // Assert — must NOT throw; returns empty-body content with xhtml format
+        result.Should().NotBeNull("permission-denied must return empty ConnectorDocumentContent, not null");
+        result!.Body.Should().BeEmpty("permission-denied must produce empty body");
+        result.Format.Should().Be("xhtml");
+    }
+
+    [Fact]
+    public async Task ConfluenceServer_FetchDocumentAsync_NoConfigUrl_ReturnsNull()
+    {
+        // Arrange — context with no url key
+        (HttpConnector inner, _) = MakeConnector(new HttpResponseMessage(HttpStatusCode.OK));
+        IServiceTaskConnector preset = new ConfluenceServerPresetConnector(inner);
+        ConnectorContext ctx = new()
+        {
+            Config = JsonDocument.Parse("{}"),
+            InputFacts = new Muonroi.RuleEngine.Abstractions.FactBag(),
+            Credentials = new Dictionary<string, string>(),
+            TenantId = "tenant-1",
+            CorrelationId = "corr-1"
+        };
+
+        // Act
+        ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "65592", CancellationToken.None);
+
+        // Assert — null = cannot resolve root URL
+        result.Should().BeNull("no config url means the preset cannot build the fetch URL");
+    }
+
+    // ---------------------------------------------------------------------------
+    // Jira Server
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task JiraServer_FetchDocumentAsync_ExtractsSummaryAndDescription_AndSetsPlainFormat()
+    {
+        // Arrange — canned Jira Server /rest/api/2/issue/{key}?fields=summary,description response
+        const string cannedJson = """
+            {
+              "key": "TTOS-1",
+              "fields": {
+                "summary": "VGM weight check rule",
+                "description": "When gross weight exceeds 30000 kg, reject the container."
+              }
+            }
+            """;
+        HttpResponseMessage response = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(cannedJson, Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, FakeHttpMessageHandler handler) = MakeConnector(response);
+        IServiceTaskConnector preset = new JiraServerPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://jira.example.com/rest/api/2/issue");
+
+        // Act
+        ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "TTOS-1", CancellationToken.None);
+
+        // Assert — URL
+        handler.LastRequestUri.Should().NotBeNull();
+        string requestUrl = handler.LastRequestUri!.ToString();
+        requestUrl.Should().Contain("/rest/api/2/issue/TTOS-1", "must fetch the specific issue by key");
+        requestUrl.Should().Contain("fields=", "must request specific fields");
+        requestUrl.Should().Contain("summary", "summary field must be requested");
+
+        // Assert — content
+        result.Should().NotBeNull();
+        result!.Body.Should().Contain("VGM weight check rule", "summary must be in the body");
+        result.Body.Should().Contain("When gross weight exceeds 30000 kg", "description must be in the body");
+        result.Format.Should().Be("plain", "Jira Server description is plain wiki text, not ADF");
+    }
+
+    [Fact]
+    public async Task JiraServer_FetchDocumentAsync_PermissionDenied_ReturnsEmptyBodyPlain()
+    {
+        // Arrange — 403 from Jira Server
+        HttpResponseMessage response = new(HttpStatusCode.Forbidden)
+        {
+            Content = new StringContent("{\"errorMessages\":[\"No permission\"]}", Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, _) = MakeConnector(response);
+        IServiceTaskConnector preset = new JiraServerPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://jira.example.com/rest/api/2/issue");
+
+        // Act
+        ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "TTOS-1", CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull("permission-denied must return empty ConnectorDocumentContent, not null");
+        result!.Body.Should().BeEmpty();
+        result.Format.Should().Be("plain");
+    }
+
+    [Fact]
+    public async Task JiraServer_FetchDocumentAsync_NullDescription_ReturnsSummaryOnly()
+    {
+        // Arrange — issue with no description set
+        const string cannedJson = """
+            {
+              "key": "TTOS-2",
+              "fields": {
+                "summary": "Missing description issue",
+                "description": null
+              }
+            }
+            """;
+        HttpResponseMessage response = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(cannedJson, Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, _) = MakeConnector(response);
+        IServiceTaskConnector preset = new JiraServerPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://jira.example.com/rest/api/2/issue");
+
+        // Act
+        ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "TTOS-2", CancellationToken.None);
+
+        // Assert — body must be summary only (no double-newline trailing, no null)
+        result.Should().NotBeNull();
+        result!.Body.Should().Be("Missing description issue");
+        result.Format.Should().Be("plain");
+    }
+
+    // ---------------------------------------------------------------------------
+    // Default-null honest-degrade: a preset without an override returns null
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task GenericRest_FetchDocumentAsync_ReturnsNull_HonestDegrade()
+    {
+        // Arrange — GenericRestPresetConnector does NOT override FetchDocumentAsync;
+        // it inherits the IServiceTaskConnector default which returns null.
+        (HttpConnector inner, _) = MakeConnector(new HttpResponseMessage(HttpStatusCode.OK));
+        IServiceTaskConnector preset = new GenericRestPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://api.example.com/data");
+
+        // Act
+        ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "doc-1", CancellationToken.None);
+
+        // Assert — null = "use legacy ExecuteAsync path"
+        result.Should().BeNull("GenericRestPresetConnector must NOT override FetchDocumentAsync; null triggers legacy path");
+    }
+}
