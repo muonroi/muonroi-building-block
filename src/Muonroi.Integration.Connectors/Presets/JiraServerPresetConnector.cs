@@ -175,4 +175,55 @@ public sealed class JiraServerPresetConnector(HttpConnector inner, ILogger<JiraS
             return new ConnectorBrowseResult([], null, IsPermissionDenied: false);
         }
     }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<ConnectorScope>?> ListScopesAsync(
+        ConnectorContext context,
+        CancellationToken ct)
+    {
+        // Derive base URL from config — same resolution as ListDocumentsAsync (lines 80-88).
+        string? baseUrl = context.Config.RootElement
+            .TryGetProperty("url", out JsonElement urlEl) ? urlEl.GetString() : null;
+        if (string.IsNullOrWhiteSpace(baseUrl)) return null;
+
+        string jiraRoot = baseUrl.TrimEnd('/');
+        int issueIdx = jiraRoot.IndexOf("/rest/api/2/issue", StringComparison.OrdinalIgnoreCase);
+        if (issueIdx > 0) jiraRoot = jiraRoot[..issueIdx];
+
+        string projectsUrl = $"{jiraRoot}/rest/api/2/project";
+
+        (JsonDocument? doc, bool isPermissionDenied) = await inner.ReadJsonAsync(context, projectsUrl, "GET", null, ct);
+
+        // Permission denied or network failure — return empty (not null: preset DOES support scopes).
+        if (isPermissionDenied || doc is null)
+            return Array.Empty<ConnectorScope>();
+
+        try
+        {
+            List<ConnectorScope> scopes = [];
+
+            foreach (JsonElement project in doc.RootElement.EnumerateArray())
+            {
+                string? key = project.TryGetProperty("key", out JsonElement keyEl) ? keyEl.GetString() : null;
+                if (string.IsNullOrWhiteSpace(key)) continue;
+
+                string? name = project.TryGetProperty("name", out JsonElement nameEl) ? nameEl.GetString() : null;
+                string label = !string.IsNullOrWhiteSpace(name) ? $"{name} ({key})" : key!;
+
+                scopes.Add(new ConnectorScope(Id: key!, Label: label));
+            }
+
+            scopes.Sort((a, b) => StringComparer.OrdinalIgnoreCase.Compare(a.Label, b.Label));
+
+            doc.Dispose();
+            return scopes;
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex,
+                "[JiraServerPresetConnector] ListScopesAsync JSON mapping failed. module=JiraServerPresetConnector op=ListScopesAsync type=jira-server");
+            doc?.Dispose();
+            return Array.Empty<ConnectorScope>();
+        }
+    }
 }

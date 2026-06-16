@@ -42,4 +42,25 @@ public interface IServiceTaskConnector
         ConnectorBrowseQuery query,
         CancellationToken ct)
         => Task.FromResult<ConnectorBrowseResult?>(null); // default: browse not supported
+
+    /// <summary>
+    /// Enumerates the scopes (projects, spaces, etc.) available to the connected credential.
+    /// The BA selects a scope to narrow document browse results.
+    /// <para>
+    /// Returns <see langword="null"/> when this preset does not support scope enumeration (graceful degrade).
+    /// The scopes endpoint maps null to <c>{ "supported": false }</c> — never a 500.
+    /// </para>
+    /// </summary>
+    /// <param name="context">Connector execution context (config, credentials, tenant).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A read-only list of <see cref="ConnectorScope"/> items available to the credential,
+    /// or <see langword="null"/> if scope enumeration is not supported by this preset.
+    /// Returns an empty list (not null) when the preset supports enumeration but the call
+    /// failed or returned no results.
+    /// </returns>
+    Task<IReadOnlyList<ConnectorScope>?> ListScopesAsync(
+        ConnectorContext context,
+        CancellationToken ct)
+        => Task.FromResult<IReadOnlyList<ConnectorScope>?>(null); // default: scopes not supported
 }
