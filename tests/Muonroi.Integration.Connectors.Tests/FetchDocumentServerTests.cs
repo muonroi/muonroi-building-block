@@ -49,9 +49,9 @@ public class FetchDocumentServerTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task ConfluenceServer_FetchDocumentAsync_ExtractsStorageValue_AndSetsXhtmlFormat()
+    public async Task ConfluenceServer_FetchDocumentAsync_FallsBackToStorage_WhenNoExportView()
     {
-        // Arrange — canned Confluence Server /rest/api/content/{id}?expand=body.storage response
+        // Arrange — response has only body.storage (no export_view node) — proves storage fallback path.
         const string cannedJson = """
             {
               "id": "65592",
@@ -75,15 +75,97 @@ public class FetchDocumentServerTests
         // Act
         ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "65592", CancellationToken.None);
 
-        // Assert — URL must hit /rest/api/content/{id}?expand=body.storage
+        // Assert — URL must request both export_view and storage expansions
         handler.LastRequestUri.Should().NotBeNull();
         string requestUrl = handler.LastRequestUri!.ToString();
         requestUrl.Should().Contain("/rest/api/content/65592", "must fetch the specific page by id");
-        requestUrl.Should().Contain("expand=body.storage", "must request storage format expansion");
+        requestUrl.Should().Contain("expand=body.export_view", "must request export_view expansion");
+        requestUrl.Should().Contain("body.storage", "must request storage expansion as fallback");
+
+        // Body falls back to storage.value when no export_view node is present
+        result.Should().NotBeNull();
+        result!.Body.Should().Be("<p>hi</p>", "must return storage.value when export_view is absent");
+        result.Format.Should().Be("xhtml", "Confluence Server returns XHTML format");
+    }
+
+    [Fact]
+    public async Task ConfluenceServer_FetchDocumentAsync_PrefersExportView_OverStorage()
+    {
+        // Arrange — response has BOTH export_view and storage; export_view wins.
+        const string cannedJson = """
+            {
+              "id": "96377660",
+              "title": "Macro-Heavy Page",
+              "body": {
+                "export_view": {
+                  "value": "<div>RENDERED PROSE</div>",
+                  "representation": "export_view"
+                },
+                "storage": {
+                  "value": "<ac:structured-macro/>",
+                  "representation": "storage"
+                }
+              }
+            }
+            """;
+        HttpResponseMessage response = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(cannedJson, Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, FakeHttpMessageHandler handler) = MakeConnector(response);
+        IServiceTaskConnector preset = new ConfluenceServerPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://confluence.example.com/rest/api/content?expand=body.storage");
+
+        // Act
+        ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "96377660", CancellationToken.None);
+
+        // Assert — export_view wins; storage macro markup is discarded
+        handler.LastRequestUri.Should().NotBeNull();
+        handler.LastRequestUri!.ToString().Should().Contain("expand=body.export_view",
+            "must request rendered export_view expansion");
 
         result.Should().NotBeNull();
-        result!.Body.Should().Be("<p>hi</p>", "must return the raw storage.value");
-        result.Format.Should().Be("xhtml", "Confluence Server returns XHTML storage format");
+        result!.Body.Should().Be("<div>RENDERED PROSE</div>",
+            "export_view.value must be preferred over storage.value");
+        result.Format.Should().Be("xhtml");
+    }
+
+    [Fact]
+    public async Task ConfluenceServer_FetchDocumentAsync_EmptyExportView_FallsBackToStorage()
+    {
+        // Arrange — export_view.value is empty string; must fall back to storage.value.
+        const string cannedJson = """
+            {
+              "id": "99999",
+              "title": "Empty Export View Page",
+              "body": {
+                "export_view": {
+                  "value": "",
+                  "representation": "export_view"
+                },
+                "storage": {
+                  "value": "<p>storage body</p>",
+                  "representation": "storage"
+                }
+              }
+            }
+            """;
+        HttpResponseMessage response = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(cannedJson, Encoding.UTF8, "application/json")
+        };
+        (HttpConnector inner, _) = MakeConnector(response);
+        IServiceTaskConnector preset = new ConfluenceServerPresetConnector(inner);
+        ConnectorContext ctx = MakeContext("https://confluence.example.com/rest/api/content?expand=body.storage");
+
+        // Act
+        ConnectorDocumentContent? result = await preset.FetchDocumentAsync(ctx, "99999", CancellationToken.None);
+
+        // Assert — falls back to storage.value when export_view.value is empty/whitespace
+        result.Should().NotBeNull();
+        result!.Body.Should().Be("<p>storage body</p>",
+            "must fall back to storage.value when export_view.value is empty");
+        result.Format.Should().Be("xhtml");
     }
 
     [Fact]

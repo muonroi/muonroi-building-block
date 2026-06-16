@@ -86,7 +86,8 @@ public sealed class ConfluenceServerPresetConnector(HttpConnector inner, ILogger
         int restIdx = confluenceRoot.IndexOf("/rest/api/content", StringComparison.OrdinalIgnoreCase);
         if (restIdx > 0) confluenceRoot = confluenceRoot[..restIdx];
 
-        string fetchUrl = $"{confluenceRoot}/rest/api/content/{Uri.EscapeDataString(sourceRef)}?expand=body.storage";
+        // Request both export_view (rendered prose) and storage (XHTML fallback) in one call.
+        string fetchUrl = $"{confluenceRoot}/rest/api/content/{Uri.EscapeDataString(sourceRef)}?expand=body.export_view,body.storage";
 
         (JsonDocument? doc, bool isPermissionDenied) = await inner.ReadJsonAsync(context, fetchUrl, "GET", null, ct);
 
@@ -95,14 +96,29 @@ public sealed class ConfluenceServerPresetConnector(HttpConnector inner, ILogger
 
         try
         {
-            // Extract body.storage.value — never log the value (D-06).
+            // Prefer body.export_view.value (server-rendered prose) — never log the value (D-06).
+            // Fall back to body.storage.value when export_view is absent or empty/whitespace.
             string value = string.Empty;
-            if (doc.RootElement.TryGetProperty("body", out JsonElement bodyEl) &&
-                bodyEl.TryGetProperty("storage", out JsonElement storageEl) &&
-                storageEl.TryGetProperty("value", out JsonElement valueEl) &&
-                valueEl.ValueKind == JsonValueKind.String)
+            if (doc.RootElement.TryGetProperty("body", out JsonElement bodyEl))
             {
-                value = valueEl.GetString() ?? string.Empty;
+                // Attempt export_view first — renders macros/tables to clean HTML.
+                if (bodyEl.TryGetProperty("export_view", out JsonElement exportViewEl) &&
+                    exportViewEl.TryGetProperty("value", out JsonElement exportValueEl) &&
+                    exportValueEl.ValueKind == JsonValueKind.String)
+                {
+                    string? exportStr = exportValueEl.GetString();
+                    if (!string.IsNullOrWhiteSpace(exportStr))
+                        value = exportStr;
+                }
+
+                // Fallback: use body.storage.value when export_view is null/empty/absent.
+                if (string.IsNullOrEmpty(value) &&
+                    bodyEl.TryGetProperty("storage", out JsonElement storageEl) &&
+                    storageEl.TryGetProperty("value", out JsonElement storageValueEl) &&
+                    storageValueEl.ValueKind == JsonValueKind.String)
+                {
+                    value = storageValueEl.GetString() ?? string.Empty;
+                }
             }
 
             return new ConnectorDocumentContent(value, "xhtml");
