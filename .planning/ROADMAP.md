@@ -24,7 +24,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [ ] **Phase 8.11: Layout Edge Cases** — Vertical-align edge, nested BFC stacks, `position:absolute` × float, page-break-inside floats, shrink-to-fit auto float, CSS `column-count` interaction. Per-template demand. TBD.
 - [x] **Phase 9: v1.0 Enterprise** — Postgres template registry, Redis hot-reload, SSIM canary, web designer, TCIS cutover — CLOSED 2026-05-29; see `.planning/PHASE-09-CLOSEOUT.md`
 - [x] **Phase 10: TCIS Cutover Sweep + v1.0 GA** — Full DinkToPdf/libwkhtmltox removal from TCIS (10.1-10.4) + v1.0.0 version stamp (10.6); publish (10.7-10.9) deferred to ops — CLOSED 2026-05-29; see `.planning/PHASE-10-CLOSEOUT.md`
-- [ ] **Phase 12: Owned CSS Cascade (B1)** — Replace AngleSharp.Css `GetComputedStyle` (beta, throws on em/rem/% headless) with an owned cascade; demote AngleSharp.Css to a parser. Retires the G14–G29 per-property fallback class. Design: `.planning/DESIGN-owned-cascade-B1.md`; spike: `.planning/SPIKE-cascade-render-device.md`
+- [x] **Phase 12: Owned CSS Cascade (B1)** — Replace AngleSharp.Css `GetComputedStyle` (beta, throws on em/rem/% headless) with an owned cascade; demote AngleSharp.Css to a parser. Retires the G14–G29 per-property fallback class. Design: `.planning/DESIGN-owned-cascade-B1.md`; spike: `.planning/SPIKE-cascade-render-device.md` (completed 2026-06-19)
 
 ## Phase Details
 
@@ -352,7 +352,7 @@ Plans:
 - [x] 12-01-PLAN.md — CssRuleSet: collect author rules once, split grouped selectors, specificity + source order + declarations
 - [x] 12-02-PLAN.md — CascadeResolver + OwnedComputedStyle: match/sort/inline-overlay/shorthand/UA-defaults/inheritance/em-rem-to-px (incl. G25/G27/G28/G29)
 - [x] 12-03-PLAN.md — OwnedStyledNode + wire AngleSharpStyledDocument; remove GetComputedStyle catch path
-- [ ] 12-04-PLAN.md — Full golden suite + %-table re-baseline (visual checkpoint) + determinism canary
+- [x] 12-04-PLAN.md — Full golden suite + %-table re-baseline (visual checkpoint) + determinism canary
 
 ## Progress
 
@@ -377,4 +377,4 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5
 | 8.10. Float Algorithm Refactor (ExcludedShapes) | 0/TBD | Planned | - |
 | 8.11. Layout Edge Cases | 0/TBD | Planned | - |
 | 9. v1.0 Enterprise (multi-repo workstreams A–D) | 0/TBD | Not started | - |
-| 12. Owned CSS Cascade (B1) | 3/4 | In Progress|  |
+| 12. Owned CSS Cascade (B1) | 4/4 | Complete   | 2026-06-19 |
