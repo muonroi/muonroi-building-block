@@ -269,4 +269,173 @@ public sealed class DescendantClassSelectorAndThBoldTests
         thCell!.BorderTop.Should().BeGreaterThan(0f,
             because: ".grid > th { border: 2px solid blue } must apply via child-combinator descendant rule");
     }
+
+    // -------------------------------------------------------------------------
+    // G25: multi-level descendant selector ".t tr.no-border td { border: none }"
+    // must suppress the base ".t td { border: 1px }" on cells of a <tr class="no-border">,
+    // while leaving cells of a plain <tr> bordered. Previously the 3-level selector was
+    // misfiled as a flat ".t" rule and never reached the <td>, so every cell stayed bordered.
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void DescendantSelector_NoBorderRow_SuppressesBaseCellBorder()
+    {
+        var body = new FakeStyledNode("body", new() { ["display"] = "block" });
+
+        var styleNode = new FakeStyledNode("style")
+        {
+            TextContent = ".t td { border: 1px solid #008080; padding: 5px } " +
+                          ".t tr.no-border td { border: none }"
+        };
+        body.ChildList.Add(styleNode);
+
+        var table = new FakeStyledNode("table", new() { ["display"] = "" },
+            attributes: new() { ["class"] = "t" });
+        var tbody = new FakeStyledNode("tbody", new() { ["display"] = "" });
+
+        // Plain row — its <td> must keep the base 1px border.
+        var plainRow = new FakeStyledNode("tr", new() { ["display"] = "" });
+        var plainTd = new FakeStyledNode("td", new() { ["display"] = "" });
+        plainTd.ChildList.Add(TextNode("A"));
+        plainRow.ChildList.Add(plainTd);
+
+        // no-border row — its <td> must have the border suppressed to none.
+        var noBorderRow = new FakeStyledNode("tr", new() { ["display"] = "" },
+            attributes: new() { ["class"] = "no-border" });
+        var noBorderTd = new FakeStyledNode("td", new() { ["display"] = "" });
+        noBorderTd.ChildList.Add(TextNode("B"));
+        noBorderRow.ChildList.Add(noBorderTd);
+
+        tbody.ChildList.Add(plainRow);
+        tbody.ChildList.Add(noBorderRow);
+        table.ChildList.Add(tbody);
+        body.ChildList.Add(table);
+
+        var root = Builder().Build(body);
+        var cells = CollectCells(root);
+        cells.Should().HaveCount(2);
+
+        var plainCell = cells.First(c => ReferenceEquals(c.Source, plainTd));
+        var noBorderCell = cells.First(c => ReferenceEquals(c.Source, noBorderTd));
+
+        plainCell.BorderTop.Should().BeGreaterThan(0f,
+            because: "a plain row's <td> keeps the base '.t td { border: 1px }' border");
+        noBorderCell.BorderTop.Should().Be(0f,
+            because: "'.t tr.no-border td { border: none }' must suppress the base border (G25)");
+        noBorderCell.BorderLeft.Should().Be(0f);
+        noBorderCell.BorderRight.Should().Be(0f);
+        noBorderCell.BorderBottom.Should().Be(0f);
+    }
+
+    // -------------------------------------------------------------------------
+    // G27: the 'padding' shorthand fallback must expand 2-value form "V H" into
+    // distinct vertical/horizontal padding (previously only the first token was read,
+    // so horizontal padding could never exceed vertical on %-width tables).
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void PaddingShorthand_TwoValue_AppliesVerticalAndHorizontalSeparately()
+    {
+        var body = new FakeStyledNode("body", new() { ["display"] = "block" });
+        var styleNode = new FakeStyledNode("style")
+        {
+            TextContent = ".t td { padding: 2px 6px }"
+        };
+        body.ChildList.Add(styleNode);
+
+        var table = new FakeStyledNode("table", new() { ["display"] = "" },
+            attributes: new() { ["class"] = "t" });
+        var tr = new FakeStyledNode("tr", new() { ["display"] = "" });
+        var td = new FakeStyledNode("td", new() { ["display"] = "" });
+        td.ChildList.Add(TextNode("X"));
+        tr.ChildList.Add(td);
+        table.ChildList.Add(tr);
+        body.ChildList.Add(table);
+
+        var root = Builder().Build(body);
+        var cell = CollectCells(root).First(c => ReferenceEquals(c.Source, td));
+
+        // px -> pt is ×0.75: 2px -> 1.5pt, 6px -> 4.5pt.
+        cell.PaddingLeft.Should().BeApproximately(4.5f, 0.01f,
+            because: "horizontal token (6px) must apply to left/right (G27)");
+        cell.PaddingRight.Should().BeApproximately(4.5f, 0.01f);
+        cell.PaddingTop.Should().BeApproximately(1.5f, 0.01f,
+            because: "vertical token (2px) must apply to top/bottom (G27)");
+        cell.PaddingBottom.Should().BeApproximately(1.5f, 0.01f);
+        cell.PaddingLeft.Should().BeGreaterThan(cell.PaddingTop,
+            because: "horizontal padding must exceed vertical for 'padding: 2px 6px'");
+    }
+
+    // -------------------------------------------------------------------------
+    // G28: word-break declared via a descendant selector ".t td { word-break: break-word }"
+    // must reach a <td> that carries a DIFFERENT own class (e.g. "text-center"). Previously the
+    // resolver consulted own-class rules only, so long unbreakable cell values overflowed the
+    // column and overlapped neighbouring cells.
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void WordBreak_DescendantSelector_AppliesToCellWithDifferentOwnClass()
+    {
+        var body = new FakeStyledNode("body", new() { ["display"] = "block" });
+        var styleNode = new FakeStyledNode("style")
+        {
+            TextContent = ".t td { word-break: break-word }"
+        };
+        body.ChildList.Add(styleNode);
+
+        var table = new FakeStyledNode("table", new() { ["display"] = "" },
+            attributes: new() { ["class"] = "t" });
+        var tr = new FakeStyledNode("tr", new() { ["display"] = "" });
+        // The cell's own class is "text-center", NOT "t" — only the descendant rule matches.
+        var td = new FakeStyledNode("td", new() { ["display"] = "" },
+            attributes: new() { ["class"] = "text-center" });
+        td.ChildList.Add(TextNode("ONES_EAL12133"));
+        tr.ChildList.Add(td);
+        table.ChildList.Add(tr);
+        body.ChildList.Add(table);
+
+        var root = Builder().Build(body);
+        var cell = CollectCells(root).First(c => ReferenceEquals(c.Source, td));
+
+        cell.WordBreak.Should().Be("break-word",
+            because: "'.t td { word-break: break-word }' must resolve via the descendant fallback (G28)");
+    }
+
+    // -------------------------------------------------------------------------
+    // G29: white-space declared via a descendant selector ".t td { white-space: nowrap }"
+    // must resolve on the cell (own class differs) AND propagate to inline text children,
+    // so a value the author wants on one line is not wrapped.
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void WhiteSpace_DescendantSelector_NowrapResolvesAndPropagates()
+    {
+        var body = new FakeStyledNode("body", new() { ["display"] = "block" });
+        var styleNode = new FakeStyledNode("style")
+        {
+            TextContent = ".t td { white-space: nowrap }"
+        };
+        body.ChildList.Add(styleNode);
+
+        var table = new FakeStyledNode("table", new() { ["display"] = "" },
+            attributes: new() { ["class"] = "t" });
+        var tr = new FakeStyledNode("tr", new() { ["display"] = "" });
+        var td = new FakeStyledNode("td", new() { ["display"] = "" },
+            attributes: new() { ["class"] = "text-center" });
+        td.ChildList.Add(TextNode("ONEE0000002"));
+        tr.ChildList.Add(td);
+        table.ChildList.Add(tr);
+        body.ChildList.Add(table);
+
+        var root = Builder().Build(body);
+        var cell = CollectCells(root).First(c => ReferenceEquals(c.Source, td));
+
+        cell.WhiteSpace.Should().Be("nowrap",
+            because: "'.t td { white-space: nowrap }' must resolve via the descendant fallback (G29)");
+
+        var inlines = CollectInlines(cell);
+        inlines.Should().NotBeEmpty();
+        inlines.Should().AllSatisfy(b => b.WhiteSpace.Should().Be("nowrap",
+            because: "white-space must propagate from the cell to inline text children (G29)"));
+    }
 }

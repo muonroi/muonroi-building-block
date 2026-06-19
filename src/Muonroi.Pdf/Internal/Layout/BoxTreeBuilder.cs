@@ -91,8 +91,8 @@ internal sealed class BoxTreeBuilder
                 // parent down to inline descendants that have not had an explicit author override.
                 // CSS 2.1 §6.2: font-weight and text-transform are inherited properties; a block
                 // heading like <h2> must pass Bold=true to its text-node InlineBox children.
-                if (box.Bold || box.TextTransform != null || box.WordBreak != null)
-                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak);
+                if (box.Bold || box.TextTransform != null || box.WordBreak != null || box.WhiteSpace != null)
+                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak, box.WhiteSpace);
                 break;
             case TableBox tableBox:
                 BuildChildren(node, tableBox);
@@ -105,9 +105,9 @@ internal sealed class BoxTreeBuilder
                 break;
             case TableCellBox cellBox:
                 BuildChildren(node, cellBox);
-                // G18 + Phase 12.4b: propagate Bold/TextTransform/WordBreak into cell's inline children.
-                if (box.Bold || box.TextTransform != null || box.WordBreak != null)
-                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak);
+                // G18 + Phase 12.4b + G29: propagate Bold/TextTransform/WordBreak/WhiteSpace into cell's inline children.
+                if (box.Bold || box.TextTransform != null || box.WordBreak != null || box.WhiteSpace != null)
+                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak, box.WhiteSpace);
                 break;
         }
 
@@ -285,11 +285,47 @@ internal sealed class BoxTreeBuilder
                 ?? LookupDescendantClassProperty(box.Source, "padding");
             if (!string.IsNullOrEmpty(paddingClass))
             {
-                // Shorthand: use first token (or the whole value if no spaces).
-                string firstToken = paddingClass.Split(' ')[0].Trim();
-                float pv = ParseLength(firstToken, fontSize);
-                if (pv > 0f)
-                    box.PaddingTop = box.PaddingRight = box.PaddingBottom = box.PaddingLeft = pv;
+                // G27: expand the CSS 'padding' shorthand honouring 1/2/3/4 values
+                // (1: all; 2: V H; 3: T H B; 4: T R B L). Previously only the first token
+                // was read, so "padding: 2px 6px" applied 2px to every side and horizontal
+                // breathing room was impossible on %-width tables (computed-style-throw path).
+                string[] tokens = paddingClass.Split(
+                    new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (tokens.Length > 0)
+                {
+                    float t, r, b, l;
+                    float p0 = ParseLength(tokens[0], fontSize);
+                    if (tokens.Length == 1)
+                    {
+                        t = r = b = l = p0;
+                    }
+                    else if (tokens.Length == 2)
+                    {
+                        float p1 = ParseLength(tokens[1], fontSize);
+                        t = b = p0; r = l = p1;
+                    }
+                    else if (tokens.Length == 3)
+                    {
+                        float p1 = ParseLength(tokens[1], fontSize);
+                        float p2 = ParseLength(tokens[2], fontSize);
+                        t = p0; r = l = p1; b = p2;
+                    }
+                    else
+                    {
+                        t = p0;
+                        r = ParseLength(tokens[1], fontSize);
+                        b = ParseLength(tokens[2], fontSize);
+                        l = ParseLength(tokens[3], fontSize);
+                    }
+
+                    if (t > 0f || r > 0f || b > 0f || l > 0f)
+                    {
+                        box.PaddingTop = t;
+                        box.PaddingRight = r;
+                        box.PaddingBottom = b;
+                        box.PaddingLeft = l;
+                    }
+                }
             }
         }
 
@@ -606,6 +642,11 @@ internal sealed class BoxTreeBuilder
             // class-descendant selector that AngleSharp.Css does not surface through
             // GetComputedStyle. Propagation to inline children happens in BuildNode below.
             cell.WordBreak = ResolveWordBreakWithFallback(cell, style);
+
+            // G29: resolve white-space with the same class/descendant/inline fallback so
+            // `white-space: nowrap` declared on `.table-bodered2 td` (or inline on a cell)
+            // is honoured on %-width tables; propagated to inline children in BuildNode below.
+            cell.WhiteSpace = ResolveWhiteSpaceWithFallback(cell, style);
         }
         else if (box is ReplacedBox replaced && replaced.Src != null && _resolvedImages != null)
         {
@@ -767,6 +808,20 @@ internal sealed class BoxTreeBuilder
                     foreach (var kv in props)
                         descExisting[kv.Key] = kv.Value;
                 }
+                else if (TryResolveDescendantKey(className, remainder, out var multiKey))
+                {
+                    // Multi-level descendant selector, e.g. ".table-bodered2 tr.no-border td".
+                    // Keyed on the class NEAREST the final tag (here "no-border") so the
+                    // nearest-ancestor walk in LookupDescendantClassProperty applies it before
+                    // reaching the less-specific outer table class. (G25)
+                    if (!descendantResult.TryGetValue(multiKey, out var descExisting))
+                    {
+                        descExisting = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        descendantResult[multiKey] = descExisting;
+                    }
+                    foreach (var kv in props)
+                        descExisting[kv.Key] = kv.Value;
+                }
                 else
                 {
                     // Flat class rule (original behavior): store under className.
@@ -790,6 +845,36 @@ internal sealed class BoxTreeBuilder
         if (string.IsNullOrEmpty(token)) return false;
         foreach (char c in token)
             if (!char.IsAsciiLetter(c)) return false;
+        return true;
+    }
+
+    // G25: resolves a multi-level descendant selector tail (everything after the leading class)
+    // into a (ancestorClass, tag) key. The selector must end in a bare element tag; the key uses
+    // the class NEAREST that tag (e.g. ".table-bodered2 tr.no-border td" -> ("no-border", "td"))
+    // so a more-specific row/cell rule beats the outer table rule during the nearest-ancestor walk.
+    // Falls back to the leading class when no intermediate class is present (".t tr td" -> ("t","td")).
+    private static bool TryResolveDescendantKey(string leadingClass, string remainder, out (string, string) key)
+    {
+        key = default;
+        string[] tokens = remainder.Split(
+            new[] { ' ', '\t', '\r', '\n', '>' }, StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 0) return false;
+
+        string finalTok = tokens[^1];
+        if (!IsBareSelectorTag(finalTok)) return false; // final token must be a bare element tag
+
+        string ancestorClass = leadingClass;
+        for (int t = tokens.Length - 2; t >= 0; t--)
+        {
+            int dot = tokens[t].LastIndexOf('.');
+            if (dot >= 0 && dot + 1 < tokens[t].Length)
+            {
+                ancestorClass = tokens[t][(dot + 1)..];
+                break;
+            }
+        }
+
+        key = (ancestorClass.ToLowerInvariant(), finalTok.ToLowerInvariant());
         return true;
     }
 
@@ -1075,7 +1160,7 @@ internal sealed class BoxTreeBuilder
     // CSS initial/default: Bold=false, TextTransform=null).
     // This is intentionally narrow — it only propagates these two properties and only in the
     // downward direction (parent → child), which is sufficient for the h1-h6 heading case.
-    private static void PropagateInheritedTextProps(BoxNode node, bool parentBold, string? parentTextTransform, string? parentWordBreak = null)
+    private static void PropagateInheritedTextProps(BoxNode node, bool parentBold, string? parentTextTransform, string? parentWordBreak = null, string? parentWhiteSpace = null)
     {
         foreach (var child in node.Children)
         {
@@ -1091,6 +1176,10 @@ internal sealed class BoxTreeBuilder
                 // Phase 12.4b: same selective-override pattern for word-break.
                 if (inlineChild.WordBreak == null && parentWordBreak != null)
                     inlineChild.WordBreak = parentWordBreak;
+                // G29: same selective-override pattern for white-space (don't weaken a
+                // <nobr>-set "nowrap" — only fill when the child has none).
+                if (inlineChild.WhiteSpace == null && parentWhiteSpace != null)
+                    inlineChild.WhiteSpace = parentWhiteSpace;
             }
             else
             {
@@ -1100,8 +1189,9 @@ internal sealed class BoxTreeBuilder
                 bool childBold = child.Bold || parentBold;
                 string? childTextTransform = child.TextTransform ?? parentTextTransform;
                 string? childWordBreak = child.WordBreak ?? parentWordBreak;
-                if (childBold || childTextTransform != null || childWordBreak != null)
-                    PropagateInheritedTextProps(child, childBold, childTextTransform, childWordBreak);
+                string? childWhiteSpace = child.WhiteSpace ?? parentWhiteSpace;
+                if (childBold || childTextTransform != null || childWordBreak != null || childWhiteSpace != null)
+                    PropagateInheritedTextProps(child, childBold, childTextTransform, childWordBreak, childWhiteSpace);
             }
         }
     }
@@ -1118,7 +1208,11 @@ internal sealed class BoxTreeBuilder
         {
             var v = style.GetValue(prop);
             if (string.IsNullOrEmpty(v))
-                v = LookupClassProperty(box.Source, prop);
+                // G28: include the descendant-selector fallback (e.g. ".table-bodered2 td
+                // { word-break: break-word }") — the cell carries no class of its own, so
+                // own-class LookupClassProperty alone never sees the table's cell rule.
+                v = LookupClassProperty(box.Source, prop)
+                    ?? LookupDescendantClassProperty(box.Source, prop);
             return string.IsNullOrEmpty(v) ? null : v.Trim().ToLowerInvariant();
         }
 
@@ -1129,6 +1223,21 @@ internal sealed class BoxTreeBuilder
         var ow = Read("overflow-wrap") ?? Read("word-wrap");
         if (ow is "break-word" or "anywhere") return "break-word";
         return null;
+    }
+
+    // G29: read white-space with the computed -> own-class -> descendant-class -> inline-attr
+    // fallback chain (same machinery as width/border/word-break). Only the values the inline
+    // layout engine acts on are returned; anything else collapses to null (default wrapping).
+    private string? ResolveWhiteSpaceWithFallback(BoxNode box, IComputedStyle style)
+    {
+        var v = style.GetValue("white-space");
+        if (string.IsNullOrEmpty(v))
+            v = LookupClassProperty(box.Source, "white-space")
+                ?? LookupDescendantClassProperty(box.Source, "white-space");
+        if (string.IsNullOrEmpty(v))
+            v = ParseInlineStyleProperty(box.Source?.GetAttribute("style"), "white-space");
+        v = v?.Trim().ToLowerInvariant();
+        return v is "nowrap" or "pre-wrap" or "pre-line" ? v : null;
     }
 
     // CSS 2.1 §9.2.1: wrap inline siblings in AnonymousBox when block-level siblings are present.
