@@ -83,6 +83,19 @@ internal sealed class CascadeResolver
         };
 
     // -----------------------------------------------------------------------
+    // Step 5 — UA display:none tags (non-rendered elements).
+    // The HTML UA stylesheet hides these by default; AngleSharp's GetComputedStyle
+    // supplied display:none for them, so the owned cascade must too — otherwise
+    // their text content (e.g. raw CSS inside <style>) renders as visible page text.
+    // Author CSS can still override (this layer only fills an unset display).
+    // -----------------------------------------------------------------------
+    private static readonly HashSet<string> UaNoneTags = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "head", "style", "script", "title", "meta", "link", "base",
+        "noscript", "template", "datalist", "param", "source", "track", "area",
+    };
+
+    // -----------------------------------------------------------------------
     // Step 5 — UA inline tags (need not be listed in display map, just recorded)
     // -----------------------------------------------------------------------
     private static readonly HashSet<string> UaInlineTags = new(StringComparer.OrdinalIgnoreCase)
@@ -103,6 +116,30 @@ internal sealed class CascadeResolver
         "blockquote", "figure", "figcaption", "address", "pre", "hr",
         "form", "fieldset", "details", "summary",
     };
+
+    // -----------------------------------------------------------------------
+    // Step 5 — UA default box properties (margin/padding/font-size/list-style).
+    // Values are the EXACT computed px AngleSharp's GetComputedStyle produced for the
+    // default 16px root (probed against Configuration.Default.WithCss()). The owned
+    // cascade must reproduce them so simple-doc goldens stay byte-identical. Each entry
+    // is a list of (property, value) longhands applied only when the property is unset
+    // (author CSS still wins). Margins are top/bottom only unless a side is listed.
+    // -----------------------------------------------------------------------
+    private static readonly Dictionary<string, (string Prop, string Val)[]> UaBoxDefaults =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["p"]          = new[] { ("margin-top", "17.92px"), ("margin-bottom", "17.92px") },
+            ["h1"]         = new[] { ("margin-top", "10.72px"), ("margin-bottom", "10.72px"), ("font-size", "32px") },
+            ["h2"]         = new[] { ("margin-top", "12px"),    ("margin-bottom", "12px"),    ("font-size", "24px") },
+            ["h3"]         = new[] { ("margin-top", "13.28px"), ("margin-bottom", "13.28px"), ("font-size", "18.72px") },
+            ["h4"]         = new[] { ("margin-top", "17.92px"), ("margin-bottom", "17.92px"), ("font-size", "16px") },
+            ["h5"]         = new[] { ("margin-top", "24px"),    ("margin-bottom", "24px"),    ("font-size", "13.28px") },
+            ["h6"]         = new[] { ("margin-top", "26.72px"), ("margin-bottom", "26.72px"), ("font-size", "12px") },
+            ["ul"]         = new[] { ("margin-top", "17.92px"), ("margin-bottom", "17.92px"), ("margin-left", "40px") },
+            ["ol"]         = new[] { ("margin-top", "17.92px"), ("margin-bottom", "17.92px"), ("margin-left", "40px"), ("list-style-type", "decimal") },
+            ["blockquote"] = new[] { ("margin-top", "17.92px"), ("margin-bottom", "17.92px"), ("margin-left", "40px"), ("margin-right", "40px") },
+            ["table"]      = new[] { ("border-spacing", "2px") },
+        };
 
     // -----------------------------------------------------------------------
     // Root default font-size in px (CSS initial value)
@@ -560,7 +597,9 @@ internal sealed class CascadeResolver
         // Display map for table structural elements and inline/block defaults.
         if (!map.ContainsKey("display"))
         {
-            if (UaDisplayMap.TryGetValue(tag, out string? displayVal))
+            if (UaNoneTags.Contains(tag))
+                map["display"] = "none";
+            else if (UaDisplayMap.TryGetValue(tag, out string? displayVal))
                 map["display"] = displayVal;
             else if (UaInlineTags.Contains(tag))
                 map["display"] = "inline";
@@ -605,9 +644,38 @@ internal sealed class CascadeResolver
                 map["text-decoration"] = "underline";
         }
 
+        // a[href] → text-decoration: underline (UA default `a:link`). AngleSharp's
+        // GetComputedStyle supplied this; without it linked text loses its underline.
+        if (tag == "a" && element.HasAttribute("href") && !map.ContainsKey("text-decoration"))
+            map["text-decoration"] = "underline";
+
         // hr → display: block (if not already set)
         if (tag == "hr" && !map.ContainsKey("display"))
             map["display"] = "block";
+
+        // body → default margin: 8px (HTML UA stylesheet). AngleSharp's GetComputedStyle
+        // supplied this; the owned cascade must too, or all block content renders 8px
+        // (=6pt) too high. Set the expanded longhands (shorthand expansion already ran in
+        // step 4), and only fill gaps so author CSS still wins.
+        if (tag == "body")
+        {
+            foreach (string side in new[] { "top", "right", "bottom", "left" })
+            {
+                if (!map.ContainsKey($"margin-{side}"))
+                    map[$"margin-{side}"] = "8px";
+            }
+        }
+
+        // Block/heading/list UA box defaults (margins, heading font-size, list margin/marker).
+        if (UaBoxDefaults.TryGetValue(tag, out (string Prop, string Val)[]? boxDefaults))
+        {
+            foreach ((string prop, string val) in boxDefaults)
+                SetIfAbsent(map, prop, val);
+        }
+
+        // li → display: list-item (UA default for list items).
+        if (tag == "li" && !map.ContainsKey("display"))
+            map["display"] = "list-item";
     }
 
     // -----------------------------------------------------------------------
