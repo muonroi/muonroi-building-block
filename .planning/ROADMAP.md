@@ -350,7 +350,7 @@ Plans:
 
 Plans:
 - [x] 12-01-PLAN.md — CssRuleSet: collect author rules once, split grouped selectors, specificity + source order + declarations
-- [ ] 12-02-PLAN.md — CascadeResolver + OwnedComputedStyle: match/sort/inline-overlay/shorthand/UA-defaults/inheritance/em-rem-to-px (incl. G25/G27/G28/G29)
+- [x] 12-02-PLAN.md — CascadeResolver + OwnedComputedStyle: match/sort/inline-overlay/shorthand/UA-defaults/inheritance/em-rem-to-px (incl. G25/G27/G28/G29)
 - [ ] 12-03-PLAN.md — OwnedStyledNode + wire AngleSharpStyledDocument; remove GetComputedStyle catch path
 - [ ] 12-04-PLAN.md — Full golden suite + %-table re-baseline (visual checkpoint) + determinism canary
 
@@ -377,4 +377,4 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5
 | 8.10. Float Algorithm Refactor (ExcludedShapes) | 0/TBD | Planned | - |
 | 8.11. Layout Edge Cases | 0/TBD | Planned | - |
 | 9. v1.0 Enterprise (multi-repo workstreams A–D) | 0/TBD | Not started | - |
-| 12. Owned CSS Cascade (B1) | 1/4 | In Progress|  |
+| 12. Owned CSS Cascade (B1) | 2/4 | In Progress|  |
