@@ -43,46 +43,37 @@ namespace Muonroi.Data.Dapper.Rls;
 /// awaited via <see cref="ITenantSessionContextSetter.ApplyAsync"/>.
 /// </para>
 /// </remarks>
-public class TenantRlsDapper<TConn> : BaseDapper<TConn>
+/// <remarks>
+/// Initializes a new instance of <see cref="TenantRlsDapper{TConn}"/>.
+/// </remarks>
+/// <param name="serviceProvider">Service provider — forwarded to <see cref="BaseDapper{TConn}"/> for cache/profiler resolution.</param>
+/// <param name="connectionName">Named connection string key.</param>
+/// <param name="enableMasterSlave">Enable master/slave routing.</param>
+/// <param name="readOnly">Route to the read-only replica when true.</param>
+/// <param name="setter">The provider-specific tenant session context setter (not null).</param>
+/// <param name="tenantContext">The ambient tenant context (not null).</param>
+/// <param name="strictMode">
+/// When <see langword="true"/>, <see cref="EnsureTenantContext"/> and
+/// <see cref="EnsureTenantContextAsync"/> will throw <c>MissingTenantContextException</c>
+/// if the ambient tenant id is absent and no bypass scope is active (HARD-03 / D-08).
+/// Defaults to <see langword="false"/> — behavior is byte-identical to v1.0 when off.
+/// </param>
+/// <param name="log">Optional structured logger for observability.</param>
+public class TenantRlsDapper<TConn>(
+    IServiceProvider serviceProvider,
+    string connectionName,
+    bool enableMasterSlave,
+    bool readOnly,
+    ITenantSessionContextSetter setter,
+    ITenantContext tenantContext,
+    bool strictMode = false,
+    IMLog<TenantRlsDapper<TConn>>? log = null) : BaseDapper<TConn>(serviceProvider, connectionName, enableMasterSlave, readOnly)
     where TConn : DbConnection, new()
 {
-    private readonly ITenantSessionContextSetter _setter;
-    private readonly ITenantContext _tenantContext;
-    private readonly IMLog<TenantRlsDapper<TConn>>? _log;
-    private readonly bool _strictMode;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="TenantRlsDapper{TConn}"/>.
-    /// </summary>
-    /// <param name="serviceProvider">Service provider — forwarded to <see cref="BaseDapper{TConn}"/> for cache/profiler resolution.</param>
-    /// <param name="connectionName">Named connection string key.</param>
-    /// <param name="enableMasterSlave">Enable master/slave routing.</param>
-    /// <param name="readOnly">Route to the read-only replica when true.</param>
-    /// <param name="setter">The provider-specific tenant session context setter (not null).</param>
-    /// <param name="tenantContext">The ambient tenant context (not null).</param>
-    /// <param name="strictMode">
-    /// When <see langword="true"/>, <see cref="EnsureTenantContext"/> and
-    /// <see cref="EnsureTenantContextAsync"/> will throw <c>MissingTenantContextException</c>
-    /// if the ambient tenant id is absent and no bypass scope is active (HARD-03 / D-08).
-    /// Defaults to <see langword="false"/> — behavior is byte-identical to v1.0 when off.
-    /// </param>
-    /// <param name="log">Optional structured logger for observability.</param>
-    public TenantRlsDapper(
-        IServiceProvider serviceProvider,
-        string connectionName,
-        bool enableMasterSlave,
-        bool readOnly,
-        ITenantSessionContextSetter setter,
-        ITenantContext tenantContext,
-        bool strictMode = false,
-        IMLog<TenantRlsDapper<TConn>>? log = null)
-        : base(serviceProvider, connectionName, enableMasterSlave, readOnly)
-    {
-        _setter = MGuard.NotNull(setter);
-        _tenantContext = MGuard.NotNull(tenantContext);
-        _strictMode = strictMode;
-        _log = log;
-    }
+    private readonly ITenantSessionContextSetter _setter = MGuard.NotNull(setter);
+    private readonly ITenantContext _tenantContext = MGuard.NotNull(tenantContext);
+    private readonly IMLog<TenantRlsDapper<TConn>>? _log = log;
+    private readonly bool _strictMode = strictMode;
 
     // -------------------------------------------------------------------------
     // Guard pair — the single choke point for all sync and async paths.

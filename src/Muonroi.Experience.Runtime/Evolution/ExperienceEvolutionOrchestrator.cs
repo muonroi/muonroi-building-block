@@ -15,33 +15,23 @@ namespace Muonroi.Experience.Runtime.Evolution;
 /// Emits an <see cref="EvolutionReport"/> with before/after token counts and compression ratio.
 /// The compression ratio is the primary observable invariant: values below 1.0 mean memory SHRANK.
 /// </summary>
-public sealed class ExperienceEvolutionOrchestrator
+/// <remarks>
+/// Initialises a new <see cref="ExperienceEvolutionOrchestrator"/>.
+/// </remarks>
+public sealed class ExperienceEvolutionOrchestrator(
+    IExperienceStore store,
+    IExperienceBrain brain,
+    IExperienceArchive archive,
+    EvolutionOptions opts,
+    ExperienceBudgetConfig budget,
+    IMLog<ExperienceEvolutionOrchestrator>? log = null)
 {
-    private readonly IExperienceStore _store;
-    private readonly IExperienceBrain _brain;
-    private readonly IExperienceArchive _archive;
-    private readonly EvolutionOptions _opts;
-    private readonly ExperienceBudgetConfig _budget;
-    private readonly IMLog<ExperienceEvolutionOrchestrator>? _log;
-
-    /// <summary>
-    /// Initialises a new <see cref="ExperienceEvolutionOrchestrator"/>.
-    /// </summary>
-    public ExperienceEvolutionOrchestrator(
-        IExperienceStore store,
-        IExperienceBrain brain,
-        IExperienceArchive archive,
-        EvolutionOptions opts,
-        ExperienceBudgetConfig budget,
-        IMLog<ExperienceEvolutionOrchestrator>? log = null)
-    {
-        _store = store ?? throw new ArgumentNullException(nameof(store));
-        _brain = brain ?? throw new ArgumentNullException(nameof(brain));
-        _archive = archive ?? throw new ArgumentNullException(nameof(archive));
-        _opts = opts ?? throw new ArgumentNullException(nameof(opts));
-        _budget = budget ?? throw new ArgumentNullException(nameof(budget));
-        _log = log;
-    }
+    private readonly IExperienceStore _store = store ?? throw new ArgumentNullException(nameof(store));
+    private readonly IExperienceBrain _brain = brain ?? throw new ArgumentNullException(nameof(brain));
+    private readonly IExperienceArchive _archive = archive ?? throw new ArgumentNullException(nameof(archive));
+    private readonly EvolutionOptions _opts = opts ?? throw new ArgumentNullException(nameof(opts));
+    private readonly ExperienceBudgetConfig _budget = budget ?? throw new ArgumentNullException(nameof(budget));
+    private readonly IMLog<ExperienceEvolutionOrchestrator>? _log = log;
 
     /// <summary>
     /// Runs the full evolution cycle and returns an <see cref="EvolutionReport"/>.

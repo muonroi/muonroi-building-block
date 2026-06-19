@@ -8,15 +8,10 @@ namespace Muonroi.Experience.Runtime.Qdrant;
 /// <summary>
 /// Production implementation of <see cref="IQdrantClientWrapper"/> that delegates to a real <see cref="QdrantClient"/>.
 /// </summary>
-public sealed class QdrantClientWrapper : IQdrantClientWrapper
+/// <remarks>Initialises a new wrapper around the supplied <see cref="QdrantClient"/> instance.</remarks>
+public sealed class QdrantClientWrapper(QdrantClient client) : IQdrantClientWrapper
 {
-    private readonly QdrantClient _client;
-
-    /// <summary>Initialises a new wrapper around the supplied <see cref="QdrantClient"/> instance.</summary>
-    public QdrantClientWrapper(QdrantClient client)
-    {
-        _client = client ?? throw new ArgumentNullException(nameof(client));
-    }
+    private readonly QdrantClient _client = client ?? throw new ArgumentNullException(nameof(client));
 
     /// <inheritdoc />
     public async Task CreateCollectionAsync(string collectionName, VectorParams vectorParams, CancellationToken ct = default)

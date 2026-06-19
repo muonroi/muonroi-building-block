@@ -1,19 +1,11 @@
 namespace Muonroi.Pdf.Abstractions.Exceptions;
 
-public sealed class PdfInputLimitException : PdfException
+public sealed class PdfInputLimitException(string ruleId, string limitName, long actualValue, long limitValue) : PdfException(
+        ruleId,
+        $"PDF input limit exceeded: {limitName} = {actualValue}, limit = {limitValue} (rule: {ruleId})",
+        $"PDF input limit exceeded: {limitName} = {actualValue}, limit = {limitValue} (rule: {ruleId})")
 {
-    public string LimitName { get; }
-    public long ActualValue { get; }
-    public long LimitValue { get; }
-
-    public PdfInputLimitException(string ruleId, string limitName, long actualValue, long limitValue)
-        : base(
-            ruleId,
-            $"PDF input limit exceeded: {limitName} = {actualValue}, limit = {limitValue} (rule: {ruleId})",
-            $"PDF input limit exceeded: {limitName} = {actualValue}, limit = {limitValue} (rule: {ruleId})")
-    {
-        LimitName = limitName;
-        ActualValue = actualValue;
-        LimitValue = limitValue;
-    }
+    public string LimitName { get; } = limitName;
+    public long ActualValue { get; } = actualValue;
+    public long LimitValue { get; } = limitValue;
 }

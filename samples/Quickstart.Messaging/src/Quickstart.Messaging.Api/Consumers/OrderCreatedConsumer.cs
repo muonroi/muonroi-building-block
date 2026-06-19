@@ -1,8 +1,4 @@
-using MassTransit;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Messaging.MassTransit.Messaging;
-using Quickstart.Messaging.Api.Messages;
+
 
 namespace Quickstart.Messaging.Api.Consumers;
 
@@ -23,7 +19,6 @@ public class OrderCreatedConsumer(
     {
         OrderCreatedEvent ev = context.Message;
 
-        // Log with tenant context automatically available from executionContext.
         Log.Info(
             "Order received — OrderId: {OrderId}, Product: {Product}, Total: {Total:C}, " +
             "Tenant: {TenantId}, ContextTenant: {ContextTenant}",
@@ -33,7 +28,6 @@ public class OrderCreatedConsumer(
             ev.TenantId,
             executionContext.TenantId);
 
-        // TODO: persist order, trigger fulfilment workflow, etc.
         return Task.CompletedTask;
     }
 }

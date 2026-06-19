@@ -1,5 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Integration.Abstractions;
+
+
+
+
+
+
 
 namespace Quickstart.Integration.Persistence.Api.Controllers;
 
@@ -21,7 +25,7 @@ public sealed class ConnectorsController(
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] string? tenantId, CancellationToken ct)
     {
-        IReadOnlyList<ConnectorConfigDto> configs = await configStore.ListAsync(tenantId, ct);
+        IReadOnlyList<ConnectorConfigDto> configs = await configStore.ListAsync(tenantId, null, ct);
         return Ok(configs);
     }
 

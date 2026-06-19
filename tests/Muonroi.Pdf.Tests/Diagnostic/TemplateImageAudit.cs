@@ -27,12 +27,9 @@ namespace Muonroi.Pdf.Tests.Diagnostic;
 /// in parallel with other diagnostic tests that also build ServiceProvider instances.
 /// </summary>
 [Collection("DiagnosticSerial")]
-public sealed class TemplateImageAudit
+public sealed class TemplateImageAudit(ITestOutputHelper output)
 {
-    private readonly ITestOutputHelper _out;
-
-    public TemplateImageAudit(ITestOutputHelper output) => _out = output;
-
+    private readonly ITestOutputHelper _out = output;
     private const string TemplateDir = @"D:\Data\Template\Htmls\PreviewRegistion";
     private const string OutDir = @"D:\sources\TEP\audit-816";
 

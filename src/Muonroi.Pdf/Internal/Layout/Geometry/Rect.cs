@@ -1,19 +1,11 @@
 namespace Muonroi.Pdf.Internal.Layout.Geometry;
 
-internal readonly struct Rect : IEquatable<Rect>
+internal readonly struct Rect(float x, float y, float width, float height) : IEquatable<Rect>
 {
-    public float X { get; }
-    public float Y { get; }
-    public float Width { get; }
-    public float Height { get; }
-
-    public Rect(float x, float y, float width, float height)
-    {
-        X = x;
-        Y = y;
-        Width = width;
-        Height = height;
-    }
+    public float X { get; } = x;
+    public float Y { get; } = y;
+    public float Width { get; } = width;
+    public float Height { get; } = height;
 
     public float Right => X + Width;
     public float Bottom => Y + Height;

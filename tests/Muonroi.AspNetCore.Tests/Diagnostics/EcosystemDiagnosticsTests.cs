@@ -326,17 +326,11 @@ public sealed class EcosystemDiagnosticsTests
     /// <summary>
     /// Minimal <see cref="IApplicationBuilder"/> stub for testing pipeline extensions.
     /// </summary>
-    private sealed class FakeApplicationBuilder : IApplicationBuilder
+    private sealed class FakeApplicationBuilder(IServiceProvider sp) : IApplicationBuilder
     {
-        private readonly IServiceProvider _sp;
+        private readonly IServiceProvider _sp = sp;
 
-        public FakeApplicationBuilder(IServiceProvider sp)
-        {
-            _sp = sp;
-            ApplicationServices = sp;
-        }
-
-        public IServiceProvider ApplicationServices { get; set; }
+        public IServiceProvider ApplicationServices { get; set; } = sp;
         public IFeatureCollection ServerFeatures => new FeatureCollection();
         public IDictionary<string, object?> Properties { get; } = new Dictionary<string, object?>();
         public IApplicationBuilder Use(Func<RequestDelegate, RequestDelegate> middleware) => this;

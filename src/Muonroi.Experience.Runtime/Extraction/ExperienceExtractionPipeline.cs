@@ -9,35 +9,26 @@ namespace Muonroi.Experience.Runtime.Extraction;
 /// -> dedup against store -> assign confidence -> store.
 /// Implements <see cref="IExperienceExtractor"/> for plug-in by external hooks.
 /// </summary>
-public sealed class ExperienceExtractionPipeline : IExperienceExtractor
+/// <remarks>
+/// Initializes a new instance of <see cref="ExperienceExtractionPipeline"/>.
+/// </remarks>
+/// <param name="detector">Detects mistake signals in raw JSONL session logs.</param>
+/// <param name="brain">LLM-powered extractor that converts signal context into NeuronExperience entries.</param>
+/// <param name="store">Backing store used for dedup checks (FindRelevantAsync) and persistence (StoreAsync).</param>
+/// <param name="storeOptions">Store options containing the ExperienceBudgetConfig (DedupThreshold, confidence clamp).</param>
+/// <param name="logger">Optional structured logger.</param>
+public sealed class ExperienceExtractionPipeline(
+    MistakeDetector detector,
+    IExperienceBrain brain,
+    IExperienceStore store,
+    IOptions<ExperienceStoreOptions> storeOptions,
+    IMLog<ExperienceExtractionPipeline>? logger = null) : IExperienceExtractor
 {
-    private readonly MistakeDetector _detector;
-    private readonly IExperienceBrain _brain;
-    private readonly IExperienceStore _store;
-    private readonly ExperienceBudgetConfig _budget;
-    private readonly IMLog<ExperienceExtractionPipeline>? _logger;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="ExperienceExtractionPipeline"/>.
-    /// </summary>
-    /// <param name="detector">Detects mistake signals in raw JSONL session logs.</param>
-    /// <param name="brain">LLM-powered extractor that converts signal context into NeuronExperience entries.</param>
-    /// <param name="store">Backing store used for dedup checks (FindRelevantAsync) and persistence (StoreAsync).</param>
-    /// <param name="storeOptions">Store options containing the ExperienceBudgetConfig (DedupThreshold, confidence clamp).</param>
-    /// <param name="logger">Optional structured logger.</param>
-    public ExperienceExtractionPipeline(
-        MistakeDetector detector,
-        IExperienceBrain brain,
-        IExperienceStore store,
-        IOptions<ExperienceStoreOptions> storeOptions,
-        IMLog<ExperienceExtractionPipeline>? logger = null)
-    {
-        _detector = detector;
-        _brain = brain;
-        _store = store;
-        _budget = storeOptions.Value.Budget;
-        _logger = logger;
-    }
+    private readonly MistakeDetector _detector = detector;
+    private readonly IExperienceBrain _brain = brain;
+    private readonly IExperienceStore _store = store;
+    private readonly ExperienceBudgetConfig _budget = storeOptions.Value.Budget;
+    private readonly IMLog<ExperienceExtractionPipeline>? _logger = logger;
 
     /// <inheritdoc/>
     /// <remarks>

@@ -1,10 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Observability.OpenTelemetry;
-using Polly;
-using Polly.CircuitBreaker;
-using Quickstart.Resilience.Api.Services;
+
 
 namespace Quickstart.Resilience.Api.Controllers;
 
@@ -129,12 +123,11 @@ public sealed class ResilienceController(
     /// </summary>
     [HttpPost("payment/hard-failure")]
     public async Task<IActionResult> ProcessPaymentWithHardFailureAsync(
-        [FromBody] PaymentRequest request,
         CancellationToken ct = default)
     {
         try
         {
-            PaymentResult result = await paymentService.ProcessPaymentWithHardFailureAsync(request, ct);
+            PaymentResult result = await paymentService.ProcessPaymentWithHardFailureAsync(ct);
             return Ok(result);
         }
         catch (BrokenCircuitException bcx)

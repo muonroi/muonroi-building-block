@@ -157,8 +157,8 @@ static void AddMinimalOpenTelemetry(WebApplicationBuilder b)
 {
     // Read the same config section that OtelSetup uses so the sample is
     // consistent regardless of which approach is active.
-    OpenTelemetryConfigs configs = new();
-    b.Configuration.GetSection(OpenTelemetryConfigs.SectionName).Bind(configs);
+    Muonroi.Observability.OpenTelemetryConfigs configs = new();
+    b.Configuration.GetSection(Muonroi.Observability.OpenTelemetryConfigs.SectionName).Bind(configs);
 
     string serviceName = configs.ServiceName ?? "Quickstart.Observability";
 

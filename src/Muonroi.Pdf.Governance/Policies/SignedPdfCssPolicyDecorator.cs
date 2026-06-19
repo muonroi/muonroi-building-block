@@ -1,20 +1,13 @@
 namespace Muonroi.Pdf.Governance.Policies;
 
-public sealed class SignedPdfCssPolicyDecorator : IPdfCssPolicy
+public sealed class SignedPdfCssPolicyDecorator(
+    IPdfCssPolicy inner,
+    PdfConfigs configs,
+    Func<bool> signatureVerifier) : IPdfCssPolicy
 {
-    private readonly IPdfCssPolicy _inner;
-    private readonly PdfConfigs _configs;
-    private readonly Func<bool> _signatureVerifier;
-
-    public SignedPdfCssPolicyDecorator(
-        IPdfCssPolicy inner,
-        PdfConfigs configs,
-        Func<bool> signatureVerifier)
-    {
-        _inner = inner;
-        _configs = configs;
-        _signatureVerifier = signatureVerifier;
-    }
+    private readonly IPdfCssPolicy _inner = inner;
+    private readonly PdfConfigs _configs = configs;
+    private readonly Func<bool> _signatureVerifier = signatureVerifier;
 
     public string Id => _inner.Id;
     public PdfPolicyLimits Limits => _inner.Limits;

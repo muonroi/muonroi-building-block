@@ -8,19 +8,13 @@ namespace Muonroi.Core.Abstractions.Ecosystem;
 /// Logs the active ecosystem capabilities at application startup.
 /// Automatically registered by <see cref="EcosystemServiceCollectionExtensions.GetOrCreateRegistry"/>.
 /// </summary>
-internal sealed class MEcosystemStartupFilter : IStartupFilter
+/// <remarks>
+/// Initializes a new instance of <see cref="MEcosystemStartupFilter"/>.
+/// </remarks>
+internal sealed class MEcosystemStartupFilter(IMEcosystemRegistry registry, ILogger<MEcosystemStartupFilter> logger) : IStartupFilter
 {
-    private readonly IMEcosystemRegistry _registry;
-    private readonly ILogger<MEcosystemStartupFilter> _logger;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="MEcosystemStartupFilter"/>.
-    /// </summary>
-    public MEcosystemStartupFilter(IMEcosystemRegistry registry, ILogger<MEcosystemStartupFilter> logger)
-    {
-        _registry = registry;
-        _logger = logger;
-    }
+    private readonly IMEcosystemRegistry _registry = registry;
+    private readonly ILogger<MEcosystemStartupFilter> _logger = logger;
 
     /// <inheritdoc />
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)

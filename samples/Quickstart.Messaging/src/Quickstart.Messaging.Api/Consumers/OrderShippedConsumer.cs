@@ -1,9 +1,3 @@
-using MassTransit;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Messaging.MassTransit.Messaging;
-using Quickstart.Messaging.Api.Messages;
-
 namespace Quickstart.Messaging.Api.Consumers;
 
 /// <summary>

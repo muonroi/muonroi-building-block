@@ -34,12 +34,9 @@ namespace Muonroi.Pdf.Tests.Golden;
 /// </summary>
 [Collection(PdfRenderCollection.Name)]
 [Trait("Category", "RealTemplate")]
-public sealed class RealTemplateBaselineTests
+public sealed class RealTemplateBaselineTests(ITestOutputHelper output)
 {
-    private readonly ITestOutputHelper _out;
-
-    public RealTemplateBaselineTests(ITestOutputHelper output) => _out = output;
-
+    private readonly ITestOutputHelper _out = output;
     private const string TemplateDir = @"D:\Data\Template\Htmls\PreviewRegistion";
 
     // 4x4 8-bit RGB PNG — known-good (same one GoldenCorpus.cs:317 uses end-to-end through the

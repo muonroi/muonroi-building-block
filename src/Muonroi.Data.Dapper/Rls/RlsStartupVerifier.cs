@@ -29,38 +29,30 @@ namespace Muonroi.Data.Dapper.Rls;
 /// boot-ordering / migration-later scenarios).
 /// </para>
 /// </remarks>
-internal sealed class RlsStartupVerifier : IHostedLifecycleService
+/// <remarks>
+/// Initializes a new instance of <see cref="RlsStartupVerifier"/>.
+/// All values are captured at DI registration time — no <c>IOptions</c>, no
+/// <c>BuildServiceProvider</c>.
+/// </remarks>
+/// <param name="provider">The configured Dapper RLS provider (PG, MSSQL).</param>
+/// <param name="verify">
+/// Whether to run the catalog check (<see cref="DapperRlsOptions.VerifyRlsObjectsOnStartup"/>).
+/// </param>
+/// <param name="connStrings">
+/// Connection-string provider. <c>GetConnectionString("default", false, false)</c> is called
+/// to obtain the same connection string used by the <c>IDapper</c> registration.
+/// </param>
+/// <param name="log">Optional logger for the success / skip paths.</param>
+internal sealed class RlsStartupVerifier(
+    DapperRlsProvider provider,
+    bool verify,
+    IConnectionStringProvider connStrings,
+    IMLog<RlsStartupVerifier>? log = null) : IHostedLifecycleService
 {
-    private readonly DapperRlsProvider _provider;
-    private readonly bool _verify;
-    private readonly IConnectionStringProvider _connStrings;
-    private readonly IMLog<RlsStartupVerifier>? _log;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="RlsStartupVerifier"/>.
-    /// All values are captured at DI registration time — no <c>IOptions</c>, no
-    /// <c>BuildServiceProvider</c>.
-    /// </summary>
-    /// <param name="provider">The configured Dapper RLS provider (PG, MSSQL).</param>
-    /// <param name="verify">
-    /// Whether to run the catalog check (<see cref="DapperRlsOptions.VerifyRlsObjectsOnStartup"/>).
-    /// </param>
-    /// <param name="connStrings">
-    /// Connection-string provider. <c>GetConnectionString("default", false, false)</c> is called
-    /// to obtain the same connection string used by the <c>IDapper</c> registration.
-    /// </param>
-    /// <param name="log">Optional logger for the success / skip paths.</param>
-    public RlsStartupVerifier(
-        DapperRlsProvider provider,
-        bool verify,
-        IConnectionStringProvider connStrings,
-        IMLog<RlsStartupVerifier>? log = null)
-    {
-        _provider = provider;
-        _verify = verify;
-        _connStrings = connStrings;
-        _log = log;
-    }
+    private readonly DapperRlsProvider _provider = provider;
+    private readonly bool _verify = verify;
+    private readonly IConnectionStringProvider _connStrings = connStrings;
+    private readonly IMLog<RlsStartupVerifier>? _log = log;
 
     /// <inheritdoc />
     /// <summary>

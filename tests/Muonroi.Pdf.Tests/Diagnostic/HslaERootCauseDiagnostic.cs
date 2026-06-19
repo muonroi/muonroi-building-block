@@ -29,12 +29,9 @@ namespace Muonroi.Pdf.Tests.Diagnostic;
 /// DO NOT commit with [Skip] removed — this is a diagnostic aid only.
 /// </summary>
 [Collection("DiagnosticSerial")]  // run alone to avoid pollution
-public sealed class HslaERootCauseDiagnostic
+public sealed class HslaERootCauseDiagnostic(ITestOutputHelper output)
 {
-    private readonly ITestOutputHelper _out;
-
-    public HslaERootCauseDiagnostic(ITestOutputHelper output) => _out = output;
-
+    private readonly ITestOutputHelper _out = output;
     private const string TemplatePath = @"D:\Data\Template\Htmls\PreviewRegistion\HSLA_E.html";
 
     // Minimal dummy values — enough to render a structurally representative page.
