@@ -209,7 +209,10 @@ internal sealed class CssRuleSet
                 string key = simple.Trim();
                 if (!map.TryGetValue(key, out List<CssDeclaration>? existing))
                 {
-                    map[key] = supplementalDecls;
+                    // Per-key copy: a grouped selector (".a, .b { ... }") must not share one
+                    // list instance across keys, or a later rule mutating .a's list via
+                    // existing.Add() would silently inject the property into .b too (CR-01).
+                    map[key] = new List<CssDeclaration>(supplementalDecls);
                 }
                 else
                 {
