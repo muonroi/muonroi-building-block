@@ -64,6 +64,28 @@ namespace Muonroi.MyService
     }
 
     [Fact]
+    public void Mstd0002_NullLiteralPlaceholder_ShouldNotError()
+    {
+        string source = @"
+#nullable enable
+namespace Muonroi.MyService
+{
+    public class Options
+    {
+        public string Name { get; set; } = null!;
+    }
+    public class MyService
+    {
+        public int Execute(object param = null!) => 0;
+        public string GetDefault() { string x = default!; return x; }
+    }
+}
+";
+        ImmutableArray<Diagnostic> diagnostics = GetDiagnostics(source);
+        Assert.DoesNotContain(diagnostics, d => d.Id == "MSTD0002");
+    }
+
+    [Fact]
     public void Mstd0002_NullForgiving_InNonMuonroiNamespace_ShouldNotError()
     {
         string source = @"
