@@ -99,4 +99,13 @@ internal abstract class BoxNode
     /// class-descendant selectors that AngleSharp.Css fails to inherit through.
     /// </summary>
     public string? WordBreak { get; set; }
+
+    /// <summary>
+    /// CSS white-space: "pre-wrap" | "pre-line" | "nowrap" | null. Resolved on any box the
+    /// cascade reaches and propagated to InlineBox descendants by PropagateInheritedTextProps —
+    /// production templates declare it on `td` via class-descendant selectors that AngleSharp.Css
+    /// fails to inherit through (G29). Declared here (not on InlineBox) so block/cell ancestors
+    /// can hold the cascaded value and push it down to text-node descendants.
+    /// </summary>
+    public string? WhiteSpace { get; set; }
 }

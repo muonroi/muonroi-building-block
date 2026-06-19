@@ -20,9 +20,6 @@ internal sealed class InlineBox : BoxNode
     /// <summary>Non-null if this inline box is inside an &lt;a&gt; element.</summary>
     public string? LinkHref { get; set; }
 
-    /// <summary>CSS white-space: "pre-wrap" | "pre-line" | "nowrap" | null.</summary>
-    public string? WhiteSpace { get; set; }
-
-    // WordBreak is inherited from BoxNode (Phase 12.4b) — declared there so block/cell
-    // ancestors can hold the cascaded value and propagate it down to text-node descendants.
+    // WhiteSpace and WordBreak are inherited from BoxNode (Phase 12.4b / G29) — declared there so
+    // block/cell ancestors can hold the cascaded value and propagate it down to text-node descendants.
 }
