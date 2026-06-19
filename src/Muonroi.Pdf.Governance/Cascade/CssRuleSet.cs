@@ -1,4 +1,5 @@
 using AngleSharp.Css.Dom;
+using AngleSharp.Dom;
 
 namespace Muonroi.Pdf.Governance.Cascade;
 
@@ -41,6 +42,13 @@ internal sealed class CssRuleSet
         var result = new List<CssMatchableRule>();
         int sourceOrder = 0;
 
+        // Step A: Build supplemental declaration map from raw <style> text.
+        // AngleSharp.Css beta.147 silently drops CSS3 properties (word-break, white-space, etc.)
+        // from ICssStyleDeclaration — the CSSOM CssText shows ".t td { }" for rules that authored
+        // "word-break: break-word". The only recovery is parsing the raw authored text directly.
+        // Key: normalized selector text → supplemental declarations for dropped properties only.
+        var supplemental = BuildSupplementalFromRawStyleText(document);
+
         foreach (ICssStyleSheet sheet in document.StyleSheets.OfType<ICssStyleSheet>())
         {
             ICssRuleList rules = sheet.Rules;
@@ -49,14 +57,29 @@ internal sealed class CssRuleSet
                 if (rules[i] is not ICssStyleRule styleRule)
                     continue;   // skip @page, @font-face, @import, @keyframes, etc.
 
-                // Collect declarations from the rule's style block.
+                // Collect CSSOM declarations.
                 IReadOnlyList<CssDeclaration> declarations = CollectDeclarations(styleRule.Style);
 
-                // Split the selector on top-level commas to produce one entry per simple selector.
+                // Step B: Supplement with any dropped properties recovered from the raw text pass.
                 string[] simpleSelectors = SplitGroupedSelector(styleRule.SelectorText);
 
                 foreach (string simpleSelector in simpleSelectors)
                 {
+                    string selectorKey = simpleSelector.Trim();
+                    List<CssDeclaration> merged = declarations.ToList();
+
+                    if (supplemental.TryGetValue(selectorKey, out var extra))
+                    {
+                        // Merge only properties not already present from the CSSOM.
+                        var alreadyPresent = new HashSet<string>(
+                            merged.Select(d => d.Property), StringComparer.OrdinalIgnoreCase);
+                        foreach (var decl in extra)
+                        {
+                            if (!alreadyPresent.Contains(decl.Property))
+                                merged.Add(decl);
+                        }
+                    }
+
                     // Specificity strategy:
                     // • If the rule has a single (non-grouped) selector, ICssStyleRule.Selector is
                     //   a single ISelector whose Specificity (AngleSharp.Css.Priority) is exact.
@@ -66,23 +89,214 @@ internal sealed class CssRuleSet
                     //   §6.4.3 computation via the split string.
                     int specificity = simpleSelectors.Length == 1
                         ? ComputeSpecificityFromSelector(styleRule.Selector)
-                        : ComputeSpecificityFromText(simpleSelector);
+                        : ComputeSpecificityFromText(selectorKey);
 
                     result.Add(new CssMatchableRule(
-                        SelectorText: simpleSelector.Trim(),
+                        SelectorText: selectorKey,
                         Specificity: specificity,
                         SourceOrder: sourceOrder++,
-                        Declarations: declarations));
+                        Declarations: merged));
                 }
             }
         }
+
+        // Step C: Also add rules that only appear in the raw-text supplemental pass but NOT in the
+        // CSSOM (possible if AngleSharp.Css dropped an entire rule — unlikely but defensive).
+        // We do this only for selector-matched rules already present (CSSOM anchor is required for
+        // specificity; pure raw-text rules without CSSOM anchor are out of scope).
 
         return new CssRuleSet(result);
     }
 
     // -----------------------------------------------------------------------
+    // Supplemental raw-text parser for AngleSharp.Css-dropped properties
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Walks every <c>&lt;style&gt;</c> element in the document, parses its raw text content,
+    /// and returns a map from selector text → supplemental <see cref="CssDeclaration"/> list
+    /// for properties in <see cref="SupplementalProperties"/> that the CSSOM drops.
+    /// </summary>
+    private static Dictionary<string, List<CssDeclaration>> BuildSupplementalFromRawStyleText(
+        IDocument document)
+    {
+        var map = new Dictionary<string, List<CssDeclaration>>(StringComparer.Ordinal);
+
+        // Walk all <style> elements in the document (handles both <head> and <body> positions).
+        foreach (IElement styleEl in document.GetElementsByTagName("style"))
+        {
+            string? rawText = styleEl.TextContent;
+            if (string.IsNullOrWhiteSpace(rawText))
+                continue;
+
+            ParseRawCssForSupplemental(rawText, map);
+        }
+
+        return map;
+    }
+
+    /// <summary>
+    /// Minimal raw CSS parser: extracts selector + declaration blocks, then for each block
+    /// collects only the properties listed in <see cref="SupplementalProperties"/>.
+    /// Handles nested braces (e.g. @media) by only parsing top-level rules.
+    /// </summary>
+    private static void ParseRawCssForSupplemental(
+        string css,
+        Dictionary<string, List<CssDeclaration>> map)
+    {
+        int pos = 0;
+        int len = css.Length;
+
+        while (pos < len)
+        {
+            // Skip whitespace and comments.
+            pos = SkipWhitespace(css, pos);
+            if (pos >= len) break;
+
+            // Skip /* ... */ comments.
+            if (pos + 1 < len && css[pos] == '/' && css[pos + 1] == '*')
+            {
+                int end = css.IndexOf("*/", pos + 2, StringComparison.Ordinal);
+                pos = end >= 0 ? end + 2 : len;
+                continue;
+            }
+
+            // Skip @-rules (e.g. @media, @import, @page) — find the matching { } or ';'.
+            if (pos < len && css[pos] == '@')
+            {
+                int semi = css.IndexOf(';', pos);
+                int brace = css.IndexOf('{', pos);
+                if (brace < 0 || (semi >= 0 && semi < brace))
+                {
+                    pos = semi >= 0 ? semi + 1 : len;
+                }
+                else
+                {
+                    // Skip balanced { }
+                    pos = SkipBalancedBraces(css, brace);
+                }
+                continue;
+            }
+
+            // Read selector text (up to the opening '{')
+            int selectorStart = pos;
+            int openBrace = css.IndexOf('{', pos);
+            if (openBrace < 0) break;
+
+            string selectorText = css.Substring(selectorStart, openBrace - selectorStart).Trim();
+            if (string.IsNullOrEmpty(selectorText))
+            {
+                pos = openBrace + 1;
+                continue;
+            }
+
+            // Read declaration block (between { and the matching })
+            int closeIdx = FindMatchingClose(css, openBrace);
+            string declBlock = closeIdx > openBrace
+                ? css.Substring(openBrace + 1, closeIdx - openBrace - 1)
+                : string.Empty;
+            pos = closeIdx >= 0 ? closeIdx + 1 : len;
+
+            // Extract supplemental declarations from this block.
+            List<CssDeclaration>? supplementalDecls = ExtractSupplementalDecls(declBlock);
+            if (supplementalDecls is null || supplementalDecls.Count == 0)
+                continue;
+
+            // Split grouped selectors and record under each simple selector.
+            string[] simpleSelectors = SplitGroupedSelector(selectorText);
+            foreach (string simple in simpleSelectors)
+            {
+                string key = simple.Trim();
+                if (!map.TryGetValue(key, out List<CssDeclaration>? existing))
+                {
+                    map[key] = supplementalDecls;
+                }
+                else
+                {
+                    // Merge: don't overwrite already-present properties from earlier rules.
+                    var existingProps = new HashSet<string>(
+                        existing.Select(d => d.Property), StringComparer.OrdinalIgnoreCase);
+                    foreach (var decl in supplementalDecls)
+                    {
+                        if (!existingProps.Contains(decl.Property))
+                            existing.Add(decl);
+                    }
+                }
+            }
+        }
+    }
+
+    private static List<CssDeclaration>? ExtractSupplementalDecls(string declBlock)
+    {
+        List<CssDeclaration>? result = null;
+        foreach (string decl in declBlock.Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            int colon = decl.IndexOf(':');
+            if (colon <= 0) continue;
+
+            string prop = decl[..colon].Trim().ToLowerInvariant();
+            if (!SupplementalProperties.Contains(prop)) continue;
+
+            string val = decl[(colon + 1)..].Trim();
+            if (string.IsNullOrEmpty(val)) continue;
+
+            bool imp = val.EndsWith("!important", StringComparison.OrdinalIgnoreCase);
+            if (imp) val = val[..^"!important".Length].Trim();
+            if (string.IsNullOrEmpty(val)) continue;
+
+            result ??= new List<CssDeclaration>();
+            result.Add(new CssDeclaration(prop, val, imp));
+        }
+        return result;
+    }
+
+    private static int SkipWhitespace(string s, int pos)
+    {
+        while (pos < s.Length && char.IsWhiteSpace(s[pos])) pos++;
+        return pos;
+    }
+
+    private static int FindMatchingClose(string s, int openIdx)
+    {
+        int depth = 0;
+        for (int i = openIdx; i < s.Length; i++)
+        {
+            if (s[i] == '{') depth++;
+            else if (s[i] == '}')
+            {
+                depth--;
+                if (depth == 0) return i;
+            }
+        }
+        return -1;
+    }
+
+    private static int SkipBalancedBraces(string s, int openIdx)
+    {
+        int close = FindMatchingClose(s, openIdx);
+        return close >= 0 ? close + 1 : s.Length;
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Properties that AngleSharp.Css beta.147 silently drops from <c>ICssStyleDeclaration</c>
+    /// because they are CSS3 properties not yet fully implemented in the beta parser.
+    /// We supplement CSSOM collection with raw-text parsing for these properties so the
+    /// cascade can resolve them correctly (otherwise G28/G29 word-break/white-space would
+    /// never reach the resolver).
+    /// </summary>
+    private static readonly HashSet<string> SupplementalProperties = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "word-break",
+        "overflow-wrap",
+        "word-wrap",
+        "white-space",
+        "text-overflow",
+        "hyphens",
+    };
 
     private static IReadOnlyList<CssDeclaration> CollectDeclarations(ICssStyleDeclaration? style)
     {
