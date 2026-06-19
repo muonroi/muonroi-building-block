@@ -1,4 +1,6 @@
 using System.Reflection;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Pdf.DesignSystem;
 
@@ -19,7 +21,7 @@ public static class DesignSystemTemplateProvider
         {
             string resourceName = $"Muonroi.Pdf.DesignSystem.Default.Templates.{name}.html";
             using Stream? stream = assembly.GetManifestResourceStream(resourceName)
-                ?? throw new InvalidOperationException(
+                ?? throw new MInternalException(
                     $"Embedded resource not found: {resourceName}. " +
                     $"Available resources: {string.Join(", ", assembly.GetManifestResourceNames())}");
             using var reader = new StreamReader(stream);
@@ -34,16 +36,14 @@ public static class DesignSystemTemplateProvider
     /// </summary>
     /// <param name="name">Template name — one of: "invoice", "receipt", "report" (case-insensitive).</param>
     /// <returns>HTML template string with <c>{{TokenName}}</c> placeholders.</returns>
-    /// <exception cref="KeyNotFoundException">Thrown when <paramref name="name"/> is not a known template.</exception>
+    /// <exception cref="MNotFoundException">Thrown when <paramref name="name"/> is not a known template.</exception>
     public static string GetTemplate(string name)
     {
-        string key = name?.ToLowerInvariant()
-            ?? throw new ArgumentNullException(nameof(name));
+        string key = MGuard.NotNull(name).ToLowerInvariant();
 
         if (_cache.TryGetValue(key, out string? html))
             return html;
 
-        throw new KeyNotFoundException(
-            $"Unknown design system template: {name}. Valid names: invoice, receipt, report");
+        throw new MNotFoundException("Design system template (valid: invoice, receipt, report)", name);
     }
 }
