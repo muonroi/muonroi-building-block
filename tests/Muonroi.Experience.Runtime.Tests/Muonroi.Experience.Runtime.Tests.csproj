@@ -12,6 +12,7 @@
     <PackageReference Include="Moq" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/Muonroi.Core.Abstractions/Muonroi.Core.Abstractions.csproj" />
     <ProjectReference Include="../../src/Muonroi.Experience.Runtime/Muonroi.Experience.Runtime.csproj" />
   </ItemGroup>
 </Project>

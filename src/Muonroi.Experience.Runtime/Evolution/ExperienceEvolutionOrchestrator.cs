@@ -1,4 +1,5 @@
 using System.Text;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Experience.Abstractions;
 using Muonroi.Experience.Runtime.Archive;
 using Muonroi.Experience.Runtime.Internal;
@@ -26,11 +27,11 @@ public sealed class ExperienceEvolutionOrchestrator(
     ExperienceBudgetConfig budget,
     IMLog<ExperienceEvolutionOrchestrator>? log = null)
 {
-    private readonly IExperienceStore _store = store ?? throw new ArgumentNullException(nameof(store));
-    private readonly IExperienceBrain _brain = brain ?? throw new ArgumentNullException(nameof(brain));
-    private readonly IExperienceArchive _archive = archive ?? throw new ArgumentNullException(nameof(archive));
-    private readonly EvolutionOptions _opts = opts ?? throw new ArgumentNullException(nameof(opts));
-    private readonly ExperienceBudgetConfig _budget = budget ?? throw new ArgumentNullException(nameof(budget));
+    private readonly IExperienceStore _store = MGuard.NotNull(store);
+    private readonly IExperienceBrain _brain = MGuard.NotNull(brain);
+    private readonly IExperienceArchive _archive = MGuard.NotNull(archive);
+    private readonly EvolutionOptions _opts = MGuard.NotNull(opts);
+    private readonly ExperienceBudgetConfig _budget = MGuard.NotNull(budget);
     private readonly IMLog<ExperienceEvolutionOrchestrator>? _log = log;
 
     /// <summary>

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Experience.Abstractions;
 
 namespace Muonroi.Experience.Runtime.Internal;
@@ -41,6 +42,6 @@ internal static class TokenBudgetEnforcer
         ExperienceTier.Behavioral => config.BehavioralBudget,
         ExperienceTier.SelfQA => config.SelfQABudget,
         ExperienceTier.RawTrajectory => int.MaxValue,
-        _ => throw new ArgumentOutOfRangeException(nameof(tier), tier, $"Unknown ExperienceTier: {tier}")
+        _ => throw new MArgumentException(nameof(tier), $"Unknown ExperienceTier: {tier}")
     };
 }

@@ -18,6 +18,7 @@
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../Muonroi.Core.Abstractions/Muonroi.Core.Abstractions.csproj" />
     <ProjectReference Include="../Muonroi.Experience.Abstractions/Muonroi.Experience.Abstractions.csproj" />
     <ProjectReference Include="../Muonroi.Logging.Abstractions/Muonroi.Logging.Abstractions.csproj" />
   </ItemGroup>

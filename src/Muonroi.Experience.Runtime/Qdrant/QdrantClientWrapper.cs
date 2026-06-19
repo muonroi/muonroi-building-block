@@ -1,4 +1,5 @@
 using Grpc.Core;
+using Muonroi.Core.Abstractions.Guards;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using QdrantGrpc = Qdrant.Client.Grpc;
@@ -11,7 +12,7 @@ namespace Muonroi.Experience.Runtime.Qdrant;
 /// <remarks>Initialises a new wrapper around the supplied <see cref="QdrantClient"/> instance.</remarks>
 public sealed class QdrantClientWrapper(QdrantClient client) : IQdrantClientWrapper
 {
-    private readonly QdrantClient _client = client ?? throw new ArgumentNullException(nameof(client));
+    private readonly QdrantClient _client = MGuard.NotNull(client);
 
     /// <inheritdoc />
     public async Task CreateCollectionAsync(string collectionName, VectorParams vectorParams, CancellationToken ct = default)

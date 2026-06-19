@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Experience.Abstractions;
 
 namespace Muonroi.Experience.Runtime.Interception;
@@ -18,7 +19,7 @@ namespace Muonroi.Experience.Runtime.Interception;
 /// <remarks>Initializes a new instance with the given experience store.</remarks>
 public sealed class DefaultExperienceInterceptor(IExperienceStore store) : IExperienceInterceptor
 {
-    private readonly IExperienceStore _store = store ?? throw new ArgumentNullException(nameof(store));
+    private readonly IExperienceStore _store = MGuard.NotNull(store);
 
     /// <inheritdoc />
     public async Task<string> InterceptAsync(

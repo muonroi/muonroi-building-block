@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Experience.Abstractions;
 using Muonroi.Logging.Abstractions;
 
@@ -19,7 +20,7 @@ namespace Muonroi.Experience.Runtime;
 /// </remarks>
 public sealed class ExperienceStoreOrchestrator(IExperienceStore store, IMLog<ExperienceStoreOrchestrator>? log = null)
 {
-    private readonly IExperienceStore _store = store ?? throw new ArgumentNullException(nameof(store));
+    private readonly IExperienceStore _store = MGuard.NotNull(store);
     private readonly IMLog<ExperienceStoreOrchestrator>? _log = log;
 
     /// <summary>
