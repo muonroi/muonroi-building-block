@@ -32,6 +32,19 @@ public sealed class HeadingBoldAndTextTransformTests
             CollectInlinesRecursive(child, result);
     }
 
+    // Depth-first search for the first box whose source element matches localName.
+    private static BoxNode? FindByTag(BoxNode node, string localName)
+    {
+        if (string.Equals(node.Source?.LocalName, localName, StringComparison.OrdinalIgnoreCase))
+            return node;
+        foreach (var child in node.Children)
+        {
+            var found = FindByTag(child, localName);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
     // Helper: create a text node (IsText=true, no styles).
     private static FakeStyledNode TextNode(string content) =>
         new("#text") { IsText = true, IsElement = false, TextContent = content };
@@ -85,38 +98,29 @@ public sealed class HeadingBoldAndTextTransformTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void H2_WithTextUppercaseClass_InlineChildGetsBoldAndTextIsUppercased()
+    public async Task H2_WithTextUppercaseClass_InlineChildGetsBoldAndTextIsUppercased()
     {
-        // Arrange: inject a <style> element so ExtractClassRules picks up .text-uppercase.
-        var body = new FakeStyledNode("body", new() { ["display"] = "block" });
+        // Phase 12 B1.3: .text-uppercase resolved through the owned cascade (was the class-rule fallback).
+        const string html = """
+            <html><head><style>
+              .text-uppercase { text-transform: uppercase; }
+            </style></head>
+            <body><h2 class="text-uppercase">phiếu đăng ký</h2></body></html>
+            """;
 
-        var styleNode = new FakeStyledNode("style")
-        {
-            TextContent = ".text-uppercase { text-transform: uppercase; }"
-        };
-        body.ChildList.Add(styleNode);
-
-        var h2 = new FakeStyledNode("h2",
-            styles: new() { ["display"] = "" },
-            attributes: new() { ["class"] = "text-uppercase" });
-        h2.ChildList.Add(TextNode("phiếu đăng ký"));
-        body.ChildList.Add(h2);
-
-        // Act: build box tree
-        var root = Builder().Build(body);
+        // Act: build box tree through the cascade
+        var root = await CascadeBoxTree.BuildAsync(html);
 
         // Assert: h2 BlockBox has Bold=true AND TextTransform="uppercase"
-        // Note: the <style> element also produces a BlockBox child — find by source tag name.
-        var h2Box = root.Children
-            .OfType<BlockBox>()
-            .FirstOrDefault(b => string.Equals(b.Source?.LocalName, "h2", StringComparison.OrdinalIgnoreCase));
+        var h2Box = FindByTag(root, "h2") as BlockBox;
         h2Box.Should().NotBeNull(because: "<h2> element must produce a BlockBox");
         h2Box!.Bold.Should().BeTrue(because: "UA bold applies to h2");
         h2Box.TextTransform.Should().Be("uppercase",
             because: ".text-uppercase class rule sets text-transform:uppercase on the block");
 
-        // Assert: InlineBox children inherit both
-        var inlines = CollectInlines(root);
+        // Assert: InlineBox children inherit both (scope to the h2 subtree so the <style>
+        // text node, if rendered, does not pollute the assertions).
+        var inlines = CollectInlines(h2Box);
         inlines.Should().NotBeEmpty();
         inlines.Should().AllSatisfy(b =>
         {
