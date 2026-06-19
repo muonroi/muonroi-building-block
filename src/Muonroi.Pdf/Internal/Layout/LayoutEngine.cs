@@ -214,7 +214,11 @@ internal sealed class LayoutEngine
             PageWidth = pageWidthPt,
             PageHeight = pageHeightPt,
             AvailableWidth = availableWidth,
-            CurrentY = topMarginPt,
+            // Body content is laid out in 0-based continuous body-space; PaginationEngine adds the
+            // top margin per physical page via localY. Starting at topMarginPt double-counted the
+            // top margin (content pushed down one margin on page 0, and tall single-page content
+            // spuriously broke to page 2 — the G8 blank-first-page bug).
+            CurrentY = 0f,
             CurrentPageIndex = 0,
             TotalPages = totalPages,
             TextMetrics = _textMetrics,

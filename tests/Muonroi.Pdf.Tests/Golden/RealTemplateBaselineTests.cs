@@ -343,13 +343,15 @@ public sealed class RealTemplateBaselineTests(ITestOutputHelper output)
         // G15b fix: float-epsilon recovers a row's worth of horizontal space → HSLA_E packs 2 pages.
         ["HSLA_E"] = 2,
         ["HSLA_F"] = 2,
-        ["HBND_F"] = 2,
+        // Phase 12 G8 fix (CurrentY=0): top margin no longer double-counted, so the form fits one
+        // page again — HBND_F and HBCX_F dropped from a spurious 2 (blank page 1) to 1.
+        ["HBND_F"] = 1,
         ["GTHA_F"] = 4,
         ["GTND_F"] = 4,
 
         // Multi-page due to table overflow (G14 fix).
         ["CHNG_F"] = 4,
-        ["HBCX_F"] = 2,
+        ["HBCX_F"] = 1,
 
         // Single-page templates (no table overflow with G14 fix).
         ["BNTT"]   = 1,
