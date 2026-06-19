@@ -112,27 +112,18 @@ public sealed class CellTextAlignmentTests
 
     /// <summary>G23g: &lt;th class="text-left"&gt; with .text-left rule → class override stays "left".</summary>
     [Fact]
-    public void Th_WithClassTextLeft_ClassRuleOverridesUa()
+    public async Task Th_WithClassTextLeft_ClassRuleOverridesUa()
     {
-        var body = new FakeStyledNode("body", new() { ["display"] = "block" });
+        // Phase 12 B1.3: .text-left resolved through the owned cascade (was the class-rule fallback);
+        // a matched author rule outranks the UA <th> center default.
+        const string html = """
+            <html><head><style>
+              .text-left { text-align: left; }
+            </style></head>
+            <body><table><tbody><tr><th class="text-left">X</th></tr></tbody></table></body></html>
+            """;
 
-        var styleNode = new FakeStyledNode("style")
-        {
-            TextContent = ".text-left { text-align: left; }"
-        };
-        body.ChildList.Add(styleNode);
-
-        var table = new FakeStyledNode("table", new() { ["display"] = "" });
-        var tr = new FakeStyledNode("tr", new() { ["display"] = "" });
-        var th = new FakeStyledNode("th",
-            styles: new() { ["display"] = "" },
-            attributes: new() { ["class"] = "text-left" });
-        th.ChildList.Add(TextNode("X"));
-        tr.ChildList.Add(th);
-        table.ChildList.Add(tr);
-        body.ChildList.Add(table);
-
-        var root = Builder().Build(body);
+        var root = await CascadeBoxTree.BuildAsync(html);
 
         var cells = CollectCells(root);
         var thCell = cells.FirstOrDefault(c =>
