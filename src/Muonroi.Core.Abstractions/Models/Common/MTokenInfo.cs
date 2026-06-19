@@ -9,16 +9,16 @@ public class MTokenInfo
     public string SectionName { get; set; } = "TokenConfigs";
 
     /// <summary> Gets or sets the symmetric secret key. </summary>
-    public string SymmetricSecretKey { get; set; } = null!;
+    public string SymmetricSecretKey { get; set; } = string.Empty;
 
     /// <summary> Gets or sets the signing keys by tenant. </summary>
     public Dictionary<string, string> SigningKeysByTenant { get; set; } = [];
 
     /// <summary> Gets or sets the issuer of the token. </summary>
-    public string Issuer { get; set; } = null!;
+    public string Issuer { get; set; } = string.Empty;
 
     /// <summary> Gets or sets the audience of the token. </summary>
-    public string Audience { get; set; } = null!;
+    public string Audience { get; set; } = string.Empty;
 
     /// <summary> Gets or sets the expiry time in minutes. </summary>
     public int ExpiryMinutes { get; set; }
@@ -33,10 +33,10 @@ public class MTokenInfo
     public bool UseRsa { get; set; } = true;
 
     /// <summary> Gets or sets the RSA public key. Can be inline PEM string or loaded from file via PublicKeyPath. </summary>
-    public string PublicKey { get; set; } = null!;
+    public string PublicKey { get; set; } = string.Empty;
 
     /// <summary> Gets or sets the RSA private key. Can be inline PEM string or loaded from file via PrivateKeyPath. </summary>
-    public string PrivateKey { get; set; } = null!;
+    public string PrivateKey { get; set; } = string.Empty;
 
     /// <summary> Gets or sets the path to the RSA public key PEM file. If set, takes priority over inline PublicKey. </summary>
     public string? PublicKeyPath { get; set; }
