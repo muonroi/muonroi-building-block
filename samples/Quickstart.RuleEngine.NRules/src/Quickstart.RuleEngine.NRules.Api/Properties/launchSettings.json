@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Quickstart.RuleEngine.NRules.Api": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:51017;http://localhost:51019"
+    }
+  }
+}

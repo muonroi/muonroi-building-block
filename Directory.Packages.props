@@ -44,7 +44,7 @@
     <PackageVersion Include="MassTransit.Abstractions" Version="8.3.6" />
     <PackageVersion Include="MassTransit.Kafka" Version="8.3.6" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.3.6" />
-    <PackageVersion Include="MessagePack" Version="3.1.4" />
+    <PackageVersion Include="MessagePack" Version="3.1.7" />
     <!-- Framework-coupled packages: versions governed by build/Version.props (TFM-conditional) -->
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(AspNetCoreVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="$(AspNetCoreVersion)" />
