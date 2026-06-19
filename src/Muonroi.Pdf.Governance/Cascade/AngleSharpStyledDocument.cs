@@ -12,7 +12,6 @@ internal sealed class AngleSharpStyledDocument : IStyledDocument, IPdfDocumentCo
     private readonly int _maxDepth;
     private readonly long _totalStylesheetBytes;
     private readonly long _sourceHtmlBytes;
-    private readonly IWindow? _window;
     private readonly IReadOnlyList<FontFaceDeclaration> _fontFaces;
 
     internal AngleSharpStyledDocument(IDocument document, long sourceHtmlBytes)
@@ -22,10 +21,17 @@ internal sealed class AngleSharpStyledDocument : IStyledDocument, IPdfDocumentCo
         _maxDepth = ComputeMaxDepth(document);
         _totalStylesheetBytes = ComputeTotalStylesheetBytes(document);
         _sourceHtmlBytes = sourceHtmlBytes;
-        _window = document.DefaultView;
-        Root = new AngleSharpStyledNode(
+
+        // Build the owned cascade: one CssRuleSet + CascadeResolver per document.
+        // No call to IWindow.GetComputedStyle or ComputeCurrentStyle anywhere.
+        CssRuleSet ruleSet = CssRuleSet.FromDocument(document);
+        var resolver = new CascadeResolver(ruleSet);
+        Root = new OwnedStyledNode(
             document.DocumentElement ?? throw new InvalidOperationException("Document has no root element."),
-            _window);
+            resolver,
+            parentResolved: null);
+
+        // @page and @font-face extraction are unchanged.
         PageRule = AngleSharpPageRule.TryExtract(document);
         _fontFaces = ExtractFontFaces(document);
     }
