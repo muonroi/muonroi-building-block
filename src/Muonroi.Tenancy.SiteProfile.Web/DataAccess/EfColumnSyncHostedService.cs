@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.DataAccess;
 
@@ -54,7 +55,7 @@ internal sealed class EfColumnSyncHostedService(
             return Task.CompletedTask;
         }
 
-        var method = registryType.GetMethod("GetAllSiteDbContextTypes")!;
+        var method = MGuard.NotNull(registryType.GetMethod("GetAllSiteDbContextTypes"));
         var result = method.Invoke(null, null);
 
         if (result is not IReadOnlyList<Type> dbContextTypes || dbContextTypes.Count == 0)

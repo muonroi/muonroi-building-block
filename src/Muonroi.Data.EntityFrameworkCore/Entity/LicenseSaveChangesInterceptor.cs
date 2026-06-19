@@ -1,4 +1,5 @@
 using Muonroi.Governance.Abstractions.License;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
 
@@ -7,6 +8,7 @@ namespace Muonroi.Data.EntityFrameworkCore.Entity;
 /// </summary>
 /// <param name="guard">The license guard.</param>
 /// <param name="configs">License configuration.</param>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "EF Core interceptor lifecycle guarantees non-null context after framework-controlled invocation; null-forgiving is structurally sound.")]
 public sealed class LicenseSaveChangesInterceptor(
     ILicenseGuard? guard,
     LicenseConfigs? configs)

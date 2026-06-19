@@ -2,12 +2,14 @@ using Microsoft.AspNetCore.Http;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Logging.Abstractions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Mediator.Behaviours;
 
 /// <summary>
 /// Represents the MDiagnostics Behavior.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "traceContext.Current is checked via the traceContext.Begin pattern; null-forgiving required after confirmed non-null context.")]
 public sealed class MDiagnosticsBehavior<TRequest, TResponse>(
     IMLog<MDiagnosticsBehavior<TRequest, TResponse>> logger,
     IMTraceContext traceContext,

@@ -2,6 +2,7 @@ namespace Muonroi.Tenancy.SiteProfile.Web.HotReload;
 
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 
 /// <summary>
@@ -99,7 +100,7 @@ public sealed class SiteProfileHotReloadClient(
 
     private string BuildHubUrl()
     {
-        string trimmed = options.ControlPlaneUrl!.Trim().TrimEnd('/');
+        string trimmed = MGuard.NotNull(options.ControlPlaneUrl).Trim().TrimEnd('/');
         return trimmed.EndsWith("/hubs/site-profile-changes", StringComparison.OrdinalIgnoreCase)
             ? trimmed
             : $"{trimmed}/hubs/site-profile-changes";

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,7 @@ namespace Muonroi.Integration.Connectors.Presets;
 /// Declares Format="xhtml" and AuthBuilder="bearer" (PAT-based authentication).
 /// Uses Confluence Server REST API /rest/api/content (same path as Cloud but Bearer PAT auth).
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "JSON deserialization results are null-checked by prior validation; null-forgiving avoids redundant re-checks on structurally guaranteed values.")]
 public sealed class ConfluenceServerPresetConnector(HttpConnector inner, ILogger<ConfluenceServerPresetConnector>? logger = null) : IServiceTaskConnector
 {
     public ConnectorMetadata Metadata => new()

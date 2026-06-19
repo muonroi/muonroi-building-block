@@ -1,6 +1,7 @@
 using System.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Hosting;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Data.Dapper.Dapper;
 using Muonroi.Logging.Abstractions;
 using Npgsql;
@@ -78,8 +79,9 @@ internal sealed class RlsStartupVerifier(
         {
             DapperRlsProvider.MsSql => new SqlConnection(cs),
             DapperRlsProvider.PostgreSql => new NpgsqlConnection(cs),
-            _ => throw new NotSupportedException(
-                $"RLS startup verification is not supported for provider '{_provider}'.")
+            _ => throw new MInternalException(
+                $"RLS startup verification is not supported for provider '{_provider}'.",
+                "NOT_SUPPORTED")
         };
 
         await using (conn)

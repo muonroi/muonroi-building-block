@@ -2,12 +2,14 @@ using Muonroi.RuleEngine.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Rules;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
 /// Executes rules defined by Microsoft RulesEngine and maps action outputs into a <see cref="FactBag"/>.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "RulesEngine action output values are validated non-null by the rule set contract before access.")]
 public sealed class RulesEngineService(
     IRuleSetStore store,
     ReSettings? settings = null,

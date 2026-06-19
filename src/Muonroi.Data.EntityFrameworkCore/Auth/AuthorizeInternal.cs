@@ -1,4 +1,5 @@
 using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
 using Muonroi.Core.Abstractions.Interfaces;
 
@@ -8,6 +9,7 @@ namespace Muonroi.Data.EntityFrameworkCore.Auth;
 /// <summary>
 /// Internal helpers for authentication and token validation using EF Core.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Auth helper methods use null-forgiving on token fields validated by JWT library contracts; unconstrained generics prevent MGuard.NotNull.")]
 public static class AuthorizeInternal
 {
     private const string BearerPrefix = "Bearer ";

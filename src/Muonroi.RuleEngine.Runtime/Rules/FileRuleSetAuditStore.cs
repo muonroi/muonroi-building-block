@@ -1,12 +1,14 @@
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
 /// File-backed NDJSON audit store for runtime ruleset governance actions.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Nullable context members are validated non-null by prior method preconditions.")]
 public sealed class FileRuleSetAuditStore(
     string rootPath,
     IMJsonSerializeService jsonSerializeService,

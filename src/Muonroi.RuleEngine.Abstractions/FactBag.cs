@@ -15,7 +15,9 @@ public class FactBag
     public object? this[string key]
     {
         get => _facts.TryGetValue(key, out object? value) ? value : null;
+#pragma warning disable MSTD0002 // FactBag intentionally stores object? values; null-forgiving cast preserves the nullable dict contract without blocking null entries
         set => _facts[key] = value!;
+#pragma warning restore MSTD0002
     }
 
     /// <summary>

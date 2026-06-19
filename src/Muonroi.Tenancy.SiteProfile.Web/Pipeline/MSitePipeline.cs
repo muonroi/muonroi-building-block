@@ -139,9 +139,11 @@ public class MSitePipeline<TContext>(
         {
             if (executionMode == ExecutionMode.BestEffort)
             {
+#pragma warning disable MSTD0001 // AggregateException preserves per-step inner exceptions for BestEffort pipeline inspection
                 throw new AggregateException(
                     $"[Pipeline:{_serviceName}] Step '{stepName}' encountered {result.Errors.Count} hook failure(s) in BestEffort mode.",
                     result.Errors.Select(e => new MInternalException(e)));
+#pragma warning restore MSTD0001
             }
 
             // AllOrNothing / CompensateOnFailure — propagate first error

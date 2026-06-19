@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -56,6 +57,7 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 /// <param name="serviceProvider">DI container for keyed service resolution.</param>
 /// <param name="siteCodeHolder">Scoped holder carrying the current request's SiteCode (set by <see cref="SiteCodeGrpcInterceptor"/>).</param>
 /// <param name="log">Structured logger for dispatch diagnostics.</param>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001", Justification = "gRPC boundary: RpcException carries the Status code to the client.")]
 public sealed class SiteGrpcDispatchHelper<TServiceBase>(
     IServiceProvider serviceProvider,
     ISiteCodeHolder siteCodeHolder,

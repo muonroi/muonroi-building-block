@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Muonroi.Data.EntityFrameworkCore.Auth;
 
 /// <summary>
@@ -11,6 +13,7 @@ namespace Muonroi.Data.EntityFrameworkCore.Auth;
 /// <param name="configuration">The application configuration.</param>
 /// <param name="tokenInfo">Token configuration info.</param>
 /// <param name="logger">Optional logger.</param>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Generic TDbContext constraint and EF Core LINQ projections prevent MGuard.NotNull usage; values are null-checked by prior EF query filters.")]
 public class DefaultRefreshTokenValidator<TDbContext, TPermission>(
     TDbContext dbContext,
     IMultiLevelCacheService cacheService,

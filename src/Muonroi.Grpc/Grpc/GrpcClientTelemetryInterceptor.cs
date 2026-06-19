@@ -2,12 +2,14 @@ using Muonroi.Core.Abstractions.Constants;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.License;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Grpc.Grpc;
 
 /// <summary>
 /// Tracks outbound gRPC client telemetry and forwards correlation and API key metadata.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001", Justification = "gRPC boundary: RpcException carries the Status code to the client.")]
 public sealed class GrpcClientTelemetryInterceptor(
     ISystemExecutionContextAccessor contextAccessor,
     LicenseState? licenseState = null,

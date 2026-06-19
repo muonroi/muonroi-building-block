@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Core.Abstractions.Guards;
 using System.Reflection;
 
 namespace Muonroi.Tenancy.SiteProfile;
@@ -82,7 +83,7 @@ public static class SiteProfileConventionExtensions
                 ISiteProfile profile;
                 try
                 {
-                    profile = (ISiteProfile)Activator.CreateInstance(profileType)!;
+                    profile = (ISiteProfile)MGuard.NotNull(Activator.CreateInstance(profileType));
                 }
                 catch
                 {

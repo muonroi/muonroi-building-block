@@ -1,5 +1,4 @@
-
-
+﻿using System.Diagnostics.CodeAnalysis;
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>
@@ -26,6 +25,7 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 /// <remarks>
 /// Creates a new interceptor with the specified options.
 /// </remarks>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001", Justification = "gRPC boundary: RpcException carries the Status code to the client.")]
 public sealed class SiteCodeGrpcInterceptor(IOptions<SiteGrpcOptions> options) : Interceptor
 {
     /// <summary>The HttpContext.Items key used as fallback storage.</summary>

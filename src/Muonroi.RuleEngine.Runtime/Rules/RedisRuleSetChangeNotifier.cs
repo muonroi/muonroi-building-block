@@ -1,10 +1,12 @@
 using Muonroi.Core.Abstractions.Interfaces;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
 /// Redis Pub/Sub based notifier for cross-node ruleset hot reload.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Redis Pub/Sub deserialized message values are guaranteed non-null by the subscription handler contract.")]
 public sealed class RedisRuleSetChangeNotifier : IRuleSetChangeNotifier, IDisposable
 {
     private readonly ISubscriber _subscriber;

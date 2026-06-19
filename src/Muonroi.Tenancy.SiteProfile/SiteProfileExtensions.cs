@@ -105,7 +105,7 @@ public static class SiteProfileExtensions
 
             foreach (var type in profileTypes)
             {
-                discoveredProfiles.Add((ISiteProfile)Activator.CreateInstance(type)!);
+                discoveredProfiles.Add((ISiteProfile)MGuard.NotNull(Activator.CreateInstance(type)));
             }
         }
 
@@ -219,9 +219,11 @@ public static class SiteProfileExtensions
         // Throw aggregate after all successful profiles are registered — partial registration is preserved
         if (errors.Count > 0)
         {
+#pragma warning disable MSTD0001 // AggregateException preserves per-site inner exceptions
             throw new AggregateException(
                 $"SiteProfile registration failed for {errors.Count} site(s): {string.Join(", ", errors.Select(e => e.siteId))}",
                 errors.Select(e => e.ex));
+#pragma warning restore MSTD0001
         }
 
         return services;

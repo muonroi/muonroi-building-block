@@ -130,7 +130,8 @@ internal sealed class SiteProfileStartupValidator(
             {
                 // Partial load — use the types that loaded successfully
                 types = (ex.Types ?? [])
-                    .Where(t => t is not null && !t.IsAbstract && !t.IsInterface && typeof(ISiteProfile).IsAssignableFrom(t))!;
+                    .Where(t => t is not null && !t.IsAbstract && !t.IsInterface && typeof(ISiteProfile).IsAssignableFrom(t))
+                    .Cast<Type>();
             }
 
             foreach (var profileType in types)

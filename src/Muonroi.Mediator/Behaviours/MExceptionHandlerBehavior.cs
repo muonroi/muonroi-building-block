@@ -1,5 +1,6 @@
 using Muonroi.Logging.Abstractions;
 using Muonroi.Mediator.Mediator.Interfaces;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Mediator.Behaviours;
 
@@ -10,6 +11,7 @@ namespace Muonroi.Mediator.Behaviours;
 /// the exception is swallowed and the handler's response is returned.
 /// If no handler handles the exception, it is re-thrown.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Generic TResponse cannot use MGuard.NotNull without class/struct constraint; state.Response is checked via state.Handled before access.")]
 public sealed class MExceptionHandlerBehavior<TRequest, TResponse>(
     IEnumerable<IRequestExceptionHandler<TRequest, TResponse, Exception>> handlers,
     IMLog<MExceptionHandlerBehavior<TRequest, TResponse>>? logger = null)

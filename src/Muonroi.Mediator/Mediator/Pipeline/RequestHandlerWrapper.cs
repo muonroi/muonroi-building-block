@@ -2,6 +2,7 @@ using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Mediator.Mediator;
 using Muonroi.Mediator.Mediator.Interfaces;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Mediator.Mediator.Pipeline;
 
@@ -154,6 +155,7 @@ internal sealed class StreamHandlerWrapperImpl<TRequest, TResponse> : StreamHand
 /// Thread-safe cache: RequestType → RequestHandlerBase (compiled wrapper).
 /// Populated lazily on first call — after that, no reflection on the hot path.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Activator.CreateInstance returns object? — null-forgiving is appropriate; MGuard.NotNull cannot be used here without losing type information.")]
 internal static class RequestHandlerWrapperCache
 {
     private static readonly ConcurrentDictionary<Type, RequestHandlerBase> _requestCache = new();

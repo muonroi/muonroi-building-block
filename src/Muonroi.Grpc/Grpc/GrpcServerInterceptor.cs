@@ -4,12 +4,14 @@ using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.License;
 using Muonroi.Logging.Abstractions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Grpc.Grpc;
 
 /// <summary>
 /// Server-side gRPC interceptor with tenancy, licensing, and telemetry handling.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001", Justification = "gRPC boundary: RpcException carries the Status code to the client.")]
 public class GrpcServerInterceptor(
     ISystemExecutionContextAccessor executionContextAccessor,
     ITenantContextPolicy tenantContextPolicy,

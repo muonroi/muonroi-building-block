@@ -3,6 +3,7 @@ using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Core.Events;
 using Muonroi.RuleEngine.Runtime.Rules;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.Runtime.Events;
 
@@ -17,6 +18,7 @@ namespace Muonroi.RuleEngine.Runtime.Events;
 /// <param name="rulesEngine">The rule engine service to evaluate rules with.</param>
 /// <param name="eventPublisher">Optional publisher for execution result events.</param>
 /// <param name="log">Optional structured logger.</param>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "CloudEvent deserialization values are checked non-null by prior event validation before accessing.")]
 public sealed class EventDrivenRuleEvaluator(
     RulesEngineService rulesEngine,
     RuleExecutionEventPublisher? eventPublisher = null,

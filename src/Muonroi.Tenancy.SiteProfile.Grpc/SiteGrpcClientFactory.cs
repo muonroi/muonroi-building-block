@@ -1,6 +1,7 @@
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 using Grpc.Core;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
@@ -11,6 +12,7 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 /// Registered automatically by <see cref="SiteGrpcExtensions.AddSiteGrpcClientFactory"/>.
 /// Lifetime: Scoped — resolved once per HTTP request.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001", Justification = "gRPC boundary: InvalidCastException on proto type mismatch is a programming error surfaced at startup.")]
 internal sealed class SiteGrpcClientFactory(
     ISiteProfileResolver resolver,
     SiteGrpcClientRegistry registry,

@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Data.Dapper.Rls;
 using Muonroi.Data.Dapper.Rls.Setters;
 using Muonroi.Tenancy.Abstractions;
@@ -221,7 +222,7 @@ public sealed class DapperRlsRegistrationTests
         Action act = () => services.AddMuonroiDapperRls();
 
         // Assert
-        act.Should().Throw<NotSupportedException>(
+        act.Should().Throw<MInternalException>(
             "WR-03: MySql is not wired end-to-end (arrives in Phase 4) and must fail fast at registration");
     }
 }

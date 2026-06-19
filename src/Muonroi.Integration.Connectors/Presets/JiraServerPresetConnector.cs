@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Muonroi.Integration.Abstractions;
@@ -10,6 +11,7 @@ namespace Muonroi.Integration.Connectors.Presets;
 /// Declares Format="wiki-markup" and AuthBuilder="bearer" (PAT-based authentication).
 /// Uses Jira REST API v2 (Server/DC) as opposed to v3 (Cloud).
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "JSON deserialization results are null-checked by prior validation; null-forgiving avoids redundant re-checks on structurally guaranteed values.")]
 public sealed class JiraServerPresetConnector(HttpConnector inner, ILogger<JiraServerPresetConnector>? logger = null) : IServiceTaskConnector
 {
     public ConnectorMetadata Metadata => new()

@@ -5,6 +5,7 @@ using Muonroi.Core.Abstractions.Models.Common;
 using Muonroi.Core.Extensions;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Mediator.Mediator.Interfaces;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Mediator;
 
@@ -13,6 +14,7 @@ namespace Muonroi.Mediator;
 /// Uses ecosystem wrappers (IMDateTimeService, ISystemExecutionContextAccessor, IMLog)
 /// rather than static ambient state.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Unconstrained generic destination cannot use MGuard.NotNull; null validated via MGuard.Against above.")]
 public abstract class MBaseCommandHandler(
     IMapper mapper,
     IAuthenticateInfoContext tokenInfo,

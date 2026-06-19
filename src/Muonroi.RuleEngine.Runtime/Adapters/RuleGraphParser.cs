@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Interfaces;
@@ -9,6 +10,7 @@ namespace Muonroi.RuleEngine.Runtime.Adapters;
 /// an ordered list of <see cref="RuleGraphEntry"/> using Kahn's topological sort.
 /// Trigger and End nodes are excluded from the result.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Rule graph nodes are validated non-null by topological sort; null-forgiving is structurally correct after Kahn's algorithm filtering.")]
 public sealed class RuleGraphParser(IMJsonSerializeService json)
 {
     /// <summary>

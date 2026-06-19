@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Guards;
+using System.Diagnostics.CodeAnalysis;
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>
@@ -12,6 +13,7 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 /// Consumers MUST call <c>app.InitializeSiteGrpcClients()</c> in Program.cs after <c>builder.Build()</c>.
 /// </para>
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Reflection-based MethodInfo.FullName lookup is guaranteed non-null by prior registry population.")]
 public sealed class GrpcClientFactoryAccessor
 {
     // Cache: (clientType.FullName, serviceName) → CallInvoker

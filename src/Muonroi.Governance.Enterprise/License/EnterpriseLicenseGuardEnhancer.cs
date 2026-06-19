@@ -3,6 +3,7 @@ using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.Enterprise.Policy;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Tenancy.Core;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Governance.License;
 
@@ -11,6 +12,7 @@ namespace Muonroi.Governance.License;
 /// Injects anti-tampering, chain audit, and fail-closed policy enforcement.
 /// Requires: Muonroi.Governance.Enterprise package + valid Enterprise license.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "License chain validation uses null-forgiving on values validated non-null by prior policy enforcement.")]
 public sealed class EnterpriseLicenseGuardEnhancer(
     LicenseConfigs configs,
     CodeIntegrityVerifier codeIntegrityVerifier,

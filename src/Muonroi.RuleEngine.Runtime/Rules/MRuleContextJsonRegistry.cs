@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.Core.Abstractions.Exceptions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
@@ -14,6 +15,7 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 /// AOT-safe: no assembly scanning, no reflection-based type lookup.
 /// Thread-safe: uses <see cref="ConcurrentDictionary{TKey,TValue}"/> internally.
 /// </remarks>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "ConcurrentDictionary lookups are guarded by TryGetValue; null-forgiving is structurally correct after successful lookup.")]
 public sealed class MRuleContextJsonRegistry
 {
     private readonly ConcurrentDictionary<string, Func<string, JsonSerializerOptions, object>> _deserializers =

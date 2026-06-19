@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Diagnostics;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using StackExchange.Redis;
 
@@ -35,7 +36,7 @@ public sealed class RedisTraceSessionStore(IConnectionMultiplexer redis, IMJsonS
     {
         var key = $"trace:session:{tenantId ?? "global"}:{sessionId}";
         var data = await _db.StringGetAsync(key);
-        return data.HasValue ? json.Deserialize<MTraceSessionRecord>(data!) : null;
+        return data.HasValue ? json.Deserialize<MTraceSessionRecord>(MGuard.NotNull((string?)data)) : null;
     }
 
     /// <inheritdoc/>

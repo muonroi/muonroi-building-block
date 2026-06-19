@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Muonroi.Core.Abstractions.Exceptions;
@@ -9,6 +10,7 @@ namespace Muonroi.Governance.License;
 /// <summary>
 /// Represents the License Heartbeat Service.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "HttpClient response deserialization values are validated non-null by prior status code checks.")]
 public sealed class LicenseHeartbeatService(
     IHttpClientFactory httpClientFactory,
     LicenseConfigs configs,

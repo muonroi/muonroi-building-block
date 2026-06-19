@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Dapper.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Tenancy.SiteProfile;
@@ -204,7 +205,7 @@ public static class SiteProfileDapperExtensions
             }
 
             // Fall back to write connection string if no read string configured or not read request
-            raw ??= options.WriteConnectionString!(sp);
+            raw ??= MGuard.NotNull(options.WriteConnectionString)(sp);
 
             return options.ConnectionStringTransform is not null
                 ? options.ConnectionStringTransform(raw)

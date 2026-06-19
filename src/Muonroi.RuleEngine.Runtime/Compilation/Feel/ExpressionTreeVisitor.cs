@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -10,6 +11,8 @@ namespace Muonroi.RuleEngine.Runtime.Compilation.Feel;
 /// Supports: logical ops, comparisons, arithmetic, if/then/else, between,
 /// some/every quantifiers, for loops, not(), and function calls.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001", Justification = "FEEL runtime arithmetic: DivideByZeroException is the correct domain exception for zero-divisor FEEL expressions.")]
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Reflection-based MethodInfo lookups for FEEL runtime dispatch are guaranteed non-null by static class initialization.")]
 internal static class ExpressionTreeVisitor
 {
     private static readonly MethodInfo ResolveValueMethod = typeof(ExpressionTreeVisitor).GetMethod(nameof(ResolveValue), BindingFlags.NonPublic | BindingFlags.Static)!;
