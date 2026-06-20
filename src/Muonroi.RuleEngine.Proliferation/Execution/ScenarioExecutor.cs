@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Proliferation.Models;
@@ -25,7 +26,7 @@ public sealed class ScenarioExecutor(
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    private static readonly string DefaultContextType = typeof(Dictionary<string, object?>).AssemblyQualifiedName!;
+    private static readonly string DefaultContextType = MGuard.NotNull(typeof(Dictionary<string, object?>).AssemblyQualifiedName);
 
     /// <summary>Executes the scenario and records the outcome.</summary>
     public async Task<ScenarioResult> ExecuteAsync(NeuronScenario scenario, CancellationToken ct = default)

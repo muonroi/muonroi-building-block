@@ -1,6 +1,7 @@
 namespace Muonroi.RuleEngine.Runtime.Web.HotReload;
 
 using Microsoft.AspNetCore.SignalR.Client;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Runtime.Rules;
 
@@ -85,7 +86,7 @@ public sealed class RuleSetHotReloadClient(
 
     private string BuildHubUrl()
     {
-        string trimmed = options.ControlPlaneUrl!.Trim().TrimEnd('/');
+        string trimmed = MGuard.NotNull(options.ControlPlaneUrl).Trim().TrimEnd('/');
         return trimmed.EndsWith("/hubs/ruleset-changes", StringComparison.OrdinalIgnoreCase)
             ? trimmed
             : $"{trimmed}/hubs/ruleset-changes";

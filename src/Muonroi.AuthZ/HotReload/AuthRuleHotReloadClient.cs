@@ -2,6 +2,7 @@ namespace Muonroi.AuthZ.HotReload;
 
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Tenancy.Abstractions;
 
@@ -88,7 +89,7 @@ public sealed class AuthRuleHotReloadClient(
 
     private string BuildHubUrl()
     {
-        string trimmed = options.ControlPlaneUrl!.Trim().TrimEnd('/');
+        string trimmed = MGuard.NotNull(options.ControlPlaneUrl).Trim().TrimEnd('/');
         return trimmed.EndsWith("/hubs/auth-rule-changes", StringComparison.OrdinalIgnoreCase)
             ? trimmed
             : $"{trimmed}/hubs/auth-rule-changes";

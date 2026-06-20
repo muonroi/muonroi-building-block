@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Proliferation.Models;
 
@@ -66,7 +67,7 @@ public sealed class ApiKeyRotationService(
         CancellationToken ct)
     {
         HttpClient client = _httpClientFactory.CreateClient(nameof(ApiKeyRotationService));
-        HttpResponseMessage response = await client.GetAsync(config.ApiKeyRotation!.ApiKeyRotationUrl, ct);
+        HttpResponseMessage response = await client.GetAsync(MGuard.NotNull(config.ApiKeyRotation).ApiKeyRotationUrl, ct);
 
         if (!response.IsSuccessStatusCode)
         {
