@@ -10,6 +10,13 @@ public sealed class NRulesEngine
 {
     private readonly ISessionFactory _sessionFactory;
 
+    /// <summary>
+    /// Initialises the engine by scanning <paramref name="assemblies"/> for NRules rule types,
+    /// filtering them according to <paramref name="options"/>, checking for name conflicts,
+    /// and compiling the enabled rules into a reusable session factory.
+    /// </summary>
+    /// <param name="assemblies">Assemblies to scan for NRules rule class definitions.</param>
+    /// <param name="options">Configuration that controls which rules are enabled and their expected versions.</param>
     public NRulesEngine(IEnumerable<Assembly> assemblies, IOptions<RuleOptions> options)
     {
         RuleRepository repository = new();
