@@ -29,7 +29,8 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 
 - [x] **Phase 13: Full-HTML Running Header/Footer** — Upgrade `options.Header/Footer` from text-only to full-HTML 3-column running content (images, `HeightMm`, `ShowLine`); page numbering via `counter(page)/counter(pages)`. Plan: `.planning/PHASE-13-PLAN.md` (completed 2026-06-20)
 - [x] **Phase 14: CSS Print Fidelity Gaps** — Close 3 print-oriented CSS gaps vs DinkToPdf: `@page` margin-box parsing (pure-CSS running header/footer), `linear-gradient` backgrounds (PDF axial shading), and `transform:rotate` watermark. JS/flex/grid/radial stay out of scope. Plan: `.planning/PHASE-14-PLAN.md` (completed 2026-06-20)
-- [x] **Phase 15: Radial Gradients + Affine Transforms** — Extend Phase 14: `radial-gradient` backgrounds (PDF ShadingType 3, reuse axial-shading infra) + full 2D affine `transform` (translate/scale/matrix + multi-function chains, reuse CTM machinery). conic-gradient/JS/flex/grid stay out of scope; flexbox deferred to Phase 16. (completed 2026-06-20)
+- [x] **Phase 15: Radial Gradients + Affine Transforms** — Extend Phase 14: `radial-gradient` backgrounds (PDF ShadingType 3, reuse axial-shading infra) + full 2D affine `transform` (translate/scale/matrix + multi-function chains, reuse CTM machinery). conic-gradient/JS/flex/grid stay out of scope; flexbox deferred to a later rendering phase. (completed 2026-06-20)
+- [ ] **Phase 16: PDF Enterprise ↔ Governance/ControlPlane Integration** — Deepen `Muonroi.Pdf.Enterprise` from thin v1.0 stubs into the shared Muonroi enterprise rails (real `ActivationProof` license gate, control-plane-governed templates, `Quota` metering, `Compliance` audit) — max ecosystem reuse, ZERO change to the OSS engine (SC5).
 
 ## Phase Details
 
@@ -461,6 +462,23 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 15-02-PLAN.md — Wave 2: radial-gradient (RadialGradient model+parser, BuildRadialShadingDict ShadingType 3 + ellipse anisotropic cm, gradient gate widening, radial test flips; depends on 15-01 via shared files)
+
+### Phase 16: PDF Enterprise ↔ Governance/ControlPlane Integration
+
+**Goal**: Deepen `Muonroi.Pdf.Enterprise` from the thin v1.0 stubs (Phase 9) into the shared Muonroi enterprise rails so the PDF product line inherits licensing, anti-tamper, audit/compliance, quota and SLO for free — maximizing ecosystem reuse, with ZERO changes to the OSS engine (`Muonroi.Pdf`).
+**Depends on**: Phase 9 (v1.0 Enterprise WS-A..D scaffolding); `Muonroi.Governance.Enterprise` (License/ControlPlane/Compliance/Operations); the control-plane + license-server repos.
+**Scope** (cross-repo workstreams, mirror Phase 9 A–D; no new repos):
+  - **WS-A — building-block**: `Muonroi.Pdf.Enterprise` references `Muonroi.Governance.Enterprise`; replace `AlwaysAllowFeatureGate` with a real `IFeatureGate` bound to RSA `ActivationProof` + `MEnterpriseFailClosedMatrix`; wire `pdf.designer/registry/canary` keys; per-tenant render metering via `Muonroi.Quota`; emit publish/render events into the `Compliance` evidence pack + `AuditTrail`.
+  - **WS-B — control-plane**: model PDF templates as a governed domain REUSING the ruleset registry/versioning/maker-checker/approval/audit infra; SSIM canary quality gate.
+  - **WS-C — ui-engine**: extend the PDF Designer to be entitlement-aware (capability-gated UI).
+  - **WS-D — license-server**: confirm/extend PDF commercial entitlements in the signed ActivationProof.
+**Out of scope**: any change to `Muonroi.Pdf` (OSS) — the one-way Enterprise→OSS boundary (SC5) is inviolable; new repos; flexbox / rendering-engine work (separate track).
+**Success Criteria** (what must be TRUE):
+  1. `Muonroi.Pdf.Enterprise.EnsureFeatureOrThrow` runs on a REAL ActivationProof: an unlicensed `pdf.*` capability throws `FeatureNotLicensedException`, a licensed one passes; `Muonroi.Pdf` (OSS) still references nothing under `*.Enterprise`.
+  2. PDF template publish/version/approve flows through the existing control-plane governance (reused, not duplicated); a publish propagates per-tenant with no cross-tenant cache invalidation.
+  3. Per-tenant PDF render metering is recorded via `Muonroi.Quota`; the compliance evidence pack includes PDF publish/render audit events.
+  4. Full `Muonroi.Pdf.Tests` + governance suites green; the OSS engine stays byte-identical (no golden re-baseline).
+**Plans**: TBD
 
 ## Progress
 
