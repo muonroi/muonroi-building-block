@@ -30,7 +30,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 13: Full-HTML Running Header/Footer** — Upgrade `options.Header/Footer` from text-only to full-HTML 3-column running content (images, `HeightMm`, `ShowLine`); page numbering via `counter(page)/counter(pages)`. Plan: `.planning/PHASE-13-PLAN.md` (completed 2026-06-20)
 - [x] **Phase 14: CSS Print Fidelity Gaps** — Close 3 print-oriented CSS gaps vs DinkToPdf: `@page` margin-box parsing (pure-CSS running header/footer), `linear-gradient` backgrounds (PDF axial shading), and `transform:rotate` watermark. JS/flex/grid/radial stay out of scope. Plan: `.planning/PHASE-14-PLAN.md` (completed 2026-06-20)
 - [x] **Phase 15: Radial Gradients + Affine Transforms** — Extend Phase 14: `radial-gradient` backgrounds (PDF ShadingType 3, reuse axial-shading infra) + full 2D affine `transform` (translate/scale/matrix + multi-function chains, reuse CTM machinery). conic-gradient/JS/flex/grid stay out of scope; flexbox deferred to a later rendering phase. (completed 2026-06-20)
-- [ ] **Phase 16: PDF Enterprise ↔ Governance/ControlPlane Integration** — Deepen `Muonroi.Pdf.Enterprise` from thin v1.0 stubs into the shared Muonroi enterprise rails (real `ActivationProof` license gate, control-plane-governed templates, `Quota` metering, `Compliance` audit) — max ecosystem reuse, ZERO change to the OSS engine (SC5).
+- [x] **Phase 16: PDF Enterprise ↔ Governance/ControlPlane Integration** — Deepen `Muonroi.Pdf.Enterprise` from thin v1.0 stubs into the shared Muonroi enterprise rails (real `ActivationProof` license gate, control-plane-governed templates, `Quota` metering, `Compliance` audit) — max ecosystem reuse, ZERO change to the OSS engine (SC5). (completed 2026-06-20)
 
 ## Phase Details
 
@@ -483,7 +483,7 @@ Plans:
 - [x] 16-02-PLAN.md — WS-A D-02: record-only per-render Quota metering wrapper (Wave 2)
 - [x] 16-03-PLAN.md — WS-B D-03: PdfAuditControlPlaneStore compliance evidence-pack adapter (Wave 1)
 - [x] 16-04-PLAN.md — WS-B D-04: canary score endpoint auto-rollback below SSIM threshold (Wave 1)
-- [ ] 16-05-PLAN.md — WS-C entitlement-aware Designer gate + WS-D confirm + SC4 green gate (Wave 3)
+- [x] 16-05-PLAN.md — WS-C entitlement-aware Designer gate + WS-D confirm + SC4 green gate (Wave 3)
 
 ## Progress
 
