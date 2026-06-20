@@ -399,7 +399,8 @@ internal sealed class BlockLayoutEngine
                 // so the fill/image renders correctly.
                 bool suppressBodyBox = blockChild.IsBodyRoot
                     && blockChild.BackgroundColor == null
-                    && blockChild.BackgroundImageSrc == null;
+                    && blockChild.BackgroundImageSrc == null
+                    && blockChild.BackgroundGradient == null;
 
                 if (!suppressBodyBox)
                 {

@@ -70,6 +70,10 @@ internal sealed class BoxTreeBuilder
                 // heading like <h2> must pass Bold=true to its text-node InlineBox children.
                 if (box.Bold || box.TextTransform != null || box.WordBreak != null || box.WhiteSpace != null)
                     PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak, box.WhiteSpace);
+                // Phase 14: share this block's rotation context with its whole subtree so the text
+                // rotates together with the block about one pivot.
+                if (box.RotationGroup is not null)
+                    PropagateRotationGroup(box, box.RotationGroup);
                 break;
             case TableBox tableBox:
                 BuildChildren(node, tableBox);
@@ -309,6 +313,24 @@ internal sealed class BoxTreeBuilder
             }
         }
 
+        // linear-gradient background (Phase 14): from background-image or the background shorthand.
+        // Falls back silently to any solid background-color when the gradient cannot be parsed.
+        string? gradientSource = bgImage;
+        if (string.IsNullOrEmpty(gradientSource)
+            || !gradientSource.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase))
+        {
+            string? bgShorthand = style.GetValue("background");
+            if (!string.IsNullOrEmpty(bgShorthand)
+                && bgShorthand.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase))
+                gradientSource = bgShorthand;
+        }
+        if (!string.IsNullOrEmpty(gradientSource)
+            && gradientSource.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase)
+            && LinearGradientParser.TryParse(gradientSource, out LinearGradient grad))
+        {
+            box.BackgroundGradient = grad;
+        }
+
         // float / clear (CSS 2.1 §9.5)
         var floatVal = style.GetValue("float");
         if (!string.IsNullOrEmpty(floatVal) && floatVal is "left" or "right")
@@ -317,6 +339,16 @@ internal sealed class BoxTreeBuilder
         var clearVal = style.GetValue("clear");
         if (!string.IsNullOrEmpty(clearVal) && clearVal is "left" or "right" or "both")
             box.ClearValue = clearVal;
+
+        // transform:rotate(<angle>) (Phase 14) — only single rotate is allowed by policy; render as a
+        // rotation about the box center. The group is shared down to descendants so the block's text
+        // rotates with it (see PropagateRotationGroup).
+        var transformVal = style.GetValue("transform");
+        if (!string.IsNullOrEmpty(transformVal) && TryParseRotateDegrees(transformVal, out float rotDeg) && rotDeg != 0f)
+        {
+            box.RotationDegrees = rotDeg;
+            box.RotationGroup = new RotationGroup { AngleDegrees = rotDeg };
+        }
 
         // position (CSS 2.1 §9.6)
         var positionVal = style.GetValue("position");
@@ -745,6 +777,50 @@ internal sealed class BoxTreeBuilder
                 result.Add(boxNode);
         }
         return result;
+    }
+
+    // Phase 14: copy the rotation group onto every descendant so the writer rotates the block and
+    // its text as a rigid group. Does not overwrite a descendant that established its own rotation.
+    private static void PropagateRotationGroup(BoxNode node, RotationGroup group)
+    {
+        foreach (var child in node.Children)
+        {
+            if (child.RotationGroup is not null)
+                continue;
+            child.RotationGroup = group;
+            PropagateRotationGroup(child, group);
+        }
+    }
+
+    // Phase 14: extract the angle (in degrees) from a transform:rotate(<angle>) value. Returns false
+    // for any non-rotate or multi-function transform (those are rejected by policy anyway).
+    private static bool TryParseRotateDegrees(string transform, out float degrees)
+    {
+        degrees = 0f;
+        string s = transform.Trim();
+        int open = s.IndexOf("rotate(", StringComparison.OrdinalIgnoreCase);
+        if (open != 0)
+            return false;
+        int close = s.IndexOf(')', open);
+        if (close < 0)
+            return false;
+        string inner = s.Substring(open + "rotate(".Length, close - open - "rotate(".Length).Trim();
+        // reject anything trailing the single rotate() (e.g. "rotate(45deg) scale(2)")
+        if (s[(close + 1)..].Trim().Length > 0)
+            return false;
+
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        var ns = System.Globalization.NumberStyles.Any;
+        if (inner.EndsWith("grad", StringComparison.OrdinalIgnoreCase)
+            && float.TryParse(inner.AsSpan(0, inner.Length - 4), ns, ci, out float grad)) { degrees = grad * 0.9f; return true; }
+        if (inner.EndsWith("turn", StringComparison.OrdinalIgnoreCase)
+            && float.TryParse(inner.AsSpan(0, inner.Length - 4), ns, ci, out float turn)) { degrees = turn * 360f; return true; }
+        if (inner.EndsWith("rad", StringComparison.OrdinalIgnoreCase)
+            && float.TryParse(inner.AsSpan(0, inner.Length - 3), ns, ci, out float rad)) { degrees = rad * 180f / (float)Math.PI; return true; }
+        if (inner.EndsWith("deg", StringComparison.OrdinalIgnoreCase)
+            && float.TryParse(inner.AsSpan(0, inner.Length - 3), ns, ci, out float deg)) { degrees = deg; return true; }
+        if (float.TryParse(inner, ns, ci, out float bare)) { degrees = bare; return true; }
+        return false;
     }
 
     // G18: CSS inheritance for font-weight and text-transform.

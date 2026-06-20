@@ -51,6 +51,16 @@ internal abstract class BoxNode
     /// <summary>Data URI extracted from CSS background-image: url(data:...). Null = no background image.</summary>
     public string? BackgroundImageSrc { get; set; }
 
+    /// <summary>Parsed CSS linear-gradient background (Phase 14). Null = no gradient.</summary>
+    public LinearGradient? BackgroundGradient { get; set; }
+
+    /// <summary>CSS transform:rotate() angle in degrees on this box (Phase 14). 0 = no rotation.
+    /// Only the origin block carries a non-zero value; descendants share the <see cref="RotationGroup"/>.</summary>
+    public float RotationDegrees { get; set; }
+
+    /// <summary>Shared rotation context (Phase 14) for a rotated block and its descendants. Null = none.</summary>
+    public RotationGroup? RotationGroup { get; set; }
+
     /// <summary>CSS position: "absolute" | "relative" | null (null = static).</summary>
     public string? Position { get; set; }
 

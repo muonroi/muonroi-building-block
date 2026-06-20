@@ -516,9 +516,15 @@ internal sealed class CascadeResolver
     private static void ExpandBackground(string value, Dictionary<string, string> map)
     {
         string v = value.Trim();
+        // Phase 14: a gradient in the background shorthand flows to background-image so the box-tree
+        // builder can parse linear-gradient(...). (linear-gradient is the only renderable gradient;
+        // others are rejected by policy before layout.)
+        if (v.Contains("gradient", StringComparison.OrdinalIgnoreCase))
+        {
+            SetIfAbsent(map, "background-image", v);
+        }
         // If it looks like a plain color (no url(...)), use as background-color.
-        if (!v.StartsWith("url(", StringComparison.OrdinalIgnoreCase)
-            && !v.Contains("gradient", StringComparison.OrdinalIgnoreCase))
+        else if (!v.StartsWith("url(", StringComparison.OrdinalIgnoreCase))
         {
             SetIfAbsent(map, "background-color", v);
         }

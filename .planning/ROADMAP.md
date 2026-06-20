@@ -25,6 +25,8 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 9: v1.0 Enterprise** — Postgres template registry, Redis hot-reload, SSIM canary, web designer, TCIS cutover — CLOSED 2026-05-29; see `.planning/PHASE-09-CLOSEOUT.md`
 - [x] **Phase 10: TCIS Cutover Sweep + v1.0 GA** — Full DinkToPdf/libwkhtmltox removal from TCIS (10.1-10.4) + v1.0.0 version stamp (10.6); publish (10.7-10.9) deferred to ops — CLOSED 2026-05-29; see `.planning/PHASE-10-CLOSEOUT.md`
 - [x] **Phase 12: Owned CSS Cascade (B1)** — Replace AngleSharp.Css `GetComputedStyle` (beta, throws on em/rem/% headless) with an owned cascade; demote AngleSharp.Css to a parser. Retires the G14–G29 per-property fallback class. Design: `.planning/DESIGN-owned-cascade-B1.md`; spike: `.planning/SPIKE-cascade-render-device.md` (completed 2026-06-19)
+- [x] **Phase 13: Full-HTML Running Header/Footer** — Upgrade `options.Header/Footer` from text-only to full-HTML 3-column running content (images, `HeightMm`, `ShowLine`); page numbering via `counter(page)/counter(pages)`. Plan: `.planning/PHASE-13-PLAN.md` (completed 2026-06-20)
+- [ ] **Phase 14: CSS Print Fidelity Gaps** — Close 3 print-oriented CSS gaps vs DinkToPdf: `@page` margin-box parsing (pure-CSS running header/footer), `linear-gradient` backgrounds (PDF axial shading), and `transform:rotate` watermark. JS/flex/grid/radial stay out of scope. Plan: `.planning/PHASE-14-PLAN.md`
 
 ## Phase Details
 

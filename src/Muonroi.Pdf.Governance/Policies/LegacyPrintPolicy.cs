@@ -198,7 +198,10 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
             {
                 style = defaultView.GetComputedStyle(element);
             }
-            catch (ArgumentException)
+            // AngleSharp.Css (beta) throws on values it cannot compute headlessly — ArgumentException
+            // for em/rem/% (Phase 12) and NullReferenceException for some transform functions
+            // (e.g. translate()). Both degrade to the raw author stylesheet rules below.
+            catch (Exception ex) when (ex is ArgumentException or NullReferenceException)
             {
                 style = null;
                 foreach (ICssStyleSheet sheet in element.Owner?.StyleSheets.OfType<ICssStyleSheet>()
@@ -218,7 +221,24 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                 }
             }
 
-            if (style is null) continue;
+            if (style is null)
+            {
+                // GetComputedStyle failed AND no stylesheet rule matched. Inline style="" values are
+                // invisible to the rule scan, so check the raw inline attribute directly for the
+                // Phase 14 properties (transform / gradient) — otherwise an inline radial-gradient or
+                // translate() would silently bypass the gate.
+                string inlineCss = element.GetAttribute("style") ?? string.Empty;
+                if (inlineCss.Length > 0)
+                {
+                    string inlineSel = element.GetSelector() ?? element.LocalName;
+                    CheckTransformAndGradient(
+                        InlineDeclValue(inlineCss, "transform"),
+                        InlineDeclValue(inlineCss, "background"),
+                        InlineDeclValue(inlineCss, "background-image"),
+                        inlineSel, violations);
+                }
+                continue;
+            }
 
             string selector = element.GetSelector() ?? element.LocalName;
             string display = style.GetPropertyValue("display") ?? string.Empty;
@@ -296,21 +316,14 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
 
             // float:left/right and border-collapse:collapse are ALLOWED in Profile v1.
 
-            // New in Profile v1: block geometric CSS transforms (non-print-safe).
-            string transform = style.GetPropertyValue("transform") ?? string.Empty;
-            if (!string.IsNullOrEmpty(transform))
-                violations.Add(ViolationFor("forbidden.transform.geometric", "transform", transform, selector, "Remove transform property"));
-
-            // New in Profile v1: block background gradients (not renderable by the engine).
-            string background = style.GetPropertyValue("background") ?? string.Empty;
-            string backgroundImage = style.GetPropertyValue("background-image") ?? string.Empty;
-            if (background.Contains("gradient", StringComparison.OrdinalIgnoreCase) ||
-                backgroundImage.Contains("gradient", StringComparison.OrdinalIgnoreCase))
-            {
-                violations.Add(ViolationFor("forbidden.background.gradient", "background",
-                    background.Contains("gradient", StringComparison.OrdinalIgnoreCase) ? background : backgroundImage,
-                    selector, "Use a solid background-color instead"));
-            }
+            // Phase 14: a single transform:rotate(<angle>) is supported (rendered via a rotation CTM,
+            // e.g. a diagonal watermark) and linear-gradient backgrounds. All other transforms and
+            // gradient functions remain rejected. See CheckTransformAndGradient.
+            CheckTransformAndGradient(
+                style.GetPropertyValue("transform"),
+                style.GetPropertyValue("background"),
+                style.GetPropertyValue("background-image"),
+                selector, violations);
         }
 
         // Soft-degrade telemetry: emit counter once per page per kind.
@@ -361,6 +374,63 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                     SuggestedAlternative: "Use an http or https URI."));
             }
         }
+    }
+
+    // Phase 14: matches exactly one rotate(<angle>) function with an optional CSS angle unit and no
+    // trailing/leading content — so "rotate(45deg) scale(2)" and "translate(..)" are rejected.
+    private static readonly System.Text.RegularExpressions.Regex SingleRotateRegex = new(
+        @"^\s*rotate\(\s*-?\d*\.?\d+(deg|rad|grad|turn)?\s*\)\s*$",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase
+        | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    private static bool IsSingleRotate(string transform) =>
+        SingleRotateRegex.IsMatch(transform);
+
+    // Phase 14: shared transform + gradient gate (computed-style and inline-style paths both call it).
+    private static void CheckTransformAndGradient(
+        string? transform, string? background, string? backgroundImage,
+        string selector, List<PolicyViolation> violations)
+    {
+        transform ??= string.Empty;
+        background ??= string.Empty;
+        backgroundImage ??= string.Empty;
+
+        if (!string.IsNullOrEmpty(transform) && !IsSingleRotate(transform))
+        {
+            violations.Add(ViolationFor("forbidden.transform.geometric", "transform", transform, selector,
+                "Only transform:rotate(<angle>) is supported; remove other transform functions"));
+        }
+
+        string gradientSource = background.Contains("gradient", StringComparison.OrdinalIgnoreCase)
+            ? background
+            : backgroundImage;
+        if (gradientSource.Contains("gradient", StringComparison.OrdinalIgnoreCase))
+        {
+            bool isLinearOnly =
+                gradientSource.Contains("linear-gradient(", StringComparison.OrdinalIgnoreCase)
+                && !gradientSource.Contains("radial-gradient", StringComparison.OrdinalIgnoreCase)
+                && !gradientSource.Contains("conic-gradient", StringComparison.OrdinalIgnoreCase)
+                && !gradientSource.Contains("repeating-", StringComparison.OrdinalIgnoreCase);
+            if (!isLinearOnly)
+            {
+                violations.Add(ViolationFor("forbidden.background.gradient", "background",
+                    gradientSource, selector,
+                    "Only linear-gradient(...) is supported; use linear-gradient or a solid background-color"));
+            }
+        }
+    }
+
+    // Extracts a single declaration value from a raw inline style="" attribute (no CSSOM).
+    private static string InlineDeclValue(string css, string property)
+    {
+        foreach (string decl in css.Split(';'))
+        {
+            int colon = decl.IndexOf(':');
+            if (colon <= 0) continue;
+            if (decl.AsSpan(0, colon).Trim().Equals(property, StringComparison.OrdinalIgnoreCase))
+                return decl[(colon + 1)..].Trim();
+        }
+        return string.Empty;
     }
 
     private static PolicyViolation ViolationFor(
