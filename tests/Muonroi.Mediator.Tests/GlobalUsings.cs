@@ -4,6 +4,7 @@ global using Microsoft.Extensions.Logging;
 global using Muonroi.Core.Abstractions.Context;
 global using Muonroi.Core.Abstractions.Diagnostics;
 global using Muonroi.Logging.Abstractions;
+global using Muonroi.Mediator.Behaviours;
 global using Muonroi.Mediator.Exceptions;
 global using Muonroi.Mediator.Mediator;
 global using Muonroi.Mediator.Mediator.Interfaces;
