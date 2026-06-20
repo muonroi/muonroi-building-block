@@ -456,7 +456,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 15-01-PLAN.md — Wave 1: full 2D affine transform (TransformGroup matrix carrier + TryParseTransformMatrix compose + widened policy gate + writer generalization + transform test flips)
+- [x] 15-01-PLAN.md — Wave 1: full 2D affine transform (TransformGroup matrix carrier + TryParseTransformMatrix compose + widened policy gate + writer generalization + transform test flips)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
