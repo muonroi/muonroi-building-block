@@ -1,8 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Muonroi.RuleEngine.Runtime.Web.Hubs;
 
 /// <summary>
 /// SignalR hub that broadcasts runtime ruleset change events per tenant.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "HubException is the SignalR-boundary contract type. The SignalR framework serializes HubException into the hub protocol error sent to clients; replacing with MException would break the client protocol.")]
 public sealed class RuleSetChangeHub : Hub
 {
     /// <summary>Joins the caller to a tenant-scoped ruleset change group.</summary>

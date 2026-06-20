@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Muonroi.AspNetCore.Diagnostics;
+using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.AspNetCore.Extensions;
 
@@ -150,9 +151,10 @@ public static class DiagnosticsExtensions
                     $"  [{f.Name}] {f.Result.Message}" +
                     (f.Result.FixSuggestion is not null ? $"  →  {f.Result.FixSuggestion}" : string.Empty)));
 
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 $"Muonroi startup diagnostics failed with {criticalFailures.Count} critical error(s):" +
-                Environment.NewLine + summary);
+                Environment.NewLine + summary,
+                "STARTUP_DIAGNOSTICS_FAILED");
         }
 
         logger.LogInformation(
