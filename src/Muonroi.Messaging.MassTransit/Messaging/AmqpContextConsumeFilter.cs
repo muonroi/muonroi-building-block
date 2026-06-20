@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>
 /// Represents the Amqp Context Consume Filter{T}.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "MassTransit ConsumeContext values are guaranteed non-null by the MassTransit pipeline contract.")]
 public class AmqpContextConsumeFilter<T>(
     IAmqpContext amqpContext,
     ISystemExecutionContextAccessor executionContextAccessor,

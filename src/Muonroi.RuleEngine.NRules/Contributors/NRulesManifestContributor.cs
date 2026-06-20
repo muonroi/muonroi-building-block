@@ -4,13 +4,29 @@ using Muonroi.Core.Abstractions.Models;
 
 namespace Muonroi.RuleEngine.NRules.Contributors;
 
+/// <summary>
+/// Registers the NRules editor screen, actions, data source, and navigation entry
+/// into the UI engine manifest so the rule editor is discoverable at runtime.
+/// </summary>
 [Obsolete("Frozen: Use Muonroi.RuleEngine.Runtime instead. NRules integration is no longer actively developed.")]
 public sealed class NRulesManifestContributor : IUiEngineManifestContributor
 {
+    /// <summary>Gets the registration order relative to other contributors. Lower values run first.</summary>
     public int Order => 110;
+
+    /// <summary>Gets the unique module identifier used to key NRules entries in the manifest.</summary>
     public string ModuleId => "nrules";
+
+    /// <summary>Gets the minimum subscription tier required to access the NRules editor.</summary>
     public string RequiredTier => "Professional";
 
+    /// <summary>
+    /// Populates <paramref name="context"/> with the NRules component, screen, actions,
+    /// data source, and navigation node. Existing entries are skipped to remain idempotent.
+    /// </summary>
+    /// <param name="context">The manifest context to which NRules UI elements are added.</param>
+    /// <param name="ct">Cancellation token (unused; the operation is synchronous).</param>
+    /// <returns>A completed <see cref="Task"/>.</returns>
     public Task ContributeAsync(UiEngineManifestContext context, CancellationToken ct = default)
     {
         _ = ct;

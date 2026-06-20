@@ -8,9 +8,11 @@
 // Fixed sentinel timestamp, fixed subset-prefix, fixed /ID — identical to PdfSharpCoreWriter.
 
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO.Compression;
 using System.Text;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Pdf.Abstractions.Exceptions;
 using Muonroi.Pdf.Internal.Font;
 using Muonroi.Pdf.Internal.Layout;
@@ -26,6 +28,8 @@ namespace Muonroi.Pdf.Internal.Writer;
 /// are embedded as DCTDecode (JPEG) or FlateDecode raw-RGB (PNG) XObjects.
 /// All content and font streams are FlateDecode-compressed via ZLibStream (RFC 1950).
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfFormatException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
 internal sealed class OwnedPdfWriter : IPdfWriter
 {
     // ── determinism sentinels (DET-01/02/03) ─────────────────────────────────
@@ -44,7 +48,7 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         CancellationToken ct = default)
     {
         if (pages is not PositionedPageList pageList)
-            throw new InvalidOperationException(
+            throw new MInternalException(
                 "OwnedPdfWriter requires PositionedPageList from the Muonroi.Pdf engine");
 
         byte[] pdfBytes = BuildPdf(pageList, options, ct);

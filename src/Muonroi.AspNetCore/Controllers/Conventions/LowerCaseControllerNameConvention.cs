@@ -13,9 +13,12 @@ public class LowerCaseControllerNameConvention : IControllerModelConvention
             .Where(selector => selector.AttributeRouteModel != null)
             .ToList()
             .ForEach(selector =>
-                selector.AttributeRouteModel!.Template =
-                    selector.AttributeRouteModel.Template?.Replace("[controller]", lowerControllerName) ?? string.Empty
-            );
+            {
+                if (selector.AttributeRouteModel is { } arm)
+                {
+                    arm.Template = arm.Template?.Replace("[controller]", lowerControllerName) ?? string.Empty;
+                }
+            });
     }
 
 

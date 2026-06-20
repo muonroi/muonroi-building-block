@@ -28,7 +28,7 @@ namespace Muonroi.Pdf.Tests.Service;
 /// </summary>
 [Collection(PdfRenderCollection.Name)]
 [Trait("Category", "SlowIntegration")]
-public sealed class AllocationProbe
+public sealed class AllocationProbe(ITestOutputHelper output)
 {
     // SC4 threshold (ALLOC-01): total render ≤ 350 MB (15% below 412.8 MB v0.1 baseline).
     // Re-baselined in Phase 8.8: float-child fix (F1) correctly builds a derived LayoutContext
@@ -40,9 +40,7 @@ public sealed class AllocationProbe
     private const string ResourceName =
         "Muonroi.Pdf.Tests.TestResources.Perf.reference-50kb.html";
 
-    private readonly ITestOutputHelper _out;
-
-    public AllocationProbe(ITestOutputHelper output) => _out = output;
+    private readonly ITestOutputHelper _out = output;
 
     [Fact]
     public async Task Probe_OwnedPdfWriter_PerStageAllocations()

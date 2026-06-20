@@ -1,10 +1,3 @@
-using Microsoft.AspNetCore.Http;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Mediator.Behaviours;
-
 namespace Muonroi.Mediator.Tests.Behaviours;
 
 public sealed class MDiagnosticsBehaviorTests
@@ -114,10 +107,14 @@ public sealed class MDiagnosticsBehaviorTests
         }
 
         public Task<MTraceSessionRecord?> GetAsync(string sessionId, string? tenantId, CancellationToken ct = default)
-            => Task.FromResult<MTraceSessionRecord?>(null);
+        {
+            return Task.FromResult<MTraceSessionRecord?>(null);
+        }
 
         public Task<IReadOnlyList<MTraceSessionRecord>> QueryByTenantAsync(string tenantId, DateTime from, DateTime to, int maxResults = 100, CancellationToken ct = default)
-            => Task.FromResult<IReadOnlyList<MTraceSessionRecord>>([]);
+        {
+            return Task.FromResult<IReadOnlyList<MTraceSessionRecord>>([]);
+        }
     }
 
     private sealed class TestTraceSession : ITraceSession
@@ -134,21 +131,48 @@ public sealed class MDiagnosticsBehaviorTests
         public string? FailedReason { get; private set; }
         public List<string> RecordedMessages { get; } = [];
 
-        public IDisposable BeginNode(string name, MTraceNodeType type) => new DisposeAction(() => { });
-        public void Record(string message, object? payload = null) => RecordedMessages.Add(message);
+        public IDisposable BeginNode(string name, MTraceNodeType type)
+        {
+            return new DisposeAction(() => { });
+        }
+
+        public void Record(string message, object? payload = null)
+        {
+            RecordedMessages.Add(message);
+        }
+
         public void RecordFactSnapshot(string phase, IReadOnlyDictionary<string, object?> facts) { }
         public void RecordLineTrace(int line, string variable, object? value, string? sourceMember = null) { }
         public void RecordBranchTrace(int line, string condition, bool taken) { }
-        public void MarkFailed(string reason, Exception? ex = null) => FailedReason = reason;
-        public MTraceSessionRecord Export() => new() { SessionId = SessionIdValue, TenantId = TenantIdValue, UserId = UserIdValue };
+        public void MarkFailed(string reason, Exception? ex = null)
+        {
+            FailedReason = reason;
+        }
+
+        public MTraceSessionRecord Export()
+        {
+            return new() { SessionId = SessionIdValue, TenantId = TenantIdValue, UserId = UserIdValue };
+        }
     }
 
     private sealed class TestLog<T> : IMLog<T>
     {
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-        public bool IsEnabled(LogLevel logLevel) => true;
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        {
+            return null;
+        }
+
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            return true;
+        }
+
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) { }
-        public IMLogContextScope BeginProperty(string key, object? value) => new DisposeAction(() => { });
+        public IMLogContextScope BeginProperty(string key, object? value)
+        {
+            return new DisposeAction(() => { });
+        }
+
         public void Info(string messageTemplate, params object?[] args) { }
         public void Warn(string messageTemplate, params object?[] args) { }
         public void Error(Exception? ex, string messageTemplate, params object?[] args) { }
@@ -158,6 +182,9 @@ public sealed class MDiagnosticsBehaviorTests
 
     private sealed class DisposeAction(Action onDispose) : IDisposable, IMLogContextScope
     {
-        public void Dispose() => onDispose();
+        public void Dispose()
+        {
+            onDispose();
+        }
     }
 }

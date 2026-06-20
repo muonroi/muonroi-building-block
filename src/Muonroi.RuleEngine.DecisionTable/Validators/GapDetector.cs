@@ -1,11 +1,13 @@
 using Muonroi.RuleEngine.DecisionTable.Converters;
 using Muonroi.RuleEngine.DecisionTable.Models;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.DecisionTable.Validators;
 
 /// <summary>
 /// Detects gaps in range-based input columns.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "LINQ projections on decision table data produce values guaranteed non-null by prior filtering; MGuard.NotNull would be redundant.")]
 public sealed class GapDetector
 {
     /// <summary>

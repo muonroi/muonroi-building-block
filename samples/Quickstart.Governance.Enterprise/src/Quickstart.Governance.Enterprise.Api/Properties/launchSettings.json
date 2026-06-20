@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Quickstart.Governance.Enterprise.Api": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:51020;http://localhost:51022"
+    }
+  }
+}

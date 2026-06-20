@@ -4,6 +4,7 @@ using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Governance.License;
 using Muonroi.Logging.Abstractions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.Core;
 
@@ -11,6 +12,7 @@ namespace Muonroi.RuleEngine.Core;
 /// Executes rules in dependency order and triggers hook handlers.
 /// </summary>
 /// <typeparam name="TContext">The execution context type.</typeparam>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Rule engine uses generic TContext and reflection-based dispatch where MGuard.NotNull is incompatible; null verified by prior guard checks.")]
 public sealed class RuleOrchestrator<TContext>(
     IEnumerable<IRule<TContext>> rules,
     IEnumerable<IHookHandler<TContext>> hooks,

@@ -154,7 +154,7 @@ public class EcosystemSecurityIntegrationTests : IDisposable
 
         // Assert
         result.Should().BeOfType<TestRuleContext>();
-        TestRuleContext ctx = (TestRuleContext)result!;
+        TestRuleContext ctx = result.Should().BeAssignableTo<TestRuleContext>().Subject;
         ctx.Name.Should().Be("hello");
         ctx.Value.Should().Be(42);
     }
@@ -229,8 +229,11 @@ public class EcosystemSecurityIntegrationTests : IDisposable
         MUser? seededUser = ctx.Users.IgnoreQueryFilters()
             .FirstOrDefault(u => u.UserName == StaticRoleAndUserNames.Host.AdminUserName);
         seededUser.Should().NotBeNull("admin user should have been seeded");
-        seededUser!.ShouldChangePasswordOnNextLogin.Should().BeTrue(
-            "admin user must require password change on first login (D-02)");
+        if (seededUser is not null)
+        {
+            seededUser.ShouldChangePasswordOnNextLogin.Should().BeTrue(
+                "admin user must require password change on first login (D-02)");
+        }
     }
 
     // ========================================================================================

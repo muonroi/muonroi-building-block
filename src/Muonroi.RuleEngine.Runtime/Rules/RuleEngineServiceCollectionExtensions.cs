@@ -6,12 +6,14 @@ using Muonroi.Core.Abstractions.SeedWorks;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.RuleEngine.Core.Events;
 using Muonroi.RuleEngine.Runtime.Events;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
 /// <summary>
 /// Dependency injection helpers for ruleset storage and execution services.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "DI service resolution values are guaranteed non-null by DI container; null-forgiving is structurally correct.")]
 public static class RuleEngineServiceCollectionExtensions
 {
     /// <summary>

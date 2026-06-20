@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Muonroi.Auth.Jwt;
 
 /// <summary>
 /// Service for generating and validating JSON Web Tokens (JWTs).
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001", Justification = "JWT validation contract: SecurityTokenException is the type the JWT bearer pipeline expects.")]
 public class JwtService
 {
     private readonly IRsaKeyStore _keyStore;

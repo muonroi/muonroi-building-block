@@ -1,6 +1,7 @@
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Authoring;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
@@ -13,6 +14,7 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 /// </remarks>
 /// <param name="serviceProvider">The optional service provider used to create manifest providers and rules.</param>
 /// <param name="assemblies">The optional assembly set to inspect instead of the current app domain.</param>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Assembly reflection lookups for manifest discovery are guarded by IsAssignableTo checks; null-forgiving is structurally correct.")]
 public sealed class MRuleAuthoringManifestRegistry(IServiceProvider? serviceProvider = null, IEnumerable<Assembly>? assemblies = null)
 {
     private readonly IServiceProvider? _serviceProvider = serviceProvider;

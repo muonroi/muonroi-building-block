@@ -1,5 +1,6 @@
 using System;
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
 
@@ -14,6 +15,8 @@ namespace Muonroi.Pdf.Enterprise.Imaging;
 /// Uses <see cref="System.IO.Compression.DeflateStream"/> (BCL) to decompress IDAT data.
 /// No native dependencies are introduced. Applies PNG row-filter reconstruction (Sub, Up, Average, Paeth).
 /// </remarks>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PngDecoder is an internal image-decoding utility that throws ArgumentException/InvalidDataException as structural validation errors; these are appropriate for a low-level codec.")]
 public static class PngDecoder
 {
     private static ReadOnlySpan<byte> PngSignature

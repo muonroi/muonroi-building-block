@@ -1,6 +1,8 @@
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Experience.Abstractions;
 using Muonroi.Logging.Abstractions;
 
@@ -142,34 +144,33 @@ public sealed class ClaudeExperienceBrain(
                 await response.Content.ReadAsStreamAsync(timeoutCts.Token),
                 cancellationToken: timeoutCts.Token);
 
-            if (!doc.RootElement.TryGetProperty("content", out JsonElement contentArr)
-                || contentArr.GetArrayLength() == 0)
-            {
-                throw new InvalidOperationException("ClaudeExperienceBrain: AbstractAsync returned no content");
-            }
+            MGuard.State(
+                doc.RootElement.TryGetProperty("content", out JsonElement contentArr) && contentArr.GetArrayLength() > 0,
+                "ClaudeExperienceBrain: AbstractAsync returned no content");
 
             JsonElement firstBlock = contentArr[0];
-            if (!firstBlock.TryGetProperty("text", out JsonElement textEl))
-                throw new InvalidOperationException("ClaudeExperienceBrain: AbstractAsync content[0] has no text");
+            MGuard.State(firstBlock.TryGetProperty("text", out JsonElement textEl),
+                "ClaudeExperienceBrain: AbstractAsync content[0] has no text");
 
             string? text = textEl.GetString();
-            if (string.IsNullOrWhiteSpace(text))
-                throw new InvalidOperationException("ClaudeExperienceBrain: AbstractAsync returned empty text");
+            MGuard.State(!string.IsNullOrWhiteSpace(text),
+                "ClaudeExperienceBrain: AbstractAsync returned empty text");
 
-            NeuronExperience? principle = ParseExperience(text, "claude-brain").FirstOrDefault();
-            return principle ?? throw new InvalidOperationException("ClaudeExperienceBrain: AbstractAsync could not parse principle JSON");
+            NeuronExperience? principle = ParseExperience(MGuard.NotNull(text), "claude-brain").FirstOrDefault();
+            MGuard.State(principle is not null, "ClaudeExperienceBrain: AbstractAsync could not parse principle JSON");
+            return MGuard.NotNull(principle);
         }
-        catch (InvalidOperationException)
+        catch (MInternalException)
         {
             throw;
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new InvalidOperationException($"ClaudeExperienceBrain: AbstractAsync timed out after {options.AiTimeoutSeconds}s");
+            throw new MInternalException($"ClaudeExperienceBrain: AbstractAsync timed out after {options.AiTimeoutSeconds}s");
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"ClaudeExperienceBrain: AbstractAsync failed — {ex.Message}", ex);
+            throw new MInternalException($"ClaudeExperienceBrain: AbstractAsync failed — {ex.Message}");
         }
     }
 
@@ -204,10 +205,10 @@ public sealed class ClaudeExperienceBrain(
                 new NeuronExperience
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Trigger = trigger!,
-                    Question = question!,
+                    Trigger = MGuard.NotNull(trigger),
+                    Question = MGuard.NotNull(question),
                     Reasoning = reasoning,
-                    Solution = solution!,
+                    Solution = MGuard.NotNull(solution),
                     CreatedFrom = createdFrom,
                     CreatedAt = DateTimeOffset.UtcNow,
                     Tier = ExperienceTier.SelfQA,

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Data.Dapper.Dapper;
 using Muonroi.Data.Dapper.Rls.Setters;
@@ -24,7 +25,7 @@ namespace Muonroi.Data.Dapper.Rls;
 /// </para>
 /// <para>
 /// When <c>MultiTenantOptions.EnableRowLevelSecurity</c> is <see langword="false"/> (the default),
-/// this method returns <paramref name="services"/> immediately — no setter is registered,
+/// this method returns the <c>services</c> collection immediately — no setter is registered,
 /// no <c>services.Replace</c> is called, and the vanilla <c>IDapper</c> descriptor from
 /// <c>AddDapperForXxx</c> is left byte-for-byte untouched (CFG-01 zero-impact).
 /// </para>
@@ -130,10 +131,11 @@ public static class DapperRlsServiceCollectionExtensions
             case DapperRlsProvider.MySql:
                 // WR-03: fail fast. MySQL emulated isolation is deferred to v2+.
                 // Accepting the configuration explicitly rather than wiring a half-baked pipeline.
-                throw new NotSupportedException(
+                throw new MInternalException(
                     $"Dapper RLS for provider '{rlsOpts.Provider}' is not yet available. " +
                     "MySQL emulated isolation is deferred to v2+. " +
-                    "Use DapperRlsProvider.MsSql or DapperRlsProvider.PostgreSql.");
+                    "Use DapperRlsProvider.MsSql or DapperRlsProvider.PostgreSql.",
+                    "NOT_SUPPORTED");
 
             case DapperRlsProvider.PostgreSql:
             default:

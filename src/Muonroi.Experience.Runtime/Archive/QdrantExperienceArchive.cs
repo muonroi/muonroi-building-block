@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Guards;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Experience.Abstractions;
 using Muonroi.Experience.Runtime.Qdrant;
 using Muonroi.Logging.Abstractions;
@@ -29,12 +31,11 @@ public sealed class QdrantExperienceArchive : IExperienceArchive
         IOptions<ExperienceStoreOptions> options,
         IMLog<QdrantExperienceArchive>? log = null)
     {
-        _client = client ?? throw new ArgumentNullException(nameof(client));
-        _vectorSize = options?.Value.VectorSize ?? throw new ArgumentNullException(nameof(options));
+        _client = MGuard.NotNull(client);
+        _vectorSize = MGuard.NotNull(options).Value.VectorSize;
         _log = log;
 
-        if (_vectorSize <= 0)
-            throw new ArgumentException("VectorSize must be > 0", nameof(options));
+        MGuard.Against(_vectorSize <= 0, "VectorSize must be > 0");
     }
 
     /// <inheritdoc/>

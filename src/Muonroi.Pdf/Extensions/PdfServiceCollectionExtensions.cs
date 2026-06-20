@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -41,6 +42,8 @@ public static class PdfServiceCollectionExtensions
     /// before <see cref="AddPdf"/> to override (TryAdd contract).
     /// </para>
     /// </summary>
+    [RequiresUnreferencedCode("Binding configuration to strongly typed options may require dynamic code.")]
+    [RequiresDynamicCode("Binding configuration to strongly typed options may require dynamic code at runtime.")]
     public static IServiceCollection AddPdf(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);

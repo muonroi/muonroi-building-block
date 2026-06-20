@@ -17,31 +17,26 @@ namespace Muonroi.Pdf.Abstractions;
 /// defining the DI registration skeleton before the template is ready.
 /// </para>
 /// </remarks>
+/// <remarks>
+/// Initialises a new <see cref="PdfTemplateAttribute"/>.
+/// </remarks>
+/// <param name="templateId">
+/// Stable identifier for this template. Must be non-empty. Matches <c>IMPdfRenderer.TemplateId</c>.
+/// </param>
+/// <param name="templateResourceName">
+/// Path of the HTML template relative to the consuming project root, declared as
+/// <c>AdditionalFiles</c> in the csproj. Null emits a stub renderer with empty HTML.
+/// </param>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false, AllowMultiple = false)]
-public sealed class PdfTemplateAttribute : Attribute
+public sealed class PdfTemplateAttribute(string templateId, string? templateResourceName = null) : Attribute
 {
-    /// <summary>
-    /// Initialises a new <see cref="PdfTemplateAttribute"/>.
-    /// </summary>
-    /// <param name="templateId">
-    /// Stable identifier for this template. Must be non-empty. Matches <c>IMPdfRenderer.TemplateId</c>.
-    /// </param>
-    /// <param name="templateResourceName">
-    /// Path of the HTML template relative to the consuming project root, declared as
-    /// <c>AdditionalFiles</c> in the csproj. Null emits a stub renderer with empty HTML.
-    /// </param>
-    public PdfTemplateAttribute(string templateId, string? templateResourceName = null)
-    {
-        TemplateId = templateId;
-        TemplateResourceName = templateResourceName;
-    }
 
     /// <summary>Stable template identifier. Matches <c>IMPdfRenderer.TemplateId</c>.</summary>
-    public string TemplateId { get; }
+    public string TemplateId { get; } = templateId;
 
     /// <summary>
     /// AdditionalFiles path (relative to project root) of the HTML template file.
     /// Null means the generator emits a stub renderer with an empty HTML string.
     /// </summary>
-    public string? TemplateResourceName { get; }
+    public string? TemplateResourceName { get; } = templateResourceName;
 }

@@ -2,6 +2,7 @@ using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Mediator.Mediator.Interfaces;
 using Muonroi.Mediator.Mediator.Pipeline;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Muonroi.Mediator.Mediator;
@@ -14,6 +15,7 @@ public delegate object? ServiceFactory(Type serviceType);
 /// Uses a compiled-delegate wrapper cache to eliminate per-call reflection overhead.
 /// After the first call for a given request type, dispatch is purely interface-based — no reflection.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Mediator pipeline uses unconstrained generics and object? casts; MGuard.NotNull requires class/struct constraints unavailable here.")]
 public class MMediator(ServiceFactory serviceFactory) : IMediator
 {
     // ───────────────────────────── Send ─────────────────────────────

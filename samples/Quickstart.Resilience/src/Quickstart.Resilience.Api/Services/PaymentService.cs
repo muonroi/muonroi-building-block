@@ -1,7 +1,7 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Observability.OpenTelemetry;
-using Polly;
+
+
+
+
 using Polly.CircuitBreaker;
 
 namespace Quickstart.Resilience.Api.Services;
@@ -28,22 +28,15 @@ namespace Quickstart.Resilience.Api.Services;
 ///   </item>
 /// </list>
 /// </summary>
-public sealed class PaymentService
+public sealed class PaymentService(
+    ResiliencePipelineProvider<string> pipelineProvider,
+    IMLog<PaymentService> logger)
 {
-    private readonly ResiliencePipeline _pipeline;
-    private readonly IMLog<PaymentService> _logger;
+    private readonly ResiliencePipeline _pipeline = pipelineProvider.GetPipeline("muonroi-standard");
+    private readonly IMLog<PaymentService> _logger = logger;
 
     // Counts consecutive hard failures injected for the circuit-breaker demo.
     private int _hardFailureCount;
-
-    public PaymentService(
-        ResiliencePipelineProvider<string> pipelineProvider,
-        IMLog<PaymentService> logger)
-    {
-        // The "muonroi-standard" pipeline is registered by AddMuonroiResilience().
-        _pipeline = pipelineProvider.GetPipeline("muonroi-standard");
-        _logger = logger;
-    }
 
     // -------------------------------------------------------------------------
     // Normal payment processing — retried on transient failures
@@ -100,7 +93,6 @@ public sealed class PaymentService
     /// <see cref="BrokenCircuitException"/> immediately without reaching the gateway.
     /// </summary>
     public async Task<PaymentResult> ProcessPaymentWithHardFailureAsync(
-        PaymentRequest request,
         CancellationToken cancellationToken = default)
     {
         _hardFailureCount++;
@@ -143,7 +135,10 @@ public sealed class PaymentService
         }, cancellationToken);
     }
 
-    public void ResetHardFailureCount() => _hardFailureCount = 0;
+    public void ResetHardFailureCount()
+    {
+        _hardFailureCount = 0;
+    }
 }
 
 /// <summary>Incoming payment request.</summary>

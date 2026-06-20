@@ -93,7 +93,7 @@ public static class GrpcHandler
 
         foreach (KeyValuePair<string, Type> client in clients)
         {
-            if (!grpcServicesConfig.Services!.TryGetValue(client.Key, out GrpcServiceConfig? serviceConfig) ||
+            if (!MGuard.NotNull(grpcServicesConfig.Services).TryGetValue(client.Key, out GrpcServiceConfig? serviceConfig) ||
                 string.IsNullOrWhiteSpace(serviceConfig.Uri))
             {
                 throw new MNotFoundException("GrpcClient", client.Key);
@@ -156,8 +156,8 @@ public static class GrpcHandler
         MGuard.NotNull(services);
         _ = new Uri(serviceUri);
 
-        MethodInfo method = typeof(GrpcHandler)
-            .GetMethod(nameof(AddGrpcClientGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
+        MethodInfo method = MGuard.NotNull(typeof(GrpcHandler)
+                .GetMethod(nameof(AddGrpcClientGeneric), BindingFlags.NonPublic | BindingFlags.Static))
             .MakeGenericMethod(clientType);
 
         object? result = method.Invoke(null, [services, serviceUri, new GrpcClientDefaultsConfig(), null]);
@@ -177,8 +177,8 @@ public static class GrpcHandler
         MGuard.NotNull(defaults);
         _ = new Uri(serviceConfig.Uri);
 
-        MethodInfo method = typeof(GrpcHandler)
-            .GetMethod(nameof(AddGrpcClientGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
+        MethodInfo method = MGuard.NotNull(typeof(GrpcHandler)
+                .GetMethod(nameof(AddGrpcClientGeneric), BindingFlags.NonPublic | BindingFlags.Static))
             .MakeGenericMethod(clientType);
 
         object? result = method.Invoke(null, [services, serviceConfig.Uri, defaults, serviceConfig]);

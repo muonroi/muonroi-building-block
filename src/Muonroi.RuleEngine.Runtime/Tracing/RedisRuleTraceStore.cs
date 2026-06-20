@@ -1,12 +1,14 @@
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.RuleEngine.Core.Tracing;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
 /// <summary>
 /// Redis-backed store for rule execution traces.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Redis deserialized trace records are validated non-null by caller before passing; null-forgiving is structurally correct.")]
 public sealed class RedisRuleTraceStore(
     IConnectionMultiplexer connectionMultiplexer,
     IOptions<RuleTracingOptions> options,

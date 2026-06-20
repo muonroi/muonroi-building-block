@@ -1,8 +1,4 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Observability.OpenTelemetry;
-using Muonroi.Logging.Abstractions;
-using Quickstart.Observability.Api.Telemetry;
+
 
 namespace Quickstart.Observability.Api.Controllers;
 
@@ -14,7 +10,7 @@ public sealed record Product(int Id, string Name, string Category, decimal Price
 /// <summary>
 /// Demonstrates the three pillars of Muonroi.Observability in a single controller:
 ///
-/// 1. <b>Distributed tracing</b> — custom spans via <see cref="ActivitySource.StartActivity"/>,
+/// 1. <b>Distributed tracing</b> — custom spans via <see cref="M:System.Diagnostics.ActivitySource.StartActivity(System.String,System.Diagnostics.ActivityKind)"/>,
 ///    child spans, and tag enrichment (product.id, product.category, tenant.id is added
 ///    automatically by <c>TenantActivityEnricher</c>).
 ///
@@ -28,9 +24,10 @@ public sealed record Product(int Id, string Name, string Category, decimal Price
 [ApiController]
 [Route("api/[controller]")]
 public sealed class ProductsController(
-    IMLog<ProductsController> log,
-    ILogger<ProductsController> fallbackLog) : ControllerBase
+    IMLog<ProductsController> log) : ControllerBase
 {
+    private const string productIdColumn = "product.id";
+
     // -----------------------------------------------------------------------
     // Static catalogue
     // -----------------------------------------------------------------------
@@ -149,10 +146,10 @@ public sealed class ProductsController(
             {
                 // Record an event on the span (visible in Jaeger / Zipkin timelines).
                 lookupActivity?.AddEvent(new ActivityEvent("cache.miss",
-                    tags: new ActivityTagsCollection { { "product.id", id } }));
+                    tags: new ActivityTagsCollection { { productIdColumn, id } }));
 
                 ProductsTelemetryDescriptor.CacheMissCount.Add(1,
-                    new TagList { { "product.id", id } });
+                    new TagList { { productIdColumn, id } });
 
                 log.Warn("Cache miss for product {ProductId}; falling back to catalogue", id);
             }
@@ -162,8 +159,8 @@ public sealed class ProductsController(
             if (product is not null)
             {
                 // Enrich child span with the resolved entity details.
-                lookupActivity?.SetTag("product.id",       product.Id);
-                lookupActivity?.SetTag("product.name",     product.Name);
+                lookupActivity?.SetTag(productIdColumn, product.Id);
+                lookupActivity?.SetTag("product.name", product.Name);
                 lookupActivity?.SetTag("product.category", product.Category);
             }
         }
@@ -190,12 +187,12 @@ public sealed class ProductsController(
             return NotFound(new { message = $"Product with id={id} was not found." });
         }
 
-        rootActivity?.SetTag("product.id",       product!.Id);
-        rootActivity?.SetTag("product.category", product.Category);
+        rootActivity?.SetTag(productIdColumn, product?.Id);
+        rootActivity?.SetTag("product.category", product?.Category);
         rootActivity?.SetTag("http.status_code", 200);
 
         log.Info("Returned product {ProductId} ({Category}) in {ElapsedMs:F2} ms",
-            product.Id, product.Category, elapsedMs);
+            product?.Id, product?.Category, elapsedMs);
 
         return Ok(product);
     }
@@ -225,7 +222,7 @@ public sealed class ProductsController(
             // MuonroiTraceProcessor.TagException which extracts Category and ErrorCode.
             MuonroiTraceProcessor.TagException(activity, ex);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            activity?.RecordException(ex);
+            activity?.AddException(ex);
 
             log.Error(ex, "Demo error triggered on {Endpoint}", "/api/products/error-demo");
 

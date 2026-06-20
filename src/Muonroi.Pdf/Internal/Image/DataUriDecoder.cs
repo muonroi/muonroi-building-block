@@ -1,6 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using Muonroi.Pdf.Abstractions.Exceptions;
 
 namespace Muonroi.Pdf.Internal.Image;
+
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfFormatException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
 
 internal static class DataUriDecoder
 {

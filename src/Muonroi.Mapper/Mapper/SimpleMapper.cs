@@ -1,10 +1,12 @@
 using Muonroi.Core.Abstractions.Guards;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Mapper.Mapper;
 
 /// <summary>
 /// Reflection-based mapper using cached mapping actions.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Unconstrained generic T cannot use MGuard.NotNull; null checked above via MGuard.Against.")]
 public sealed class SimpleMapper(MappingConfiguration configuration) : IMapper
 {
     /// <inheritdoc/>

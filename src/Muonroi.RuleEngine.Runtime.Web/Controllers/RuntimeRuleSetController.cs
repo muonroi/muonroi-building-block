@@ -263,7 +263,7 @@ public sealed class RuntimeRuleSetController(
             Detail = detail,
             TenantId = string.IsNullOrWhiteSpace(executionContextAccessor.Get().TenantId)
                 ? "default"
-                : executionContextAccessor.Get().TenantId!
+                : executionContextAccessor.Get().TenantId ?? "default"
         };
         await auditStore.AppendAsync(entry, cancellationToken);
     }

@@ -25,4 +25,6 @@ public sealed class ConnectorConfigEntity
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     /// <summary>Last update timestamp in UTC.</summary>
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>User ID of the BA who owns this connector. Null = legacy/admin-created.</summary>
+    public string? OwnerId { get; set; }
 }

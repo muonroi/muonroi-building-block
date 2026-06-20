@@ -146,7 +146,7 @@ public class Program
             string value = (await cacheService.GetOrSetAsync(
                 cacheKey,
                 () => Task.FromResult<string?>($"cache-{tenantId}-{key}"),
-                absoluteExpirationInMinutes: 10))!;
+                absoluteExpirationInMinutes: 10)) ?? string.Empty;
             return Results.Ok(new { value, tenantId });
         }).RequireAuthorization();
 
@@ -157,7 +157,7 @@ public class Program
             string value = (await cacheService.GetOrSetAsync(
                 cacheKey,
                 () => Task.FromResult<string?>($"payload-{tenantId}-{key}"),
-                absoluteExpirationInMinutes: 10))!;
+                absoluteExpirationInMinutes: 10)) ?? string.Empty;
             return Results.Ok(value);
         }).RequireAuthorization();
 

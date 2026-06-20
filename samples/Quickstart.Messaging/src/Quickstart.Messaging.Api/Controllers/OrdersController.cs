@@ -18,6 +18,7 @@ public class OrdersController(IPublishEndpoint publishEndpoint, IBus bus) : Cont
     /// publish from within the request scope.
     /// </summary>
     /// <param name="request">Order creation details.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>202 Accepted with the published event payload.</returns>
     [HttpPost]
     [ProducesResponseType(typeof(OrderCreatedEvent), StatusCodes.Status202Accepted)]
@@ -50,6 +51,7 @@ public class OrdersController(IPublishEndpoint publishEndpoint, IBus bus) : Cont
     /// </summary>
     /// <param name="id">The order identifier.</param>
     /// <param name="request">Shipment details.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>202 Accepted with the published event payload.</returns>
     [HttpPost("{id:guid}/ship")]
     [ProducesResponseType(typeof(OrderShippedEvent), StatusCodes.Status202Accepted)]

@@ -10,6 +10,7 @@ using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Telemetry;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using System.Reflection;
 
@@ -20,6 +21,7 @@ namespace Muonroi.Mediator.Behaviours;
 /// </summary>
 /// <typeparam name="TRequest">The mediator request type.</typeparam>
 /// <typeparam name="TResponse">The mediator response type.</typeparam>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Rule engine uses reflection and object? returns; unconstrained generics prevent MGuard.NotNull usage; null is validated via is-not-null patterns.")]
 public sealed class MRuleEngineBehavior<TRequest, TResponse>(
     ServiceFactory serviceFactory,
     IMLog<MRuleEngineBehavior<TRequest, TResponse>>? logger = null,

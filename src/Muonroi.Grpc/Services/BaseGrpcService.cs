@@ -10,6 +10,7 @@ using Polly.Retry;
 using Polly.CircuitBreaker;
 using Polly.Timeout;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Options;
 using Grpc.Core;
 namespace Muonroi.Grpc.Services;
@@ -21,6 +22,7 @@ namespace Muonroi.Grpc.Services;
 /// <param name="licenseState">Optional license state override.</param>
 /// <param name="grpcConfigOptions">Optional gRPC configuration options.</param>
 /// <param name="licenseGuard">Optional license guard for feature checks.</param>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001", Justification = "gRPC boundary: RpcException carries the Status code to the client.")]
 public abstract class BaseGrpcService(
     ISystemExecutionContextAccessor contextAccessor,
     LicenseState? licenseState = null,

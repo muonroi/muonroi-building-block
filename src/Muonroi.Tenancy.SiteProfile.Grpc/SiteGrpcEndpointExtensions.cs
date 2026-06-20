@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Guards;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -38,6 +39,7 @@ namespace Muonroi.Tenancy.SiteProfile.Grpc;
 /// <see cref="ISiteCodeHolder.SiteCode"/> regardless of which service handles the request.
 /// </para>
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Reflection-based attribute and property lookups are guaranteed non-null by prior type filtering; MGuard.NotNull would be redundant.")]
 public static class SiteGrpcEndpointExtensions
 {
     // Cached reflection: MapGrpcService<T>() is generic, we need to call it per-type

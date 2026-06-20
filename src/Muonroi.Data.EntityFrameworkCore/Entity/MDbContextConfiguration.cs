@@ -98,10 +98,10 @@ public static class MDbContextConfiguration
             "services.AddRedisRsaKeyStore() to register BCryptPasswordHasher.";
 
         public string HashPassword(string password, out string salt)
-            => throw new InvalidOperationException(Msg);
+            => throw new MInternalException(Msg, "NOT_CONFIGURED");
 
         public bool VerifyPassword(string enteredPassword, string storedHash)
-            => throw new InvalidOperationException(Msg);
+            => throw new MInternalException(Msg, "NOT_CONFIGURED");
     }
 
 

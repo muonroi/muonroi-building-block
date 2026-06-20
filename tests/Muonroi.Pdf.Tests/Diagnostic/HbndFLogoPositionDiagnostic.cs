@@ -34,12 +34,9 @@ namespace Muonroi.Pdf.Tests.Diagnostic;
 /// at least 50pt down the page after normal table layout pushes it into the first data row.
 /// </summary>
 [Collection("DiagnosticSerial")]
-public sealed class HbndFLogoPositionDiagnostic
+public sealed class HbndFLogoPositionDiagnostic(ITestOutputHelper output)
 {
-    private readonly ITestOutputHelper _out;
-
-    public HbndFLogoPositionDiagnostic(ITestOutputHelper output) => _out = output;
-
+    private readonly ITestOutputHelper _out = output;
     private const string TemplatePath = @"D:\Data\Template\Htmls\PreviewRegistion\HBND_F.html";
 
     // 4×4 red placeholder — retained for {{barcode}} and other non-logo image slots

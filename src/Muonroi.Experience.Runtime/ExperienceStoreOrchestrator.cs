@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Experience.Abstractions;
 using Muonroi.Logging.Abstractions;
 
@@ -14,19 +15,13 @@ namespace Muonroi.Experience.Runtime;
 /// the concrete store implementations (FileExperienceStore / QdrantExperienceStore).
 /// The orchestrator provides a named entry point for consumers and adds observability via IMLog.
 /// </remarks>
-public sealed class ExperienceStoreOrchestrator
+/// <remarks>
+/// Initialises a new <see cref="ExperienceStoreOrchestrator"/> with the registered store.
+/// </remarks>
+public sealed class ExperienceStoreOrchestrator(IExperienceStore store, IMLog<ExperienceStoreOrchestrator>? log = null)
 {
-    private readonly IExperienceStore _store;
-    private readonly IMLog<ExperienceStoreOrchestrator>? _log;
-
-    /// <summary>
-    /// Initialises a new <see cref="ExperienceStoreOrchestrator"/> with the registered store.
-    /// </summary>
-    public ExperienceStoreOrchestrator(IExperienceStore store, IMLog<ExperienceStoreOrchestrator>? log = null)
-    {
-        _store = store ?? throw new ArgumentNullException(nameof(store));
-        _log = log;
-    }
+    private readonly IExperienceStore _store = MGuard.NotNull(store);
+    private readonly IMLog<ExperienceStoreOrchestrator>? _log = log;
 
     /// <summary>
     /// Routes a <see cref="NeuronExperience"/> to the correct tier in the registered store.

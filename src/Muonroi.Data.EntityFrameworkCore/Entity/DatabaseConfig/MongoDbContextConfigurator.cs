@@ -1,10 +1,12 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig;
 
 /// <summary>
 /// Configures MongoDB services for a <see cref="MDbContext"/> that uses MongoDB for storage.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "MongoDB configurator uses reflection-based type registration where MGuard.NotNull is incompatible with unconstrained generic type parameters.")]
 public class MongoDbContextConfigurator<T> : IDbContextConfigurator<T> where T : MDbContext
 {
     /// <summary>

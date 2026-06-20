@@ -93,7 +93,9 @@ app.UseHangfireDashboard("/hangfire");
 // UseHangfireServer starts the background processing loop inside this process.
 // In a horizontally-scaled deployment you may keep the dashboard-only instance
 // and run dedicated worker processes with UseHangfireServer only.
+#pragma warning disable CS0618 // UseHangfireServer(IApplicationBuilder) is the preferred simple overload; migration to AddHangfireServer() would require host builder restructuring beyond this quickstart's scope.
 app.UseHangfireServer();
+#pragma warning restore CS0618
 
 // ── 6. Swagger + routing ──────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())

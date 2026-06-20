@@ -1,10 +1,12 @@
 using Muonroi.Governance.Abstractions.License;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Governance.License;
 
 /// <summary>
 /// Represents the File Fingerprint Chain Store.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Fingerprint chain state is validated non-null by lock-guarded _loaded flag before access.")]
 public sealed class FileFingerprintChainStore(IHostEnvironment? environment, LicenseConfigs configs, IMJsonSerializeService jsonSerializeService)
     : IFingerprintChainStore
 {

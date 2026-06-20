@@ -1,15 +1,9 @@
-using MassTransit;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Messaging.MassTransit.Messaging;
-using Quickstart.Messaging.Api.Messages;
-
 namespace Quickstart.Messaging.Api.Consumers;
 
 /// <summary>
 /// Handles <see cref="OrderShippedEvent"/> messages.
 /// Demonstrates tenant-aware processing: the shipping notification could be
-/// forwarded to different webhook endpoints depending on <paramref name="executionContext"/>.
+/// forwarded to different webhook endpoints depending on the <c>executionContext</c>.
 /// </summary>
 public class OrderShippedConsumer(
     ISystemExecutionContextAccessor contextAccessor,

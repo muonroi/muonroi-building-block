@@ -26,21 +26,16 @@ namespace Muonroi.Data.Dapper.Rls.Setters;
 /// bypass the view filter. Document this clearly and revoke base-table grants.
 /// </para>
 /// </remarks>
-public sealed class MySqlTenantSessionContextSetter : ITenantSessionContextSetter
+/// <remarks>
+/// Initializes a new instance of <see cref="MySqlTenantSessionContextSetter"/>.
+/// </remarks>
+/// <param name="log">
+/// Optional logger. When supplied, logs applied tenant id at Info level and warns when
+/// no tenant context is present (OBS-01).
+/// </param>
+public sealed class MySqlTenantSessionContextSetter(IMLog<MySqlTenantSessionContextSetter>? log = null) : ITenantSessionContextSetter
 {
-    private readonly IMLog<MySqlTenantSessionContextSetter>? _log;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="MySqlTenantSessionContextSetter"/>.
-    /// </summary>
-    /// <param name="log">
-    /// Optional logger. When supplied, logs applied tenant id at Info level and warns when
-    /// no tenant context is present (OBS-01).
-    /// </param>
-    public MySqlTenantSessionContextSetter(IMLog<MySqlTenantSessionContextSetter>? log = null)
-    {
-        _log = log;
-    }
+    private readonly IMLog<MySqlTenantSessionContextSetter>? _log = log;
 
     /// <inheritdoc />
     public void Apply(IDbConnection connection, string? tenantId)

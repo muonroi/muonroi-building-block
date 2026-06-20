@@ -1,11 +1,13 @@
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
 
 /// <summary>
 /// Represents the base database context for the Muonroi application, providing audit, soft-delete, and multi-tenancy support.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "EF Core query composition and projection use null-forgiving on values that are structurally guaranteed non-null by the query shape.")]
 public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactionalRuleContext, IIdentityAuth
 {
     private static readonly ActivitySource ActivitySource = new("Muonroi.Data.EntityFrameworkCore");
@@ -120,7 +122,6 @@ public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactional
         _logger = logger;
         _licenseGuard = licenseGuard;
         _dateTimeService = dateTimeService;
-        Debug.WriteLine("BaseDbContext::ctor ->" + GetHashCode());
     }
 
     /// <summary>

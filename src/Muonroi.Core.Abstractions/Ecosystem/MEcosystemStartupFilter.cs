@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
@@ -8,21 +9,17 @@ namespace Muonroi.Core.Abstractions.Ecosystem;
 /// Logs the active ecosystem capabilities at application startup.
 /// Automatically registered by <see cref="EcosystemServiceCollectionExtensions.GetOrCreateRegistry"/>.
 /// </summary>
-internal sealed class MEcosystemStartupFilter : IStartupFilter
+/// <remarks>
+/// Initializes a new instance of <see cref="MEcosystemStartupFilter"/>.
+/// </remarks>
+internal sealed class MEcosystemStartupFilter(IMEcosystemRegistry registry, ILogger<MEcosystemStartupFilter> logger) : IStartupFilter
 {
-    private readonly IMEcosystemRegistry _registry;
-    private readonly ILogger<MEcosystemStartupFilter> _logger;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="MEcosystemStartupFilter"/>.
-    /// </summary>
-    public MEcosystemStartupFilter(IMEcosystemRegistry registry, ILogger<MEcosystemStartupFilter> logger)
-    {
-        _registry = registry;
-        _logger = logger;
-    }
+    private readonly IMEcosystemRegistry _registry = registry;
+    private readonly ILogger<MEcosystemStartupFilter> _logger = logger;
 
     /// <inheritdoc />
+    [SuppressMessage("Muonroi.CodeStandards", "MSTD0003",
+        Justification = "Foundational startup filter registered by the ecosystem core (Muonroi.Core.Abstractions). It uses the always-available Microsoft ILogger; migrating to IMLog would make the optional Muonroi.Logging package a hard dependency of the ecosystem registry and risk a DI resolution failure at startup for consumers that do not call AddMuonroiLogging.")]
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
     {
         MCapability active = _registry.Active;

@@ -7,7 +7,7 @@ namespace Muonroi.Experience.Runtime.Archive;
 
 /// <summary>
 /// <see cref="IExperienceArchive"/> backed by a JSON file (<c>archived.json</c>) in the
-/// same directory as the active <see cref="FileExperienceStore"/>.
+/// same directory as the active <see cref="Muonroi.Experience.Runtime.File.FileExperienceStore"/>.
 /// Archive is append-only and accessed only by the evolution orchestrator (single writer at a time),
 /// but a <see cref="SemaphoreSlim"/> ensures thread safety if multiple sweeps overlap.
 /// </summary>

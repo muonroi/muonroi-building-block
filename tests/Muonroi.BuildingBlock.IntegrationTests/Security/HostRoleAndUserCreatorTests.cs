@@ -67,13 +67,16 @@ public class HostRoleAndUserCreatorTests : IDisposable
             MUser? admin = _context.Users.IgnoreQueryFilters()
                 .FirstOrDefault(u => u.UserName == "admin");
             admin.Should().NotBeNull();
-            admin!.Password.Should().NotBeNullOrWhiteSpace();
-            admin.Password.Should().NotBe("MyStr0ng!Pass", "password must be stored hashed, not plaintext");
-            admin.ShouldChangePasswordOnNextLogin.Should().BeTrue();
+            if (admin is not null)
+            {
+                admin.Password.Should().NotBeNullOrWhiteSpace();
+                admin.Password.Should().NotBe("MyStr0ng!Pass", "password must be stored hashed, not plaintext");
+                admin.ShouldChangePasswordOnNextLogin.Should().BeTrue();
 
-            // Verify it's a valid bcrypt hash (starts with $2b$ or $2a$)
-            admin.Password.Should().StartWith("$2", "stored password must be a bcrypt hash");
-            admin.Password.Length.Should().Be(60, "bcrypt hash is always 60 chars");
+                // Verify it's a valid bcrypt hash (starts with $2b$ or $2a$)
+                admin.Password.Should().StartWith("$2", "stored password must be a bcrypt hash");
+                admin.Password.Length.Should().Be(60, "bcrypt hash is always 60 chars");
+            }
         }
         finally
         {
@@ -99,10 +102,13 @@ public class HostRoleAndUserCreatorTests : IDisposable
         MUser? admin = _context.Users.IgnoreQueryFilters()
             .FirstOrDefault(u => u.UserName == "admin");
         admin.Should().NotBeNull();
-        admin!.Password.Should().NotBeNullOrWhiteSpace("a random password hash must be generated");
-        admin.ShouldChangePasswordOnNextLogin.Should().BeTrue();
-        // Verify it looks like a bcrypt hash (starts with $2)
-        admin.Password.Should().StartWith("$2", "generated password must be stored as bcrypt hash");
+        if (admin is not null)
+        {
+            admin.Password.Should().NotBeNullOrWhiteSpace("a random password hash must be generated");
+            admin.ShouldChangePasswordOnNextLogin.Should().BeTrue();
+            // Verify it looks like a bcrypt hash (starts with $2)
+            admin.Password.Should().StartWith("$2", "generated password must be stored as bcrypt hash");
+        }
     }
 
     /// <summary>

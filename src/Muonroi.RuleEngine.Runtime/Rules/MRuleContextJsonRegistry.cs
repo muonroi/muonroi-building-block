@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.Core.Abstractions.Exceptions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
@@ -14,6 +15,8 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 /// AOT-safe: no assembly scanning, no reflection-based type lookup.
 /// Thread-safe: uses <see cref="ConcurrentDictionary{TKey,TValue}"/> internally.
 /// </remarks>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "ConcurrentDictionary lookups are guarded by TryGetValue; null-forgiving is structurally correct after successful lookup.")]
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0003", Justification = "Capability-gated '[Ecosystem] AUDIT' trail intentionally written to Console (same degradation pattern as other [Ecosystem] audit sites); IMLog is not guaranteed registered for this registry and integration tests assert the Console audit output.")]
 public sealed class MRuleContextJsonRegistry
 {
     private readonly ConcurrentDictionary<string, Func<string, JsonSerializerOptions, object>> _deserializers =

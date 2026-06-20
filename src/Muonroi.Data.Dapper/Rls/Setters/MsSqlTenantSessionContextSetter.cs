@@ -39,21 +39,16 @@ namespace Muonroi.Data.Dapper.Rls.Setters;
 /// semicolons in a single <see cref="DbCommand.CommandText"/>.
 /// </para>
 /// </remarks>
-public sealed class MsSqlTenantSessionContextSetter : ITenantSessionContextSetter
+/// <remarks>
+/// Initializes a new instance of <see cref="MsSqlTenantSessionContextSetter"/>.
+/// </remarks>
+/// <param name="log">
+/// Optional logger. When supplied, logs applied tenant id at Info level and warns when
+/// no tenant context is present (OBS-01).
+/// </param>
+public sealed class MsSqlTenantSessionContextSetter(IMLog<MsSqlTenantSessionContextSetter>? log = null) : ITenantSessionContextSetter
 {
-    private readonly IMLog<MsSqlTenantSessionContextSetter>? _log;
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="MsSqlTenantSessionContextSetter"/>.
-    /// </summary>
-    /// <param name="log">
-    /// Optional logger. When supplied, logs applied tenant id at Info level and warns when
-    /// no tenant context is present (OBS-01).
-    /// </param>
-    public MsSqlTenantSessionContextSetter(IMLog<MsSqlTenantSessionContextSetter>? log = null)
-    {
-        _log = log;
-    }
+    private readonly IMLog<MsSqlTenantSessionContextSetter>? _log = log;
 
     /// <inheritdoc />
     public void Apply(IDbConnection connection, string? tenantId)

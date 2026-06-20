@@ -24,6 +24,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [ ] **Phase 8.11: Layout Edge Cases** — Vertical-align edge, nested BFC stacks, `position:absolute` × float, page-break-inside floats, shrink-to-fit auto float, CSS `column-count` interaction. Per-template demand. TBD.
 - [x] **Phase 9: v1.0 Enterprise** — Postgres template registry, Redis hot-reload, SSIM canary, web designer, TCIS cutover — CLOSED 2026-05-29; see `.planning/PHASE-09-CLOSEOUT.md`
 - [x] **Phase 10: TCIS Cutover Sweep + v1.0 GA** — Full DinkToPdf/libwkhtmltox removal from TCIS (10.1-10.4) + v1.0.0 version stamp (10.6); publish (10.7-10.9) deferred to ops — CLOSED 2026-05-29; see `.planning/PHASE-10-CLOSEOUT.md`
+- [x] **Phase 12: Owned CSS Cascade (B1)** — Replace AngleSharp.Css `GetComputedStyle` (beta, throws on em/rem/% headless) with an owned cascade; demote AngleSharp.Css to a parser. Retires the G14–G29 per-property fallback class. Design: `.planning/DESIGN-owned-cascade-B1.md`; spike: `.planning/SPIKE-cascade-render-device.md` (completed 2026-06-19)
 
 ## Phase Details
 
@@ -330,6 +331,29 @@ Plans:
 **Plans**: TBD (plan per workstream after 8.7 closes)
 **UI hint**: yes
 
+### Phase 12: Owned CSS Cascade (B1)
+**Goal**: The engine resolves computed styles via an owned cascade — `AngleSharp.Css.GetComputedStyle` is never called. AngleSharp.Css is demoted to CSS parsing (rules + `@page` + `@font-face`); AngleSharp core handles selector matching. The G14–G29 BoxTreeBuilder fallbacks become redundant.
+**Depends on**: Phase 8.x (current cascade seam), and the committed G25/G27/G28/G29 fixes (branch `fix/pdf-legacy-print-cascade-gaps`).
+**Design**: `.planning/DESIGN-owned-cascade-B1.md` (full architecture, components, cascade algorithm, migration phases B1.1/B1.2/B1.3, risks, test strategy). Spike verdict (A dead): `.planning/SPIKE-cascade-render-device.md`.
+**Scope (this plan = B1.1 only)**:
+  - Implement `CssRuleSet`, `CascadeResolver`, `OwnedComputedStyle`, `OwnedStyledNode` in `src/Muonroi.Pdf.Governance/Cascade/`.
+  - Wire `AngleSharpStyledDocument` to the owned cascade; never call `GetComputedStyle`.
+  - Keep BoxTreeBuilder fallbacks as belt-and-suspenders (delete in B1.3).
+  - Run full golden suite; re-baseline ONLY `%`-table cases (visually verified); simple-doc goldens stay byte-identical.
+**Out of scope**: B1.2 (policy migration off `GetComputedStyle`), B1.3 (delete G14–G29 fallbacks).
+**Success Criteria** (what must be TRUE):
+  1. No code path calls `IWindow.GetComputedStyle` / `ComputeCurrentStyle`; the `catch (ArgumentException)` in `AngleSharpStyledNode` is gone.
+  2. The owned cascade resolves the Profile v1 property surface (display, box-model longhands, text/font, float/clear/position, white-space, word-break, table props) with selector specificity + `!important` + inheritance + em/rem→px; `%` left literal for layout.
+  3. Descendant selectors (`.table-bodered2 tr.no-border td`), shorthand expansion (`padding: 2px 6px`), and inheritance behave per the G25/G27/G28/G29 regression tests — now satisfied by the cascade, not fallbacks.
+  4. Full `Muonroi.Pdf.Tests` suite green; only `%`-table goldens re-baselined (visually verified); determinism canary unaffected.
+**Plans**: 4 plans (B1.1)
+
+Plans:
+- [x] 12-01-PLAN.md — CssRuleSet: collect author rules once, split grouped selectors, specificity + source order + declarations
+- [x] 12-02-PLAN.md — CascadeResolver + OwnedComputedStyle: match/sort/inline-overlay/shorthand/UA-defaults/inheritance/em-rem-to-px (incl. G25/G27/G28/G29)
+- [x] 12-03-PLAN.md — OwnedStyledNode + wire AngleSharpStyledDocument; remove GetComputedStyle catch path
+- [x] 12-04-PLAN.md — Full golden suite + %-table re-baseline (visual checkpoint) + determinism canary
+
 ## Progress
 
 **Execution Order:**
@@ -353,3 +377,4 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 8.5
 | 8.10. Float Algorithm Refactor (ExcludedShapes) | 0/TBD | Planned | - |
 | 8.11. Layout Edge Cases | 0/TBD | Planned | - |
 | 9. v1.0 Enterprise (multi-repo workstreams A–D) | 0/TBD | Not started | - |
+| 12. Owned CSS Cascade (B1) | 4/4 | Complete    | 2026-06-19 |

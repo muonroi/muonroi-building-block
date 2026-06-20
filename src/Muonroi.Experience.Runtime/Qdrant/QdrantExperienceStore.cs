@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Experience.Abstractions;
 using Muonroi.Experience.Runtime.Internal;
 using Muonroi.Logging.Abstractions;
@@ -41,16 +43,13 @@ public sealed class QdrantExperienceStore : IExperienceStore
         IMLog<QdrantExperienceStore>? log = null,
         IExperienceBrain? brain = null)
     {
-        _client = client ?? throw new ArgumentNullException(nameof(client));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        _client = MGuard.NotNull(client);
+        _options = MGuard.NotNull(options).Value;
         _budget = _options.Budget;
         _brain = brain;
         _log = log;
 
-        if (_options.VectorSize <= 0)
-        {
-            throw new ArgumentException("VectorSize must be > 0", nameof(options));
-        }
+        MGuard.Against(_options.VectorSize <= 0, "VectorSize must be > 0");
     }
 
     // -------------------------------------------------------------------------
@@ -79,7 +78,7 @@ public sealed class QdrantExperienceStore : IExperienceStore
         var point = new PointStruct
         {
             Id = new PointId { Uuid = experience.Id },
-            /// <remarks>Zero-vector placeholder — real embedding vectors are injected by Phase 96 (Experience Extraction) via IExperienceBrain.</remarks>
+            // Zero-vector placeholder — real embedding vectors are injected by Phase 96 (Experience Extraction) via IExperienceBrain.
             Vectors = new float[_options.VectorSize]
         };
         point.Payload["json"] = JsonSerializer.Serialize(experience);
@@ -145,10 +144,8 @@ public sealed class QdrantExperienceStore : IExperienceStore
     /// <inheritdoc />
     public async Task<NeuronExperience> PromoteAsync(NeuronExperience experience, CancellationToken ct = default)
     {
-        if (experience.Tier == ExperienceTier.Principle)
-        {
-            throw new InvalidOperationException("Cannot promote a Tier 0 (Principle) entry — it is already the highest tier.");
-        }
+        MGuard.State(experience.Tier != ExperienceTier.Principle,
+            "Cannot promote a Tier 0 (Principle) entry — it is already the highest tier.");
 
         var targetTier = (ExperienceTier)((int)experience.Tier - 1);
         NeuronExperience promoted = experience with { Tier = targetTier };
@@ -173,10 +170,8 @@ public sealed class QdrantExperienceStore : IExperienceStore
     /// <inheritdoc />
     public async Task<NeuronExperience> DemoteAsync(NeuronExperience experience, CancellationToken ct = default)
     {
-        if (experience.Tier == ExperienceTier.RawTrajectory)
-        {
-            throw new InvalidOperationException("Cannot demote a Tier 3 (RawTrajectory) entry — it is already the lowest tier.");
-        }
+        MGuard.State(experience.Tier != ExperienceTier.RawTrajectory,
+            "Cannot demote a Tier 3 (RawTrajectory) entry — it is already the lowest tier.");
 
         var targetTier = (ExperienceTier)((int)experience.Tier + 1);
         NeuronExperience demoted = experience with { Tier = targetTier, HitCount = 0 };
@@ -202,7 +197,10 @@ public sealed class QdrantExperienceStore : IExperienceStore
     {
         if (_brain is null)
         {
+            // MSTD0001 suppressed: public contract requires NotSupportedException for unsupported store operations.
+#pragma warning disable MSTD0001
             throw new NotSupportedException("IExperienceBrain not registered — call AddExperienceBrain() before using ClusterAndAbstractAsync");
+#pragma warning restore MSTD0001
         }
 
         NeuronExperience[] cluster = tier2Entries.ToArray();
@@ -222,7 +220,7 @@ public sealed class QdrantExperienceStore : IExperienceStore
         bool success = await StoreAsync(stored, ct);
         if (!success)
         {
-            throw new InvalidOperationException("Principle budget exceeded — source entries preserved");
+            throw new MInternalException("Principle budget exceeded — source entries preserved");
         }
 
         return stored;

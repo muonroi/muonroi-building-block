@@ -26,7 +26,7 @@ namespace Muonroi.Pdf.Tests.Performance;
 /// </summary>
 [Collection(PdfRenderCollection.Name)]
 [Trait("Category", "SlowIntegration")]
-public sealed class PerfGateTests
+public sealed class PerfGateTests(ITestOutputHelper output)
 {
     // GATE assertions — generous ceiling so CI/slow hardware does not flake (locked decision 2).
     // Dev-machine goal (PERF-01/PERF-02): cold <=300 ms, warm <=80 ms.
@@ -38,9 +38,7 @@ public sealed class PerfGateTests
     private const string ResourceName =
         "Muonroi.Pdf.Tests.TestResources.Perf.reference-50kb.html";
 
-    private readonly ITestOutputHelper _output;
-
-    public PerfGateTests(ITestOutputHelper output) => _output = output;
+    private readonly ITestOutputHelper _output = output;
 
     [Fact]
     public async Task PerfGate_50kbTemplate_ColdAndWarmWithinCeiling()

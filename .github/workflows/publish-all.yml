@@ -110,6 +110,8 @@ jobs:
           # ────────────────────────────────────────
           # OSS-only projects
           ALL_PROJECTS=(
+            # System-wide code-standards analyzer (MSTD0001/0002/0003) — build-time only, no runtime deps
+            "src/Muonroi.CodeStandards"
             "src/Muonroi.Core.Abstractions"
             "src/Muonroi.Core"
             "src/Muonroi.Governance.Abstractions"

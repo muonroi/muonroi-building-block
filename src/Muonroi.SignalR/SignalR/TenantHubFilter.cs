@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Muonroi.SignalR.SignalR;
 
 /// <summary>
 /// Hub filter that sets <see cref="TenantContext.CurrentTenantId"/> for each invocation.
 /// When multi-tenant is enabled, tenant id is required.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001", Justification = "SignalR boundary: HubException message is the contract surfaced to clients.")]
 public sealed class TenantHubFilter(ITenantIdResolver resolver, MTokenInfo tokenInfo, ILicenseGuard guard) : IHubFilter
 {
     /// <summary>

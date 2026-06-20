@@ -32,7 +32,9 @@ public class ConnectorDbContext(DbContextOptions<ConnectorDbContext> options) : 
             entity.Property(e => e.ConfigJson).HasColumnType("jsonb");
             entity.Property(e => e.CredentialId).HasMaxLength(64);
             entity.Property(e => e.Status).HasMaxLength(32).HasDefaultValue("active");
+            entity.Property(e => e.OwnerId).HasMaxLength(256);
             entity.HasIndex(e => new { e.TenantId, e.ConnectorType });
+            entity.HasIndex(e => new { e.TenantId, e.OwnerId });
 
             // Tenant query filter
             string? tenantId = TenantContext.CurrentTenantId;

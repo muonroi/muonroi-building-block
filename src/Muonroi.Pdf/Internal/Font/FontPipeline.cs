@@ -1,9 +1,14 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Muonroi.Pdf.Abstractions.Exceptions;
 using SixLabors.Fonts;
 
 namespace Muonroi.Pdf.Internal.Font;
 
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfInputLimitException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0003",
+    Justification = "Internal PDF pipeline helper is instantiated without DI; Debug.WriteLine is a DEBUG-only trace for unresolved fonts, compiled out in Release.")]
 internal sealed class FontPipeline
 {
     internal async Task<(SixLaborsTextMetrics TextMetrics, IReadOnlyDictionary<string, ReadOnlyMemory<byte>> FontBytesMap, FontCollection Collection)> ResolveAsync(

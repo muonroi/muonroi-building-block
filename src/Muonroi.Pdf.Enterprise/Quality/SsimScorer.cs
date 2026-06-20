@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Pdf.Enterprise.Quality;
 
@@ -24,6 +25,8 @@ namespace Muonroi.Pdf.Enterprise.Quality;
 /// Performance: pure-managed, single-threaded baseline.
 /// SIMD (System.Runtime.Intrinsics) and Parallel.For parallelism are deferred to Phase 9.x.
 /// </remarks>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "SsimScorer is an internal quality-scoring utility; ArgumentException here validates pixel-buffer dimensions which are structural pre-conditions, not business-logic errors.")]
 public static class SsimScorer
 {
     private const int WindowSize = 8;

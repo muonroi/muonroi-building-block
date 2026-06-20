@@ -34,12 +34,9 @@ namespace Muonroi.Pdf.Tests.Golden;
 /// </summary>
 [Collection(PdfRenderCollection.Name)]
 [Trait("Category", "RealTemplate")]
-public sealed class RealTemplateBaselineTests
+public sealed class RealTemplateBaselineTests(ITestOutputHelper output)
 {
-    private readonly ITestOutputHelper _out;
-
-    public RealTemplateBaselineTests(ITestOutputHelper output) => _out = output;
-
+    private readonly ITestOutputHelper _out = output;
     private const string TemplateDir = @"D:\Data\Template\Htmls\PreviewRegistion";
 
     // 4x4 8-bit RGB PNG — known-good (same one GoldenCorpus.cs:317 uses end-to-end through the
@@ -280,7 +277,9 @@ public sealed class RealTemplateBaselineTests
         try
         {
             using var pngStream = new MemoryStream();
+#pragma warning disable CA1416 // Platform-specific — only runs on supported test platforms (Windows/Linux/macOS)
             Conversion.SavePng(pngStream, pdfBytes, 0, password: null, options: new RenderOptions(Dpi: 200));
+#pragma warning restore CA1416
             await File.WriteAllBytesAsync(pngPath, pngStream.ToArray());
             _out.WriteLine($"RASTER: OK — {slug}  PNG {pngStream.Length} bytes at {pngPath}");
         }
@@ -346,13 +345,15 @@ public sealed class RealTemplateBaselineTests
         // G15b fix: float-epsilon recovers a row's worth of horizontal space → HSLA_E packs 2 pages.
         ["HSLA_E"] = 2,
         ["HSLA_F"] = 2,
-        ["HBND_F"] = 2,
+        // Phase 12 G8 fix (CurrentY=0): top margin no longer double-counted, so the form fits one
+        // page again — HBND_F and HBCX_F dropped from a spurious 2 (blank page 1) to 1.
+        ["HBND_F"] = 1,
         ["GTHA_F"] = 4,
         ["GTND_F"] = 4,
 
         // Multi-page due to table overflow (G14 fix).
         ["CHNG_F"] = 4,
-        ["HBCX_F"] = 2,
+        ["HBCX_F"] = 1,
 
         // Single-page templates (no table overflow with G14 fix).
         ["BNTT"]   = 1,

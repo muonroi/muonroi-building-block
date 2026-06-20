@@ -66,6 +66,9 @@ public sealed class RoutingScenarioExecutor(
         ScenarioResult result,
         CancellationToken ct)
     {
+        if (_webhookService is null)
+            return;
+
         try
         {
             WebhookPayload payload = new()
@@ -80,7 +83,7 @@ public sealed class RoutingScenarioExecutor(
                 ExecutedAt = result.ExecutedAt
             };
 
-            await _webhookService!.NotifyAsync(webhookUrl, payload, ct);
+            await _webhookService.NotifyAsync(webhookUrl, payload, ct);
 
             _logger?.Debug("Webhook notification sent to {WebhookUrl} for scenario {ScenarioId}",
                 webhookUrl, scenario.Id);

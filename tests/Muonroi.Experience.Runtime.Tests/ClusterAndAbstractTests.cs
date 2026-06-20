@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Moq;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Experience.Abstractions;
 using Muonroi.Experience.Runtime.File;
 using Xunit;
@@ -134,7 +135,7 @@ public sealed class ClusterAndAbstractTests : IDisposable
 
         Func<Task> act = async () => await store.ClusterAndAbstractAsync(cluster);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*budget exceeded*");
     }
 

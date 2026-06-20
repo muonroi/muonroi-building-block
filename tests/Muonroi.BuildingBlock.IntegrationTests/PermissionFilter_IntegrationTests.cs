@@ -215,7 +215,10 @@ public class PermissionFilter_IntegrationTests(CustomWebApplicationFactory facto
         // Assert
         firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         lastCachedResponse.Should().NotBeNull();
-        lastCachedResponse!.StatusCode.Should().Be(HttpStatusCode.OK);
+        if (lastCachedResponse is not null)
+        {
+            lastCachedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        }
 
         TimeSpan averageCachedDuration = TimeSpan.FromTicks((long)cachedDurations.Average(x => x.Ticks));
         averageCachedDuration.Should().BeLessThanOrEqualTo(firstRequestDuration + TimeSpan.FromMilliseconds(50));

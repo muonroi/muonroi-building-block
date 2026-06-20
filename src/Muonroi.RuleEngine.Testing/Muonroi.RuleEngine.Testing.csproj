@@ -16,6 +16,7 @@
     <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5100</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />

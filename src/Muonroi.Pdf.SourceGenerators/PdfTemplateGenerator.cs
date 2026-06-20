@@ -39,12 +39,17 @@ namespace Muonroi.Pdf.Abstractions
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false, AllowMultiple = false)]
     public sealed class PdfTemplateAttribute : Attribute
     {
+        /// <summary>Initializes a new instance of <see cref=""PdfTemplateAttribute""/>.</summary>
+        /// <param name=""templateId"">Unique identifier for the PDF template.</param>
+        /// <param name=""templateResourceName"">Optional embedded-resource name of the HTML template file.</param>
         public PdfTemplateAttribute(string templateId, string? templateResourceName = null)
         {
             TemplateId = templateId;
             TemplateResourceName = templateResourceName;
         }
+        /// <summary>Gets the unique identifier for this PDF template.</summary>
         public string TemplateId { get; }
+        /// <summary>Gets the optional embedded-resource name of the HTML template file.</summary>
         public string? TemplateResourceName { get; }
     }
 }

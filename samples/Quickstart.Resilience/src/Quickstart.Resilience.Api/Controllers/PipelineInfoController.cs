@@ -1,5 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using Polly;
+
+
+
+
+
+
 
 namespace Quickstart.Resilience.Api.Controllers;
 
@@ -37,7 +41,7 @@ public sealed class PipelineInfoController(
         {
             note = "Polly does not expose its internal strategy graph at runtime. " +
                    "The settings below are the values configured in Program.cs and AddMuonroiResilience().",
-            pipelines = new[]
+            pipelines = new object[]
             {
                 new
                 {
@@ -101,7 +105,7 @@ public sealed class PipelineInfoController(
             metrics = new
             {
                 meterName = "Muonroi.Ecosystem.Core",
-                counters = new[]
+                counters = new object[]
                 {
                     new
                     {

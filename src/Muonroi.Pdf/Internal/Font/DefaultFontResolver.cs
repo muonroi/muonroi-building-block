@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.Pdf.Internal.Font;
 
@@ -21,7 +22,7 @@ internal sealed class DefaultFontResolver : IFontResolver
     // ── key: "{family}|{weight}|{style}" (OrdinalIgnoreCase family) → Lazy file load ──
     private readonly List<(string Family, int Weight, FontStyle Style, Lazy<ReadOnlyMemory<byte>?> Bytes)> _registry;
     private readonly PdfFontResolverConfig _config;
-    private readonly ILogger<DefaultFontResolver> _logger;
+    private readonly IMLog<DefaultFontResolver> _logger;
 
     // De-duplicate file reads: multiple entries can reference the same TTF path.
     private readonly ConcurrentDictionary<string, Lazy<ReadOnlyMemory<byte>?>> _fileCache =
@@ -30,7 +31,7 @@ internal sealed class DefaultFontResolver : IFontResolver
     public DefaultFontResolver(
         IOptions<PdfConfigs> options,
         IHostEnvironment hostEnvironment,
-        ILogger<DefaultFontResolver> logger)
+        IMLog<DefaultFontResolver> logger)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(hostEnvironment);

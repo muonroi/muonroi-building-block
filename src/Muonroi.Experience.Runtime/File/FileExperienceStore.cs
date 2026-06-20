@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Experience.Abstractions;
 using Muonroi.Experience.Runtime.Internal;
 using Muonroi.Logging.Abstractions;
@@ -116,10 +118,8 @@ public sealed class FileExperienceStore : IExperienceStore
     /// <inheritdoc />
     public async Task<NeuronExperience> PromoteAsync(NeuronExperience experience, CancellationToken ct = default)
     {
-        if (experience.Tier == ExperienceTier.Principle)
-        {
-            throw new InvalidOperationException("Cannot promote a Tier 0 (Principle) entry — it is already the highest tier.");
-        }
+        MGuard.State(experience.Tier != ExperienceTier.Principle,
+            "Cannot promote a Tier 0 (Principle) entry — it is already the highest tier.");
 
         var targetTier = (ExperienceTier)((int)experience.Tier - 1);
         NeuronExperience promoted = experience with { Tier = targetTier };
@@ -158,10 +158,8 @@ public sealed class FileExperienceStore : IExperienceStore
     /// <inheritdoc />
     public async Task<NeuronExperience> DemoteAsync(NeuronExperience experience, CancellationToken ct = default)
     {
-        if (experience.Tier == ExperienceTier.RawTrajectory)
-        {
-            throw new InvalidOperationException("Cannot demote a Tier 3 (RawTrajectory) entry — it is already the lowest tier.");
-        }
+        MGuard.State(experience.Tier != ExperienceTier.RawTrajectory,
+            "Cannot demote a Tier 3 (RawTrajectory) entry — it is already the lowest tier.");
 
         var targetTier = (ExperienceTier)((int)experience.Tier + 1);
         NeuronExperience demoted = experience with { Tier = targetTier, HitCount = 0 };
@@ -201,7 +199,10 @@ public sealed class FileExperienceStore : IExperienceStore
     {
         if (_brain is null)
         {
+            // MSTD0001 suppressed: public contract requires NotSupportedException for unsupported store operations.
+#pragma warning disable MSTD0001
             throw new NotSupportedException("IExperienceBrain not registered — call AddExperienceBrain() before using ClusterAndAbstractAsync");
+#pragma warning restore MSTD0001
         }
 
         NeuronExperience[] cluster = tier2Entries.ToArray();
@@ -221,7 +222,7 @@ public sealed class FileExperienceStore : IExperienceStore
         bool success = await StoreAsync(stored, ct);
         if (!success)
         {
-            throw new InvalidOperationException("Principle budget exceeded — source entries preserved");
+            throw new MInternalException("Principle budget exceeded — source entries preserved");
         }
 
         return stored;
@@ -293,7 +294,7 @@ public sealed class FileExperienceStore : IExperienceStore
             ExperienceTier.Behavioral => "behavioral.json",
             ExperienceTier.SelfQA => "selfqa.json",
             ExperienceTier.RawTrajectory => "raw.json",
-            _ => throw new ArgumentOutOfRangeException(nameof(tier), tier, $"Unknown ExperienceTier: {tier}")
+            _ => throw new MArgumentException(nameof(tier), $"Unknown ExperienceTier: {tier}")
         });
 
     private async Task<List<NeuronExperience>> LoadTierAsync(ExperienceTier tier, CancellationToken ct)

@@ -1,11 +1,13 @@
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.CEP.Builder;
 
 /// <summary>
 /// Entry point for building CEP configurations and runtime windows.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "CEP configuration builder uses null-forgiving on values validated non-null by the fluent builder state machine.")]
 public static class CepWindowBuilder
 {
     /// <summary>
@@ -185,6 +187,7 @@ public sealed class CepConfigBuilder(string name)
 /// Fluent builder for a runtime CEP window.
 /// </summary>
 /// <param name="config">Configuration to bind.</param>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Key selector is guaranteed non-null by MGuard.State precondition check immediately before access.")]
 public sealed class CepWindowRuntimeBuilder<TPayload>(CepConfig config)
 {
     private readonly CepConfig _config = MGuard.NotNull(config);

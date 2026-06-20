@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Muonroi.Pdf.Abstractions.Exceptions;
 
@@ -22,6 +23,8 @@ internal sealed record FontSubsetResult(
     IReadOnlyList<ushort> SortedGids,
     IReadOnlyDictionary<int, ushort> CpToNewGid);
 
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfFormatException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
 internal sealed class TrueTypeFontSubsetter
 {
     private const uint SfntVersionTTF  = 0x00010000u;

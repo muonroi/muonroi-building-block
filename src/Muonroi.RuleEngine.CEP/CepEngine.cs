@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.CEP.Observability;
@@ -10,6 +11,7 @@ namespace Muonroi.RuleEngine.CEP;
 /// Events are correlated using a key.
 /// </summary>
 /// <typeparam name="T">Payload type.</typeparam>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "CepEvent comparisons use null-forgiving on values that are already sorted/filtered non-null by the CEP window logic.")]
 public sealed class CepEngine<T>
 {
     private readonly TimeSpan _ttl;

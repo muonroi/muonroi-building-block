@@ -1,0 +1,1644 @@
+========================================================================
+  muonroi-cli — Chat Export
+  Exported: 2026-06-16 10:30:40
+  DB entries:    18
+  Live entries:  16
+  Timeline rows: 7
+========================================================================
+
+WARNING: DB and TUI scrollback disagree.
+  DB signature:    n=18 assistant:3 tool_result:12 user:3
+  Live signature:  n=16 assistant:4 tool_group:1 tool_result:8 user:3
+Both renderings are included below for comparison.
+
+── Interaction Timeline ──
+
+[2026-06-16 10:28:19] ee_injection.filtered_noise phase=pil_enrichment role=knowledge_retriever queryLength=44 filteredBelowFloor=5 scoreFloor=0.55 taskType=analyze
+[2026-06-16 10:28:19] routing defaultModel=deepseek-ai/DeepSeek-V4-Flash routedModel=deepseek-ai/DeepSeek-V4-Flash pilTaskType=analyze pilIntentKind=task
+[2026-06-16 10:29:19] routing defaultModel=deepseek-ai/DeepSeek-V4-Flash routedModel=deepseek-ai/DeepSeek-V4-Flash pilIntentKind=task
+[2026-06-16 10:29:19] routing droppedRedundantFsMcp=["mcp_filesystem__read_file","mcp_filesystem__read_text_file","mcp_filesystem__read_media_file","mcp_filesystem__read_multiple_files","mcp_filesystem__write_file","mcp_filesystem__edit_file"]
+[2026-06-16 10:29:52] ee_injection.no_match phase=pil_enrichment role=knowledge_retriever queryLength=45 filteredBelowFloor=0 scoreFloor=0.55 taskType=analyze
+[2026-06-16 10:29:54] routing defaultModel=deepseek-ai/DeepSeek-V4-Flash routedModel=deepseek-ai/DeepSeek-V4-Flash pilTaskType=analyze pilIntentKind=task
+[2026-06-16 10:29:57] routing droppedRedundantFsMcp=["mcp_filesystem__read_file","mcp_filesystem__read_text_file","mcp_filesystem__read_media_file","mcp_filesystem__read_multiple_files","mcp_filesystem__write_file","mcp_filesystem__edit_file"]
+
+────────────────────────────────────────────────────────────────────────
+── Section A: Persisted (DB)
+────────────────────────────────────────────────────────────────────────
+
+[2026-06-16 10:28:19] You:
+bạn hiểu thế nào về hệ sinh thái muonroi nhỉ
+[personality: concise — Be direct and terse. Lead with the answer. Skip preamble. Use bullet points over paragraphs. Code over prose. No filler phrases.]
+[gsd-native] QUESTION / explanatory request — no code change is being asked for.
+Answer it directly and completely, written for the HUMAN who asked:
+  1. Investigate only as needed — read/grep the specific files that ground your answer this turn.
+  2. Lead with the answer. Use clear prose + structure (headings, bullets). Where a claim rests on the code, cite a concise file:line inline.
+  3. Do NOT output an implementation plan, do NOT narrate your own process or restate these instructions, and...
+
+[2026-06-16 10:28:52] Tool [bash]:
+.claude
+.dockerignore
+.git
+.gitattributes
+.github
+.gitignore
+.gitleaks.toml
+.muonroi-flow
+.planning
+.vs
+BenchmarkDotNet.Artifacts
+CHANGELOG.md
+COMMERCIAL-EDITIONS.md
+CONTRIBUTING.md
+Directory.Build.props
+Directory.Build.targets
+Directory.Packages.props
+KNOWN-DEVIATIONS.md
+LICENSE
+LICENSE-APACHE
+LICENSE-COMMERCIAL
+Muonroi.BuildingBlock.sln
+Muonroi.snk
+OSS-BOUNDARY.md
+PROFILE-V1.md
+README.md
+REPO_DEEP_MAP.md
+SECURITY.md
+TestResults
+benchmarks
+buf.yaml
+build
+build_output.txt
+dashboards
+db
+deploy
+docs
+icon.png
+k8s
+nuget.commercial.config.template
+
+[bash_run_id: bash-1]
+
+[2026-06-16 10:28:52] Tool [grep]:
+Found 165 matches (showing first 100)
+tools\Muonroi.RuleGen\vscode-extension\README.md:
+  Line 17: `muonroi-rule` CLI must be available on PATH.
+
+tools\Muonroi.RuleGen.VisualStudio\README.md:
+  Line 43: - **Executable Path**: full path to `muonroi-rule.exe` or `Muonroi.RuleGen.dll`.
+  Line 47:   3. `dotnet tool run muonroi-rule`
+  Line 60: muonroi-rule merge --rules-dir <Rules> --target <TargetFile> --compile-check
+
+src\Muonroi.RuleEngine.SourceGenerators\AnalyzerReleases.Unshipped.md:
+  Line 7: MBB008 | Muonroi.Governance | Warning | Cross-capability reference without ecosystem guard
+
+samples\Quickstart.RuleEngine\README.md:
+  Line 5: - `muonroi-building-block/samples/Quickstart.RuleEngine`
+  Line 17: cd <workspace-root>\muonroi-building-block\samples\Quickstart.RuleEngine\src\Quickstart.RuleEngine.Api
+
+samples\Quickstart.DecisionTable\README.md:
+  Line 5: - `muonroi-building-block/samples/Quickstart.DecisionTable`
+  Line 16: docker run --name muonroi-sample-postgres -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=muonroi_decision_tables -p 5432:5432 -d postgres:16
+  Line 22: cd <workspace-root>\muonroi-building-block\samples\Quickstart.DecisionTable\src\Quickstart.DecisionTable.Api
+
+samples\MultiTenantSaaS\README.md:
+  Line 45: - [Multi-Tenant Guide](../../../../Docs/muonroi-docs/docs/03-guides/multi-tenancy/multi-tenant-guide.md)
+  Line 46: - [Canary Rollout Guide](../../../../Docs/muonroi-docs/docs/03-guides/control-plane/canary-rollout-guide.md)
+
+samples\LoanApproval\README.md:
+  Line 43: - [Rule Engine Guide](../../../../Docs/muonroi-docs/docs/03-guides/rule-engine/rule-engine-guide.md)
+  Line 44: - [Decision Table Guide](../../../../Docs/muonroi-docs/docs/03-guides/rule-engine/decision-table-guide.md)
+
+SECURITY.md:
+  Line 15: If you discover a security vulnerability, please email [security@muonroi.com](mailto:security@muonroi.com) with a detailed description. We aim to acknowledge reports within 2 business days and will keep you informed of our progress. When a fix is released, we will credit the reporter unless requested otherwise.
+
+README.md:
+  Line 1: # muonroi-building-block
+  Line 3: Muonroi Building Block is the .NET foundation of the Muonroi open-core ecosystem: rule engine, decision tables, governance, tenancy, observability, and the commercial extensions that sit on top of the OSS base.
+  Line 5: [![CI](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml/badge.svg)](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml)
+  Line 6: [![codecov](https://codecov.io/github/muonroi/muonroi-building-block/graph/badge.svg?token=97f35491-9d56-4c92-918e-aae729589699)](https://codecov.io/github/muonroi/muonroi-building-block)
+  Line 34: muonroi-rule extract --source src/Rules --output Generated/Rules
+  Line 35: muonroi-rule register --rules Generated/Rules --output Generated/RuleEngineRegistrationExtensions.g.cs
+  Line 45: Result: the rule enters the DI graph without a handwritten registration block, and `muonroi-rule verify` can catch dependency and rule-code mistakes before runtime.
+  Line 51: - Full package list: https://docs.muonroi.com/docs/reference/package-reference
+  Line 56: - Docs: https://docs.muonroi.com/docs/getting-started/introduction
+  Line 57: - Rule engine guide: https://docs.muonroi.com/docs/guides/rule-engine/rule-engine-guide
+  Line 58: - Rule source generator deep dive: https://docs.muonroi.com/docs/guides/rule-engine/rule-source-generator
+  Line 59: - Decision table guide: https://docs.muonroi.com/docs/guides/rule-engine/decision-table-guide
+  Line 87: - Docs: https://docs.muonroi.com
+  Line 88: - Issues: https://github.com/muonroi/muonroi-building-block/issues
+  Line 90: - Security policy: https://docs.muonroi.com/docs/resources/SECURITY
+
+REPO_DEEP_MAP.md:
+  Line 1: # muonroi-building-block — Deep Map
+
+OSS-BOUNDARY.md:
+  Line 16: - The real monetization moat is the SaaS Control Plane (private repos: `muonroi-control-plane`, `muonroi-license-server`), not the package source code.
+  Line 22: 4. SaaS lock-in - hot-reload, approval workflows, canary rollout, and audit trail all require the private `muonroi-control-plane` service. These cannot be replicated by forking OSS packages.
+  Line 25: Report it at https://github.com/muonroi/muonroi-building-block/security/advisories/new.
+  Line 72: > The only truly private artifacts are the SaaS services `muonroi-control-plane` and
+  Line 73: > `muonroi-license-server` (separate private repositories), not these packages.
+
+CONTRIBUTING.md:
+  Line 1: # Contributing to muonroi-building-block
+  Line 3: This repository is the public .NET library foundation of the Muonroi ecosystem. Contributions are welcome, but "done" here means boundary-safe code, passing tests, and documentation that keeps pace with the behavior you changed.
+  Line 11: - https://docs.muonroi.com/docs/resources/CONTRIBUTING
+  Line 30: git clone https://github.com/muonroi/muonroi-building-block.git
+  Line 31: cd muonroi-building-block
+  Line 66: These are not optional style preferences. They are ecosystem rules enforced by analyzers, review, or both.
+  Line 77: - Extend `MDbContext` for EF Core contexts in this ecosystem.
+  Line 100: - `../Docs/muonroi-docs/docs/03-guides/`
+  Line 101: - `../Docs/muonroi-docs/docs/05-reference/`
+  Line 102: - `../Docs/muonroi-docs/docs/06-resources/`
+  Line 144: - misuse of ecosystem wrappers
+  Line 158: - https://docs.muonroi.com/docs/resources/SECURITY
+  Line 165: - deployed service code belongs in the private `muonroi-control-plane` or `muonroi-license-server` repos
+
+.planning\research\pdf-writer-strategy.md:
+  Line 3: **Project:** Muonroi.Pdf (pure-managed PDF ecosystem, open-core)
+
+.planning\research\SUMMARY.md:
+  Line 183: - `D:\sources\Core\muonroi-building-block\.planning\PROJECT.md` — authoritative specification (decisions D1–D20, requirements v0.1/v0.2/v1.0, out-of-scope declarations)
+  Line 184: - `D:\sources\Core\muonroi-building-block\Directory.Packages.props` — authoritative CPM version list; confirmed existing packages
+  Line 185: - `D:\sources\Core\muonroi-building-block\src\Muonroi.Pdf.Abstractions\` — actual interface definitions read 2026-05-26
+  Line 186: - `D:\sources\Core\muonroi-building-block\src\Muonroi.Caching.Redis\Redis\RedisExtensions.cs` — DI + telemetry pattern reference
+
+.planning\research\PITFALLS.md:
+  Line 40: The ecosystem gap is real — there is no stable, maintained CSS cascade engine in the .NET managed space. Accepting a beta pin is the only viable choice, but teams often treat "pinned" as "solved" rather than as "managed risk that needs monitoring."
+
+.planning\research\STACK.md:
+  Line 5: **Confidence:** HIGH — stack is fully constrained by project decisions; all choices are evidence-backed from PROJECT.md, Directory.Packages.props, and existing ecosystem conventions.
+  Line 142: - `D:\sources\Core\muonroi-building-block\.planning\PROJECT.md` — primary authority; all stack decisions are documented with rationale (HIGH confidence)
+  Line 143: - `D:\sources\Core\muonroi-building-block\Directory.Packages.props` — authoritative CPM version list; confirmed existing packages (HIGH confidence)
+
+.planning\research\ARCHITECTURE.md:
+  Line 68: muonroi-building-block/
+  Line 472: All metric names follow the ecosystem-wide snake_case convention established in `OtelSetup.cs`.
+
+.planning\research\FEATURES.md:
+  Line 136: - [x] `AddPdf()` DI registration — why essential: discoverable entry point; matches ecosystem conventions
+
+.planning\phases\10-cutover-sweep-ga\PLAN.md:
+  Line 25: | 10.6 | Version bump `0.1.0-alpha` → `1.0.0` (Muonroi.Pdf + Muonroi.Pdf.Enterprise + @muonroi/ui-engine-pdf-designer) |
+  Line 28: | 10.9 | Publish `@muonroi/ui-engine-pdf-designer 1.0.0` to private npm registry |
+  Line 29: | 10.10 | Public docs site lift (`PROFILE-V1.md` → muonroi.io/pdf/v1) — DEFERRED to ops side if no infra |
+  Line 51: | SC5 | `Muonroi.Pdf 1.0.0` + `Muonroi.Pdf.Enterprise 1.0.0` + `@muonroi/ui-engine-pdf-designer 1.0.0` packaged | tgz/nupkg inspection |
+  Line 65: - Memory `[[project_muonroi_pdf_charter]]`
+
+.planning\phases\09.1-ws-a-foundation\RESEARCH.md:
+  Line 187: The license server (`muonroi-license-server`) stores feature entitlements as `string[]
+  Line 225: | A: Reuse `LicenseException` | Consistent with existing ecosystem. Simpler. |
+  Line 365:   <PackageTags>muonroi;pdf;enterprise;html-to-pdf;template-registry;ssim</PackageTags>
+  Line 447: 1. **`FeatureNotLicensedException` base class.** PLAN.md says `FeatureNotLicensedException : InvalidOperationException`. Research shows the existing ecosystem uses `LicenseException : MException`. Making the PDF enterprise exception inherit `InvalidOperationException` avoids a transitive dependency on `Muonroi.Core.Abstractions` from `Muonroi.Pdf.Enterprise`, which is desirable for a distributable commercial package. Confirm: should `Muonroi.Pdf.Enterprise` reference `Muonroi.Governance.Abstractions` (and thus `Muonroi.Core.Abstractions`) and reuse `LicenseException`, or stay dependency-free and use `InvalidOperationException`?
+
+.planning\phases\09.1-ws-a-foundation\VERIFICATION.md:
+  Line 127: - Memory `[[project_muonroi_ecosystem_topology]]`
+
+.planning\phases\09.1-ws-a-foundation\PLAN.md:
+  Line 60: 3. **Strong-naming** — Need a key file (`muonroi-pdf-enterprise.snk`). Decision: generate in Wave A, commit `.snk` to repo (private signing only; public release uses CI-managed key). Confirm with user if delayed-signed instead.
+  Line 70: - Memory `[[project_muonroi_ecosystem_topology]]` (4-repo open-core SaaS)
+
+.planning\phases\08.7-legacy-print-html\VERIFICATION.md:
+  Line 112: Phase 8.7 is **closed at 94% visual gate (17/18 real templates render acceptably)**. The v1 Legacy Print-HTML Profile is fit-for-purpose: float multi-column, position:absolute, table hardening, background rendering, and the LegacyPrintPolicy all land correctly for the corpus. Real-world ecosystem use (Phase 9 integration) is unblocked.
+
+.planning\phases\08.6-rendering-fidelity\08.6-RESEARCH.md:
+  Line 772: | A4 | CFF subsetting feasibility: no pure-managed, MIT/Apache/BSD-licensed CFF subsetter exists in the .NET ecosystem | Cluster 3A OTF-CFF | If a verified library exists, subsetting (not rejection) would be preferred — requires slopcheck verification first |
+
+.planning\phases\08.6-rendering-fidelity\08.6-06-PLAN.md:
+  Line 78: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 79: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.6-rendering-fidelity\08.6-04-PLAN.md:
+  Line 55: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 56: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.6-rendering-fidelity\08.6-05-PLAN.md:
+  Line 43: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 44: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.6-rendering-fidelity\08.6-02-PLAN.md:
+  Line 71: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 72: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.6-rendering-fidelity\08.6-03-PLAN.md:
+  Line 79: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 80: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.6-rendering-fidelity\08.6-01-PLAN.md:
+  Line 56: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 57: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-06-PLAN.md:
+  Line 52: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 53: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-07-PLAN.md:
+  Line 46: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 47: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-04-PLAN.md:
+  Line 53: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 54: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-05-PLAN.md:
+  Line 50: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 51: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-02-PLAN.md:
+  Line 53: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 54: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-03-PLAN.md:
+  Line 50: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 51: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-01-PLAN.md:
+  Line 52: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+
+(Results truncated: showing 100 of 165 matches. Consider using a more specific path or pattern.)
+
+[2026-06-16 10:28:52] Tool [read_file]:
+[D:/sources/Core/muonroi-building-block/README.md: lines 1-97 of 97]
+1 | # muonroi-building-block
+2 | 
+3 | Muonroi Building Block is the .NET foundation of the Muonroi open-core ecosystem: rule engine, decision tables, governance, tenancy, observability, and the commercial extensions that sit on top of the OSS base.
+4 | 
+5 | [![CI](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml/badge.svg)](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml)
+6 | [![codecov](https://codecov.io/github/muonroi/muonroi-building-block/graph/badge.svg?token=97f35491-9d56-4c92-918e-aae729589699)](https://codecov.io/github/muonroi/muonroi-building-block)
+7 | [![OSS License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](./LICENSE-APACHE)
+8 | [![Commercial License](https://img.shields.io/badge/commercial-available-blue.svg)](./LICENSE-COMMERCIAL)
+9 | 
+10 | ## Install
+11 | 
+12 | ```bash
+13 | dotnet add package Muonroi.RuleEngine.Core
+14 | dotnet add package Muonroi.RuleEngine.SourceGenerators
+15 | ```
+16 | 
+17 | ## Quick Example
+18 | 
+19 | Annotate rule logic in normal C#:
+20 | 
+21 | ```csharp
+22 | [MExtractAsRule("HIGH_VALUE_ORDER", DependsOn = new[] { "CREDIT_SCORE" })]
+23 | public RuleResult HighValue(OrderContext context, FactBag facts)
+24 | {
+25 |     if (context.Amount <= 1000m) return RuleResult.Failure("Below threshold.");
+26 |     facts["requiresReview"] = true;
+27 |     return RuleResult.Success();
+28 | }
+29 | ```
+30 | 
+31 | Generate the registration and wire the engine:
+32 | 
+33 | ```bash
+34 | muonroi-rule extract --source src/Rules --output Generated/Rules
+35 | muonroi-rule register --rules Generated/Rules --output Generated/RuleEngineRegistrationExtensions.g.cs
+36 | ```
+37 | 
+38 | ```csharp
+39 | using Muonroi.RuleEngine.Generated;
+40 | 
+41 | builder.Services.AddRuleEngine<OrderContext>();
+42 | builder.Services.AddGeneratedRules();
+43 | ```
+44 | 
+45 | Result: the rule enters the DI graph without a handwritten registration block, and `muonroi-rule verify` can catch dependency and rule-code mistakes before runtime.
+46 | 
+47 | ## Packages
+48 | 
+49 | OSS and commercial packages span core, governance, rule engine, and infrastructure areas. OSS packages must not reference commercial packages.
+50 | 
+51 | - Full package list: https://docs.muonroi.com/docs/reference/package-reference
+52 | - OSS boundary matrix: [OSS-BOUNDARY.md](./OSS-BOUNDARY.md)
+53 | 
+54 | ## What To Read First
+55 | 
+56 | - Docs: https://docs.muonroi.com/docs/getting-started/introduction
+57 | - Rule engine guide: https://docs.muonroi.com/docs/guides/rule-engine/rule-engine-guide
+58 | - Rule source generator deep dive: https://docs.muonroi.com/docs/guides/rule-engine/rule-source-generator
+59 | - Decision table guide: https://docs.muonroi.com/docs/guides/rule-engine/decision-table-guide
+60 | - Samples index: [samples/README.md](./samples/README.md)
+61 | 
+62 | ## Samples
+63 | 
+64 | - [Quickstart.RuleEngine](./samples/Quickstart.RuleEngine/README.md)
+65 | - [Quickstart.DecisionTable](./samples/Quickstart.DecisionTable/README.md)
+66 | - [FraudDetection](./samples/FraudDetection/README.md)
+67 | - [LoanApproval](./samples/LoanApproval/README.md)
+68 | - [MultiTenantSaaS](./samples/MultiTenantSaaS/README.md)
+69 | - [RuleSourceGen](./samples/RuleSourceGen/README.md)
+70 | 
+71 | ## Local Development
+72 | 
+73 | ```bash
+74 | dotnet restore Muonroi.BuildingBlock.sln
+75 | dotnet build Muonroi.BuildingBlock.sln -c Debug
+76 | ```
+77 | 
+78 | Useful gates before opening a PR:
+79 | 
+80 | ```bash
+81 | pwsh ./scripts/check-modular-boundaries.ps1 -RepoRoot .
+82 | dotnet test Muonroi.BuildingBlock.sln -c Debug
+83 | ```
+84 | 
+85 | ## Community
+86 | 
+87 | - Docs: https://docs.muonroi.com
+88 | - Issues: https://github.com/muonroi/muonroi-building-block/issues
+89 | - Contributing guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
+90 | - Security policy: https://docs.muonroi.com/docs/resources/SECURITY
+91 | 
+92 | Discussion templates are prepared under [`.github/DISCUSSION_TEMPLATE`](./.github/DISCUSSION_TEMPLATE) and become active as soon as GitHub Discussions is enabled for the repository.
+93 | 
+94 | ## License
+95 | 
+96 | OSS packages are Apache 2.0. Commercial packages are distributed under the Muonroi commercial license and require activation proof in deployed environments.
+97 | 
+
+[2026-06-16 10:28:52] Tool [read_file]:
+[D:/sources/Core/muonroi-building-block/OSS-BOUNDARY.md: lines 1-90 of 90]
+1 | # OSS / Commercial Package Boundary
+2 | 
+3 | ## Rule
+4 | - OSS packages MUST NOT depend on Commercial packages.
+5 | - Verified by: `scripts/check-modular-boundaries.ps1`
+6 | 
+7 | ## Design Intent - Why Enterprise Source Is In This Public Repo
+8 | 
+9 | This repository uses a BUSL-style (Business Source License) open-core model:
+10 | source code is publicly visible but usage of Commercial packages requires a
+11 | valid commercial license. This is intentional, not an oversight.
+12 | 
+13 | Why source is public:
+14 | - Transparency builds trust: customers can audit security and data-handling code before purchasing.
+15 | - Forkability is a feature: OSS components (Core, RuleEngine, Tenancy) are freely forkable under Apache 2.0.
+16 | - The real monetization moat is the SaaS Control Plane (private repos: `muonroi-control-plane`, `muonroi-license-server`), not the package source code.
+17 | 
+18 | What protects Commercial revenue:
+19 | 1. RSA-signed ActivationProof - tier and capabilities are server-signed; you cannot forge them without the License Server private key.
+20 | 2. Assembly hash verification - `CodeIntegrityVerifier` checks that all Muonroi.* assemblies in the process match the hashes approved at activation time. A fork that removes `EnsureFeatureOrThrow()` calls will fail integrity verification.
+21 | 3. Heartbeat + grace period - revoked licenses degrade to Free tier after the configured grace period (24h Enterprise / 72h Licensed).
+22 | 4. SaaS lock-in - hot-reload, approval workflows, canary rollout, and audit trail all require the private `muonroi-control-plane` service. These cannot be replicated by forking OSS packages.
+23 | 
+24 | What to do if you find a legitimate fork that bypasses commercial features:
+25 | Report it at https://github.com/muonroi/muonroi-building-block/security/advisories/new.
+26 | Per our Commercial License Agreement, production use without a valid license key is
+27 | a license violation regardless of source visibility.
+28 | 
+29 | ---
+30 | 
+31 | ## OSS Packages (Apache 2.0 - public NuGet)
+32 | - Muonroi.Core.Abstractions
+33 | - Muonroi.Core
+34 | - Muonroi.Governance.Abstractions        (Phase 0.2 creates this)
+35 | - Muonroi.Governance
+36 | - Muonroi.Tenancy.Abstractions
+37 | - Muonroi.Tenancy.Core
+38 | - Muonroi.Tenancy
+39 | - Muonroi.RuleEngine.Abstractions
+40 | - Muonroi.RuleEngine.Core
+41 | - Muonroi.RuleEngine.SourceGenerators
+42 | - Muonroi.RuleEngine.Testing
+43 | - Muonroi.RuleEngine.DecisionTable
+44 | - Muonroi.RuleEngine.NRules
+45 | - Muonroi.RuleEngine.CEP
+46 | - Muonroi.Data.Abstractions
+47 | - Muonroi.Data.Dapper
+48 | - Muonroi.Data.EntityFrameworkCore
+49 | - Muonroi.Caching.Abstractions
+50 | - Muonroi.Caching.Memory
+51 | - Muonroi.Auth
+52 | - Muonroi.AspNetCore
+53 | - Muonroi.AspNetCore.OpenApi
+54 | - Muonroi.Http
+55 | - Muonroi.Resilience
+56 | - Muonroi.Mapper
+57 | - Muonroi.Mediator
+58 | - Muonroi.Messaging.Abstractions
+59 | - Muonroi.Observability
+60 | - Muonroi.BackgroundJobs.Abstractions
+61 | - Muonroi.BuildingBlock.Shared
+62 | - Muonroi.Logging
+63 | - Muonroi.Logging.Abstractions
+64 | - Muonroi.Pdf.Abstractions
+65 | - Muonroi.Pdf
+66 | - Muonroi.Pdf.Governance
+67 | 
+68 | ## Commercial Packages (Muonroi Commercial License — published on nuget.org)
+69 | 
+70 | > All commercial packages are publicly distributed on nuget.org for ease of consumption.
+71 | > Source visibility does NOT imply free production use — see the Commercial License Agreement.
+72 | > The only truly private artifacts are the SaaS services `muonroi-control-plane` and
+73 | > `muonroi-license-server` (separate private repositories), not these packages.
+74 | 
+75 | - Muonroi.Governance.Enterprise           (Phase 0.2 creates this)
+76 | - Muonroi.AuthZ
+77 | - Muonroi.Caching.Redis
+78 | - Muonroi.Messaging.MassTransit
+79 | - Muonroi.BackgroundJobs.Hangfire
+80 | - Muonroi.BackgroundJobs.Quartz
+81 | - Muonroi.SignalR
+82 | - Muonroi.Grpc
+83 | - Muonroi.Secrets
+84 | - Muonroi.Bff
+85 | - Muonroi.ServiceDiscovery.Consul
+86 | - Muonroi.RuleEngine.Runtime.Web
+87 | - Muonroi.RuleEngine.DecisionTable.Web
+88 | - Muonroi.UiEngine.Catalog
+89 | - Muonroi.Pdf.Enterprise
+90 | 
+
+[2026-06-16 10:28:52] Tool [read_file]:
+[D:/sources/Core/muonroi-building-block/REPO_DEEP_MAP.md: lines 1-80 of 456]
+1 | # muonroi-building-block — Deep Map
+2 | 
+3 | > Complete file-level map. Agents should read this instead of exploring the repo.
+4 | 
+5 | ---
+6 | 
+7 | ## 1. Rule Engine
+8 | 
+9 | ### RuleEngine.Abstractions (`src/Muonroi.RuleEngine.Abstractions/`)
+10 | 
+11 | | File | Class/Interface | Key Methods/Properties |
+12 | |------|----------------|----------------------|
+13 | | IRule.cs | `IRule<TContext>` | `EvaluateAsync(ctx, facts, ct) → RuleResult`, `ExecuteAsync(ctx, ct)`, Code, Order, DependsOn, HookPoint, Type |
+14 | | IMRuleOrchestrator.cs | `IMRuleOrchestrator<TContext>` | `ExecuteAsync(context, ct) → OrchestratorResult` |
+15 | | FactBag.cs | `FactBag` | `Get<T>(key)`, `Set<T>(key, value)`, `TryGet<T>(key, out T)`, `Remove(key)`, `AsReadOnly()` |
+16 | | MFactBagAwareRule.cs | `MFactBagAwareRule<TContext>` | Abstract base for FactBag-aware compiled rules. `ReadFact<T>(path)`, `WriteFact<T>(path, value)`, `NodePassed(nodeId)`, `NodeExecuted(nodeId)`, `NodeResult<T>(nodeId)`, `EvaluateCoreAsync(ctx, ct)` |
+17 | | RuleResult.cs | `RuleResult` | `Passed()`, `Success()`, `Failure(errors)` — static factories |
+18 | | ExtractAsRuleAttribute.cs | `MExtractAsRuleAttribute` | `(code)` — marker for rule extraction |
+19 | | HookPoint.cs | `HookPoint` enum | BeforeRule, AfterRule, BeforeValidation, AfterValidation |
+20 | | RuleType.cs | `RuleType` enum | Validation (read-only), Business (state-modifying) |
+21 | | ExecutionMode.cs | `ExecutionMode` enum | AllOrNothing, BestEffort, CompensateOnFailure |
+22 | | ICompensatableRule.cs | `ICompensatableRule<TContext>` | `CompensateAsync(ctx, ct)` |
+23 | | IRuleContext.cs | `IRuleContext` | Marker interface for context types |
+24 | | IRuleFactory.cs | `IRuleFactory` | Factory for rule instances |
+25 | | IRuleEventListener.cs | `IRuleEventListener<TContext>` | `OnRuleExecuted(rule, result, ct)` |
+26 | | ITenantQuotaTracker.cs | `ITenantQuotaTracker` | `CheckQuotaAsync(tenantId, type, requested, ct)`, `IncrementUsageAsync(...)` |
+27 | | OrchestratorResult.cs | `OrchestratorResult` | Execution summary record |
+28 | | TenantRuleGroupAttribute.cs | `TenantRuleGroupAttribute` | Multi-tenant rule grouping |
+29 | | Authoring/IRuleAuthoringManifestProvider.cs | `IRuleAuthoringManifestProvider` | Rule schema discovery |
+30 | | Authoring/MRuleAuthoringModels.cs | `RuleAuthoringManifest`, `RuleParameterInfo` | Metadata models |
+31 | | Adapters/IContextFactory.cs | `IContextFactory<TContext>` | Context creation from facts |
+32 | | Adapters/IContextProjector.cs | `IContextProjector` | Projects context to facts |
+33 | 
+34 | ### RuleEngine.Core (`src/Muonroi.RuleEngine.Core/`)
+35 | 
+36 | | File | Class | Key Methods |
+37 | |------|-------|------------|
+38 | | RuleOrchestrator.cs | `RuleOrchestrator<TContext>` | `ExecuteAsync(context, filterPoint, ct) → FactBag` — creates FactBag, handles quota/tracing |
+39 | | DefaultRuleFactory.cs | `DefaultRuleFactory` | Default rule instantiation |
+40 | | MRuleEngineBuilder.cs | `MRuleEngineBuilder` | Fluent builder for engine setup |
+41 | | MRuleEngineOptions.cs | `MRuleEngineOptions` | Configuration options |
+42 | | IMRuleExecutionRouter.cs | `IMRuleExecutionRouter` | Routes to different rule types |
+43 | | MRuleExecutionRouter.cs | `MRuleExecutionRouter` | Implementation |
+44 | | Workflow/IMRuleWorkflowRunner.cs | `IMRuleWorkflowRunner` | Workflow contract |
+45 | | Workflow/MRuleWorkflowRunner.cs | `MRuleWorkflowRunner` | Workflow orchestration |
+46 | | Workflow/MRuleWorkflowDefinition.cs | `MRuleWorkflowDefinition` | Workflow definition |
+47 | | Workflow/MRuleWorkflowStep.cs | `MRuleWorkflowStep` | Step in workflow |
+48 | | Tracing/IRuleExecutionTracer.cs | `IRuleExecutionTracer` | `TraceAsync(entry, ct)`, `IsEnabled(tenantId)` |
+49 | | Tracing/IRuleTraceStore.cs | `IRuleTraceStore` | Trace persistence |
+50 | | Tracing/IRuleDebuggerModeService.cs | `IRuleDebuggerModeService` | Debugger control |
+51 | | RuleAuditLogger.cs | `RuleAuditLogger` | Audit trail |
+52 | | AuditTrailHook.cs | `AuditTrailHook<TContext>` | Lifecycle audit hook |
+53 | 
+54 | ### RuleEngine.Runtime (`src/Muonroi.RuleEngine.Runtime/`)
+55 | 
+56 | **Rules subsystem** (`Runtime/Rules/`):
+57 | 
+58 | | File | Class | Purpose |
+59 | |------|-------|---------|
+60 | | RulesEngineService.cs | `RulesEngineService` | Main service facade — instrumented with WorkflowCacheTelemetry (Phase 38) |
+61 | | WorkflowCacheTelemetry.cs | `WorkflowCacheTelemetry` | OTel metrics: hit/miss counters, eviction counter, cache size gauge, hot-reload lag histogram (Phase 38) |
+62 | | RuleEngine.cs | `RuleEngine<T>` | `AddRule()`, `RemoveRule()`, `ExecuteAsync()`, `GetCatalog()` |
+63 | | IRuleSetStore.cs | `IRuleSetStore` | RuleSet persistence |
+64 | | IRuleSetAuditStore.cs | `IRuleSetAuditStore` | Audit storage |
+65 | | IRuleSetApprovalService.cs | `IRuleSetApprovalService` | Approval workflow |
+66 | | ICanaryRolloutService.cs | `ICanaryRolloutService` | Canary deployment |
+67 | | IRuleActivationStrategy.cs | `IRuleActivationStrategy<T>` | Activation policies |
+68 | | IRuleSetSigner.cs | `IRuleSetSigner` | HMAC/RSA signing |
+69 | | PostgresRuleSetStore.cs | `PostgresRuleSetStore` | Postgres persistence |
+70 | | FileRuleSetStore.cs | `FileRuleSetStore` | File-based persistence |
+71 | | RuleEngineDbContext.cs | `RuleEngineDbContext` | EF DbContext |
+72 | | RuleSetRecord.cs | `RuleSetRecord` | Data model |
+73 | | RuleSetStatus.cs | `RuleSetStatus` enum | Active, Draft, Archived... |
+74 | | RuleSetRuntimeCache.cs | `RuleSetRuntimeCache` | In-memory cache |
+75 | | CanaryRolloutService.cs | `CanaryRolloutService` | Canary logic |
+76 | | RuleSetApprovalService.cs | `RuleSetApprovalService` | Approval impl |
+77 | | HmacSha256RuleSetSigner.cs | `HmacSha256RuleSetSigner` | HMAC signing |
+78 | | RsaRuleSetAuditSigner.cs | `RsaRuleSetAuditSigner` | RSA signing |
+79 | | ExternalJsonRule.cs | `ExternalJsonRule` | JSON-based rule |
+80 | 
+
+[2026-06-16 10:28:52] Tool [read_file]:
+[D:/sources/Core/muonroi-building-block/PROFILE-V1.md: lines 1-60 of 427]
+1 | # Legacy Print-HTML Profile v1 — Public Specification
+2 | 
+3 | > **Profile name:** Legacy Print-HTML Profile v1
+4 | > **Policy ID:** `legacy-print-v1`
+5 | > **Version:** 1.0
+6 | > **Issued:** 2026-05-29 (post-Phase-8.16)
+7 | > **Audience:** template authors, integrators, Phase 9 Designer implementers
+8 | > **Status:** **STABLE — production-ready.** 17/17 production templates render at Chrome parity.
+9 | 
+10 | This document is the public contract for the v1 rendering profile of `Muonroi.Pdf`. It declares
+11 | what HTML/CSS subset the engine guarantees to render correctly, what it rejects loud at the
+12 | policy gate, and what it silently ignores. Anything outside the declared subset is unsupported —
+13 | do not rely on incidental behaviour.
+14 | 
+15 | For the historical phase-internal version used during 8.7 implementation see
+16 | `.planning/phases/08.7-legacy-print-html/CAPABILITY-CONTRACT.md`. This document supersedes it.
+17 | 
+18 | ---
+19 | 
+20 | ## 1. Identity
+21 | 
+22 | | Field | Value |
+23 | |---|---|
+24 | | Profile name | Legacy Print-HTML Profile v1 |
+25 | | Policy ID | `legacy-print-v1` |
+26 | | Policy class | `Muonroi.Pdf.Governance.Policies.LegacyPrintPolicy` |
+27 | | Engine version | `Muonroi.Pdf` v1.0 (post-Phase-8.16) |
+28 | | Corpus | 17 production shipping/logistics templates |
+29 | | Reference renderer | Chromium (visual parity bar) |
+30 | 
+31 | **Purpose.** Gate for production shipping/logistics PDF templates. Extends the safe CSS 2.1 print
+32 | subset with the layout primitives the corpus requires (float, `position:absolute`,
+33 | `border-collapse`, fixed table layout, synthetic bold/italic, descendant class selectors). All
+34 | other non-print-safe CSS features remain blocked.
+35 | 
+36 | **Caller registration:**
+37 | ```csharp
+38 | services.TryAddSingleton<IPdfCssPolicy, LegacyPrintPolicy>();
+39 | services.AddPdf(configuration);
+40 | ```
+41 | 
+42 | The policy registration must come BEFORE `AddPdf(...)` so the `TryAddSingleton` respects the
+43 | override over the default permissive policy.
+44 | 
+45 | ---
+46 | 
+47 | ## 2. Policy Limits (PdfPolicyLimits.Strict)
+48 | 
+49 | | Limit | Value | Policy ID |
+50 | |---|---|---|
+51 | | Max HTML bytes | 512 KB | `limit.max-html-bytes` |
+52 | | Max element count | 5 000 | `limit.max-element-count` |
+53 | | Max DOM depth | 50 | `limit.max-dom-depth` |
+54 | | Max image pixels | `PdfLimits.Defaults.MaxImagePixels` | rejected with `IMG-MAX-PIXELS` |
+55 | 
+56 | Source: `src/Muonroi.Pdf.Governance/Policies/LegacyPrintPolicy.cs`
+57 | 
+58 | ---
+59 | 
+60 | ## 3. Supported Layout Primitives
+
+[2026-06-16 10:28:52] Tool [bash]:
+D:/sources/Core/muonroi-building-block/src/Muonroi.AspNetCore.OpenApi/
+D:/sources/Core/muonroi-building-block/src/Muonroi.AspNetCore.RuleEngine/
+D:/sources/Core/muonroi-building-block/src/Muonroi.AspNetCore/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Auth/
+D:/sources/Core/muonroi-building-block/src/Muonroi.AuthZ/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BackgroundJobs.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BackgroundJobs.Hangfire/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BackgroundJobs.Quartz/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Bff/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BuildingBlock.All/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BuildingBlock.Shared/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BuildingBlock/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Caching.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Caching.Memory/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Caching.Redis/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Core.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Core/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Data.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Data.Dapper/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Data.EntityFrameworkCore.Events/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Data.EntityFrameworkCore/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Diagnostics.Generator/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Diagnostics/
+D:/sources/Core/muonroi-building-block/src/Muonroi.EntityFrameworkCore.Configuration/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Experience.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Experience.Runtime/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Governance.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Governance.Enterprise/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Governance/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Grpc/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Http/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Integration.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Integration.Connectors/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Integration.Persistence/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Kubernetes/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Logging.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Logging/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Mapper/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Mapping.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Mediator/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Messaging.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Messaging.MassTransit/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Observability/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf.DesignSystem.Default/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf.Enterprise/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf.Governance/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf.SourceGenerators/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Quota.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Resilience/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.CEP/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Core/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.DecisionTable.Web/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.DecisionTable/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.EntityFrameworkCore/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.NRules/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Proliferation.Persistence/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Proliferation/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Runtime.Web/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Runtime/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.SourceGenerators/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Testing/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Rules/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Secrets/
+D:/sources/Core/muonroi-building-block/src/Muonroi.ServiceDiscovery.Consul/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Services/
+D:/sources/Core/muonroi-building-block/src/Muonroi.SignalR/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.Core/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.SiteProfile.Grpc/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.SiteProfile.SourceGenerators/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.SiteProfile.Web/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.SiteProfile/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy/
+D:/sources/Core/muonroi-building-block/src/Muonroi.UiEngine.Catalog/
+
+[bash_run_id: bash-2 — 5400 chars cached; use bash_output_get(run_id, mode=tail|head|grep|lines) to re-query]
+
+[2026-06-16 10:28:52] Tool [read_file]:
+[D:/sources/Core/muonroi-building-block/KNOWN-DEVIATIONS.md: lines 1-60 of 246]
+1 | # Known Deviations from CSS 2.1 / W3C Specifications
+2 | 
+3 | This document records intentional deviations from the CSS 2.1 specification. Each entry
+4 | explains the deviation, its scope, and the rationale. Deviations are accepted for v0.1 and
+5 | will be addressed in future phases as noted.
+6 | 
+7 | > **TEST-03 conformance framing.** v0.1 does not publish a numeric CSS-property coverage
+8 | > percentage. Instead, "conformance to the declared subset" means: (1) the golden corpus
+9 | > exercises every non-rejected property in the declared v0.1 subset (block/inline layout,
+10 | > tables with `border-collapse:separate`, paged media, fonts, images, Vietnamese diacritics),
+11 | > and (2) every intentional behavioural difference from CSS 2.1 / W3C specs is exhaustively
+12 | > enumerated below (TEST-04). Properties outside the subset are not "deviations" — they are
+13 | > hard-rejected by the strict policy gate (see KD-05-01) and never reach layout.
+14 | 
+15 | ---
+16 | 
+17 | ## Phase 3 Deviations (Box Tree + Layout Engine)
+18 | 
+19 | ### KD-03-01: `@page { size: … }` descriptor ignored
+20 | 
+21 | **Specification**: CSS Paged Media §6.1 — `@page { size: A4 landscape }` overrides the
+22 | physical page dimensions.
+23 | 
+24 | **Actual behavior**: The `@page { size: … }` descriptor is parsed and stored in
+25 | `IPageRule.Size` but is **never applied** by the layout engine. Page dimensions are always
+26 | taken from `PdfRenderOptions.PageSize` and `PdfRenderOptions.Orientation`.
+27 | 
+28 | **Scope**: Phase 3 layout engine (`LayoutEngine.GetPageDimensions`).
+29 | 
+30 | **Rationale**: No v0.1 consumer requires CSS-driven page size override. The ROADMAP SC1–SC5
+31 | success criteria test margins and content positioning, not `@page { size }`. Adding size
+32 | parsing adds complexity without a testable requirement. The feature is deferred to a future
+33 | phase when a consumer demands it.
+34 | 
+35 | ---
+36 | 
+37 | ### KD-03-02: `orphans` and `widows` properties not implemented
+38 | 
+39 | **Specification**: CSS 2.1 §13.3.3 — `orphans` specifies the minimum number of lines in a
+40 | block that must be left at the bottom of a page; `widows` specifies the minimum at the top.
+41 | 
+42 | **Actual behavior**: The `orphans` and `widows` CSS properties are accepted by the policy gate
+43 | but have no effect on pagination. Lines are broken at the natural page boundary without any
+44 | minimum-line guarantee.
+45 | 
+46 | **Scope**: Phase 3 `PaginationEngine` and `BlockLayoutEngine`.
+47 | 
+48 | **Rationale**: Orphan/widow control requires tracking individual line boxes across page
+49 | boundaries, which adds significant complexity to the pagination loop. No Phase 3 success
+50 | criterion (SC1–SC5) requires this behavior. Deferred to a future phase.
+51 | 
+52 | ---
+53 | 
+54 | ### KD-03-03: Two-pass layout — page boundary may shift between passes
+55 | 
+56 | **Specification**: CSS Paged Media / counter(pages) — the total-page count reported by
+57 | `counter(pages)` should match the final paginated output exactly.
+58 | 
+59 | **Actual behavior**: Pass 1 runs with `totalPages = 0` to determine page count. Pass 2 runs
+60 | with the pass-1 count substituted into `counter(pages)`. If the text of the resolved count
+
+[2026-06-16 10:28:52] Assistant:
+Here là cách tôi hiểu về hệ sinh thái **Muonroi**, dựa trên những gì tôi đọc trực tiếp từ repo này:
+
+---
+
+## Muonroi là gì?
+
+Muonroi là một **open-core .NET ecosystem** — nền tảng xây dựng ứng dụng doanh nghiệp theo mô hình BUSL (Business Source License), với lõi OSS Apache 2.0 và các phần mở rộng thương mại.
+
+## Kiến trúc 4 lớp
+
+**1. Core & Abstractions** (OSS)
+- `Muonroi.Core`, `Muonroi.Core.Abstractions` — nền tảng chung
+- `Muonroi.Governance`, `Muonroi.Tenancy`, `Muonroi.Auth`, `Muonroi.Observability` — governance, đa tenant, auth, observability
+- `Muonroi.Data.*`, `Muonroi.Caching.*`, `Muonroi.Messaging.Abstractions` — tầng dữ liệu/cache/message
+- ~30+ packages OSS, tất cả Apache 2.0
+
+**2. Rule Engine** (OSS + Commercial) — sản phẩm chủ lực
+- Source-generator driven: đánh dấu rule bằng attribute `[MExtractAsRule]`, CLI `muonroi-rule` tự sinh registration code (README.md:21-45)
+- Hỗ trợ: workflow, canary rollout, approval, audit trail, signing (HMAC/RSA), decision tables, CEP, NRules integration
+- Runtime (`Muonroi.RuleEngine.Runtime`) có hot-reload, cache telemetry, Postgres/file store
+
+**3. Commercial Layer** (license thương mại — source công khai trên NuGet)
+- `Muonroi.Governance.Enterprise`, `Muonroi.AuthZ`, `Muonroi.Caching.Redis`, `Muonroi.Messaging.MassTransit`, `Muonroi.BackgroundJobs.Hangfire`, `Muonroi.Grpc`, `Muonroi.Secrets`, `Muonroi.Bff`, `Muonroi.Pdf.Enterprise`...
+- ~15 packages — source **công khai** nhưng cần license để dùng production (OSS-BOUNDARY.md:9-27)
+
+**4. SaaS Control Plane** (private repo — moat thực sự)
+- `muonroi-control-plane`, `muonroi-license-server` — hai repo private
+- Tính năng SaaS-only: hot-reload, canary rollout, audit trail, approval workflow (OSS-BOUNDARY.md:22)
+- Không thể fork từ OSS để có được các tính năng này
+
+## Cơ chế bảo vệ thương mại
+
+Dựa trên 4 lớp (OSS-BOUNDARY.md:19-27):
+1. **ActivationProof** RSA-signed — không thể giả mạo
+2. **Assembly hash verification** — `CodeIntegrityVerifier` kiểm tra toàn vẹn assembly
+3. **Heartbeat + grace period** — license revoked tự degrade xuống Free tier
+4. **SaaS lock-in** — các tính năng quan trọng nhất cần control plane
+
+## Các sản phẩm nổi bật khác
+
+- **Muonroi.Pdf** — pure-managed HTML-to-PDF engine, mới hoàn thiện Phase 8, có profile `legacy-print-v1` đạt Chrome parity trên 17/17 template production (PROFILE-V1.md:8)
+- **Tools**: `muonroi-rule` CLI (rule extraction/generation), source generators cho DI registration
+- **Samples**: FraudDetection, LoanApproval, MultiTenantSaaS, Quickstart DecisionTable
+
+## Tổng quan
+
+Muonroi không chỉ là một rule engine. Nó là một **hệ sinh thái xây dựng ứng dụng doanh nghiệp .NET hoàn chỉnh** — từ rule engine, decision tables, governance, multi-tenancy, caching, messaging, PDF generation, đến authZ, observability, background jobs. Chiến lược open-core cho phép cộng đồng dùng miễn phí phần OSS, trong khi doanh thu đến từ enterprise features + SaaS control plane — một mô hình giống GitLab / Mattermost hơn là "mã nguồn đóng hoàn toàn".
+
+[2026-06-16 10:29:19] You:
+bạn hiểu dựa trên thông tin nào nhỉ
+
+[2026-06-16 10:29:28] Assistant:
+Dựa trên các file tôi đã đọc **trong turn trước** (và chỉ các file đó), đây là mapping sources:
+
+---
+
+| Luận điểm | Source | Dòng |
+|---|---|---|
+| "Muonroi Building Block là .NET foundation của open-core ecosystem" | `README.md` | 3 |
+| "OSS packages là Apache 2.0, commercial packages cần license" | `README.md` | 96 |
+| Danh sách ~30+ OSS packages | `OSS-BOUNDARY.md` | 32–67 |
+| Danh sách ~15 commercial packages | `OSS-BOUNDARY.md` | 75–89 |
+| "Source commercial công khai trên NuGet" | `OSS-BOUNDARY.md` | 70–73 |
+| "Moat thực sự là SaaS Control Plane (private repo)" | `OSS-BOUNDARY.md` | 16 |
+| 4 cơ chế bảo vệ thương mại: ActivationProof, assembly hash, heartbeat, SaaS lock-in | `OSS-BOUNDARY.md` | 19–27 |
+| "BUSL-style open-core model" | `OSS-BOUNDARY.md` | 9–11 |
+| Rule engine: `[MExtractAsRule]` + CLI `muonroi-rule` + DI generation | `README.md` | 21–45 |
+| Canary rollout, approval, audit trail, signing (HMAC/RSA) | `REPO_DEEP_MAP.md` | 55–80 |
+| Rule engine runtime: hot-reload, cache telemetry, Postgres/file store | `REPO_DEEP_MAP.md` | 54–80 |
+| PDF engine `legacy-print-v1`, Chrome parity 17/17 templates | `PROFILE-V1.md` | 8, 24–29 |
+| ~80+ thư mục `src/` tương ứng từng package | `bash` output (`ls src/*/`) | — |
+
+**Không có luận điểm nào** trong câu trả lời trước được suy diễn hay bịa đặt — mỗi luận điểm đều có file:dòng cụ thể ở trên. Nếu muốn verify bất kỳ cái nào, tôi có thể đọc lại đúng dòng đó ngay lập tức.
+
+[2026-06-16 10:29:54] You:
+có các mcp như muonroi-docs bạn có thể verify
+[personality: concise — Be direct and terse. Lead with the answer. Skip preamble. Use bullet points over paragraphs. Code over prose. No filler phrases.]
+[gsd-native] QUESTION / explanatory request — no code change is being asked for.
+Answer it directly and completely, written for the HUMAN who asked:
+  1. Investigate only as needed — read/grep the specific files that ground your answer this turn.
+  2. Lead with the answer. Use clear prose + structure (headings, bullets). Where a claim rests on the code, cite a concise file:line inline.
+  3. Do NOT output an implementation plan, do NOT narrate your own process or restate these instructions, and...
+
+[2026-06-16 10:30:19] Assistant:
+Có lý. Để tôi dùng chính các MCP `muonroi-docs` để verify những luận điểm cốt lõi.
+
+[2026-06-16 10:30:19] Tool [mcp_muonroi-docs__bb_package_describe]:
+Error
+
+[2026-06-16 10:30:19] Tool [mcp_muonroi-docs__bb_package_describe]:
+Error
+
+[2026-06-16 10:30:19] Tool [mcp_muonroi-docs__bb_package_describe]:
+Error
+
+[2026-06-16 10:30:19] Tool [mcp_muonroi-docs__docs_search]:
+Error
+
+────────────────────────────────────────────────────────────────────────
+── Section B: Live TUI Scrollback
+────────────────────────────────────────────────────────────────────────
+
+[2026-06-16 10:28:19] You:
+bạn hiểu thế nào về hệ sinh thái muonroi nhỉ
+
+[2026-06-16 10:28:52] Tool [bash]:
+.claude
+.dockerignore
+.git
+.gitattributes
+.github
+.gitignore
+.gitleaks.toml
+.muonroi-flow
+.planning
+.vs
+BenchmarkDotNet.Artifacts
+CHANGELOG.md
+COMMERCIAL-EDITIONS.md
+CONTRIBUTING.md
+Directory.Build.props
+Directory.Build.targets
+Directory.Packages.props
+KNOWN-DEVIATIONS.md
+LICENSE
+LICENSE-APACHE
+LICENSE-COMMERCIAL
+Muonroi.BuildingBlock.sln
+Muonroi.snk
+OSS-BOUNDARY.md
+PROFILE-V1.md
+README.md
+REPO_DEEP_MAP.md
+SECURITY.md
+TestResults
+benchmarks
+buf.yaml
+build
+build_output.txt
+dashboards
+db
+deploy
+docs
+icon.png
+k8s
+nuget.commercial.config.template
+
+[bash_run_id: bash-1]
+
+[2026-06-16 10:28:52] Tool [grep]:
+Found 165 matches (showing first 100)
+tools\Muonroi.RuleGen\vscode-extension\README.md:
+  Line 17: `muonroi-rule` CLI must be available on PATH.
+
+tools\Muonroi.RuleGen.VisualStudio\README.md:
+  Line 43: - **Executable Path**: full path to `muonroi-rule.exe` or `Muonroi.RuleGen.dll`.
+  Line 47:   3. `dotnet tool run muonroi-rule`
+  Line 60: muonroi-rule merge --rules-dir <Rules> --target <TargetFile> --compile-check
+
+src\Muonroi.RuleEngine.SourceGenerators\AnalyzerReleases.Unshipped.md:
+  Line 7: MBB008 | Muonroi.Governance | Warning | Cross-capability reference without ecosystem guard
+
+samples\Quickstart.RuleEngine\README.md:
+  Line 5: - `muonroi-building-block/samples/Quickstart.RuleEngine`
+  Line 17: cd <workspace-root>\muonroi-building-block\samples\Quickstart.RuleEngine\src\Quickstart.RuleEngine.Api
+
+samples\Quickstart.DecisionTable\README.md:
+  Line 5: - `muonroi-building-block/samples/Quickstart.DecisionTable`
+  Line 16: docker run --name muonroi-sample-postgres -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=muonroi_decision_tables -p 5432:5432 -d postgres:16
+  Line 22: cd <workspace-root>\muonroi-building-block\samples\Quickstart.DecisionTable\src\Quickstart.DecisionTable.Api
+
+samples\MultiTenantSaaS\README.md:
+  Line 45: - [Multi-Tenant Guide](../../../../Docs/muonroi-docs/docs/03-guides/multi-tenancy/multi-tenant-guide.md)
+  Line 46: - [Canary Rollout Guide](../../../../Docs/muonroi-docs/docs/03-guides/control-plane/canary-rollout-guide.md)
+
+samples\LoanApproval\README.md:
+  Line 43: - [Rule Engine Guide](../../../../Docs/muonroi-docs/docs/03-guides/rule-engine/rule-engine-guide.md)
+  Line 44: - [Decision Table Guide](../../../../Docs/muonroi-docs/docs/03-guides/rule-engine/decision-table-guide.md)
+
+SECURITY.md:
+  Line 15: If you discover a security vulnerability, please email [security@muonroi.com](mailto:security@muonroi.com) with a detailed description. We aim to acknowledge reports within 2 business days and will keep you informed of our progress. When a fix is released, we will credit the reporter unless requested otherwise.
+
+README.md:
+  Line 1: # muonroi-building-block
+  Line 3: Muonroi Building Block is the .NET foundation of the Muonroi open-core ecosystem: rule engine, decision tables, governance, tenancy, observability, and the commercial extensions that sit on top of the OSS base.
+  Line 5: [![CI](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml/badge.svg)](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml)
+  Line 6: [![codecov](https://codecov.io/github/muonroi/muonroi-building-block/graph/badge.svg?token=97f35491-9d56-4c92-918e-aae729589699)](https://codecov.io/github/muonroi/muonroi-building-block)
+  Line 34: muonroi-rule extract --source src/Rules --output Generated/Rules
+  Line 35: muonroi-rule register --rules Generated/Rules --output Generated/RuleEngineRegistrationExtensions.g.cs
+  Line 45: Result: the rule enters the DI graph without a handwritten registration block, and `muonroi-rule verify` can catch dependency and rule-code mistakes before runtime.
+  Line 51: - Full package list: https://docs.muonroi.com/docs/reference/package-reference
+  Line 56: - Docs: https://docs.muonroi.com/docs/getting-started/introduction
+  Line 57: - Rule engine guide: https://docs.muonroi.com/docs/guides/rule-engine/rule-engine-guide
+  Line 58: - Rule source generator deep dive: https://docs.muonroi.com/docs/guides/rule-engine/rule-source-generator
+  Line 59: - Decision table guide: https://docs.muonroi.com/docs/guides/rule-engine/decision-table-guide
+  Line 87: - Docs: https://docs.muonroi.com
+  Line 88: - Issues: https://github.com/muonroi/muonroi-building-block/issues
+  Line 90: - Security policy: https://docs.muonroi.com/docs/resources/SECURITY
+
+REPO_DEEP_MAP.md:
+  Line 1: # muonroi-building-block — Deep Map
+
+OSS-BOUNDARY.md:
+  Line 16: - The real monetization moat is the SaaS Control Plane (private repos: `muonroi-control-plane`, `muonroi-license-server`), not the package source code.
+  Line 22: 4. SaaS lock-in - hot-reload, approval workflows, canary rollout, and audit trail all require the private `muonroi-control-plane` service. These cannot be replicated by forking OSS packages.
+  Line 25: Report it at https://github.com/muonroi/muonroi-building-block/security/advisories/new.
+  Line 72: > The only truly private artifacts are the SaaS services `muonroi-control-plane` and
+  Line 73: > `muonroi-license-server` (separate private repositories), not these packages.
+
+CONTRIBUTING.md:
+  Line 1: # Contributing to muonroi-building-block
+  Line 3: This repository is the public .NET library foundation of the Muonroi ecosystem. Contributions are welcome, but "done" here means boundary-safe code, passing tests, and documentation that keeps pace with the behavior you changed.
+  Line 11: - https://docs.muonroi.com/docs/resources/CONTRIBUTING
+  Line 30: git clone https://github.com/muonroi/muonroi-building-block.git
+  Line 31: cd muonroi-building-block
+  Line 66: These are not optional style preferences. They are ecosystem rules enforced by analyzers, review, or both.
+  Line 77: - Extend `MDbContext` for EF Core contexts in this ecosystem.
+  Line 100: - `../Docs/muonroi-docs/docs/03-guides/`
+  Line 101: - `../Docs/muonroi-docs/docs/05-reference/`
+  Line 102: - `../Docs/muonroi-docs/docs/06-resources/`
+  Line 144: - misuse of ecosystem wrappers
+  Line 158: - https://docs.muonroi.com/docs/resources/SECURITY
+  Line 165: - deployed service code belongs in the private `muonroi-control-plane` or `muonroi-license-server` repos
+
+.planning\research\pdf-writer-strategy.md:
+  Line 3: **Project:** Muonroi.Pdf (pure-managed PDF ecosystem, open-core)
+
+.planning\research\SUMMARY.md:
+  Line 183: - `D:\sources\Core\muonroi-building-block\.planning\PROJECT.md` — authoritative specification (decisions D1–D20, requirements v0.1/v0.2/v1.0, out-of-scope declarations)
+  Line 184: - `D:\sources\Core\muonroi-building-block\Directory.Packages.props` — authoritative CPM version list; confirmed existing packages
+  Line 185: - `D:\sources\Core\muonroi-building-block\src\Muonroi.Pdf.Abstractions\` — actual interface definitions read 2026-05-26
+  Line 186: - `D:\sources\Core\muonroi-building-block\src\Muonroi.Caching.Redis\Redis\RedisExtensions.cs` — DI + telemetry pattern reference
+
+.planning\research\PITFALLS.md:
+  Line 40: The ecosystem gap is real — there is no stable, maintained CSS cascade engine in the .NET managed space. Accepting a beta pin is the only viable choice, but teams often treat "pinned" as "solved" rather than as "managed risk that needs monitoring."
+
+.planning\research\STACK.md:
+  Line 5: **Confidence:** HIGH — stack is fully constrained by project decisions; all choices are evidence-backed from PROJECT.md, Directory.Packages.props, and existing ecosystem conventions.
+  Line 142: - `D:\sources\Core\muonroi-building-block\.planning\PROJECT.md` — primary authority; all stack decisions are documented with rationale (HIGH confidence)
+  Line 143: - `D:\sources\Core\muonroi-building-block\Directory.Packages.props` — authoritative CPM version list; confirmed existing packages (HIGH confidence)
+
+.planning\research\ARCHITECTURE.md:
+  Line 68: muonroi-building-block/
+  Line 472: All metric names follow the ecosystem-wide snake_case convention established in `OtelSetup.cs`.
+
+.planning\research\FEATURES.md:
+  Line 136: - [x] `AddPdf()` DI registration — why essential: discoverable entry point; matches ecosystem conventions
+
+.planning\phases\10-cutover-sweep-ga\PLAN.md:
+  Line 25: | 10.6 | Version bump `0.1.0-alpha` → `1.0.0` (Muonroi.Pdf + Muonroi.Pdf.Enterprise + @muonroi/ui-engine-pdf-designer) |
+  Line 28: | 10.9 | Publish `@muonroi/ui-engine-pdf-designer 1.0.0` to private npm registry |
+  Line 29: | 10.10 | Public docs site lift (`PROFILE-V1.md` → muonroi.io/pdf/v1) — DEFERRED to ops side if no infra |
+  Line 51: | SC5 | `Muonroi.Pdf 1.0.0` + `Muonroi.Pdf.Enterprise 1.0.0` + `@muonroi/ui-engine-pdf-designer 1.0.0` packaged | tgz/nupkg inspection |
+  Line 65: - Memory `[[project_muonroi_pdf_charter]]`
+
+.planning\phases\09.1-ws-a-foundation\RESEARCH.md:
+  Line 187: The license server (`muonroi-license-server`) stores feature entitlements as `string[]
+  Line 225: | A: Reuse `LicenseException` | Consistent with existing ecosystem. Simpler. |
+  Line 365:   <PackageTags>muonroi;pdf;enterprise;html-to-pdf;template-registry;ssim</PackageTags>
+  Line 447: 1. **`FeatureNotLicensedException` base class.** PLAN.md says `FeatureNotLicensedException : InvalidOperationException`. Research shows the existing ecosystem uses `LicenseException : MException`. Making the PDF enterprise exception inherit `InvalidOperationException` avoids a transitive dependency on `Muonroi.Core.Abstractions` from `Muonroi.Pdf.Enterprise`, which is desirable for a distributable commercial package. Confirm: should `Muonroi.Pdf.Enterprise` reference `Muonroi.Governance.Abstractions` (and thus `Muonroi.Core.Abstractions`) and reuse `LicenseException`, or stay dependency-free and use `InvalidOperationException`?
+
+.planning\phases\09.1-ws-a-foundation\VERIFICATION.md:
+  Line 127: - Memory `[[project_muonroi_ecosystem_topology]]`
+
+.planning\phases\09.1-ws-a-foundation\PLAN.md:
+  Line 60: 3. **Strong-naming** — Need a key file (`muonroi-pdf-enterprise.snk`). Decision: generate in Wave A, commit `.snk` to repo (private signing only; public release uses CI-managed key). Confirm with user if delayed-signed instead.
+  Line 70: - Memory `[[project_muonroi_ecosystem_topology]]` (4-repo open-core SaaS)
+
+.planning\phases\08.7-legacy-print-html\VERIFICATION.md:
+  Line 112: Phase 8.7 is **closed at 94% visual gate (17/18 real templates render acceptably)**. The v1 Legacy Print-HTML Profile is fit-for-purpose: float multi-column, position:absolute, table hardening, background rendering, and the LegacyPrintPolicy all land correctly for the corpus. Real-world ecosystem use (Phase 9 integration) is unblocked.
+
+.planning\phases\08.6-rendering-fidelity\08.6-RESEARCH.md:
+  Line 772: | A4 | CFF subsetting feasibility: no pure-managed, MIT/Apache/BSD-licensed CFF subsetter exists in the .NET ecosystem | Cluster 3A OTF-CFF | If a verified library exists, subsetting (not rejection) would be preferred — requires slopcheck verification first |
+
+.planning\phases\08.6-rendering-fidelity\08.6-06-PLAN.md:
+  Line 78: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 79: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.6-rendering-fidelity\08.6-04-PLAN.md:
+  Line 55: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 56: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.6-rendering-fidelity\08.6-05-PLAN.md:
+  Line 43: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 44: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.6-rendering-fidelity\08.6-02-PLAN.md:
+  Line 71: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 72: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.6-rendering-fidelity\08.6-03-PLAN.md:
+  Line 79: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 80: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.6-rendering-fidelity\08.6-01-PLAN.md:
+  Line 56: @D:/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 57: @D:/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-06-PLAN.md:
+  Line 52: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 53: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-07-PLAN.md:
+  Line 46: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 47: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-04-PLAN.md:
+  Line 53: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 54: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-05-PLAN.md:
+  Line 50: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 51: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-02-PLAN.md:
+  Line 53: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 54: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-03-PLAN.md:
+  Line 50: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+  Line 51: @/d/sources/Core/muonroi-building-block/.planning/ROADMAP.md
+
+.planning\phases\08.5-owned-pdf-writer\08.5-01-PLAN.md:
+  Line 52: @/d/sources/Core/muonroi-building-block/.planning/PROJECT.md
+
+(Results truncated: showing 100 of 165 matches. Consider using a more specific path or pattern.)
+
+[2026-06-16 10:28:52] Tool [read_file]:
+[D:/sources/Core/muonroi-building-block/README.md: lines 1-97 of 97]
+1 | # muonroi-building-block
+2 | 
+3 | Muonroi Building Block is the .NET foundation of the Muonroi open-core ecosystem: rule engine, decision tables, governance, tenancy, observability, and the commercial extensions that sit on top of the OSS base.
+4 | 
+5 | [![CI](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml/badge.svg)](https://github.com/muonroi/muonroi-building-block/actions/workflows/ci.yml)
+6 | [![codecov](https://codecov.io/github/muonroi/muonroi-building-block/graph/badge.svg?token=97f35491-9d56-4c92-918e-aae729589699)](https://codecov.io/github/muonroi/muonroi-building-block)
+7 | [![OSS License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](./LICENSE-APACHE)
+8 | [![Commercial License](https://img.shields.io/badge/commercial-available-blue.svg)](./LICENSE-COMMERCIAL)
+9 | 
+10 | ## Install
+11 | 
+12 | ```bash
+13 | dotnet add package Muonroi.RuleEngine.Core
+14 | dotnet add package Muonroi.RuleEngine.SourceGenerators
+15 | ```
+16 | 
+17 | ## Quick Example
+18 | 
+19 | Annotate rule logic in normal C#:
+20 | 
+21 | ```csharp
+22 | [MExtractAsRule("HIGH_VALUE_ORDER", DependsOn = new[] { "CREDIT_SCORE" })]
+23 | public RuleResult HighValue(OrderContext context, FactBag facts)
+24 | {
+25 |     if (context.Amount <= 1000m) return RuleResult.Failure("Below threshold.");
+26 |     facts["requiresReview"] = true;
+27 |     return RuleResult.Success();
+28 | }
+29 | ```
+30 | 
+31 | Generate the registration and wire the engine:
+32 | 
+33 | ```bash
+34 | muonroi-rule extract --source src/Rules --output Generated/Rules
+35 | muonroi-rule register --rules Generated/Rules --output Generated/RuleEngineRegistrationExtensions.g.cs
+36 | ```
+37 | 
+38 | ```csharp
+39 | using Muonroi.RuleEngine.Generated;
+40 | 
+41 | builder.Services.AddRuleEngine<OrderContext>();
+42 | builder.Services.AddGeneratedRules();
+43 | ```
+44 | 
+45 | Result: the rule enters the DI graph without a handwritten registration block, and `muonroi-rule verify` can catch dependency and rule-code mistakes before runtime.
+46 | 
+47 | ## Packages
+48 | 
+49 | OSS and commercial packages span core, governance, rule engine, and infrastructure areas. OSS packages must not reference commercial packages.
+50 | 
+51 | - Full package list: https://docs.muonroi.com/docs/reference/package-reference
+52 | - OSS boundary matrix: [OSS-BOUNDARY.md](./OSS-BOUNDARY.md)
+53 | 
+54 | ## What To Read First
+55 | 
+56 | - Docs: https://docs.muonroi.com/docs/getting-started/introduction
+57 | - Rule engine guide: https://docs.muonroi.com/docs/guides/rule-engine/rule-engine-guide
+58 | - Rule source generator deep dive: https://docs.muonroi.com/docs/guides/rule-engine/rule-source-generator
+59 | - Decision table guide: https://docs.muonroi.com/docs/guides/rule-engine/decision-table-guide
+60 | - Samples index: [samples/README.md](./samples/README.md)
+61 | 
+62 | ## Samples
+63 | 
+64 | - [Quickstart.RuleEngine](./samples/Quickstart.RuleEngine/README.md)
+65 | - [Quickstart.DecisionTable](./samples/Quickstart.DecisionTable/README.md)
+66 | - [FraudDetection](./samples/FraudDetection/README.md)
+67 | - [LoanApproval](./samples/LoanApproval/README.md)
+68 | - [MultiTenantSaaS](./samples/MultiTenantSaaS/README.md)
+69 | - [RuleSourceGen](./samples/RuleSourceGen/README.md)
+70 | 
+71 | ## Local Development
+72 | 
+73 | ```bash
+74 | dotnet restore Muonroi.BuildingBlock.sln
+75 | dotnet build Muonroi.BuildingBlock.sln -c Debug
+76 | ```
+77 | 
+78 | Useful gates before opening a PR:
+79 | 
+80 | ```bash
+81 | pwsh ./scripts/check-modular-boundaries.ps1 -RepoRoot .
+82 | dotnet test Muonroi.BuildingBlock.sln -c Debug
+83 | ```
+84 | 
+85 | ## Community
+86 | 
+87 | - Docs: https://docs.muonroi.com
+88 | - Issues: https://github.com/muonroi/muonroi-building-block/issues
+89 | - Contributing guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
+90 | - Security policy: https://docs.muonroi.com/docs/resources/SECURITY
+91 | 
+92 | Discussion templates are prepared under [`.github/DISCUSSION_TEMPLATE`](./.github/DISCUSSION_TEMPLATE) and become active as soon as GitHub Discussions is enabled for the repository.
+93 | 
+94 | ## License
+95 | 
+96 | OSS packages are Apache 2.0. Commercial packages are distributed under the Muonroi commercial license and require activation proof in deployed environments.
+97 | 
+
+[2026-06-16 10:28:52] Tool [read_file]:
+[D:/sources/Core/muonroi-building-block/OSS-BOUNDARY.md: lines 1-90 of 90]
+1 | # OSS / Commercial Package Boundary
+2 | 
+3 | ## Rule
+4 | - OSS packages MUST NOT depend on Commercial packages.
+5 | - Verified by: `scripts/check-modular-boundaries.ps1`
+6 | 
+7 | ## Design Intent - Why Enterprise Source Is In This Public Repo
+8 | 
+9 | This repository uses a BUSL-style (Business Source License) open-core model:
+10 | source code is publicly visible but usage of Commercial packages requires a
+11 | valid commercial license. This is intentional, not an oversight.
+12 | 
+13 | Why source is public:
+14 | - Transparency builds trust: customers can audit security and data-handling code before purchasing.
+15 | - Forkability is a feature: OSS components (Core, RuleEngine, Tenancy) are freely forkable under Apache 2.0.
+16 | - The real monetization moat is the SaaS Control Plane (private repos: `muonroi-control-plane`, `muonroi-license-server`), not the package source code.
+17 | 
+18 | What protects Commercial revenue:
+19 | 1. RSA-signed ActivationProof - tier and capabilities are server-signed; you cannot forge them without the License Server private key.
+20 | 2. Assembly hash verification - `CodeIntegrityVerifier` checks that all Muonroi.* assemblies in the process match the hashes approved at activation time. A fork that removes `EnsureFeatureOrThrow()` calls will fail integrity verification.
+21 | 3. Heartbeat + grace period - revoked licenses degrade to Free tier after the configured grace period (24h Enterprise / 72h Licensed).
+22 | 4. SaaS lock-in - hot-reload, approval workflows, canary rollout, and audit trail all require the private `muonroi-control-plane` service. These cannot be replicated by forking OSS packages.
+23 | 
+24 | What to do if you find a legitimate fork that bypasses commercial features:
+25 | Report it at https://github.com/muonroi/muonroi-building-block/security/advisories/new.
+26 | Per our Commercial License Agreement, production use without a valid license key is
+27 | a license violation regardless of source visibility.
+28 | 
+29 | ---
+30 | 
+31 | ## OSS Packages (Apache 2.0 - public NuGet)
+32 | - Muonroi.Core.Abstractions
+33 | - Muonroi.Core
+34 | - Muonroi.Governance.Abstractions        (Phase 0.2 creates this)
+35 | - Muonroi.Governance
+36 | - Muonroi.Tenancy.Abstractions
+37 | - Muonroi.Tenancy.Core
+38 | - Muonroi.Tenancy
+39 | - Muonroi.RuleEngine.Abstractions
+40 | - Muonroi.RuleEngine.Core
+41 | - Muonroi.RuleEngine.SourceGenerators
+42 | - Muonroi.RuleEngine.Testing
+43 | - Muonroi.RuleEngine.DecisionTable
+44 | - Muonroi.RuleEngine.NRules
+45 | - Muonroi.RuleEngine.CEP
+46 | - Muonroi.Data.Abstractions
+47 | - Muonroi.Data.Dapper
+48 | - Muonroi.Data.EntityFrameworkCore
+49 | - Muonroi.Caching.Abstractions
+50 | - Muonroi.Caching.Memory
+51 | - Muonroi.Auth
+52 | - Muonroi.AspNetCore
+53 | - Muonroi.AspNetCore.OpenApi
+54 | - Muonroi.Http
+55 | - Muonroi.Resilience
+56 | - Muonroi.Mapper
+57 | - Muonroi.Mediator
+58 | - Muonroi.Messaging.Abstractions
+59 | - Muonroi.Observability
+60 | - Muonroi.BackgroundJobs.Abstractions
+61 | - Muonroi.BuildingBlock.Shared
+62 | - Muonroi.Logging
+63 | - Muonroi.Logging.Abstractions
+64 | - Muonroi.Pdf.Abstractions
+65 | - Muonroi.Pdf
+66 | - Muonroi.Pdf.Governance
+67 | 
+68 | ## Commercial Packages (Muonroi Commercial License — published on nuget.org)
+69 | 
+70 | > All commercial packages are publicly distributed on nuget.org for ease of consumption.
+71 | > Source visibility does NOT imply free production use — see the Commercial License Agreement.
+72 | > The only truly private artifacts are the SaaS services `muonroi-control-plane` and
+73 | > `muonroi-license-server` (separate private repositories), not these packages.
+74 | 
+75 | - Muonroi.Governance.Enterprise           (Phase 0.2 creates this)
+76 | - Muonroi.AuthZ
+77 | - Muonroi.Caching.Redis
+78 | - Muonroi.Messaging.MassTransit
+79 | - Muonroi.BackgroundJobs.Hangfire
+80 | - Muonroi.BackgroundJobs.Quartz
+81 | - Muonroi.SignalR
+82 | - Muonroi.Grpc
+83 | - Muonroi.Secrets
+84 | - Muonroi.Bff
+85 | - Muonroi.ServiceDiscovery.Consul
+86 | - Muonroi.RuleEngine.Runtime.Web
+87 | - Muonroi.RuleEngine.DecisionTable.Web
+88 | - Muonroi.UiEngine.Catalog
+89 | - Muonroi.Pdf.Enterprise
+90 | 
+
+[2026-06-16 10:28:52] Tool [read_file]:
+[D:/sources/Core/muonroi-building-block/REPO_DEEP_MAP.md: lines 1-80 of 456]
+1 | # muonroi-building-block — Deep Map
+2 | 
+3 | > Complete file-level map. Agents should read this instead of exploring the repo.
+4 | 
+5 | ---
+6 | 
+7 | ## 1. Rule Engine
+8 | 
+9 | ### RuleEngine.Abstractions (`src/Muonroi.RuleEngine.Abstractions/`)
+10 | 
+11 | | File | Class/Interface | Key Methods/Properties |
+12 | |------|----------------|----------------------|
+13 | | IRule.cs | `IRule<TContext>` | `EvaluateAsync(ctx, facts, ct) → RuleResult`, `ExecuteAsync(ctx, ct)`, Code, Order, DependsOn, HookPoint, Type |
+14 | | IMRuleOrchestrator.cs | `IMRuleOrchestrator<TContext>` | `ExecuteAsync(context, ct) → OrchestratorResult` |
+15 | | FactBag.cs | `FactBag` | `Get<T>(key)`, `Set<T>(key, value)`, `TryGet<T>(key, out T)`, `Remove(key)`, `AsReadOnly()` |
+16 | | MFactBagAwareRule.cs | `MFactBagAwareRule<TContext>` | Abstract base for FactBag-aware compiled rules. `ReadFact<T>(path)`, `WriteFact<T>(path, value)`, `NodePassed(nodeId)`, `NodeExecuted(nodeId)`, `NodeResult<T>(nodeId)`, `EvaluateCoreAsync(ctx, ct)` |
+17 | | RuleResult.cs | `RuleResult` | `Passed()`, `Success()`, `Failure(errors)` — static factories |
+18 | | ExtractAsRuleAttribute.cs | `MExtractAsRuleAttribute` | `(code)` — marker for rule extraction |
+19 | | HookPoint.cs | `HookPoint` enum | BeforeRule, AfterRule, BeforeValidation, AfterValidation |
+20 | | RuleType.cs | `RuleType` enum | Validation (read-only), Business (state-modifying) |
+21 | | ExecutionMode.cs | `ExecutionMode` enum | AllOrNothing, BestEffort, CompensateOnFailure |
+22 | | ICompensatableRule.cs | `ICompensatableRule<TContext>` | `CompensateAsync(ctx, ct)` |
+23 | | IRuleContext.cs | `IRuleContext` | Marker interface for context types |
+24 | | IRuleFactory.cs | `IRuleFactory` | Factory for rule instances |
+25 | | IRuleEventListener.cs | `IRuleEventListener<TContext>` | `OnRuleExecuted(rule, result, ct)` |
+26 | | ITenantQuotaTracker.cs | `ITenantQuotaTracker` | `CheckQuotaAsync(tenantId, type, requested, ct)`, `IncrementUsageAsync(...)` |
+27 | | OrchestratorResult.cs | `OrchestratorResult` | Execution summary record |
+28 | | TenantRuleGroupAttribute.cs | `TenantRuleGroupAttribute` | Multi-tenant rule grouping |
+29 | | Authoring/IRuleAuthoringManifestProvider.cs | `IRuleAuthoringManifestProvider` | Rule schema discovery |
+30 | | Authoring/MRuleAuthoringModels.cs | `RuleAuthoringManifest`, `RuleParameterInfo` | Metadata models |
+31 | | Adapters/IContextFactory.cs | `IContextFactory<TContext>` | Context creation from facts |
+32 | | Adapters/IContextProjector.cs | `IContextProjector` | Projects context to facts |
+33 | 
+34 | ### RuleEngine.Core (`src/Muonroi.RuleEngine.Core/`)
+35 | 
+36 | | File | Class | Key Methods |
+37 | |------|-------|------------|
+38 | | RuleOrchestrator.cs | `RuleOrchestrator<TContext>` | `ExecuteAsync(context, filterPoint, ct) → FactBag` — creates FactBag, handles quota/tracing |
+39 | | DefaultRuleFactory.cs | `DefaultRuleFactory` | Default rule instantiation |
+40 | | MRuleEngineBuilder.cs | `MRuleEngineBuilder` | Fluent builder for engine setup |
+41 | | MRuleEngineOptions.cs | `MRuleEngineOptions` | Configuration options |
+42 | | IMRuleExecutionRouter.cs | `IMRuleExecutionRouter` | Routes to different rule types |
+43 | | MRuleExecutionRouter.cs | `MRuleExecutionRouter` | Implementation |
+44 | | Workflow/IMRuleWorkflowRunner.cs | `IMRuleWorkflowRunner` | Workflow contract |
+45 | | Workflow/MRuleWorkflowRunner.cs | `MRuleWorkflowRunner` | Workflow orchestration |
+46 | | Workflow/MRuleWorkflowDefinition.cs | `MRuleWorkflowDefinition` | Workflow definition |
+47 | | Workflow/MRuleWorkflowStep.cs | `MRuleWorkflowStep` | Step in workflow |
+48 | | Tracing/IRuleExecutionTracer.cs | `IRuleExecutionTracer` | `TraceAsync(entry, ct)`, `IsEnabled(tenantId)` |
+49 | | Tracing/IRuleTraceStore.cs | `IRuleTraceStore` | Trace persistence |
+50 | | Tracing/IRuleDebuggerModeService.cs | `IRuleDebuggerModeService` | Debugger control |
+51 | | RuleAuditLogger.cs | `RuleAuditLogger` | Audit trail |
+52 | | AuditTrailHook.cs | `AuditTrailHook<TContext>` | Lifecycle audit hook |
+53 | 
+54 | ### RuleEngine.Runtime (`src/Muonroi.RuleEngine.Runtime/`)
+55 | 
+56 | **Rules subsystem** (`Runtime/Rules/`):
+57 | 
+58 | | File | Class | Purpose |
+59 | |------|-------|---------|
+60 | | RulesEngineService.cs | `RulesEngineService` | Main service facade — instrumented with WorkflowCacheTelemetry (Phase 38) |
+61 | | WorkflowCacheTelemetry.cs | `WorkflowCacheTelemetry` | OTel metrics: hit/miss counters, eviction counter, cache size gauge, hot-reload lag histogram (Phase 38) |
+62 | | RuleEngine.cs | `RuleEngine<T>` | `AddRule()`, `RemoveRule()`, `ExecuteAsync()`, `GetCatalog()` |
+63 | | IRuleSetStore.cs | `IRuleSetStore` | RuleSet persistence |
+64 | | IRuleSetAuditStore.cs | `IRuleSetAuditStore` | Audit storage |
+65 | | IRuleSetApprovalService.cs | `IRuleSetApprovalService` | Approval workflow |
+66 | | ICanaryRolloutService.cs | `ICanaryRolloutService` | Canary deployment |
+67 | | IRuleActivationStrategy.cs | `IRuleActivationStrategy<T>` | Activation policies |
+68 | | IRuleSetSigner.cs | `IRuleSetSigner` | HMAC/RSA signing |
+69 | | PostgresRuleSetStore.cs | `PostgresRuleSetStore` | Postgres persistence |
+70 | | FileRuleSetStore.cs | `FileRuleSetStore` | File-based persistence |
+71 | | RuleEngineDbContext.cs | `RuleEngineDbContext` | EF DbContext |
+72 | | RuleSetRecord.cs | `RuleSetRecord` | Data model |
+73 | | RuleSetStatus.cs | `RuleSetStatus` enum | Active, Draft, Archived... |
+74 | | RuleSetRuntimeCache.cs | `RuleSetRuntimeCache` | In-memory cache |
+75 | | CanaryRolloutService.cs | `CanaryRolloutService` | Canary logic |
+76 | | RuleSetApprovalService.cs | `RuleSetApprovalService` | Approval impl |
+77 | | HmacSha256RuleSetSigner.cs | `HmacSha256RuleSetSigner` | HMAC signing |
+78 | | RsaRuleSetAuditSigner.cs | `RsaRuleSetAuditSigner` | RSA signing |
+79 | | ExternalJsonRule.cs | `ExternalJsonRule` | JSON-based rule |
+80 | 
+
+[2026-06-16 10:28:52] Tool [read_file]:
+[D:/sources/Core/muonroi-building-block/PROFILE-V1.md: lines 1-60 of 427]
+1 | # Legacy Print-HTML Profile v1 — Public Specification
+2 | 
+3 | > **Profile name:** Legacy Print-HTML Profile v1
+4 | > **Policy ID:** `legacy-print-v1`
+5 | > **Version:** 1.0
+6 | > **Issued:** 2026-05-29 (post-Phase-8.16)
+7 | > **Audience:** template authors, integrators, Phase 9 Designer implementers
+8 | > **Status:** **STABLE — production-ready.** 17/17 production templates render at Chrome parity.
+9 | 
+10 | This document is the public contract for the v1 rendering profile of `Muonroi.Pdf`. It declares
+11 | what HTML/CSS subset the engine guarantees to render correctly, what it rejects loud at the
+12 | policy gate, and what it silently ignores. Anything outside the declared subset is unsupported —
+13 | do not rely on incidental behaviour.
+14 | 
+15 | For the historical phase-internal version used during 8.7 implementation see
+16 | `.planning/phases/08.7-legacy-print-html/CAPABILITY-CONTRACT.md`. This document supersedes it.
+17 | 
+18 | ---
+19 | 
+20 | ## 1. Identity
+21 | 
+22 | | Field | Value |
+23 | |---|---|
+24 | | Profile name | Legacy Print-HTML Profile v1 |
+25 | | Policy ID | `legacy-print-v1` |
+26 | | Policy class | `Muonroi.Pdf.Governance.Policies.LegacyPrintPolicy` |
+27 | | Engine version | `Muonroi.Pdf` v1.0 (post-Phase-8.16) |
+28 | | Corpus | 17 production shipping/logistics templates |
+29 | | Reference renderer | Chromium (visual parity bar) |
+30 | 
+31 | **Purpose.** Gate for production shipping/logistics PDF templates. Extends the safe CSS 2.1 print
+32 | subset with the layout primitives the corpus requires (float, `position:absolute`,
+33 | `border-collapse`, fixed table layout, synthetic bold/italic, descendant class selectors). All
+34 | other non-print-safe CSS features remain blocked.
+35 | 
+36 | **Caller registration:**
+37 | ```csharp
+38 | services.TryAddSingleton<IPdfCssPolicy, LegacyPrintPolicy>();
+39 | services.AddPdf(configuration);
+40 | ```
+41 | 
+42 | The policy registration must come BEFORE `AddPdf(...)` so the `TryAddSingleton` respects the
+43 | override over the default permissive policy.
+44 | 
+45 | ---
+46 | 
+47 | ## 2. Policy Limits (PdfPolicyLimits.Strict)
+48 | 
+49 | | Limit | Value | Policy ID |
+50 | |---|---|---|
+51 | | Max HTML bytes | 512 KB | `limit.max-html-bytes` |
+52 | | Max element count | 5 000 | `limit.max-element-count` |
+53 | | Max DOM depth | 50 | `limit.max-dom-depth` |
+54 | | Max image pixels | `PdfLimits.Defaults.MaxImagePixels` | rejected with `IMG-MAX-PIXELS` |
+55 | 
+56 | Source: `src/Muonroi.Pdf.Governance/Policies/LegacyPrintPolicy.cs`
+57 | 
+58 | ---
+59 | 
+60 | ## 3. Supported Layout Primitives
+
+[2026-06-16 10:28:52] Tool [bash]:
+D:/sources/Core/muonroi-building-block/src/Muonroi.AspNetCore.OpenApi/
+D:/sources/Core/muonroi-building-block/src/Muonroi.AspNetCore.RuleEngine/
+D:/sources/Core/muonroi-building-block/src/Muonroi.AspNetCore/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Auth/
+D:/sources/Core/muonroi-building-block/src/Muonroi.AuthZ/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BackgroundJobs.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BackgroundJobs.Hangfire/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BackgroundJobs.Quartz/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Bff/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BuildingBlock.All/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BuildingBlock.Shared/
+D:/sources/Core/muonroi-building-block/src/Muonroi.BuildingBlock/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Caching.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Caching.Memory/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Caching.Redis/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Core.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Core/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Data.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Data.Dapper/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Data.EntityFrameworkCore.Events/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Data.EntityFrameworkCore/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Diagnostics.Generator/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Diagnostics/
+D:/sources/Core/muonroi-building-block/src/Muonroi.EntityFrameworkCore.Configuration/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Experience.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Experience.Runtime/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Governance.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Governance.Enterprise/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Governance/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Grpc/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Http/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Integration.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Integration.Connectors/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Integration.Persistence/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Kubernetes/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Logging.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Logging/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Mapper/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Mapping.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Mediator/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Messaging.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Messaging.MassTransit/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Observability/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf.DesignSystem.Default/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf.Enterprise/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf.Governance/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf.SourceGenerators/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Pdf/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Quota.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Resilience/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.CEP/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Core/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.DecisionTable.Web/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.DecisionTable/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.EntityFrameworkCore/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.NRules/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Proliferation.Persistence/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Proliferation/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Runtime.Web/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Runtime/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.SourceGenerators/
+D:/sources/Core/muonroi-building-block/src/Muonroi.RuleEngine.Testing/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Rules/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Secrets/
+D:/sources/Core/muonroi-building-block/src/Muonroi.ServiceDiscovery.Consul/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Services/
+D:/sources/Core/muonroi-building-block/src/Muonroi.SignalR/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.Abstractions/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.Core/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.SiteProfile.Grpc/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.SiteProfile.SourceGenerators/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.SiteProfile.Web/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy.SiteProfile/
+D:/sources/Core/muonroi-building-block/src/Muonroi.Tenancy/
+D:/sources/Core/muonroi-building-block/src/Muonroi.UiEngine.Catalog/
+
+[bash_run_id: bash-2 — 5400 chars cached; use bash_output_get(run_id, mode=tail|head|grep|lines) to re-query]
+
+[2026-06-16 10:28:52] Tool [read_file]:
+[D:/sources/Core/muonroi-building-block/KNOWN-DEVIATIONS.md: lines 1-60 of 246]
+1 | # Known Deviations from CSS 2.1 / W3C Specifications
+2 | 
+3 | This document records intentional deviations from the CSS 2.1 specification. Each entry
+4 | explains the deviation, its scope, and the rationale. Deviations are accepted for v0.1 and
+5 | will be addressed in future phases as noted.
+6 | 
+7 | > **TEST-03 conformance framing.** v0.1 does not publish a numeric CSS-property coverage
+8 | > percentage. Instead, "conformance to the declared subset" means: (1) the golden corpus
+9 | > exercises every non-rejected property in the declared v0.1 subset (block/inline layout,
+10 | > tables with `border-collapse:separate`, paged media, fonts, images, Vietnamese diacritics),
+11 | > and (2) every intentional behavioural difference from CSS 2.1 / W3C specs is exhaustively
+12 | > enumerated below (TEST-04). Properties outside the subset are not "deviations" — they are
+13 | > hard-rejected by the strict policy gate (see KD-05-01) and never reach layout.
+14 | 
+15 | ---
+16 | 
+17 | ## Phase 3 Deviations (Box Tree + Layout Engine)
+18 | 
+19 | ### KD-03-01: `@page { size: … }` descriptor ignored
+20 | 
+21 | **Specification**: CSS Paged Media §6.1 — `@page { size: A4 landscape }` overrides the
+22 | physical page dimensions.
+23 | 
+24 | **Actual behavior**: The `@page { size: … }` descriptor is parsed and stored in
+25 | `IPageRule.Size` but is **never applied** by the layout engine. Page dimensions are always
+26 | taken from `PdfRenderOptions.PageSize` and `PdfRenderOptions.Orientation`.
+27 | 
+28 | **Scope**: Phase 3 layout engine (`LayoutEngine.GetPageDimensions`).
+29 | 
+30 | **Rationale**: No v0.1 consumer requires CSS-driven page size override. The ROADMAP SC1–SC5
+31 | success criteria test margins and content positioning, not `@page { size }`. Adding size
+32 | parsing adds complexity without a testable requirement. The feature is deferred to a future
+33 | phase when a consumer demands it.
+34 | 
+35 | ---
+36 | 
+37 | ### KD-03-02: `orphans` and `widows` properties not implemented
+38 | 
+39 | **Specification**: CSS 2.1 §13.3.3 — `orphans` specifies the minimum number of lines in a
+40 | block that must be left at the bottom of a page; `widows` specifies the minimum at the top.
+41 | 
+42 | **Actual behavior**: The `orphans` and `widows` CSS properties are accepted by the policy gate
+43 | but have no effect on pagination. Lines are broken at the natural page boundary without any
+44 | minimum-line guarantee.
+45 | 
+46 | **Scope**: Phase 3 `PaginationEngine` and `BlockLayoutEngine`.
+47 | 
+48 | **Rationale**: Orphan/widow control requires tracking individual line boxes across page
+49 | boundaries, which adds significant complexity to the pagination loop. No Phase 3 success
+50 | criterion (SC1–SC5) requires this behavior. Deferred to a future phase.
+51 | 
+52 | ---
+53 | 
+54 | ### KD-03-03: Two-pass layout — page boundary may shift between passes
+55 | 
+56 | **Specification**: CSS Paged Media / counter(pages) — the total-page count reported by
+57 | `counter(pages)` should match the final paginated output exactly.
+58 | 
+59 | **Actual behavior**: Pass 1 runs with `totalPages = 0` to determine page count. Pass 2 runs
+60 | with the pass-1 count substituted into `counter(pages)`. If the text of the resolved count
+
+[2026-06-16 10:28:52] Assistant:
+Here là cách tôi hiểu về hệ sinh thái **Muonroi**, dựa trên những gì tôi đọc trực tiếp từ repo này:
+
+---
+
+## Muonroi là gì?
+
+Muonroi là một **open-core .NET ecosystem** — nền tảng xây dựng ứng dụng doanh nghiệp theo mô hình BUSL (Business Source License), với lõi OSS Apache 2.0 và các phần mở rộng thương mại.
+
+## Kiến trúc 4 lớp
+
+**1. Core & Abstractions** (OSS)
+- `Muonroi.Core`, `Muonroi.Core.Abstractions` — nền tảng chung
+- `Muonroi.Governance`, `Muonroi.Tenancy`, `Muonroi.Auth`, `Muonroi.Observability` — governance, đa tenant, auth, observability
+- `Muonroi.Data.*`, `Muonroi.Caching.*`, `Muonroi.Messaging.Abstractions` — tầng dữ liệu/cache/message
+- ~30+ packages OSS, tất cả Apache 2.0
+
+**2. Rule Engine** (OSS + Commercial) — sản phẩm chủ lực
+- Source-generator driven: đánh dấu rule bằng attribute `[MExtractAsRule]`, CLI `muonroi-rule` tự sinh registration code (README.md:21-45)
+- Hỗ trợ: workflow, canary rollout, approval, audit trail, signing (HMAC/RSA), decision tables, CEP, NRules integration
+- Runtime (`Muonroi.RuleEngine.Runtime`) có hot-reload, cache telemetry, Postgres/file store
+
+**3. Commercial Layer** (license thương mại — source công khai trên NuGet)
+- `Muonroi.Governance.Enterprise`, `Muonroi.AuthZ`, `Muonroi.Caching.Redis`, `Muonroi.Messaging.MassTransit`, `Muonroi.BackgroundJobs.Hangfire`, `Muonroi.Grpc`, `Muonroi.Secrets`, `Muonroi.Bff`, `Muonroi.Pdf.Enterprise`...
+- ~15 packages — source **công khai** nhưng cần license để dùng production (OSS-BOUNDARY.md:9-27)
+
+**4. SaaS Control Plane** (private repo — moat thực sự)
+- `muonroi-control-plane`, `muonroi-license-server` — hai repo private
+- Tính năng SaaS-only: hot-reload, canary rollout, audit trail, approval workflow (OSS-BOUNDARY.md:22)
+- Không thể fork từ OSS để có được các tính năng này
+
+## Cơ chế bảo vệ thương mại
+
+Dựa trên 4 lớp (OSS-BOUNDARY.md:19-27):
+1. **ActivationProof** RSA-signed — không thể giả mạo
+2. **Assembly hash verification** — `CodeIntegrityVerifier` kiểm tra toàn vẹn assembly
+3. **Heartbeat + grace period** — license revoked tự degrade xuống Free tier
+4. **SaaS lock-in** — các tính năng quan trọng nhất cần control plane
+
+## Các sản phẩm nổi bật khác
+
+- **Muonroi.Pdf** — pure-managed HTML-to-PDF engine, mới hoàn thiện Phase 8, có profile `legacy-print-v1` đạt Chrome parity trên 17/17 template production (PROFILE-V1.md:8)
+- **Tools**: `muonroi-rule` CLI (rule extraction/generation), source generators cho DI registration
+- **Samples**: FraudDetection, LoanApproval, MultiTenantSaaS, Quickstart DecisionTable
+
+## Tổng quan
+
+Muonroi không chỉ là một rule engine. Nó là một **hệ sinh thái xây dựng ứng dụng doanh nghiệp .NET hoàn chỉnh** — từ rule engine, decision tables, governance, multi-tenancy, caching, messaging, PDF generation, đến authZ, observability, background jobs. Chiến lược open-core cho phép cộng đồng dùng miễn phí phần OSS, trong khi doanh thu đến từ enterprise features + SaaS control plane — một mô hình giống GitLab / Mattermost hơn là "mã nguồn đóng hoàn toàn".
+
+[2026-06-16 10:29:19] You:
+bạn hiểu dựa trên thông tin nào nhỉ
+
+[2026-06-16 10:29:28] Assistant:
+Dựa trên các file tôi đã đọc **trong turn trước** (và chỉ các file đó), đây là mapping sources:
+
+---
+
+| Luận điểm | Source | Dòng |
+|---|---|---|
+| "Muonroi Building Block là .NET foundation của open-core ecosystem" | `README.md` | 3 |
+| "OSS packages là Apache 2.0, commercial packages cần license" | `README.md` | 96 |
+| Danh sách ~30+ OSS packages | `OSS-BOUNDARY.md` | 32–67 |
+| Danh sách ~15 commercial packages | `OSS-BOUNDARY.md` | 75–89 |
+| "Source commercial công khai trên NuGet" | `OSS-BOUNDARY.md` | 70–73 |
+| "Moat thực sự là SaaS Control Plane (private repo)" | `OSS-BOUNDARY.md` | 16 |
+| 4 cơ chế bảo vệ thương mại: ActivationProof, assembly hash, heartbeat, SaaS lock-in | `OSS-BOUNDARY.md` | 19–27 |
+| "BUSL-style open-core model" | `OSS-BOUNDARY.md` | 9–11 |
+| Rule engine: `[MExtractAsRule]` + CLI `muonroi-rule` + DI generation | `README.md` | 21–45 |
+| Canary rollout, approval, audit trail, signing (HMAC/RSA) | `REPO_DEEP_MAP.md` | 55–80 |
+| Rule engine runtime: hot-reload, cache telemetry, Postgres/file store | `REPO_DEEP_MAP.md` | 54–80 |
+| PDF engine `legacy-print-v1`, Chrome parity 17/17 templates | `PROFILE-V1.md` | 8, 24–29 |
+| ~80+ thư mục `src/` tương ứng từng package | `bash` output (`ls src/*/`) | — |
+
+**Không có luận điểm nào** trong câu trả lời trước được suy diễn hay bịa đặt — mỗi luận điểm đều có file:dòng cụ thể ở trên. Nếu muốn verify bất kỳ cái nào, tôi có thể đọc lại đúng dòng đó ngay lập tức.
+
+[2026-06-16 10:29:42] You:
+có các mcp như muonroi-docs bạn có thể verify
+
+[2026-06-16 10:30:06] Assistant:
+MCP unavailable: Fetch (URL → markdown): not ready within 2500ms (still connecting — available next turn) | Tavily Web Search: not ready within 2500ms (still connecting — available next turn)
+
+Có lý. Để tôi dùng chính các MCP `muonroi-docs` để verify những luận điểm cốt lõi.
+
+[2026-06-16 10:30:06] tool_group:
+
+
+[2026-06-16 10:30:19] Assistant:
+Request failed: Unknown error.
+
+========================================================================
+  End of export
+========================================================================

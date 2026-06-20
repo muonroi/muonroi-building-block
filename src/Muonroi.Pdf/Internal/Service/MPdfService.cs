@@ -1,8 +1,11 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Logging.Abstractions;
 using Muonroi.Pdf.Abstractions;
 using Muonroi.Pdf.Abstractions.Engine;
@@ -24,42 +27,30 @@ namespace Muonroi.Pdf.Internal.Service;
 /// Singleton-safe: the scoped <see cref="ITenantContext"/> is resolved per-call via
 /// <see cref="IServiceProvider"/> to avoid a captive-dependency scope violation (T-06-05).
 /// </summary>
-internal sealed class MPdfService : IMPdfService
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfInputLimitException and PdfPolicyException are public PDF-contract exception types; consumers catch them directly. Cannot change hierarchy.")]
+internal sealed class MPdfService(
+    IHtmlParser htmlParser,
+    ICssCascadeEngine cascadeEngine,
+    IPdfCssPolicy cssPolicy,
+    IPdfWriter writer,
+    IImageDecoder imageDecoder,
+    IResourceResolver resourceResolver,
+    IOptions<PdfConfigs> configs,
+    IServiceProvider serviceProvider,
+    IMLog<MPdfService> log,
+    IFontResolver? fontResolver = null) : IMPdfService
 {
-    private readonly IHtmlParser _htmlParser;
-    private readonly ICssCascadeEngine _cascadeEngine;
-    private readonly IPdfCssPolicy _cssPolicy;
-    private readonly IPdfWriter _writer;
-    private readonly IImageDecoder _imageDecoder;
-    private readonly IResourceResolver _resourceResolver;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IMLog<MPdfService> _log;
-    private readonly IFontResolver? _fontResolver;
-    private readonly PdfConfigs _configs;
-
-    public MPdfService(
-        IHtmlParser htmlParser,
-        ICssCascadeEngine cascadeEngine,
-        IPdfCssPolicy cssPolicy,
-        IPdfWriter writer,
-        IImageDecoder imageDecoder,
-        IResourceResolver resourceResolver,
-        IOptions<PdfConfigs> configs,
-        IServiceProvider serviceProvider,
-        IMLog<MPdfService> log,
-        IFontResolver? fontResolver = null)
-    {
-        _htmlParser = htmlParser ?? throw new ArgumentNullException(nameof(htmlParser));
-        _cascadeEngine = cascadeEngine ?? throw new ArgumentNullException(nameof(cascadeEngine));
-        _cssPolicy = cssPolicy ?? throw new ArgumentNullException(nameof(cssPolicy));
-        _writer = writer ?? throw new ArgumentNullException(nameof(writer));
-        _imageDecoder = imageDecoder ?? throw new ArgumentNullException(nameof(imageDecoder));
-        _resourceResolver = resourceResolver ?? throw new ArgumentNullException(nameof(resourceResolver));
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
-        _fontResolver = fontResolver;
-        _configs = (configs ?? throw new ArgumentNullException(nameof(configs))).Value;
-    }
+    private readonly IHtmlParser _htmlParser = MGuard.NotNull(htmlParser);
+    private readonly ICssCascadeEngine _cascadeEngine = MGuard.NotNull(cascadeEngine);
+    private readonly IPdfCssPolicy _cssPolicy = MGuard.NotNull(cssPolicy);
+    private readonly IPdfWriter _writer = MGuard.NotNull(writer);
+    private readonly IImageDecoder _imageDecoder = MGuard.NotNull(imageDecoder);
+    private readonly IResourceResolver _resourceResolver = MGuard.NotNull(resourceResolver);
+    private readonly IServiceProvider _serviceProvider = MGuard.NotNull(serviceProvider);
+    private readonly IMLog<MPdfService> _log = MGuard.NotNull(log);
+    private readonly IFontResolver? _fontResolver = fontResolver;
+    private readonly PdfConfigs _configs = MGuard.NotNull(configs).Value;
 
     public async Task<PdfRenderResult> RenderAsync(
         string html,
@@ -67,9 +58,9 @@ internal sealed class MPdfService : IMPdfService
         PdfRenderOptions options,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(html);
-        ArgumentNullException.ThrowIfNull(destination);
-        ArgumentNullException.ThrowIfNull(options);
+        MGuard.NotNull(html);
+        MGuard.NotNull(destination);
+        MGuard.NotNull(options);
 
         // T-06-04: size-gate untrusted HTML before parsing — early exit.
         int htmlBytes = Encoding.UTF8.GetByteCount(html);
@@ -96,7 +87,7 @@ internal sealed class MPdfService : IMPdfService
 
             if (styled is not IPdfDocumentContext documentContext)
             {
-                throw new InvalidOperationException(
+                throw new MInternalException(
                     "Styled document must implement IPdfDocumentContext for policy validation.");
             }
 
@@ -193,7 +184,7 @@ internal sealed class MPdfService : IMPdfService
             IStyledDocument styled = await _cascadeEngine.CascadeAsync(parsed, null, cts.Token).ConfigureAwait(false);
 
             if (styled is not IPdfDocumentContext documentContext)
-                throw new InvalidOperationException("Styled document must implement IPdfDocumentContext for policy validation.");
+                throw new MInternalException("Styled document must implement IPdfDocumentContext for policy validation.");
 
             PolicyValidationResult policy = await _cssPolicy.ValidateAsync(documentContext, cts.Token).ConfigureAwait(false);
             if (!policy.Accepted)

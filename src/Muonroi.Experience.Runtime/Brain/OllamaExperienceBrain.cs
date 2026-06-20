@@ -1,6 +1,8 @@
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Experience.Abstractions;
 using Muonroi.Logging.Abstractions;
 
@@ -187,23 +189,24 @@ public sealed class OllamaExperienceBrain(
             }
 
             string result = accumulated.ToString();
-            if (string.IsNullOrWhiteSpace(result))
-                throw new InvalidOperationException("OllamaExperienceBrain: AbstractAsync returned empty response");
+            MGuard.State(!string.IsNullOrWhiteSpace(result),
+                "OllamaExperienceBrain: AbstractAsync returned empty response");
 
             NeuronExperience? principle = ParseExperience(result, "ollama-brain").FirstOrDefault();
-            return principle ?? throw new InvalidOperationException("OllamaExperienceBrain: AbstractAsync could not parse principle JSON");
+            MGuard.State(principle is not null, "OllamaExperienceBrain: AbstractAsync could not parse principle JSON");
+            return MGuard.NotNull(principle);
         }
-        catch (InvalidOperationException)
+        catch (MInternalException)
         {
             throw;
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new InvalidOperationException($"OllamaExperienceBrain: AbstractAsync timed out after {options.AiTimeoutSeconds}s");
+            throw new MInternalException($"OllamaExperienceBrain: AbstractAsync timed out after {options.AiTimeoutSeconds}s");
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"OllamaExperienceBrain: AbstractAsync failed — {ex.Message}", ex);
+            throw new MInternalException($"OllamaExperienceBrain: AbstractAsync failed — {ex.Message}");
         }
     }
 
@@ -238,10 +241,10 @@ public sealed class OllamaExperienceBrain(
                 new NeuronExperience
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Trigger = trigger!,
-                    Question = question!,
+                    Trigger = MGuard.NotNull(trigger),
+                    Question = MGuard.NotNull(question),
                     Reasoning = reasoning,
-                    Solution = solution!,
+                    Solution = MGuard.NotNull(solution),
                     CreatedFrom = createdFrom,
                     CreatedAt = DateTimeOffset.UtcNow,
                     Tier = ExperienceTier.SelfQA,

@@ -399,6 +399,9 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
             entity.Property(x => x.NormalizedContent).HasColumnType("text");
             entity.Property(x => x.CorrelationId).HasMaxLength(64);
             entity.Property(x => x.IngestedBy).HasMaxLength(256);
+            // Phase 25 DOC-01: BA-confirmed classification ("rule" | "business" | null). No RLS change —
+            // this is a column add on the already-secured IngestedSourceDocument table.
+            entity.Property(x => x.DocType).HasMaxLength(16);
         });
 
         modelBuilder.Entity<OutboundSyncJobRecord>(entity =>

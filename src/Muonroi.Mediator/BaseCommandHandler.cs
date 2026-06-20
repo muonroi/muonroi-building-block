@@ -3,12 +3,14 @@ using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Models.Common;
 using Muonroi.Core.Extensions;
 using Muonroi.Logging.Abstractions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Mediator;
 
 /// <summary>
 /// Represents the Base Command Handler.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Unconstrained generic destination cannot use MGuard.NotNull; null validated via MGuard.Against above.")]
 public abstract class BaseCommandHandler(
     IMapper mapper,
     IAuthenticateInfoContext tokenInfo,

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Muonroi.Pdf.Abstractions.Exceptions;
 using Muonroi.Pdf.Internal.Font;
 using Muonroi.Pdf.Internal.Image;
@@ -5,6 +6,9 @@ using Muonroi.Pdf.Internal.Layout.Geometry;
 using SixLabors.Fonts;
 
 namespace Muonroi.Pdf.Internal.Layout;
+
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfInputLimitException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
 
 internal sealed class LayoutEngine
 {
@@ -214,7 +218,11 @@ internal sealed class LayoutEngine
             PageWidth = pageWidthPt,
             PageHeight = pageHeightPt,
             AvailableWidth = availableWidth,
-            CurrentY = topMarginPt,
+            // Body content is laid out in 0-based continuous body-space; PaginationEngine adds the
+            // top margin per physical page via localY. Starting at topMarginPt double-counted the
+            // top margin (content pushed down one margin on page 0, and tall single-page content
+            // spuriously broke to page 2 — the G8 blank-first-page bug).
+            CurrentY = 0f,
             CurrentPageIndex = 0,
             TotalPages = totalPages,
             TextMetrics = _textMetrics,

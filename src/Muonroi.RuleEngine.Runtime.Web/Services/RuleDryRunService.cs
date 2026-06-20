@@ -84,7 +84,7 @@ public sealed class RuleDryRunService(
         ISystemExecutionContext previousContext = _executionContextAccessor.Get();
         if (!string.IsNullOrWhiteSpace(tenantId))
         {
-            _executionContextAccessor.Set(WithTenant(previousContext, tenantId!));
+            _executionContextAccessor.Set(WithTenant(previousContext, tenantId ?? string.Empty));
         }
 
         using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -221,7 +221,7 @@ public sealed class RuleDryRunService(
         {
             string contextType =
                 string.IsNullOrWhiteSpace(explicitContextType)
-                    ? typeof(Dictionary<string, object?>).AssemblyQualifiedName!
+                    ? MGuard.NotNull(typeof(Dictionary<string, object?>).AssemblyQualifiedName)
                     : explicitContextType;
 
             FactBag facts = await tempService.DryRunAsync(
@@ -342,9 +342,10 @@ public sealed class RuleDryRunService(
                     List<string> codes = [];
                     foreach (JsonElement code in rules.EnumerateArray())
                     {
-                        if (code.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(code.GetString()))
+                        string? codeStr = code.GetString();
+                        if (code.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(codeStr))
                         {
-                            codes.Add(code.GetString()!);
+                            codes.Add(codeStr);
                         }
                     }
 

@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Quickstart.UiEngine.Catalog.Api": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:50990;http://localhost:50991"
+    }
+  }
+}

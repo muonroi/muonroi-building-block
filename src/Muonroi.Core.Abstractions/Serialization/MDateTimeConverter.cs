@@ -31,7 +31,11 @@ public class MDateTimeConverter
                 : DateTime.SpecifyKind(parsedDate.ToUniversalTime(), DateTimeKind.Utc);
         }
 
+        // MSTD0001 suppressed: System.Text.Json's contract requires a JsonException on invalid
+        // input (see the documented <exception> above); an MException here would break the serializer.
+#pragma warning disable MSTD0001
         throw new JsonException($"Invalid date format: {dateString}");
+#pragma warning restore MSTD0001
     }
 
     /// <summary>

@@ -20,13 +20,14 @@ internal static class EndpointValidator
         string raw = $"{baseEndpoint.TrimEnd('/')}{path}";
 
         MGuard.Against(!Uri.TryCreate(raw, UriKind.Absolute, out Uri? uri), $"Invalid endpoint URI: {raw}");
+        Uri validUri = MGuard.NotNull(uri);
 
-        MGuard.Against(!string.Equals(uri!.Scheme, "https", StringComparison.OrdinalIgnoreCase),
-            $"External AI endpoints must use HTTPS. Got: {uri.Scheme}");
+        MGuard.Against(!string.Equals(validUri.Scheme, "https", StringComparison.OrdinalIgnoreCase),
+            $"External AI endpoints must use HTTPS. Got: {validUri.Scheme}");
 
-        MGuard.Against(IsBlockedHost(uri.Host), $"Endpoint host is not allowed: {uri.Host}");
+        MGuard.Against(IsBlockedHost(validUri.Host), $"Endpoint host is not allowed: {validUri.Host}");
 
-        return uri.AbsoluteUri;
+        return validUri.AbsoluteUri;
     }
 
     /// <summary>
@@ -38,10 +39,11 @@ internal static class EndpointValidator
         string raw = $"{baseEndpoint.TrimEnd('/')}{path}";
 
         MGuard.Against(!Uri.TryCreate(raw, UriKind.Absolute, out Uri? uri), $"Invalid endpoint URI: {raw}");
+        Uri validUri = MGuard.NotNull(uri);
 
-        MGuard.Against(IsMetadataEndpoint(uri!.Host), $"Cloud metadata endpoints are not allowed: {uri.Host}");
+        MGuard.Against(IsMetadataEndpoint(validUri.Host), $"Cloud metadata endpoints are not allowed: {validUri.Host}");
 
-        return uri.AbsoluteUri;
+        return validUri.AbsoluteUri;
     }
 
     private static bool IsBlockedHost(string host)

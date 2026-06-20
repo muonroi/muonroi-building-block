@@ -1,7 +1,13 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Observability.OpenTelemetry;
-using Polly;
+
+
+
+
+
+
+
+
+
+
 
 namespace Quickstart.Resilience.Api.Services;
 
@@ -10,25 +16,17 @@ namespace Quickstart.Resilience.Api.Services;
 /// The pipeline provides automatic retry with exponential back-off, circuit breaker protection,
 /// and a hard 10-second execution timeout — all configured via <see cref="MuonroiResilienceExtensions.AddMuonroiResilience"/>.
 /// </summary>
-public sealed class WeatherApiClient
+public sealed class WeatherApiClient(
+    IHttpClientFactory httpClientFactory,
+    ResiliencePipelineProvider<string> pipelineProvider,
+    IMLog<WeatherApiClient> logger)
 {
-    private readonly HttpClient _httpClient;
-    private readonly ResiliencePipeline _pipeline;
-    private readonly IMLog<WeatherApiClient> _logger;
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient("weather-api");
+    private readonly ResiliencePipeline _pipeline = pipelineProvider.GetPipeline("muonroi-standard");
+    private readonly IMLog<WeatherApiClient> _logger = logger;
 
     // Tracks how many deliberate failures have been injected so far in the current demo run.
     private int _failureCount;
-
-    public WeatherApiClient(
-        IHttpClientFactory httpClientFactory,
-        ResiliencePipelineProvider<string> pipelineProvider,
-        IMLog<WeatherApiClient> logger)
-    {
-        _httpClient = httpClientFactory.CreateClient("weather-api");
-        // Retrieve the named pipeline registered by AddMuonroiResilience().
-        _pipeline = pipelineProvider.GetPipeline("muonroi-standard");
-        _logger = logger;
-    }
 
     /// <summary>
     /// Returns the current weather for the supplied coordinates.

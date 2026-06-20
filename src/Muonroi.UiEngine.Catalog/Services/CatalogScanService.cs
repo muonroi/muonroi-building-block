@@ -523,7 +523,7 @@ public sealed class CatalogScanService(
     {
         return [.. values
             .Where(x => !string.IsNullOrWhiteSpace(x))
-            .SelectMany(x => x!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .SelectMany(x => (x ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)];
@@ -603,7 +603,7 @@ public sealed class CatalogScanService(
         }
         catch (ReflectionTypeLoadException ex)
         {
-            return ex.Types.Where(x => x is not null)!;
+            return ex.Types.OfType<Type>();
         }
         catch
         {

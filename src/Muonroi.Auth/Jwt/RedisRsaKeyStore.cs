@@ -1,10 +1,13 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Auth.Jwt;
 
 /// <summary>
 /// A Redis-backed implementation of the IRsaKeyStore.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001", Justification = "JWT validation contract: SecurityTokenException is the type the JWT bearer pipeline expects.")]
 public class RedisRsaKeyStore : IRsaKeyStore
 {
     private const string CurrentKidKey = "rsakey:current";
@@ -53,7 +56,7 @@ public class RedisRsaKeyStore : IRsaKeyStore
         if (key is not RsaSecurityKey rsaKey)
         {
             RotateKeys();
-            key = GetKey(_cache.GetString(CurrentKidKey)!);
+            key = GetKey(MGuard.NotNull(_cache.GetString(CurrentKidKey)));
             if (key is not RsaSecurityKey fallbackKey)
             {
                 throw new MInternalException("Unable to resolve current RSA signing key.");
@@ -145,7 +148,7 @@ public class RedisRsaKeyStore : IRsaKeyStore
                 continue;
             }
 
-            RSAParameters parameters = _jsonService.Deserialize<RSAParameters>(serializedPublic)!;
+            RSAParameters parameters = MGuard.NotNull((RSAParameters?)_jsonService.Deserialize<RSAParameters>(serializedPublic));
             using RSA rsa = RSA.Create();
             rsa.ImportParameters(parameters);
 

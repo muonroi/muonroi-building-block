@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using Muonroi.Core.Abstractions.Exceptions;
@@ -7,6 +8,7 @@ namespace Muonroi.RuleEngine.DecisionTable.Feel;
 /// <summary>
 /// Provides methods to evaluate FEEL (Friendly Enough Expression Language) expressions.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "FEEL evaluator uses LINQ projections and regex groups where values are structurally guaranteed non-null by parser logic; MGuard.NotNull is incompatible with static class methods.")]
 public static partial class FeelEvaluator
 {
     private const double NumericTolerance = 1e-9;

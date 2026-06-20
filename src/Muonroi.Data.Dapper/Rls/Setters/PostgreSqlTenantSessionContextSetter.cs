@@ -1,6 +1,7 @@
 using System.Data;
 using System.Data.Common;
 using System.Text.RegularExpressions;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Data.Dapper.Rls.Bypass;
 using Muonroi.Logging.Abstractions;
@@ -54,10 +55,10 @@ public sealed class PostgreSqlTenantSessionContextSetter : ITenantSessionContext
         _bypassRoleName = MGuard.NotEmpty(bypassRoleName);
         if (!SafeIdentifier.IsMatch(_bypassRoleName))
         {
-            throw new ArgumentException(
+            throw new MArgumentException(
+                nameof(bypassRoleName),
                 $"BypassRoleName '{_bypassRoleName}' is not a valid PostgreSQL identifier. " +
-                "It must match ^[A-Za-z_][A-Za-z0-9_]*$ (WR-01 defense-in-depth for SET ROLE).",
-                nameof(bypassRoleName));
+                "It must match ^[A-Za-z_][A-Za-z0-9_]*$ (WR-01 defense-in-depth for SET ROLE).");
         }
         _log = log;
     }

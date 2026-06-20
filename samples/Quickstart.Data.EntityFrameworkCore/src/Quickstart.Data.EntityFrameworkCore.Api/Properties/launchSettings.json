@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Quickstart.Data.EntityFrameworkCore.Api": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:50999;http://localhost:51000"
+    }
+  }
+}

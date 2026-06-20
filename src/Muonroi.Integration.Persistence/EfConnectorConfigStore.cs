@@ -22,9 +22,14 @@ public sealed class EfConnectorConfigStore(ConnectorDbContext db) : IConnectorCo
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ConnectorConfigDto>> ListAsync(string? tenantId, CancellationToken ct)
+    public async Task<IReadOnlyList<ConnectorConfigDto>> ListAsync(string? tenantId, string? ownerId, CancellationToken ct)
     {
-        List<ConnectorConfigEntity> entities = await _db.ConnectorConfigs
+        IQueryable<ConnectorConfigEntity> q = _db.ConnectorConfigs;
+        if (ownerId is not null)
+        {
+            q = q.Where(e => e.OwnerId == ownerId);
+        }
+        List<ConnectorConfigEntity> entities = await q
             .OrderByDescending(e => e.UpdatedAt)
             .ToListAsync(ct);
         return entities.Select(ToDto).ToList();
@@ -57,6 +62,7 @@ public sealed class EfConnectorConfigStore(ConnectorDbContext db) : IConnectorCo
                 ConfigJson = config.ConfigJson,
                 CredentialId = config.CredentialId,
                 Status = config.Status,
+                OwnerId = config.OwnerId,
             };
             _db.ConnectorConfigs.Add(existing);
         }
@@ -88,5 +94,6 @@ public sealed class EfConnectorConfigStore(ConnectorDbContext db) : IConnectorCo
         Status = entity.Status,
         CreatedAt = entity.CreatedAt,
         UpdatedAt = entity.UpdatedAt,
+        OwnerId = entity.OwnerId,
     };
 }

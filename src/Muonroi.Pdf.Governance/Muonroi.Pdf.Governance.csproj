@@ -23,4 +23,8 @@
     <ProjectReference Include="..\Muonroi.Pdf.Abstractions\Muonroi.Pdf.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Governance\Muonroi.Governance.csproj" />
   </ItemGroup>
+  <!-- Required by wave-1 cascade plans (12-01 through 12-03) to access internal cascade types -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Muonroi.Pdf.Tests" />
+  </ItemGroup>
 </Project>

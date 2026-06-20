@@ -1,4 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
+using Muonroi.Core.Abstractions.Guards;
+using Muonroi.Logging.Abstractions;
 
 namespace Muonroi.AspNetCore.Controllers;
 
@@ -8,13 +10,15 @@ public class DefaultAuthContextFactory(
     ResourceSetting resourceSetting,
     IConfiguration configuration,
     MDbContext dbContext,
-    IAmqpContext? amqpContext = null) : IAuthContextFactory
+    IAmqpContext? amqpContext = null,
+    IMLog<DefaultAuthContextFactory>? logger = null) : IAuthContextFactory
 {
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
     private readonly ResourceSetting _resourceSetting = resourceSetting;
     private readonly IConfiguration _configuration = configuration;
     private readonly MDbContext _dbContext = dbContext;
     private readonly IAmqpContext? _amqpContext = amqpContext;
+    private readonly IMLog<DefaultAuthContextFactory>? _logger = logger;
 
 /// <inheritdoc />
     public IAuthenticateInfoContext Create()
@@ -30,7 +34,7 @@ public class DefaultAuthContextFactory(
             // the type's full name. If it already ran for this request, reuse that context verbatim —
             // this is the authoritative, signature-validated identity and avoids divergence between the
             // validator and this factory.
-            if (context.Items.TryGetValue(typeof(MAuthenticateInfoContext).FullName!, out object? cachedCtx)
+            if (context.Items.TryGetValue(MGuard.NotNull(typeof(MAuthenticateInfoContext).FullName), out object? cachedCtx)
                 && cachedCtx is MAuthenticateInfoContext validated
                 && validated.IsAuthenticated)
             {
@@ -63,7 +67,7 @@ public class DefaultAuthContextFactory(
             {
                 // InitializeFromToken decodes claims, DB-validates the user (exists + active),
                 // and sets IsAuthenticated accordingly — independent of middleware ordering.
-                InitializeFromToken(mAuth, mAuth.AccessToken, _dbContext);
+                InitializeFromToken(mAuth, mAuth.AccessToken, _dbContext, _logger);
             }
             else
             {
@@ -92,7 +96,7 @@ public class DefaultAuthContextFactory(
         return authContext;
     }
 
-    private static void InitializeFromToken(MAuthenticateInfoContext mAuth, string token, MDbContext dbContext)
+    private static void InitializeFromToken(MAuthenticateInfoContext mAuth, string token, MDbContext dbContext, IMLog<DefaultAuthContextFactory>? logger)
     {
         try
         {
@@ -138,8 +142,7 @@ public class DefaultAuthContextFactory(
         {
             // No silent catch: surface decode/DB errors so auth failures are diagnosable.
             mAuth.IsAuthenticated = false;
-            Console.Error.WriteLine(
-                $"[DefaultAuthContextFactory] InitializeFromToken failed: {ex.GetType().Name}: {ex.Message}");
+            logger?.Error(ex, "[DefaultAuthContextFactory] InitializeFromToken failed: {ExceptionType}", ex.GetType().Name);
         }
     }
 

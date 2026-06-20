@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 
@@ -49,7 +50,7 @@ public sealed class LicenseRefreshHostedService(
                         : "<unknown>";
                     logger?.Info("[License] License refreshed successfully. Expires: {Expiry}",
                         expiryValue);
-                    stateNotifier.NotifyRefreshed(result.Payload!);
+                    stateNotifier.NotifyRefreshed(MGuard.NotNull(result.Payload));
                 }
                 else
                 {

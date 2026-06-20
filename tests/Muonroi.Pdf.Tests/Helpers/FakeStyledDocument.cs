@@ -1,16 +1,9 @@
 namespace Muonroi.Pdf.Tests.Helpers;
 
-internal sealed class FakeStyledDocument : IStyledDocument
+internal sealed class FakeStyledDocument(IStyledNode root, IPageRule? pageRule = null,
+    IReadOnlyList<FontFaceDeclaration>? fontFaces = null) : IStyledDocument
 {
-    public FakeStyledDocument(IStyledNode root, IPageRule? pageRule = null,
-        IReadOnlyList<FontFaceDeclaration>? fontFaces = null)
-    {
-        Root = root;
-        PageRule = pageRule;
-        FontFaces = fontFaces ?? Array.Empty<FontFaceDeclaration>();
-    }
-
-    public IStyledNode Root { get; }
-    public IPageRule? PageRule { get; }
-    public IReadOnlyList<FontFaceDeclaration> FontFaces { get; }
+    public IStyledNode Root { get; } = root;
+    public IPageRule? PageRule { get; } = pageRule;
+    public IReadOnlyList<FontFaceDeclaration> FontFaces { get; } = fontFaces ?? Array.Empty<FontFaceDeclaration>();
 }

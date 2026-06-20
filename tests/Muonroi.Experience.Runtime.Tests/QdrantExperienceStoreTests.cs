@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Moq;
+using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Experience.Abstractions;
 using Muonroi.Experience.Runtime;
 using Muonroi.Experience.Runtime.Qdrant;
@@ -32,7 +33,7 @@ public sealed class QdrantExperienceStoreTests
 
         Action act = () => _ = new QdrantExperienceStore(mockWrapper.Object, opts);
 
-        act.Should().Throw<ArgumentException>().WithMessage("*VectorSize*");
+        act.Should().Throw<MArgumentException>().WithMessage("*VectorSize*");
     }
 
     // -------------------------------------------------------------------------

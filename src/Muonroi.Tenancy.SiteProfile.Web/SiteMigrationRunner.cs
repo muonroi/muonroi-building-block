@@ -126,9 +126,11 @@ internal sealed class SiteMigrationRunner(
 
             if (failures.Count > 0)
             {
+#pragma warning disable MSTD0001 // AggregateException preserves per-DbContext inner exceptions for parallel migration diagnostics
                 throw new AggregateException(
                     $"[SiteMigration] {failures.Count} DbContext(s) failed to migrate.",
                     failures.Select(f => new MInternalException(f)));
+#pragma warning restore MSTD0001
             }
         }
         else // ValidateOnly

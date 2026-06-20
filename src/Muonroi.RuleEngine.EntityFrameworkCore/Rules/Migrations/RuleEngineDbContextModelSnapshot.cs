@@ -632,6 +632,10 @@ namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("DocType")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
                     b.Property<DateTimeOffset>("IngestedAt")
                         .HasColumnType("timestamp with time zone");
 

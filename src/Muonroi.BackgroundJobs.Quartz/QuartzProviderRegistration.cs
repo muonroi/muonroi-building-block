@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +17,7 @@ internal static class QuartzProviderRegistration
     /// Registers the Quartz provider when the assembly is loaded.
     /// </summary>
     [ModuleInitializer]
+    [SuppressMessage("Usage", "CA2255", Justification = "Intentional one-time module initializer to register provider on assembly load.")]
     internal static void Register()
     {
         BackgroundJobHandler.RegisterProvider(

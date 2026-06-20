@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.Abstractions;
 using RuleSourceGen.Api.Models;
 
@@ -13,6 +14,7 @@ public sealed class ValidationRules
     [MExtractAsRule("DISCOUNT_VALIDATE", Order = 0)]
     public RuleResult Validate(DiscountRequest context)
     {
+        MGuard.NotNull(context, nameof(context));
         if (string.IsNullOrWhiteSpace(context.CustomerType))
         {
             return RuleResult.Failure("CustomerType is required.");

@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Muonroi.RuleEngine.DecisionTable.Models;
 using Muonroi.RuleEngine.DecisionTable.Stores.Persistence;
 using Muonroi.Core.Abstractions.Interfaces;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.RuleEngine.DecisionTable.Stores;
 
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "EF Core LINQ projections return values structurally guaranteed non-null by the query shape; MGuard.NotNull would add redundant allocations on the hot data path.")]
 internal sealed class EfCoreDecisionTableStore(
     DecisionTableDbContext dbContext,
     IMJsonSerializeService jsonSerializeService,

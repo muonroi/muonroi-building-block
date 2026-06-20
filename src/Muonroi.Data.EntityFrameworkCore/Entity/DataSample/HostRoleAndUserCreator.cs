@@ -93,7 +93,9 @@ public class HostRoleAndUserCreator<TContext>(
         // at seed time — DI container has not been built yet when seeding runs.
         if (registry?.Has(MCapability.Logging) == true)
         {
+#pragma warning disable MSTD0003
             Console.WriteLine("[Ecosystem] WARN: Default admin seeded — password change required on next login");
+#pragma warning restore MSTD0003
         }
     }
 

@@ -1,6 +1,7 @@
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Data.EntityFrameworkCore.Repositories;
 
@@ -8,6 +9,7 @@ namespace Muonroi.Data.EntityFrameworkCore.Repositories;
 /// Provides a base implementation for a repository of entities of type <typeparamref name="T"/>.
 /// </summary>
 /// <typeparam name="T">The type of the entity. Must inherit from <see cref="MEntity"/>.</typeparam>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "EF Core query projections use null-forgiving on fields guaranteed non-null by entity constraints; unconstrained generics prevent MGuard.NotNull.")]
 public class MRepository<T> : IMRepository<T> where T : MEntity
 {
     private readonly IAuthenticateInfoContext _authContext;

@@ -89,7 +89,9 @@ public sealed class VisualRegressionTests
 
         // Rasterize page 0 to PNG
         using var pngStream = new MemoryStream();
+#pragma warning disable CA1416 // Platform-specific — only runs on supported test platforms (Windows/Linux/macOS)
         Conversion.SavePng(pngStream, pdfBytes, 0, password: null, options: new RenderOptions(Dpi: 150));
+#pragma warning restore CA1416
         pngStream.Position = 0;
         byte[] pngBytes = pngStream.ToArray();
 
@@ -290,7 +292,9 @@ public sealed class VisualRegressionTests
         {
             byte[] pdfBytes = await GoldenPdf.RenderAsync(html, new PdfRenderOptions());
             using var pngStream = new MemoryStream();
+#pragma warning disable CA1416 // Platform-specific — only runs on supported test platforms (Windows/Linux/macOS)
             Conversion.SavePng(pngStream, pdfBytes, 0, password: null, options: new RenderOptions(Dpi: 150));
+#pragma warning restore CA1416
             await File.WriteAllBytesAsync(Path.Combine(outDir, $"{name}.png"), pngStream.ToArray());
         }
     }

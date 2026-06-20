@@ -1,4 +1,36 @@
 <Project>
+
+  <!-- RS1038 fires on in-repo Roslyn analyzers / source generators that bundle their code-fix
+       providers in the same assembly (which requires a Microsoft.CodeAnalysis.Workspaces
+       reference). This is an accepted trade-off for these in-repo components.
+
+       This suppression lives in Directory.Build.targets (NOT Directory.Build.props) on purpose:
+       IsRoslynComponent is set in each analyzer's .csproj <PropertyGroup>, which MSBuild evaluates
+       AFTER Directory.Build.props is imported. Directory.Build.targets is imported at the end of
+       project evaluation, so the condition below resolves correctly here. Without this, the global
+       ship gate (TreatWarningsAsErrors in Directory.Build.props) would re-promote RS1038 to an
+       error and break the analyzer / source-generator builds. -->
+  <PropertyGroup Condition="'$(IsRoslynComponent)' == 'true'">
+    <!-- NU5128: analyzer packages are inherently lib/dependency-asymmetric — their payload lives in
+         analyzers/dotnet/cs, not lib/, so NuGet's lib-vs-dependency-group symmetry check is a false
+         positive in BOTH directions (no-lib-with-deps AND lib-with-no-deps after deps are suppressed
+         below). Benign for analyzer packages; suppressed so the ship gate's TreatWarningsAsErrors
+         does not break `dotnet pack` at release time. -->
+    <NoWarn>$(NoWarn);RS1038;NU5128</NoWarn>
+
+    <!-- Analyzer / source-generator packages carry NO consumer-facing runtime dependencies:
+         their Microsoft.CodeAnalysis.* references are provided by the compiler host at analysis
+         time, not needed by the referencing project at runtime. Packages that set
+         IncludeBuildOutput=false (no lib/ folder) but leave a non-private CodeAnalysis reference
+         (e.g. Workspaces.Common) emit NU5128 — a dependency group with no matching lib/ref. Under
+         the ship gate (TreatWarningsAsErrors) that NU5128 is promoted to an error and breaks
+         `dotnet pack` at release time. Suppressing the dependency group is the canonical Roslyn
+         analyzer-package fix: it reflects reality (the package declares no consumer dependencies)
+         rather than masking a warning. Set here (not Directory.Build.props) for the same eval-order
+         reason as the RS1038 NoWarn above — IsRoslynComponent is defined in the .csproj body. -->
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+  </PropertyGroup>
+
   <Target Name="DeduplicateGlobalAnalyzerConfigFiles" BeforeTargets="CoreCompile">
     <ItemGroup>
       <_UniqueGlobalAnalyzerConfigFiles Include="@(GlobalAnalyzerConfigFiles->Distinct())" />

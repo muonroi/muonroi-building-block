@@ -8,6 +8,9 @@
     <ToolCommandName>muonroi-dt</ToolCommandName>
   </PropertyGroup>
   <PropertyGroup>
+    <!-- CLI tool: Console is the user-facing program output (stdout/stderr), not application
+         logging, so the system-wide MSTD0003 (log-only-via-IMLog) rule does not apply here. -->
+    <NoWarn>$(NoWarn);MSTD0003</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.RuleEngine.DecisionTable\Muonroi.RuleEngine.DecisionTable.csproj" />
