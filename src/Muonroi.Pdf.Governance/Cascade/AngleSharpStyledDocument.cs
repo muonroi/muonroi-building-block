@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Text;
 using AngleSharp.Css.Dom;
+using Muonroi.Core.Abstractions.Exceptions;
 using PdfFontStyle = Muonroi.Pdf.Abstractions.FontStyle;
 using PdfFontWeight = Muonroi.Pdf.Abstractions.FontWeight;
 
@@ -27,7 +28,7 @@ internal sealed class AngleSharpStyledDocument : IStyledDocument, IPdfDocumentCo
         CssRuleSet ruleSet = CssRuleSet.FromDocument(document);
         var resolver = new CascadeResolver(ruleSet);
         Root = new OwnedStyledNode(
-            document.DocumentElement ?? throw new InvalidOperationException("Document has no root element."),
+            document.DocumentElement ?? throw new MInternalException("Document has no root element."),
             resolver,
             parentResolved: null);
 

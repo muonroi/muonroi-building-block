@@ -1,5 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Muonroi.Pdf.Governance.Policies;
 
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfPolicyException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy in netstandard2.0 Pdf.Abstractions.")]
 public sealed class SignedPdfCssPolicyDecorator(
     IPdfCssPolicy inner,
     PdfConfigs configs,

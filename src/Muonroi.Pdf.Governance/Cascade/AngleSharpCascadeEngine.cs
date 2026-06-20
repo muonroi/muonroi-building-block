@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Pdf.Governance.Parsing;
 
 namespace Muonroi.Pdf.Governance.Cascade;
@@ -8,8 +9,8 @@ public sealed class AngleSharpCascadeEngine : ICssCascadeEngine
 
     public ValueTask<IStyledDocument> CascadeAsync(IParsedDocument doc, string? userStyleSheet, CancellationToken ct = default)
     {
-        if (doc is not AngleSharpParsedDocument parsedDoc)
-            throw new ArgumentException("Expected AngleSharpParsedDocument produced by AngleSharpHtmlParser", nameof(doc));
+        MGuard.Against(doc is not AngleSharpParsedDocument, "Expected AngleSharpParsedDocument produced by AngleSharpHtmlParser");
+        AngleSharpParsedDocument parsedDoc = (AngleSharpParsedDocument)doc;
 
         if (!string.IsNullOrEmpty(userStyleSheet))
         {

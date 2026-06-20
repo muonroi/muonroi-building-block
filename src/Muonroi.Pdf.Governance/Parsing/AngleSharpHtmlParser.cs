@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Pdf.Governance.Parsing;
 
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfInputLimitException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy in netstandard2.0 Pdf.Abstractions.")]
 public sealed class AngleSharpHtmlParser : IHtmlParser
 {
     public async ValueTask<IParsedDocument> ParseAsync(string html, CancellationToken ct = default)
