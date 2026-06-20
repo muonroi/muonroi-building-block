@@ -277,7 +277,9 @@ public sealed class RealTemplateBaselineTests(ITestOutputHelper output)
         try
         {
             using var pngStream = new MemoryStream();
+#pragma warning disable CA1416 // Platform-specific — only runs on supported test platforms (Windows/Linux/macOS)
             Conversion.SavePng(pngStream, pdfBytes, 0, password: null, options: new RenderOptions(Dpi: 200));
+#pragma warning restore CA1416
             await File.WriteAllBytesAsync(pngPath, pngStream.ToArray());
             _out.WriteLine($"RASTER: OK — {slug}  PNG {pngStream.Length} bytes at {pngPath}");
         }
