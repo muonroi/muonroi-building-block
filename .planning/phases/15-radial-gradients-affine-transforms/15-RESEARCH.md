@@ -1129,7 +1129,7 @@ right-multiplying each new matrix: `M_result = M_f1 * M_f2` for "f1 then f2". [A
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Left-to-right multiply order ambiguity**
    - What we know: CSS spec says functions apply left-to-right; `translate(10px) rotate(45deg)` means
@@ -1138,6 +1138,9 @@ right-multiplying each new matrix: `M_result = M_f1 * M_f2` for "f1 then f2". [A
      or M_rotate * M_translate when using column-vector convention vs row-vector convention.
    - Recommendation: Verify against a browser (Chrome DevTools computed transform matrix for a known
      two-function chain). The matrix math is unambiguous but convention must be confirmed.
+   - **RESOLVED:** The `TryParseTransformMatrix` behavior tests in plan 15-01 Task 1 validate the
+     left-to-right composition against expected output positions; a wrong multiply order fails those
+     tests at execution time. No planning gap.
 
 2. **Ellipse CTM in content stream vs ellipse ShadingType-3 with two different circles**
    - What we know: D-04 locks the ellipse approach as "unit-circle shading + anisotropic CTM".
@@ -1145,6 +1148,9 @@ right-multiplying each new matrix: `M_result = M_f1 * M_f2` for "f1 then f2". [A
      the shading `/Coords` are in the transformed (unit) space but the page clip is in page space.
    - Recommendation: Verify with a test render + PDF viewer. The clip-before-cm ordering (Pitfall P3)
      is the key risk.
+   - **RESOLVED:** CONTEXT.md D-04 locks the unit-circle + anisotropic-CTM approach; plan 15-02 Task 2
+     implements it with the clip-before-cm order (P3) and a golden render verifies the bytes. Viewer
+     behavior is confirmed at test time, not a planning blocker.
 
 3. **`BoxNode.BackgroundGradient` type — union vs parallel property**
    - What we know: Currently `LinearGradient?`. Phase 15 adds `RadialGradient?`.
@@ -1152,6 +1158,8 @@ right-multiplying each new matrix: `M_result = M_f1 * M_f2` for "f1 then f2". [A
      or an abstract base type is cleaner.
    - Recommendation (Planner decides): Parallel property (`BackgroundRadialGradient`) is least
      disruptive to existing code. A base type is cleaner long-term but touches more files.
+   - **RESOLVED:** Option chosen — parallel `BackgroundRadialGradient` property, implemented in
+     plan 15-02 Task 2 (least disruptive; mirrors the existing `BackgroundGradient` slot).
 
 ---
 
