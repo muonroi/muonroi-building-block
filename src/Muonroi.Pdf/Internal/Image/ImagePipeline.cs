@@ -6,7 +6,8 @@ namespace Muonroi.Pdf.Internal.Image;
 
 [SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
     Justification = "PdfInputLimitException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
-
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0003",
+    Justification = "Internal PDF pipeline helper is instantiated without DI; Debug.WriteLine is a DEBUG-only trace for skipped resources, compiled out in Release.")]
 internal sealed class ImagePipeline
 {
     internal async Task<IReadOnlyDictionary<string, DecodedImage>> ResolveAsync(

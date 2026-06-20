@@ -2,6 +2,17 @@
   <PropertyGroup>
     <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
     <NoWarn>$(NoWarn);NU1605</NoWarn>
+
+    <!-- Ship gate (Rule 2a): the whole solution must build with zero warnings and zero errors.
+         Every compiler/analyzer/MSBuild warning is promoted to an error. The two accepted,
+         non-actionable warnings stay as warnings via WarningsNotAsErrors:
+           - RS1038: in-repo Roslyn analyzers bundle their code-fix providers (require a
+                     Microsoft.CodeAnalysis.Workspaces reference). Also fully suppressed for
+                     IsRoslynComponent projects in Directory.Build.targets (eval-order correct).
+           - xUnit1030: ConfigureAwait advisory for test methods (also NoWarn'd for test projects). -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <MSBuildTreatWarningsAsErrors>true</MSBuildTreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);RS1038;xUnit1030</WarningsNotAsErrors>
     <EnforceExtendedAnalyzerRules Condition="'$(MSBuildProjectName)' == 'Muonroi.RuleEngine.SourceGenerators'">true</EnforceExtendedAnalyzerRules>
     <!-- OSS default - commercial packages override this in their .csproj -->
     <PackageLicenseFile>LICENSE-APACHE</PackageLicenseFile>
@@ -37,7 +48,9 @@
 
   <PropertyGroup Condition="'$(IsMuonroiTestProject)' == 'true'">
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- CS1591: test code is not part of the public API surface, no XML docs required.
+         xUnit1030: xUnit's ConfigureAwait guidance is advisory for test methods; not a ship defect. -->
+    <NoWarn>$(NoWarn);CS1591;xUnit1030</NoWarn>
   </PropertyGroup>
 
   <!-- Common Test Dependencies — versions managed by Directory.Packages.props (CPM) -->
@@ -88,4 +101,19 @@
 
   <!-- Version governance: TFM-conditional versions for framework-coupled packages -->
   <Import Project="build/Version.props" />
+
+  <!-- NOTE: RS1038 suppression for IsRoslynComponent projects lives in Directory.Build.targets,
+       not here. IsRoslynComponent is set in each analyzer .csproj body, which is evaluated AFTER
+       this file is imported but BEFORE Directory.Build.targets — so the condition only resolves
+       correctly there. (See Directory.Build.targets.) -->
+
+  <!-- System-wide Muonroi.CodeStandards analyzer (MSTD0001/MSTD0002/MSTD0003). Excludes Roslyn-component
+       projects (analyzers/source generators): they target netstandard2.0 and cannot reference
+       Muonroi.Core.Abstractions (where MGuard/MException live), so the rules do not apply. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'Muonroi.CodeStandards' and '$(IsRoslynComponent)' != 'true'">
+    <ProjectReference Include="$(RepositoryRoot)src\Muonroi.CodeStandards\Muonroi.CodeStandards.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
+  </ItemGroup>
 </Project>

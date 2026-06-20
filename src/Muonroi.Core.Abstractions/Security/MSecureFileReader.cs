@@ -62,7 +62,11 @@ public static class MSecureFileReader
         // +Logging: audit log every key file access (per D-23).
         if (registry?.Has(MCapability.Logging) == true)
         {
+            // Pre-DI bootstrap: this static key reader runs before the DI container is built,
+            // so IMLog is genuinely unavailable. Console is the only sink for this audit line.
+#pragma warning disable MSTD0003
             Console.WriteLine($"[Ecosystem] AUDIT: Key file accessed: {resolvedPath}");
+#pragma warning restore MSTD0003
         }
 
         return content;

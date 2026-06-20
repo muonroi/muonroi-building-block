@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics.CodeAnalysis;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Integration.Abstractions;
 
@@ -17,6 +18,8 @@ namespace Muonroi.Integration.Connectors.Http;
 /// </remarks>
 /// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
 /// <param name="logger">Logger for recording request diagnostics and errors.</param>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0003",
+    Justification = "DI-registered connector (TryAddSingleton in ConnectorRegistration). Muonroi.Integration.Connectors does not register Muonroi.Logging, and consumers may resolve connectors without AddMuonroiLogging, so IMLog<T> is not guaranteed in this DI scope — requiring it breaks container resolution. Logs via the always-available Microsoft ILogger.")]
 public sealed class HttpConnector(IHttpClientFactory httpClientFactory, ILogger<HttpConnector> logger) : IServiceTaskConnector
 {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;

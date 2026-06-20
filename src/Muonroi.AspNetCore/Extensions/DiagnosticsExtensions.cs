@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Muonroi.AspNetCore.Diagnostics;
 using Muonroi.Core.Abstractions.Exceptions;
@@ -7,6 +8,8 @@ namespace Muonroi.AspNetCore.Extensions;
 /// <summary>
 /// Extension methods for registering and running the Muonroi ecosystem startup diagnostics.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0003",
+    Justification = "Startup diagnostics runner obtains a logger from ILoggerFactory (always available) at app startup, before/independent of whether Muonroi.Logging is registered. It also logs at Critical level, which IMLog does not expose. Uses the Microsoft ILogger by design.")]
 public static class DiagnosticsExtensions
 {
     // Marker type used for ILogger category

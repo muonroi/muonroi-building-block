@@ -10,6 +10,7 @@ namespace Muonroi.Data.EntityFrameworkCore.Auth;
 /// Internal helpers for authentication and token validation using EF Core.
 /// </summary>
 [SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "Auth helper methods use null-forgiving on token fields validated by JWT library contracts; unconstrained generics prevent MGuard.NotNull.")]
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0003", Justification = "Static JWT helper class has no DI logger; JWT validation failures are surfaced via Debug/Console.Error to satisfy the No-Silent-Catch rule.")]
 public static class AuthorizeInternal
 {
     private const string BearerPrefix = "Bearer ";

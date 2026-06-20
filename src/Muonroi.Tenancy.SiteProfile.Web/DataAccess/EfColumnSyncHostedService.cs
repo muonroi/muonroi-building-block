@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Muonroi.Core.Abstractions.Guards;
 
@@ -17,6 +18,8 @@ namespace Muonroi.Tenancy.SiteProfile.Web.DataAccess;
 /// The synced data is consumed by <see cref="EfSyncedColumnMap"/> which decorates the
 /// existing <see cref="Dapper.ISiteColumnMap"/> chain.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0003",
+    Justification = "Hosted service registered by AddEfColumnSync. Muonroi.Tenancy.SiteProfile.Web does not register Muonroi.Logging, and consumers may not call AddMuonroiLogging, so IMLog<T> is not guaranteed in this DI scope — requiring it breaks container ValidateOnBuild. Logs via the always-available Microsoft ILogger.")]
 internal sealed class EfColumnSyncHostedService(
     IServiceProvider serviceProvider,
     ILogger<EfColumnSyncHostedService> logger) : IHostedService

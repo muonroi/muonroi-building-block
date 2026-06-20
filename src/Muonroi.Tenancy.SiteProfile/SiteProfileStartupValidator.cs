@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Muonroi.Core.Abstractions.Exceptions;
 using Microsoft.Extensions.Options;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Tenancy.SiteProfile;
 
@@ -17,6 +18,8 @@ namespace Muonroi.Tenancy.SiteProfile;
 ///
 /// Opt-out: call services.SkipSiteProfileStartupValidation() for test/dev scenarios per D-04.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0003",
+    Justification = "Hosted service registered by AddSiteProfile. Tenancy.SiteProfile does not register Muonroi.Logging, and consumers (incl. minimal/standalone hosts) may not call AddMuonroiLogging, so IMLog<T> is not guaranteed in this DI scope — requiring it breaks container ValidateOnBuild. Logs via the always-available Microsoft ILogger.")]
 internal sealed class SiteProfileStartupValidator(
     SiteProfileRegistrationTracker tracker,
     IServiceProvider serviceProvider,

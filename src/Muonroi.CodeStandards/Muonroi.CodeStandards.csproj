@@ -6,7 +6,7 @@
     <LangVersion>latest</LangVersion>
     <PackageId>Muonroi.CodeStandards</PackageId>
     <Authors>Le Anh Phi</Authors>
-    <Description>System-wide Muonroi code standards analyzers (MSTD0001 forbidden throw, MSTD0002 no null-forgiving operator).</Description>
+    <Description>System-wide Muonroi code standards analyzers (MSTD0001 forbidden throw, MSTD0002 no null-forgiving operator, MSTD0003 logging only via IMLog).</Description>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>

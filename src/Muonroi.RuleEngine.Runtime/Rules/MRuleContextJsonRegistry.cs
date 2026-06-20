@@ -16,6 +16,7 @@ namespace Muonroi.RuleEngine.Runtime.Rules;
 /// Thread-safe: uses <see cref="ConcurrentDictionary{TKey,TValue}"/> internally.
 /// </remarks>
 [SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "ConcurrentDictionary lookups are guarded by TryGetValue; null-forgiving is structurally correct after successful lookup.")]
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0003", Justification = "Capability-gated '[Ecosystem] AUDIT' trail intentionally written to Console (same degradation pattern as other [Ecosystem] audit sites); IMLog is not guaranteed registered for this registry and integration tests assert the Console audit output.")]
 public sealed class MRuleContextJsonRegistry
 {
     private readonly ConcurrentDictionary<string, Func<string, JsonSerializerOptions, object>> _deserializers =

@@ -44,4 +44,64 @@ internal static class MstdAnalyzerHelpers
 
         return false;
     }
+
+    /// <summary>
+    /// The Muonroi.Logging / Muonroi.Logging.Abstractions projects legitimately wrap the raw
+    /// Microsoft <c>ILogger</c>; logging-sink rules do not apply inside them.
+    /// </summary>
+    public static bool IsLoggingInfrastructureNamespace(string ns)
+    {
+        return ns.StartsWith("Muonroi.Logging", StringComparison.Ordinal);
+    }
+
+    /// <summary>Returns true when <paramref name="type"/> is or implements Microsoft.Extensions.Logging.ILogger.</summary>
+    public static bool ImplementsILogger(ITypeSymbol type)
+    {
+        if (IsMicrosoftILogger(type))
+        {
+            return true;
+        }
+
+        foreach (INamedTypeSymbol iface in type.AllInterfaces)
+        {
+            if (IsMicrosoftILogger(iface))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Returns true when <paramref name="type"/> is or implements Muonroi.Logging.Abstractions.IMLog (incl. IMLog&lt;T&gt;).</summary>
+    public static bool IsIMLog(ITypeSymbol type)
+    {
+        if (IsIMLogType(type))
+        {
+            return true;
+        }
+
+        foreach (INamedTypeSymbol iface in type.AllInterfaces)
+        {
+            if (IsIMLogType(iface))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsMicrosoftILogger(ITypeSymbol type)
+    {
+        return type.Name == "ILogger"
+            && type.ContainingNamespace?.ToDisplayString() == "Microsoft.Extensions.Logging";
+    }
+
+    private static bool IsIMLogType(ITypeSymbol type)
+    {
+        // IMLog and IMLog<T> share Name "IMLog" and the same namespace.
+        return type.Name == "IMLog"
+            && type.ContainingNamespace?.ToDisplayString() == "Muonroi.Logging.Abstractions";
+    }
 }

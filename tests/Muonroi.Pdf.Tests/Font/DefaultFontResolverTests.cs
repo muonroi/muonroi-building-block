@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Muonroi.Pdf.Internal.Font;
+using Muonroi.Logging.Abstractions;
 using NSubstitute;
 
 namespace Muonroi.Pdf.Tests.Font;
@@ -46,7 +48,27 @@ public sealed class DefaultFontResolverTests : IDisposable
         var pdfConfigs = new PdfConfigs { FontResolver = resolverConfig };
         var options = Options.Create(pdfConfigs);
 
-        return new DefaultFontResolver(options, env, NullLogger<DefaultFontResolver>.Instance);
+        return new DefaultFontResolver(options, env, new NoOpMLog<DefaultFontResolver>());
+    }
+
+    // No-op IMLog double. NSubstitute cannot proxy IMLog<DefaultFontResolver> because
+    // DefaultFontResolver is an internal type and Muonroi.Logging.Abstractions is not strong-named.
+    private sealed class NoOpMLog<T> : IMLog<T>
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => false;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) { }
+        public IMLogContextScope BeginProperty(string key, object? value) => NoOpScope.Instance;
+        public void Info(string messageTemplate, params object?[] args) { }
+        public void Warn(string messageTemplate, params object?[] args) { }
+        public void Error(Exception? ex, string messageTemplate, params object?[] args) { }
+        public void Debug(string messageTemplate, params object?[] args) { }
+        public void InfoTrace(string messageTemplate, params object?[] args) { }
+        private sealed class NoOpScope : IMLogContextScope
+        {
+            public static readonly NoOpScope Instance = new();
+            public void Dispose() { }
+        }
     }
 
     // ── tests ─────────────────────────────────────────────────────────────────

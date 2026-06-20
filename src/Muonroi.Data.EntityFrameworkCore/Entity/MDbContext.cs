@@ -122,7 +122,6 @@ public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactional
         _logger = logger;
         _licenseGuard = licenseGuard;
         _dateTimeService = dateTimeService;
-        Debug.WriteLine("BaseDbContext::ctor ->" + GetHashCode());
     }
 
     /// <summary>

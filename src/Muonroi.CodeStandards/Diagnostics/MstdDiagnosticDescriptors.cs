@@ -23,4 +23,13 @@ internal static class MstdDiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "The null-forgiving operator '!' suppresses null-safety. Validate with MGuard.NotNull. Suppress intentionally with '#pragma warning disable MSTD0002' only when truly required.");
+
+    public static readonly DiagnosticDescriptor Mstd0003LoggingViaMLog = new(
+        id: "MSTD0003",
+        title: "Logging must go through IMLog",
+        messageFormat: "Logging must go through IMLog (Muonroi.Logging.Abstractions); '{0}' is forbidden in namespace '{1}'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "All Muonroi code must log via IMLog/IMLog<T>. Direct Console/Debug/Trace/Serilog logging and raw ILogger usage are forbidden — inject IMLog<T> instead. Suppress with '#pragma warning disable MSTD0003' or [SuppressMessage] only for pre-DI bootstrap code where IMLog is genuinely unavailable.");
 }

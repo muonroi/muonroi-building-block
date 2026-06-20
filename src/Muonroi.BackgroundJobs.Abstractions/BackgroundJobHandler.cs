@@ -73,7 +73,9 @@ public static class BackgroundJobHandler
         {
             // INTENTIONAL DEGRADATION: Console.WriteLine used because ILogger/IMLog is not
             // available at DI registration time (BuildServiceProvider not yet called).
+#pragma warning disable MSTD0003
             Console.WriteLine($"[Ecosystem] BackgroundJobs: Dispatching to {cfg.JobType} provider");
+#pragma warning restore MSTD0003
         }
 
         // +RuleEngine: When RuleEngine capability is present, job routing can be
