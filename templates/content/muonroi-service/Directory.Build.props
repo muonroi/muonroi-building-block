@@ -1,0 +1,23 @@
+<Project>
+
+  <!--
+    Muonroi system-wide code-standards analyzer (MSTD0001/0002/0003) — REQUIRED.
+
+    Applied to every project in the generated service (Host, Core, Sites.Default, and
+    any site modules added later under this root) so the ecosystem coding rules are
+    enforced at build time, exactly as in the Muonroi platform repositories:
+      - MSTD0001: throw only via MGuard / an MException-derived type (no raw throw)
+      - MSTD0002: no null-forgiving '!' on real dereferences (validate with MGuard.NotNull)
+      - MSTD0003: log only through IMLog (Muonroi.Logging.Abstractions)
+
+    Build-time only (PrivateAssets=all): the package ships no runtime assembly and does
+    not flow transitively to downstream consumers of this service's packages.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Muonroi.CodeStandards" Version="1.0.0-alpha.15">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
