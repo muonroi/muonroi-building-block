@@ -376,17 +376,68 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
         }
     }
 
-    // Phase 14: matches exactly one rotate(<angle>) function with an optional CSS angle unit and no
-    // trailing/leading content — so "rotate(45deg) scale(2)" and "translate(..)" are rejected.
-    private static readonly System.Text.RegularExpressions.Regex SingleRotateRegex = new(
-        @"^\s*rotate\(\s*-?\d*\.?\d+(deg|rad|grad|turn)?\s*\)\s*$",
+    // Phase 15: allowed affine transform function names (D-02). Any function not in this set is
+    // rejected fail-loud via the IsAffineTransform gate called in CheckTransformAndGradient.
+    private static readonly System.Collections.Generic.HashSet<string> AllowedAffineFunctions =
+        new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            "translate", "translateX", "translateY",
+            "scale", "scaleX", "scaleY",
+            "rotate",
+            "skew", "skewX", "skewY",
+            "matrix"
+        };
+
+    // Phase 15: tokenizes a CSS transform string into name(args) pairs.
+    // Non-backtracking-prone: no nested quantifiers on the same group (T-15.01-02).
+    private static readonly System.Text.RegularExpressions.Regex AffineFunctionTokenRegex = new(
+        @"(\w+)\(([^)]*)\)",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase
-        | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+        | System.Text.RegularExpressions.RegexOptions.CultureInvariant
+        | System.Text.RegularExpressions.RegexOptions.Compiled);
 
-    private static bool IsSingleRotate(string transform) =>
-        SingleRotateRegex.IsMatch(transform);
+    // Phase 15: returns true if every function token in the transform value is an allowed affine
+    // function with numerically-parseable args. Rejects any unknown function name fail-loud (D-02).
+    // Empty/null input returns false (no transform — treated as no violation by caller).
+    private static bool IsAffineTransform(string transform)
+    {
+        if (string.IsNullOrWhiteSpace(transform)) return false;
+        var matches = AffineFunctionTokenRegex.Matches(transform);
+        if (matches.Count == 0) return false;
+        foreach (System.Text.RegularExpressions.Match m in matches)
+        {
+            if (!AllowedAffineFunctions.Contains(m.Groups[1].Value)) return false;
+            if (!AreNumericArgs(m.Groups[2].Value)) return false;
+        }
+        return true;
+    }
 
-    // Phase 14: shared transform + gradient gate (computed-style and inline-style paths both call it).
+    // Verifies that a CSS function's args string is composed only of comma-separated numbers
+    // with optional CSS angle/length units. Accepts empty args (e.g. no-arg edge cases).
+    private static bool AreNumericArgs(string args)
+    {
+        if (string.IsNullOrWhiteSpace(args)) return true;
+        foreach (string part in args.Split(','))
+        {
+            string raw = part.Trim();
+            if (raw.Length == 0) continue;
+            // Strip trailing CSS unit (deg/rad/grad/turn/px/%)
+            foreach (string unit in new[] { "deg", "grad", "turn", "rad", "px", "%" })
+            {
+                if (raw.EndsWith(unit, StringComparison.OrdinalIgnoreCase))
+                {
+                    raw = raw[..^unit.Length].TrimEnd();
+                    break;
+                }
+            }
+            if (!double.TryParse(raw, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out _))
+                return false;
+        }
+        return true;
+    }
+
+    // Phase 15: shared transform + gradient gate (computed-style and inline-style paths both call it).
     private static void CheckTransformAndGradient(
         string? transform, string? background, string? backgroundImage,
         string selector, List<PolicyViolation> violations)
@@ -395,10 +446,11 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
         background ??= string.Empty;
         backgroundImage ??= string.Empty;
 
-        if (!string.IsNullOrEmpty(transform) && !IsSingleRotate(transform))
+        if (!string.IsNullOrEmpty(transform) && !IsAffineTransform(transform))
         {
             violations.Add(ViolationFor("forbidden.transform.geometric", "transform", transform, selector,
-                "Only transform:rotate(<angle>) is supported; remove other transform functions"));
+                "Only affine transform functions (translate, scale, rotate, skew, matrix) are supported; " +
+                "perspective/filter and unknown functions are rejected."));
         }
 
         string gradientSource = background.Contains("gradient", StringComparison.OrdinalIgnoreCase)
@@ -406,16 +458,16 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
             : backgroundImage;
         if (gradientSource.Contains("gradient", StringComparison.OrdinalIgnoreCase))
         {
-            bool isLinearOnly =
-                gradientSource.Contains("linear-gradient(", StringComparison.OrdinalIgnoreCase)
-                && !gradientSource.Contains("radial-gradient", StringComparison.OrdinalIgnoreCase)
+            bool isAllowedGradient =
+                (gradientSource.Contains("linear-gradient(", StringComparison.OrdinalIgnoreCase)
+                 || gradientSource.Contains("radial-gradient(", StringComparison.OrdinalIgnoreCase))
                 && !gradientSource.Contains("conic-gradient", StringComparison.OrdinalIgnoreCase)
                 && !gradientSource.Contains("repeating-", StringComparison.OrdinalIgnoreCase);
-            if (!isLinearOnly)
+            if (!isAllowedGradient)
             {
                 violations.Add(ViolationFor("forbidden.background.gradient", "background",
                     gradientSource, selector,
-                    "Only linear-gradient(...) is supported; use linear-gradient or a solid background-color"));
+                    "Use linear-gradient or radial-gradient; other gradient functions are not supported."));
             }
         }
     }
