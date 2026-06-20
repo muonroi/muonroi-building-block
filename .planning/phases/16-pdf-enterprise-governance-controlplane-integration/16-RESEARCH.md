@@ -640,7 +640,7 @@ private static async Task<IResult> ScorePdfSsimAsync(
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **`ITenantContext` vs `TenantContext.CurrentTenantId` for metering tenant resolution**
    - What we know: `EnterpriseLicenseGuardEnhancer` uses `ISystemExecutionContextAccessor` first,
@@ -659,12 +659,24 @@ private static async Task<IResult> ScorePdfSsimAsync(
      inside `Load()` with a cancellation-free call, or cache the last results from a background
      `IHostedService` that fills an in-memory list.
 
-3. **Version bump strategy for modified shared packages**
+3. **Version bump strategy for modified shared packages** — RESOLVED
    - What we know: `LicenseCapabilityResolver` is in `Muonroi.Governance.Abstractions` and
-     `QuotaType` is in `Muonroi.Quota.Abstractions` — both OSS packages with independent versioning.
-   - What's unclear: Does adding enum values / constants constitute a minor or patch version bump?
-   - Recommendation: Minor bump (additive, backward-compatible). Confirm with the versioning policy
-     in `VERSION_GOVERNANCE.md`.
+     `QuotaType` is in `Muonroi.Quota.Abstractions` — both OSS packages. Verified: all building-block
+     package versions are governed centrally by `<VersionPrefix>1.0.0</VersionPrefix>` +
+     `<VersionSuffix>alpha.15</VersionSuffix>` in `muonroi-building-block/Directory.Build.props` (single
+     unified prerelease version across the ecosystem), and `VERSION_GOVERNANCE.md` (at workspace root
+     `D:/sources/Core/VERSION_GOVERNANCE.md`) governs third-party NuGet versions via CPM but defines no
+     separate first-party assembly-version SemVer track — the whole repo ships under one coordinated
+     `1.0.0-alpha.NN` tag.
+   - **Resolution:** These are additive, backward-compatible public-surface changes (new enum member,
+     new constants, new dictionary/HashSet entries — no removals, no signature changes). For a unified
+     `1.0.0-alpha.NN` prerelease governed centrally in `Directory.Build.props`, the correct action is to
+     bump `VersionSuffix` (alpha.15 → alpha.16) ONCE at the next coordinated alpha cut for the whole
+     ecosystem, rather than per-package. Plans 16-01 and 16-02 each carry an acceptance criterion: the
+     version bump is applied per this policy OR explicitly deferred (with the stated reason that the phase
+     ships under the current alpha and the suffix bumps at the next coordinated cut). The chosen path MUST
+     be recorded in each plan's SUMMARY. No `Version=` attribute may be added to any `.csproj` (CPM
+     enforces NU1011).
 
 ---
 
