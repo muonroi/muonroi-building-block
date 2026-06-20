@@ -479,9 +479,9 @@ Plans:
   3. Per-tenant PDF render metering is recorded via `Muonroi.Quota`; the compliance evidence pack includes PDF publish/render audit events.
   4. Full `Muonroi.Pdf.Tests` + governance suites green; the OSS engine stays byte-identical (no golden re-baseline).
 **Plans**: 5 plans
-- [ ] 16-01-PLAN.md — WS-A D-01: real LicenseFeatureGate + pdf.* in all four governance registries (Wave 1)
+- [x] 16-01-PLAN.md — WS-A D-01: real LicenseFeatureGate + pdf.* in all four governance registries (Wave 1)
 - [ ] 16-02-PLAN.md — WS-A D-02: record-only per-render Quota metering wrapper (Wave 2)
-- [ ] 16-03-PLAN.md — WS-B D-03: PdfAuditControlPlaneStore compliance evidence-pack adapter (Wave 1)
+- [x] 16-03-PLAN.md — WS-B D-03: PdfAuditControlPlaneStore compliance evidence-pack adapter (Wave 1)
 - [ ] 16-04-PLAN.md — WS-B D-04: canary score endpoint auto-rollback below SSIM threshold (Wave 1)
 - [ ] 16-05-PLAN.md — WS-C entitlement-aware Designer gate + WS-D confirm + SC4 green gate (Wave 3)
 
