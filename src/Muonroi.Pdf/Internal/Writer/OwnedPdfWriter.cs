@@ -999,9 +999,16 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 // PDF y-up flip applied. CSS y-down means sinA terms must be negated for PDF y-up.
                 // Apply the flip: negate b and c (the mixed-axis terms) to account for PDF y-inversion.
                 double a = m[0], b = -m[1], c = -m[2], d = m[3];
-                // Pivot composition with y-flipped matrix:
-                double e = p.Px - p.Px * a - p.Py * c;
-                double f = p.Py - p.Px * b - p.Py * d;
+                // CSS translation (m[4]=tx, m[5]=ty) carried into PDF space: tx is unchanged
+                // (x-axis shared), ty is negated (CSS +y is down, PDF +y is up). Without these the
+                // pivot composition silently dropped translate()/matrix() translation, emitting an
+                // identity cm for transform:translate(...) (Phase 15 fix).
+                double tx = m[4], ty = -m[5];
+                // Pivot composition with y-flipped matrix: T(px,py) * M_css * T(-px,-py), plus the
+                // matrix's own translation. For a pure translate the pivot terms cancel, leaving (tx,ty);
+                // for rotate/scale (tx=ty=0) this reduces to the validated Phase 14 formula.
+                double e = tx + p.Px - p.Px * a - p.Py * c;
+                double f = ty + p.Py - p.Px * b - p.Py * d;
                 return (a, b, c, d, e, f);
             }
             return null;

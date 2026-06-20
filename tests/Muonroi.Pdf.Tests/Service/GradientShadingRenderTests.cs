@@ -141,11 +141,15 @@ public sealed class GradientShadingRenderTests
     public async Task TransformTranslate_EmitsCm()
     {
         // background-color forces the q...Q block where TransformFor emits cm.
+        // Distinctive operands (123, 47) prove the translation actually lands in the cm — a regression
+        // guard for the Phase 15 bug where TransformFor dropped m[4]/m[5] and emitted an identity cm.
         byte[] bytes = await RenderAsync(
-            "<div style=\"background-color:#cccccc;height:30px;transform:translate(10px,5px);\">x</div>");
+            "<div style=\"background-color:#cccccc;height:30px;transform:translate(123px,47px);\">x</div>");
 
         string content = InflateStreams(bytes);
         content.Should().Contain(" cm", because: "transform:translate() with a background must emit a cm operator in the content stream");
+        content.Should().Contain("123.0000", because: "the CSS x-translation (123px) must appear in the cm e-operand, not be dropped to identity");
+        content.Should().Contain("-47.0000", because: "the CSS y-translation (47px) must appear negated in the cm f-operand (CSS +y down → PDF +y up)");
     }
 
     [Fact]

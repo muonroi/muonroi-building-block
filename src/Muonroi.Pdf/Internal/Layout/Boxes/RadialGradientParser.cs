@@ -15,7 +15,11 @@ internal static class RadialGradientParser
     // part as a gradient definition vs a color stop.
     private static readonly string[] ShapeKeywords = ["circle", "ellipse"];
     private static readonly string[] ExtentKeywords = ["farthest-corner", "farthest-side", "closest-corner", "closest-side"];
-    private static readonly string[] PositionKeywords = ["top", "bottom", "left", "right", "center", "at"];
+    // Note: "at" is deliberately NOT a keyword here — matching it via Contains() misclassifies named
+    // colors that embed the substring "at" (e.g. "wheat", "chocolate") as gradient-definition parts.
+    // The actual position VALUE (top/bottom/left/right/center) is what flags a definition part; the
+    // "at" connector is parsed separately in ParseShapeAndPosition via " at " / "at " matching.
+    private static readonly string[] PositionKeywords = ["top", "bottom", "left", "right", "center"];
 
     public static bool TryParse(string css, out RadialGradient gradient)
     {
@@ -88,10 +92,8 @@ internal static class RadialGradientParser
         else if (lower.Contains("ellipse")) shape = "ellipse";
         // else keep default "ellipse"
 
-        // Position detection: look for "at <keyword>".
+        // Position detection: look for "at <keyword>" — either " at " mid-string or an "at " prefix.
         int atIdx = lower.IndexOf(" at ", System.StringComparison.Ordinal);
-        if (atIdx < 0 && lower.StartsWith("at ", System.StringComparison.Ordinal))
-            atIdx = -1; // handle "at top" as full string starting with "at "
 
         string posStr;
         if (atIdx >= 0)
