@@ -482,7 +482,7 @@ Plans:
 - [x] 16-01-PLAN.md — WS-A D-01: real LicenseFeatureGate + pdf.* in all four governance registries (Wave 1)
 - [ ] 16-02-PLAN.md — WS-A D-02: record-only per-render Quota metering wrapper (Wave 2)
 - [x] 16-03-PLAN.md — WS-B D-03: PdfAuditControlPlaneStore compliance evidence-pack adapter (Wave 1)
-- [ ] 16-04-PLAN.md — WS-B D-04: canary score endpoint auto-rollback below SSIM threshold (Wave 1)
+- [x] 16-04-PLAN.md — WS-B D-04: canary score endpoint auto-rollback below SSIM threshold (Wave 1)
 - [ ] 16-05-PLAN.md — WS-C entitlement-aware Designer gate + WS-D confirm + SC4 green gate (Wave 3)
 
 ## Progress
