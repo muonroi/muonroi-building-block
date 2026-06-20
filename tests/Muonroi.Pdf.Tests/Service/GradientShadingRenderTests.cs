@@ -91,6 +91,46 @@ public sealed class GradientShadingRenderTests
         text.Should().Contain("/FunctionType 3", because: "three stops stitch multiple exponential sub-functions");
     }
 
+    // ── Radial gradient render tests (Phase 15, Plan 02) ─────────────────────────────────────────
+
+    /// <summary>
+    /// Phase 15: radial-gradient (ellipse, default) renders as PDF ShadingType 3 radial shading.
+    /// Formerly asserted ThrowAsync&lt;PdfPolicyException&gt; — flipped to acceptance (D-06).
+    /// </summary>
+    [Fact]
+    public async Task RadialGradient_EmitsRadialShading()
+    {
+        byte[] bytes = await RenderAsync(
+            "<div style=\"height:40px;background:radial-gradient(#fff,#000);\">band</div>");
+
+        string text = Encoding.ASCII.GetString(bytes);
+        text.Should().StartWith("%PDF-1.7");
+        text.Should().Contain("/ShadingType 3", because: "a radial-gradient is rendered as a PDF radial shading");
+        text.Should().Contain("/Coords", because: "the radial shading defines its two bounding circles");
+        text.Should().Contain("/FunctionType 2", because: "two color stops use an exponential interpolation function");
+    }
+
+    [Fact]
+    public async Task RadialGradientCircle_EmitsRadialShading()
+    {
+        byte[] bytes = await RenderAsync(
+            "<div style=\"height:40px;background:radial-gradient(circle,#0c6b6b,#fff);\">band</div>");
+
+        string text = Encoding.ASCII.GetString(bytes);
+        text.Should().Contain("/ShadingType 3", because: "a circle radial-gradient is a PDF radial shading (ShadingType 3)");
+        text.Should().Contain("/Coords", because: "circle shading uses /Coords [cx cy 0 cx cy r]");
+    }
+
+    [Fact]
+    public async Task RadialGradientThreeStop_UsesStitchingFunction()
+    {
+        byte[] bytes = await RenderAsync(
+            "<div style=\"height:40px;background:radial-gradient(#f00,#0f0,#00f);\">band</div>");
+
+        string text = Encoding.ASCII.GetString(bytes);
+        text.Should().Contain("/FunctionType 3", because: "three stops stitch multiple exponential sub-functions");
+    }
+
     // ── Transform render tests (Phase 15, Plan 01) ────────────────────────────────────────────────
     //
     // Affine transforms for text-only elements are baked into the Tm matrix (Phase 14 pattern).
