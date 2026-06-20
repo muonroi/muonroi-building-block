@@ -236,13 +236,13 @@ public class AuthorizePermissionFilter<TDbContext>(
             .Where(attribute => attribute.MatchMode == PermissionMatchMode.Any)
             .Select(attribute => attribute.PermissionKey)
             .Where(value => !string.IsNullOrWhiteSpace(value))
-            .ToArray()!;
+            .ToArray();
 
         string[] allPermissions = attributes
             .Where(attribute => attribute.MatchMode == PermissionMatchMode.All)
             .Select(attribute => attribute.PermissionKey)
             .Where(value => !string.IsNullOrWhiteSpace(value))
-            .ToArray()!;
+            .ToArray();
 
         Dictionary<string, string> claims = new(StringComparer.OrdinalIgnoreCase);
         foreach (Claim claim in httpContext.User.Claims)

@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.AspNetCore.Controllers;
 
@@ -30,7 +31,7 @@ public class DefaultAuthContextFactory(
             // the type's full name. If it already ran for this request, reuse that context verbatim —
             // this is the authoritative, signature-validated identity and avoids divergence between the
             // validator and this factory.
-            if (context.Items.TryGetValue(typeof(MAuthenticateInfoContext).FullName!, out object? cachedCtx)
+            if (context.Items.TryGetValue(MGuard.NotNull(typeof(MAuthenticateInfoContext).FullName), out object? cachedCtx)
                 && cachedCtx is MAuthenticateInfoContext validated
                 && validated.IsAuthenticated)
             {

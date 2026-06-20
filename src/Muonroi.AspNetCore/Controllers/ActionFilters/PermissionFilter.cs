@@ -126,15 +126,15 @@ public class PermissionFilter<TPermission>(IMLog<PermissionFilter<TPermission>> 
     {
         string[] anyPermissions = attributes
             .Where(attribute => attribute.MatchMode == PermissionMatchMode.Any)
-            .Select(attribute => attribute.RequiredPermission.ToString())
+            .Select(attribute => attribute.RequiredPermission.ToString() ?? string.Empty)
             .Where(value => !string.IsNullOrWhiteSpace(value))
-            .ToArray()!;
+            .ToArray();
 
         string[] allPermissions = attributes
             .Where(attribute => attribute.MatchMode == PermissionMatchMode.All)
-            .Select(attribute => attribute.RequiredPermission.ToString())
+            .Select(attribute => attribute.RequiredPermission.ToString() ?? string.Empty)
             .Where(value => !string.IsNullOrWhiteSpace(value))
-            .ToArray()!;
+            .ToArray();
 
         Dictionary<string, string> claims = new(StringComparer.OrdinalIgnoreCase);
         foreach (Claim claim in httpContext.User.Claims)

@@ -90,7 +90,7 @@ public class JwtMiddleware(
 
         List<string> permissions = string.IsNullOrWhiteSpace(verifyToken.Permission)
             ? []
-            : [.. verifyToken.Permission!
+            : [.. (verifyToken.Permission ?? string.Empty)
                 .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Distinct(StringComparer.OrdinalIgnoreCase)];
 
