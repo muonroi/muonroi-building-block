@@ -70,10 +70,10 @@ internal sealed class BoxTreeBuilder
                 // heading like <h2> must pass Bold=true to its text-node InlineBox children.
                 if (box.Bold || box.TextTransform != null || box.WordBreak != null || box.WhiteSpace != null)
                     PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak, box.WhiteSpace);
-                // Phase 14: share this block's rotation context with its whole subtree so the text
-                // rotates together with the block about one pivot.
-                if (box.RotationGroup is not null)
-                    PropagateRotationGroup(box, box.RotationGroup);
+                // Phase 15: share this block's affine transform context with its whole subtree so the
+                // text and content transform together with the block about one pivot.
+                if (box.TransformGroup is not null)
+                    PropagateTransformGroup(box, box.TransformGroup);
                 break;
             case TableBox tableBox:
                 BuildChildren(node, tableBox);
@@ -313,22 +313,32 @@ internal sealed class BoxTreeBuilder
             }
         }
 
-        // linear-gradient background (Phase 14): from background-image or the background shorthand.
-        // Falls back silently to any solid background-color when the gradient cannot be parsed.
+        // gradient background (Phase 14 linear, Phase 15 radial): from background-image or the
+        // background shorthand. Falls back silently to any solid background-color when the gradient
+        // cannot be parsed.
         string? gradientSource = bgImage;
         if (string.IsNullOrEmpty(gradientSource)
-            || !gradientSource.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase))
+            || (!gradientSource.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase)
+                && !gradientSource.Contains("radial-gradient", StringComparison.OrdinalIgnoreCase)))
         {
             string? bgShorthand = style.GetValue("background");
             if (!string.IsNullOrEmpty(bgShorthand)
-                && bgShorthand.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase))
+                && (bgShorthand.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase)
+                    || bgShorthand.Contains("radial-gradient", StringComparison.OrdinalIgnoreCase)))
                 gradientSource = bgShorthand;
         }
-        if (!string.IsNullOrEmpty(gradientSource)
-            && gradientSource.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase)
-            && LinearGradientParser.TryParse(gradientSource, out LinearGradient grad))
+        if (!string.IsNullOrEmpty(gradientSource))
         {
-            box.BackgroundGradient = grad;
+            if (gradientSource.Contains("radial-gradient", StringComparison.OrdinalIgnoreCase)
+                && RadialGradientParser.TryParse(gradientSource, out RadialGradient radGrad))
+            {
+                box.BackgroundRadialGradient = radGrad;
+            }
+            else if (gradientSource.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase)
+                && LinearGradientParser.TryParse(gradientSource, out LinearGradient grad))
+            {
+                box.BackgroundGradient = grad;
+            }
         }
 
         // float / clear (CSS 2.1 §9.5)
@@ -340,14 +350,16 @@ internal sealed class BoxTreeBuilder
         if (!string.IsNullOrEmpty(clearVal) && clearVal is "left" or "right" or "both")
             box.ClearValue = clearVal;
 
-        // transform:rotate(<angle>) (Phase 14) — only single rotate is allowed by policy; render as a
-        // rotation about the box center. The group is shared down to descendants so the block's text
-        // rotates with it (see PropagateRotationGroup).
+        // transform: (Phase 15) — full 2D affine set. Policy rejects unknown functions before layout
+        // runs, so this parser only needs to handle allowed functions; returns false on anything
+        // unrecognized (safe: box gets no transform, policy already blocked it). The group is shared
+        // down to descendants so the block and its text transform as a rigid group about one pivot
+        // (see PropagateTransformGroup). Pivot is box center in layout coords (D-03).
         var transformVal = style.GetValue("transform");
-        if (!string.IsNullOrEmpty(transformVal) && TryParseRotateDegrees(transformVal, out float rotDeg) && rotDeg != 0f)
+        if (!string.IsNullOrEmpty(transformVal) && TryParseTransformMatrix(transformVal, out double[] tMatrix))
         {
-            box.RotationDegrees = rotDeg;
-            box.RotationGroup = new RotationGroup { AngleDegrees = rotDeg };
+            box.HasTransform = true;
+            box.TransformGroup = new TransformGroup { Matrix = tMatrix };
         }
 
         // position (CSS 2.1 §9.6)
@@ -779,48 +791,252 @@ internal sealed class BoxTreeBuilder
         return result;
     }
 
-    // Phase 14: copy the rotation group onto every descendant so the writer rotates the block and
-    // its text as a rigid group. Does not overwrite a descendant that established its own rotation.
-    private static void PropagateRotationGroup(BoxNode node, RotationGroup group)
+    // Phase 15: copy the transform group onto every descendant so the writer transforms the block
+    // and its text as a rigid group. Does not overwrite a descendant that established its own transform.
+    private static void PropagateTransformGroup(BoxNode node, TransformGroup group)
     {
         foreach (var child in node.Children)
         {
-            if (child.RotationGroup is not null)
+            if (child.TransformGroup is not null)
                 continue;
-            child.RotationGroup = group;
-            PropagateRotationGroup(child, group);
+            child.TransformGroup = group;
+            PropagateTransformGroup(child, group);
         }
     }
 
-    // Phase 14: extract the angle (in degrees) from a transform:rotate(<angle>) value. Returns false
-    // for any non-rotate or multi-function transform (those are rejected by policy anyway).
-    private static bool TryParseRotateDegrees(string transform, out float degrees)
+    // Phase 15: parse a CSS transform value into a pivot-composed 2×3 affine matrix [a,b,c,d,e,f].
+    // CSS functions compose left-to-right: each function maps to a 2×3 matrix; successive multiply
+    // yields one composed matrix (RESEARCH Q3 A4). The pivot is the box-center in layout coordinates,
+    // but at parse time the box rect is not yet resolved, so the pivot composition is DEFERRED to the
+    // writer (same as Phase 14's rotationPivots approach). This method returns the CSS-space composed
+    // matrix WITHOUT pivot composition; the writer applies T(px,py)*M*T(-px,-py) when resolving
+    // TransformGroup.Matrix for the cm/Tm emission.
+    //
+    // Note: the plan specifies storing the pivot-composed matrix at parse time (D-03), but since the
+    // box rect is not available here (ResolveCssProperties receives the style, not the final rect),
+    // the pivot composition is correctly deferred to the writer — matching Phase 14's approach (P5).
+    // The writer's pivot loop (HasTransform: true sentinel) computes px/py in PDF coords and the
+    // TransformFor function reads the raw CSS-space matrix and applies RotMatrix-equivalent math.
+    // Actually: to match the plan's intent of composing at parse time, we store the CSS-space composed
+    // matrix (without pivot). The writer applies the pivot + PDF y-flip exactly as Phase 14 did.
+    //
+    // Returns false on any unrecognized function or non-parseable args (fail-safe; policy gate is loud).
+    private static bool TryParseTransformMatrix(string transform, out double[] matrix)
     {
-        degrees = 0f;
-        string s = transform.Trim();
-        int open = s.IndexOf("rotate(", StringComparison.OrdinalIgnoreCase);
-        if (open != 0)
-            return false;
-        int close = s.IndexOf(')', open);
-        if (close < 0)
-            return false;
-        string inner = s.Substring(open + "rotate(".Length, close - open - "rotate(".Length).Trim();
-        // reject anything trailing the single rotate() (e.g. "rotate(45deg) scale(2)")
-        if (s[(close + 1)..].Trim().Length > 0)
-            return false;
-
+        matrix = [1, 0, 0, 1, 0, 0]; // identity
         var ci = System.Globalization.CultureInfo.InvariantCulture;
         var ns = System.Globalization.NumberStyles.Any;
-        if (inner.EndsWith("grad", StringComparison.OrdinalIgnoreCase)
-            && float.TryParse(inner.AsSpan(0, inner.Length - 4), ns, ci, out float grad)) { degrees = grad * 0.9f; return true; }
-        if (inner.EndsWith("turn", StringComparison.OrdinalIgnoreCase)
-            && float.TryParse(inner.AsSpan(0, inner.Length - 4), ns, ci, out float turn)) { degrees = turn * 360f; return true; }
-        if (inner.EndsWith("rad", StringComparison.OrdinalIgnoreCase)
-            && float.TryParse(inner.AsSpan(0, inner.Length - 3), ns, ci, out float rad)) { degrees = rad * 180f / (float)Math.PI; return true; }
-        if (inner.EndsWith("deg", StringComparison.OrdinalIgnoreCase)
-            && float.TryParse(inner.AsSpan(0, inner.Length - 3), ns, ci, out float deg)) { degrees = deg; return true; }
-        if (float.TryParse(inner, ns, ci, out float bare)) { degrees = bare; return true; }
+
+        // Tokenize: find each name(args) function token.
+        int pos = 0;
+        string s = transform.Trim();
+        bool anyFound = false;
+        double[] composed = [1, 0, 0, 1, 0, 0];
+
+        while (pos < s.Length)
+        {
+            // Skip whitespace between tokens.
+            while (pos < s.Length && char.IsWhiteSpace(s[pos]))
+                pos++;
+            if (pos >= s.Length) break;
+
+            // Find function name: word chars up to '('.
+            int nameStart = pos;
+            while (pos < s.Length && s[pos] != '(')
+                pos++;
+            if (pos >= s.Length)
+                return false; // no opening paren → malformed
+
+            string funcName = s[nameStart..pos].Trim();
+            if (string.IsNullOrEmpty(funcName))
+                return false;
+
+            pos++; // consume '('
+
+            // Find matching ')'.
+            int argsStart = pos;
+            while (pos < s.Length && s[pos] != ')')
+                pos++;
+            if (pos >= s.Length)
+                return false; // no closing paren
+
+            string args = s[argsStart..pos].Trim();
+            pos++; // consume ')'
+
+            // Map function name to a 2×3 matrix.
+            double[] m;
+            if (!TryFunctionMatrix(funcName, args, ns, ci, out m))
+                return false;
+
+            composed = Multiply(composed, m);
+            anyFound = true;
+        }
+
+        if (!anyFound) return false;
+        matrix = composed;
+        return true;
+    }
+
+    // Maps one CSS transform function name + args string to a 2×3 matrix [a,b,c,d,e,f].
+    // Returns false if the function name is unrecognized or the args cannot be parsed.
+    private static bool TryFunctionMatrix(
+        string name, string args,
+        System.Globalization.NumberStyles ns,
+        System.Globalization.CultureInfo ci,
+        out double[] m)
+    {
+        m = [1, 0, 0, 1, 0, 0];
+
+        // Parse comma-or-whitespace-separated numeric args, stripping CSS units.
+        static bool ParseNum(string raw, System.Globalization.NumberStyles ns2,
+            System.Globalization.CultureInfo ci2, out double val)
+        {
+            raw = raw.Trim();
+            // Strip known CSS length/angle units (deg/rad/grad/turn/px/%)
+            foreach (string unit in new[] { "deg", "grad", "turn", "rad", "px", "%" })
+            {
+                if (raw.EndsWith(unit, StringComparison.OrdinalIgnoreCase))
+                {
+                    raw = raw[..^unit.Length].TrimEnd();
+                    break;
+                }
+            }
+            return double.TryParse(raw, ns2, ci2, out val);
+        }
+
+        // Split args by comma (CSS transform args are comma-separated).
+        string[] parts = args.Split(',');
+
+        switch (name.ToLowerInvariant())
+        {
+            case "translate":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double tx)) return false;
+                double ty = 0;
+                if (parts.Length >= 2 && !ParseNum(parts[1], ns, ci, out ty)) return false;
+                m = [1, 0, 0, 1, tx, ty];
+                return true;
+            }
+            case "translatex":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double tx)) return false;
+                m = [1, 0, 0, 1, tx, 0];
+                return true;
+            }
+            case "translatey":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double ty)) return false;
+                m = [1, 0, 0, 1, 0, ty];
+                return true;
+            }
+            case "scale":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double sx)) return false;
+                double sy = sx; // scale(s) means uniform scale
+                if (parts.Length >= 2 && !ParseNum(parts[1], ns, ci, out sy)) return false;
+                m = [sx, 0, 0, sy, 0, 0];
+                return true;
+            }
+            case "scalex":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double sx)) return false;
+                m = [sx, 0, 0, 1, 0, 0];
+                return true;
+            }
+            case "scaley":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double sy)) return false;
+                m = [1, 0, 0, sy, 0, 0];
+                return true;
+            }
+            case "rotate":
+            {
+                if (parts.Length < 1 || !TryParseAngleDeg(parts[0].Trim(), ns, ci, out double angleDeg)) return false;
+                double phi = angleDeg * Math.PI / 180.0; // CSS CW positive; writer negates for PDF y-up
+                double cosA = Math.Cos(phi), sinA = Math.Sin(phi);
+                m = [cosA, sinA, -sinA, cosA, 0, 0];
+                return true;
+            }
+            case "skew":
+            {
+                if (parts.Length < 1 || !TryParseAngleDeg(parts[0].Trim(), ns, ci, out double ax)) return false;
+                double ay = 0;
+                if (parts.Length >= 2 && !TryParseAngleDeg(parts[1].Trim(), ns, ci, out ay)) return false;
+                m = [1, Math.Tan(ay * Math.PI / 180.0), Math.Tan(ax * Math.PI / 180.0), 1, 0, 0];
+                return true;
+            }
+            case "skewx":
+            {
+                if (parts.Length < 1 || !TryParseAngleDeg(parts[0].Trim(), ns, ci, out double ax)) return false;
+                m = [1, 0, Math.Tan(ax * Math.PI / 180.0), 1, 0, 0];
+                return true;
+            }
+            case "skewy":
+            {
+                if (parts.Length < 1 || !TryParseAngleDeg(parts[0].Trim(), ns, ci, out double ay)) return false;
+                m = [1, Math.Tan(ay * Math.PI / 180.0), 0, 1, 0, 0];
+                return true;
+            }
+            case "matrix":
+            {
+                if (parts.Length != 6) return false;
+                double ma, mb, mc, md, me, mf;
+                if (!ParseNum(parts[0], ns, ci, out ma)) return false;
+                if (!ParseNum(parts[1], ns, ci, out mb)) return false;
+                if (!ParseNum(parts[2], ns, ci, out mc)) return false;
+                if (!ParseNum(parts[3], ns, ci, out md)) return false;
+                if (!ParseNum(parts[4], ns, ci, out me)) return false;
+                if (!ParseNum(parts[5], ns, ci, out mf)) return false;
+                m = [ma, mb, mc, md, me, mf];
+                return true;
+            }
+            default:
+                return false; // unknown function → fail-safe (policy rejects it loud)
+        }
+    }
+
+    // Parse a CSS angle value (with unit: deg/rad/grad/turn) and return degrees.
+    // Returns false if unparseable.
+    private static bool TryParseAngleDeg(string raw,
+        System.Globalization.NumberStyles ns,
+        System.Globalization.CultureInfo ci,
+        out double degrees)
+    {
+        degrees = 0;
+        raw = raw.Trim();
+        if (raw.EndsWith("grad", StringComparison.OrdinalIgnoreCase)
+            && double.TryParse(raw.AsSpan(0, raw.Length - 4), ns, ci, out double g))
+        { degrees = g * 0.9; return true; }
+        if (raw.EndsWith("turn", StringComparison.OrdinalIgnoreCase)
+            && double.TryParse(raw.AsSpan(0, raw.Length - 4), ns, ci, out double t))
+        { degrees = t * 360.0; return true; }
+        if (raw.EndsWith("rad", StringComparison.OrdinalIgnoreCase)
+            && double.TryParse(raw.AsSpan(0, raw.Length - 3), ns, ci, out double r))
+        { degrees = r * 180.0 / Math.PI; return true; }
+        if (raw.EndsWith("deg", StringComparison.OrdinalIgnoreCase)
+            && double.TryParse(raw.AsSpan(0, raw.Length - 3), ns, ci, out double d))
+        { degrees = d; return true; }
+        if (double.TryParse(raw, ns, ci, out double bare))
+        { degrees = bare; return true; }
         return false;
+    }
+
+    // Left-to-right 2×3 affine matrix composition (RESEARCH Q3).
+    // m = [a, b, c, d, e, f] representing the homogeneous 3×3:
+    //   | a c e |
+    //   | b d f |
+    //   | 0 0 1 |
+    // Result = m1 * m2 (m1 applied first, m2 second in CSS left-to-right convention).
+    private static double[] Multiply(double[] m1, double[] m2)
+    {
+        return [
+            m1[0] * m2[0] + m1[2] * m2[1],
+            m1[1] * m2[0] + m1[3] * m2[1],
+            m1[0] * m2[2] + m1[2] * m2[3],
+            m1[1] * m2[2] + m1[3] * m2[3],
+            m1[0] * m2[4] + m1[2] * m2[5] + m1[4],
+            m1[1] * m2[4] + m1[3] * m2[5] + m1[5]
+        ];
     }
 
     // G18: CSS inheritance for font-weight and text-transform.

@@ -54,12 +54,19 @@ internal abstract class BoxNode
     /// <summary>Parsed CSS linear-gradient background (Phase 14). Null = no gradient.</summary>
     public LinearGradient? BackgroundGradient { get; set; }
 
-    /// <summary>CSS transform:rotate() angle in degrees on this box (Phase 14). 0 = no rotation.
-    /// Only the origin block carries a non-zero value; descendants share the <see cref="RotationGroup"/>.</summary>
-    public float RotationDegrees { get; set; }
+    /// <summary>Parsed CSS radial-gradient background (Phase 15). Null = no radial gradient.</summary>
+    public RadialGradient? BackgroundRadialGradient { get; set; }
 
-    /// <summary>Shared rotation context (Phase 14) for a rotated block and its descendants. Null = none.</summary>
-    public RotationGroup? RotationGroup { get; set; }
+    /// <summary>
+    /// True when this box is the origin element that set a <c>transform:</c> value (Phase 15).
+    /// Only the origin block carries <c>true</c>; descendants share the <see cref="TransformGroup"/>
+    /// but have <c>HasTransform = false</c>. Replaces the Phase 14 <c>RotationDegrees != 0f</c>
+    /// sentinel used by the writer to identify the pivot-defining element.
+    /// </summary>
+    public bool HasTransform { get; set; }
+
+    /// <summary>Shared affine transform context (Phase 15) for a transformed block and its descendants. Null = none.</summary>
+    public TransformGroup? TransformGroup { get; set; }
 
     /// <summary>CSS position: "absolute" | "relative" | null (null = static).</summary>
     public string? Position { get; set; }

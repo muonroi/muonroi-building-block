@@ -898,28 +898,43 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         foreach ((string rn, _, string src) in imageResources)
             srcToResName[src] = rn;
 
-        // Phase 14: resolve each rotation group's pivot (PDF coords) from its origin block's rect
-        // (the element whose Source carries the non-zero RotationDegrees). Descendant elements share
-        // the same pivot so the block + its text rotate as one rigid group.
-        var rotationPivots = new Dictionary<RotationGroup, (double Px, double Py)>();
+        // Phase 15: resolve each transform group's pivot (PDF coords, y-up) from its origin block's
+        // rect (the element whose Source has HasTransform=true). Descendant elements share the same
+        // TransformGroup reference so the block + its text transform as one rigid group.
+        var transformPivots = new Dictionary<TransformGroup, (double Px, double Py)>();
         foreach (PositionedElement el in page.Elements)
         {
-            if (el.Source is { RotationDegrees: not 0f, RotationGroup: { } originGroup })
+            if (el.Source is { HasTransform: true, TransformGroup: { } originGroup })
             {
                 double px = el.Position.X + el.Position.Width / 2.0;
                 double py = pageHeightPt - (el.Position.Y + el.Position.Height / 2.0);
-                rotationPivots[originGroup] = (px, py);
+                transformPivots[originGroup] = (px, py);
             }
         }
 
         var sb = new StringBuilder(4096);
         sb.AppendLine("BT");
 
-        // Rotation matrix for an element if it belongs to a rotation group with a resolved pivot.
-        (double A, double B, double C, double D, double E, double F)? RotFor(PositionedElement el)
+        // Returns the pivot-composed PDF affine matrix for an element that belongs to a transform
+        // group, or null if no transform applies. The CSS-space matrix from TransformGroup is composed
+        // with the box-center pivot (T(px,py)*M_css*T(-px,-py)) here at write time using PDF coords.
+        (double A, double B, double C, double D, double E, double F)? TransformFor(PositionedElement el)
         {
-            if (el.Source?.RotationGroup is { } grp && rotationPivots.TryGetValue(grp, out (double Px, double Py) p))
-                return RotMatrix(grp.AngleDegrees, p.Px, p.Py);
+            if (el.Source?.TransformGroup is { } grp
+                && grp.Matrix is { Length: 6 } m
+                && transformPivots.TryGetValue(grp, out (double Px, double Py) p))
+            {
+                // Apply pivot composition in PDF space: T(px,py) * M_css * T(-px,-py).
+                // T(-px,-py) pre-translates to origin, M_css applies, T(px,py) translates back.
+                // For rotation: the CSS matrix [cosA, sinA, -sinA, cosA, 0, 0] must have the
+                // PDF y-up flip applied. CSS y-down means sinA terms must be negated for PDF y-up.
+                // Apply the flip: negate b and c (the mixed-axis terms) to account for PDF y-inversion.
+                double a = m[0], b = -m[1], c = -m[2], d = m[3];
+                // Pivot composition with y-flipped matrix:
+                double e = p.Px - p.Px * a - p.Py * c;
+                double f = p.Py - p.Px * b - p.Py * d;
+                return (a, b, c, d, e, f);
+            }
             return null;
         }
 
@@ -938,7 +953,7 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 float gw = el.Position.Width;
                 float gh = el.Position.Height;
                 sb.AppendLine("q");
-                if (RotFor(el) is { } gRot)
+                if (TransformFor(el) is { } gRot)
                     AppendCm(sb, gRot);
                 sb.Append(gx.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
                 sb.Append(gy.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
@@ -963,7 +978,7 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 float bgW = el.Position.Width;
                 float bgH = el.Position.Height;
                 sb.Append("q").AppendLine();
-                if (RotFor(el) is { } bgRot)
+                if (TransformFor(el) is { } bgRot)
                     AppendCm(sb, bgRot);
                 sb.Append(bgR.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
                 sb.Append(bgG.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
@@ -1183,7 +1198,7 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             // Synthetic italic: skew the text matrix with c=0.2 (≈11° slant).
             float pdfXt = el.Position.X;
             float pdfYt = pageHeightPt - el.Position.Y - inline.FontSize;
-            if (RotFor(el) is { } tRot)
+            if (TransformFor(el) is { } tRot)
             {
                 // Phase 14: rotate the text about the group pivot. Bake the rotation into Tm — the
                 // linear part orients glyphs, and the origin is the rotated text position. (Synthetic
