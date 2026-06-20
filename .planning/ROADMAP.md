@@ -29,7 +29,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 
 - [x] **Phase 13: Full-HTML Running Header/Footer** — Upgrade `options.Header/Footer` from text-only to full-HTML 3-column running content (images, `HeightMm`, `ShowLine`); page numbering via `counter(page)/counter(pages)`. Plan: `.planning/PHASE-13-PLAN.md` (completed 2026-06-20)
 - [x] **Phase 14: CSS Print Fidelity Gaps** — Close 3 print-oriented CSS gaps vs DinkToPdf: `@page` margin-box parsing (pure-CSS running header/footer), `linear-gradient` backgrounds (PDF axial shading), and `transform:rotate` watermark. JS/flex/grid/radial stay out of scope. Plan: `.planning/PHASE-14-PLAN.md` (completed 2026-06-20)
-- [ ] **Phase 15: Radial Gradients + Affine Transforms** — Extend Phase 14: `radial-gradient` backgrounds (PDF ShadingType 3, reuse axial-shading infra) + full 2D affine `transform` (translate/scale/matrix + multi-function chains, reuse CTM machinery). conic-gradient/JS/flex/grid stay out of scope; flexbox deferred to Phase 16.
+- [x] **Phase 15: Radial Gradients + Affine Transforms** — Extend Phase 14: `radial-gradient` backgrounds (PDF ShadingType 3, reuse axial-shading infra) + full 2D affine `transform` (translate/scale/matrix + multi-function chains, reuse CTM machinery). conic-gradient/JS/flex/grid stay out of scope; flexbox deferred to Phase 16. (completed 2026-06-20)
 
 ## Phase Details
 
@@ -460,7 +460,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 15-02-PLAN.md — Wave 2: radial-gradient (RadialGradient model+parser, BuildRadialShadingDict ShadingType 3 + ellipse anisotropic cm, gradient gate widening, radial test flips; depends on 15-01 via shared files)
+- [x] 15-02-PLAN.md — Wave 2: radial-gradient (RadialGradient model+parser, BuildRadialShadingDict ShadingType 3 + ellipse anisotropic cm, gradient gate widening, radial test flips; depends on 15-01 via shared files)
 
 ## Progress
 
