@@ -856,19 +856,7 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             $"{c.B.ToString("F4", CultureInfo.InvariantCulture)}";
     }
 
-    // Phase 14: affine matrix [a b c d e f] for a CSS rotate(angleDegCss) about pivot (px,py) in PDF
-    // user space. CSS rotation is clockwise on screen; PDF y is up, so the math angle is negated.
-    private static (double A, double B, double C, double D, double E, double F) RotMatrix(
-        float angleDegCss, double px, double py)
-    {
-        double phi = -angleDegCss * Math.PI / 180.0;
-        double a = Math.Cos(phi), b = Math.Sin(phi), c = -Math.Sin(phi), d = Math.Cos(phi);
-        double e = px - px * a - py * c;
-        double f = py - px * b - py * d;
-        return (a, b, c, d, e, f);
-    }
-
-    // Phase 14: emit a `cm` operator for a rotation matrix [a b c d e f].
+    // Phase 15: emit a `cm` operator for an affine matrix [a b c d e f].
     private static void AppendCm(
         StringBuilder sb, (double A, double B, double C, double D, double E, double F) m)
     {
