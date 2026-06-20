@@ -9,19 +9,17 @@ namespace Muonroi.Integration.Abstractions;
 /// from "no items matched the query".
 /// </para>
 /// </summary>
+/// <param name="Items">Items returned for the current page. Empty when no matches or permission denied.</param>
+/// <param name="NextCursor">
+/// Opaque cursor to pass as <see cref="ConnectorBrowseQuery.Cursor"/> for the next page.
+/// Null when there are no further pages.
+/// </param>
+/// <param name="IsPermissionDenied">
+/// True when the connected credential exists but the remote platform returned 401 or 403.
+/// The browse endpoint maps this to category="no-permission" — never conflate with no-match.
+/// </param>
 public sealed record ConnectorBrowseResult(
-    /// <summary>Items returned for the current page. Empty when no matches or permission denied.</summary>
     IReadOnlyList<ConnectorBrowseItem> Items,
-
-    /// <summary>
-    /// Opaque cursor to pass as <see cref="ConnectorBrowseQuery.Cursor"/> for the next page.
-    /// Null when there are no further pages.
-    /// </summary>
     string? NextCursor,
-
-    /// <summary>
-    /// True when the connected credential exists but the remote platform returned 401 or 403.
-    /// The browse endpoint maps this to category="no-permission" — never conflate with no-match.
-    /// </summary>
     bool IsPermissionDenied
 );

@@ -4,15 +4,14 @@ using Muonroi.Pdf.Abstractions.Exceptions;
 
 namespace Muonroi.Pdf.Internal.Security;
 
-[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
-    Justification = "PdfSecurityException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
-
 /// <summary>
 /// Safe-by-default <see cref="IResourceResolver"/>. Blocks disallowed URI schemes
 /// (file://, javascript:) by throwing <see cref="PdfSecurityException"/>, and returns
 /// null for all other schemes (resource not fetched). Callers that need external
 /// resolution supply their own resolver via <c>PdfRenderOptions.ResourceResolver</c>.
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfSecurityException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
 internal sealed class ThrowingResourceResolver : IResourceResolver
 {
     public ValueTask<ResourceResult?> ResolveAsync(

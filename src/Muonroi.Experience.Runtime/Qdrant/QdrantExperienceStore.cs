@@ -78,7 +78,7 @@ public sealed class QdrantExperienceStore : IExperienceStore
         var point = new PointStruct
         {
             Id = new PointId { Uuid = experience.Id },
-            /// <remarks>Zero-vector placeholder — real embedding vectors are injected by Phase 96 (Experience Extraction) via IExperienceBrain.</remarks>
+            // Zero-vector placeholder — real embedding vectors are injected by Phase 96 (Experience Extraction) via IExperienceBrain.
             Vectors = new float[_options.VectorSize]
         };
         point.Payload["json"] = JsonSerializer.Serialize(experience);

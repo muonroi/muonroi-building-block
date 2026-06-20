@@ -20,9 +20,6 @@ using Muonroi.Tenancy.Abstractions;
 
 namespace Muonroi.Pdf.Internal.Service;
 
-[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
-    Justification = "PdfInputLimitException and PdfPolicyException are public PDF-contract exception types; consumers catch them directly. Cannot change hierarchy.")]
-
 /// <summary>
 /// End-to-end HTML/CSS → PDF orchestrator. Drives parse → cascade → policy → layout → write,
 /// enforces the render timeout via a linked <see cref="CancellationTokenSource"/> (PIPE-08),
@@ -30,6 +27,8 @@ namespace Muonroi.Pdf.Internal.Service;
 /// Singleton-safe: the scoped <see cref="ITenantContext"/> is resolved per-call via
 /// <see cref="IServiceProvider"/> to avoid a captive-dependency scope violation (T-06-05).
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfInputLimitException and PdfPolicyException are public PDF-contract exception types; consumers catch them directly. Cannot change hierarchy.")]
 internal sealed class MPdfService(
     IHtmlParser htmlParser,
     ICssCascadeEngine cascadeEngine,

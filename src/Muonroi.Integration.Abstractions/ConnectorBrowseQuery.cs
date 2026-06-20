@@ -7,28 +7,24 @@ namespace Muonroi.Integration.Abstractions;
 /// preset from these fields — the caller never supplies raw platform query syntax.
 /// </para>
 /// </summary>
+/// <param name="SearchText">
+/// Free-text search. When null, the preset returns recent/default items
+/// for the connected credential (no <c>text ~</c> clause in JQL, etc.).
+/// </param>
+/// <param name="Scope">
+/// Optional scope limiter: Jira project key, Confluence space key, repo name, etc.
+/// When null, results span all scopes accessible to the credential.
+/// </param>
+/// <param name="TypeFilter">
+/// Optional type filter: "issue", "page", "wiki", etc.
+/// When null, the preset returns all supported types.
+/// </param>
+/// <param name="Cursor">Opaque paging cursor returned by a previous call. Null for the first page.</param>
+/// <param name="PageSize">Maximum number of items to return. Default is 20.</param>
 public sealed record ConnectorBrowseQuery(
-    /// <summary>
-    /// Free-text search. When null, the preset returns recent/default items
-    /// for the connected credential (no <c>text ~</c> clause in JQL, etc.).
-    /// </summary>
     string? SearchText,
-
-    /// <summary>
-    /// Optional scope limiter: Jira project key, Confluence space key, repo name, etc.
-    /// When null, results span all scopes accessible to the credential.
-    /// </summary>
     string? Scope,
-
-    /// <summary>
-    /// Optional type filter: "issue", "page", "wiki", etc.
-    /// When null, the preset returns all supported types.
-    /// </summary>
     string? TypeFilter,
-
-    /// <summary>Opaque paging cursor returned by a previous call. Null for the first page.</summary>
     string? Cursor,
-
-    /// <summary>Maximum number of items to return. Default is 20.</summary>
     int PageSize = 20
 );

@@ -21,9 +21,6 @@ using Muonroi.Pdf.Internal.Layout.Geometry;
 
 namespace Muonroi.Pdf.Internal.Writer;
 
-[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
-    Justification = "PdfFormatException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
-
 /// <summary>
 /// Pure-managed PDF 1.7 writer. Zero PdfSharpCore types. Emits CID Type0 composite fonts
 /// (Identity-H encoding, 2-byte GID content streams) for correct Unicode/Vietnamese rendering.
@@ -31,6 +28,8 @@ namespace Muonroi.Pdf.Internal.Writer;
 /// are embedded as DCTDecode (JPEG) or FlateDecode raw-RGB (PNG) XObjects.
 /// All content and font streams are FlateDecode-compressed via ZLibStream (RFC 1950).
 /// </summary>
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfFormatException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
 internal sealed class OwnedPdfWriter : IPdfWriter
 {
     // ── determinism sentinels (DET-01/02/03) ─────────────────────────────────
