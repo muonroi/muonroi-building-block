@@ -56,7 +56,8 @@ internal sealed class LayoutEngine
         IFontResolver? fontResolver,
         IResourceResolver? imageResolver,
         IImageDecoder imageDecoder,
-        CancellationToken ct)
+        CancellationToken ct,
+        RunningContentSpec? running = null)
     {
         SixLaborsTextMetrics? realMetrics = null;
         IReadOnlyDictionary<string, ReadOnlyMemory<byte>> fontBytesMap = new Dictionary<string, ReadOnlyMemory<byte>>();
@@ -72,7 +73,9 @@ internal sealed class LayoutEngine
         if (imageResolver != null)
         {
             var imagePipeline = new ImagePipeline();
-            resolvedImages = await imagePipeline.ResolveAsync(doc, imageResolver, imageDecoder, limits, ct).ConfigureAwait(false);
+            // Phase 13: also resolve images referenced by running header/footer fragments.
+            IReadOnlyList<IStyledDocument>? runningDocs = CollectRunningDocs(running);
+            resolvedImages = await imagePipeline.ResolveAsync(doc, runningDocs, imageResolver, imageDecoder, limits, ct).ConfigureAwait(false);
         }
         else
         {
@@ -83,7 +86,7 @@ internal sealed class LayoutEngine
             ? new LayoutEngine(realMetrics)
             : this;
 
-        var pass1 = engineToUse.RunLayout(doc, options, totalPages: 0, resolvedImages);
+        var pass1 = engineToUse.RunLayout(doc, options, totalPages: 0, resolvedImages, running);
 
         if (pass1.PageCount > PdfConfigs.PdfLimits.Defaults.MaxPages)
             throw new PdfInputLimitException(
@@ -94,7 +97,7 @@ internal sealed class LayoutEngine
 
         ct.ThrowIfCancellationRequested();
 
-        var pass2 = engineToUse.RunLayout(doc, options, totalPages: pass1.PageCount, resolvedImages);
+        var pass2 = engineToUse.RunLayout(doc, options, totalPages: pass1.PageCount, resolvedImages, running);
 
         var embeddedFonts = new List<EmbeddedFontInfo>();
         if (fontResolver != null && fontBytesMap.Count > 0 && fontCollection != null)
@@ -199,7 +202,7 @@ internal sealed class LayoutEngine
         return pass2;
     }
 
-    private PositionedPageList RunLayout(IStyledDocument doc, PdfRenderOptions options, int totalPages, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null)
+    private PositionedPageList RunLayout(IStyledDocument doc, PdfRenderOptions options, int totalPages, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null, RunningContentSpec? running = null)
     {
         var (pageWidthPt, pageHeightPt) = GetPageDimensions(options);
         var margins = ResolveMargins(options, doc.PageRule);
@@ -208,7 +211,22 @@ internal sealed class LayoutEngine
         float bottomMarginPt = (float)(margins.BottomMm * Units.MmToPt);
         float leftMarginPt = (float)(margins.LeftMm * Units.MmToPt);
         float rightMarginPt = (float)(margins.RightMm * Units.MmToPt);
-        float pageBodyHeight = pageHeightPt - topMarginPt - bottomMarginPt;
+
+        // Phase 13: render running header/footer columns first. Their measured band heights can
+        // expand the effective margins — body is pushed below the header band / above the footer
+        // band so the two never overlap (locked decision: HeightMm grows the margin).
+        RenderedRunningContent? rc = BuildRunningContent(
+            running, pageWidthPt, pageHeightPt, leftMarginPt, rightMarginPt, totalPages, resolvedImages);
+
+        float effectiveTopPt = topMarginPt;
+        float effectiveBottomPt = bottomMarginPt;
+        if (rc is not null)
+        {
+            if (rc.HeaderBandPt > effectiveTopPt) effectiveTopPt = rc.HeaderBandPt;
+            if (rc.FooterBandPt > effectiveBottomPt) effectiveBottomPt = rc.FooterBandPt;
+        }
+
+        float pageBodyHeight = pageHeightPt - effectiveTopPt - effectiveBottomPt;
         float availableWidth = pageWidthPt - leftMarginPt - rightMarginPt;
 
         var rootBox = _boxTreeBuilder.Build(doc.Root, resolvedImages);
@@ -235,12 +253,107 @@ internal sealed class LayoutEngine
         return _paginationEngine.Paginate(
             elements,
             pageBodyHeight,
-            topMarginPt,
-            bottomMarginPt,
+            effectiveTopPt,
+            effectiveBottomPt,
             pageWidthPt,
+            pageHeightPt,
             totalPages,
-            doc.PageRule,
-            options);
+            rc);
+    }
+
+    // Phase 13: lay out each header/footer column fragment with the SAME text metrics as the body,
+    // offset into its column third, and measure the tallest band. Returns null when no running
+    // content is configured. The elements are stamped per page by PaginationEngine.
+    private static IReadOnlyList<IStyledDocument>? CollectRunningDocs(RunningContentSpec? spec)
+    {
+        if (spec is null) return null;
+        var docs = new List<IStyledDocument>(6);
+        void Add(IStyledDocument? d) { if (d is not null) docs.Add(d); }
+        Add(spec.HeaderLeft); Add(spec.HeaderCenter); Add(spec.HeaderRight);
+        Add(spec.FooterLeft); Add(spec.FooterCenter); Add(spec.FooterRight);
+        return docs.Count > 0 ? docs : null;
+    }
+
+    private RenderedRunningContent? BuildRunningContent(
+        RunningContentSpec? spec,
+        float pageWidthPt,
+        float pageHeightPt,
+        float leftMarginPt,
+        float rightMarginPt,
+        int totalPages,
+        IReadOnlyDictionary<string, DecodedImage>? resolvedImages)
+    {
+        _ = pageHeightPt;
+        if (spec is null || (!spec.HasHeader && !spec.HasFooter)) return null;
+
+        float contentWidth = pageWidthPt - leftMarginPt - rightMarginPt;
+        if (contentWidth <= 0f) contentWidth = pageWidthPt;
+        float colWidth = contentWidth / 3f;
+
+        var rc = new RenderedRunningContent
+        {
+            HeaderShowLine = spec.HeaderShowLine,
+            FooterShowLine = spec.FooterShowLine,
+            LineColor = spec.LineColor,
+            ContentLeftPt = leftMarginPt,
+            ContentWidthPt = contentWidth,
+        };
+
+        float xLeft = leftMarginPt;
+        float xCenter = leftMarginPt + colWidth;
+        float xRight = leftMarginPt + 2f * colWidth;
+
+        float hMax = 0f;
+        hMax = Math.Max(hMax, RenderColumnInto(rc.HeaderElements, spec.HeaderLeft, xLeft, colWidth, pageWidthPt, totalPages, resolvedImages));
+        hMax = Math.Max(hMax, RenderColumnInto(rc.HeaderElements, spec.HeaderCenter, xCenter, colWidth, pageWidthPt, totalPages, resolvedImages));
+        hMax = Math.Max(hMax, RenderColumnInto(rc.HeaderElements, spec.HeaderRight, xRight, colWidth, pageWidthPt, totalPages, resolvedImages));
+        rc.HeaderBandPt = Math.Max(spec.HeaderHeightPt, hMax);
+
+        float fMax = 0f;
+        fMax = Math.Max(fMax, RenderColumnInto(rc.FooterElements, spec.FooterLeft, xLeft, colWidth, pageWidthPt, totalPages, resolvedImages));
+        fMax = Math.Max(fMax, RenderColumnInto(rc.FooterElements, spec.FooterCenter, xCenter, colWidth, pageWidthPt, totalPages, resolvedImages));
+        fMax = Math.Max(fMax, RenderColumnInto(rc.FooterElements, spec.FooterRight, xRight, colWidth, pageWidthPt, totalPages, resolvedImages));
+        rc.FooterBandPt = Math.Max(spec.FooterHeightPt, fMax);
+
+        return rc;
+    }
+
+    private float RenderColumnInto(
+        List<PositionedElement> dest,
+        IStyledDocument? colDoc,
+        float xOffset,
+        float colWidth,
+        float pageWidthPt,
+        int totalPages,
+        IReadOnlyDictionary<string, DecodedImage>? resolvedImages)
+    {
+        if (colDoc is null) return 0f;
+
+        var rootBox = _boxTreeBuilder.Build(colDoc.Root, resolvedImages);
+        var ctx = new LayoutContext
+        {
+            PageWidth = pageWidthPt,
+            PageHeight = 100000f, // effectively unbounded — running content never paginates
+            AvailableWidth = colWidth,
+            CurrentY = 0f,
+            CurrentPageIndex = 0,
+            TotalPages = totalPages,
+            TextMetrics = _textMetrics,
+            PageMargins = PdfMargins.Zero,
+        };
+
+        var els = new List<PositionedElement>();
+        _blockEngine.Layout(rootBox, ctx, els, 0, isRoot: true);
+
+        float height = 0f;
+        foreach (var e in els)
+        {
+            e.Position = new Rect(e.Position.X + xOffset, e.Position.Y, e.Position.Width, e.Position.Height);
+            dest.Add(e);
+            float bottom = e.Position.Y + e.Position.Height;
+            if (bottom > height) height = bottom;
+        }
+        return height;
     }
 
     private static (float Width, float Height) GetPageDimensions(PdfRenderOptions options)

@@ -15,6 +15,7 @@ using Muonroi.Pdf.Abstractions.Telemetry;
 using Muonroi.Pdf.Internal.Font;
 using Muonroi.Pdf.Internal.Layout;
 using Muonroi.Pdf.Internal.Layout.Boxes;
+using Muonroi.Pdf.Internal.Layout.Geometry;
 using Muonroi.Pdf.Internal.Telemetry;
 using Muonroi.Tenancy.Abstractions;
 
@@ -98,9 +99,11 @@ internal sealed class MPdfService(
                 throw new PdfPolicyException(policy.Violations);
             }
 
+            RunningContentSpec? running = await BuildRunningContentAsync(options, cts.Token).ConfigureAwait(false);
+
             var layout = new LayoutEngine();
             IPositionedPageList pages = await layout.LayoutAsync(
-                styled, options, _configs.Limits, _fontResolver, _resourceResolver, _imageDecoder, cts.Token)
+                styled, options, _configs.Limits, _fontResolver, _resourceResolver, _imageDecoder, cts.Token, running)
                 .ConfigureAwait(false);
 
             long byteCount = await _writer.WriteAsync(pages, options, destination, cts.Token).ConfigureAwait(false);
@@ -131,6 +134,46 @@ internal sealed class MPdfService(
             _log.LogError(ex, "PDF render failed for template {TemplateId}", options.TemplateId ?? string.Empty);
             throw;
         }
+    }
+
+    // Phase 13: build the full-HTML running header/footer spec from options.Header/Footer.
+    // Each non-empty column fragment is wrapped (base font + forced text-align), parsed, and
+    // cascaded into a styled fragment document. LayoutEngine lays them out + stamps per page.
+    private async Task<RunningContentSpec?> BuildRunningContentAsync(
+        PdfRenderOptions options, CancellationToken ct)
+    {
+        PdfHeaderFooter? header = options.Header;
+        PdfHeaderFooter? footer = options.Footer;
+        if (header is null && footer is null) return null;
+
+        async Task<IStyledDocument?> ColumnAsync(string? fragment, string align)
+        {
+            if (string.IsNullOrWhiteSpace(fragment)) return null;
+            string wrapper =
+                "<html><head><style>" +
+                "html,body{margin:0;padding:0;}" +
+                "html,body,p,div,span,td,th{font-family:\"Times New Roman\";font-size:11px;}" +
+                ".hf{text-align:" + align + ";}" +
+                "</style></head><body><div class=\"hf\">" + fragment + "</div></body></html>";
+
+            IParsedDocument parsed = await _htmlParser.ParseAsync(wrapper, ct).ConfigureAwait(false);
+            return await _cascadeEngine.CascadeAsync(parsed, null, ct).ConfigureAwait(false);
+        }
+
+        return new RunningContentSpec
+        {
+            HeaderLeft = header is null ? null : await ColumnAsync(header.LeftHtml, "left").ConfigureAwait(false),
+            HeaderCenter = header is null ? null : await ColumnAsync(header.CenterHtml, "center").ConfigureAwait(false),
+            HeaderRight = header is null ? null : await ColumnAsync(header.RightHtml, "right").ConfigureAwait(false),
+            FooterLeft = footer is null ? null : await ColumnAsync(footer.LeftHtml, "left").ConfigureAwait(false),
+            FooterCenter = footer is null ? null : await ColumnAsync(footer.CenterHtml, "center").ConfigureAwait(false),
+            FooterRight = footer is null ? null : await ColumnAsync(footer.RightHtml, "right").ConfigureAwait(false),
+            HeaderHeightPt = (float)((header?.HeightMm ?? 0d) * Units.MmToPt),
+            FooterHeightPt = (float)((footer?.HeightMm ?? 0d) * Units.MmToPt),
+            HeaderShowLine = header?.ShowLine ?? false,
+            FooterShowLine = footer?.ShowLine ?? false,
+            LineColor = "#888888",
+        };
     }
 
     public async Task<(byte[] Bytes, PdfRenderResult Metadata)> RenderToBytesAsync(

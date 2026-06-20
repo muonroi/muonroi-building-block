@@ -3,44 +3,61 @@ using Muonroi.Pdf.Internal.Layout.Geometry;
 
 namespace Muonroi.Pdf.Internal.Layout;
 
-// Distributes PositionedElements across pages, applies counter substitution, and
-// appends per-page header/footer elements.
+// Distributes PositionedElements across pages, applies counter substitution, and stamps the
+// full-HTML running header/footer (Phase 13) onto every page.
 //
 // PITFALL 4 (RESEARCH.md): page-break-inside:avoid with element taller than a full page
 // must still be placed (break anyway) to prevent an infinite loop.
 internal sealed class PaginationEngine
 {
-    // Paginate elements from continuous layout space into a PositionedPageList.
+    // Separator-rule thickness in points when PdfHeaderFooter.ShowLine is set.
+    private const float LineThicknessPt = 0.7f;
+
+    // Paginate body elements into pages, then stamp the rendered running header/footer.
     //
-    // elements  – all positioned boxes from BlockLayoutEngine (Y in continuous body-space)
-    // pageBodyHeight – usable body height per page (pageHeight − topMargin − bottomMargin)
-    // pageTopMarginPt – top margin in points (header sits above this; body starts at this Y on each physical page)
-    // pageBottomMarginPt – bottom margin in points (footer sits below body)
-    // pageWidth  – full page width in points
-    // totalPages – for counter(pages) substitution (0 in pass 1, actual count in pass 2)
-    // pageRule   – @page header/footer HTML; overridden by options if options supplies its own
-    // options    – API-level rendering options
+    // elements         – body positioned boxes (Y in continuous body-space)
+    // pageBodyHeight   – usable body height per page (pageHeight − effectiveTop − effectiveBottom)
+    // pageTopMarginPt  – EFFECTIVE top margin (max of CSS margin and header band) where body starts
+    // pageBottomMarginPt – EFFECTIVE bottom margin (max of CSS margin and footer band)
+    // pageWidth/pageHeight – full page dimensions in points
+    // totalPages       – for counter(pages) substitution (0 in pass 1, actual count in pass 2)
+    // running          – laid-out header/footer columns to stamp (null = none)
     public PositionedPageList Paginate(
         List<PositionedElement> elements,
         float pageBodyHeight,
         float pageTopMarginPt,
         float pageBottomMarginPt,
         float pageWidth,
+        float pageHeight,
         int totalPages,
-        IPageRule? pageRule,
-        PdfRenderOptions options)
+        RenderedRunningContent? running)
     {
-        // Resolve header/footer HTML: API options take precedence over @page rule.
-        string? headerHtml = CombineHeaderFooter(options.Header) ?? pageRule?.TopMarginBoxHtml;
-        string? footerHtml = CombineHeaderFooter(options.Footer) ?? pageRule?.BottomMarginBoxHtml;
-
         var result = new PositionedPageList();
+
         if (elements.Count == 0)
         {
-            AddPage(result, 0, headerHtml, footerHtml, pageTopMarginPt, pageBottomMarginPt,
-                pageWidth, pageBodyHeight, totalPages);
-            return result;
+            result.Pages.Add(new PositionedPage { PageIndex = 0 });
         }
+        else
+        {
+            PaginateBody(elements, pageBodyHeight, pageTopMarginPt, pageWidth, result);
+        }
+
+        CollectLinkAnnotations(result);
+        SubstituteBodyCounters(result, totalPages);
+        StampRunningContent(result, running, pageWidth, pageHeight, totalPages);
+
+        return result;
+    }
+
+    private static void PaginateBody(
+        List<PositionedElement> elements,
+        float pageBodyHeight,
+        float pageTopMarginPt,
+        float pageWidth,
+        PositionedPageList result)
+    {
+        _ = pageWidth;
 
         // Sort by ascending Y so we scan document order.
         var sorted = elements.OrderBy(e => e.Position.Y).ThenBy(e => e.Position.X).ToList();
@@ -80,7 +97,7 @@ internal sealed class PaginationEngine
                 result.Pages.Add(currentPage);
             }
 
-            // Translate from continuous Y to page-local Y.
+            // Translate from continuous Y to page-local Y (body starts at the effective top margin).
             float localY = el.Position.Y - pageBodyStart + pageTopMarginPt;
 
             currentPage.Elements.Add(new PositionedElement
@@ -91,8 +108,11 @@ internal sealed class PaginationEngine
                 PageIndex = pageIndex
             });
         }
+    }
 
-        // Collect link annotations: scan positioned elements for InlineBox.LinkHref
+    // Collect link annotations: scan positioned elements for InlineBox.LinkHref.
+    private static void CollectLinkAnnotations(PositionedPageList result)
+    {
         for (int p = 0; p < result.Pages.Count; p++)
         {
             foreach (var el in result.Pages[p].Elements)
@@ -109,8 +129,11 @@ internal sealed class PaginationEngine
                 }
             }
         }
+    }
 
-        // Counter substitution: replace counter(page) and counter(pages) in InlineBox text.
+    // Counter substitution for BODY inline text (header/footer counters are substituted at stamp time).
+    private static void SubstituteBodyCounters(PositionedPageList result, int totalPages)
+    {
         for (int p = 0; p < result.Pages.Count; p++)
         {
             int oneBased = p + 1;
@@ -120,88 +143,107 @@ internal sealed class PaginationEngine
                 if (string.IsNullOrEmpty(inlineBox.Text)) continue;
                 if (!inlineBox.Text.Contains("counter(", StringComparison.Ordinal)) continue;
 
-                inlineBox.Text = inlineBox.Text
-                    .Replace("counter(pages)", totalPages.ToString(), StringComparison.Ordinal)
-                    .Replace("counter(page)", oneBased.ToString(), StringComparison.Ordinal);
+                inlineBox.Text = SubstituteCounters(inlineBox.Text, oneBased, totalPages) ?? inlineBox.Text;
+                if (el.RenderedText is not null)
+                    el.RenderedText = SubstituteCounters(el.RenderedText, oneBased, totalPages);
             }
         }
+    }
 
-        // Append header/footer to every page.
+    // Stamp the rendered running header/footer onto every page, cloning elements (footer translated
+    // to the bottom band) and substituting page counters per page. Adds separator rules when requested.
+    private static void StampRunningContent(
+        PositionedPageList result,
+        RenderedRunningContent? running,
+        float pageWidth,
+        float pageHeight,
+        int totalPages)
+    {
+        if (running is null || (!running.HasHeader && !running.HasFooter)) return;
+
+        float lineX = running.ContentLeftPt;
+        float lineW = running.ContentWidthPt > 0f ? running.ContentWidthPt : pageWidth;
+
         for (int p = 0; p < result.Pages.Count; p++)
-            ApplyHeaderFooter(result.Pages[p], p, headerHtml, footerHtml,
-                pageTopMarginPt, pageBottomMarginPt, pageWidth, pageBodyHeight, totalPages);
-
-        return result;
-    }
-
-    private static void AddPage(PositionedPageList list, int pageIndex,
-        string? headerHtml, string? footerHtml,
-        float topMarginPt, float bottomMarginPt, float pageWidth, float bodyHeight, int totalPages)
-    {
-        var page = new PositionedPage { PageIndex = pageIndex };
-        list.Pages.Add(page);
-        ApplyHeaderFooter(page, pageIndex, headerHtml, footerHtml,
-            topMarginPt, bottomMarginPt, pageWidth, bodyHeight, totalPages);
-    }
-
-    private static void ApplyHeaderFooter(PositionedPage page, int pageIndex,
-        string? headerHtml, string? footerHtml,
-        float topMarginPt, float bottomMarginPt, float pageWidth, float bodyHeight, int totalPages)
-    {
-        int oneBased = pageIndex + 1;
-
-        if (!string.IsNullOrEmpty(headerHtml))
         {
-            string text = StripTags(headerHtml)
-                .Replace("counter(pages)", totalPages.ToString(), StringComparison.Ordinal)
-                .Replace("counter(page)", oneBased.ToString(), StringComparison.Ordinal);
+            var page = result.Pages[p];
+            int oneBased = p + 1;
 
-            var headerBox = new InlineBox { Text = text };
-            page.Elements.Add(new PositionedElement
+            // Header band at top: Y stays band-local (band starts at page top, Y=0).
+            foreach (var el in running.HeaderElements)
+                page.Elements.Add(CloneStamped(el, el.Position.Y, oneBased, totalPages, p));
+
+            if (running.HeaderShowLine && running.HeaderBandPt > 0f)
+                page.Elements.Add(SeparatorRect(lineX, running.HeaderBandPt - LineThicknessPt, lineW, running.LineColor, p));
+
+            // Footer band at bottom: translate band-local Y into [pageHeight − footerBandPt, pageHeight].
+            float footerTop = pageHeight - running.FooterBandPt;
+            foreach (var el in running.FooterElements)
+                page.Elements.Add(CloneStamped(el, footerTop + el.Position.Y, oneBased, totalPages, p));
+
+            if (running.FooterShowLine && running.FooterBandPt > 0f)
+                page.Elements.Add(SeparatorRect(lineX, footerTop, lineW, running.LineColor, p));
+        }
+    }
+
+    private static PositionedElement CloneStamped(
+        PositionedElement el, float newY, int oneBased, int totalPages, int pageIndex)
+    {
+        BoxNode source = el.Source;
+
+        // GlyphCollector reads InlineBox.Text (the source text), NOT RenderedText. The stamped
+        // source still holds the literal "counter(page)/counter(pages)" — with no digits — so the
+        // page-number glyphs would never enter the font subset and would render blank. Clone the
+        // InlineBox with the per-page substituted Text so the digits are collected for THIS family.
+        if (source is InlineBox ib && ib.Text is { } t && t.Contains("counter(", StringComparison.Ordinal))
+        {
+            source = new InlineBox
             {
-                Position = new Rect(0f, 0f, pageWidth, topMarginPt),
-                Source = headerBox,
-                PageIndex = pageIndex
-            });
+                Text = SubstituteCounters(t, oneBased, totalPages),
+                FontFamily = ib.FontFamily,
+                FontSize = ib.FontSize,
+                Italic = ib.Italic,
+                Color = ib.Color,
+                VerticalAlign = ib.VerticalAlign,
+                LineHeightFactor = ib.LineHeightFactor,
+                TextDecoration = ib.TextDecoration,
+                LinkHref = ib.LinkHref,
+                Bold = ib.Bold,
+                TextTransform = ib.TextTransform,
+                WhiteSpace = ib.WhiteSpace,
+                WordBreak = ib.WordBreak,
+                Display = ib.Display,
+            };
         }
 
-        if (!string.IsNullOrEmpty(footerHtml))
+        return new PositionedElement
         {
-            string text = StripTags(footerHtml)
-                .Replace("counter(pages)", totalPages.ToString(), StringComparison.Ordinal)
-                .Replace("counter(page)", oneBased.ToString(), StringComparison.Ordinal);
-
-            float footerY = topMarginPt + bodyHeight;
-            var footerBox = new InlineBox { Text = text };
-            page.Elements.Add(new PositionedElement
-            {
-                Position = new Rect(0f, footerY, pageWidth, bottomMarginPt),
-                Source = footerBox,
-                PageIndex = pageIndex
-            });
-        }
+            // The (possibly cloned) source is never shared-mutated across pages; the per-page
+            // RenderedText carries the substituted page numbers, which the writer prefers.
+            Source = source,
+            RenderedText = SubstituteCounters(el.RenderedText, oneBased, totalPages),
+            Position = new Rect(el.Position.X, newY, el.Position.Width, el.Position.Height),
+            PageIndex = pageIndex
+        };
     }
 
-    private static string CombineHeaderFooter(PdfHeaderFooter? hf)
-    {
-        if (hf is null) return string.Empty;
-        var parts = new[] { hf.LeftHtml, hf.CenterHtml, hf.RightHtml }
-            .Where(s => !string.IsNullOrEmpty(s));
-        return string.Join(" ", parts);
-    }
-
-    // Inline-safe HTML tag strip: <[^>]+> → empty (Phase 3 only, no nested angle brackets in templates).
-    private static string StripTags(string html)
-    {
-        if (string.IsNullOrEmpty(html)) return html;
-        var sb = new System.Text.StringBuilder(html.Length);
-        bool inTag = false;
-        foreach (char c in html)
+    // A thin filled rectangle drawn via an empty InlineBox carrying BackgroundColor — the writer
+    // fills BackgroundColor for any source box regardless of type.
+    private static PositionedElement SeparatorRect(
+        float x, float y, float width, string? color, int pageIndex) =>
+        new()
         {
-            if (c == '<') { inTag = true; continue; }
-            if (c == '>') { inTag = false; continue; }
-            if (!inTag) sb.Append(c);
-        }
-        return sb.ToString();
+            Source = new InlineBox { Text = null, BackgroundColor = color ?? "#888888" },
+            Position = new Rect(x, y, width, LineThicknessPt),
+            PageIndex = pageIndex
+        };
+
+    private static string? SubstituteCounters(string? s, int oneBased, int totalPages)
+    {
+        if (string.IsNullOrEmpty(s) || !s.Contains("counter(", StringComparison.Ordinal))
+            return s;
+        return s
+            .Replace("counter(pages)", totalPages.ToString(), StringComparison.Ordinal)
+            .Replace("counter(page)", oneBased.ToString(), StringComparison.Ordinal);
     }
 }
