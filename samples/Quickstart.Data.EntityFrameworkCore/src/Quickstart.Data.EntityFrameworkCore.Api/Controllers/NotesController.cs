@@ -5,7 +5,7 @@ using Quickstart.Data.EntityFrameworkCore.Api.Data;
 namespace Quickstart.Data.EntityFrameworkCore.Api.Controllers;
 
 /// <summary>
-/// Exercises an <see cref="MDbContext"/>-derived context (<see cref="SampleNotesDbContext"/>):
+/// Exercises an <see cref="Muonroi.Data.EntityFrameworkCore.Entity.MDbContext"/>-derived context (<see cref="SampleNotesDbContext"/>):
 /// audit timestamping on insert and soft-delete on remove.
 ///
 /// MEntity carries IsDeleted/DeletionTime; MDbContext.SaveChangesAsync() converts an

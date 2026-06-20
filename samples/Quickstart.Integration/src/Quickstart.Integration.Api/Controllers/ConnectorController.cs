@@ -225,6 +225,7 @@ public sealed class ConnectorController(
     /// </summary>
     /// <param name="url">Override the target URL (defaults to appsettings value).</param>
     /// <param name="method">HTTP method (GET, POST, PUT, PATCH, DELETE). Defaults to GET.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpPost("http/execute")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status502BadGateway)]
@@ -311,6 +312,7 @@ public sealed class ConnectorController(
     /// When Enable=false the endpoint returns a dry-run response.
     /// </summary>
     /// <param name="text">Message text to send (defaults to a sample message).</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpPost("slack/webhook")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status502BadGateway)]
