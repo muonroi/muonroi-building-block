@@ -1,0 +1,14 @@
+# [DEPRECATED] package — superseded by Muonroi.RuleEngine.Runtime, frozen for removal.
+#
+# This legacy package is exempt from the system-wide Muonroi standards + ship gate:
+#  - CS0618: it deliberately references ITS OWN [Obsolete] public types (the package
+#    *is* the deprecated surface) — flagging that is noise, not a defect.
+#  - MSTD0001/0002/0003: it predates the analyzers; it is being removed, not refactored.
+#
+# Scoped here (not the csproj) so the suppression is self-documenting and applies only
+# to this project's sources. Other packages stay fully gated.
+[*.cs]
+dotnet_diagnostic.CS0618.severity = none
+dotnet_diagnostic.MSTD0001.severity = none
+dotnet_diagnostic.MSTD0002.severity = none
+dotnet_diagnostic.MSTD0003.severity = none
