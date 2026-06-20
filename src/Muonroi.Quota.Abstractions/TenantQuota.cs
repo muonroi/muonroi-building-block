@@ -91,6 +91,11 @@ public sealed class TenantQuota
     public int MaxConnectorExecutionsPerDay { get; set; } = 100;
 
     /// <summary>
+    /// Gets or sets the maximum PDF render events recorded per day. Default: int.MaxValue (unlimited — Phase 16 is record-only).
+    /// </summary>
+    public int MaxPdfRendersPerDay { get; set; } = int.MaxValue;
+
+    /// <summary>
     /// Gets or sets the tenant tier.
     /// </summary>
     public TenantTier Tier { get; set; } = TenantTier.Free;
@@ -152,7 +157,8 @@ public static class TenantQuotaPresets
                 MaxMessagesPerDay = 1000,
                 MaxMessagesPerMinute = 50,
                 MaxTotalConnectors = 2,
-                MaxConnectorExecutionsPerDay = 100
+                MaxConnectorExecutionsPerDay = 100,
+                MaxPdfRendersPerDay = int.MaxValue
             };
             return free;
         }
@@ -183,7 +189,8 @@ public static class TenantQuotaPresets
                 MaxMessagesPerDay = 10_000,
                 MaxMessagesPerMinute = 200,
                 MaxTotalConnectors = 10,
-                MaxConnectorExecutionsPerDay = 1000
+                MaxConnectorExecutionsPerDay = 1000,
+                MaxPdfRendersPerDay = int.MaxValue
             };
             return quota;
         }
@@ -214,7 +221,8 @@ public static class TenantQuotaPresets
                 MaxMessagesPerDay = 100_000,
                 MaxMessagesPerMinute = 1000,
                 MaxTotalConnectors = 50,
-                MaxConnectorExecutionsPerDay = 10_000
+                MaxConnectorExecutionsPerDay = 10_000,
+                MaxPdfRendersPerDay = int.MaxValue
             };
             return quota;
         }
@@ -245,7 +253,8 @@ public static class TenantQuotaPresets
                 MaxMessagesPerDay = int.MaxValue,
                 MaxMessagesPerMinute = int.MaxValue,
                 MaxTotalConnectors = int.MaxValue,
-                MaxConnectorExecutionsPerDay = int.MaxValue
+                MaxConnectorExecutionsPerDay = int.MaxValue,
+                MaxPdfRendersPerDay = int.MaxValue
             };
             return quota;
         }
