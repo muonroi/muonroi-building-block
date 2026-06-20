@@ -60,6 +60,12 @@ public static class LicenseCapabilityResolver
         /// The Java Script Expressions.
         /// </summary>
         public const string JavaScriptExpressions = "js_expressions";
+        /// <summary>The PDF Template Designer feature.</summary>
+        public const string PdfDesigner = "pdf.designer";
+        /// <summary>The PDF Template Registry feature.</summary>
+        public const string PdfRegistry = "pdf.registry";
+        /// <summary>The PDF Canary quality-regression scorer feature.</summary>
+        public const string PdfCanary = "pdf.canary";
     }
 
     private static readonly Dictionary<string, string> FeatureToCapability =
@@ -75,7 +81,10 @@ public static class LicenseCapabilityResolver
             [FreeTierFeatures.Premium.AntiTampering] = Capabilities.RuntimeAntiTampering,
             ["server-validation"] = Capabilities.AuditRemote,
             [FreeTierFeatures.Premium.Connectors] = Capabilities.Connectors,
-            [FreeTierFeatures.Premium.JavaScriptExpressions] = Capabilities.JavaScriptExpressions
+            [FreeTierFeatures.Premium.JavaScriptExpressions] = Capabilities.JavaScriptExpressions,
+            [Capabilities.PdfDesigner] = Capabilities.PdfDesigner,
+            [Capabilities.PdfRegistry] = Capabilities.PdfRegistry,
+            [Capabilities.PdfCanary] = Capabilities.PdfCanary
         };
 
     private static readonly HashSet<string> CapabilityKeys =
@@ -91,7 +100,10 @@ public static class LicenseCapabilityResolver
         Capabilities.RuntimeAntiTampering,
         Capabilities.AuditRemote,
         Capabilities.Connectors,
-        Capabilities.JavaScriptExpressions
+        Capabilities.JavaScriptExpressions,
+        Capabilities.PdfDesigner,
+        Capabilities.PdfRegistry,
+        Capabilities.PdfCanary
     ];
 
     /// <summary>

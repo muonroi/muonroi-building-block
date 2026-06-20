@@ -47,7 +47,10 @@ internal static class MEnterpriseFailClosedMatrix
                capability.Equals(LicenseCapabilityResolver.Capabilities.CacheDistributed, StringComparison.OrdinalIgnoreCase) ||
                capability.Equals(LicenseCapabilityResolver.Capabilities.AuditTrail, StringComparison.OrdinalIgnoreCase) ||
                capability.Equals(LicenseCapabilityResolver.Capabilities.RuntimeAntiTampering, StringComparison.OrdinalIgnoreCase) ||
-               capability.Equals(LicenseCapabilityResolver.Capabilities.AuditRemote, StringComparison.OrdinalIgnoreCase);
+               capability.Equals(LicenseCapabilityResolver.Capabilities.AuditRemote, StringComparison.OrdinalIgnoreCase) ||
+               capability.Equals(LicenseCapabilityResolver.Capabilities.PdfDesigner, StringComparison.OrdinalIgnoreCase) ||
+               capability.Equals(LicenseCapabilityResolver.Capabilities.PdfRegistry, StringComparison.OrdinalIgnoreCase) ||
+               capability.Equals(LicenseCapabilityResolver.Capabilities.PdfCanary, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool BlocksRemoteAudit(string capability)

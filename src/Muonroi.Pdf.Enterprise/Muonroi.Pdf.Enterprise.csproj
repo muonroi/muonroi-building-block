@@ -19,5 +19,7 @@
   <ItemGroup>
     <!-- One-way reference: Enterprise -> OSS. The OSS engine must never reference Enterprise (SC5). -->
     <ProjectReference Include="..\Muonroi.Pdf\Muonroi.Pdf.csproj" />
+    <!-- Enterprise -> Enterprise: allowed. Governance.Enterprise is also strong-named with Muonroi.snk. -->
+    <ProjectReference Include="..\Muonroi.Governance.Enterprise\Muonroi.Governance.Enterprise.csproj" />
   </ItemGroup>
 </Project>
