@@ -12,6 +12,9 @@ namespace Muonroi.Integration.Connectors.Presets;
 /// </summary>
 public sealed class ConfluencePresetConnector(HttpConnector inner, ILogger<ConfluencePresetConnector>? logger = null) : IServiceTaskConnector
 {
+    /// <summary>
+    /// Connector metadata describing Confluence Cloud capabilities and configuration schema.
+    /// </summary>
     public ConnectorMetadata Metadata => new()
     {
         Type = "confluence-cloud",
@@ -61,12 +64,28 @@ public sealed class ConfluencePresetConnector(HttpConnector inner, ILogger<Confl
         ]
     };
 
+    /// <summary>
+    /// Executes the Confluence Cloud connector by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <param name="ctx">Connector execution context containing configuration and credentials.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The connector result.</returns>
     public Task<ConnectorResult> ExecuteAsync(ConnectorContext ctx, CancellationToken ct)
         => inner.ExecuteAsync(ctx, ct);
 
+    /// <summary>
+    /// Tests the Confluence Cloud connection by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <param name="ctx">Connector execution context containing configuration and credentials.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns><see langword="true"/> if the connection is reachable and authenticated; otherwise <see langword="false"/>.</returns>
     public Task<bool> TestConnectionAsync(ConnectorContext ctx, CancellationToken ct)
         => inner.TestConnectionAsync(ctx, ct);
 
+    /// <summary>
+    /// Returns the JSON configuration schema by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <returns>A <see cref="System.Text.Json.JsonElement"/> describing the accepted configuration fields.</returns>
     public System.Text.Json.JsonElement GetConfigSchema()
         => inner.GetConfigSchema();
 

@@ -14,6 +14,9 @@ namespace Muonroi.Integration.Connectors.Presets;
 [SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "JSON deserialization results are null-checked by prior validation; null-forgiving avoids redundant re-checks on structurally guaranteed values.")]
 public sealed class JiraServerPresetConnector(HttpConnector inner, ILogger<JiraServerPresetConnector>? logger = null) : IServiceTaskConnector
 {
+    /// <summary>
+    /// Connector metadata describing Jira Server / Data Center capabilities and configuration schema.
+    /// </summary>
     public ConnectorMetadata Metadata => new()
     {
         Type = "jira-server",
@@ -64,12 +67,28 @@ public sealed class JiraServerPresetConnector(HttpConnector inner, ILogger<JiraS
         ]
     };
 
+    /// <summary>
+    /// Executes the Jira Server connector by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <param name="ctx">Connector execution context containing configuration and credentials.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The connector result.</returns>
     public Task<ConnectorResult> ExecuteAsync(ConnectorContext ctx, CancellationToken ct)
         => inner.ExecuteAsync(ctx, ct);
 
+    /// <summary>
+    /// Tests the Jira Server connection by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <param name="ctx">Connector execution context containing configuration and credentials.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns><see langword="true"/> if the connection is reachable and authenticated; otherwise <see langword="false"/>.</returns>
     public Task<bool> TestConnectionAsync(ConnectorContext ctx, CancellationToken ct)
         => inner.TestConnectionAsync(ctx, ct);
 
+    /// <summary>
+    /// Returns the JSON configuration schema by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <returns>A <see cref="System.Text.Json.JsonElement"/> describing the accepted configuration fields.</returns>
     public System.Text.Json.JsonElement GetConfigSchema()
         => inner.GetConfigSchema();
 

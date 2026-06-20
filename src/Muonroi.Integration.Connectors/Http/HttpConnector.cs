@@ -16,6 +16,7 @@ namespace Muonroi.Integration.Connectors.Http;
 /// Creates an HTTP connector with the provided client factory.
 /// </remarks>
 /// <param name="httpClientFactory">Factory used to create HTTP clients.</param>
+/// <param name="logger">Logger for recording request diagnostics and errors.</param>
 public sealed class HttpConnector(IHttpClientFactory httpClientFactory, ILogger<HttpConnector> logger) : IServiceTaskConnector
 {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;

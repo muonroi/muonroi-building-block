@@ -9,6 +9,9 @@ namespace Muonroi.Integration.Connectors.Presets;
 /// </summary>
 public sealed class GenericRestPresetConnector(HttpConnector inner) : IServiceTaskConnector
 {
+    /// <summary>
+    /// Connector metadata describing Generic REST capabilities and configuration schema.
+    /// </summary>
     public ConnectorMetadata Metadata => new()
     {
         Type = "generic-rest",
@@ -47,12 +50,28 @@ public sealed class GenericRestPresetConnector(HttpConnector inner) : IServiceTa
         ]
     };
 
+    /// <summary>
+    /// Executes the generic REST connector by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <param name="ctx">Connector execution context containing configuration and credentials.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The connector result.</returns>
     public Task<ConnectorResult> ExecuteAsync(ConnectorContext ctx, CancellationToken ct)
         => inner.ExecuteAsync(ctx, ct);
 
+    /// <summary>
+    /// Tests the generic REST connection by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <param name="ctx">Connector execution context containing configuration and credentials.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns><see langword="true"/> if the connection is reachable; otherwise <see langword="false"/>.</returns>
     public Task<bool> TestConnectionAsync(ConnectorContext ctx, CancellationToken ct)
         => inner.TestConnectionAsync(ctx, ct);
 
+    /// <summary>
+    /// Returns the JSON configuration schema by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <returns>A <see cref="System.Text.Json.JsonElement"/> describing the accepted configuration fields.</returns>
     public System.Text.Json.JsonElement GetConfigSchema()
         => inner.GetConfigSchema();
 }

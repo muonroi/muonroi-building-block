@@ -15,6 +15,9 @@ namespace Muonroi.Integration.Connectors.Presets;
 [SuppressMessage("Muonroi.CodeStandards", "MSTD0002", Justification = "JSON deserialization results are null-checked by prior validation; null-forgiving avoids redundant re-checks on structurally guaranteed values.")]
 public sealed class ConfluenceServerPresetConnector(HttpConnector inner, ILogger<ConfluenceServerPresetConnector>? logger = null) : IServiceTaskConnector
 {
+    /// <summary>
+    /// Connector metadata describing Confluence Server / Data Center capabilities and configuration schema.
+    /// </summary>
     public ConnectorMetadata Metadata => new()
     {
         Type = "confluence-server",
@@ -65,12 +68,28 @@ public sealed class ConfluenceServerPresetConnector(HttpConnector inner, ILogger
         ]
     };
 
+    /// <summary>
+    /// Executes the Confluence Server connector by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <param name="ctx">Connector execution context containing configuration and credentials.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The connector result.</returns>
     public Task<ConnectorResult> ExecuteAsync(ConnectorContext ctx, CancellationToken ct)
         => inner.ExecuteAsync(ctx, ct);
 
+    /// <summary>
+    /// Tests the Confluence Server connection by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <param name="ctx">Connector execution context containing configuration and credentials.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns><see langword="true"/> if the connection is reachable and authenticated; otherwise <see langword="false"/>.</returns>
     public Task<bool> TestConnectionAsync(ConnectorContext ctx, CancellationToken ct)
         => inner.TestConnectionAsync(ctx, ct);
 
+    /// <summary>
+    /// Returns the JSON configuration schema by delegating to the underlying <see cref="HttpConnector"/>.
+    /// </summary>
+    /// <returns>A <see cref="System.Text.Json.JsonElement"/> describing the accepted configuration fields.</returns>
     public System.Text.Json.JsonElement GetConfigSchema()
         => inner.GetConfigSchema();
 
@@ -234,13 +253,18 @@ public sealed class ConfluenceServerPresetConnector(HttpConnector inner, ILogger
     }
 
     /// <summary>
-    /// Returns true when <paramref name="html"/> contains at least one non-whitespace character
-    /// after stripping all HTML/XML tags. Used to detect macro pages whose export_view value
-    /// consists only of tag markup with no prose (e.g. <c>&lt;ac:structured-macro .../&gt;</c>),
-    /// so the ingest path can fall back to body.storage rather than ingesting 0 visible chars.
+    /// Compiled regex that matches any HTML or XML tag (<c>&lt;tag ...&gt;</c>) for stripping purposes.
     /// </summary>
     private static readonly Regex HtmlTagPattern = new("<[^>]+>", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="html"/> contains at least one non-whitespace
+    /// character after stripping all HTML/XML tags. Used to detect macro pages whose export_view value
+    /// consists only of tag markup with no prose (e.g. <c>&lt;ac:structured-macro .../&gt;</c>),
+    /// so the ingest path can fall back to body.storage rather than ingesting 0 visible chars.
+    /// </summary>
+    /// <param name="html">The raw HTML/XHTML string to inspect, or <see langword="null"/>.</param>
+    /// <returns><see langword="true"/> if visible text is present after stripping tags; otherwise <see langword="false"/>.</returns>
     private static bool HasVisibleText(string? html)
     {
         if (html is null) return false;
