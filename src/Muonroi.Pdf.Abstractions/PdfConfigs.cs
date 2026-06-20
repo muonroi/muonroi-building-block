@@ -78,10 +78,19 @@ public sealed class PdfPolicySettings
 /// </summary>
 public sealed class PdfConfigs
 {
+    /// <summary>Configuration section name used to bind this class from <c>IConfiguration</c>.</summary>
     public const string SectionName = "PdfConfigs";
 
+    /// <summary>
+    /// Resource limits applied to input validation and rendering. Bindable from the
+    /// <c>"PdfConfigs:Limits"</c> section. Defaults to <see cref="PdfLimits.Defaults"/>.
+    /// </summary>
     public PdfLimits Limits { get; set; } = new();
 
+    /// <summary>
+    /// When <see langword="true"/>, the policy gate requires a valid policy signature header
+    /// before rendering proceeds. Set to <see langword="false"/> (default) to skip signature enforcement.
+    /// </summary>
     public bool RequirePolicySignature { get; set; } = false;
 
     /// <summary>
@@ -108,12 +117,25 @@ public sealed class PdfConfigs
         /// <summary>Absolute default/backstop values enforced by engine internals.</summary>
         public static readonly PdfLimits Defaults = new();
 
+        /// <summary>Maximum allowed size of the raw HTML input in bytes. Default: 8 MiB.</summary>
         public long MaxHtmlBytes { get; set; } = 8_388_608;
+
+        /// <summary>Maximum nesting depth of the DOM tree. Prevents stack overflows during recursive traversal. Default: 256.</summary>
         public int MaxDomDepth { get; set; } = 256;
+
+        /// <summary>Maximum total number of DOM elements in the parsed document. Default: 100 000.</summary>
         public int MaxElementCount { get; set; } = 100_000;
+
+        /// <summary>Maximum total pixel count (width × height) for any single decoded image. Default: 25 000 000.</summary>
         public long MaxImagePixels { get; set; } = 25_000_000;
+
+        /// <summary>Maximum number of pages the renderer may produce in a single run. Default: 1 000.</summary>
         public int MaxPages { get; set; } = 1_000;
+
+        /// <summary>Maximum wall-clock duration in milliseconds allowed for the full render pipeline. Default: 15 000 ms.</summary>
         public long MaxRenderDurationMs { get; set; } = 15_000;
+
+        /// <summary>Maximum number of font files that may be loaded during a single render. Default: 32.</summary>
         public int MaxFontFiles { get; set; } = 32;
     }
 }
