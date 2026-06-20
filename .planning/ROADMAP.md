@@ -26,7 +26,8 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 10: TCIS Cutover Sweep + v1.0 GA** — Full DinkToPdf/libwkhtmltox removal from TCIS (10.1-10.4) + v1.0.0 version stamp (10.6); publish (10.7-10.9) deferred to ops — CLOSED 2026-05-29; see `.planning/PHASE-10-CLOSEOUT.md`
 - [x] **Phase 12: Owned CSS Cascade (B1)** — Replace AngleSharp.Css `GetComputedStyle` (beta, throws on em/rem/% headless) with an owned cascade; demote AngleSharp.Css to a parser. Retires the G14–G29 per-property fallback class. Design: `.planning/DESIGN-owned-cascade-B1.md`; spike: `.planning/SPIKE-cascade-render-device.md` (completed 2026-06-19)
 - [x] **Phase 13: Full-HTML Running Header/Footer** — Upgrade `options.Header/Footer` from text-only to full-HTML 3-column running content (images, `HeightMm`, `ShowLine`); page numbering via `counter(page)/counter(pages)`. Plan: `.planning/PHASE-13-PLAN.md` (completed 2026-06-20)
-- [ ] **Phase 14: CSS Print Fidelity Gaps** — Close 3 print-oriented CSS gaps vs DinkToPdf: `@page` margin-box parsing (pure-CSS running header/footer), `linear-gradient` backgrounds (PDF axial shading), and `transform:rotate` watermark. JS/flex/grid/radial stay out of scope. Plan: `.planning/PHASE-14-PLAN.md`
+- [x] **Phase 14: CSS Print Fidelity Gaps** — Close 3 print-oriented CSS gaps vs DinkToPdf: `@page` margin-box parsing (pure-CSS running header/footer), `linear-gradient` backgrounds (PDF axial shading), and `transform:rotate` watermark. JS/flex/grid/radial stay out of scope. Plan: `.planning/PHASE-14-PLAN.md` (completed 2026-06-20)
+- [ ] **Phase 15: Radial Gradients + Affine Transforms** — Extend Phase 14: `radial-gradient` backgrounds (PDF ShadingType 3, reuse axial-shading infra) + full 2D affine `transform` (translate/scale/matrix + multi-function chains, reuse CTM machinery). conic-gradient/JS/flex/grid stay out of scope; flexbox deferred to Phase 16.
 
 ## Phase Details
 
@@ -355,6 +356,20 @@ Plans:
 - [x] 12-02-PLAN.md — CascadeResolver + OwnedComputedStyle: match/sort/inline-overlay/shorthand/UA-defaults/inheritance/em-rem-to-px (incl. G25/G27/G28/G29)
 - [x] 12-03-PLAN.md — OwnedStyledNode + wire AngleSharpStyledDocument; remove GetComputedStyle catch path
 - [x] 12-04-PLAN.md — Full golden suite + %-table re-baseline (visual checkpoint) + determinism canary
+
+### Phase 15: Radial Gradients + Affine Transforms
+**Goal**: Extend the Phase 14 writer-level CSS features — render `radial-gradient(...)` backgrounds via PDF radial shading and generalize `transform` from single `rotate()` to the full 2D affine set (translate/scale/matrix + multi-function chains) — reusing the axial-shading and CTM infrastructure built in Phase 14. Additive; no golden re-baseline expected.
+**Depends on**: Phase 14 (axial shading ShadingType 2 + CTM helpers RotMatrix/AppendCm + RotationGroup; shipped develop commit 3dfb7842)
+**Scope**:
+  - `radial-gradient`: parse + emit PDF ShadingType 3 (radial); narrow LegacyPrintPolicy to also allow radial-gradient. conic-gradient + repeating-* stay rejected.
+  - `transform` affine: translate/translateX/translateY, scale/scaleX/scaleY, matrix(), and multi-function chains composed into a single CTM; widen the LegacyPrintPolicy transform gate (currently single-rotate only).
+  - Open questions for discuss: skew() in/out; transform-origin support (Phase 14 pivots about box-center).
+**Out of scope**: conic-gradient, JavaScript, flexbox (deferred to Phase 16), CSS grid.
+**Success Criteria** (what must be TRUE):
+  1. `background: radial-gradient(...)` renders as a PDF radial shading; `conic-gradient`/`repeating-*` still throw a policy violation.
+  2. `transform: translate()/scale()/matrix()` and multi-function chains render correctly composed; unsupported transform functions still throw.
+  3. Full Muonroi.Pdf suite green; existing 17 TCIS templates byte-unchanged; PerfGate within ceilings (cold<=1500ms/warm<=400ms).
+**Plans**: TBD
 
 ## Progress
 
