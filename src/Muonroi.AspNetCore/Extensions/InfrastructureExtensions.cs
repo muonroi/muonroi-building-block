@@ -152,7 +152,7 @@ public static class InfrastructureExtensions
     /// <summary>
     /// Registers <see cref="IAuthService{TPermission,TDbContext}"/> and
     /// <see cref="IPermissionService{TPermission}"/> for the given DbContext and Permission type.
-    /// Call this after <see cref="AddDbContextConfigure{TDbContext,TPermission}"/> and
+    /// Call this after <see cref="Muonroi.Data.EntityFrameworkCore.Entity.MDbContextConfiguration.AddDbContextConfigure{TDbContext,TPermission}(IServiceCollection, Microsoft.Extensions.Configuration.IConfiguration, bool, string)"/> and
     /// <see cref="AddValidateBearerToken"/> so that all auth dependencies are wired up
     /// automatically without manual registration in the consumer app.
     /// </summary>

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Muonroi.BackgroundJobs.Hangfire;
@@ -13,6 +14,7 @@ internal static class HangfireProviderRegistration
     /// Registers the Hangfire provider when the assembly is loaded.
     /// </summary>
     [ModuleInitializer]
+    [SuppressMessage("Usage", "CA2255", Justification = "Intentional one-time module initializer to register provider on assembly load.")]
     internal static void Register()
     {
         BackgroundJobHandler.RegisterProvider(

@@ -25,7 +25,7 @@ namespace Muonroi.Data.Dapper.Rls;
 /// </para>
 /// <para>
 /// When <c>MultiTenantOptions.EnableRowLevelSecurity</c> is <see langword="false"/> (the default),
-/// this method returns <paramref name="services"/> immediately — no setter is registered,
+/// this method returns the <c>services</c> collection immediately — no setter is registered,
 /// no <c>services.Replace</c> is called, and the vanilla <c>IDapper</c> descriptor from
 /// <c>AddDapperForXxx</c> is left byte-for-byte untouched (CFG-01 zero-impact).
 /// </para>
