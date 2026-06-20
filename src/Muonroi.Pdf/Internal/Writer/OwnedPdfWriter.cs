@@ -162,19 +162,31 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                     pageImages.Add((rn, oid));
             }
 
-            // Phase 14: linear-gradient backgrounds → one inline axial shading per gradient element.
-            // /Coords are absolute (page user space) so the content stream just clips + paints.
+            // Phase 14/15: gradient backgrounds → one inline shading per gradient element.
+            // Linear: ShadingType 2 (axial). Radial: ShadingType 3 (radial).
+            // /Coords are absolute (page user space) for circle; unit-circle + ellipseCm for ellipse.
             var gradientResNames = new Dictionary<PositionedElement, string>();
+            var radialEllipseCms = new Dictionary<PositionedElement, string>();
             var pageShadings = new List<(string ResName, string Dict)>();
             {
                 int gi = 0;
                 foreach (PositionedElement el in page.Elements)
                 {
-                    if (el.Source?.BackgroundGradient is not { Stops.Count: >= 2 } grad)
-                        continue;
+                    string? dict = null;
+                    if (el.Source?.BackgroundGradient is { Stops.Count: >= 2 } linGrad)
+                    {
+                        dict = BuildAxialShadingDict(linGrad, el.Position, pageHeightPt);
+                    }
+                    else if (el.Source?.BackgroundRadialGradient is { Stops.Count: >= 2 } radGrad)
+                    {
+                        dict = BuildRadialShadingDict(radGrad, el.Position, pageHeightPt, out string? ellipseCm);
+                        if (ellipseCm is not null)
+                            radialEllipseCms[el] = ellipseCm;
+                    }
+                    if (dict is null) continue;
                     string resName = $"Sh{gi++}";
                     gradientResNames[el] = resName;
-                    pageShadings.Add((resName, BuildAxialShadingDict(grad, el.Position, pageHeightPt)));
+                    pageShadings.Add((resName, dict));
                 }
             }
 
@@ -183,7 +195,7 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 .Select(_ => store.ReserveId())
                 .ToArray();
 
-            byte[] rawContent = BuildContentStream(page, pageHeightPt, fontResources, imageResources, cpToNewGidMap, gradientResNames);
+            byte[] rawContent = BuildContentStream(page, pageHeightPt, fontResources, imageResources, cpToNewGidMap, gradientResNames, radialEllipseCms);
             byte[] compressedContent = CompressFlateDecode(rawContent);
 
             // Content stream
@@ -819,6 +831,74 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         static string Num(double v) => v.ToString("F4", CultureInfo.InvariantCulture);
     }
 
+    // Phase 15: build an inline PDF radial-shading dictionary (ShadingType 3) for a radial-gradient
+    // background. For a circle: /Coords = [cx cy 0 cx cy r] (two concentric circles, r0=0,
+    // r1=farthest-corner). For an ellipse: /Coords = [0 0 0 0 0 1] (unit circle at origin), and the
+    // caller emits an anisotropic CTM [rx 0 0 ry cx cy cm] in the content stream BEFORE calling sh.
+    // Out param ellipseCm is null for circle, non-null for ellipse.
+    private static string BuildRadialShadingDict(
+        RadialGradient g, Rect rect, float pageHeightPt, out string? ellipseCm)
+    {
+        float w = rect.Width;
+        float h = rect.Height;
+        float bgX = rect.X;
+        float bgY = pageHeightPt - rect.Y - rect.Height;  // PDF y-up: bottom-left of box
+
+        // Center in PDF coords (y-up). CSS PositionY=0 is top → PDF cy = bgY + h.
+        double cx = bgX + g.PositionX * w;
+        double cy = bgY + (1.0 - g.PositionY) * h;  // y-flip: CSS top=0 → PDF bottom
+
+        IReadOnlyList<GradientStop> stops = g.Stops;
+        int n = stops.Count;
+        var pos = new float[n];
+        for (int i = 0; i < n; i++)
+            pos[i] = stops[i].Position ?? (n == 1 ? 0f : (float)i / (n - 1));
+        pos[0] = 0f;
+        pos[n - 1] = 1f;
+        for (int i = 1; i < n; i++)
+            if (pos[i] < pos[i - 1]) pos[i] = pos[i - 1];
+
+        var colors = new (float R, float G, float B)[n];
+        for (int i = 0; i < n; i++)
+            colors[i] = ParseColor(stops[i].Color);
+
+        var sb = new StringBuilder();
+        if (string.Equals(g.Shape, "circle", StringComparison.OrdinalIgnoreCase))
+        {
+            // Farthest-corner radius: distance from center to farthest box corner (P4 — NOT half-dimensions).
+            double r = Math.Max(
+                Math.Max(Dist(cx, cy, bgX, bgY),         Dist(cx, cy, bgX + w, bgY)),
+                Math.Max(Dist(cx, cy, bgX, bgY + h),     Dist(cx, cy, bgX + w, bgY + h)));
+
+            sb.Append("<< /ShadingType 3 /ColorSpace /DeviceRGB /Coords [");
+            sb.Append(Num(cx)); sb.Append(' '); sb.Append(Num(cy)); sb.Append(" 0 ");
+            sb.Append(Num(cx)); sb.Append(' '); sb.Append(Num(cy)); sb.Append(' '); sb.Append(Num(r));
+            sb.Append("] /Domain [0 1] /Function ");
+            sb.Append(BuildStitchingFunction(colors, pos));
+            sb.Append(" /Extend [true true] >>");
+            ellipseCm = null;
+        }
+        else  // ellipse (CSS default)
+        {
+            // Unit-circle shading; the content stream applies an anisotropic CTM before sh.
+            sb.Append("<< /ShadingType 3 /ColorSpace /DeviceRGB /Coords [0 0 0 0 0 1]");
+            sb.Append(" /Domain [0 1] /Function ");
+            sb.Append(BuildStitchingFunction(colors, pos));
+            sb.Append(" /Extend [true true] >>");
+
+            // Farthest-corner ellipse radii (A2): max distance along each axis.
+            double rx = Math.Max(Math.Abs(cx - bgX), Math.Abs(cx - (bgX + w)));
+            double ry = Math.Max(Math.Abs(cy - bgY), Math.Abs(cy - (bgY + h)));
+            // Anisotropic scale + translate to place and stretch the unit circle onto the ellipse.
+            ellipseCm = $"{Num(rx)} 0 0 {Num(ry)} {Num(cx)} {Num(cy)} cm";
+        }
+        return sb.ToString();
+
+        static double Dist(double x1, double y1, double x2, double y2) =>
+            Math.Sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+        static string Num(double v) => v.ToString("F4", CultureInfo.InvariantCulture);
+    }
+
     private static string BuildStitchingFunction((float R, float G, float B)[] colors, float[] pos)
     {
         int n = colors.Length;
@@ -874,7 +954,8 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         List<(string ResourceName, FontObjectIds Ids, EmbeddedFontInfo Info)> fontResources,
         List<(string ResourceName, int ObjectId, string Src)> imageResources,
         Dictionary<string, Dictionary<int, ushort>> cpToNewGidMap,
-        Dictionary<PositionedElement, string> gradientResNames)
+        Dictionary<PositionedElement, string> gradientResNames,
+        Dictionary<PositionedElement, string> radialEllipseCms)
     {
         // Build family → resourceName map for fast lookup
         var familyToResName = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -954,9 +1035,40 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 currentSize = 0f;
             }
 
+            // background: radial-gradient → PDF radial shading (ShadingType 3) clipped to the box
+            // rect (Phase 15). Clip ordering (Pitfall P3): clip re W n FIRST (in page user space),
+            // then element transform cm (if any), then ellipse anisotropic cm (if ellipse), then sh.
+            if (el.Source?.BackgroundRadialGradient is { Stops.Count: >= 2 }
+                && gradientResNames.TryGetValue(el, out string? radShName))
+            {
+                sb.AppendLine("ET");
+                float rx = el.Position.X;
+                float ry = pageHeightPt - el.Position.Y - el.Position.Height;
+                float rw = el.Position.Width;
+                float rh = el.Position.Height;
+                sb.AppendLine("q");
+                // P3: clip in page user space BEFORE any cm.
+                sb.Append(rx.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(ry.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(rw.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(rh.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" re W n");
+                // Element affine transform cm (if any).
+                if (TransformFor(el) is { } radRot)
+                    AppendCm(sb, radRot);
+                // Ellipse anisotropic cm — maps unit-circle shading to actual ellipse (ellipse only).
+                if (radialEllipseCms.TryGetValue(el, out string? ellipseCm))
+                    sb.AppendLine(ellipseCm);
+                sb.AppendLine($"/{radShName} sh");
+                sb.AppendLine("Q");
+                sb.AppendLine("BT");
+                currentFamily = null;
+                currentSize = 0f;
+            }
+
             // background-color: fill a solid rectangle before any content (skipped when a gradient
             // background is present — the gradient supersedes the solid fill).
             if (el.Source?.BackgroundGradient is null
+                && el.Source?.BackgroundRadialGradient is null
                 && el.Source?.BackgroundColor is { Length: > 0 } bgColorVal)
             {
                 sb.AppendLine("ET");
