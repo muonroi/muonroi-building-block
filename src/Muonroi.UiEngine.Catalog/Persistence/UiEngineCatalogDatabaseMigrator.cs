@@ -71,7 +71,7 @@ internal sealed class UiEngineCatalogDatabaseMigrator(
             IEnumerable<(string Schema, string Table)> mappedTables = dbContext.Model.GetEntityTypes()
                 .Select(entityType => (Schema: entityType.GetSchema() ?? defaultSchema, Table: entityType.GetTableName()))
                 .Where(item => !string.IsNullOrWhiteSpace(item.Table))
-                .Select(item => (item.Schema, item.Table!))
+                .Select(item => (item.Schema, Table: item.Table ?? string.Empty))
                 .Distinct();
 
             foreach ((string schema, string table) in mappedTables)

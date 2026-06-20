@@ -142,8 +142,9 @@ internal static class Program
 
     private static bool TryGetOption(IReadOnlyDictionary<string, string> options, string key, out string value)
     {
-        if (options.TryGetValue(key, out value!) && !string.IsNullOrWhiteSpace(value))
+        if (options.TryGetValue(key, out string? found) && !string.IsNullOrWhiteSpace(found))
         {
+            value = found;
             return true;
         }
 
