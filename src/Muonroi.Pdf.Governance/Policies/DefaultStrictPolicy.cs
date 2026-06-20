@@ -3,11 +3,32 @@ using Muonroi.Pdf.Governance.Cascade;
 
 namespace Muonroi.Pdf.Governance.Policies;
 
+/// <summary>
+/// The default strict CSS policy for PDF rendering. Blocks all CSS features that are
+/// unsafe or unsupported in the print renderer: external <c>@import</c>, <c>@keyframes</c>,
+/// CSS transitions, <c>display:flex/grid</c>, <c>float</c>, <c>position:absolute/fixed/sticky</c>,
+/// <c>border-collapse:collapse</c>, <c>&lt;script&gt;</c> elements, and non-http(s)/mailto
+/// link schemes. Enforces <see cref="PdfPolicyLimits.Strict"/> structural limits.
+/// </summary>
 public sealed class DefaultStrictPolicy : IPdfCssPolicy
 {
+    /// <summary>Gets the stable identifier for this policy version.</summary>
     public string Id => "default-strict-v1";
+
+    /// <summary>Gets the structural limits (element count, DOM depth, HTML bytes) enforced by this policy.</summary>
     public PdfPolicyLimits Limits => PdfPolicyLimits.Strict;
 
+    /// <summary>
+    /// Validates <paramref name="context"/> against the strict CSS policy rules.
+    /// Checks structural limits and, when the context is an <see cref="AngleSharpStyledDocument"/>,
+    /// walks the stylesheet AST and computed element styles for forbidden CSS features.
+    /// </summary>
+    /// <param name="context">The styled document context to validate.</param>
+    /// <param name="ct">Cancellation token (unused; reserved for interface conformance).</param>
+    /// <returns>
+    /// <see cref="PolicyValidationResult.Ok"/> when no violations are found; otherwise a
+    /// failed <see cref="PolicyValidationResult"/> listing all detected violations.
+    /// </returns>
     public ValueTask<PolicyValidationResult> ValidateAsync(
         IPdfDocumentContext context,
         CancellationToken ct = default)

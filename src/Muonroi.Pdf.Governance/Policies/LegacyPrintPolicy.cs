@@ -71,9 +71,27 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
         _softDegrade = softDegrade;
     }
 
+    /// <summary>Gets the stable identifier for this policy version.</summary>
     public string Id => "legacy-print-v1";
+
+    /// <summary>Gets the structural limits (element count, DOM depth, HTML bytes) enforced by this policy.</summary>
     public PdfPolicyLimits Limits => PdfPolicyLimits.Strict;
 
+    /// <summary>
+    /// Validates <paramref name="context"/> against the legacy-print CSS policy rules.
+    /// Checks structural limits and, when the context is an <see cref="AngleSharpStyledDocument"/>,
+    /// walks the stylesheet AST and computed element styles for forbidden CSS features.
+    /// In soft-degrade mode, <c>display:flex/grid</c> violations are emitted as
+    /// <see cref="PolicySeverity.Warning"/> and rendering proceeds; all other forbidden
+    /// features remain hard errors.
+    /// </summary>
+    /// <param name="context">The styled document context to validate.</param>
+    /// <param name="ct">Cancellation token (unused; reserved for interface conformance).</param>
+    /// <returns>
+    /// <see cref="PolicyValidationResult.Ok"/> when no violations are found; a passing
+    /// <see cref="PolicyValidationResult"/> (accepted = <c>true</c>) when only warnings are
+    /// present in soft-degrade mode; otherwise a failed result listing all violations.
+    /// </returns>
     public ValueTask<PolicyValidationResult> ValidateAsync(
         IPdfDocumentContext context,
         CancellationToken ct = default)
