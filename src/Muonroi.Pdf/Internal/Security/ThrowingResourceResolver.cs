@@ -1,7 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using Muonroi.Pdf.Abstractions;
 using Muonroi.Pdf.Abstractions.Exceptions;
 
 namespace Muonroi.Pdf.Internal.Security;
+
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfSecurityException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
 
 /// <summary>
 /// Safe-by-default <see cref="IResourceResolver"/>. Blocks disallowed URI schemes

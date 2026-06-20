@@ -1,9 +1,13 @@
 using System;
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
 
 namespace Muonroi.Pdf.Enterprise.Imaging;
+
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PngDecoder is an internal image-decoding utility that throws ArgumentException/InvalidDataException as structural validation errors; these are appropriate for a low-level codec.")]
 
 /// <summary>
 /// Pure-managed PNG decoder that produces interleaved 8-bit RGB pixel buffers suitable for

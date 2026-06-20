@@ -1,6 +1,10 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Muonroi.Pdf.Enterprise.Quality;
+
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "SsimScorer is an internal quality-scoring utility; ArgumentException here validates pixel-buffer dimensions which are structural pre-conditions, not business-logic errors.")]
 
 /// <summary>
 /// Pure-managed structural similarity (SSIM) scorer for comparing two pre-decoded

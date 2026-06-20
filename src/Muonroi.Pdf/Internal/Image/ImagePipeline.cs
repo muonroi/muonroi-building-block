@@ -1,7 +1,11 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Muonroi.Pdf.Abstractions.Exceptions;
 
 namespace Muonroi.Pdf.Internal.Image;
+
+[SuppressMessage("Muonroi.CodeStandards", "MSTD0001",
+    Justification = "PdfInputLimitException is the public PDF-contract exception type; consumers catch it directly. Cannot change hierarchy.")]
 
 internal sealed class ImagePipeline
 {
