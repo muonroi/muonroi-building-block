@@ -4,6 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <AssemblyName>Muonroi.Tenancy.Extended.Tests</AssemblyName>
   </PropertyGroup>
 <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.Tenancy\Muonroi.Tenancy.csproj" />

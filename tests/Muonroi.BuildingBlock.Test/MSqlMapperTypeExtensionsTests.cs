@@ -1,3 +1,5 @@
+using Google.Protobuf.WellKnownTypes;
+
 namespace Muonroi.BuildingBlock.Test;
 
 public class MSqlMapperTypeExtensionsTests

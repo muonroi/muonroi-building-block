@@ -12,8 +12,8 @@ public class JwtProfileTests
     public JwtProfileTests()
     {
         _keyStore = new InMemoryRsaKeyStore();
-        _revocation = new TokenRevocationStore();
-        _service = new JwtService(_keyStore, _revocation, "issuer", "audience");
+        _revocation = new TokenRevocationStore(new MDateTimeService());
+        _service = new JwtService(_keyStore, _revocation, "issuer", "audience", new MDateTimeService());
     }
 
     [Fact]
@@ -28,9 +28,9 @@ public class JwtProfileTests
     public void AudienceAndIssuerAreValidated()
     {
         string token = _service.GenerateToken("user1", TimeSpan.FromMinutes(5));
-        JwtService badAudienceService = new(_keyStore, _revocation, "issuer", "other");
+        JwtService badAudienceService = new(_keyStore, _revocation, "issuer", "other", new MDateTimeService());
         Assert.Throws<SecurityTokenInvalidAudienceException>(() => badAudienceService.ValidateToken(token));
-        JwtService badIssuerService = new(_keyStore, _revocation, "other", "audience");
+        JwtService badIssuerService = new(_keyStore, _revocation, "other", "audience", new MDateTimeService());
         Assert.Throws<SecurityTokenInvalidIssuerException>(() => badIssuerService.ValidateToken(token));
     }
 

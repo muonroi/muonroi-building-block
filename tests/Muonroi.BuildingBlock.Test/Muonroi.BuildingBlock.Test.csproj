@@ -5,15 +5,40 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS0618;MSTD0001;MSTD0002</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-<PackageReference Include="Moq" />
-<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Moq" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="RulesEngine" />
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="MassTransit.Abstractions" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Serilog.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Grpc.AspNetCore" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" />
+    <PackageReference Include="Polly" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Consul" />
+    <PackageReference Include="MongoDB.Driver" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="AsyncEnumerator" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.BuildingBlock.All\Muonroi.BuildingBlock.All.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Rules\Muonroi.Rules.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.RuleEngine.Runtime\Muonroi.RuleEngine.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Http\Muonroi.Http.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Kubernetes\Muonroi.Kubernetes.csproj" />
   </ItemGroup>
 
 </Project>

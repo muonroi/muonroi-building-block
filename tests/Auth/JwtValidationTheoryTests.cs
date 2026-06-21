@@ -16,8 +16,8 @@ public class JwtValidationTheoryTests
     public JwtValidationTheoryTests()
     {
         _keyStore = new InMemoryRsaKeyStore();
-        _revocation = new TokenRevocationStore();
-        _service = new JwtService(_keyStore, _revocation, "issuer", "audience");
+        _revocation = new TokenRevocationStore(new MDateTimeService());
+        _service = new JwtService(_keyStore, _revocation, "issuer", "audience", new MDateTimeService());
     }
 
     [Theory]
@@ -86,7 +86,7 @@ public class JwtValidationTheoryTests
     public void ValidateToken_WrongIssuer_ThrowsSecurityTokenInvalidIssuerException(string wrongIssuer, string correctAudience)
     {
         string token = _service.GenerateToken("user1", TimeSpan.FromMinutes(5));
-        JwtService wrongIssuerService = new(_keyStore, _revocation, wrongIssuer, correctAudience);
+        JwtService wrongIssuerService = new(_keyStore, _revocation, wrongIssuer, correctAudience, new MDateTimeService());
         Assert.Throws<SecurityTokenInvalidIssuerException>(() => wrongIssuerService.ValidateToken(token));
     }
 
@@ -97,7 +97,7 @@ public class JwtValidationTheoryTests
     public void ValidateToken_WrongAudience_ThrowsSecurityTokenInvalidAudienceException(string correctIssuer, string wrongAudience)
     {
         string token = _service.GenerateToken("user1", TimeSpan.FromMinutes(5));
-        JwtService wrongAudienceService = new(_keyStore, _revocation, correctIssuer, wrongAudience);
+        JwtService wrongAudienceService = new(_keyStore, _revocation, correctIssuer, wrongAudience, new MDateTimeService());
         Assert.Throws<SecurityTokenInvalidAudienceException>(() => wrongAudienceService.ValidateToken(token));
     }
 }

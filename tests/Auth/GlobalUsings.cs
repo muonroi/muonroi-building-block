@@ -1,3 +1,10 @@
+global using Microsoft.IdentityModel.Tokens;
+global using System.IdentityModel.Tokens.Jwt;
+global using System.Net.Http;
+global using System.Security.Claims;
+global using System.Security.Cryptography;
+global using System.Text;
+global using System.Text.Json;
 global using Muonroi.Auth.BearerToken;
 global using Muonroi.Auth.Oidc;
 global using Muonroi.Auth.Jwt;
@@ -5,6 +12,7 @@ global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Core.Abstractions.Models;
 global using Muonroi.Core.Abstractions.Models.Common;
 global using Muonroi.Core.Abstractions.Response;
+global using Muonroi.Core.Helpers;
 global using Xunit;
 global using System;
 global using System.Collections.Generic;

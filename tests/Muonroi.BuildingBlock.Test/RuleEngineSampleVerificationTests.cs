@@ -1,3 +1,4 @@
+using Muonroi.Rules.Rules;
 namespace Muonroi.BuildingBlock.Test;
 
 [Collection("NonParallel")]

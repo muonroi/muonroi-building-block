@@ -16,9 +16,9 @@ public class MGenericControllerPermissionTests
         public Task<object?> Send(object request, CancellationToken cancellationToken = default)
             => Task.FromResult<object?>(null);
         public IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request,
-            CancellationToken cancellationToken = default) => AsyncEnumerable.Empty<TResponse>();
+            CancellationToken cancellationToken = default) => AsyncEnumerableHelper.Empty<TResponse>();
         public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default)
-            => AsyncEnumerable.Empty<object?>();
+            => AsyncEnumerableHelper.Empty<object?>();
     }
 
     private sealed class AllowLicenseGuard : ILicenseGuard
@@ -57,11 +57,13 @@ public class MGenericControllerPermissionTests
         GenericPermissionDbContext db,
         ILicenseGuard guard,
         MTokenInfo tokenInfo,
-        IConfiguration configuration) : MGenericController<ProductEntity, GenericPermissionDbContext>(
+        IConfiguration configuration,
+        IMDateTimeService dateTimeService) : MGenericController<ProductEntity, GenericPermissionDbContext>(
             db,
             guard,
             tokenInfo,
-            configuration)
+            configuration,
+            dateTimeService)
     {
     }
 
@@ -118,7 +120,7 @@ public class MGenericControllerPermissionTests
         await db.SaveChangesAsync();
 
         ProductController controller = new(db, new AllowLicenseGuard(), new MTokenInfo { MultiTenantEnabled = false },
-            new ConfigurationBuilder().AddInMemoryCollection().Build());
+            new ConfigurationBuilder().AddInMemoryCollection().Build(), new MDateTimeService());
 
         DefaultHttpContext httpContext = new()
         {
@@ -163,7 +165,7 @@ public class MGenericControllerPermissionTests
         await db.SaveChangesAsync();
 
         ProductController controller = new(db, new AllowLicenseGuard(), new MTokenInfo { MultiTenantEnabled = false },
-            new ConfigurationBuilder().AddInMemoryCollection().Build());
+            new ConfigurationBuilder().AddInMemoryCollection().Build(), new MDateTimeService());
 
         DefaultHttpContext httpContext = new()
         {

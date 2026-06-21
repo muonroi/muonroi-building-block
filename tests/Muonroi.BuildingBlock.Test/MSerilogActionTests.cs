@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace Muonroi.BuildingBlock.Test;
 
 public class MSerilogActionTests
