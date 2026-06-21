@@ -35,7 +35,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 
 - [x] **Phase 17: Monetization Rail — Enforced Quota + Usage→Billing + Subscription** — Close the monetization gap both control-plane and license-server explicitly deferred. Turn record-only metering + placeholder pricing into an enforced, billable ecosystem rail: hard quota enforcement at the control-plane API boundary (NEVER the OSS render path), usage aggregation → priced line items + invoice-preview, an `IBillingProvider` seam (record-only default; payment-processor adapter behind the seam, deferred), and subscription/renewal lifecycle in license-server. Cross-repo (building-block + control-plane + license-server); ZERO change to OSS engine (SC5). (completed 2026-06-21; verified 8/8 — 17-VERIFICATION.md)
 
-- [ ] **Phase 18: Flexbox Layout Engine (OSS `Muonroi.Pdf`)** — Close the single largest remaining render gap: implement a real CSS Flexbox layout algorithm in the OSS engine (`FlexContainerBox` + `FlexLayoutEngine`: flex-direction, wrap, justify-content, align-items/content/self, flex-grow/shrink/basis, gap, order), replacing today's hard-block / degrade-to-block. Gated behind a new opt-in `PdfPolicySettings.AllowModernLayout` (default false) so the strict-by-default charter is preserved with ZERO breaking change — existing 82 golden baselines stay byte-identical; only new flex goldens are added. CSS Grid deferred to Phase 19.
+- [x] **Phase 18: Flexbox Layout Engine (OSS `Muonroi.Pdf`)** — Close the single largest remaining render gap: implement a real CSS Flexbox layout algorithm in the OSS engine (`FlexContainerBox` + `FlexLayoutEngine`: flex-direction, wrap, justify-content, align-items/content/self, flex-grow/shrink/basis, gap, order), replacing today's hard-block / degrade-to-block. Gated behind a new opt-in `PdfPolicySettings.AllowModernLayout` (default false) so the strict-by-default charter is preserved with ZERO breaking change — existing golden baselines stayed byte-identical (0 modified, 9 flex baselines added); only new flex goldens were added. CSS Grid deferred to Phase 19. (completed 2026-06-21; verified 5/5 SC, 8/8 FLEX — 18-VERIFICATION.md)
 
 ## Phase Details
 
@@ -546,13 +546,13 @@ Plans:
   5. `Muonroi.Pdf.Tests` + `Muonroi.Pdf.Governance.Tests` suites green (per-project runs, per test-flakiness memory); build validated against .NET 8/9 not only local .NET 10.
 
 **Requirements**: FLEX-01, FLEX-02, FLEX-03, FLEX-04, FLEX-05, FLEX-06, FLEX-07, FLEX-08
-**Plans**: 4 plans (4 waves)
+**Plans**: 4 plans (4 sequential waves) — COMPLETE 2026-06-21; verified 5/5 SC, 8/8 FLEX (18-VERIFICATION.md). Pre-push gate: Pdf.Tests 618/0, Governance.Tests 11/0; 0 baselines modified, 9 flex baselines added.
 
 Plans:
 - [x] 18-01-PLAN.md — AllowModernLayout flag + LegacyPrintPolicy flex gate (grid stays blocked) + policy tests (FLEX-01..04) [wave 1]
 - [x] 18-02-PLAN.md — FlexContainerBox + BoxNode flex-item props + gated BoxTreeBuilder mapping + thread flag MPdfService→LayoutAsync→BoxTreeBuilder (FLEX-05) [wave 2, depends 18-01]
 - [x] 18-03-PLAN.md — FlexLayoutEngine algorithm + DispatchLayout case + LayoutEngine wiring (FLEX-06) [wave 3, depends 18-02]
-- [ ] 18-04-PLAN.md — FlexLayoutTests (operand-value positions) + FlexLayout golden corpus + baselines + 82-baseline byte-identical regression guard + per-project/.NET 8-9 (FLEX-07, FLEX-08) [wave 4, depends 18-03]
+- [x] 18-04-PLAN.md — FlexLayoutTests (operand-value positions) + FlexLayout golden corpus + baselines + byte-identical regression guard (84 default-path cases; "82" was off by one) + per-project/.NET 8-9 (FLEX-07, FLEX-08) [wave 4, depends 18-03]
 
 **UI hint**: no
 

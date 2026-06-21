@@ -263,7 +263,7 @@
 | TCIS-01 – TCIS-02 | Phase 9 | v1.0 | Pending |
 | COMM-01 – COMM-02 | Phase 9 | v1.0 | Pending |
 | MON-01 – MON-08 | Phase 17 | v1.1 | Pending |
-| FLEX-01 – FLEX-08 | Phase 18 | v1.2 | Pending |
+| FLEX-01 – FLEX-08 | Phase 18 | v1.2 | Done (2026-06-21; verified 5/5 SC, 8/8 FLEX) |
 
 ### Phase 18 — Flexbox Layout Engine (FLEX)
 
