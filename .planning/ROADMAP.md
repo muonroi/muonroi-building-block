@@ -549,8 +549,8 @@ Plans:
 **Plans**: 4 plans (4 waves)
 
 Plans:
-- [ ] 18-01-PLAN.md — AllowModernLayout flag + LegacyPrintPolicy flex gate (grid stays blocked) + policy tests (FLEX-01..04) [wave 1]
-- [ ] 18-02-PLAN.md — FlexContainerBox + BoxNode flex-item props + gated BoxTreeBuilder mapping + thread flag MPdfService→LayoutAsync→BoxTreeBuilder (FLEX-05) [wave 2, depends 18-01]
+- [x] 18-01-PLAN.md — AllowModernLayout flag + LegacyPrintPolicy flex gate (grid stays blocked) + policy tests (FLEX-01..04) [wave 1]
+- [x] 18-02-PLAN.md — FlexContainerBox + BoxNode flex-item props + gated BoxTreeBuilder mapping + thread flag MPdfService→LayoutAsync→BoxTreeBuilder (FLEX-05) [wave 2, depends 18-01]
 - [ ] 18-03-PLAN.md — FlexLayoutEngine algorithm + DispatchLayout case + LayoutEngine wiring (FLEX-06) [wave 3, depends 18-02]
 - [ ] 18-04-PLAN.md — FlexLayoutTests (operand-value positions) + FlexLayout golden corpus + baselines + 82-baseline byte-identical regression guard + per-project/.NET 8-9 (FLEX-07, FLEX-08) [wave 4, depends 18-03]
 
