@@ -264,6 +264,18 @@
 | COMM-01 – COMM-02 | Phase 9 | v1.0 | Pending |
 | MON-01 – MON-08 | Phase 17 | v1.1 | Pending |
 | FLEX-01 – FLEX-08 | Phase 18 | v1.2 | Done (2026-06-21; verified 5/5 SC, 8/8 FLEX) |
+| GRID-01 – GRID-08 | Phase 19 | v1.2 | Pending |
+
+### Phase 19 — CSS Grid Layout Engine (GRID)
+
+- **GRID-01**: `LegacyPrintPolicy` gates `display:grid`/`inline-grid` + grid sub-properties on the EXISTING `PdfPolicySettings.AllowModernLayout` flag (mirror the Phase-18 flex gate); no new config key.
+- **GRID-02**: With `AllowModernLayout=true`, grid is accepted (no violation, sub-props not dropped); `DefaultStrictPolicy` remains always-strict. The Phase-18 "grid still blocked with flag on" test is flipped to "grid accepted".
+- **GRID-03**: With `AllowModernLayout=false` (default), grid behaviour is unchanged — strict emits `forbidden.display.grid`; soft-degrade warns + renders as block. `LegacyPrintPolicyTests` strict/default grid expectations unchanged.
+- **GRID-04**: `GridContainerBox : BoxNode` + `BoxTreeBuilder` maps `grid`/`inline-grid`→`GridContainerBox` when the flag is on (else degrade-to-block); grid container + item props resolved (track lists w/ `repeat()`/`minmax()`, `grid-template-areas`, `grid-column`/`grid-row`/`grid-area`, gaps).
+- **GRID-05**: `GridLayoutEngine` resolves track sizes (px/%/fr/auto/minmax/repeat), places explicit + named-area + auto-flow (sparse) items, honors gaps and justify/align items/self/content; recurses children through the existing dispatch. Wired via `BlockLayoutEngine.DispatchLayout` (`case GridContainerBox`) + `LayoutEngine` ctor.
+- **GRID-06**: Unit tests assert `PositionedElement.Position` (X/Y/W/H) by value for representative grid scenarios (fixed tracks, fr distribution, minmax, repeat, gap, explicit line placement, span, auto-placement row/column, named areas, nested grid).
+- **GRID-07**: New `GridLayout` golden corpus (standalone, outside `AllCases`) + `GridLayoutGoldenTests` rendered with `AllowModernLayout=true`; baselines committed.
+- **GRID-08**: Existing baselines (default-path + 9 Phase-18 flex) remain byte-identical (structural suite green, no re-baseline); flex still renders with the flag on; `Muonroi.Pdf.Tests` + `Muonroi.Pdf.Governance.Tests` green (per-project); build validated against .NET 8/9.
 
 ### Phase 18 — Flexbox Layout Engine (FLEX)
 

@@ -37,6 +37,8 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 
 - [x] **Phase 18: Flexbox Layout Engine (OSS `Muonroi.Pdf`)** — Close the single largest remaining render gap: implement a real CSS Flexbox layout algorithm in the OSS engine (`FlexContainerBox` + `FlexLayoutEngine`: flex-direction, wrap, justify-content, align-items/content/self, flex-grow/shrink/basis, gap, order), replacing today's hard-block / degrade-to-block. Gated behind a new opt-in `PdfPolicySettings.AllowModernLayout` (default false) so the strict-by-default charter is preserved with ZERO breaking change — existing golden baselines stayed byte-identical (0 modified, 9 flex baselines added); only new flex goldens were added. CSS Grid deferred to Phase 19. (completed 2026-06-21; verified 5/5 SC, 8/8 FLEX — 18-VERIFICATION.md)
 
+- [ ] **Phase 19: CSS Grid Layout Engine (OSS `Muonroi.Pdf`)** — Close the second half of the flex/grid gap: implement a real CSS Grid layout algorithm in the OSS engine (`GridContainerBox` + `GridLayoutEngine`: track sizing with px/%/fr/auto/minmax()/repeat(), gap, explicit line placement + span, grid-template-areas, auto-placement via grid-auto-flow, box/content alignment), replacing today's hard-block / degrade-to-block. Unlocked by the SAME opt-in `PdfPolicySettings.AllowModernLayout` flag added in Phase 18 (strict-by-default preserved; existing + Phase-18 flex baselines stay byte-identical; only new grid goldens added). Defers subgrid/auto-fill-fit/dense/masonry. Direct sibling of Phase 18 — identical architecture, grid-specific algorithm.
+
 ## Phase Details
 
 ### Phase 1: Abstractions + Contracts
@@ -553,6 +555,36 @@ Plans:
 - [x] 18-02-PLAN.md — FlexContainerBox + BoxNode flex-item props + gated BoxTreeBuilder mapping + thread flag MPdfService→LayoutAsync→BoxTreeBuilder (FLEX-05) [wave 2, depends 18-01]
 - [x] 18-03-PLAN.md — FlexLayoutEngine algorithm + DispatchLayout case + LayoutEngine wiring (FLEX-06) [wave 3, depends 18-02]
 - [x] 18-04-PLAN.md — FlexLayoutTests (operand-value positions) + FlexLayout golden corpus + baselines + byte-identical regression guard (84 default-path cases; "82" was off by one) + per-project/.NET 8-9 (FLEX-07, FLEX-08) [wave 4, depends 18-03]
+
+**UI hint**: no
+
+### Phase 19: CSS Grid Layout Engine (OSS `Muonroi.Pdf`)
+
+**Goal**: Implement a real CSS Grid layout algorithm in the OSS PDF engine, closing the second half of the flex/grid gap (grid is today hard-blocked or degraded to block). Unlock it via the EXISTING `PdfPolicySettings.AllowModernLayout` flag added in Phase 18 — no new flag. Strict-by-default holds; existing + Phase-18 flex baselines stay byte-identical. Direct sibling of Phase 18: identical architecture, grid-specific algorithm.
+
+**Depends on**: Phase 18 (the entire opt-in plumbing — flag, threading, gated box mapping, flag-aware golden harness, standalone-corpus pattern — already exists and is reused verbatim); the mature OSS layout engine (`BoxTreeBuilder`, `DispatchLayout`, `TableLayoutEngine` as the 2-D analog, `FlexLayoutEngine` as the engine scaffold).
+
+**Scope** (single-repo: building-block, all OSS):
+  - **Policy**: gate `LegacyPrintPolicy` grid display + grid sub-props on `AllowModernLayout` (mirror the Phase 18 flex gate at `:253`/`:310`); `DefaultStrictPolicy` unchanged; flip the Phase-18 "grid still blocked with flag on" test to "grid accepted with flag on".
+  - **Box tree**: new `GridContainerBox : BoxNode`; `BoxTreeBuilder` maps `grid`/`inline-grid`→`GridContainerBox` when the flag is on (else degrade-to-block); resolve grid props (track lists with `repeat()`/`minmax()`, `grid-template-areas`, item placement shorthands, gaps); grid-item props on `BoxNode`.
+  - **Layout**: new `GridLayoutEngine` (mirrors `FlexLayoutEngine`/`TableLayoutEngine`): track sizing (px/%/fr/auto/minmax/repeat), explicit + named-area + auto-flow placement, gaps, justify/align items/self/content; recurses children through the existing dispatch.
+  - **Wire**: add `case GridContainerBox` to `DispatchLayout`; wire `GridEngine` in `LayoutEngine` ctor (flag already threaded).
+
+**Out of scope** (deliberate): `subgrid`, `repeat(auto-fill | auto-fit, ...)`, `grid-auto-flow: dense` (sparse only), masonry, true baseline alignment (approximate as start), percentage tracks/gaps against an indefinite container, splitting a grid container across a page boundary (atomic for pagination, first cut), flipping the flag default.
+
+**Success Criteria** (what must be TRUE):
+
+  1. With `AllowModernLayout=true`, `display:grid` renders via a real Grid algorithm: items placed into cells per track sizes (px/%/fr/auto/minmax/repeat), gaps, explicit line placement + span, grid-template-areas, and grid-auto-flow auto-placement — asserted by unit tests on `PositionedElement.Position` (X/Y/W/H), not non-throwing renders.
+  2. With `AllowModernLayout=false` (DEFAULT), grid behaviour is byte-for-byte unchanged: strict emits `forbidden.display.grid` (aborts); soft-degrade warns + renders as block with grid sub-props dropped. `LegacyPrintPolicyTests` strict/default grid expectations unchanged.
+  3. The existing golden baselines (default-path + the 9 Phase-18 flex baselines) remain **byte-identical** (structural snapshot suite green, no re-baseline); new grid golden baselines added under their own standalone corpus group (outside `AllCases`, like flex).
+  4. Flex (Phase 18) is unaffected — flex still renders with the flag on; the flag now unlocks BOTH flex and grid.
+  5. `Muonroi.Pdf.Tests` + `Muonroi.Pdf.Governance.Tests` green (per-project); build validated against .NET 8/9.
+
+**Requirements**: GRID-01 … GRID-08 (to be enumerated by planner)
+**Plans**: TBD (planner)
+
+Plans:
+- [ ] (to be created by gsd-planner)
 
 **UI hint**: no
 
