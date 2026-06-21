@@ -662,6 +662,15 @@ internal sealed class GridLayoutEngine
         foreach (var pe in measureOut)
             maxRight = MathF.Max(maxRight, pe.Position.X + pe.Position.Width);
         float intrinsicWidth = MathF.Max(0f, maxRight - originX);
+
+        // An item with a definite outer width (e.g. width:100px) contributes that width to a
+        // content-sized (auto) track even when it emits no in-flow children of its own — otherwise an
+        // empty fixed-width box collapses the auto track to 0. Max-content of a definite-width box is
+        // its specified width. (Caught by GridLayoutTests.AutoPlacementColumn_WrapsToNextColumn: an
+        // auto implicit column held a definite-width item but resolved to 0 px.)
+        if (box.Width > 0f)
+            intrinsicWidth = MathF.Max(intrinsicWidth, box.Width);
+
         return (intrinsicWidth, MathF.Max(0f, measuredHeight));
     }
 
