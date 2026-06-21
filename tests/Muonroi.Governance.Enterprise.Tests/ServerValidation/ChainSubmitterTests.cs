@@ -181,7 +181,140 @@ public class ChainSubmitterTests
         Assert.Contains("Invalid server signature", result.Error!);
     }
 
-    private ChainSubmitter CreateSubmitter(LicenseState? licenseState = null)
+    // ─── durability: transient failures persist for retry ─────────────────────
+
+    [Fact]
+    public async Task SubmitAsync_TransientServerError_EnqueuesForRetry()
+    {
+        FakeFailedStore store = ArrangePostHandler(HttpStatusCode.ServiceUnavailable);
+        var entries = new List<FingerprintChainEntry> { new() { TenantId = "TenantA" } };
+
+        ChainSubmissionResponse result = await CreateSubmitter(failedStore: store).SubmitAsync(entries, "TenantA");
+
+        Assert.False(result.Accepted);
+        Assert.Single(store.Items);
+        Assert.Equal(1, store.Items[0].AttemptCount);
+    }
+
+    [Fact]
+    public async Task SubmitAsync_NetworkException_EnqueuesForRetry()
+    {
+        var store = new FakeFailedStore();
+        var handler = new MockHttpMessageHandler
+        {
+            SendAsyncFunc = (_, _) => throw new HttpRequestException("connection refused")
+        };
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://license.muonroi.com") };
+        _httpClientFactory.CreateClient("LicenseServer").Returns(httpClient);
+        _configs.Enterprise.TrustedLicenseServerHosts = ["license.muonroi.com"];
+
+        var entries = new List<FingerprintChainEntry> { new() { TenantId = "TenantA" } };
+        ChainSubmissionResponse result = await CreateSubmitter(failedStore: store).SubmitAsync(entries, "TenantA");
+
+        Assert.False(result.Accepted);
+        Assert.Single(store.Items);
+    }
+
+    [Fact]
+    public async Task SubmitAsync_ClientError_DoesNotEnqueue()
+    {
+        FakeFailedStore store = ArrangePostHandler(HttpStatusCode.BadRequest);
+        var entries = new List<FingerprintChainEntry> { new() { TenantId = "TenantA" } };
+
+        ChainSubmissionResponse result = await CreateSubmitter(failedStore: store).SubmitAsync(entries, "TenantA");
+
+        Assert.False(result.Accepted);
+        Assert.Empty(store.Items); // 4xx is deterministic — must not poison the retry queue
+    }
+
+    [Fact]
+    public async Task RetryPendingAsync_SuccessfulRetry_RemovesFromQueue()
+    {
+        var store = new FakeFailedStore();
+        store.Items.Add(new PendingChainSubmission
+        {
+            Id = "p1",
+            AttemptCount = 1,
+            Request = new ChainSubmissionRequest
+            {
+                TenantId = "TenantA",
+                Entries = [new FingerprintChainEntry { TenantId = "TenantA" }]
+            }
+        });
+        ArrangePostHandler(HttpStatusCode.OK, accepted: true);
+
+        ChainRetryResult result = await CreateSubmitter(failedStore: store).RetryPendingAsync();
+
+        Assert.Equal(1, result.Succeeded);
+        Assert.Empty(store.Items);
+    }
+
+    [Fact]
+    public async Task RetryPendingAsync_DeadLettersAfterMaxAttempts()
+    {
+        var store = new FakeFailedStore();
+        store.Items.Add(new PendingChainSubmission
+        {
+            Id = "p1",
+            AttemptCount = 4, // one more failure reaches maxAttempts=5
+            Request = new ChainSubmissionRequest
+            {
+                TenantId = "TenantA",
+                Entries = [new FingerprintChainEntry { TenantId = "TenantA" }]
+            }
+        });
+        ArrangePostHandler(HttpStatusCode.ServiceUnavailable);
+
+        ChainRetryResult result = await CreateSubmitter(failedStore: store).RetryPendingAsync(maxAttempts: 5);
+
+        Assert.Equal(1, result.Dropped);
+        Assert.Empty(store.Items); // dead-lettered (removed) so the queue cannot grow unbounded
+    }
+
+    private FakeFailedStore ArrangePostHandler(HttpStatusCode status, bool accepted = false)
+    {
+        var store = new FakeFailedStore();
+        var handler = new MockHttpMessageHandler
+        {
+            SendAsyncFunc = (_, _) =>
+            {
+                HttpResponseMessage response = new(status)
+                {
+                    Content = JsonContent.Create(new ChainSubmissionResponse { Accepted = accepted })
+                };
+                return Task.FromResult(response);
+            }
+        };
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://license.muonroi.com") };
+        _httpClientFactory.CreateClient("LicenseServer").Returns(httpClient);
+        _configs.Enterprise.TrustedLicenseServerHosts = ["license.muonroi.com"];
+        return store;
+    }
+
+    private sealed class FakeFailedStore : IFailedChainSubmissionStore
+    {
+        public List<PendingChainSubmission> Items { get; } = [];
+
+        public Task EnqueueAsync(PendingChainSubmission pending, CancellationToken cancellationToken = default)
+        {
+            Items.Add(pending);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<PendingChainSubmission>> ListPendingAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<PendingChainSubmission>>([.. Items]);
+
+        public Task UpdateAsync(PendingChainSubmission pending, CancellationToken cancellationToken = default)
+            => Task.CompletedTask; // Items holds the same reference; attempt count mutated in place
+
+        public Task RemoveAsync(string id, CancellationToken cancellationToken = default)
+        {
+            Items.RemoveAll(x => x.Id == id);
+            return Task.CompletedTask;
+        }
+    }
+
+    private ChainSubmitter CreateSubmitter(LicenseState? licenseState = null, IFailedChainSubmissionStore? failedStore = null)
     {
         licenseState ??= new LicenseState
         {
@@ -194,6 +327,6 @@ public class ChainSubmitterTests
             }
         };
 
-        return new ChainSubmitter(_configs, _httpClientFactory, _logger, licenseState, scopeFactory: null);
+        return new ChainSubmitter(_configs, _httpClientFactory, _logger, licenseState, scopeFactory: null, failedStore: failedStore);
     }
 }
