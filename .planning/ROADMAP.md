@@ -32,7 +32,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 15: Radial Gradients + Affine Transforms** — Extend Phase 14: `radial-gradient` backgrounds (PDF ShadingType 3, reuse axial-shading infra) + full 2D affine `transform` (translate/scale/matrix + multi-function chains, reuse CTM machinery). conic-gradient/JS/flex/grid stay out of scope; flexbox deferred to a later rendering phase. (completed 2026-06-20)
 - [x] **Phase 16: PDF Enterprise ↔ Governance/ControlPlane Integration** — Deepen `Muonroi.Pdf.Enterprise` from thin v1.0 stubs into the shared Muonroi enterprise rails (real `ActivationProof` license gate, control-plane-governed templates, `Quota` metering, `Compliance` audit) — max ecosystem reuse, ZERO change to the OSS engine (SC5). (completed 2026-06-20)
 
-- [ ] **Phase 17: Monetization Rail — Enforced Quota + Usage→Billing + Subscription** — Close the monetization gap both control-plane and license-server explicitly deferred. Turn record-only metering + placeholder pricing into an enforced, billable ecosystem rail: hard quota enforcement at the control-plane API boundary (NEVER the OSS render path), usage aggregation → priced line items + invoice-preview, an `IBillingProvider` seam (record-only default; payment-processor adapter behind the seam, deferred), and subscription/renewal lifecycle in license-server. Cross-repo (building-block + control-plane + license-server); ZERO change to OSS engine (SC5).
+- [x] **Phase 17: Monetization Rail — Enforced Quota + Usage→Billing + Subscription** — Close the monetization gap both control-plane and license-server explicitly deferred. Turn record-only metering + placeholder pricing into an enforced, billable ecosystem rail: hard quota enforcement at the control-plane API boundary (NEVER the OSS render path), usage aggregation → priced line items + invoice-preview, an `IBillingProvider` seam (record-only default; payment-processor adapter behind the seam, deferred), and subscription/renewal lifecycle in license-server. Cross-repo (building-block + control-plane + license-server); ZERO change to OSS engine (SC5). (completed 2026-06-21; verified 8/8 — 17-VERIFICATION.md)
 
 ## Phase Details
 
@@ -509,14 +509,14 @@ Plans:
   5. Full `Muonroi.Pdf.Tests` + governance + control-plane + license-server suites green; the OSS engine stays byte-identical (no golden re-baseline).
 
 **Requirements**: MON-01, MON-02, MON-03, MON-04, MON-05, MON-06, MON-07, MON-08
-**Plans**: 5 plans
+**Plans**: 5 plans (4 waves) — COMPLETE 2026-06-21; verified 8/8 (17-VERIFICATION.md)
 
 Plans:
-- [ ] 17-01-PLAN.md — Muonroi.Billing.Abstractions seam + record-only IBillingProvider (building-block)
-- [ ] 17-02-PLAN.md — IUsageAggregator impl + tier-sourced quota limits (building-block)
-- [ ] 17-03-PLAN.md — register UseQuotaEnforcement() + invoice-preview + PricingPlan pricing (control-plane)
-- [ ] 17-04-PLAN.md — subscription + renewal lifecycle + tier->limit mapping (license-server)
-- [ ] 17-05-PLAN.md — cross-repo green + SC5 byte-identical OSS + no-billing-leak guard
+- [x] 17-01-PLAN.md — Muonroi.Billing.Abstractions seam + record-only IBillingProvider (building-block)
+- [x] 17-02-PLAN.md — IUsageAggregator impl + tier-sourced quota limits (building-block)
+- [x] 17-03-PLAN.md — register UseQuotaEnforcement() + invoice-preview + PricingPlan pricing (control-plane)
+- [x] 17-04-PLAN.md — subscription + renewal lifecycle + tier->limit mapping (license-server)
+- [x] 17-05-PLAN.md — cross-repo green + SC5 byte-identical OSS + no-billing-leak guard
 
 **UI hint**: no
 
