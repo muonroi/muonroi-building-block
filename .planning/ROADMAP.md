@@ -580,11 +580,14 @@ Plans:
   4. Flex (Phase 18) is unaffected — flex still renders with the flag on; the flag now unlocks BOTH flex and grid.
   5. `Muonroi.Pdf.Tests` + `Muonroi.Pdf.Governance.Tests` green (per-project); build validated against .NET 8/9.
 
-**Requirements**: GRID-01 … GRID-08 (to be enumerated by planner)
-**Plans**: TBD (planner)
+**Requirements**: GRID-01, GRID-02, GRID-03, GRID-04, GRID-05, GRID-06, GRID-07, GRID-08
+**Plans**: 4 plans
 
 Plans:
-- [ ] (to be created by gsd-planner)
+- [ ] 19-01-PLAN.md — Gate LegacyPrintPolicy grid display + grid sub-props on AllowModernLayout; flip the Phase-18 grid-blocked tests to grid-accepted (GRID-01/02/03)
+- [ ] 19-02-PLAN.md — GridContainerBox + GridTrack model + BoxNode grid-item props; gated grid→GridContainerBox mapping + track-list/repeat/minmax/template-areas/placement resolution (GRID-04)
+- [ ] 19-03-PLAN.md — GridLayoutEngine (track sizing px/%/fr/auto/minmax/repeat + explicit/named-area/auto-flow placement); wire DispatchLayout case + LayoutEngine ctor (GRID-05)
+- [ ] 19-04-PLAN.md — operand-value GridLayoutTests + standalone GridLayout golden corpus + GridLayoutGoldenTests + committed baselines + byte-identical regression guard (GRID-06/07/08)
 
 **UI hint**: no
 
