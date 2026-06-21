@@ -51,4 +51,17 @@ public sealed class FlexRegressionGuardTests
             because: "no flex case may appear in the flag-less default-path corpus (it would throw "
                 + "PdfPolicyException on the canary / default-path theory)");
     }
+
+    [Fact]
+    public void GridCases_AreExcludedFromDefaultPath()
+    {
+        // GRID-08 / T-19-08: grid cases live in the standalone GridLayout group, never in AllCases.
+        var allNames = GoldenCorpus.AllCasesData().Select(d => (string)d[0]).ToHashSet();
+        var gridNames = GoldenCorpus.GridCasesData().Select(d => (string)d[0]).ToList();
+
+        gridNames.Should().NotBeEmpty(because: "the grid golden group must exist (GRID-07)");
+        gridNames.Should().OnlyContain(name => !allNames.Contains(name),
+            because: "no grid case may appear in the flag-less default-path corpus (it would throw "
+                + "PdfPolicyException forbidden.display.grid on the canary / default-path theory)");
+    }
 }
