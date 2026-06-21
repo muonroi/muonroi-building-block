@@ -52,23 +52,26 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
     });
 
     private readonly bool _softDegrade;
+    private readonly bool _allowModernLayout;
 
     /// <summary>
     /// Parameterless constructor — uses default (strict) policy settings.
     /// Existing code that calls <c>new LegacyPrintPolicy()</c> gets unchanged fail-loud behavior.
     /// </summary>
-    public LegacyPrintPolicy() : this(softDegrade: false) { }
+    public LegacyPrintPolicy() : this(softDegrade: false, allowModernLayout: false) { }
 
     /// <summary>
-    /// Constructor that reads <see cref="PdfPolicySettings.SoftDegradeUnknownDisplay"/>
-    /// from the bound <see cref="PdfConfigs"/> options.
+    /// Constructor that reads <see cref="PdfPolicySettings.SoftDegradeUnknownDisplay"/> and
+    /// <see cref="PdfPolicySettings.AllowModernLayout"/> from the bound <see cref="PdfConfigs"/> options.
     /// </summary>
     public LegacyPrintPolicy(IOptions<PdfConfigs> options)
-        : this(options?.Value?.Policy?.SoftDegradeUnknownDisplay ?? false) { }
+        : this(options?.Value?.Policy?.SoftDegradeUnknownDisplay ?? false,
+               options?.Value?.Policy?.AllowModernLayout ?? false) { }
 
-    private LegacyPrintPolicy(bool softDegrade)
+    private LegacyPrintPolicy(bool softDegrade, bool allowModernLayout = false)
     {
         _softDegrade = softDegrade;
+        _allowModernLayout = allowModernLayout;
     }
 
     /// <summary>Gets the stable identifier for this policy version.</summary>
@@ -101,7 +104,7 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
         CheckLimits(context, violations);
 
         if (context is AngleSharpStyledDocument styledDoc)
-            CheckCssFeatures(styledDoc.AngleSharpDocument, violations, _softDegrade);
+            CheckCssFeatures(styledDoc.AngleSharpDocument, violations, _softDegrade, _allowModernLayout);
 
         // Accepted = true when there are no violations at all, OR when soft-degrade is on and
         // every violation is a Warning (no hard errors). Any Error-severity violation rejects.
@@ -129,7 +132,7 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                 $"Source HTML {context.SourceHtmlBytes} bytes exceeds limit {Limits.MaxHtmlBytes}."));
     }
 
-    private static void CheckCssFeatures(IDocument document, List<PolicyViolation> violations, bool softDegrade)
+    private static void CheckCssFeatures(IDocument document, List<PolicyViolation> violations, bool softDegrade, bool allowModernLayout)
     {
         // Pass 1: Stylesheet AST walk — @import external, @keyframes, transition
         foreach (ICssStyleSheet sheet in document.StyleSheets.OfType<ICssStyleSheet>())
@@ -244,7 +247,10 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
             string display = style.GetPropertyValue("display") ?? string.Empty;
             string position = style.GetPropertyValue("position") ?? string.Empty;
 
-            if (display is "flex" or "inline-flex")
+            // FLEX-02 / FLEX-04: when allowModernLayout is on, flex is ACCEPTED (no violation,
+            // no soft-degrade trigger) — the engine renders real Flexbox. Grid (below) stays
+            // blocked even when AllowModernLayout=true.
+            if ((display is "flex" or "inline-flex") && !allowModernLayout)
             {
                 if (softDegrade)
                 {
@@ -299,7 +305,9 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                     }
                     else
                     {
-                        if (!flexSubPropSeen)
+                        // FLEX-02: when allowModernLayout is on the engine reads flex sub-props
+                        // (they are NOT dropped) — so do not emit the "will be ignored" warning.
+                        if (!flexSubPropSeen && !allowModernLayout)
                         {
                             flexSubPropSeen = true;
                             violations.Add(new PolicyViolation(

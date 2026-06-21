@@ -70,6 +70,16 @@ public sealed class PdfPolicySettings
     /// </para>
     /// </summary>
     public bool SoftDegradeUnknownDisplay { get; init; } = false;
+
+    /// <summary>
+    /// When <c>true</c>, <c>LegacyPrintPolicy</c> ACCEPTS <c>display:flex/inline-flex</c> and
+    /// flex sub-properties (the engine renders real Flexbox via <c>FlexLayoutEngine</c>).
+    /// CSS Grid stays blocked even when this is <c>true</c> (grid is a later phase).
+    /// <c>DefaultStrictPolicy</c> ignores this flag and always blocks flex.
+    /// Default <c>false</c> preserves the strict (fail-loud) / soft-degrade-to-block charter
+    /// with zero breaking change.
+    /// </summary>
+    public bool AllowModernLayout { get; init; } = false;
 }
 
 /// <summary>
