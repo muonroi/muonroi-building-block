@@ -1,4 +1,6 @@
+using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Exceptions;
+
 namespace Muonroi.BuildingBlock.Test;
 
 public class BaseGrpcServiceTests
@@ -10,8 +12,8 @@ public class BaseGrpcServiceTests
         Features = [FreeTierFeatures.Premium.Grpc]
     };
 
-    private class TestGrpc(MAuthenticateInfoContext ctx, LicenseState? state = null, ILicenseGuard? guard = null)
-        : BaseGrpcService(ctx, state, null, guard)
+    private class TestGrpc(LicenseState? state = null, ILicenseGuard? guard = null)
+        : BaseGrpcService(new SystemExecutionContextAccessor(), state, null, guard)
     {
         public Task<T> Call<T>(Func<Metadata, Task<T>> func)
         {
@@ -57,7 +59,7 @@ public class BaseGrpcServiceTests
     [Fact]
     public async Task CallGrpcServiceAsync_Returns_Result()
     {
-        TestGrpc svc = new(new MAuthenticateInfoContext(false), GrpcLicensed);
+        TestGrpc svc = new(GrpcLicensed);
         string res = await svc.Call(_ => Task.FromResult("ok"));
         Assert.Equal("ok", res);
     }
@@ -65,7 +67,7 @@ public class BaseGrpcServiceTests
     [Fact]
     public async Task CallGrpcServiceAsync_Throws_Exception()
     {
-        TestGrpc svc = new(new MAuthenticateInfoContext(false), GrpcLicensed);
+        TestGrpc svc = new(GrpcLicensed);
         await Assert.ThrowsAsync<MInternalException>(() =>
             svc.Call<string>(_ => throw new InvalidOperationException()));
     }
@@ -73,14 +75,14 @@ public class BaseGrpcServiceTests
     [Fact]
     public async Task CallGrpcServiceAsync_NullInput_Throws()
     {
-        TestGrpc svc = new(new MAuthenticateInfoContext(false));
+        TestGrpc svc = new();
         await Assert.ThrowsAsync<NullReferenceException>(() => svc.Call<string>(null!));
     }
 
     [Fact]
     public async Task CallGrpcServiceAsync_FreeMode_Throws_License_Error()
     {
-        TestGrpc svc = new(new MAuthenticateInfoContext(false));
+        TestGrpc svc = new();
         RpcException ex = await Assert.ThrowsAsync<RpcException>(() => svc.Call(_ => Task.FromResult("ok")));
         Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
     }
@@ -88,8 +90,8 @@ public class BaseGrpcServiceTests
     [Fact]
     public async Task CallGrpcServiceAsync_LicenseGuardDenies_ShouldThrow()
     {
-        TestGrpc svc = new(new MAuthenticateInfoContext(false), GrpcLicensed, new DenyGrpcGuard());
-        InvalidOperationException ex = await Assert.ThrowsAsync<MInternalException>(() => svc.Call(_ => Task.FromResult("ok")));
+        TestGrpc svc = new(GrpcLicensed, new DenyGrpcGuard());
+        MInternalException ex = await Assert.ThrowsAsync<MInternalException>(() => svc.Call(_ => Task.FromResult("ok")));
         Assert.Contains("grpc feature not licensed", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 }

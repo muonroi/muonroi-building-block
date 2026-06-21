@@ -8,7 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.Auth\Muonroi.Auth.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Core\Muonroi.Core.csproj" />
     <ProjectReference Include="..\..\src\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
   </ItemGroup>
 </Project>

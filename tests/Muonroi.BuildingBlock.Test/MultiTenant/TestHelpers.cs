@@ -1,13 +1,12 @@
 
 namespace Muonroi.BuildingBlock.Test.MultiTenant;
 
-using Microsoft.Extensions.Logging;
 using Muonroi.Governance.License;
 
 public class FakeMediator : IMediator
 {
-    public IAsyncEnumerable<MResponse> CreateStream<MResponse>(IStreamRequest<MResponse> request, CancellationToken cancellationToken = default) => AsyncEnumerable.Empty<MResponse>();
-    public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default) => AsyncEnumerable.Empty<object?>();
+    public IAsyncEnumerable<MResponse> CreateStream<MResponse>(IStreamRequest<MResponse> request, CancellationToken cancellationToken = default) => AsyncEnumerableHelper.Empty<MResponse>();
+    public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default) => AsyncEnumerableHelper.Empty<object?>();
     public Task Publish(object notification, CancellationToken cancellationToken = default) => Task.CompletedTask;
     public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default) where TNotification : INotification => Task.CompletedTask;
     public Task<MResponse> Send<MResponse>(IRequest<MResponse> request, CancellationToken cancellationToken = default) => Task.FromResult(default(MResponse)!);
@@ -23,7 +22,7 @@ public class TestDbContext : MDbContext
     }
 
     public TestDbContext(DbContextOptions options, IMediator mediator, ILicenseGuard? licenseGuard = null,
-        ILogger<TestDbContext>? logger = null)
+        IMLog<MDbContext>? logger = null)
         : base(options, mediator, licenseGuard, logger)
     {
     }

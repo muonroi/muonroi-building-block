@@ -14,6 +14,7 @@
          TrimmerRootDescriptor below preserves the required types at link time. -->
     <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
     <!-- This project is an AOT smoke-test sample; exclude from NuGet packaging. -->
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>

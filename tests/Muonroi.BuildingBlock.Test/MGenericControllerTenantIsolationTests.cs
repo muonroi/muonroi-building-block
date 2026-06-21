@@ -17,9 +17,9 @@ public class MGenericControllerTenantIsolationTests
         public Task<object?> Send(object request, CancellationToken cancellationToken = default)
             => Task.FromResult<object?>(null);
         public IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request,
-            CancellationToken cancellationToken = default) => AsyncEnumerable.Empty<TResponse>();
+            CancellationToken cancellationToken = default) => AsyncEnumerableHelper.Empty<TResponse>();
         public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default)
-            => AsyncEnumerable.Empty<object?>();
+            => AsyncEnumerableHelper.Empty<object?>();
     }
 
     private sealed class StubLicenseGuard(bool hasMultiTenantFeature) : ILicenseGuard
@@ -69,11 +69,13 @@ public class MGenericControllerTenantIsolationTests
         TenantIsolationDbContext db,
         ILicenseGuard guard,
         MTokenInfo tokenInfo,
-        IConfiguration configuration) : MGenericController<TenantScopedEntity, TenantIsolationDbContext>(
+        IConfiguration configuration,
+        IMDateTimeService dateTimeService) : MGenericController<TenantScopedEntity, TenantIsolationDbContext>(
             db,
             guard,
             tokenInfo,
-            configuration)
+            configuration,
+            dateTimeService)
     {
         public IQueryable<TenantScopedEntity> Apply(IQueryable<TenantScopedEntity> query)
         {
@@ -122,7 +124,8 @@ public class MGenericControllerTenantIsolationTests
             db,
             new StubLicenseGuard(true),
             new MTokenInfo { MultiTenantEnabled = true },
-            BuildConfig(true));
+            BuildConfig(true),
+            new MDateTimeService());
 
         Assert.Throws<UnauthorizedAccessException>(() => controller.Apply(db.Items.IgnoreQueryFilters()).ToList());
     }
@@ -137,7 +140,8 @@ public class MGenericControllerTenantIsolationTests
             db,
             new StubLicenseGuard(true),
             new MTokenInfo { MultiTenantEnabled = true },
-            BuildConfig(true));
+            BuildConfig(true),
+            new MDateTimeService());
 
         Assert.Throws<UnauthorizedAccessException>(() =>
         {
@@ -167,7 +171,8 @@ public class MGenericControllerTenantIsolationTests
             db,
             new StubLicenseGuard(false),
             new MTokenInfo { MultiTenantEnabled = true },
-            BuildConfig(true));
+            BuildConfig(true),
+            new MDateTimeService());
 
         Assert.Throws<MInternalException>(() => controller.Apply(db.Items.IgnoreQueryFilters()).ToList());
         TenantContext.CurrentTenantId = null;
@@ -193,7 +198,8 @@ public class MGenericControllerTenantIsolationTests
             db,
             new StubLicenseGuard(false),
             new MTokenInfo { MultiTenantEnabled = false },
-            BuildConfig(false));
+            BuildConfig(false),
+            new MDateTimeService());
 
         List<TenantScopedEntity> items = [.. controller.Apply(db.Items.IgnoreQueryFilters())];
         Assert.Equal(2, items.Count);

@@ -1,10 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- Muonroi.RuleEngine.NRules is [FROZEN] / [Obsolete]; suppress CS0618 in this test project. -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
-  <PropertyGroup>
-  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Muonroi.RuleEngine.NRules\Muonroi.RuleEngine.NRules.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Core\Muonroi.Core.csproj" />
+  </ItemGroup>
 </Project>
-
-

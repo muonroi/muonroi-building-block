@@ -12,7 +12,7 @@ public class MConnectionStringProviderTests
             ["Default:ConnectionString"] = "DataSource=db;"
         };
         IConfiguration config = new ConfigurationBuilder().AddInMemoryCollection(data).Build();
-        MConnectionStringProvider provider = new(config, new ConfigurationSecretProvider(config));
+        MConnectionStringProvider provider = new(config);
 
         string result = provider.GetConnectionString("Default");
 
@@ -24,7 +24,7 @@ public class MConnectionStringProviderTests
     {
         IConfiguration config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["EnableEncryption"] = "false" }).Build();
-        MConnectionStringProvider provider = new(config, new ConfigurationSecretProvider(config));
+        MConnectionStringProvider provider = new(config);
 
         string result = provider.GetConnectionString("Missing");
 
@@ -36,7 +36,7 @@ public class MConnectionStringProviderTests
     {
         IConfiguration config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["EnableEncryption"] = "true" }).Build();
-        MConnectionStringProvider provider = new(config, new ConfigurationSecretProvider(config));
+        MConnectionStringProvider provider = new(config);
 
         Assert.Throws<MInternalException>(() => provider.GetConnectionString("Default"));
     }

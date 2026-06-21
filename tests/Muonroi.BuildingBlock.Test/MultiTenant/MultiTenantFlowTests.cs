@@ -62,7 +62,7 @@ public class MultiTenantFlowTests
             MultiTenantEnabled = true,
             UseRsa = false
         };
-        MAuthenticateTokenHelper<TestPerm> helper = new(info, new HmacTokenSigner(info.SymmetricSecretKey));
+        MAuthenticateTokenHelper<TestPerm> helper = new(info, new HmacTokenSigner(info.SymmetricSecretKey), new MDateTimeService());
         string token1 = helper.GenerateAuthenticateToken(
             new MUserModel("1", "u1", "v1", "name", "surname", "phone", "email", "tenant1"), [TestPerm.Read]);
         string token2 = helper.GenerateAuthenticateToken(

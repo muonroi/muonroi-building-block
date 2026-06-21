@@ -2,7 +2,7 @@
 
 namespace Muonroi.BuildingBlock.Test;
 
-public class FaultyDbContext(DbContextOptions<FaultyDbContext> options) : MDbContext(options, new FakeMediator())
+public class FaultyDbContext(DbContextOptions<FaultyDbContext> options) : MDbContext(options, new MultiTenant.FakeMediator())
 {
     public override int SaveChanges()
     {
