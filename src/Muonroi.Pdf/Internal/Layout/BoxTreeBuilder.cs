@@ -830,6 +830,10 @@ internal sealed class BoxTreeBuilder
         return TryParseFloat(span) * Units.PxToPt;
     }
 
+    /// <summary>Internal accessor so <see cref="Boxes.GridTrack"/> reuses the single length parser
+    /// (px→pt etc.) for fixed track sizes instead of adding a second parser. "auto"/"normal"/null/% → 0.</summary>
+    internal static float ParseLengthPublic(string? val, float emBase = 12f) => ParseLength(val, emBase);
+
     private static float TryParseFloat(ReadOnlySpan<char> span)
     {
         if (float.TryParse(span, System.Globalization.NumberStyles.Float,

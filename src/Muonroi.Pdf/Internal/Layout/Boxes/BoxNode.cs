@@ -113,6 +113,38 @@ internal abstract class BoxNode
     /// </summary>
     public string? AlignSelf { get; set; }
 
+    // Grid-ITEM properties (CSS Grid). Resolved on EVERY box so a child of any type can be a grid
+    // item. All nullable: null = the CSS initial value, leaving zero behavioural change for non-grid
+    // layouts (untouched outside a grid container). Consumed by GridLayoutEngine (Plan 03).
+    // align-self is REUSED from the Phase-18 flex-item props above (line ~114).
+
+    /// <summary>
+    /// Raw CSS <c>grid-column</c> token (e.g. <c>"2"</c>, <c>"1 / 3"</c>, <c>"span 2"</c>). Null = CSS
+    /// initial <c>auto</c>. Consumed by GridLayoutEngine (Plan 03); untouched for non-grid layouts.
+    /// </summary>
+    public string? GridColumnRaw { get; set; }
+
+    /// <summary>
+    /// Raw CSS <c>grid-row</c> token (e.g. <c>"1 / 3"</c>, <c>"span 2"</c>). Null = CSS initial
+    /// <c>auto</c>. Consumed by GridLayoutEngine (Plan 03); untouched for non-grid layouts.
+    /// </summary>
+    public string? GridRowRaw { get; set; }
+
+    /// <summary>
+    /// Raw CSS <c>grid-area</c> token: a named area, or the
+    /// <c>row-start / col-start / row-end / col-end</c> shorthand. Null = CSS initial <c>auto</c>.
+    /// Consumed by GridLayoutEngine (Plan 03); untouched for non-grid layouts.
+    /// </summary>
+    public string? GridAreaRaw { get; set; }
+
+    /// <summary>
+    /// CSS <c>justify-self</c> (inline-axis self alignment within the grid cell). One of
+    /// <c>start</c> | <c>end</c> | <c>center</c> | <c>stretch</c>. Null = CSS initial <c>auto</c>
+    /// (inherit the container <see cref="GridContainerBox.JustifyItems"/>). Consumed by
+    /// GridLayoutEngine (Plan 03); untouched for non-grid layouts.
+    /// </summary>
+    public string? JustifySelf { get; set; }
+
     public List<BoxNode> Children { get; } = new();
 
     /// <summary>
