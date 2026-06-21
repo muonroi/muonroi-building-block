@@ -509,7 +509,15 @@ Plans:
   5. Full `Muonroi.Pdf.Tests` + governance + control-plane + license-server suites green; the OSS engine stays byte-identical (no golden re-baseline).
 
 **Requirements**: MON-01, MON-02, MON-03, MON-04, MON-05, MON-06, MON-07, MON-08
-**Plans**: TBD (plan per workstream)
+**Plans**: 5 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Muonroi.Billing.Abstractions seam + record-only IBillingProvider (building-block)
+- [ ] 17-02-PLAN.md — IUsageAggregator impl + tier-sourced quota limits (building-block)
+- [ ] 17-03-PLAN.md — register UseQuotaEnforcement() + invoice-preview + PricingPlan pricing (control-plane)
+- [ ] 17-04-PLAN.md — subscription + renewal lifecycle + tier->limit mapping (license-server)
+- [ ] 17-05-PLAN.md — cross-repo green + SC5 byte-identical OSS + no-billing-leak guard
+
 **UI hint**: no
 
 ## Progress
