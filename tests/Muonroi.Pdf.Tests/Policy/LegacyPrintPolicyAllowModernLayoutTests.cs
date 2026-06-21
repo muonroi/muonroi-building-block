@@ -9,11 +9,12 @@ namespace Muonroi.Pdf.Tests.Policy;
 
 /// <summary>
 /// Validates the <c>PdfPolicySettings.AllowModernLayout</c> opt-in gate on
-/// <see cref="LegacyPrintPolicy"/> (Phase 18, FLEX-02..04):
+/// <see cref="LegacyPrintPolicy"/> (Phase 18 FLEX-02..04, Phase 19 GRID-01..03):
 /// <list type="bullet">
 ///   <item>flag ON  → flex display + flex sub-properties are ACCEPTED (no violation)</item>
-///   <item>flag ON  → CSS Grid stays blocked (only flex is unlocked)</item>
-///   <item>flag OFF → flex behaviour is byte-for-byte unchanged (strict and soft-degrade)</item>
+///   <item>flag ON  → grid display + grid sub-properties are ALSO ACCEPTED — the flag unlocks BOTH flex and grid</item>
+///   <item>flag OFF → flex AND grid behaviour are byte-for-byte unchanged (strict and soft-degrade)</item>
+///   <item>DefaultStrictPolicy ignores the flag and always blocks flex and grid</item>
 /// </list>
 /// </summary>
 public sealed class LegacyPrintPolicyAllowModernLayoutTests
@@ -56,10 +57,10 @@ public sealed class LegacyPrintPolicyAllowModernLayoutTests
         result.Violations.Should().NotContain(v => v.RuleId == "soft-degrade.flex-subproperty");
     }
 
-    // --- FLEX-04: grid stays blocked even when the flag is ON ---
+    // --- GRID-02: flag ON accepts grid display + grid sub-properties (flipped from Phase-18 grid-blocked) ---
 
     [Fact]
-    public async Task Grid_FlagOn_StrictBase_StillForbidden()
+    public async Task Grid_FlagOn_StrictBase_Accepted()
     {
         const string html = "<html><head><style>div{display:grid;}</style></head><body><div>x</div></body></html>";
         var context = await ParseAsync(html);
@@ -67,12 +68,12 @@ public sealed class LegacyPrintPolicyAllowModernLayoutTests
         LegacyPrintPolicy policy = PolicyWith(allowModernLayout: true, softDegrade: false);
         PolicyValidationResult result = await policy.ValidateAsync(context);
 
-        result.Accepted.Should().BeFalse(because: "grid is not unlocked by AllowModernLayout");
-        result.Violations.Should().Contain(v => v.RuleId == "forbidden.display.grid");
+        result.Accepted.Should().BeTrue(because: "AllowModernLayout=true accepts grid");
+        result.Violations.Should().NotContain(v => v.RuleId == "forbidden.display.grid");
     }
 
     [Fact]
-    public async Task Grid_FlagOn_SoftDegrade_StillSoftDegradeWarning()
+    public async Task Grid_FlagOn_SoftDegrade_Accepted_NoGridWarning()
     {
         const string html = "<html><head><style>div{display:grid;}</style></head><body><div>x</div></body></html>";
         var context = await ParseAsync(html);
@@ -80,8 +81,76 @@ public sealed class LegacyPrintPolicyAllowModernLayoutTests
         LegacyPrintPolicy policy = PolicyWith(allowModernLayout: true, softDegrade: true);
         PolicyValidationResult result = await policy.ValidateAsync(context);
 
+        result.Violations.Should().NotContain(v => v.RuleId == "soft-degrade.display.grid");
+    }
+
+    [Fact]
+    public async Task GridWithSubProps_FlagOn_Accepted_NoGridSubpropWarning()
+    {
+        const string html =
+            "<html><head><style>div{display:grid;grid-template-columns:1fr 1fr;gap:8px;}</style></head>" +
+            "<body><div>x</div></body></html>";
+        var context = await ParseAsync(html);
+
+        LegacyPrintPolicy policy = PolicyWith(allowModernLayout: true, softDegrade: true);
+        PolicyValidationResult result = await policy.ValidateAsync(context);
+
+        result.Accepted.Should().BeTrue(because: "AllowModernLayout=true accepts grid + grid sub-props");
+        result.Violations.Should().NotContain(v => v.RuleId == "soft-degrade.display.grid");
+        result.Violations.Should().NotContain(v => v.RuleId == "soft-degrade.grid-subproperty");
+    }
+
+    [Fact]
+    public async Task FlexAndGrid_FlagOn_BothAccepted()
+    {
+        const string html =
+            "<html><head><style>.f{display:flex;}.g{display:grid;}</style></head>" +
+            "<body><div class=\"f\">x</div><div class=\"g\">y</div></body></html>";
+        var context = await ParseAsync(html);
+
+        LegacyPrintPolicy policy = PolicyWith(allowModernLayout: true);
+        PolicyValidationResult result = await policy.ValidateAsync(context);
+
+        result.Accepted.Should().BeTrue(because: "AllowModernLayout=true unlocks BOTH flex and grid");
+        result.Violations.Should().NotContain(v => v.RuleId == "forbidden.display.flex");
+        result.Violations.Should().NotContain(v => v.RuleId == "forbidden.display.grid");
+    }
+
+    // --- GRID-03: flag OFF (default) is byte-for-byte unchanged ---
+
+    [Fact]
+    public async Task Grid_FlagOff_StrictDefault_StillForbidden_BothPolicies()
+    {
+        const string html = "<html><head><style>div{display:grid;}</style></head><body><div>x</div></body></html>";
+        var context = await ParseAsync(html);
+
+        var legacy = new LegacyPrintPolicy();            // default: flag off, strict
+        var strict = new DefaultStrictPolicy();
+
+        PolicyValidationResult legacyResult = await legacy.ValidateAsync(context);
+        PolicyValidationResult strictResult = await strict.ValidateAsync(context);
+
+        legacyResult.Accepted.Should().BeFalse();
+        legacyResult.Violations.Should().Contain(v => v.RuleId == "forbidden.display.grid");
+        strictResult.Violations.Should().Contain(v => v.RuleId == "forbidden.display.grid",
+            because: "DefaultStrictPolicy ignores AllowModernLayout and always blocks grid");
+    }
+
+    [Fact]
+    public async Task GridWithSubProp_FlagOff_SoftDegrade_StillWarnsAndDegrades()
+    {
+        const string html =
+            "<html><head><style>div{display:grid;grid-template-columns:1fr;}</style></head><body><div>x</div></body></html>";
+        var context = await ParseAsync(html);
+
+        LegacyPrintPolicy policy = PolicyWith(allowModernLayout: false, softDegrade: true);
+        PolicyValidationResult result = await policy.ValidateAsync(context);
+
+        result.Accepted.Should().BeTrue(because: "soft-degrade emits warnings only, block degrade preserved");
         result.Violations.Should().Contain(v =>
             v.RuleId == "soft-degrade.display.grid" && v.Severity == PolicySeverity.Warning);
+        result.Violations.Should().Contain(v =>
+            v.RuleId == "soft-degrade.grid-subproperty" && v.Severity == PolicySeverity.Warning);
     }
 
     // --- FLEX-03: flag OFF (default) is byte-for-byte unchanged ---
