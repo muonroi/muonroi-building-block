@@ -78,7 +78,7 @@ public sealed class AllocationProbe(ITestOutputHelper output)
             async () =>
             {
                 var engine = new LayoutEngine();
-                return await engine.LayoutAsync(styled, options, new PdfConfigs.PdfLimits(), fontResolver, null, imageDecoder, CancellationToken.None);
+                return await engine.LayoutAsync(styled, options, new PdfConfigs.PdfLimits(), false, fontResolver, null, imageDecoder, CancellationToken.None);
             });
 
         var writer = new OwnedPdfWriter();

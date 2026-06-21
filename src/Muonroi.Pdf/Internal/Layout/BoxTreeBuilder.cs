@@ -7,10 +7,15 @@ internal sealed class BoxTreeBuilder
 {
     private IReadOnlyDictionary<string, DecodedImage>? _resolvedImages;
 
+    // Phase 18 (FLEX-05): opt-in flag. When true, display:flex/inline-flex map to FlexContainerBox.
+    // When false (default), flex falls through to BlockBox — the soft-degrade path stays byte-identical.
+    private bool _allowModernLayout;
+
     /// <summary>Converts an IStyledNode tree into a BlockBox root. Pitfall 6: display:none check happens first in BuildNode.</summary>
-    public BlockBox Build(IStyledNode root, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null)
+    public BlockBox Build(IStyledNode root, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null, bool allowModernLayout = false)
     {
         _resolvedImages = resolvedImages;
+        _allowModernLayout = allowModernLayout;
         var box = new BlockBox { Source = root };
         ResolveCssProperties(root.Style, box);
         // Mark body element so ResolveWidth can clamp its explicit width to available area (Fix C2).
@@ -75,6 +80,15 @@ internal sealed class BoxTreeBuilder
                 if (box.TransformGroup is not null)
                     PropagateTransformGroup(box, box.TransformGroup);
                 break;
+            case FlexContainerBox flexBox:
+                // Phase 18: build flex children (any box type can be a flex item). Reuse the
+                // BlockBox child collector/normalizer so inline/anonymous wrapping is consistent.
+                BuildChildren(node, flexBox);
+                if (box.Bold || box.TextTransform != null || box.WordBreak != null || box.WhiteSpace != null)
+                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak, box.WhiteSpace);
+                if (box.TransformGroup is not null)
+                    PropagateTransformGroup(box, box.TransformGroup);
+                break;
             case TableBox tableBox:
                 BuildChildren(node, tableBox);
                 break;
@@ -109,7 +123,7 @@ internal sealed class BoxTreeBuilder
         "tt", "s", "del", "ins", "bdo", "bdi", "ruby", "rt",
     };
 
-    private static BoxNode CreateBox(IStyledNode node)
+    private BoxNode CreateBox(IStyledNode node)
     {
         if (string.Equals(node.LocalName, "img", StringComparison.OrdinalIgnoreCase))
             return new ReplacedBox { Source = node, Src = node.GetAttribute("src") };
@@ -203,6 +217,11 @@ internal sealed class BoxTreeBuilder
             "table-footer-group" or "tfoot" => new TableRowGroupBox { Source = node, GroupType = TableRowGroupType.Footer },
             "table-row" or "tr" => new TableRowBox { Source = node },
             "table-cell" or "td" or "th" => new TableCellBox { Source = node },
+            // Phase 18 (FLEX-05): gated flex mapping. ONLY when AllowModernLayout is on; otherwise
+            // flex/inline-flex hit the `_` default below → BlockBox (degrade path unchanged).
+            // grid/inline-grid are NOT mapped here (Plan-19 scope; policy still blocks them).
+            "flex" when _allowModernLayout => new FlexContainerBox { Source = node },
+            "inline-flex" when _allowModernLayout => new FlexContainerBox { Source = node, IsInlineFlex = true },
             _ => new BlockBox { Source = node }
         };
     }
@@ -378,6 +397,9 @@ internal sealed class BoxTreeBuilder
         var overflowVal = style.GetValue("overflow");
         if (!string.IsNullOrEmpty(overflowVal) && overflowVal is "hidden" or "scroll" or "auto")
             box.Overflow = overflowVal;
+
+        // Phase 18 (FLEX-05): resolve flex CONTAINER + ITEM props.
+        ResolveFlexProperties(style, box, fontSize);
 
         // G18: font-weight and text-transform are inherited CSS properties and must be resolved
         // for ALL box types (block AND inline), not just InlineBox. A block-level heading
@@ -556,6 +578,193 @@ internal sealed class BoxTreeBuilder
                 replaced.NaturalHeight = decoded.Height * Units.PxToPt;
             }
         }
+    }
+
+    // Phase 18 (FLEX-05): resolve flex container + item properties. Malformed values fall back to
+    // CSS defaults and never throw (T-18-04). CONTAINER props are read only for FlexContainerBox;
+    // ITEM props are read on every box so any child type can be a flex item.
+    private static void ResolveFlexProperties(IComputedStyle style, BoxNode box, float fontSize)
+    {
+        // ---- CONTAINER props (FlexContainerBox only) ----
+        if (box is FlexContainerBox fc)
+        {
+            // flex-flow shorthand first; explicit longhands override below.
+            var flexFlow = Lower(style.GetValue("flex-flow"));
+            if (!string.IsNullOrEmpty(flexFlow))
+            {
+                foreach (var token in flexFlow.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (token is "row" or "row-reverse" or "column" or "column-reverse")
+                        fc.FlexDirection = token;
+                    else if (token is "nowrap" or "wrap" or "wrap-reverse")
+                        fc.FlexWrap = token;
+                }
+            }
+
+            fc.FlexDirection = OneOf(Lower(style.GetValue("flex-direction")), fc.FlexDirection,
+                "row", "row-reverse", "column", "column-reverse");
+            fc.FlexWrap = OneOf(Lower(style.GetValue("flex-wrap")), fc.FlexWrap,
+                "nowrap", "wrap", "wrap-reverse");
+            fc.JustifyContent = OneOf(Lower(style.GetValue("justify-content")), fc.JustifyContent,
+                "flex-start", "flex-end", "center", "space-between", "space-around", "space-evenly");
+            fc.AlignItems = OneOf(Lower(style.GetValue("align-items")), fc.AlignItems,
+                "flex-start", "flex-end", "center", "stretch", "baseline");
+            fc.AlignContent = OneOf(Lower(style.GetValue("align-content")), fc.AlignContent,
+                "flex-start", "flex-end", "center", "space-between", "space-around", "stretch");
+
+            // gap shorthand: one or two lengths ("row col"). First→RowGap, second→ColumnGap.
+            var gap = style.GetValue("gap");
+            if (!string.IsNullOrWhiteSpace(gap))
+            {
+                var parts = gap.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 1)
+                {
+                    float g0 = ParseLength(parts[0], fontSize);
+                    fc.RowGap = g0;
+                    fc.ColumnGap = parts.Length >= 2 ? ParseLength(parts[1], fontSize) : g0;
+                }
+            }
+
+            // row-gap / column-gap longhands override the shorthand.
+            var rowGap = style.GetValue("row-gap");
+            if (!string.IsNullOrWhiteSpace(rowGap))
+                fc.RowGap = ParseLength(rowGap, fontSize);
+            var colGap = style.GetValue("column-gap");
+            if (!string.IsNullOrWhiteSpace(colGap))
+                fc.ColumnGap = ParseLength(colGap, fontSize);
+        }
+
+        // ---- ITEM props (every box) ----
+        // flex shorthand first; explicit flex-grow/shrink/basis longhands override below.
+        var flexShorthand = Lower(style.GetValue("flex"));
+        if (flexShorthand is { Length: > 0 })
+            ParseFlexShorthand(flexShorthand, box);
+
+        var grow = style.GetValue("flex-grow");
+        if (!string.IsNullOrWhiteSpace(grow)
+            && float.TryParse(grow.Trim(), System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float growVal))
+            box.FlexGrow = growVal;
+
+        var shrink = style.GetValue("flex-shrink");
+        if (!string.IsNullOrWhiteSpace(shrink)
+            && float.TryParse(shrink.Trim(), System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float shrinkVal))
+            box.FlexShrink = shrinkVal;
+
+        var basis = style.GetValue("flex-basis");
+        if (!string.IsNullOrWhiteSpace(basis))
+            box.FlexBasisRaw = basis.Trim();
+
+        var order = style.GetValue("order");
+        if (!string.IsNullOrWhiteSpace(order)
+            && int.TryParse(order.Trim(), System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture, out int orderVal))
+            box.Order = orderVal;
+
+        var alignSelf = Lower(style.GetValue("align-self"));
+        if (alignSelf is "auto" or "flex-start" or "flex-end" or "center" or "stretch" or "baseline")
+            box.AlignSelf = alignSelf;
+    }
+
+    // CSS `flex` shorthand expansion (CSS Flexbox §7.1). Malformed input leaves the box untouched.
+    //   flex: none                  → 0 0 auto
+    //   flex: initial               → 0 1 auto
+    //   flex: auto                  → 1 1 auto
+    //   flex: <number>              → <number> 1 0%   (single-number form; basis literal LOCKED to "0%")
+    //   flex: <g> <s>               → <g> <s> 0%
+    //   flex: <g> <basis>           → <g> 1 <basis>   (number + length/auto)
+    //   flex: <g> <s> <basis>       → <g> <s> <basis>
+    private static void ParseFlexShorthand(string value, BoxNode box)
+    {
+        string v = value.Trim();
+        if (v.Length == 0) return;
+
+        if (string.Equals(v, "none", StringComparison.OrdinalIgnoreCase))
+        {
+            box.FlexGrow = 0f; box.FlexShrink = 0f; box.FlexBasisRaw = "auto";
+            return;
+        }
+        if (string.Equals(v, "auto", StringComparison.OrdinalIgnoreCase))
+        {
+            box.FlexGrow = 1f; box.FlexShrink = 1f; box.FlexBasisRaw = "auto";
+            return;
+        }
+        if (string.Equals(v, "initial", StringComparison.OrdinalIgnoreCase))
+        {
+            box.FlexGrow = 0f; box.FlexShrink = 1f; box.FlexBasisRaw = "auto";
+            return;
+        }
+
+        var parts = v.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        static bool IsNumber(string s) =>
+            float.TryParse(s, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out _);
+
+        static float Num(string s) =>
+            float.TryParse(s, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float f) ? f : 0f;
+
+        switch (parts.Length)
+        {
+            case 1:
+                if (IsNumber(parts[0]))
+                {
+                    // flex: <number> → <number> 1 0%  (locked basis literal "0%")
+                    box.FlexGrow = Num(parts[0]);
+                    box.FlexShrink = 1f;
+                    box.FlexBasisRaw = "0%";
+                }
+                else
+                {
+                    // single non-number token → flex-basis only (grow 1, shrink 1 per spec)
+                    box.FlexGrow = 1f;
+                    box.FlexShrink = 1f;
+                    box.FlexBasisRaw = parts[0];
+                }
+                break;
+
+            case 2:
+                if (IsNumber(parts[0]) && IsNumber(parts[1]))
+                {
+                    // <g> <s> → grow shrink, basis 0%
+                    box.FlexGrow = Num(parts[0]);
+                    box.FlexShrink = Num(parts[1]);
+                    box.FlexBasisRaw = "0%";
+                }
+                else if (IsNumber(parts[0]))
+                {
+                    // <g> <basis> → grow, shrink 1, basis
+                    box.FlexGrow = Num(parts[0]);
+                    box.FlexShrink = 1f;
+                    box.FlexBasisRaw = parts[1];
+                }
+                break;
+
+            case 3:
+                if (IsNumber(parts[0]) && IsNumber(parts[1]))
+                {
+                    box.FlexGrow = Num(parts[0]);
+                    box.FlexShrink = Num(parts[1]);
+                    box.FlexBasisRaw = parts[2];
+                }
+                break;
+        }
+    }
+
+    private static string? Lower(string? v)
+        => string.IsNullOrWhiteSpace(v) ? null : v.Trim().ToLowerInvariant();
+
+    // Returns `value` when it is one of the allowed keywords; otherwise the supplied fallback
+    // (the box's CSS-default). Guarantees a non-null result for non-nullable container props.
+    private static string OneOf(string? value, string fallback, params string[] allowed)
+    {
+        if (value is null) return fallback;
+        foreach (var a in allowed)
+            if (string.Equals(value, a, StringComparison.Ordinal))
+                return value;
+        return fallback;
     }
 
     /// <summary>
@@ -743,6 +952,15 @@ internal sealed class BoxTreeBuilder
     }
 
     private static IStyledNode? FindListAncestor(IStyledNode node) => null; // not used; stack approach used instead
+
+    // Phase 18: flex children — same collect + normalize as a block container so inline siblings
+    // get wrapped consistently. The flex layout algorithm (Plan 03) treats each direct child as a
+    // flex item regardless of its box type.
+    private void BuildChildren(IStyledNode node, FlexContainerBox parent)
+    {
+        var raw = CollectChildren(node);
+        parent.Children.AddRange(NormalizeChildren(raw));
+    }
 
     private void BuildChildren(IStyledNode node, TableCellBox parent)
     {

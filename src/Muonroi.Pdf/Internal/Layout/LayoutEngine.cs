@@ -53,6 +53,7 @@ internal sealed class LayoutEngine
         IStyledDocument doc,
         PdfRenderOptions options,
         PdfConfigs.PdfLimits limits,
+        bool allowModernLayout,
         IFontResolver? fontResolver,
         IResourceResolver? imageResolver,
         IImageDecoder imageDecoder,
@@ -86,7 +87,7 @@ internal sealed class LayoutEngine
             ? new LayoutEngine(realMetrics)
             : this;
 
-        var pass1 = engineToUse.RunLayout(doc, options, totalPages: 0, resolvedImages, running);
+        var pass1 = engineToUse.RunLayout(doc, options, totalPages: 0, resolvedImages, running, allowModernLayout);
 
         if (pass1.PageCount > PdfConfigs.PdfLimits.Defaults.MaxPages)
             throw new PdfInputLimitException(
@@ -97,7 +98,7 @@ internal sealed class LayoutEngine
 
         ct.ThrowIfCancellationRequested();
 
-        var pass2 = engineToUse.RunLayout(doc, options, totalPages: pass1.PageCount, resolvedImages, running);
+        var pass2 = engineToUse.RunLayout(doc, options, totalPages: pass1.PageCount, resolvedImages, running, allowModernLayout);
 
         var embeddedFonts = new List<EmbeddedFontInfo>();
         if (fontResolver != null && fontBytesMap.Count > 0 && fontCollection != null)
@@ -202,7 +203,7 @@ internal sealed class LayoutEngine
         return pass2;
     }
 
-    private PositionedPageList RunLayout(IStyledDocument doc, PdfRenderOptions options, int totalPages, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null, RunningContentSpec? running = null)
+    private PositionedPageList RunLayout(IStyledDocument doc, PdfRenderOptions options, int totalPages, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null, RunningContentSpec? running = null, bool allowModernLayout = false)
     {
         var (pageWidthPt, pageHeightPt) = GetPageDimensions(options);
         var margins = ResolveMargins(options, doc.PageRule);
@@ -229,7 +230,7 @@ internal sealed class LayoutEngine
         float pageBodyHeight = pageHeightPt - effectiveTopPt - effectiveBottomPt;
         float availableWidth = pageWidthPt - leftMarginPt - rightMarginPt;
 
-        var rootBox = _boxTreeBuilder.Build(doc.Root, resolvedImages);
+        var rootBox = _boxTreeBuilder.Build(doc.Root, resolvedImages, allowModernLayout);
 
         var context = new LayoutContext
         {
@@ -329,7 +330,10 @@ internal sealed class LayoutEngine
     {
         if (colDoc is null) return 0f;
 
-        var rootBox = _boxTreeBuilder.Build(colDoc.Root, resolvedImages);
+        // First-cut deferral (Phase 18): running header/footer columns never enable modern layout.
+        // Flex inside @page running content degrades to block (allowModernLayout: false). Running
+        // content has no flex use-case today; documented in 18-02-SUMMARY.md.
+        var rootBox = _boxTreeBuilder.Build(colDoc.Root, resolvedImages, allowModernLayout: false);
         var ctx = new LayoutContext
         {
             PageWidth = pageWidthPt,

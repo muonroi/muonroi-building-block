@@ -103,7 +103,8 @@ internal sealed class MPdfService(
 
             var layout = new LayoutEngine();
             IPositionedPageList pages = await layout.LayoutAsync(
-                styled, options, _configs.Limits, _fontResolver, _resourceResolver, _imageDecoder, cts.Token, running)
+                styled, options, _configs.Limits, _configs.Policy.AllowModernLayout,
+                _fontResolver, _resourceResolver, _imageDecoder, cts.Token, running)
                 .ConfigureAwait(false);
 
             long byteCount = await _writer.WriteAsync(pages, options, destination, cts.Token).ConfigureAwait(false);
@@ -257,7 +258,8 @@ internal sealed class MPdfService(
 
             var layout = new LayoutEngine();
             IPositionedPageList fragmentPages = await layout.LayoutAsync(
-                styled, options, _configs.Limits, _fontResolver, _resourceResolver, _imageDecoder, cts.Token)
+                styled, options, _configs.Limits, _configs.Policy.AllowModernLayout,
+                _fontResolver, _resourceResolver, _imageDecoder, cts.Token)
                 .ConfigureAwait(false);
 
             if (fragmentPages is PositionedPageList pageList)
