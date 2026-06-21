@@ -89,6 +89,15 @@ internal sealed class BoxTreeBuilder
                 if (box.TransformGroup is not null)
                     PropagateTransformGroup(box, box.TransformGroup);
                 break;
+            case GridContainerBox gridBox:
+                // Phase 19: build grid children (any box type can be a grid item). Reuse the
+                // BlockBox child collector/normalizer so inline/anonymous wrapping is consistent.
+                BuildChildren(node, gridBox);
+                if (box.Bold || box.TextTransform != null || box.WordBreak != null || box.WhiteSpace != null)
+                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak, box.WhiteSpace);
+                if (box.TransformGroup is not null)
+                    PropagateTransformGroup(box, box.TransformGroup);
+                break;
             case TableBox tableBox:
                 BuildChildren(node, tableBox);
                 break;
@@ -217,11 +226,13 @@ internal sealed class BoxTreeBuilder
             "table-footer-group" or "tfoot" => new TableRowGroupBox { Source = node, GroupType = TableRowGroupType.Footer },
             "table-row" or "tr" => new TableRowBox { Source = node },
             "table-cell" or "td" or "th" => new TableCellBox { Source = node },
-            // Phase 18 (FLEX-05): gated flex mapping. ONLY when AllowModernLayout is on; otherwise
-            // flex/inline-flex hit the `_` default below → BlockBox (degrade path unchanged).
-            // grid/inline-grid are NOT mapped here (Plan-19 scope; policy still blocks them).
+            // Phase 18 (FLEX-05) / Phase 19 (GRID-04): gated modern-layout mapping. ONLY when
+            // AllowModernLayout is on; otherwise flex/inline-flex/grid/inline-grid hit the `_`
+            // default below → BlockBox (the soft-degrade path stays byte-identical).
             "flex" when _allowModernLayout => new FlexContainerBox { Source = node },
             "inline-flex" when _allowModernLayout => new FlexContainerBox { Source = node, IsInlineFlex = true },
+            "grid" when _allowModernLayout => new GridContainerBox { Source = node },
+            "inline-grid" when _allowModernLayout => new GridContainerBox { Source = node, IsInlineGrid = true },
             _ => new BlockBox { Source = node }
         };
     }
@@ -400,6 +411,9 @@ internal sealed class BoxTreeBuilder
 
         // Phase 18 (FLEX-05): resolve flex CONTAINER + ITEM props.
         ResolveFlexProperties(style, box, fontSize);
+
+        // Phase 19 (GRID-04): resolve grid CONTAINER + ITEM props.
+        ResolveGridProperties(style, box, fontSize);
 
         // G18: font-weight and text-transform are inherited CSS properties and must be resolved
         // for ALL box types (block AND inline), not just InlineBox. A block-level heading
@@ -665,6 +679,127 @@ internal sealed class BoxTreeBuilder
         var alignSelf = Lower(style.GetValue("align-self"));
         if (alignSelf is "auto" or "flex-start" or "flex-end" or "center" or "stretch" or "baseline")
             box.AlignSelf = alignSelf;
+    }
+
+    private static void ResolveGridProperties(IComputedStyle style, BoxNode box, float fontSize)
+    {
+        // ---- CONTAINER props (GridContainerBox only) ----
+        if (box is GridContainerBox gc)
+        {
+            // Explicit track lists (repeat()/minmax() expanded by GridTrack). Only assign when
+            // non-empty so the default stays an empty list.
+            var cols = GridTrack.ParseTrackList(style.GetValue("grid-template-columns"), fontSize);
+            if (cols.Count > 0) gc.TemplateColumns = cols;
+            var rows = GridTrack.ParseTrackList(style.GetValue("grid-template-rows"), fontSize);
+            if (rows.Count > 0) gc.TemplateRows = rows;
+
+            // grid-auto-columns / grid-auto-rows → single track template (null when unset).
+            var autoCols = style.GetValue("grid-auto-columns");
+            if (!string.IsNullOrWhiteSpace(autoCols))
+                gc.AutoColumns = GridTrack.ParseSingleTrack(autoCols, fontSize);
+            var autoRows = style.GetValue("grid-auto-rows");
+            if (!string.IsNullOrWhiteSpace(autoRows))
+                gc.AutoRows = GridTrack.ParseSingleTrack(autoRows, fontSize);
+
+            // grid-auto-flow: strip a "dense" token (sparse-only per D-01), then keep row|column.
+            var autoFlow = Lower(style.GetValue("grid-auto-flow"));
+            if (autoFlow is { Length: > 0 })
+            {
+                var remaining = autoFlow
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .FirstOrDefault(t => t is "row" or "column");
+                gc.AutoFlow = OneOf(remaining, gc.AutoFlow, "row", "column");
+            }
+
+            // gap shorthand: one or two lengths ("row col"). First→RowGap, second→ColumnGap.
+            // (Identical semantics to flex; mirrors ResolveFlexProperties.)
+            var gap = style.GetValue("gap");
+            if (!string.IsNullOrWhiteSpace(gap))
+            {
+                var parts = gap.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 1)
+                {
+                    float g0 = ParseLength(parts[0], fontSize);
+                    gc.RowGap = g0;
+                    gc.ColumnGap = parts.Length >= 2 ? ParseLength(parts[1], fontSize) : g0;
+                }
+            }
+            var rowGap = style.GetValue("row-gap");
+            if (!string.IsNullOrWhiteSpace(rowGap))
+                gc.RowGap = ParseLength(rowGap, fontSize);
+            var colGap = style.GetValue("column-gap");
+            if (!string.IsNullOrWhiteSpace(colGap))
+                gc.ColumnGap = ParseLength(colGap, fontSize);
+
+            // justify/align items (item-in-cell) + content (track-group-in-container).
+            gc.JustifyItems = OneOf(Lower(style.GetValue("justify-items")), gc.JustifyItems,
+                "start", "end", "center", "stretch");
+            gc.AlignItems = OneOf(Lower(style.GetValue("align-items")), gc.AlignItems,
+                "start", "end", "center", "stretch");
+            gc.JustifyContent = OneOf(Lower(style.GetValue("justify-content")), gc.JustifyContent,
+                "start", "end", "center", "space-between", "space-around", "space-evenly", "stretch");
+            gc.AlignContent = OneOf(Lower(style.GetValue("align-content")), gc.AlignContent,
+                "start", "end", "center", "space-between", "space-around", "space-evenly", "stretch");
+
+            // grid-template-areas: quoted row strings → string[][]. Ragged/empty rows → empty (T-19-05).
+            gc.TemplateAreas = ParseTemplateAreas(style.GetValue("grid-template-areas"));
+        }
+
+        // ---- ITEM props (every box) ----
+        var gridColumn = style.GetValue("grid-column");
+        if (!string.IsNullOrWhiteSpace(gridColumn))
+            box.GridColumnRaw = gridColumn.Trim();
+        var gridRow = style.GetValue("grid-row");
+        if (!string.IsNullOrWhiteSpace(gridRow))
+            box.GridRowRaw = gridRow.Trim();
+        var gridArea = style.GetValue("grid-area");
+        if (!string.IsNullOrWhiteSpace(gridArea))
+            box.GridAreaRaw = gridArea.Trim();
+
+        var justifySelf = Lower(style.GetValue("justify-self"));
+        if (justifySelf is "start" or "end" or "center" or "stretch")
+            box.JustifySelf = justifySelf;
+        // align-self is read by ResolveFlexProperties (Phase 18) and reused for grid — do NOT re-read.
+    }
+
+    // Parses CSS grid-template-areas (a string of quoted row strings, e.g. `"head head" "nav main"`)
+    // into a rectangular row-major string[][] of area-name tokens ("." = empty cell). Rejects
+    // ragged/empty grids (unequal column counts) by returning an empty array so downstream cell-rect
+    // math cannot index out of bounds (T-19-05). Never throws.
+    private static string[][] ParseTemplateAreas(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Array.Empty<string[]>();
+
+        var rows = new List<string[]>();
+        int i = 0;
+        while (i < value.Length)
+        {
+            char q = value[i];
+            if (q != '"' && q != '\'')
+            {
+                i++;
+                continue;
+            }
+            int end = value.IndexOf(q, i + 1);
+            if (end < 0)
+                return Array.Empty<string[]>(); // unterminated quote → reject
+            string rowStr = value[(i + 1)..end];
+            var cells = rowStr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (cells.Length == 0)
+                return Array.Empty<string[]>(); // empty row → reject
+            rows.Add(cells);
+            i = end + 1;
+        }
+
+        if (rows.Count == 0)
+            return Array.Empty<string[]>();
+
+        int cols = rows[0].Length;
+        if (rows.Any(r => r.Length != cols))
+            return Array.Empty<string[]>(); // ragged → reject
+
+        return rows.ToArray();
     }
 
     // CSS `flex` shorthand expansion (CSS Flexbox §7.1). Malformed input leaves the box untouched.
@@ -961,6 +1096,15 @@ internal sealed class BoxTreeBuilder
     // get wrapped consistently. The flex layout algorithm (Plan 03) treats each direct child as a
     // flex item regardless of its box type.
     private void BuildChildren(IStyledNode node, FlexContainerBox parent)
+    {
+        var raw = CollectChildren(node);
+        parent.Children.AddRange(NormalizeChildren(raw));
+    }
+
+    // Phase 19: grid children — same collect + normalize as a block container so inline siblings
+    // get wrapped consistently. The grid layout algorithm (Plan 03) treats each direct child as a
+    // grid item regardless of its box type.
+    private void BuildChildren(IStyledNode node, GridContainerBox parent)
     {
         var raw = CollectChildren(node);
         parent.Children.AddRange(NormalizeChildren(raw));
