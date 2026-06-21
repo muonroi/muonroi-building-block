@@ -30,9 +30,12 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 13: Full-HTML Running Header/Footer** — Upgrade `options.Header/Footer` from text-only to full-HTML 3-column running content (images, `HeightMm`, `ShowLine`); page numbering via `counter(page)/counter(pages)`. Plan: `.planning/PHASE-13-PLAN.md` (completed 2026-06-20)
 - [x] **Phase 14: CSS Print Fidelity Gaps** — Close 3 print-oriented CSS gaps vs DinkToPdf: `@page` margin-box parsing (pure-CSS running header/footer), `linear-gradient` backgrounds (PDF axial shading), and `transform:rotate` watermark. JS/flex/grid/radial stay out of scope. Plan: `.planning/PHASE-14-PLAN.md` (completed 2026-06-20)
 - [x] **Phase 15: Radial Gradients + Affine Transforms** — Extend Phase 14: `radial-gradient` backgrounds (PDF ShadingType 3, reuse axial-shading infra) + full 2D affine `transform` (translate/scale/matrix + multi-function chains, reuse CTM machinery). conic-gradient/JS/flex/grid stay out of scope; flexbox deferred to a later rendering phase. (completed 2026-06-20)
-- [x] **Phase 16: PDF Enterprise ↔ Governance/ControlPlane Integration** — Deepen `Muonroi.Pdf.Enterprise` from thin v1.0 stubs into the shared Muonroi enterprise rails (real `ActivationProof` license gate, control-plane-governed templates, `Quota` metering, `Compliance` audit) — max ecosystem reuse, ZERO change to the OSS engine (SC5). (completed 2026-06-20)
+- [x] **Phase 16: PDF Enterprise ↔ Governance/ControlPlane Integration** — Deepen `Muonroi.Pdf.Enterprise` from thin v1.0 stubs into the shared Muonroi enterprise rails (real `ActivationProof` license gate, control-plane-governed templates, `Quota` metering, `Compliance` audit) — max ecosystem reuse, ZERO change to the OSS engine (SC5).
+ (completed 2026-06-20)
 
 - [x] **Phase 17: Monetization Rail — Enforced Quota + Usage→Billing + Subscription** — Close the monetization gap both control-plane and license-server explicitly deferred. Turn record-only metering + placeholder pricing into an enforced, billable ecosystem rail: hard quota enforcement at the control-plane API boundary (NEVER the OSS render path), usage aggregation → priced line items + invoice-preview, an `IBillingProvider` seam (record-only default; payment-processor adapter behind the seam, deferred), and subscription/renewal lifecycle in license-server. Cross-repo (building-block + control-plane + license-server); ZERO change to OSS engine (SC5). (completed 2026-06-21; verified 8/8 — 17-VERIFICATION.md)
+
+- [ ] **Phase 18: Flexbox Layout Engine (OSS `Muonroi.Pdf`)** — Close the single largest remaining render gap: implement a real CSS Flexbox layout algorithm in the OSS engine (`FlexContainerBox` + `FlexLayoutEngine`: flex-direction, wrap, justify-content, align-items/content/self, flex-grow/shrink/basis, gap, order), replacing today's hard-block / degrade-to-block. Gated behind a new opt-in `PdfPolicySettings.AllowModernLayout` (default false) so the strict-by-default charter is preserved with ZERO breaking change — existing 82 golden baselines stay byte-identical; only new flex goldens are added. CSS Grid deferred to Phase 19.
 
 ## Phase Details
 
@@ -517,6 +520,39 @@ Plans:
 - [x] 17-03-PLAN.md — register UseQuotaEnforcement() + invoice-preview + PricingPlan pricing (control-plane)
 - [x] 17-04-PLAN.md — subscription + renewal lifecycle + tier->limit mapping (license-server)
 - [x] 17-05-PLAN.md — cross-repo green + SC5 byte-identical OSS + no-billing-leak guard
+
+**UI hint**: no
+
+### Phase 18: Flexbox Layout Engine (OSS `Muonroi.Pdf`)
+
+**Goal**: Implement a real CSS Flexbox layout algorithm in the OSS PDF engine, closing the largest remaining render gap (flex is today hard-blocked or silently degraded to block). Ship it behind a new opt-in `PdfPolicySettings.AllowModernLayout` (default false) so the strict-by-default charter holds and every existing consumer is byte-for-byte unchanged. CSS Grid is explicitly OUT (→ Phase 19).
+
+**Depends on**: The mature OSS layout engine (Phases 3, 8.5–8.16, 12) — `BoxTreeBuilder`, `BlockLayoutEngine.DispatchLayout`, `TableLayoutEngine` (analog), `InlineLayoutEngine` (content measurement), `GoldenPdf` snapshot infra. Policy plumbing for `SoftDegradeUnknownDisplay` (the channel `AllowModernLayout` rides).
+
+**Scope** (single-repo: building-block, all OSS):
+  - **Contract/policy**: add `PdfPolicySettings.AllowModernLayout` (default false); `LegacyPrintPolicy` accepts `display:flex`/`inline-flex` + flex sub-props ONLY when the flag is on (grid stays blocked); `DefaultStrictPolicy` unchanged.
+  - **Box tree**: new `FlexContainerBox : BoxNode`; `BoxTreeBuilder` maps flex→`FlexContainerBox` when the flag is on (else degrade-to-block, unchanged); resolve flex container + item props (incl. `flex`/`flex-flow` shorthand, `gap`, `flex-basis`).
+  - **Layout**: new `FlexLayoutEngine` (mirrors `TableLayoutEngine`): flex-basis resolution, line wrapping, grow/shrink free-space distribution, justify-content, align-items/content/self, gap, order; recurses children through the existing dispatch (nested layouts compose).
+  - **Wire**: thread `AllowModernLayout` `MPdfService` → `LayoutEngine.LayoutAsync` → `BoxTreeBuilder`; add `case FlexContainerBox` to `BlockLayoutEngine.DispatchLayout`.
+
+**Out of scope** (deliberate): CSS Grid (entire feature → Phase 19, same flag); splitting a flex container across a page boundary (atomic for pagination, first cut); true cross-font baseline alignment (approximate as flex-start); `aspect-ratio`, intrinsic min/max-content subtleties, percentage flex-basis vs indefinite container; flipping the flag default / making flex first-class in `DefaultStrictPolicy`.
+
+**Success Criteria** (what must be TRUE):
+
+  1. With `AllowModernLayout=true`, `display:flex` renders via a real Flexbox algorithm: items are positioned per `flex-direction`, `flex-grow/shrink/basis`, `justify-content`, `align-items`, `flex-wrap`, `gap`, and `order` — asserted by unit tests on `PositionedElement.Position` (X/Y/W/H), not just non-throwing renders.
+  2. With `AllowModernLayout=false` (DEFAULT), behaviour is byte-for-byte unchanged: strict mode still emits `forbidden.display.flex` (Error, aborts); soft-degrade mode still warns + renders flex as block with sub-props dropped. No existing policy test changes its expectation.
+  3. The existing 82 golden baselines remain **byte-identical** (structural snapshot suite green with no re-baseline) — proving the opt-in did not perturb the default block/inline/table path. New flex golden baselines are added under their own corpus group.
+  4. CSS Grid stays blocked even with `AllowModernLayout=true` (`forbidden.display.grid` / soft-degrade unchanged) — grid is Phase 19.
+  5. `Muonroi.Pdf.Tests` + `Muonroi.Pdf.Governance.Tests` suites green (per-project runs, per test-flakiness memory); build validated against .NET 8/9 not only local .NET 10.
+
+**Requirements**: FLEX-01, FLEX-02, FLEX-03, FLEX-04, FLEX-05, FLEX-06, FLEX-07, FLEX-08
+**Plans**: 4 plans (4 waves)
+
+Plans:
+- [ ] 18-01-PLAN.md — AllowModernLayout flag + LegacyPrintPolicy flex gate (grid stays blocked) + policy tests (FLEX-01..04) [wave 1]
+- [ ] 18-02-PLAN.md — FlexContainerBox + BoxNode flex-item props + gated BoxTreeBuilder mapping + thread flag MPdfService→LayoutAsync→BoxTreeBuilder (FLEX-05) [wave 2, depends 18-01]
+- [ ] 18-03-PLAN.md — FlexLayoutEngine algorithm + DispatchLayout case + LayoutEngine wiring (FLEX-06) [wave 3, depends 18-02]
+- [ ] 18-04-PLAN.md — FlexLayoutTests (operand-value positions) + FlexLayout golden corpus + baselines + 82-baseline byte-identical regression guard + per-project/.NET 8-9 (FLEX-07, FLEX-08) [wave 4, depends 18-03]
 
 **UI hint**: no
 

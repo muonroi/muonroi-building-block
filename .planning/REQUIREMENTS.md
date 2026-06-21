@@ -263,6 +263,18 @@
 | TCIS-01 – TCIS-02 | Phase 9 | v1.0 | Pending |
 | COMM-01 – COMM-02 | Phase 9 | v1.0 | Pending |
 | MON-01 – MON-08 | Phase 17 | v1.1 | Pending |
+| FLEX-01 – FLEX-08 | Phase 18 | v1.2 | Pending |
+
+### Phase 18 — Flexbox Layout Engine (FLEX)
+
+- **FLEX-01**: `PdfPolicySettings.AllowModernLayout` (bool, default false) added in `Muonroi.Pdf.Abstractions`; bound from `PdfConfigs:Policy`.
+- **FLEX-02**: With `AllowModernLayout=true`, `LegacyPrintPolicy` accepts `display:flex`/`inline-flex` and flex sub-properties (no violation); `DefaultStrictPolicy` remains always-strict.
+- **FLEX-03**: With `AllowModernLayout=false` (default), flex behaviour is unchanged — strict emits `forbidden.display.flex` (Error); soft-degrade emits the Warning + renders as block. No existing policy test changes.
+- **FLEX-04**: CSS Grid stays blocked even when `AllowModernLayout=true` (`forbidden.display.grid` / soft-degrade unchanged) — grid is Phase 19.
+- **FLEX-05**: `FlexContainerBox : BoxNode` + `BoxTreeBuilder` maps `flex`/`inline-flex`→`FlexContainerBox` when the flag is on (else degrade-to-block); flex container + item props resolved (incl. `flex`/`flex-flow` shorthand, `gap`, `flex-basis`, `order`).
+- **FLEX-06**: `FlexLayoutEngine` positions items per `flex-direction`, `flex-grow/shrink/basis`, `justify-content`, `align-items`/`align-content`/`align-self`, `flex-wrap`, `gap`, `order`; recurses children through the existing dispatch (nested layouts compose). Wired via `BlockLayoutEngine.DispatchLayout` + threaded `AllowModernLayout`.
+- **FLEX-07**: Unit tests assert `PositionedElement.Position` (X/Y/W/H) for representative flex scenarios (row distribution, grow/shrink, justify/align, wrap, gap, column direction, nested). New `FlexLayout` golden corpus + baselines added.
+- **FLEX-08**: Existing 82 golden baselines remain byte-identical (structural snapshot suite green, no re-baseline); `Muonroi.Pdf.Tests` + `Muonroi.Pdf.Governance.Tests` green (per-project); build validated against .NET 8/9.
 
 ### Phase 17 — Monetization Rail (MON)
 
