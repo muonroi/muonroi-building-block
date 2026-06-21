@@ -247,9 +247,8 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
             string display = style.GetPropertyValue("display") ?? string.Empty;
             string position = style.GetPropertyValue("position") ?? string.Empty;
 
-            // FLEX-02 / FLEX-04: when allowModernLayout is on, flex is ACCEPTED (no violation,
-            // no soft-degrade trigger) — the engine renders real Flexbox. Grid (below) stays
-            // blocked even when AllowModernLayout=true.
+            // FLEX-02: when allowModernLayout is on, flex is ACCEPTED (no violation,
+            // no soft-degrade trigger) — the engine renders real Flexbox.
             if ((display is "flex" or "inline-flex") && !allowModernLayout)
             {
                 if (softDegrade)
@@ -261,7 +260,8 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                     violations.Add(ViolationFor("forbidden.display.flex", "display", display, selector, "display:block"));
             }
 
-            if (display is "grid" or "inline-grid")
+            // GRID-01 / GRID-02: with allowModernLayout the engine renders real Grid via GridLayoutEngine — accept grid display.
+            if ((display is "grid" or "inline-grid") && !allowModernLayout)
             {
                 if (softDegrade)
                 {
@@ -291,7 +291,8 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                     bool isGrid = propName.StartsWith("grid", StringComparison.OrdinalIgnoreCase);
                     if (isGrid)
                     {
-                        if (!gridSubPropSeen)
+                        // GRID-02: when allowModernLayout is on the engine reads grid sub-props (they are NOT dropped) — do not emit the "will be ignored" warning.
+                        if (!gridSubPropSeen && !allowModernLayout)
                         {
                             gridSubPropSeen = true;
                             violations.Add(new PolicyViolation(
