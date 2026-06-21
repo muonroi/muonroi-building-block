@@ -85,6 +85,34 @@ internal abstract class BoxNode
     /// <summary>Raw CSS 'right' value for percentage resolution at layout time.</summary>
     public string? RightRaw { get; set; }
 
+    // Flex-ITEM properties (CSS flexbox). Resolved on EVERY box so a child of any type can be a
+    // flex item. All nullable: null = the CSS initial value, and an unset value means zero
+    // behavioural change for non-flex layouts (these are untouched outside a flex container).
+    // Consumed by FlexLayoutEngine (Plan 03).
+
+    /// <summary>CSS <c>flex-grow</c>. Null = CSS initial value 0. Consumed by FlexLayoutEngine (Plan 03); untouched for non-flex layouts.</summary>
+    public float? FlexGrow { get; set; }
+
+    /// <summary>CSS <c>flex-shrink</c>. Null = CSS initial value 1. Consumed by FlexLayoutEngine (Plan 03); untouched for non-flex layouts.</summary>
+    public float? FlexShrink { get; set; }
+
+    /// <summary>
+    /// Raw CSS <c>flex-basis</c> token (<c>auto</c> | length | <c>content</c> | null). Resolved at
+    /// layout time against the main axis, like <see cref="WidthRaw"/>. Null = CSS initial value
+    /// <c>auto</c>. Consumed by FlexLayoutEngine (Plan 03); untouched for non-flex layouts.
+    /// </summary>
+    public string? FlexBasisRaw { get; set; }
+
+    /// <summary>CSS <c>order</c>. Null = CSS initial value 0. Consumed by FlexLayoutEngine (Plan 03); untouched for non-flex layouts.</summary>
+    public int? Order { get; set; }
+
+    /// <summary>
+    /// CSS <c>align-self</c>. Null = CSS initial value <c>auto</c> (inherit the container
+    /// <see cref="FlexContainerBox.AlignItems"/>). Consumed by FlexLayoutEngine (Plan 03);
+    /// untouched for non-flex layouts.
+    /// </summary>
+    public string? AlignSelf { get; set; }
+
     public List<BoxNode> Children { get; } = new();
 
     /// <summary>
