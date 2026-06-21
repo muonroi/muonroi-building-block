@@ -26,6 +26,8 @@ internal sealed class LayoutEngine
         _blockEngine = new BlockLayoutEngine();
         var tableEngine = new TableLayoutEngine(_blockEngine, _blockEngine.InlineEngine);
         _blockEngine.TableEngine = tableEngine;
+        var flexEngine = new FlexLayoutEngine(_blockEngine);
+        _blockEngine.FlexEngine = flexEngine;
         _paginationEngine = new PaginationEngine();
     }
 

@@ -11,6 +11,10 @@ internal sealed class BlockLayoutEngine
     // Set by LayoutEngine after TableLayoutEngine is constructed (avoids circular ctor dependency).
     internal TableLayoutEngine? TableEngine { get; set; }
 
+    // Set by LayoutEngine after FlexLayoutEngine is constructed (same post-construction
+    // pattern as TableEngine — breaks the BlockLayoutEngine ↔ FlexLayoutEngine ctor cycle).
+    internal FlexLayoutEngine? FlexEngine { get; set; }
+
     // CSS 2.1 §8.3.1: max(positives) + min(negatives) handles mixed-sign margins.
     internal static float CollapseMargins(float a, float b)
     {
@@ -469,6 +473,24 @@ internal sealed class BlockLayoutEngine
                 {
                     Source = tableChild,
                     Position = new Rect(tableOriginX + tableChild.MarginLeft, startY, childWidth, h),
+                    PageIndex = pageIndex
+                });
+                ctx.CurrentY = startY + h;
+                return h;
+            }
+
+            case FlexContainerBox flexChild:
+            {
+                // Mirror the TableBox case: FlexEngine.Layout emits the per-item PositionedElements
+                // into `output`; here we emit the CONTAINER element and advance CurrentY.
+                float h = FlexEngine != null
+                    ? FlexEngine.Layout(flexChild, ctx, output, pageIndex)
+                    : (flexChild.Height > 0f ? flexChild.Height : 0f);
+                float flexOriginX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
+                output.Add(new PositionedElement
+                {
+                    Source = flexChild,
+                    Position = new Rect(flexOriginX + flexChild.MarginLeft, startY, childWidth, h),
                     PageIndex = pageIndex
                 });
                 ctx.CurrentY = startY + h;
