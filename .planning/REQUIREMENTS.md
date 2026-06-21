@@ -264,7 +264,7 @@
 | COMM-01 – COMM-02 | Phase 9 | v1.0 | Pending |
 | MON-01 – MON-08 | Phase 17 | v1.1 | Pending |
 | FLEX-01 – FLEX-08 | Phase 18 | v1.2 | Done (2026-06-21; verified 5/5 SC, 8/8 FLEX) |
-| GRID-01 – GRID-08 | Phase 19 | v1.2 | Pending |
+| GRID-01 – GRID-08 | Phase 19 | v1.2 | Done (2026-06-21; GRID-06/07/08 closed by 19-04 — 12 operand-value facts, 10 grid goldens, count guard 84) |
 
 ### Phase 19 — CSS Grid Layout Engine (GRID)
 

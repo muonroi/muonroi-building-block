@@ -586,8 +586,8 @@ Plans:
 Plans:
 - [x] 19-01-PLAN.md — Gate LegacyPrintPolicy grid display + grid sub-props on AllowModernLayout; flip the Phase-18 grid-blocked tests to grid-accepted (GRID-01/02/03)
 - [x] 19-02-PLAN.md — GridContainerBox + GridTrack model + BoxNode grid-item props; gated grid→GridContainerBox mapping + track-list/repeat/minmax/template-areas/placement resolution (GRID-04)
-- [ ] 19-03-PLAN.md — GridLayoutEngine (track sizing px/%/fr/auto/minmax/repeat + explicit/named-area/auto-flow placement); wire DispatchLayout case + LayoutEngine ctor (GRID-05)
-- [ ] 19-04-PLAN.md — operand-value GridLayoutTests + standalone GridLayout golden corpus + GridLayoutGoldenTests + committed baselines + byte-identical regression guard (GRID-06/07/08)
+- [x] 19-03-PLAN.md — GridLayoutEngine (track sizing px/%/fr/auto/minmax/repeat + explicit/named-area/auto-flow placement); wire DispatchLayout case + LayoutEngine ctor (GRID-05)
+- [x] 19-04-PLAN.md — operand-value GridLayoutTests + standalone GridLayout golden corpus + GridLayoutGoldenTests + committed baselines + byte-identical regression guard (GRID-06/07/08)
 
 **UI hint**: no
 
