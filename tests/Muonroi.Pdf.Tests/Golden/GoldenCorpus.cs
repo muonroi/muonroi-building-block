@@ -115,6 +115,63 @@ internal static class GoldenCorpus
     };
 
     /// <summary>
+    /// Grid-layout golden cases (Phase 19, GRID-07). Rendered ONLY through the modern-layout opt-in
+    /// (AllowModernLayout=true) by <see cref="GridLayoutGoldenTests"/>. CRITICAL: this group is
+    /// deliberately NOT concatenated into <see cref="AllCases"/> — identical to the FlexLayout group:
+    /// under the default <c>LegacyPrintPolicy</c> (flag off) a <c>display:grid</c> document hits
+    /// <c>forbidden.display.grid</c> and MPdfService THROWS PdfPolicyException, which would redden the
+    /// flag-less DeterminismCanaryTests and the default-path byte-equality theory. Keeping grid out of
+    /// AllCases guarantees those flag-less consumers only ever see the 84 default-path cases.
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> GridLayout = new[]
+    {
+        new GoldenCase(
+            "grid-fixed-tracks",
+            Doc(".grid{display:grid;width:300px;grid-template-columns:100px 100px 100px;}.item{}",
+                "<div class=\"grid\"><div class=\"item\">A</div><div class=\"item\">B</div><div class=\"item\">C</div></div>")),
+        new GoldenCase(
+            "grid-fr-distribute",
+            Doc(".grid{display:grid;width:300px;grid-template-columns:1fr 2fr;}.item{}",
+                "<div class=\"grid\"><div class=\"item\">One</div><div class=\"item\">Two</div></div>")),
+        new GoldenCase(
+            "grid-minmax",
+            Doc(".grid{display:grid;width:300px;grid-template-columns:minmax(50px,1fr) minmax(50px,1fr);}.item{}",
+                "<div class=\"grid\"><div class=\"item\">L</div><div class=\"item\">R</div></div>")),
+        new GoldenCase(
+            "grid-repeat",
+            Doc(".grid{display:grid;width:300px;grid-template-columns:repeat(3,1fr);}.item{}",
+                "<div class=\"grid\"><div class=\"item\">1</div><div class=\"item\">2</div><div class=\"item\">3</div></div>")),
+        new GoldenCase(
+            "grid-gap",
+            Doc(".grid{display:grid;width:300px;grid-template-columns:100px 100px;column-gap:20px;}.item{}",
+                "<div class=\"grid\"><div class=\"item\">A</div><div class=\"item\">B</div></div>")),
+        new GoldenCase(
+            "grid-explicit-placement",
+            Doc(".grid{display:grid;grid-template-columns:repeat(3,100px);}.item{grid-column:2 / 3;}",
+                "<div class=\"grid\"><div class=\"item\">Col2</div></div>")),
+        new GoldenCase(
+            "grid-span",
+            Doc(".grid{display:grid;grid-template-columns:repeat(3,100px);}.item{grid-column:1 / span 2;}",
+                "<div class=\"grid\"><div class=\"item\">Span2</div></div>")),
+        new GoldenCase(
+            "grid-auto-flow-row",
+            Doc(".grid{display:grid;grid-template-columns:repeat(2,100px);grid-auto-flow:row;}.item{height:40px;}",
+                "<div class=\"grid\"><div class=\"item\">1</div><div class=\"item\">2</div><div class=\"item\">3</div></div>")),
+        new GoldenCase(
+            "grid-named-areas",
+            Doc(".grid{display:grid;grid-template-areas:\"head head\" \"nav main\";"
+                + "grid-template-columns:100px 100px;grid-template-rows:40px 40px;}"
+                + ".head{grid-area:head;}.main{grid-area:main;}",
+                "<div class=\"grid\"><div class=\"head\">Head</div><div class=\"main\">Main</div></div>")),
+        new GoldenCase(
+            "grid-nested",
+            Doc(".outer{display:grid;grid-template-columns:100px 200px;}"
+                + ".inner{display:grid;width:200px;grid-template-columns:100px 100px;}.s{width:100px;}.g{width:30px;}",
+                "<div class=\"outer\"><div class=\"s\">Spacer</div>"
+                + "<div class=\"inner\"><div class=\"g\">X</div><div class=\"g\">Y</div></div></div>")),
+    };
+
+    /// <summary>
     /// Inline-layout golden cases: line wrapping, baseline alignment across font sizes,
     /// vertical-align, and white-space handling. v0.1 inline subset only.
     /// </summary>
@@ -623,6 +680,14 @@ internal static class GoldenCorpus
     public static IEnumerable<object[]> FlexCasesData() =>
         FlexLayout.Select(c => new object[] { c.Name });
 
+    /// <summary>
+    /// MemberData source yielding <c>[case.Name]</c> for the grid-layout group only (Phase 19).
+    /// Sourced DIRECTLY from the standalone <see cref="GridLayout"/> group — grid is intentionally
+    /// NOT in <see cref="AllCases"/> (see the GridLayout group remarks).
+    /// </summary>
+    public static IEnumerable<object[]> GridCasesData() =>
+        GridLayout.Select(c => new object[] { c.Name });
+
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the inline-layout group only.</summary>
     public static IEnumerable<object[]> InlineCasesData() =>
         InlineLayout.Select(c => new object[] { c.Name });
@@ -698,9 +763,10 @@ internal static class GoldenCorpus
 
     /// <summary>
     /// Looks up a registered case by name. Searches the default-path corpus AND the standalone
-    /// <see cref="FlexLayout"/> group so flex cases are resolvable by name without polluting
-    /// <see cref="AllCases"/> (which drives the flag-less canary + default-path byte-equality theory).
+    /// <see cref="FlexLayout"/> / <see cref="GridLayout"/> groups so flex/grid cases are resolvable by
+    /// name without polluting <see cref="AllCases"/> (which drives the flag-less canary + default-path
+    /// byte-equality theory — a flex/grid case there THROWS PdfPolicyException).
     /// </summary>
     public static GoldenCase ByName(string name) =>
-        AllCases.Concat(FlexLayout).First(c => c.Name == name);
+        AllCases.Concat(FlexLayout).Concat(GridLayout).First(c => c.Name == name);
 }
