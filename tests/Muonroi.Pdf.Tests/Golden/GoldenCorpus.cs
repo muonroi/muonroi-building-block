@@ -65,6 +65,56 @@ internal static class GoldenCorpus
     };
 
     /// <summary>
+    /// Flex-layout golden cases (Phase 18, FLEX-07). Rendered ONLY through the modern-layout opt-in
+    /// (AllowModernLayout=true) by <see cref="FlexLayoutGoldenTests"/>. CRITICAL: this group is
+    /// deliberately NOT concatenated into <see cref="AllCases"/> — under the default
+    /// <c>LegacyPrintPolicy</c> (flag off) a <c>display:flex</c> document hits
+    /// <c>forbidden.display.flex</c> and MPdfService THROWS PdfPolicyException, which would redden the
+    /// flag-less DeterminismCanaryTests and the default-path byte-equality theory. Keeping flex out of
+    /// AllCases guarantees those flag-less consumers only ever see the 81 default-path cases.
+    /// </summary>
+    internal static readonly IReadOnlyList<GoldenCase> FlexLayout = new[]
+    {
+        new GoldenCase(
+            "flex-row-basic",
+            Doc(".flex{display:flex;width:300px;}.item{width:50px;}",
+                "<div class=\"flex\"><div class=\"item\">A</div><div class=\"item\">B</div><div class=\"item\">C</div></div>")),
+        new GoldenCase(
+            "flex-grow-distribute",
+            Doc(".flex{display:flex;width:300px;}.g{flex-grow:1;flex-basis:0;}",
+                "<div class=\"flex\"><div class=\"g\">One</div><div class=\"g\">Two</div></div>")),
+        new GoldenCase(
+            "flex-justify-space-between",
+            Doc(".flex{display:flex;width:300px;justify-content:space-between;}.item{width:50px;}",
+                "<div class=\"flex\"><div class=\"item\">L</div><div class=\"item\">R</div></div>")),
+        new GoldenCase(
+            "flex-align-items-stretch",
+            Doc(".flex{display:flex;width:300px;height:100px;align-items:stretch;}.item{width:50px;}",
+                "<div class=\"flex\"><div class=\"item\">Stretch</div></div>")),
+        new GoldenCase(
+            "flex-wrap-two-line",
+            Doc(".flex{display:flex;width:120px;flex-wrap:wrap;}.item{width:50px;height:20px;}",
+                "<div class=\"flex\"><div class=\"item\">1</div><div class=\"item\">2</div><div class=\"item\">3</div></div>")),
+        new GoldenCase(
+            "flex-gap",
+            Doc(".flex{display:flex;width:300px;gap:20px;}.item{width:50px;}",
+                "<div class=\"flex\"><div class=\"item\">A</div><div class=\"item\">B</div></div>")),
+        new GoldenCase(
+            "flex-column",
+            Doc(".flex{display:flex;flex-direction:column;height:300px;}.item{height:40px;}",
+                "<div class=\"flex\"><div class=\"item\">Top</div><div class=\"item\">Bottom</div></div>")),
+        new GoldenCase(
+            "flex-order",
+            Doc(".flex{display:flex;width:300px;}.first{width:50px;order:2;}.second{width:50px;order:1;}",
+                "<div class=\"flex\"><div class=\"first\">2nd</div><div class=\"second\">1st</div></div>")),
+        new GoldenCase(
+            "flex-nested",
+            Doc(".outer{display:flex;width:500px;}.inner{display:flex;width:200px;}.s{width:100px;}.g{width:30px;}",
+                "<div class=\"outer\"><div class=\"s\">Spacer</div>"
+                + "<div class=\"inner\"><div class=\"g\">X</div><div class=\"g\">Y</div></div></div>")),
+    };
+
+    /// <summary>
     /// Inline-layout golden cases: line wrapping, baseline alignment across font sizes,
     /// vertical-align, and white-space handling. v0.1 inline subset only.
     /// </summary>
@@ -565,6 +615,14 @@ internal static class GoldenCorpus
     public static IEnumerable<object[]> BlockCasesData() =>
         BlockLayout.Select(c => new object[] { c.Name });
 
+    /// <summary>
+    /// MemberData source yielding <c>[case.Name]</c> for the flex-layout group only (Phase 18).
+    /// Sourced DIRECTLY from the standalone <see cref="FlexLayout"/> group — flex is intentionally
+    /// NOT in <see cref="AllCases"/> (see the FlexLayout group remarks).
+    /// </summary>
+    public static IEnumerable<object[]> FlexCasesData() =>
+        FlexLayout.Select(c => new object[] { c.Name });
+
     /// <summary>MemberData source yielding <c>[case.Name]</c> for the inline-layout group only.</summary>
     public static IEnumerable<object[]> InlineCasesData() =>
         InlineLayout.Select(c => new object[] { c.Name });
@@ -638,7 +696,11 @@ internal static class GoldenCorpus
             new(new ResourceResult(PngBytes, "image/png"));
     }
 
-    /// <summary>Looks up a registered case by name.</summary>
+    /// <summary>
+    /// Looks up a registered case by name. Searches the default-path corpus AND the standalone
+    /// <see cref="FlexLayout"/> group so flex cases are resolvable by name without polluting
+    /// <see cref="AllCases"/> (which drives the flag-less canary + default-path byte-equality theory).
+    /// </summary>
     public static GoldenCase ByName(string name) =>
-        AllCases.First(c => c.Name == name);
+        AllCases.Concat(FlexLayout).First(c => c.Name == name);
 }

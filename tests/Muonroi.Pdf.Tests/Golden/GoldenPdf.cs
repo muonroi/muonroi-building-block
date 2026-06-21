@@ -64,6 +64,25 @@ internal static class GoldenPdf
     }
 
     /// <summary>
+    /// Flag-aware render path (FLEX-07): builds the provider with
+    /// <c>PdfConfigs:Policy:AllowModernLayout</c> set from <paramref name="allowModernLayout"/> so
+    /// flex goldens render through the modern-layout opt-in. The flag-less overload above is left
+    /// byte-for-byte unchanged — the 81-baseline regression guard depends on the default path.
+    /// </summary>
+    internal static async Task<byte[]> RenderAsync(
+        string html, PdfRenderOptions options, bool allowModernLayout, CancellationToken ct = default)
+    {
+        using ServiceProvider provider = PdfServiceTestHarness.BuildProvider(
+            PdfServiceTestHarness.ValidConfig(new Dictionary<string, string?>
+            {
+                ["PdfConfigs:Policy:AllowModernLayout"] = allowModernLayout ? "true" : "false",
+            }));
+        var svc = provider.GetRequiredService<IMPdfService>();
+        (byte[] bytes, _) = await svc.RenderToBytesAsync(html, options, ct);
+        return bytes;
+    }
+
+    /// <summary>
     /// Renders the case and either regenerates (UpdateMode) or asserts byte-equality against the
     /// committed embedded baseline.
     /// </summary>
@@ -74,7 +93,36 @@ internal static class GoldenPdf
         CancellationToken ct = default,
         [CallerFilePath] string callerPath = "")
     {
-        byte[] actual = await RenderAsync(html, options, ct);
+        await VerifyCoreAsync(caseName, html, options, allowModernLayout: false, ct, callerPath);
+    }
+
+    /// <summary>
+    /// Flag-aware <see cref="VerifyAsync(string, string, PdfRenderOptions, CancellationToken, string)"/>
+    /// overload: renders through the modern-layout opt-in (FLEX-07). UpdateMode + structural compare
+    /// are identical to the flag-less overload.
+    /// </summary>
+    public static async Task VerifyAsync(
+        string caseName,
+        string html,
+        PdfRenderOptions options,
+        bool allowModernLayout,
+        CancellationToken ct = default,
+        [CallerFilePath] string callerPath = "")
+    {
+        await VerifyCoreAsync(caseName, html, options, allowModernLayout, ct, callerPath);
+    }
+
+    private static async Task VerifyCoreAsync(
+        string caseName,
+        string html,
+        PdfRenderOptions options,
+        bool allowModernLayout,
+        CancellationToken ct,
+        string callerPath)
+    {
+        byte[] actual = allowModernLayout
+            ? await RenderAsync(html, options, allowModernLayout: true, ct)
+            : await RenderAsync(html, options, ct);
 
         if (UpdateMode)
         {
