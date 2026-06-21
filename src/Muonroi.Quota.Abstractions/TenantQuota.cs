@@ -91,7 +91,10 @@ public sealed class TenantQuota
     public int MaxConnectorExecutionsPerDay { get; set; } = 100;
 
     /// <summary>
-    /// Gets or sets the maximum PDF render events recorded per day. Default: int.MaxValue (unlimited — Phase 16 is record-only).
+    /// Gets or sets the enforced per-tier maximum number of PDF render events allowed per day
+    /// (Phase 17 / MON-04). Sourced from the licensed tier: finite for non-Enterprise tiers
+    /// (Free/Starter/Professional) and <see cref="int.MaxValue"/> (unlimited) for Enterprise.
+    /// The instance default is <see cref="int.MaxValue"/>; tier presets set finite caps.
     /// </summary>
     public int MaxPdfRendersPerDay { get; set; } = int.MaxValue;
 
@@ -158,7 +161,8 @@ public static class TenantQuotaPresets
                 MaxMessagesPerMinute = 50,
                 MaxTotalConnectors = 2,
                 MaxConnectorExecutionsPerDay = 100,
-                MaxPdfRendersPerDay = int.MaxValue
+                // MON-04: finite per-tier PDF render cap (Free = smallest daily allowance).
+                MaxPdfRendersPerDay = 50
             };
             return free;
         }
@@ -190,7 +194,8 @@ public static class TenantQuotaPresets
                 MaxMessagesPerMinute = 200,
                 MaxTotalConnectors = 10,
                 MaxConnectorExecutionsPerDay = 1000,
-                MaxPdfRendersPerDay = int.MaxValue
+                // MON-04: finite per-tier PDF render cap (Starter > Free).
+                MaxPdfRendersPerDay = 500
             };
             return quota;
         }
@@ -222,7 +227,8 @@ public static class TenantQuotaPresets
                 MaxMessagesPerMinute = 1000,
                 MaxTotalConnectors = 50,
                 MaxConnectorExecutionsPerDay = 10_000,
-                MaxPdfRendersPerDay = int.MaxValue
+                // MON-04: finite per-tier PDF render cap (Professional > Starter).
+                MaxPdfRendersPerDay = 5_000
             };
             return quota;
         }
