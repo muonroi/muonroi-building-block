@@ -37,7 +37,7 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 
 - [x] **Phase 18: Flexbox Layout Engine (OSS `Muonroi.Pdf`)** — Close the single largest remaining render gap: implement a real CSS Flexbox layout algorithm in the OSS engine (`FlexContainerBox` + `FlexLayoutEngine`: flex-direction, wrap, justify-content, align-items/content/self, flex-grow/shrink/basis, gap, order), replacing today's hard-block / degrade-to-block. Gated behind a new opt-in `PdfPolicySettings.AllowModernLayout` (default false) so the strict-by-default charter is preserved with ZERO breaking change — existing golden baselines stayed byte-identical (0 modified, 9 flex baselines added); only new flex goldens were added. CSS Grid deferred to Phase 19. (completed 2026-06-21; verified 5/5 SC, 8/8 FLEX — 18-VERIFICATION.md)
 
-- [ ] **Phase 19: CSS Grid Layout Engine (OSS `Muonroi.Pdf`)** — Close the second half of the flex/grid gap: implement a real CSS Grid layout algorithm in the OSS engine (`GridContainerBox` + `GridLayoutEngine`: track sizing with px/%/fr/auto/minmax()/repeat(), gap, explicit line placement + span, grid-template-areas, auto-placement via grid-auto-flow, box/content alignment), replacing today's hard-block / degrade-to-block. Unlocked by the SAME opt-in `PdfPolicySettings.AllowModernLayout` flag added in Phase 18 (strict-by-default preserved; existing + Phase-18 flex baselines stay byte-identical; only new grid goldens added). Defers subgrid/auto-fill-fit/dense/masonry. Direct sibling of Phase 18 — identical architecture, grid-specific algorithm.
+- [x] **Phase 19: CSS Grid Layout Engine (OSS `Muonroi.Pdf`)** — Close the second half of the flex/grid gap: implement a real CSS Grid layout algorithm in the OSS engine (`GridContainerBox` + `GridLayoutEngine`: track sizing with px/%/fr/auto/minmax()/repeat(), gap, explicit line placement + span, grid-template-areas, auto-placement via grid-auto-flow, box/content alignment), replacing today's hard-block / degrade-to-block. Unlocked by the SAME opt-in `PdfPolicySettings.AllowModernLayout` flag added in Phase 18 (strict-by-default preserved; existing + Phase-18 flex baselines stayed byte-identical — 0 modified, 10 grid baselines added). Defers subgrid/auto-fill-fit/dense/masonry. Direct sibling of Phase 18. (completed 2026-06-21; verified 5/5 SC, 8/8 GRID — 19-VERIFICATION.md)
 
 ## Phase Details
 
@@ -581,7 +581,7 @@ Plans:
   5. `Muonroi.Pdf.Tests` + `Muonroi.Pdf.Governance.Tests` green (per-project); build validated against .NET 8/9.
 
 **Requirements**: GRID-01, GRID-02, GRID-03, GRID-04, GRID-05, GRID-06, GRID-07, GRID-08
-**Plans**: 4 plans
+**Plans**: 4 plans (4 sequential waves) — COMPLETE 2026-06-21; verified 5/5 SC, 8/8 GRID (19-VERIFICATION.md). Pre-push gate: Pdf.Tests 661/0, Governance.Tests 11/0; 0 baselines modified, 10 grid baselines added.
 
 Plans:
 - [x] 19-01-PLAN.md — Gate LegacyPrintPolicy grid display + grid sub-props on AllowModernLayout; flip the Phase-18 grid-blocked tests to grid-accepted (GRID-01/02/03)
