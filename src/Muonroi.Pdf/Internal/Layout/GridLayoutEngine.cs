@@ -16,7 +16,9 @@ namespace Muonroi.Pdf.Internal.Layout;
 // / named areas / sparse auto-flow), and cell-rect positioning with justify/align items/self/content.
 //
 // First-cut discretion (D-01), documented in 19-03-SUMMARY.md:
-//  - auto-fill/auto-fit not supported (repeat() is expanded with a fixed count at parse time).
+//  - repeat(auto-fill | auto-fit, …) supported: the count is resolved at layout time from the
+//    definite axis size (MaterializeTemplate). auto-fit collapses empty trailing repetitions by
+//    capping the count at the item count (an approximation of per-track collapse).
 //  - grid-auto-flow dense not supported — sparse packing only.
 //  - subgrid / masonry not supported.
 //  - baseline alignment approximated as start.
@@ -61,14 +63,21 @@ internal sealed class GridLayoutEngine
             return containerHeight > 0f ? containerHeight : 0f;
         }
 
+        // STEP 0 — resolve repeat(auto-fill | auto-fit, …) placeholders into concrete template tracks
+        // against the (definite) axis size, BEFORE placement (placement needs the explicit track count).
+        // The column axis is definite (container width); the row axis only when the height is explicit.
+        int itemCount = children.Count;
+        var colTemplate = MaterializeTemplate(container.TemplateColumns, containerWidth, definite: containerWidth > 0f, container.ColumnGap, itemCount);
+        var rowTemplate = MaterializeTemplate(container.TemplateRows, containerHeight, definite: containerHeight > 0f, container.RowGap, itemCount);
+
         // STEP 1 — PLACEMENT. Resolve explicit / named-area placements, then sparse auto-flow the rest.
         // Produces a placement per child plus the final (explicit+implicit) column/row counts.
-        var placements = PlaceItems(container, out int colCount, out int rowCount);
+        var placements = PlaceItems(container, colTemplate, rowTemplate, out int colCount, out int rowCount);
 
         // STEP 2 — build the effective track lists (explicit template + implicit tracks sized by
         // grid-auto-columns / grid-auto-rows, defaulting to auto).
-        var colTracks = BuildEffectiveTracks(container.TemplateColumns, container.AutoColumns, colCount);
-        var rowTracks = BuildEffectiveTracks(container.TemplateRows, container.AutoRows, rowCount);
+        var colTracks = BuildEffectiveTracks(colTemplate, container.AutoColumns, colCount);
+        var rowTracks = BuildEffectiveTracks(rowTemplate, container.AutoRows, rowCount);
 
         // STEP 3 — COLUMN sizing against the (definite) container width.
         float colGap = container.ColumnGap;
@@ -120,10 +129,11 @@ internal sealed class GridLayoutEngine
     // grid-area shorthand) and named-area items are placed first; remaining items flow sparsely per
     // grid-auto-flow into the next free cell. Implicit tracks are created beyond the explicit
     // template, BOUNDED by the item count (T-19-06: each unplaced item consumes at most one cell).
-    private static List<GridPlacement> PlaceItems(GridContainerBox container, out int colCount, out int rowCount)
+    private static List<GridPlacement> PlaceItems(GridContainerBox container,
+        List<GridTrack> colTemplate, List<GridTrack> rowTemplate, out int colCount, out int rowCount)
     {
-        int explicitCols = Math.Max(container.TemplateColumns.Count, 1);
-        int explicitRows = Math.Max(container.TemplateRows.Count, 1);
+        int explicitCols = Math.Max(colTemplate.Count, 1);
+        int explicitRows = Math.Max(rowTemplate.Count, 1);
 
         var areaIndex = BuildAreaIndex(container.TemplateAreas);
 
@@ -459,6 +469,117 @@ internal sealed class GridLayoutEngine
         if (tracks.Count == 0)
             tracks.Add(new GridTrack { Kind = GridTrackKind.Auto });
         return tracks;
+    }
+
+    // Resolve repeat(auto-fill | auto-fit) placeholders into concrete tracks against the axis size.
+    // Non-AutoRepeat tracks pass through unchanged. When the axis is indefinite, or the pattern has no
+    // countable fixed size (pure fr/auto), the placeholder degrades to a single repetition. CSS allows
+    // at most one auto-repeat per track list; any extra placeholder also degrades to one repetition.
+    private static List<GridTrack> MaterializeTemplate(
+        List<GridTrack> template, float axisSize, bool definite, float gap, int itemCount)
+    {
+        bool hasAutoRepeat = false;
+        foreach (var t in template)
+        {
+            if (t.Kind == GridTrackKind.AutoRepeat) { hasAutoRepeat = true; break; }
+        }
+        if (!hasAutoRepeat)
+            return template;
+
+        // Fixed (non-repeat) contribution reduces the space available to the repeat region.
+        float fixedExtent = 0f;
+        int fixedCount = 0;
+        foreach (var t in template)
+        {
+            if (t.Kind == GridTrackKind.AutoRepeat) continue;
+            fixedExtent += BaseSizeForCount(t, axisSize, definite);
+            fixedCount++;
+        }
+
+        var result = new List<GridTrack>(template.Count);
+        bool autoRepeatConsumed = false;
+        foreach (var t in template)
+        {
+            if (t.Kind != GridTrackKind.AutoRepeat)
+            {
+                result.Add(t);
+                continue;
+            }
+
+            var pattern = t.Pattern ?? [];
+            if (pattern.Count == 0)
+                continue;
+
+            int reps = 1;
+            if (definite && !autoRepeatConsumed)
+            {
+                reps = AutoRepeatCount(pattern, axisSize, gap, fixedExtent, fixedCount, t.RepeatMode, itemCount);
+                autoRepeatConsumed = true;
+            }
+
+            for (int r = 0; r < reps; r++)
+                result.AddRange(pattern);
+        }
+
+        if (result.Count == 0)
+            result.Add(new GridTrack { Kind = GridTrackKind.Auto });
+        return result;
+    }
+
+    // Largest repetition count r ≥ 1 such that the fixed tracks plus r copies of the pattern (with
+    // uniform gaps) fit within axisSize. auto-fit caps r at the repetitions the items can fill so
+    // empty trailing repetitions collapse. Returns 1 when the pattern has no countable fixed size.
+    private static int AutoRepeatCount(
+        List<GridTrack> pattern, float axisSize, float gap, float fixedExtent, int fixedCount,
+        GridAutoRepeatMode mode, int itemCount)
+    {
+        int patternLen = pattern.Count;
+        float patternFixedExtent = 0f;
+        foreach (var t in pattern)
+            patternFixedExtent += BaseSizeForCount(t, axisSize, definite: true);
+
+        if (patternFixedExtent <= 0f)
+            return 1; // pure fr/auto pattern — count is indeterminate; one repetition.
+
+        // axisSize ≈ fixedExtent + r·patternFixedExtent + (fixedCount + r·patternLen − 1)·gap
+        // Solve for the largest r. (fixedCount = 0 makes the −(fixedCount−1)·gap term add one gap,
+        // which correctly accounts for the absent leading gap of a pure auto-repeat track list.)
+        float numerator = axisSize - fixedExtent - (fixedCount - 1) * gap;
+        float denominator = patternFixedExtent + patternLen * gap;
+        int reps = denominator > 0f ? (int)MathF.Floor(numerator / denominator) : 1;
+        if (reps < 1) reps = 1;
+
+        // DoS clamp (mirrors the integer repeat() clamp): bound total expanded tracks.
+        int maxReps = Math.Max(1, GridTrack.MaxRepeatCount / Math.Max(1, patternLen));
+        if (reps > maxReps) reps = maxReps;
+
+        if (mode == GridAutoRepeatMode.AutoFit)
+        {
+            int neededReps = Math.Max(1, (Math.Max(0, itemCount) + patternLen - 1) / patternLen); // ceil(items / patternLen)
+            if (reps > neededReps) reps = neededReps;
+        }
+
+        return reps;
+    }
+
+    // The countable fixed base size of a track for auto-fill/auto-fit repetition counting: a fixed
+    // length, a percentage of a definite axis, or a minmax's min (falling back to its max). Flexible
+    // (fr) and auto tracks have no countable size → 0.
+    private static float BaseSizeForCount(GridTrack t, float axisSize, bool definite)
+    {
+        switch (t.Kind)
+        {
+            case GridTrackKind.Length:
+                return MathF.Max(0f, t.Length);
+            case GridTrackKind.Percent:
+                return definite ? MathF.Max(0f, t.Percent * axisSize) : 0f;
+            case GridTrackKind.MinMax:
+                float min = t.Min != null ? BaseSizeForCount(t.Min, axisSize, definite) : 0f;
+                if (min > 0f) return min;
+                return t.Max != null ? BaseSizeForCount(t.Max, axisSize, definite) : 0f;
+            default: // Fraction / Auto / AutoRepeat — no countable fixed size
+                return 0f;
+        }
     }
 
     // Resolve one axis of tracks into pixel sizes.

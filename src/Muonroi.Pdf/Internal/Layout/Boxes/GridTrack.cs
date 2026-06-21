@@ -21,6 +21,24 @@ internal enum GridTrackKind
 
     /// <summary>A <c>minmax(min, max)</c> track; <see cref="GridTrack.Min"/> / <see cref="GridTrack.Max"/> hold the two non-MinMax sub-tracks.</summary>
     MinMax,
+
+    /// <summary>
+    /// A <c>repeat(auto-fill | auto-fit, &lt;pattern&gt;)</c> placeholder. The repetition count depends on the
+    /// container's inline size and is resolved at layout time (GridLayoutEngine.MaterializeTemplate),
+    /// not parse time. <see cref="GridTrack.Pattern"/> holds the per-repetition track list and
+    /// <see cref="GridTrack.RepeatMode"/> the fill/fit mode.
+    /// </summary>
+    AutoRepeat,
+}
+
+/// <summary>The repetition mode of a <c>repeat(auto-fill | auto-fit, …)</c> track.</summary>
+internal enum GridAutoRepeatMode
+{
+    /// <summary><c>auto-fill</c>: fit as many repetitions as the container allows, keeping empty tracks.</summary>
+    AutoFill,
+
+    /// <summary><c>auto-fit</c>: like auto-fill, but empty trailing repetitions collapse (approximated here by capping repetitions at the item count).</summary>
+    AutoFit,
 }
 
 /// <summary>
@@ -53,12 +71,19 @@ internal sealed class GridTrack
     /// <summary>For <see cref="GridTrackKind.MinMax"/>: the maximum sub-track (a non-MinMax track). Null otherwise.</summary>
     public GridTrack? Max { get; set; }
 
+    /// <summary>For <see cref="GridTrackKind.AutoRepeat"/>: the per-repetition track pattern. Null otherwise.</summary>
+    public List<GridTrack>? Pattern { get; set; }
+
+    /// <summary>For <see cref="GridTrackKind.AutoRepeat"/>: fill vs fit. Ignored otherwise.</summary>
+    public GridAutoRepeatMode RepeatMode { get; set; } = GridAutoRepeatMode.AutoFill;
+
     /// <summary>
     /// Parses a CSS track-list string (e.g. <c>"100px 1fr 2fr"</c>, <c>"repeat(3, 1fr)"</c>,
     /// <c>"minmax(50px, 1fr) auto"</c>) into an ordered list of <see cref="GridTrack"/>.
     /// Expands <c>repeat(N, &lt;track-list&gt;)</c> to N copies of the inner list (N is a positive int,
-    /// CLAMPED to <see cref="MaxRepeatCount"/>; a non-integer first arg such as <c>auto-fill</c>/<c>auto-fit</c>
-    /// is OUT of scope per D-01 and skips the repeat). Handles nested parens (repeat may contain minmax).
+    /// CLAMPED to <see cref="MaxRepeatCount"/>). <c>repeat(auto-fill | auto-fit, &lt;pattern&gt;)</c> becomes a
+    /// single <see cref="GridTrackKind.AutoRepeat"/> placeholder resolved at layout time (count depends on
+    /// container size). Handles nested parens (repeat may contain minmax).
     /// Never throws — empty/null/malformed input yields an empty list.
     /// </summary>
     internal static List<GridTrack> ParseTrackList(string? value, float fontSize)
@@ -152,7 +177,26 @@ internal sealed class GridTrack
         string countToken = inner[..comma].Trim();
         string innerList = inner[(comma + 1)..].Trim();
 
-        // auto-fill / auto-fit (non-integer first arg) are OUT of scope (D-01) → skip the repeat.
+        // auto-fill / auto-fit: the repetition count depends on the container's inline size, so it
+        // cannot be expanded here. Emit a single AutoRepeat placeholder carrying the pattern + mode;
+        // GridLayoutEngine.MaterializeTemplate resolves the count at layout time.
+        bool isAutoFill = string.Equals(countToken, "auto-fill", StringComparison.OrdinalIgnoreCase);
+        bool isAutoFit = string.Equals(countToken, "auto-fit", StringComparison.OrdinalIgnoreCase);
+        if (isAutoFill || isAutoFit)
+        {
+            var pattern = ParseTrackList(innerList, fontSize);
+            if (pattern.Count == 0)
+                return;
+            output.Add(new GridTrack
+            {
+                Kind = GridTrackKind.AutoRepeat,
+                RepeatMode = isAutoFit ? GridAutoRepeatMode.AutoFit : GridAutoRepeatMode.AutoFill,
+                Pattern = pattern
+            });
+            return;
+        }
+
+        // Integer repeat(N, …): expand to N copies now.
         if (!int.TryParse(countToken, NumberStyles.Integer, CultureInfo.InvariantCulture, out int count) || count <= 0)
             return;
 

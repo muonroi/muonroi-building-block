@@ -193,6 +193,60 @@ public sealed class GridLayoutTests
             For(elements, b1).Position.X + 200f * Px, 0.5f);
     }
 
+    // --- AutoFill: repeat(auto-fill,100px) width:300px → 3 columns; a 4th item wraps to row 2 -----
+    [Fact]
+    public void AutoFill_ResolvesCountFromWidth_AndWraps()
+    {
+        var c1 = Item(new() { ["height"] = "50px" });
+        var c2 = Item(new() { ["height"] = "50px" });
+        var c3 = Item(new() { ["height"] = "50px" });
+        var c4 = Item(new() { ["height"] = "50px" });
+        var (container, elements) = RunGrid(
+            Grid(new() { ["width"] = "300px", ["grid-template-columns"] = "repeat(auto-fill, 100px)" },
+                c1, c2, c3, c4));
+
+        var b1 = container.Children[0];
+        var b3 = container.Children[2];
+        var b4 = container.Children[3];
+
+        // 300px / 100px = 3 columns → third at 200px, fourth wraps to column 0 of a new row.
+        For(elements, b3).Position.X.Should().BeApproximately(200f * Px, 0.5f);
+        For(elements, b4).Position.X.Should().BeApproximately(0f, 0.5f);
+        For(elements, b4).Position.Y.Should().BeGreaterThan(For(elements, b1).Position.Y + 0.5f);
+    }
+
+    // --- AutoFit: repeat(auto-fit,minmax(100px,1fr)) width:300px, 2 items → empties collapse, ----
+    // --- the two tracks stretch to fill the row (150px each) instead of staying at 100px ---------
+    [Fact]
+    public void AutoFit_CollapsesEmptyTracks_ItemsStretchToFill()
+    {
+        var c1 = Item(new());
+        var c2 = Item(new());
+        var (container, elements) = RunGrid(
+            Grid(new() { ["width"] = "300px", ["grid-template-columns"] = "repeat(auto-fit, minmax(100px, 1fr))" },
+                c1, c2));
+
+        var b1 = container.Children[0];
+        var b2 = container.Children[1];
+
+        // auto-fill would make 3 tracks (each 100px, no stretch); auto-fit caps at the 2 items, so the
+        // two fr tracks split the full 300px → 150px each.
+        For(elements, b1).Position.Width.Should().BeApproximately(150f * Px, 0.5f);
+        For(elements, b2).Position.X.Should().BeApproximately(150f * Px, 0.5f);
+    }
+
+    // --- AutoFill degrade: repeat(auto-fill,1fr) has no countable size → 1 repetition (full width) -
+    [Fact]
+    public void AutoFill_PureFr_DegradesToSingleRepetition()
+    {
+        var c1 = Item(new());
+        var (container, elements) = RunGrid(
+            Grid(new() { ["width"] = "300px", ["grid-template-columns"] = "repeat(auto-fill, 1fr)" }, c1));
+
+        // A pure-fr pattern has no countable fixed size → one repetition spanning the full width.
+        For(elements, container.Children[0]).Position.Width.Should().BeApproximately(300f * Px, 0.5f);
+    }
+
     // --- Gap: width:300px, 100px 100px, column-gap:20px → second.X = first + 100px + 20px --------
     [Fact]
     public void Gap_AddsBetweenTracks()

@@ -228,12 +228,25 @@ public sealed class GridBoxTreeTests
         tracks.Should().OnlyContain(t => t.Kind == GridTrackKind.Fraction && t.Fraction == 1f);
     }
 
-    // D-01 — auto-fill / auto-fit (non-integer first arg) is out of scope → repeat skipped.
+    // repeat(auto-fill | auto-fit, …) parses to a single AutoRepeat placeholder (count resolved at
+    // layout time from the container size). The pattern + mode are carried for the engine.
     [Fact]
-    public void ParseTrackList_RepeatAutoFill_Skipped()
+    public void ParseTrackList_RepeatAutoFill_ProducesAutoRepeatPlaceholder()
     {
-        var tracks = GridTrack.ParseTrackList("repeat(auto-fill, 1fr)", 12f);
-        tracks.Should().BeEmpty();
+        var tracks = GridTrack.ParseTrackList("repeat(auto-fill, minmax(100px, 1fr))", 12f);
+        tracks.Should().ContainSingle();
+        tracks[0].Kind.Should().Be(GridTrackKind.AutoRepeat);
+        tracks[0].RepeatMode.Should().Be(GridAutoRepeatMode.AutoFill);
+        tracks[0].Pattern.Should().ContainSingle().Which.Kind.Should().Be(GridTrackKind.MinMax);
+    }
+
+    [Fact]
+    public void ParseTrackList_RepeatAutoFit_ProducesAutoFitPlaceholder()
+    {
+        var tracks = GridTrack.ParseTrackList("repeat(auto-fit, 100px)", 12f);
+        tracks.Should().ContainSingle();
+        tracks[0].Kind.Should().Be(GridTrackKind.AutoRepeat);
+        tracks[0].RepeatMode.Should().Be(GridAutoRepeatMode.AutoFit);
     }
 
     // T-19-04 — malformed track tokens degrade to Auto, never throw.
