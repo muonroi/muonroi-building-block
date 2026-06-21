@@ -262,6 +262,18 @@
 | DESIGN-01 – DESIGN-03 | Phase 9 | v1.0 | Pending |
 | TCIS-01 – TCIS-02 | Phase 9 | v1.0 | Pending |
 | COMM-01 – COMM-02 | Phase 9 | v1.0 | Pending |
+| MON-01 – MON-08 | Phase 17 | v1.1 | Pending |
+
+### Phase 17 — Monetization Rail (MON)
+
+- **MON-01**: `Muonroi.Billing.Abstractions` defines `IBillingProvider`, `UsageLineItem`, `IUsageAggregator`, and `PricingPlan` contracts (no payment-SDK dependency).
+- **MON-02**: A record-only default `IBillingProvider` records billable events and never calls an external service; provider failures are logged with context (No Silent Catch), never swallowed silently.
+- **MON-03**: `IUsageAggregator` rolls per-tenant metered usage (from `ITenantQuotaStore`) into priced `UsageLineItem`s for a billing period via a `PricingPlan`.
+- **MON-04**: Per-tier quota limits (incl. `MaxPdfRendersPerDay`) are sourced from the licensed tier rather than hard-coded `int.MaxValue`.
+- **MON-05**: control-plane host registers `UseQuotaEnforcement()`; a tenant over its tier limit receives HTTP 429 at the API boundary; the OSS render path is never blocked (SC5).
+- **MON-06**: control-plane exposes an invoice-preview endpoint returning the computed amount for a tenant + period from aggregated usage and the `PricingPlan` (replaces `PricingEndpoints` placeholder prices).
+- **MON-07**: license-server exposes a subscription + renewal lifecycle (renew endpoint, expiry/grace) so renewal is not manual re-issue only; exposes tier→quota-limit mapping.
+- **MON-08**: Full suites green across the three repos; `Muonroi.Pdf` (OSS) byte-identical (no golden re-baseline); no billing reference leaks into the OSS engine.
 
 **Coverage:**
 - v0.1 requirements: 86 total (PKG×7, ABST×14, DI×4, PIPE×8, LAYOUT×7, PAGE×8, FONT×6, IMG×5, SEC×7, DET×3, TEL×5, GOV×3, TEST×4, PERF×2, GATE×3)

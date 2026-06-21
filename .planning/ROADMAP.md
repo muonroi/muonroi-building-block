@@ -32,6 +32,8 @@ Nine phases deliver a pure-managed HTML/CSS-to-PDF renderer from zero to enterpr
 - [x] **Phase 15: Radial Gradients + Affine Transforms** — Extend Phase 14: `radial-gradient` backgrounds (PDF ShadingType 3, reuse axial-shading infra) + full 2D affine `transform` (translate/scale/matrix + multi-function chains, reuse CTM machinery). conic-gradient/JS/flex/grid stay out of scope; flexbox deferred to a later rendering phase. (completed 2026-06-20)
 - [x] **Phase 16: PDF Enterprise ↔ Governance/ControlPlane Integration** — Deepen `Muonroi.Pdf.Enterprise` from thin v1.0 stubs into the shared Muonroi enterprise rails (real `ActivationProof` license gate, control-plane-governed templates, `Quota` metering, `Compliance` audit) — max ecosystem reuse, ZERO change to the OSS engine (SC5). (completed 2026-06-20)
 
+- [ ] **Phase 17: Monetization Rail — Enforced Quota + Usage→Billing + Subscription** — Close the monetization gap both control-plane and license-server explicitly deferred. Turn record-only metering + placeholder pricing into an enforced, billable ecosystem rail: hard quota enforcement at the control-plane API boundary (NEVER the OSS render path), usage aggregation → priced line items + invoice-preview, an `IBillingProvider` seam (record-only default; payment-processor adapter behind the seam, deferred), and subscription/renewal lifecycle in license-server. Cross-repo (building-block + control-plane + license-server); ZERO change to OSS engine (SC5).
+
 ## Phase Details
 
 ### Phase 1: Abstractions + Contracts
@@ -484,6 +486,31 @@ Plans:
 - [x] 16-03-PLAN.md — WS-B D-03: PdfAuditControlPlaneStore compliance evidence-pack adapter (Wave 1)
 - [x] 16-04-PLAN.md — WS-B D-04: canary score endpoint auto-rollback below SSIM threshold (Wave 1)
 - [x] 16-05-PLAN.md — WS-C entitlement-aware Designer gate + WS-D confirm + SC4 green gate (Wave 3)
+
+### Phase 17: Monetization Rail — Enforced Quota + Usage→Billing + Subscription
+
+**Goal**: Close the monetization gap that `muonroi-control-plane` and `muonroi-license-server` both explicitly deferred (verified: control-plane has zero `Billing/Invoice/Payment/Stripe/Subscription`; `QuotaEnforcementMiddleware` exists in building-block but is never registered in the control-plane host; `PricingEndpoints` carries placeholder prices; license-server `09.4-ws-d-license-pdf/PLAN.md:34` defers *"Billing / metering ARR for PDF tier"*). Turn the record-only metering + placeholder pricing into an **enforced, billable rail** reused across every product line — without touching the OSS engine.
+
+**Depends on**: Phase 16 (real license gate + `Muonroi.Quota` metering + `Compliance`); existing `QuotaEnforcementMiddleware`, `PricingEndpoints`, license-server entitlement model.
+
+**Scope** (cross-repo workstreams; no new repos):
+  - **WS-A — building-block**: billing seam in a new `Muonroi.Billing.Abstractions` (`IBillingProvider`, `UsageLineItem`, `IUsageAggregator`, `PricingPlan`); a record-only default `IBillingProvider` (logs, never calls out); usage rollup over `ITenantQuotaStore` events; source `MaxPdfRendersPerDay` (and other quota limits) from the licensed tier instead of `int.MaxValue`. NO change to `Muonroi.Pdf` (OSS).
+  - **WS-B — control-plane**: register `UseQuotaEnforcement()` in the host with real per-tier limits; turn `PricingEndpoints` placeholders into a real `PricingPlan` model; add a usage-aggregation + **invoice-preview** endpoint that prices a tenant's metered usage for a period; wire the record-only `IBillingProvider`.
+  - **WS-D — license-server**: subscription record + **renewal endpoint** + expiry/grace lifecycle (no more manual re-issue only); expose tier→quota-limit mapping consumed by control-plane/building-block.
+
+**Out of scope** (deliberate): live payment-processor (Stripe) integration — the adapter lives behind `IBillingProvider` and is **stubbed/deferred** (no external dependency at build or test time); dunning, tax, multi-currency, proration math beyond simple per-unit pricing; ANY change to `Muonroi.Pdf` (OSS) — the one-way Enterprise→OSS boundary (SC5) is inviolable; new repos.
+
+**Success Criteria** (what must be TRUE):
+
+  1. A tenant exceeding its per-tier limit at the **control-plane API boundary** gets HTTP 429 via the now-registered `UseQuotaEnforcement()`; the OSS `IMPdfService.RenderAsync` path is still **never** blocked (SC5 preserved — enforcement sits at the API/enterprise layer, not in the engine).
+  2. Per-tenant metered usage aggregates into priced `UsageLineItem`s via a real `PricingPlan`; an **invoice-preview** endpoint returns the computed amount for a billing period (replacing `PricingEndpoints` placeholders).
+  3. `IBillingProvider` seam exists with a **record-only** default impl (No Silent Catch on provider failure); the payment-processor adapter is behind the seam and is NOT required to build or test (zero external dependency at build time).
+  4. license-server exposes a **subscription + renewal** lifecycle (renew endpoint, expiry/grace, tier→limit mapping); manual key re-issue is no longer the only renewal path.
+  5. Full `Muonroi.Pdf.Tests` + governance + control-plane + license-server suites green; the OSS engine stays byte-identical (no golden re-baseline).
+
+**Requirements**: MON-01, MON-02, MON-03, MON-04, MON-05, MON-06, MON-07, MON-08
+**Plans**: TBD (plan per workstream)
+**UI hint**: no
 
 ## Progress
 
