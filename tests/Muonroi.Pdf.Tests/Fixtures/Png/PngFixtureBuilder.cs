@@ -84,6 +84,38 @@ internal static class PngFixtureBuilder
             idatData: scanlines);
     }
 
+    /// <summary>
+    /// 8-bit grayscale (color_type=0) PNG, 8×8 px.
+    /// Horizontal ramp: gray = x * 32 (column 0 = black 0, column 4 = 128).
+    /// </summary>
+    public static byte[] Gray8()
+    {
+        const int w = 8, h = 8;
+        byte[] scanlines = BuildGrayScanlines(w, h, (x, _) => (byte)(x * 32));
+
+        return Assemble(w, h, colorType: 0, bitDepth: 8,
+            extraChunks: Array.Empty<byte[]>(),
+            idatData: scanlines);
+    }
+
+    /// <summary>
+    /// 8-bit grayscale+alpha (color_type=4) PNG, 8×8 px.
+    /// Constant gray=200; alpha ramps top (opaque) → bottom (transparent): alpha = 255*(h-1-y)/(h-1).
+    /// </summary>
+    public static byte[] GrayAlpha8()
+    {
+        const int w = 8, h = 8;
+        byte[] scanlines = BuildGrayAlphaScanlines(w, h, (_, y) =>
+        {
+            byte alpha = (byte)(255 * (h - 1 - y) / (h - 1));
+            return ((byte)200, alpha);
+        });
+
+        return Assemble(w, h, colorType: 4, bitDepth: 8,
+            extraChunks: Array.Empty<byte[]>(),
+            idatData: scanlines);
+    }
+
     // ── Scanline builders ────────────────────────────────────────────────────
 
     /// <summary>Builds raw (uncompressed) scanline bytes for a palette/index image.
@@ -120,6 +152,43 @@ internal static class PngFixtureBuilder
                 buf[off + 1 + x * 4 + 1] = g;
                 buf[off + 1 + x * 4 + 2] = b;
                 buf[off + 1 + x * 4 + 3] = a;
+            }
+        }
+        return buf;
+    }
+
+    /// <summary>Builds raw scanline bytes for an 8-bit grayscale image.
+    /// Each row = filter_byte(0=None) + w gray bytes.</summary>
+    private static byte[] BuildGrayScanlines(int w, int h, Func<int, int, byte> grayAt)
+    {
+        int rowBytes = 1 + w; // filter + 1 byte per pixel
+        byte[] buf = new byte[h * rowBytes];
+        for (int y = 0; y < h; y++)
+        {
+            int off = y * rowBytes;
+            buf[off] = 0; // filter=None
+            for (int x = 0; x < w; x++)
+                buf[off + 1 + x] = grayAt(x, y);
+        }
+        return buf;
+    }
+
+    /// <summary>Builds raw scanline bytes for an 8-bit grayscale+alpha image.
+    /// Each row = filter_byte(0=None) + w*(gray,alpha) bytes.</summary>
+    private static byte[] BuildGrayAlphaScanlines(int w, int h,
+        Func<int, int, (byte gray, byte a)> pixelAt)
+    {
+        int rowBytes = 1 + w * 2;
+        byte[] buf = new byte[h * rowBytes];
+        for (int y = 0; y < h; y++)
+        {
+            int off = y * rowBytes;
+            buf[off] = 0; // filter=None
+            for (int x = 0; x < w; x++)
+            {
+                (byte gray, byte a) = pixelAt(x, y);
+                buf[off + 1 + x * 2]     = gray;
+                buf[off + 1 + x * 2 + 1] = a;
             }
         }
         return buf;

@@ -183,10 +183,13 @@ even on incomplete font families.
 | Image inside `float` | Renders at correct position with float dimensions (G2 / G9 — 8.8 / 8.11) |
 | Image inside `position:absolute` cell | Rendered at cell position (G9 — 8.11) |
 
+**Supported PNG color types** (8-bit samples): RGB (`color_type=2`), palette (`color_type=3`),
+RGBA (`color_type=6`, alpha composited onto white), grayscale (`color_type=0`), and
+grayscale+alpha (`color_type=4`, alpha composited onto white). Grayscale samples expand to R=G=B.
+
 **Rejected image formats** (raised at decode):
-- RGBA PNG (`color_type=6`) — 4-channel alpha not supported
-- Palette PNG (`color_type=3`) — indexed color not supported
-- Grayscale PNG (`color_type=0`) — single-channel not supported
+- 16-bit PNG (`bit_depth=16`, any color type) — convert to 8-bit
+- Sub-8-bit grayscale PNG (`bit_depth` 1/2/4) — convert to 8-bit
 - GIF / WebP / SVG / BMP / TIFF — no decoder in v1
 - External URLs (`http(s)://`, `file://`, relative paths) — engine never fetches at render time
 

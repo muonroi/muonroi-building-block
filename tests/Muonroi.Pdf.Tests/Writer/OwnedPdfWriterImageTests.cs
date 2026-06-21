@@ -190,17 +190,16 @@ public sealed class OwnedPdfWriterImageTests
     [Fact]
     public async Task WriteAsync_PngImage_UnsupportedFormat_ThrowsPdfFormatException()
     {
-        // Grayscale PNG (color_type=0) is still unsupported in v1.0.1
-        // Build a minimal but structurally valid 1x1 grayscale PNG (color_type=0)
+        // color_type=5 is not a valid PNG colour type (valid: 0,2,3,4,6) — the writer must reject it.
         // We use a raw DecodedImage with the PNG bytes so the writer's DecodePngToRawRgb is exercised.
         byte[] sig = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
         byte[] ihdrData = new byte[13];
         ihdrData[0] = 0; ihdrData[1] = 0; ihdrData[2] = 0; ihdrData[3] = 1; // width=1
         ihdrData[4] = 0; ihdrData[5] = 0; ihdrData[6] = 0; ihdrData[7] = 1; // height=1
         ihdrData[8] = 8; // bit_depth=8
-        ihdrData[9] = 0; // color_type=0 (grayscale)
+        ihdrData[9] = 5; // color_type=5 (invalid/unsupported)
         byte[] ihdrChunk = BuildPngChunk("IHDR", ihdrData);
-        byte[] rawRow = new byte[] { 0, 128 }; // filter=None, 1 gray byte
+        byte[] rawRow = new byte[] { 0, 128 }; // filter=None + 1 sample byte (ignored; guard throws first)
         byte[] compressedIdat;
         using (var cMs = new MemoryStream())
         {
@@ -210,13 +209,13 @@ public sealed class OwnedPdfWriterImageTests
         }
         byte[] idatChunk = BuildPngChunk("IDAT", compressedIdat);
         byte[] iendChunk = BuildPngChunk("IEND", Array.Empty<byte>());
-        var grayscaleBytes = new List<byte>();
-        grayscaleBytes.AddRange(sig);
-        grayscaleBytes.AddRange(ihdrChunk);
-        grayscaleBytes.AddRange(idatChunk);
-        grayscaleBytes.AddRange(iendChunk);
+        var unsupportedBytes = new List<byte>();
+        unsupportedBytes.AddRange(sig);
+        unsupportedBytes.AddRange(ihdrChunk);
+        unsupportedBytes.AddRange(idatChunk);
+        unsupportedBytes.AddRange(iendChunk);
 
-        var image = new DecodedImage(1, 1, grayscaleBytes.ToArray(), "image/png");
+        var image = new DecodedImage(1, 1, unsupportedBytes.ToArray(), "image/png");
 
         var writer = new OwnedPdfWriter();
         using var ms = new MemoryStream();
