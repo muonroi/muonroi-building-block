@@ -106,6 +106,7 @@ public sealed class DefaultStrictPolicy : IPdfCssPolicy
                             RejectedValue: transition,
                             SuggestedAlternative: "Remove transition properties"));
                     }
+
                 }
             }
         }
@@ -212,6 +213,94 @@ public sealed class DefaultStrictPolicy : IPdfCssPolicy
                     PropertyName: "href",
                     CssSelector: "a",
                     SuggestedAlternative: "Use an http or https URI."));
+            }
+        }
+
+        // Pass 4 (C4 fail-loud): raw-CSS scan for unsupported visual properties. AngleSharp drops these
+        // from the CSSOM (the very reason they are "unsupported"), so they survive only in the raw
+        // <style> text / inline style attributes. Silently dropping them mis-renders, which the
+        // strict charter forbids — reject loudly instead.
+        ScanRawCssForUnsupported(document, violations);
+    }
+
+    // Visual CSS properties the renderer does not implement. None appear in any in-scope
+    // template/golden corpus, so rejecting them adds no regression.
+    private static readonly string[] UnsupportedVisualProperties =
+    [
+        "filter", "clip-path", "-webkit-clip-path", "backdrop-filter", "mix-blend-mode",
+    ];
+
+    private static void ScanRawCssForUnsupported(IDocument document, List<PolicyViolation> violations)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (IElement styleEl in document.QuerySelectorAll("style"))
+            ScanCssDeclarations(styleEl.TextContent, "<style>", seen, violations);
+
+        foreach (IElement el in document.All.OfType<IElement>())
+        {
+            string inline = el.GetAttribute("style") ?? string.Empty;
+            if (inline.Length == 0)
+                continue;
+            ScanCssDeclarations(inline, el.GetSelector() ?? el.LocalName, seen, violations);
+        }
+    }
+
+    // Boundary-matched scan: for each unsupported property, find a declaration `prop : value` where
+    // `prop` is preceded by a declaration boundary (start / whitespace / { ; }) so that e.g. the
+    // `filter` entry never matches inside `backdrop-filter`. Emits at most one violation per property.
+    private static void ScanCssDeclarations(string css, string selector, HashSet<string> seen, List<PolicyViolation> violations)
+    {
+        if (string.IsNullOrWhiteSpace(css))
+            return;
+
+        foreach (string property in UnsupportedVisualProperties)
+        {
+            if (seen.Contains(property))
+                continue;
+
+            int from = 0;
+            while (true)
+            {
+                int idx = css.IndexOf(property, from, StringComparison.OrdinalIgnoreCase);
+                if (idx < 0)
+                    break;
+                from = idx + property.Length;
+
+                // Preceding char must be a declaration boundary (not part of a longer identifier).
+                if (idx > 0)
+                {
+                    char prev = css[idx - 1];
+                    if (prev is '-' or '_' || char.IsLetterOrDigit(prev))
+                        continue;
+                }
+
+                // Next non-space char must be ':'.
+                int j = from;
+                while (j < css.Length && char.IsWhiteSpace(css[j])) j++;
+                if (j >= css.Length || css[j] != ':')
+                    continue;
+
+                // Extract the value up to the next ';' or '}'.
+                int end = j + 1;
+                while (end < css.Length && css[end] is not (';' or '}'))
+                    end++;
+                string value = css[(j + 1)..end].Trim();
+                if (value.EndsWith("!important", StringComparison.OrdinalIgnoreCase))
+                    value = value[..^"!important".Length].Trim();
+
+                if (value.Length == 0 || value is "none" or "normal" or "initial" or "inherit" or "unset" or "revert")
+                    continue;
+
+                seen.Add(property);
+                violations.Add(new PolicyViolation(
+                    $"unsupported.{property}",
+                    $"CSS property '{property}' is not supported by the PDF renderer and would be silently dropped.",
+                    PropertyName: property,
+                    RejectedValue: value,
+                    CssSelector: selector,
+                    SuggestedAlternative: "Remove the property, or pre-rasterize the affected element into an image."));
+                break;
             }
         }
     }
