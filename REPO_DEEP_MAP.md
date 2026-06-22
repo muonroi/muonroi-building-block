@@ -361,6 +361,8 @@
 | Quickstart.DecisionTable/ | Decision table quickstart |
 | Quickstart.RuleEngine/ | Rule engine quickstart |
 | RuleSourceGen/ | Source generation example |
+| Muonroi.Pdf.Samples/ | PDF engine worked examples (invoice, header/footer, watermark+gradient, flex/grid opt-in, multi-page, policy rejection) — `dotnet run` renders to `pdf-output/` |
+| Muonroi.Pdf.AotSample/ | PDF engine NativeAOT smoke test (embedded font, no OS deps) |
 
 ---
 

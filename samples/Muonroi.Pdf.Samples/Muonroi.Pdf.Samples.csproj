@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- AddPdf binds configuration → strongly-typed options; suppress the AOT/trim analyzer
+         warnings that surface only under PublishAot (this sample runs on the JIT). -->
+    <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Muonroi.Pdf transitively brings Abstractions, Governance, Tenancy.Abstractions and
+         Muonroi.Logging — AddPdf auto-wires logging + the execution-context accessor, so a
+         single reference is all a consuming host needs. -->
+    <ProjectReference Include="..\..\src\Muonroi.Pdf\Muonroi.Pdf.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <!-- Generic Host provides IHostEnvironment, which DefaultFontResolver depends on to resolve
+         the content root for any file-based fonts (bundled Liberation fonts work without it). -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+</Project>

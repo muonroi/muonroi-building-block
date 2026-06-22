@@ -146,7 +146,7 @@ block-formatting contexts. Text following a float clears it.
 | Feature | Notes |
 |---|---|
 | `background-color` | Any CSS named/hex/rgb/rgba color on any block |
-| `background-image: url("data:...")` | Base64 data-URI images (RGB PNG or JPEG) |
+| `background-image: url("data:...")` | Base64 data-URI images (8-bit PNG: RGB/palette/RGBA/grayscale/grayscale+alpha, or JPEG) |
 | `border` shorthand + per-side `border-{top,right,bottom,left}-{width,style,color}` | Full border model |
 | `padding` / `margin` (px, %, rem) | Block spacing |
 | `width` / `height` (px, %, auto) | Explicit and auto sizing |
@@ -174,7 +174,7 @@ even on incomplete font families.
 
 | Feature | Notes |
 |---|---|
-| `<img src="data:image/png;base64,...">` | 8-bit RGB PNG (color_type=2) |
+| `<img src="data:image/png;base64,...">` | 8-bit PNG — RGB (2), palette (3), RGBA (6), grayscale (0), grayscale+alpha (4). See color-type note below. |
 | `<img src="data:image/jpeg;base64,...">` | JPEG |
 | `<img>` with explicit `width` / `height` | Honoured (G16 — 8.12) |
 | `<img>` intrinsic size when no CSS width/height | `DecodedImage.Width × 0.75pt/px`, no container stretch (G24 — 8.16) |
@@ -212,17 +212,23 @@ Rejection raises `PdfPolicyViolationException` with the listed violation ID.
 
 | Violation ID | Feature | Alternative |
 |---|---|---|
-| `forbidden.display.flex` | `display: flex` / `inline-flex` | `display: block` or table layout |
-| `forbidden.display.grid` | `display: grid` / `inline-grid` | `display: table` |
+| `forbidden.display.flex` | `display: flex` / `inline-flex` | `display: block` / table — **or** set `Policy:AllowModernLayout=true` to render real Flexbox |
+| `forbidden.display.grid` | `display: grid` / `inline-grid` | `display: table` — **or** set `Policy:AllowModernLayout=true` to render real CSS Grid |
 | `forbidden.position.fixed` | `position: fixed` | `position: absolute` in `position: relative` container |
 | `forbidden.position.sticky` | `position: sticky` | `position: static` |
-| `forbidden.transform.geometric` | `transform: ...` (any) | Remove |
-| `forbidden.background.gradient` | `background: linear-gradient(...)` and variants | `background-color: <solid>` |
+| `forbidden.transform.geometric` | `transform:` with non-affine functions (`perspective()`, 3D, unknown) | 2D affine (`translate`/`scale`/`rotate`/`skew`/`matrix` + chains) **is** supported |
+| `forbidden.background.gradient` | `conic-gradient` / `repeating-*` gradients | `linear-gradient(...)` / `radial-gradient(...)` (both supported) or `background-color: <solid>` |
 | `forbidden.css-animation` | `@keyframes` / CSS animations | Remove |
 | `forbidden.css-transition` | `transition: ...` | Remove |
 | `forbidden.import.external` | External `@import` URL | Inline the stylesheet |
 | `forbidden.script-element` | `<script>` elements | Remove |
 | `forbidden.link.scheme` | `<a href="javascript:..">` / `file:` URLs | `http` / `https` / `mailto` / relative only |
+
+> **Modern-layout opt-in (Phase 18/19):** with `PdfConfigs:Policy:AllowModernLayout=true` the engine
+> renders real Flexbox **and** CSS Grid (`repeat(auto-fill/auto-fit)`, `minmax`, `fr`, named areas,
+> sparse auto-flow) instead of rejecting `display:flex/grid`. The flag is **off** by default, so the
+> reject list above is the default behavior. `SoftDegradeUnknownDisplay=true` is a separate, weaker
+> opt-in that downgrades flex/grid to `display:block`.
 
 Source: `src/Muonroi.Pdf.Governance/Policies/LegacyPrintPolicy.cs`
 
@@ -292,9 +298,9 @@ If `@page { size }` is absent, the caller supplies `PdfRenderOptions.PageSize` +
 ### 7.3 Image Format
 
 - **Inline only:** Base64 data URIs in `<img src>` or `background-image: url("data:...")`.
-- **Allowed:** `data:image/png;base64,...` (RGB PNG), `data:image/jpeg;base64,...`.
+- **Allowed:** `data:image/png;base64,...` (8-bit PNG, any of RGB/palette/RGBA/grayscale/grayscale+alpha), `data:image/jpeg;base64,...`.
 - **Prohibited:** External URLs (`http(s)://`, `file://`, relative paths). The engine never fetches.
-- **PNG type:** 8-bit RGB (`color_type=2`) only. RGBA / palette / grayscale rejected.
+- **PNG type:** 8-bit samples — RGB (`color_type=2`), palette (`3`), RGBA (`6`, composited onto white), grayscale (`0`, expands to R=G=B), grayscale+alpha (`4`, composited onto white). Rejected: 16-bit (any type) and sub-8-bit grayscale (`bit_depth` 1/2/4).
 
 ### 7.4 Font Declaration
 
@@ -339,10 +345,13 @@ preview, or alternate output target.
 
 **Seam contract for Phase 9:**
 
-1. The Designer emits HTML conforming to Profile v1 (§3) — no flex / grid / animation / `position:fixed`.
+1. The Designer emits HTML conforming to Profile v1 (§3) — no animation / `position:fixed`. Flex/grid
+   are allowed only when the consuming deployment sets `Policy:AllowModernLayout=true` (see §4 note).
 2. The engine consumes the HTML, produces `PositionedPageList`, and the writer emits the PDF.
 3. The Designer does NOT need to understand the IR — it only needs to conform to the CSS profile.
-4. **Future opt-in:** If flex / grid layout is later needed, a `FlexLayoutMapper` or `GridLayoutMapper` can target the same `PositionedPageList` IR. The IR shape is stable.
+4. **Flex / grid (delivered Phase 18/19):** the planned `FlexLayoutMapper` / `GridLayoutMapper` opt-in
+   shipped as real Flexbox + CSS Grid layout engines targeting the same `PositionedPageList` IR,
+   gated behind `AllowModernLayout`. The IR shape stayed stable as predicted.
 
 ---
 
@@ -389,7 +398,7 @@ without requiring a caller-supplied `@font-face` declaration.
 | Full CSS 2.1 §17.6.2 border-conflict resolution | Complex precedence for adjacent cell borders | Corpus uses uniform `border-collapse: collapse`; conflict resolution not needed |
 | Inline text wrapping around floats | Text reflow around float boxes | Corpus only uses floats for side-by-side blocks |
 | Nested tables (depth > 1) | Table inside `<td>` | Corpus depth = 1; layout accuracy not guaranteed for deeper nesting |
-| RGBA / palette / grayscale PNG | Non-RGB PNG channel layouts | Corpus uses RGB only; rejected by `PureImageDecoder` |
+| 16-bit / sub-8-bit grayscale PNG | High-bit-depth or `bit_depth` 1/2/4 grayscale | Rejected at decode by `PureImageDecoder` (`PNG-16BIT` / `PNG-GRAYSCALE-DEPTH`); convert to 8-bit. 8-bit RGB/palette/RGBA/grayscale/grayscale+alpha **are** supported. |
 | GIF / WebP / SVG / BMP / TIFF | Other image formats | Out of v1 decoder scope |
 | `calc()` | Math expressions in property values | Not parsed |
 | CSS custom properties (`--var`) | CSS variable resolution | Not in corpus |
