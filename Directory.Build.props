@@ -73,9 +73,14 @@
     <None Include="$(MSBuildThisFileDirectory)LICENSE-APACHE"
           Pack="true" PackagePath="\"
           />
+    <!-- Per-package README: if the package directory ships its own README.md, that one is packed
+         (wired via the <None Update> in Directory.Build.targets, which runs after the SDK default
+         item globs exist). The repo-root README is only packed as a fallback when a package has no
+         README of its own — keeping the two mutually exclusive so NuGet never sees a duplicate
+         README.md at PackagePath '\'. -->
     <None Include="$(MSBuildThisFileDirectory)README.md"
           Pack="true" PackagePath="\"
-          Condition="Exists('$(MSBuildThisFileDirectory)README.md')" />
+          Condition="!Exists('$(MSBuildProjectDirectory)/README.md') and Exists('$(MSBuildThisFileDirectory)README.md')" />
     <None Include="$(MSBuildThisFileDirectory)icon.png"
           Pack="true" PackagePath="\"
           Condition="Exists('$(MSBuildThisFileDirectory)icon.png')" />
@@ -85,9 +90,14 @@
     <None Include="$(MSBuildThisFileDirectory)LICENSE-COMMERCIAL"
           Pack="true" PackagePath="\"
           />
+    <!-- Per-package README: if the package directory ships its own README.md, that one is packed
+         (wired via the <None Update> in Directory.Build.targets, which runs after the SDK default
+         item globs exist). The repo-root README is only packed as a fallback when a package has no
+         README of its own — keeping the two mutually exclusive so NuGet never sees a duplicate
+         README.md at PackagePath '\'. -->
     <None Include="$(MSBuildThisFileDirectory)README.md"
           Pack="true" PackagePath="\"
-          Condition="Exists('$(MSBuildThisFileDirectory)README.md')" />
+          Condition="!Exists('$(MSBuildProjectDirectory)/README.md') and Exists('$(MSBuildThisFileDirectory)README.md')" />
     <None Include="$(MSBuildThisFileDirectory)icon.png"
           Pack="true" PackagePath="\"
           Condition="Exists('$(MSBuildThisFileDirectory)icon.png')" />
