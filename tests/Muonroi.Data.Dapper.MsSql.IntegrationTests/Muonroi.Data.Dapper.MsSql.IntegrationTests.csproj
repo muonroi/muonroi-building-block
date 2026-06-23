@@ -6,6 +6,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <IsMuonroiTestProject>true</IsMuonroiTestProject>
+    <NoWarn>$(NoWarn);MSTD0001;MSTD0002</NoWarn>
   </PropertyGroup>
   <!--
     Microsoft.NET.Test.Sdk, xunit, xunit.runner.visualstudio, coverlet.collector,

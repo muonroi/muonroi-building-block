@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>Muonroi.Billing.Abstractions</PackageId>
+    <Description>Product-agnostic billing seam contracts for Muonroi multi-tenant applications. Contains IBillingProvider, IUsageAggregator, BillableEvent, UsageLineItem, PricingPlan and a record-only default provider. No payment-SDK dependency; the payment-processor adapter is a deferred, separate implementation behind this seam.</Description>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Quota.Abstractions\Muonroi.Quota.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Logging.Abstractions\Muonroi.Logging.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

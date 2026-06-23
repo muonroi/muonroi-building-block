@@ -48,21 +48,22 @@ internal sealed class PureImageDecoder : IImageDecoder
         byte bitDepth  = data[24];
         byte colorType = data[25];
 
-        // Grayscale types are out of scope for v1.0.1 — fail loud with actionable message.
-        if (colorType == 0)
-            throw new PdfFormatException("PNG-GRAYSCALE",
-                "Grayscale PNG (color_type=0) not yet supported; convert to RGB.");
-        if (colorType == 4)
-            throw new PdfFormatException("PNG-GRAYSCALE-ALPHA",
-                "Grayscale+alpha PNG (color_type=4) not yet supported; convert to RGB.");
-        if (colorType == 2 && bitDepth == 16)
+        // 16-bit samples are not supported for any colour type — fail loud with actionable message.
+        if (bitDepth == 16)
             throw new PdfFormatException("PNG-16BIT",
-                "16-bit RGB PNG (bit_depth=16) is not supported. Convert to 8-bit RGB PNG.");
-        if (colorType != 2 && colorType != 3 && colorType != 6)
-            throw new PdfFormatException("PNG-FORMAT",
-                $"Unsupported PNG: color_type={colorType}, bit_depth={bitDepth}. Supported: 8-bit RGB (type 2), palette (type 3), RGBA (type 6).");
+                "16-bit PNG (bit_depth=16) is not supported. Convert to 8-bit PNG.");
 
-        // color_type=2 (RGB), color_type=3 (palette/indexed), color_type=6 (RGBA):
+        // Grayscale (0) and grayscale+alpha (4) require 8-bit samples; sub-byte packed
+        // depths (1/2/4) are not unpacked by the writer — fail loud with a convert hint.
+        if ((colorType == 0 || colorType == 4) && bitDepth != 8)
+            throw new PdfFormatException("PNG-GRAYSCALE-DEPTH",
+                $"Sub-8-bit grayscale PNG (bit_depth={bitDepth}) is not supported; convert to 8-bit.");
+
+        if (colorType != 0 && colorType != 2 && colorType != 3 && colorType != 4 && colorType != 6)
+            throw new PdfFormatException("PNG-FORMAT",
+                $"Unsupported PNG: color_type={colorType}, bit_depth={bitDepth}. Supported: 8-bit grayscale (type 0), grayscale+alpha (type 4), RGB (type 2), palette (type 3), RGBA (type 6).");
+
+        // color_type=0 (grayscale), 2 (RGB), 3 (palette/indexed), 4 (grayscale+alpha), 6 (RGBA):
         // Pass the raw PNG bytes through to the writer; DecodePngToRawRgb in OwnedPdfWriter
         // handles per-type expansion and alpha compositing onto white.
         return new DecodedImage(width, height, data.ToArray(), "image/png");

@@ -55,6 +55,7 @@ public sealed class InMemoryTenantQuotaTracker(ITenantQuotaStore quotaStore) : I
             QuotaType.TotalWorkflows => quota.MaxJsonWorkflows,
             QuotaType.TotalConnectors => quota.MaxTotalConnectors,
             QuotaType.ConnectorExecutionsPerDay => quota.MaxConnectorExecutionsPerDay,
+            QuotaType.PdfRendersPerDay => quota.MaxPdfRendersPerDay,
             _ => int.MaxValue
         };
     }

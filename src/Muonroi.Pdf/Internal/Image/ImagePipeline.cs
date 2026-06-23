@@ -10,8 +10,19 @@ namespace Muonroi.Pdf.Internal.Image;
     Justification = "Internal PDF pipeline helper is instantiated without DI; Debug.WriteLine is a DEBUG-only trace for skipped resources, compiled out in Release.")]
 internal sealed class ImagePipeline
 {
+    internal Task<IReadOnlyDictionary<string, DecodedImage>> ResolveAsync(
+        IStyledDocument doc,
+        IResourceResolver resolver,
+        IImageDecoder decoder,
+        PdfConfigs.PdfLimits limits,
+        CancellationToken ct)
+        => ResolveAsync(doc, null, resolver, decoder, limits, ct);
+
+    // Phase 13: also resolve <img>/background images declared in running header/footer fragment
+    // documents so a header logo embeds + renders, not just body images.
     internal async Task<IReadOnlyDictionary<string, DecodedImage>> ResolveAsync(
         IStyledDocument doc,
+        IReadOnlyList<IStyledDocument>? extraDocs,
         IResourceResolver resolver,
         IImageDecoder decoder,
         PdfConfigs.PdfLimits limits,
@@ -21,7 +32,13 @@ internal sealed class ImagePipeline
 
         var dict = new Dictionary<string, DecodedImage>(StringComparer.Ordinal);
 
-        IEnumerable<string> srcs = CollectImageSrcs(doc.Root).Distinct(StringComparer.Ordinal);
+        IEnumerable<string> allSrcs = CollectImageSrcs(doc.Root);
+        if (extraDocs is not null)
+        {
+            foreach (IStyledDocument extra in extraDocs)
+                allSrcs = allSrcs.Concat(CollectImageSrcs(extra.Root));
+        }
+        IEnumerable<string> srcs = allSrcs.Distinct(StringComparer.Ordinal);
 
         foreach (string src in srcs)
         {

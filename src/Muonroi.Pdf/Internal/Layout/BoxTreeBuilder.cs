@@ -7,10 +7,15 @@ internal sealed class BoxTreeBuilder
 {
     private IReadOnlyDictionary<string, DecodedImage>? _resolvedImages;
 
+    // Phase 18 (FLEX-05): opt-in flag. When true, display:flex/inline-flex map to FlexContainerBox.
+    // When false (default), flex falls through to BlockBox — the soft-degrade path stays byte-identical.
+    private bool _allowModernLayout;
+
     /// <summary>Converts an IStyledNode tree into a BlockBox root. Pitfall 6: display:none check happens first in BuildNode.</summary>
-    public BlockBox Build(IStyledNode root, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null)
+    public BlockBox Build(IStyledNode root, IReadOnlyDictionary<string, DecodedImage>? resolvedImages = null, bool allowModernLayout = false)
     {
         _resolvedImages = resolvedImages;
+        _allowModernLayout = allowModernLayout;
         var box = new BlockBox { Source = root };
         ResolveCssProperties(root.Style, box);
         // Mark body element so ResolveWidth can clamp its explicit width to available area (Fix C2).
@@ -70,6 +75,28 @@ internal sealed class BoxTreeBuilder
                 // heading like <h2> must pass Bold=true to its text-node InlineBox children.
                 if (box.Bold || box.TextTransform != null || box.WordBreak != null || box.WhiteSpace != null)
                     PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak, box.WhiteSpace);
+                // Phase 15: share this block's affine transform context with its whole subtree so the
+                // text and content transform together with the block about one pivot.
+                if (box.TransformGroup is not null)
+                    PropagateTransformGroup(box, box.TransformGroup);
+                break;
+            case FlexContainerBox flexBox:
+                // Phase 18: build flex children (any box type can be a flex item). Reuse the
+                // BlockBox child collector/normalizer so inline/anonymous wrapping is consistent.
+                BuildChildren(node, flexBox);
+                if (box.Bold || box.TextTransform != null || box.WordBreak != null || box.WhiteSpace != null)
+                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak, box.WhiteSpace);
+                if (box.TransformGroup is not null)
+                    PropagateTransformGroup(box, box.TransformGroup);
+                break;
+            case GridContainerBox gridBox:
+                // Phase 19: build grid children (any box type can be a grid item). Reuse the
+                // BlockBox child collector/normalizer so inline/anonymous wrapping is consistent.
+                BuildChildren(node, gridBox);
+                if (box.Bold || box.TextTransform != null || box.WordBreak != null || box.WhiteSpace != null)
+                    PropagateInheritedTextProps(box, box.Bold, box.TextTransform, box.WordBreak, box.WhiteSpace);
+                if (box.TransformGroup is not null)
+                    PropagateTransformGroup(box, box.TransformGroup);
                 break;
             case TableBox tableBox:
                 BuildChildren(node, tableBox);
@@ -105,7 +132,7 @@ internal sealed class BoxTreeBuilder
         "tt", "s", "del", "ins", "bdo", "bdi", "ruby", "rt",
     };
 
-    private static BoxNode CreateBox(IStyledNode node)
+    private BoxNode CreateBox(IStyledNode node)
     {
         if (string.Equals(node.LocalName, "img", StringComparison.OrdinalIgnoreCase))
             return new ReplacedBox { Source = node, Src = node.GetAttribute("src") };
@@ -199,6 +226,13 @@ internal sealed class BoxTreeBuilder
             "table-footer-group" or "tfoot" => new TableRowGroupBox { Source = node, GroupType = TableRowGroupType.Footer },
             "table-row" or "tr" => new TableRowBox { Source = node },
             "table-cell" or "td" or "th" => new TableCellBox { Source = node },
+            // Phase 18 (FLEX-05) / Phase 19 (GRID-04): gated modern-layout mapping. ONLY when
+            // AllowModernLayout is on; otherwise flex/inline-flex/grid/inline-grid hit the `_`
+            // default below → BlockBox (the soft-degrade path stays byte-identical).
+            "flex" when _allowModernLayout => new FlexContainerBox { Source = node },
+            "inline-flex" when _allowModernLayout => new FlexContainerBox { Source = node, IsInlineFlex = true },
+            "grid" when _allowModernLayout => new GridContainerBox { Source = node },
+            "inline-grid" when _allowModernLayout => new GridContainerBox { Source = node, IsInlineGrid = true },
             _ => new BlockBox { Source = node }
         };
     }
@@ -309,6 +343,34 @@ internal sealed class BoxTreeBuilder
             }
         }
 
+        // gradient background (Phase 14 linear, Phase 15 radial): from background-image or the
+        // background shorthand. Falls back silently to any solid background-color when the gradient
+        // cannot be parsed.
+        string? gradientSource = bgImage;
+        if (string.IsNullOrEmpty(gradientSource)
+            || (!gradientSource.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase)
+                && !gradientSource.Contains("radial-gradient", StringComparison.OrdinalIgnoreCase)))
+        {
+            string? bgShorthand = style.GetValue("background");
+            if (!string.IsNullOrEmpty(bgShorthand)
+                && (bgShorthand.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase)
+                    || bgShorthand.Contains("radial-gradient", StringComparison.OrdinalIgnoreCase)))
+                gradientSource = bgShorthand;
+        }
+        if (!string.IsNullOrEmpty(gradientSource))
+        {
+            if (gradientSource.Contains("radial-gradient", StringComparison.OrdinalIgnoreCase)
+                && RadialGradientParser.TryParse(gradientSource, out RadialGradient radGrad))
+            {
+                box.BackgroundRadialGradient = radGrad;
+            }
+            else if (gradientSource.Contains("linear-gradient", StringComparison.OrdinalIgnoreCase)
+                && LinearGradientParser.TryParse(gradientSource, out LinearGradient grad))
+            {
+                box.BackgroundGradient = grad;
+            }
+        }
+
         // float / clear (CSS 2.1 §9.5)
         var floatVal = style.GetValue("float");
         if (!string.IsNullOrEmpty(floatVal) && floatVal is "left" or "right")
@@ -317,6 +379,18 @@ internal sealed class BoxTreeBuilder
         var clearVal = style.GetValue("clear");
         if (!string.IsNullOrEmpty(clearVal) && clearVal is "left" or "right" or "both")
             box.ClearValue = clearVal;
+
+        // transform: (Phase 15) — full 2D affine set. Policy rejects unknown functions before layout
+        // runs, so this parser only needs to handle allowed functions; returns false on anything
+        // unrecognized (safe: box gets no transform, policy already blocked it). The group is shared
+        // down to descendants so the block and its text transform as a rigid group about one pivot
+        // (see PropagateTransformGroup). Pivot is box center in layout coords (D-03).
+        var transformVal = style.GetValue("transform");
+        if (!string.IsNullOrEmpty(transformVal) && TryParseTransformMatrix(transformVal, out double[] tMatrix))
+        {
+            box.HasTransform = true;
+            box.TransformGroup = new TransformGroup { Matrix = tMatrix };
+        }
 
         // position (CSS 2.1 §9.6)
         var positionVal = style.GetValue("position");
@@ -334,6 +408,12 @@ internal sealed class BoxTreeBuilder
         var overflowVal = style.GetValue("overflow");
         if (!string.IsNullOrEmpty(overflowVal) && overflowVal is "hidden" or "scroll" or "auto")
             box.Overflow = overflowVal;
+
+        // Phase 18 (FLEX-05): resolve flex CONTAINER + ITEM props.
+        ResolveFlexProperties(style, box, fontSize);
+
+        // Phase 19 (GRID-04): resolve grid CONTAINER + ITEM props.
+        ResolveGridProperties(style, box, fontSize);
 
         // G18: font-weight and text-transform are inherited CSS properties and must be resolved
         // for ALL box types (block AND inline), not just InlineBox. A block-level heading
@@ -514,6 +594,314 @@ internal sealed class BoxTreeBuilder
         }
     }
 
+    // Phase 18 (FLEX-05): resolve flex container + item properties. Malformed values fall back to
+    // CSS defaults and never throw (T-18-04). CONTAINER props are read only for FlexContainerBox;
+    // ITEM props are read on every box so any child type can be a flex item.
+    private static void ResolveFlexProperties(IComputedStyle style, BoxNode box, float fontSize)
+    {
+        // ---- CONTAINER props (FlexContainerBox only) ----
+        if (box is FlexContainerBox fc)
+        {
+            // flex-flow shorthand first; explicit longhands override below.
+            var flexFlow = Lower(style.GetValue("flex-flow"));
+            if (!string.IsNullOrEmpty(flexFlow))
+            {
+                foreach (var token in flexFlow.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (token is "row" or "row-reverse" or "column" or "column-reverse")
+                        fc.FlexDirection = token;
+                    else if (token is "nowrap" or "wrap" or "wrap-reverse")
+                        fc.FlexWrap = token;
+                }
+            }
+
+            fc.FlexDirection = OneOf(Lower(style.GetValue("flex-direction")), fc.FlexDirection,
+                "row", "row-reverse", "column", "column-reverse");
+            fc.FlexWrap = OneOf(Lower(style.GetValue("flex-wrap")), fc.FlexWrap,
+                "nowrap", "wrap", "wrap-reverse");
+            fc.JustifyContent = OneOf(Lower(style.GetValue("justify-content")), fc.JustifyContent,
+                "flex-start", "flex-end", "center", "space-between", "space-around", "space-evenly");
+            fc.AlignItems = OneOf(Lower(style.GetValue("align-items")), fc.AlignItems,
+                "flex-start", "flex-end", "center", "stretch", "baseline");
+            fc.AlignContent = OneOf(Lower(style.GetValue("align-content")), fc.AlignContent,
+                "flex-start", "flex-end", "center", "space-between", "space-around", "stretch");
+
+            // gap shorthand: one or two lengths ("row col"). First→RowGap, second→ColumnGap.
+            var gap = style.GetValue("gap");
+            if (!string.IsNullOrWhiteSpace(gap))
+            {
+                var parts = gap.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 1)
+                {
+                    float g0 = ParseLength(parts[0], fontSize);
+                    fc.RowGap = g0;
+                    fc.ColumnGap = parts.Length >= 2 ? ParseLength(parts[1], fontSize) : g0;
+                }
+            }
+
+            // row-gap / column-gap longhands override the shorthand.
+            var rowGap = style.GetValue("row-gap");
+            if (!string.IsNullOrWhiteSpace(rowGap))
+                fc.RowGap = ParseLength(rowGap, fontSize);
+            var colGap = style.GetValue("column-gap");
+            if (!string.IsNullOrWhiteSpace(colGap))
+                fc.ColumnGap = ParseLength(colGap, fontSize);
+        }
+
+        // ---- ITEM props (every box) ----
+        // flex shorthand first; explicit flex-grow/shrink/basis longhands override below.
+        var flexShorthand = Lower(style.GetValue("flex"));
+        if (flexShorthand is { Length: > 0 })
+            ParseFlexShorthand(flexShorthand, box);
+
+        var grow = style.GetValue("flex-grow");
+        if (!string.IsNullOrWhiteSpace(grow)
+            && float.TryParse(grow.Trim(), System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float growVal))
+            box.FlexGrow = growVal;
+
+        var shrink = style.GetValue("flex-shrink");
+        if (!string.IsNullOrWhiteSpace(shrink)
+            && float.TryParse(shrink.Trim(), System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float shrinkVal))
+            box.FlexShrink = shrinkVal;
+
+        var basis = style.GetValue("flex-basis");
+        if (!string.IsNullOrWhiteSpace(basis))
+            box.FlexBasisRaw = basis.Trim();
+
+        var order = style.GetValue("order");
+        if (!string.IsNullOrWhiteSpace(order)
+            && int.TryParse(order.Trim(), System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture, out int orderVal))
+            box.Order = orderVal;
+
+        var alignSelf = Lower(style.GetValue("align-self"));
+        if (alignSelf is "auto" or "flex-start" or "flex-end" or "center" or "stretch" or "baseline")
+            box.AlignSelf = alignSelf;
+    }
+
+    private static void ResolveGridProperties(IComputedStyle style, BoxNode box, float fontSize)
+    {
+        // ---- CONTAINER props (GridContainerBox only) ----
+        if (box is GridContainerBox gc)
+        {
+            // Explicit track lists (repeat()/minmax() expanded by GridTrack). Only assign when
+            // non-empty so the default stays an empty list.
+            var cols = GridTrack.ParseTrackList(style.GetValue("grid-template-columns"), fontSize);
+            if (cols.Count > 0) gc.TemplateColumns = cols;
+            var rows = GridTrack.ParseTrackList(style.GetValue("grid-template-rows"), fontSize);
+            if (rows.Count > 0) gc.TemplateRows = rows;
+
+            // grid-auto-columns / grid-auto-rows → single track template (null when unset).
+            var autoCols = style.GetValue("grid-auto-columns");
+            if (!string.IsNullOrWhiteSpace(autoCols))
+                gc.AutoColumns = GridTrack.ParseSingleTrack(autoCols, fontSize);
+            var autoRows = style.GetValue("grid-auto-rows");
+            if (!string.IsNullOrWhiteSpace(autoRows))
+                gc.AutoRows = GridTrack.ParseSingleTrack(autoRows, fontSize);
+
+            // grid-auto-flow: strip a "dense" token (sparse-only per D-01), then keep row|column.
+            var autoFlow = Lower(style.GetValue("grid-auto-flow"));
+            if (autoFlow is { Length: > 0 })
+            {
+                var remaining = autoFlow
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .FirstOrDefault(t => t is "row" or "column");
+                gc.AutoFlow = OneOf(remaining, gc.AutoFlow, "row", "column");
+            }
+
+            // gap shorthand: one or two lengths ("row col"). First→RowGap, second→ColumnGap.
+            // (Identical semantics to flex; mirrors ResolveFlexProperties.)
+            var gap = style.GetValue("gap");
+            if (!string.IsNullOrWhiteSpace(gap))
+            {
+                var parts = gap.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 1)
+                {
+                    float g0 = ParseLength(parts[0], fontSize);
+                    gc.RowGap = g0;
+                    gc.ColumnGap = parts.Length >= 2 ? ParseLength(parts[1], fontSize) : g0;
+                }
+            }
+            var rowGap = style.GetValue("row-gap");
+            if (!string.IsNullOrWhiteSpace(rowGap))
+                gc.RowGap = ParseLength(rowGap, fontSize);
+            var colGap = style.GetValue("column-gap");
+            if (!string.IsNullOrWhiteSpace(colGap))
+                gc.ColumnGap = ParseLength(colGap, fontSize);
+
+            // justify/align items (item-in-cell) + content (track-group-in-container).
+            gc.JustifyItems = OneOf(Lower(style.GetValue("justify-items")), gc.JustifyItems,
+                "start", "end", "center", "stretch");
+            gc.AlignItems = OneOf(Lower(style.GetValue("align-items")), gc.AlignItems,
+                "start", "end", "center", "stretch");
+            gc.JustifyContent = OneOf(Lower(style.GetValue("justify-content")), gc.JustifyContent,
+                "start", "end", "center", "space-between", "space-around", "space-evenly", "stretch");
+            gc.AlignContent = OneOf(Lower(style.GetValue("align-content")), gc.AlignContent,
+                "start", "end", "center", "space-between", "space-around", "space-evenly", "stretch");
+
+            // grid-template-areas: quoted row strings → string[][]. Ragged/empty rows → empty (T-19-05).
+            gc.TemplateAreas = ParseTemplateAreas(style.GetValue("grid-template-areas"));
+        }
+
+        // ---- ITEM props (every box) ----
+        var gridColumn = style.GetValue("grid-column");
+        if (!string.IsNullOrWhiteSpace(gridColumn))
+            box.GridColumnRaw = gridColumn.Trim();
+        var gridRow = style.GetValue("grid-row");
+        if (!string.IsNullOrWhiteSpace(gridRow))
+            box.GridRowRaw = gridRow.Trim();
+        var gridArea = style.GetValue("grid-area");
+        if (!string.IsNullOrWhiteSpace(gridArea))
+            box.GridAreaRaw = gridArea.Trim();
+
+        var justifySelf = Lower(style.GetValue("justify-self"));
+        if (justifySelf is "start" or "end" or "center" or "stretch")
+            box.JustifySelf = justifySelf;
+        // align-self is read by ResolveFlexProperties (Phase 18) and reused for grid — do NOT re-read.
+    }
+
+    // Parses CSS grid-template-areas (a string of quoted row strings, e.g. `"head head" "nav main"`)
+    // into a rectangular row-major string[][] of area-name tokens ("." = empty cell). Rejects
+    // ragged/empty grids (unequal column counts) by returning an empty array so downstream cell-rect
+    // math cannot index out of bounds (T-19-05). Never throws.
+    private static string[][] ParseTemplateAreas(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Array.Empty<string[]>();
+
+        var rows = new List<string[]>();
+        int i = 0;
+        while (i < value.Length)
+        {
+            char q = value[i];
+            if (q != '"' && q != '\'')
+            {
+                i++;
+                continue;
+            }
+            int end = value.IndexOf(q, i + 1);
+            if (end < 0)
+                return Array.Empty<string[]>(); // unterminated quote → reject
+            string rowStr = value[(i + 1)..end];
+            var cells = rowStr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (cells.Length == 0)
+                return Array.Empty<string[]>(); // empty row → reject
+            rows.Add(cells);
+            i = end + 1;
+        }
+
+        if (rows.Count == 0)
+            return Array.Empty<string[]>();
+
+        int cols = rows[0].Length;
+        if (rows.Any(r => r.Length != cols))
+            return Array.Empty<string[]>(); // ragged → reject
+
+        return rows.ToArray();
+    }
+
+    // CSS `flex` shorthand expansion (CSS Flexbox §7.1). Malformed input leaves the box untouched.
+    //   flex: none                  → 0 0 auto
+    //   flex: initial               → 0 1 auto
+    //   flex: auto                  → 1 1 auto
+    //   flex: <number>              → <number> 1 0%   (single-number form; basis literal LOCKED to "0%")
+    //   flex: <g> <s>               → <g> <s> 0%
+    //   flex: <g> <basis>           → <g> 1 <basis>   (number + length/auto)
+    //   flex: <g> <s> <basis>       → <g> <s> <basis>
+    private static void ParseFlexShorthand(string value, BoxNode box)
+    {
+        string v = value.Trim();
+        if (v.Length == 0) return;
+
+        if (string.Equals(v, "none", StringComparison.OrdinalIgnoreCase))
+        {
+            box.FlexGrow = 0f; box.FlexShrink = 0f; box.FlexBasisRaw = "auto";
+            return;
+        }
+        if (string.Equals(v, "auto", StringComparison.OrdinalIgnoreCase))
+        {
+            box.FlexGrow = 1f; box.FlexShrink = 1f; box.FlexBasisRaw = "auto";
+            return;
+        }
+        if (string.Equals(v, "initial", StringComparison.OrdinalIgnoreCase))
+        {
+            box.FlexGrow = 0f; box.FlexShrink = 1f; box.FlexBasisRaw = "auto";
+            return;
+        }
+
+        var parts = v.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        static bool IsNumber(string s) =>
+            float.TryParse(s, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out _);
+
+        static float Num(string s) =>
+            float.TryParse(s, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float f) ? f : 0f;
+
+        switch (parts.Length)
+        {
+            case 1:
+                if (IsNumber(parts[0]))
+                {
+                    // flex: <number> → <number> 1 0%  (locked basis literal "0%")
+                    box.FlexGrow = Num(parts[0]);
+                    box.FlexShrink = 1f;
+                    box.FlexBasisRaw = "0%";
+                }
+                else
+                {
+                    // single non-number token → flex-basis only (grow 1, shrink 1 per spec)
+                    box.FlexGrow = 1f;
+                    box.FlexShrink = 1f;
+                    box.FlexBasisRaw = parts[0];
+                }
+                break;
+
+            case 2:
+                if (IsNumber(parts[0]) && IsNumber(parts[1]))
+                {
+                    // <g> <s> → grow shrink, basis 0%
+                    box.FlexGrow = Num(parts[0]);
+                    box.FlexShrink = Num(parts[1]);
+                    box.FlexBasisRaw = "0%";
+                }
+                else if (IsNumber(parts[0]))
+                {
+                    // <g> <basis> → grow, shrink 1, basis
+                    box.FlexGrow = Num(parts[0]);
+                    box.FlexShrink = 1f;
+                    box.FlexBasisRaw = parts[1];
+                }
+                break;
+
+            case 3:
+                if (IsNumber(parts[0]) && IsNumber(parts[1]))
+                {
+                    box.FlexGrow = Num(parts[0]);
+                    box.FlexShrink = Num(parts[1]);
+                    box.FlexBasisRaw = parts[2];
+                }
+                break;
+        }
+    }
+
+    private static string? Lower(string? v)
+        => string.IsNullOrWhiteSpace(v) ? null : v.Trim().ToLowerInvariant();
+
+    // Returns `value` when it is one of the allowed keywords; otherwise the supplied fallback
+    // (the box's CSS-default). Guarantees a non-null result for non-nullable container props.
+    private static string OneOf(string? value, string fallback, params string[] allowed)
+    {
+        if (value is null) return fallback;
+        foreach (var a in allowed)
+            if (string.Equals(value, a, StringComparison.Ordinal))
+                return value;
+        return fallback;
+    }
+
     /// <summary>
     /// Returns true if the CSS color value represents a fully-transparent color that should
     /// not generate a background-fill rectangle in the PDF content stream.
@@ -576,6 +964,10 @@ internal sealed class BoxTreeBuilder
         // Bare number: treat as px
         return TryParseFloat(span) * Units.PxToPt;
     }
+
+    /// <summary>Internal accessor so <see cref="Boxes.GridTrack"/> reuses the single length parser
+    /// (px→pt etc.) for fixed track sizes instead of adding a second parser. "auto"/"normal"/null/% → 0.</summary>
+    internal static float ParseLengthPublic(string? val, float emBase = 12f) => ParseLength(val, emBase);
 
     private static float TryParseFloat(ReadOnlySpan<char> span)
     {
@@ -700,6 +1092,24 @@ internal sealed class BoxTreeBuilder
 
     private static IStyledNode? FindListAncestor(IStyledNode node) => null; // not used; stack approach used instead
 
+    // Phase 18: flex children — same collect + normalize as a block container so inline siblings
+    // get wrapped consistently. The flex layout algorithm (Plan 03) treats each direct child as a
+    // flex item regardless of its box type.
+    private void BuildChildren(IStyledNode node, FlexContainerBox parent)
+    {
+        var raw = CollectChildren(node);
+        parent.Children.AddRange(NormalizeChildren(raw));
+    }
+
+    // Phase 19: grid children — same collect + normalize as a block container so inline siblings
+    // get wrapped consistently. The grid layout algorithm (Plan 03) treats each direct child as a
+    // grid item regardless of its box type.
+    private void BuildChildren(IStyledNode node, GridContainerBox parent)
+    {
+        var raw = CollectChildren(node);
+        parent.Children.AddRange(NormalizeChildren(raw));
+    }
+
     private void BuildChildren(IStyledNode node, TableCellBox parent)
     {
         var raw = CollectChildren(node);
@@ -745,6 +1155,254 @@ internal sealed class BoxTreeBuilder
                 result.Add(boxNode);
         }
         return result;
+    }
+
+    // Phase 15: copy the transform group onto every descendant so the writer transforms the block
+    // and its text as a rigid group. Does not overwrite a descendant that established its own transform.
+    private static void PropagateTransformGroup(BoxNode node, TransformGroup group)
+    {
+        foreach (var child in node.Children)
+        {
+            if (child.TransformGroup is not null)
+                continue;
+            child.TransformGroup = group;
+            PropagateTransformGroup(child, group);
+        }
+    }
+
+    // Phase 15: parse a CSS transform value into a pivot-composed 2×3 affine matrix [a,b,c,d,e,f].
+    // CSS functions compose left-to-right: each function maps to a 2×3 matrix; successive multiply
+    // yields one composed matrix (RESEARCH Q3 A4). The pivot is the box-center in layout coordinates,
+    // but at parse time the box rect is not yet resolved, so the pivot composition is DEFERRED to the
+    // writer (same as Phase 14's rotationPivots approach). This method returns the CSS-space composed
+    // matrix WITHOUT pivot composition; the writer applies T(px,py)*M*T(-px,-py) when resolving
+    // TransformGroup.Matrix for the cm/Tm emission.
+    //
+    // Note: the plan specifies storing the pivot-composed matrix at parse time (D-03), but since the
+    // box rect is not available here (ResolveCssProperties receives the style, not the final rect),
+    // the pivot composition is correctly deferred to the writer — matching Phase 14's approach (P5).
+    // The writer's pivot loop (HasTransform: true sentinel) computes px/py in PDF coords and the
+    // TransformFor function reads the raw CSS-space matrix and applies RotMatrix-equivalent math.
+    // Actually: to match the plan's intent of composing at parse time, we store the CSS-space composed
+    // matrix (without pivot). The writer applies the pivot + PDF y-flip exactly as Phase 14 did.
+    //
+    // Returns false on any unrecognized function or non-parseable args (fail-safe; policy gate is loud).
+    private static bool TryParseTransformMatrix(string transform, out double[] matrix)
+    {
+        matrix = [1, 0, 0, 1, 0, 0]; // identity
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        var ns = System.Globalization.NumberStyles.Any;
+
+        // Tokenize: find each name(args) function token.
+        int pos = 0;
+        string s = transform.Trim();
+        bool anyFound = false;
+        double[] composed = [1, 0, 0, 1, 0, 0];
+
+        while (pos < s.Length)
+        {
+            // Skip whitespace between tokens.
+            while (pos < s.Length && char.IsWhiteSpace(s[pos]))
+                pos++;
+            if (pos >= s.Length) break;
+
+            // Find function name: word chars up to '('.
+            int nameStart = pos;
+            while (pos < s.Length && s[pos] != '(')
+                pos++;
+            if (pos >= s.Length)
+                return false; // no opening paren → malformed
+
+            string funcName = s[nameStart..pos].Trim();
+            if (string.IsNullOrEmpty(funcName))
+                return false;
+
+            pos++; // consume '('
+
+            // Find matching ')'.
+            int argsStart = pos;
+            while (pos < s.Length && s[pos] != ')')
+                pos++;
+            if (pos >= s.Length)
+                return false; // no closing paren
+
+            string args = s[argsStart..pos].Trim();
+            pos++; // consume ')'
+
+            // Map function name to a 2×3 matrix.
+            double[] m;
+            if (!TryFunctionMatrix(funcName, args, ns, ci, out m))
+                return false;
+
+            composed = Multiply(composed, m);
+            anyFound = true;
+        }
+
+        if (!anyFound) return false;
+        matrix = composed;
+        return true;
+    }
+
+    // Maps one CSS transform function name + args string to a 2×3 matrix [a,b,c,d,e,f].
+    // Returns false if the function name is unrecognized or the args cannot be parsed.
+    private static bool TryFunctionMatrix(
+        string name, string args,
+        System.Globalization.NumberStyles ns,
+        System.Globalization.CultureInfo ci,
+        out double[] m)
+    {
+        m = [1, 0, 0, 1, 0, 0];
+
+        // Parse comma-or-whitespace-separated numeric args, stripping CSS units.
+        static bool ParseNum(string raw, System.Globalization.NumberStyles ns2,
+            System.Globalization.CultureInfo ci2, out double val)
+        {
+            raw = raw.Trim();
+            // Strip known CSS length/angle units (deg/rad/grad/turn/px/%)
+            foreach (string unit in new[] { "deg", "grad", "turn", "rad", "px", "%" })
+            {
+                if (raw.EndsWith(unit, StringComparison.OrdinalIgnoreCase))
+                {
+                    raw = raw[..^unit.Length].TrimEnd();
+                    break;
+                }
+            }
+            return double.TryParse(raw, ns2, ci2, out val);
+        }
+
+        // Split args by comma (CSS transform args are comma-separated).
+        string[] parts = args.Split(',');
+
+        switch (name.ToLowerInvariant())
+        {
+            case "translate":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double tx)) return false;
+                double ty = 0;
+                if (parts.Length >= 2 && !ParseNum(parts[1], ns, ci, out ty)) return false;
+                m = [1, 0, 0, 1, tx, ty];
+                return true;
+            }
+            case "translatex":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double tx)) return false;
+                m = [1, 0, 0, 1, tx, 0];
+                return true;
+            }
+            case "translatey":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double ty)) return false;
+                m = [1, 0, 0, 1, 0, ty];
+                return true;
+            }
+            case "scale":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double sx)) return false;
+                double sy = sx; // scale(s) means uniform scale
+                if (parts.Length >= 2 && !ParseNum(parts[1], ns, ci, out sy)) return false;
+                m = [sx, 0, 0, sy, 0, 0];
+                return true;
+            }
+            case "scalex":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double sx)) return false;
+                m = [sx, 0, 0, 1, 0, 0];
+                return true;
+            }
+            case "scaley":
+            {
+                if (parts.Length < 1 || !ParseNum(parts[0], ns, ci, out double sy)) return false;
+                m = [1, 0, 0, sy, 0, 0];
+                return true;
+            }
+            case "rotate":
+            {
+                if (parts.Length < 1 || !TryParseAngleDeg(parts[0].Trim(), ns, ci, out double angleDeg)) return false;
+                double phi = angleDeg * Math.PI / 180.0; // CSS CW positive; writer negates for PDF y-up
+                double cosA = Math.Cos(phi), sinA = Math.Sin(phi);
+                m = [cosA, sinA, -sinA, cosA, 0, 0];
+                return true;
+            }
+            case "skew":
+            {
+                if (parts.Length < 1 || !TryParseAngleDeg(parts[0].Trim(), ns, ci, out double ax)) return false;
+                double ay = 0;
+                if (parts.Length >= 2 && !TryParseAngleDeg(parts[1].Trim(), ns, ci, out ay)) return false;
+                m = [1, Math.Tan(ay * Math.PI / 180.0), Math.Tan(ax * Math.PI / 180.0), 1, 0, 0];
+                return true;
+            }
+            case "skewx":
+            {
+                if (parts.Length < 1 || !TryParseAngleDeg(parts[0].Trim(), ns, ci, out double ax)) return false;
+                m = [1, 0, Math.Tan(ax * Math.PI / 180.0), 1, 0, 0];
+                return true;
+            }
+            case "skewy":
+            {
+                if (parts.Length < 1 || !TryParseAngleDeg(parts[0].Trim(), ns, ci, out double ay)) return false;
+                m = [1, Math.Tan(ay * Math.PI / 180.0), 0, 1, 0, 0];
+                return true;
+            }
+            case "matrix":
+            {
+                if (parts.Length != 6) return false;
+                double ma, mb, mc, md, me, mf;
+                if (!ParseNum(parts[0], ns, ci, out ma)) return false;
+                if (!ParseNum(parts[1], ns, ci, out mb)) return false;
+                if (!ParseNum(parts[2], ns, ci, out mc)) return false;
+                if (!ParseNum(parts[3], ns, ci, out md)) return false;
+                if (!ParseNum(parts[4], ns, ci, out me)) return false;
+                if (!ParseNum(parts[5], ns, ci, out mf)) return false;
+                m = [ma, mb, mc, md, me, mf];
+                return true;
+            }
+            default:
+                return false; // unknown function → fail-safe (policy rejects it loud)
+        }
+    }
+
+    // Parse a CSS angle value (with unit: deg/rad/grad/turn) and return degrees.
+    // Returns false if unparseable.
+    private static bool TryParseAngleDeg(string raw,
+        System.Globalization.NumberStyles ns,
+        System.Globalization.CultureInfo ci,
+        out double degrees)
+    {
+        degrees = 0;
+        raw = raw.Trim();
+        if (raw.EndsWith("grad", StringComparison.OrdinalIgnoreCase)
+            && double.TryParse(raw.AsSpan(0, raw.Length - 4), ns, ci, out double g))
+        { degrees = g * 0.9; return true; }
+        if (raw.EndsWith("turn", StringComparison.OrdinalIgnoreCase)
+            && double.TryParse(raw.AsSpan(0, raw.Length - 4), ns, ci, out double t))
+        { degrees = t * 360.0; return true; }
+        if (raw.EndsWith("rad", StringComparison.OrdinalIgnoreCase)
+            && double.TryParse(raw.AsSpan(0, raw.Length - 3), ns, ci, out double r))
+        { degrees = r * 180.0 / Math.PI; return true; }
+        if (raw.EndsWith("deg", StringComparison.OrdinalIgnoreCase)
+            && double.TryParse(raw.AsSpan(0, raw.Length - 3), ns, ci, out double d))
+        { degrees = d; return true; }
+        if (double.TryParse(raw, ns, ci, out double bare))
+        { degrees = bare; return true; }
+        return false;
+    }
+
+    // Left-to-right 2×3 affine matrix composition (RESEARCH Q3).
+    // m = [a, b, c, d, e, f] representing the homogeneous 3×3:
+    //   | a c e |
+    //   | b d f |
+    //   | 0 0 1 |
+    // Result = m1 * m2 (m1 applied first, m2 second in CSS left-to-right convention).
+    private static double[] Multiply(double[] m1, double[] m2)
+    {
+        return [
+            m1[0] * m2[0] + m1[2] * m2[1],
+            m1[1] * m2[0] + m1[3] * m2[1],
+            m1[0] * m2[2] + m1[2] * m2[3],
+            m1[1] * m2[2] + m1[3] * m2[3],
+            m1[0] * m2[4] + m1[2] * m2[5] + m1[4],
+            m1[1] * m2[4] + m1[3] * m2[5] + m1[5]
+        ];
     }
 
     // G18: CSS inheritance for font-weight and text-transform.

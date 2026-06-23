@@ -297,6 +297,11 @@ public sealed class MComplianceEvidencePackDocument
     /// </summary>
     public string SignatureAlgorithm { get; set; } = "HMACSHA256";
     /// <summary>
+    /// Gets or sets the identifier of the key that produced <see cref="Signature"/>.
+    /// Empty for the local HMAC path; the signer's KeyId for the RSA chain-of-custody path.
+    /// </summary>
+    public string SigningKeyId { get; set; } = string.Empty;
+    /// <summary>
     /// Gets or sets the Signature.
     /// </summary>
     public string Signature { get; set; } = string.Empty;
@@ -304,6 +309,26 @@ public sealed class MComplianceEvidencePackDocument
     /// Gets or sets the Records.
     /// </summary>
     public List<MComplianceExportRecord>? Records { get; set; }
+}
+
+/// <summary>
+/// Outcome of verifying a persisted evidence pack's authenticity and integrity.
+/// </summary>
+public sealed class MComplianceEvidencePackVerifyResult
+{
+    /// <summary>Whether the stored signature is valid over the stored pack hash.</summary>
+    public bool SignatureValid { get; init; }
+    /// <summary>
+    /// Whether the recomputed content hash matches the stored pack hash.
+    /// <see langword="null"/> when the pack does not embed records (cannot fully recompute).
+    /// </summary>
+    public bool? ContentHashValid { get; init; }
+    /// <summary>The signature algorithm declared by the pack (e.g. HMACSHA256, RSA-SHA256).</summary>
+    public string SignatureAlgorithm { get; init; } = string.Empty;
+    /// <summary>Human-readable detail, populated when verification fails.</summary>
+    public string Message { get; init; } = string.Empty;
+    /// <summary>True only when the signature is valid and content hash is valid-or-not-applicable.</summary>
+    public bool IsTrustworthy => SignatureValid && ContentHashValid != false;
 }
 
 /// <summary>

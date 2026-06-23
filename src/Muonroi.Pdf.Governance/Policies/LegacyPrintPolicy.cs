@@ -52,23 +52,26 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
     });
 
     private readonly bool _softDegrade;
+    private readonly bool _allowModernLayout;
 
     /// <summary>
     /// Parameterless constructor — uses default (strict) policy settings.
     /// Existing code that calls <c>new LegacyPrintPolicy()</c> gets unchanged fail-loud behavior.
     /// </summary>
-    public LegacyPrintPolicy() : this(softDegrade: false) { }
+    public LegacyPrintPolicy() : this(softDegrade: false, allowModernLayout: false) { }
 
     /// <summary>
-    /// Constructor that reads <see cref="PdfPolicySettings.SoftDegradeUnknownDisplay"/>
-    /// from the bound <see cref="PdfConfigs"/> options.
+    /// Constructor that reads <see cref="PdfPolicySettings.SoftDegradeUnknownDisplay"/> and
+    /// <see cref="PdfPolicySettings.AllowModernLayout"/> from the bound <see cref="PdfConfigs"/> options.
     /// </summary>
     public LegacyPrintPolicy(IOptions<PdfConfigs> options)
-        : this(options?.Value?.Policy?.SoftDegradeUnknownDisplay ?? false) { }
+        : this(options?.Value?.Policy?.SoftDegradeUnknownDisplay ?? false,
+               options?.Value?.Policy?.AllowModernLayout ?? false) { }
 
-    private LegacyPrintPolicy(bool softDegrade)
+    private LegacyPrintPolicy(bool softDegrade, bool allowModernLayout = false)
     {
         _softDegrade = softDegrade;
+        _allowModernLayout = allowModernLayout;
     }
 
     /// <summary>Gets the stable identifier for this policy version.</summary>
@@ -101,7 +104,7 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
         CheckLimits(context, violations);
 
         if (context is AngleSharpStyledDocument styledDoc)
-            CheckCssFeatures(styledDoc.AngleSharpDocument, violations, _softDegrade);
+            CheckCssFeatures(styledDoc.AngleSharpDocument, violations, _softDegrade, _allowModernLayout);
 
         // Accepted = true when there are no violations at all, OR when soft-degrade is on and
         // every violation is a Warning (no hard errors). Any Error-severity violation rejects.
@@ -129,7 +132,7 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                 $"Source HTML {context.SourceHtmlBytes} bytes exceeds limit {Limits.MaxHtmlBytes}."));
     }
 
-    private static void CheckCssFeatures(IDocument document, List<PolicyViolation> violations, bool softDegrade)
+    private static void CheckCssFeatures(IDocument document, List<PolicyViolation> violations, bool softDegrade, bool allowModernLayout)
     {
         // Pass 1: Stylesheet AST walk — @import external, @keyframes, transition
         foreach (ICssStyleSheet sheet in document.StyleSheets.OfType<ICssStyleSheet>())
@@ -198,7 +201,10 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
             {
                 style = defaultView.GetComputedStyle(element);
             }
-            catch (ArgumentException)
+            // AngleSharp.Css (beta) throws on values it cannot compute headlessly — ArgumentException
+            // for em/rem/% (Phase 12) and NullReferenceException for some transform functions
+            // (e.g. translate()). Both degrade to the raw author stylesheet rules below.
+            catch (Exception ex) when (ex is ArgumentException or NullReferenceException)
             {
                 style = null;
                 foreach (ICssStyleSheet sheet in element.Owner?.StyleSheets.OfType<ICssStyleSheet>()
@@ -218,13 +224,32 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                 }
             }
 
-            if (style is null) continue;
+            if (style is null)
+            {
+                // GetComputedStyle failed AND no stylesheet rule matched. Inline style="" values are
+                // invisible to the rule scan, so check the raw inline attribute directly for the
+                // Phase 14 properties (transform / gradient) — otherwise an inline radial-gradient or
+                // translate() would silently bypass the gate.
+                string inlineCss = element.GetAttribute("style") ?? string.Empty;
+                if (inlineCss.Length > 0)
+                {
+                    string inlineSel = element.GetSelector() ?? element.LocalName;
+                    CheckTransformAndGradient(
+                        InlineDeclValue(inlineCss, "transform"),
+                        InlineDeclValue(inlineCss, "background"),
+                        InlineDeclValue(inlineCss, "background-image"),
+                        inlineSel, violations);
+                }
+                continue;
+            }
 
             string selector = element.GetSelector() ?? element.LocalName;
             string display = style.GetPropertyValue("display") ?? string.Empty;
             string position = style.GetPropertyValue("position") ?? string.Empty;
 
-            if (display is "flex" or "inline-flex")
+            // FLEX-02: when allowModernLayout is on, flex is ACCEPTED (no violation,
+            // no soft-degrade trigger) — the engine renders real Flexbox.
+            if ((display is "flex" or "inline-flex") && !allowModernLayout)
             {
                 if (softDegrade)
                 {
@@ -235,7 +260,8 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                     violations.Add(ViolationFor("forbidden.display.flex", "display", display, selector, "display:block"));
             }
 
-            if (display is "grid" or "inline-grid")
+            // GRID-01 / GRID-02: with allowModernLayout the engine renders real Grid via GridLayoutEngine — accept grid display.
+            if ((display is "grid" or "inline-grid") && !allowModernLayout)
             {
                 if (softDegrade)
                 {
@@ -265,7 +291,8 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                     bool isGrid = propName.StartsWith("grid", StringComparison.OrdinalIgnoreCase);
                     if (isGrid)
                     {
-                        if (!gridSubPropSeen)
+                        // GRID-02: when allowModernLayout is on the engine reads grid sub-props (they are NOT dropped) — do not emit the "will be ignored" warning.
+                        if (!gridSubPropSeen && !allowModernLayout)
                         {
                             gridSubPropSeen = true;
                             violations.Add(new PolicyViolation(
@@ -279,7 +306,9 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                     }
                     else
                     {
-                        if (!flexSubPropSeen)
+                        // FLEX-02: when allowModernLayout is on the engine reads flex sub-props
+                        // (they are NOT dropped) — so do not emit the "will be ignored" warning.
+                        if (!flexSubPropSeen && !allowModernLayout)
                         {
                             flexSubPropSeen = true;
                             violations.Add(new PolicyViolation(
@@ -296,21 +325,14 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
 
             // float:left/right and border-collapse:collapse are ALLOWED in Profile v1.
 
-            // New in Profile v1: block geometric CSS transforms (non-print-safe).
-            string transform = style.GetPropertyValue("transform") ?? string.Empty;
-            if (!string.IsNullOrEmpty(transform))
-                violations.Add(ViolationFor("forbidden.transform.geometric", "transform", transform, selector, "Remove transform property"));
-
-            // New in Profile v1: block background gradients (not renderable by the engine).
-            string background = style.GetPropertyValue("background") ?? string.Empty;
-            string backgroundImage = style.GetPropertyValue("background-image") ?? string.Empty;
-            if (background.Contains("gradient", StringComparison.OrdinalIgnoreCase) ||
-                backgroundImage.Contains("gradient", StringComparison.OrdinalIgnoreCase))
-            {
-                violations.Add(ViolationFor("forbidden.background.gradient", "background",
-                    background.Contains("gradient", StringComparison.OrdinalIgnoreCase) ? background : backgroundImage,
-                    selector, "Use a solid background-color instead"));
-            }
+            // Phase 14: a single transform:rotate(<angle>) is supported (rendered via a rotation CTM,
+            // e.g. a diagonal watermark) and linear-gradient backgrounds. All other transforms and
+            // gradient functions remain rejected. See CheckTransformAndGradient.
+            CheckTransformAndGradient(
+                style.GetPropertyValue("transform"),
+                style.GetPropertyValue("background"),
+                style.GetPropertyValue("background-image"),
+                selector, violations);
         }
 
         // Soft-degrade telemetry: emit counter once per page per kind.
@@ -361,6 +383,115 @@ public sealed class LegacyPrintPolicy : IPdfCssPolicy
                     SuggestedAlternative: "Use an http or https URI."));
             }
         }
+    }
+
+    // Phase 15: allowed affine transform function names (D-02). Any function not in this set is
+    // rejected fail-loud via the IsAffineTransform gate called in CheckTransformAndGradient.
+    private static readonly System.Collections.Generic.HashSet<string> AllowedAffineFunctions =
+        new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            "translate", "translateX", "translateY",
+            "scale", "scaleX", "scaleY",
+            "rotate",
+            "skew", "skewX", "skewY",
+            "matrix"
+        };
+
+    // Phase 15: tokenizes a CSS transform string into name(args) pairs.
+    // Non-backtracking-prone: no nested quantifiers on the same group (T-15.01-02).
+    private static readonly System.Text.RegularExpressions.Regex AffineFunctionTokenRegex = new(
+        @"(\w+)\(([^)]*)\)",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase
+        | System.Text.RegularExpressions.RegexOptions.CultureInvariant
+        | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    // Phase 15: returns true if every function token in the transform value is an allowed affine
+    // function with numerically-parseable args. Rejects any unknown function name fail-loud (D-02).
+    // Empty/null input returns false (no transform — treated as no violation by caller).
+    private static bool IsAffineTransform(string transform)
+    {
+        if (string.IsNullOrWhiteSpace(transform)) return false;
+        var matches = AffineFunctionTokenRegex.Matches(transform);
+        if (matches.Count == 0) return false;
+        foreach (System.Text.RegularExpressions.Match m in matches)
+        {
+            if (!AllowedAffineFunctions.Contains(m.Groups[1].Value)) return false;
+            if (!AreNumericArgs(m.Groups[2].Value)) return false;
+        }
+        return true;
+    }
+
+    // Verifies that a CSS function's args string is composed only of comma-separated numbers
+    // with optional CSS angle/length units. Accepts empty args (e.g. no-arg edge cases).
+    private static bool AreNumericArgs(string args)
+    {
+        if (string.IsNullOrWhiteSpace(args)) return true;
+        foreach (string part in args.Split(','))
+        {
+            string raw = part.Trim();
+            if (raw.Length == 0) continue;
+            // Strip trailing CSS unit (deg/rad/grad/turn/px/%)
+            foreach (string unit in new[] { "deg", "grad", "turn", "rad", "px", "%" })
+            {
+                if (raw.EndsWith(unit, StringComparison.OrdinalIgnoreCase))
+                {
+                    raw = raw[..^unit.Length].TrimEnd();
+                    break;
+                }
+            }
+            if (!double.TryParse(raw, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out _))
+                return false;
+        }
+        return true;
+    }
+
+    // Phase 15: shared transform + gradient gate (computed-style and inline-style paths both call it).
+    private static void CheckTransformAndGradient(
+        string? transform, string? background, string? backgroundImage,
+        string selector, List<PolicyViolation> violations)
+    {
+        transform ??= string.Empty;
+        background ??= string.Empty;
+        backgroundImage ??= string.Empty;
+
+        if (!string.IsNullOrEmpty(transform) && !IsAffineTransform(transform))
+        {
+            violations.Add(ViolationFor("forbidden.transform.geometric", "transform", transform, selector,
+                "Only affine transform functions (translate, scale, rotate, skew, matrix) are supported; " +
+                "perspective/filter and unknown functions are rejected."));
+        }
+
+        string gradientSource = background.Contains("gradient", StringComparison.OrdinalIgnoreCase)
+            ? background
+            : backgroundImage;
+        if (gradientSource.Contains("gradient", StringComparison.OrdinalIgnoreCase))
+        {
+            bool isAllowedGradient =
+                (gradientSource.Contains("linear-gradient(", StringComparison.OrdinalIgnoreCase)
+                 || gradientSource.Contains("radial-gradient(", StringComparison.OrdinalIgnoreCase))
+                && !gradientSource.Contains("conic-gradient", StringComparison.OrdinalIgnoreCase)
+                && !gradientSource.Contains("repeating-", StringComparison.OrdinalIgnoreCase);
+            if (!isAllowedGradient)
+            {
+                violations.Add(ViolationFor("forbidden.background.gradient", "background",
+                    gradientSource, selector,
+                    "Use linear-gradient or radial-gradient; other gradient functions are not supported."));
+            }
+        }
+    }
+
+    // Extracts a single declaration value from a raw inline style="" attribute (no CSSOM).
+    private static string InlineDeclValue(string css, string property)
+    {
+        foreach (string decl in css.Split(';'))
+        {
+            int colon = decl.IndexOf(':');
+            if (colon <= 0) continue;
+            if (decl.AsSpan(0, colon).Trim().Equals(property, StringComparison.OrdinalIgnoreCase))
+                return decl[(colon + 1)..].Trim();
+        }
+        return string.Empty;
     }
 
     private static PolicyViolation ViolationFor(

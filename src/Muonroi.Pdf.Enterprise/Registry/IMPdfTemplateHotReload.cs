@@ -5,7 +5,9 @@ namespace Muonroi.Pdf.Enterprise.Registry;
 /// Implementations listen for registry change notifications and refresh
 /// in-process template caches without a process restart.
 /// <para>
-/// The Redis pub/sub implementation (<c>RedisPdfTemplateHotReload</c>) lands in Phase 9.2.
+/// <see cref="PdfTemplateHotReload"/> is the transport-agnostic polling implementation (works against
+/// any <see cref="IMPdfTemplateRegistry"/>). A push-based variant (control-plane SignalR/Redis) is a
+/// cross-repo transport that can be substituted behind this same interface.
 /// </para>
 /// </summary>
 public interface IMPdfTemplateHotReload

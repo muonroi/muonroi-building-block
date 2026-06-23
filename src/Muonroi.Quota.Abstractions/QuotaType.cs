@@ -30,5 +30,7 @@ public enum QuotaType
     /// <summary>Total number of connectors allowed.</summary>
     TotalConnectors,
     /// <summary>Maximum number of connector executions per day.</summary>
-    ConnectorExecutionsPerDay
+    ConnectorExecutionsPerDay,
+    /// <summary>Maximum number of PDF page-render events recorded per day (record-only; no hard cap in Phase 16).</summary>
+    PdfRendersPerDay
 }

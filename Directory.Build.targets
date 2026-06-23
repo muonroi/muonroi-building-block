@@ -31,6 +31,21 @@
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
 
+  <!-- Per-package NuGet README. The SDK's default item globs add `README.md` as a `None` item
+       (EnableDefaultNoneItems), so we must Update that existing item rather than Include a second
+       one (Include would trip NETSDK1022 duplicate-item). This lives in Directory.Build.targets
+       (not .props) because the default None glob is materialized during SDK props evaluation,
+       which can run after Directory.Build.props is imported; by targets time the item always
+       exists. Packs the package-local README to the package root so it satisfies
+       <PackageReadmeFile>README.md</PackageReadmeFile>. The repo-root README fallback in
+       Directory.Build.props is mutually exclusive (negated Exists condition). -->
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)/README.md')">
+    <None Update="README.md">
+      <Pack>true</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
   <Target Name="DeduplicateGlobalAnalyzerConfigFiles" BeforeTargets="CoreCompile">
     <ItemGroup>
       <_UniqueGlobalAnalyzerConfigFiles Include="@(GlobalAnalyzerConfigFiles->Distinct())" />

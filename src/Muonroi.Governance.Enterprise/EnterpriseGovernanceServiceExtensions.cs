@@ -88,6 +88,7 @@ public static class EnterpriseGovernanceServiceExtensions
         services.TryAddSingleton<CodeIntegrityVerifier>();
 
         services.TryAddSingleton<TpmAnchor>();
+        services.TryAddSingleton<IFailedChainSubmissionStore, FileFailedChainSubmissionStore>();
         services.TryAddSingleton<ChainSubmitter>();
         services.TryAddSingleton<NonceRotator>();
         services.TryAddSingleton<IMComplianceExportService, MComplianceExportService>();

@@ -91,6 +91,14 @@ public sealed class TenantQuota
     public int MaxConnectorExecutionsPerDay { get; set; } = 100;
 
     /// <summary>
+    /// Gets or sets the enforced per-tier maximum number of PDF render events allowed per day
+    /// (Phase 17 / MON-04). Sourced from the licensed tier: finite for non-Enterprise tiers
+    /// (Free/Starter/Professional) and <see cref="int.MaxValue"/> (unlimited) for Enterprise.
+    /// The instance default is <see cref="int.MaxValue"/>; tier presets set finite caps.
+    /// </summary>
+    public int MaxPdfRendersPerDay { get; set; } = int.MaxValue;
+
+    /// <summary>
     /// Gets or sets the tenant tier.
     /// </summary>
     public TenantTier Tier { get; set; } = TenantTier.Free;
@@ -152,7 +160,9 @@ public static class TenantQuotaPresets
                 MaxMessagesPerDay = 1000,
                 MaxMessagesPerMinute = 50,
                 MaxTotalConnectors = 2,
-                MaxConnectorExecutionsPerDay = 100
+                MaxConnectorExecutionsPerDay = 100,
+                // MON-04: finite per-tier PDF render cap (Free = smallest daily allowance).
+                MaxPdfRendersPerDay = 50
             };
             return free;
         }
@@ -183,7 +193,9 @@ public static class TenantQuotaPresets
                 MaxMessagesPerDay = 10_000,
                 MaxMessagesPerMinute = 200,
                 MaxTotalConnectors = 10,
-                MaxConnectorExecutionsPerDay = 1000
+                MaxConnectorExecutionsPerDay = 1000,
+                // MON-04: finite per-tier PDF render cap (Starter > Free).
+                MaxPdfRendersPerDay = 500
             };
             return quota;
         }
@@ -214,7 +226,9 @@ public static class TenantQuotaPresets
                 MaxMessagesPerDay = 100_000,
                 MaxMessagesPerMinute = 1000,
                 MaxTotalConnectors = 50,
-                MaxConnectorExecutionsPerDay = 10_000
+                MaxConnectorExecutionsPerDay = 10_000,
+                // MON-04: finite per-tier PDF render cap (Professional > Starter).
+                MaxPdfRendersPerDay = 5_000
             };
             return quota;
         }
@@ -245,7 +259,8 @@ public static class TenantQuotaPresets
                 MaxMessagesPerDay = int.MaxValue,
                 MaxMessagesPerMinute = int.MaxValue,
                 MaxTotalConnectors = int.MaxValue,
-                MaxConnectorExecutionsPerDay = int.MaxValue
+                MaxConnectorExecutionsPerDay = int.MaxValue,
+                MaxPdfRendersPerDay = int.MaxValue
             };
             return quota;
         }

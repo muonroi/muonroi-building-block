@@ -81,8 +81,10 @@ public interface IAsyncObserver<in T>
 /// <summary>
 /// Client contract for the Muonroi PDF template registry.
 /// <para>
-/// Interface + DTOs only. Transport implementation (HTTP / gRPC wire format)
-/// is wired in Phase 9.2 WS-B. No transport or network code exists here.
+/// The REST transport is <see cref="HttpPdfTemplateRegistry"/> (Lookup / Resolve). Push-based
+/// change notifications (<see cref="SubscribeAsync"/>) require the control-plane hot-reload transport
+/// (SignalR/Redis), which is cross-repo; <see cref="PdfTemplateHotReload"/> polls specific templates
+/// over any registry as the building-block-side hot-reload.
 /// </para>
 /// </summary>
 public interface IMPdfTemplateRegistry

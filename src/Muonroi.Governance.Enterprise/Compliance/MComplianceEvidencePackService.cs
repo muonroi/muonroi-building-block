@@ -1,16 +1,24 @@
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Governance.Abstractions.License;
+using Muonroi.Governance.ControlPlane;
 
 namespace Muonroi.Governance.Compliance;
 
 /// <summary>
 /// Represents the MCompliance Evidence Pack Service.
 /// </summary>
+/// <remarks>
+/// Packs are signed for tamper-evidence. When an <see cref="IMControlPlaneSigner"/> is registered,
+/// signing uses asymmetric RSA chain-of-custody (verifiers only need the public key). Otherwise it
+/// falls back to a local HMAC keyed on <c>LicenseConfigs.ProjectSeed</c>/<c>FingerprintSalt</c>;
+/// the fallback fails closed when no key material is configured (no guessable default key).
+/// </remarks>
 public sealed class MComplianceEvidencePackService(
     LicenseConfigs licenseConfigs,
     IMComplianceExportService exportService,
-    IHostEnvironment? hostEnvironment = null) : IMComplianceEvidencePackService
+    IHostEnvironment? hostEnvironment = null,
+    IMControlPlaneSigner? signer = null) : IMComplianceEvidencePackService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -21,6 +29,7 @@ public sealed class MComplianceEvidencePackService(
     private readonly LicenseConfigs _licenseConfigs = MGuard.NotNull(licenseConfigs);
     private readonly IMComplianceExportService _exportService = MGuard.NotNull(exportService);
     private readonly IHostEnvironment? _hostEnvironment = hostEnvironment;
+    private readonly IMControlPlaneSigner? _signer = signer;
 
     /// <summary>
     /// Executes the Generate Async operation.
@@ -78,8 +87,8 @@ public sealed class MComplianceEvidencePackService(
             Records = request.IncludeRecords ? [.. records] : null
         };
 
-        pack.PackHash = ComputePackHash(pack, records);
-        pack.Signature = SignPack(pack.PackHash);
+        pack.PackHash = ComputePackHash(pack, records.Select(r => r.RecordHash).ToArray());
+        (pack.Signature, pack.SignatureAlgorithm, pack.SigningKeyId) = SignPack(pack.PackHash);
 
         string outputPath = ResolveOutputPath(request.OutputPath, pack.PackId);
         string? folder = Path.GetDirectoryName(outputPath);
@@ -138,9 +147,72 @@ public sealed class MComplianceEvidencePackService(
         return Path.Combine(root, folderName);
     }
 
+    /// <summary>
+    /// Loads a persisted evidence pack and verifies its signature (always) and content hash
+    /// (when records are embedded). See <see cref="IMComplianceEvidencePackService.VerifyAsync"/>.
+    /// </summary>
+    public async Task<MComplianceEvidencePackVerifyResult> VerifyAsync(
+        string packFilePath,
+        CancellationToken cancellationToken = default)
+    {
+        MGuard.NotEmpty(packFilePath);
+        if (!File.Exists(packFilePath))
+        {
+            throw new MInternalException($"Evidence pack not found: {packFilePath}");
+        }
+
+        string payload = await File.ReadAllTextAsync(packFilePath, cancellationToken);
+        MComplianceEvidencePackDocument? pack =
+            JsonSerializer.Deserialize<MComplianceEvidencePackDocument>(payload, JsonOptions); // MBB002-exempt: custom JsonOptions not available in wrapper
+
+        if (pack is null)
+        {
+            return new MComplianceEvidencePackVerifyResult
+            {
+                SignatureValid = false,
+                ContentHashValid = false,
+                Message = "Evidence pack could not be deserialized."
+            };
+        }
+
+        // 1) Signature over the stored pack hash — authenticity + hash-tamper detection.
+        bool signatureValid = VerifySignature(pack.SignatureAlgorithm, pack.PackHash, pack.Signature);
+
+        // 2) Content integrity — only when records are embedded (otherwise cannot recompute the
+        //    per-record hash component of the pack hash).
+        bool? contentHashValid = null;
+        if (pack.Records is not null)
+        {
+            string recomputed = ComputePackHash(pack, pack.Records.Select(r => r.RecordHash).ToArray());
+            contentHashValid = string.Equals(recomputed, pack.PackHash, StringComparison.OrdinalIgnoreCase);
+        }
+
+        string message;
+        if (!signatureValid)
+        {
+            message = "Signature verification failed — pack hash or signature was altered, or the verifying key does not match.";
+        }
+        else if (contentHashValid == false)
+        {
+            message = "Content hash mismatch — embedded records were altered after signing.";
+        }
+        else
+        {
+            message = string.Empty;
+        }
+
+        return new MComplianceEvidencePackVerifyResult
+        {
+            SignatureValid = signatureValid,
+            ContentHashValid = contentHashValid,
+            SignatureAlgorithm = pack.SignatureAlgorithm,
+            Message = message
+        };
+    }
+
     private static string ComputePackHash(
         MComplianceEvidencePackDocument pack,
-        IReadOnlyList<MComplianceExportRecord> records)
+        IReadOnlyList<string> recordHashes)
     {
         string material = JsonSerializer.Serialize(new // MBB002-exempt: static helper with custom JsonOptions not available in wrapper
         {
@@ -151,28 +223,84 @@ public sealed class MComplianceEvidencePackService(
             pack.RootHash,
             pack.Verification.IsValid,
             pack.Verification.CheckedCount,
-            RecordHashes = records.Select(x => x.RecordHash).ToArray()
+            RecordHashes = recordHashes
         }, JsonOptions);
 
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(material)));
     }
 
-    private string SignPack(string packHash)
+    /// <summary>
+    /// Signs the pack hash. Prefers the asymmetric control-plane signer (RSA chain-of-custody);
+    /// falls back to a local HMAC. Fails closed when neither a signer nor key material is present.
+    /// </summary>
+    private (string Signature, string Algorithm, string KeyId) SignPack(string packHash)
     {
-        string? keyMaterial = _licenseConfigs.ProjectSeed;
-        if (string.IsNullOrWhiteSpace(keyMaterial))
+        // Preferred: asymmetric chain-of-custody. Verifiers only need the public key, so packs are
+        // non-repudiable across trust boundaries.
+        if (_signer is not null)
         {
-            keyMaterial = _licenseConfigs.FingerprintSalt;
+            return (_signer.Sign(packHash), _signer.SignatureAlgorithm, _signer.KeyId);
         }
 
-        if (string.IsNullOrWhiteSpace(keyMaterial))
-        {
-            keyMaterial = "muonroi-compliance-default-key";
-        }
+        // Fallback: local HMAC. Fail closed if no real key material is configured — a guessable
+        // default key would make signatures forgeable by anyone reading the OSS source.
+        string keyMaterial = ResolveHmacKeyMaterial()
+            ?? throw new MInternalException(
+                "Compliance evidence-pack signing key is not configured: set LicenseConfigs.ProjectSeed " +
+                "or FingerprintSalt, or register an IMControlPlaneSigner for RSA signing.");
 
         byte[] key = Encoding.UTF8.GetBytes(keyMaterial);
         using HMACSHA256 hmac = new(key);
         byte[] signature = hmac.ComputeHash(Encoding.UTF8.GetBytes(packHash));
-        return Convert.ToHexString(signature);
+        return (Convert.ToHexString(signature), "HMACSHA256", string.Empty);
+    }
+
+    private bool VerifySignature(string algorithm, string packHash, string signature)
+    {
+        if (string.IsNullOrWhiteSpace(packHash) || string.IsNullOrWhiteSpace(signature))
+        {
+            return false;
+        }
+
+        // RSA (or any non-HMAC) chain-of-custody requires the configured signer to verify.
+        if (!string.Equals(algorithm, "HMACSHA256", StringComparison.OrdinalIgnoreCase))
+        {
+            return _signer is not null && _signer.Verify(packHash, signature);
+        }
+
+        // Local HMAC: recompute and constant-time compare.
+        string? keyMaterial = ResolveHmacKeyMaterial();
+        if (keyMaterial is null)
+        {
+            return false;
+        }
+
+        byte[] key = Encoding.UTF8.GetBytes(keyMaterial);
+        using HMACSHA256 hmac = new(key);
+        byte[] expected = hmac.ComputeHash(Encoding.UTF8.GetBytes(packHash));
+
+        byte[] actual;
+        try
+        {
+            actual = Convert.FromHexString(signature);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        return CryptographicOperations.FixedTimeEquals(expected, actual);
+    }
+
+    private string? ResolveHmacKeyMaterial()
+    {
+        if (!string.IsNullOrWhiteSpace(_licenseConfigs.ProjectSeed))
+        {
+            return _licenseConfigs.ProjectSeed;
+        }
+
+        return string.IsNullOrWhiteSpace(_licenseConfigs.FingerprintSalt)
+            ? null
+            : _licenseConfigs.FingerprintSalt;
     }
 }

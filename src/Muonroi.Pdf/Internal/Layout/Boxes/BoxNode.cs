@@ -51,6 +51,23 @@ internal abstract class BoxNode
     /// <summary>Data URI extracted from CSS background-image: url(data:...). Null = no background image.</summary>
     public string? BackgroundImageSrc { get; set; }
 
+    /// <summary>Parsed CSS linear-gradient background (Phase 14). Null = no gradient.</summary>
+    public LinearGradient? BackgroundGradient { get; set; }
+
+    /// <summary>Parsed CSS radial-gradient background (Phase 15). Null = no radial gradient.</summary>
+    public RadialGradient? BackgroundRadialGradient { get; set; }
+
+    /// <summary>
+    /// True when this box is the origin element that set a <c>transform:</c> value (Phase 15).
+    /// Only the origin block carries <c>true</c>; descendants share the <see cref="TransformGroup"/>
+    /// but have <c>HasTransform = false</c>. Replaces the Phase 14 <c>RotationDegrees != 0f</c>
+    /// sentinel used by the writer to identify the pivot-defining element.
+    /// </summary>
+    public bool HasTransform { get; set; }
+
+    /// <summary>Shared affine transform context (Phase 15) for a transformed block and its descendants. Null = none.</summary>
+    public TransformGroup? TransformGroup { get; set; }
+
     /// <summary>CSS position: "absolute" | "relative" | null (null = static).</summary>
     public string? Position { get; set; }
 
@@ -67,6 +84,66 @@ internal abstract class BoxNode
     public string? LeftRaw { get; set; }
     /// <summary>Raw CSS 'right' value for percentage resolution at layout time.</summary>
     public string? RightRaw { get; set; }
+
+    // Flex-ITEM properties (CSS flexbox). Resolved on EVERY box so a child of any type can be a
+    // flex item. All nullable: null = the CSS initial value, and an unset value means zero
+    // behavioural change for non-flex layouts (these are untouched outside a flex container).
+    // Consumed by FlexLayoutEngine (Plan 03).
+
+    /// <summary>CSS <c>flex-grow</c>. Null = CSS initial value 0. Consumed by FlexLayoutEngine (Plan 03); untouched for non-flex layouts.</summary>
+    public float? FlexGrow { get; set; }
+
+    /// <summary>CSS <c>flex-shrink</c>. Null = CSS initial value 1. Consumed by FlexLayoutEngine (Plan 03); untouched for non-flex layouts.</summary>
+    public float? FlexShrink { get; set; }
+
+    /// <summary>
+    /// Raw CSS <c>flex-basis</c> token (<c>auto</c> | length | <c>content</c> | null). Resolved at
+    /// layout time against the main axis, like <see cref="WidthRaw"/>. Null = CSS initial value
+    /// <c>auto</c>. Consumed by FlexLayoutEngine (Plan 03); untouched for non-flex layouts.
+    /// </summary>
+    public string? FlexBasisRaw { get; set; }
+
+    /// <summary>CSS <c>order</c>. Null = CSS initial value 0. Consumed by FlexLayoutEngine (Plan 03); untouched for non-flex layouts.</summary>
+    public int? Order { get; set; }
+
+    /// <summary>
+    /// CSS <c>align-self</c>. Null = CSS initial value <c>auto</c> (inherit the container
+    /// <see cref="FlexContainerBox.AlignItems"/>). Consumed by FlexLayoutEngine (Plan 03);
+    /// untouched for non-flex layouts.
+    /// </summary>
+    public string? AlignSelf { get; set; }
+
+    // Grid-ITEM properties (CSS Grid). Resolved on EVERY box so a child of any type can be a grid
+    // item. All nullable: null = the CSS initial value, leaving zero behavioural change for non-grid
+    // layouts (untouched outside a grid container). Consumed by GridLayoutEngine (Plan 03).
+    // align-self is REUSED from the Phase-18 flex-item props above (line ~114).
+
+    /// <summary>
+    /// Raw CSS <c>grid-column</c> token (e.g. <c>"2"</c>, <c>"1 / 3"</c>, <c>"span 2"</c>). Null = CSS
+    /// initial <c>auto</c>. Consumed by GridLayoutEngine (Plan 03); untouched for non-grid layouts.
+    /// </summary>
+    public string? GridColumnRaw { get; set; }
+
+    /// <summary>
+    /// Raw CSS <c>grid-row</c> token (e.g. <c>"1 / 3"</c>, <c>"span 2"</c>). Null = CSS initial
+    /// <c>auto</c>. Consumed by GridLayoutEngine (Plan 03); untouched for non-grid layouts.
+    /// </summary>
+    public string? GridRowRaw { get; set; }
+
+    /// <summary>
+    /// Raw CSS <c>grid-area</c> token: a named area, or the
+    /// <c>row-start / col-start / row-end / col-end</c> shorthand. Null = CSS initial <c>auto</c>.
+    /// Consumed by GridLayoutEngine (Plan 03); untouched for non-grid layouts.
+    /// </summary>
+    public string? GridAreaRaw { get; set; }
+
+    /// <summary>
+    /// CSS <c>justify-self</c> (inline-axis self alignment within the grid cell). One of
+    /// <c>start</c> | <c>end</c> | <c>center</c> | <c>stretch</c>. Null = CSS initial <c>auto</c>
+    /// (inherit the container <see cref="GridContainerBox.JustifyItems"/>). Consumed by
+    /// GridLayoutEngine (Plan 03); untouched for non-grid layouts.
+    /// </summary>
+    public string? JustifySelf { get; set; }
 
     public List<BoxNode> Children { get; } = new();
 

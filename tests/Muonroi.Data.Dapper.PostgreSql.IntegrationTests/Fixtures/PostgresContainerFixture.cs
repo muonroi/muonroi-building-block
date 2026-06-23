@@ -18,8 +18,7 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
 {
     private const string AppRolePassword = "change_me_in_deployment";
 
-    private readonly PostgreSqlContainer _pg = new PostgreSqlBuilder()
-        .WithImage("postgres:16")
+    private readonly PostgreSqlContainer _pg = new PostgreSqlBuilder("postgres:16")
         .Build();
 
     /// <summary>Superuser connection string — used only for DDL and seeding in <see cref="InitializeAsync"/>.</summary>

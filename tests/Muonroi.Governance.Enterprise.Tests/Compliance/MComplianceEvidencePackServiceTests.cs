@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Moq;
 using NSubstitute;
@@ -78,6 +79,127 @@ public class MComplianceEvidencePackServiceTests
         Assert.Null(result.Pack.Records);
     }
 
+    // ─── verify-on-load: fresh HMAC pack is trustworthy ───────────────────────
+
+    [Fact]
+    public async Task VerifyAsync_FreshHmacPack_IsTrustworthy()
+    {
+        using EvidenceHarness harness = new();
+        harness.SeedTwoEntries();
+        _ = await harness.ExportService.ExportAsync();
+
+        MComplianceEvidencePackResult result = await harness.PackService.GenerateAsync(
+            new MComplianceEvidencePackRequest { TenantId = "tenant-a", IncludeRecords = true });
+
+        Assert.Equal("HMACSHA256", result.Pack.SignatureAlgorithm);
+
+        MComplianceEvidencePackVerifyResult verify = await harness.PackService.VerifyAsync(result.OutputPath);
+
+        Assert.True(verify.SignatureValid);
+        Assert.True(verify.ContentHashValid);
+        Assert.True(verify.IsTrustworthy);
+    }
+
+    // ─── verify-on-load: RSA chain-of-custody round-trips ─────────────────────
+
+    [Fact]
+    public async Task VerifyAsync_RsaSignedPack_RoundTripsAndVerifies()
+    {
+        using MRsaControlPlaneSigner signer = MRsaControlPlaneSigner.CreateEphemeral("test-cp");
+        using EvidenceHarness harness = new(signer);
+        harness.SeedTwoEntries();
+        _ = await harness.ExportService.ExportAsync();
+
+        MComplianceEvidencePackResult result = await harness.PackService.GenerateAsync(
+            new MComplianceEvidencePackRequest { TenantId = "tenant-a", IncludeRecords = true });
+
+        Assert.Equal("RSA-SHA256", result.Pack.SignatureAlgorithm);
+        Assert.Equal("test-cp", result.Pack.SigningKeyId);
+
+        MComplianceEvidencePackVerifyResult verify = await harness.PackService.VerifyAsync(result.OutputPath);
+
+        Assert.True(verify.SignatureValid);
+        Assert.True(verify.ContentHashValid);
+    }
+
+    // ─── tamper detection: altered content fails the content hash ─────────────
+
+    [Fact]
+    public async Task VerifyAsync_TamperedContent_DetectsContentMismatch()
+    {
+        using EvidenceHarness harness = new();
+        harness.SeedTwoEntries();
+        _ = await harness.ExportService.ExportAsync();
+
+        MComplianceEvidencePackResult result = await harness.PackService.GenerateAsync(
+            new MComplianceEvidencePackRequest { TenantId = "tenant-a", IncludeRecords = true });
+
+        // Alter a hashed field (RootHash) without touching PackHash/Signature.
+        MutatePack(result.OutputPath, doc => doc.RootHash = "TAMPERED");
+
+        MComplianceEvidencePackVerifyResult verify = await harness.PackService.VerifyAsync(result.OutputPath);
+
+        Assert.True(verify.SignatureValid, "signature is over the unchanged PackHash");
+        Assert.False(verify.ContentHashValid, "recomputed hash must not match after content tamper");
+        Assert.False(verify.IsTrustworthy);
+    }
+
+    // ─── tamper detection: altered signature fails verification ───────────────
+
+    [Fact]
+    public async Task VerifyAsync_TamperedSignature_FailsSignature()
+    {
+        using EvidenceHarness harness = new();
+        harness.SeedTwoEntries();
+        _ = await harness.ExportService.ExportAsync();
+
+        MComplianceEvidencePackResult result = await harness.PackService.GenerateAsync(
+            new MComplianceEvidencePackRequest { TenantId = "tenant-a", IncludeRecords = true });
+
+        MutatePack(result.OutputPath, doc => doc.Signature = FlipFirstHexChar(doc.Signature));
+
+        MComplianceEvidencePackVerifyResult verify = await harness.PackService.VerifyAsync(result.OutputPath);
+
+        Assert.False(verify.SignatureValid);
+        Assert.False(verify.IsTrustworthy);
+    }
+
+    // ─── fail-closed: no key material and no signer must throw, not sign with a default ──
+
+    [Fact]
+    public async Task GenerateAsync_NoKeyMaterialNoSigner_FailsClosed()
+    {
+        using EvidenceHarness harness = new(signer: null, withKeyMaterial: false);
+        harness.SeedTwoEntries();
+        _ = await harness.ExportService.ExportAsync();
+
+        await Assert.ThrowsAsync<MInternalException>(() =>
+            harness.PackService.GenerateAsync(new MComplianceEvidencePackRequest { TenantId = "tenant-a" }));
+    }
+
+    private static readonly JsonSerializerOptions PackJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        WriteIndented = true
+    };
+
+    private static void MutatePack(string path, Action<MComplianceEvidencePackDocument> mutate)
+    {
+        string json = File.ReadAllText(path);
+        MComplianceEvidencePackDocument doc =
+            JsonSerializer.Deserialize<MComplianceEvidencePackDocument>(json, PackJsonOptions)!;
+        mutate(doc);
+        File.WriteAllText(path, JsonSerializer.Serialize(doc, PackJsonOptions));
+    }
+
+    private static string FlipFirstHexChar(string hex)
+    {
+        if (string.IsNullOrEmpty(hex)) return "00";
+        char first = hex[0] == 'A' ? 'B' : 'A';
+        return first + hex[1..];
+    }
+
     private sealed class EvidenceHarness : IDisposable
     {
         private readonly string _root;
@@ -87,7 +209,7 @@ public class MComplianceEvidencePackServiceTests
         public MComplianceEvidencePackService PackService { get; }
         public InMemoryChainStore ChainStore { get; } = new();
 
-        public EvidenceHarness()
+        public EvidenceHarness(IMControlPlaneSigner? signer = null, bool withKeyMaterial = true)
         {
             _root = Path.Combine(Path.GetTempPath(), "Muonroi.Governance.Enterprise-pack-tests", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_root);
@@ -95,7 +217,8 @@ public class MComplianceEvidencePackServiceTests
 
             LicenseConfigs config = new()
             {
-                ProjectSeed = "1234567890ABCDEF",
+                ProjectSeed = withKeyMaterial ? "1234567890ABCDEF" : string.Empty,
+                FingerprintSalt = string.Empty,
                 Compliance = new MComplianceConfigs
                 {
                     Enabled = true,
@@ -118,7 +241,25 @@ public class MComplianceEvidencePackServiceTests
                 env.Object,
                 Substitute.For<IMLog<MComplianceExportService>>());
 
-            PackService = new MComplianceEvidencePackService(config, ExportService, env.Object);
+            PackService = new MComplianceEvidencePackService(config, ExportService, env.Object, signer);
+        }
+
+        public void SeedTwoEntries()
+        {
+            ChainStore.Append(new FingerprintChainEntry
+            {
+                Sequence = 1,
+                TenantId = "tenant-a",
+                ActionType = "api.list",
+                Signature = "sig-1"
+            });
+            ChainStore.Append(new FingerprintChainEntry
+            {
+                Sequence = 2,
+                TenantId = "tenant-a",
+                ActionType = "api.update",
+                Signature = "sig-2"
+            });
         }
 
         public void Dispose()

@@ -64,6 +64,7 @@ a license violation regardless of source visibility.
 - Muonroi.Pdf.Abstractions
 - Muonroi.Pdf
 - Muonroi.Pdf.Governance
+- Muonroi.Billing.Abstractions          (Phase 17 creates this; record-only seam, no payment SDK)
 
 ## Commercial Packages (Muonroi Commercial License — published on nuget.org)
 

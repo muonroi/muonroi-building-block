@@ -162,12 +162,40 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                     pageImages.Add((rn, oid));
             }
 
+            // Phase 14/15: gradient backgrounds → one inline shading per gradient element.
+            // Linear: ShadingType 2 (axial). Radial: ShadingType 3 (radial).
+            // /Coords are absolute (page user space) for circle; unit-circle + ellipseCm for ellipse.
+            var gradientResNames = new Dictionary<PositionedElement, string>();
+            var radialEllipseCms = new Dictionary<PositionedElement, string>();
+            var pageShadings = new List<(string ResName, string Dict)>();
+            {
+                int gi = 0;
+                foreach (PositionedElement el in page.Elements)
+                {
+                    string? dict = null;
+                    if (el.Source?.BackgroundGradient is { Stops.Count: >= 2 } linGrad)
+                    {
+                        dict = BuildAxialShadingDict(linGrad, el.Position, pageHeightPt);
+                    }
+                    else if (el.Source?.BackgroundRadialGradient is { Stops.Count: >= 2 } radGrad)
+                    {
+                        dict = BuildRadialShadingDict(radGrad, el.Position, pageHeightPt, out string? ellipseCm);
+                        if (ellipseCm is not null)
+                            radialEllipseCms[el] = ellipseCm;
+                    }
+                    if (dict is null) continue;
+                    string resName = $"Sh{gi++}";
+                    gradientResNames[el] = resName;
+                    pageShadings.Add((resName, dict));
+                }
+            }
+
             // Reserve annotation object IDs for this page's link annotations
             int[] annotIds = page.LinkAnnotations
                 .Select(_ => store.ReserveId())
                 .ToArray();
 
-            byte[] rawContent = BuildContentStream(page, pageHeightPt, fontResources, imageResources, cpToNewGidMap);
+            byte[] rawContent = BuildContentStream(page, pageHeightPt, fontResources, imageResources, cpToNewGidMap, gradientResNames, radialEllipseCms);
             byte[] compressedContent = CompressFlateDecode(rawContent);
 
             // Content stream
@@ -185,7 +213,7 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 w.WriteRaw($"<< /Type /Page /Parent {pagesRootId} 0 R");
                 w.WriteRaw($" /MediaBox [0 0 {pageWidthPt.ToString("F2", CultureInfo.InvariantCulture)} {pageHeightPt.ToString("F2", CultureInfo.InvariantCulture)}]");
                 w.WriteRaw($" /Contents {contentObjIds[i]} 0 R");
-                if (pageFonts.Count > 0 || pageImages.Count > 0)
+                if (pageFonts.Count > 0 || pageImages.Count > 0 || pageShadings.Count > 0)
                 {
                     w.WriteRaw(" /Resources <<");
                     if (pageFonts.Count > 0)
@@ -200,6 +228,13 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                         w.WriteRaw(" /XObject <<");
                         foreach ((string rn, int oid) in pageImages)
                             w.WriteRaw($" /{rn} {oid} 0 R");
+                        w.WriteRaw(" >>");
+                    }
+                    if (pageShadings.Count > 0)
+                    {
+                        w.WriteRaw(" /Shading <<");
+                        foreach ((string rn, string dict) in pageShadings)
+                            w.WriteRaw($" /{rn} {dict}");
                         w.WriteRaw(" >>");
                     }
                     w.WriteRaw(" >>");
@@ -491,9 +526,9 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         byte bitDepth = pngData[24];
         byte colorType = pngData[25];
 
-        if (colorType != 2 && colorType != 3 && colorType != 6)
+        if (colorType != 0 && colorType != 2 && colorType != 3 && colorType != 4 && colorType != 6)
             throw new PdfFormatException("IMAGE-FORMAT",
-                $"Unsupported PNG: color_type={colorType} bit_depth={bitDepth}. Supported: 8-bit RGB (type 2), palette (type 3), RGBA (type 6).");
+                $"Unsupported PNG: color_type={colorType} bit_depth={bitDepth}. Supported: 8-bit grayscale (type 0), grayscale+alpha (type 4), RGB (type 2), palette (type 3), RGBA (type 6).");
 
         // Scan all chunks: collect IDAT payload and (for palette) PLTE + tRNS chunks.
         var idatPayload = new List<byte>();
@@ -546,8 +581,10 @@ internal sealed class OwnedPdfWriter : IPdfWriter
 
         return colorType switch
         {
+            0 => DecodePngGray(filteredScanlines, width, height),
             2 => DecodePngRgb(filteredScanlines, width, height),
             3 => DecodePngPalette(filteredScanlines, width, height, plteData, trnsData),
+            4 => DecodePngGrayAlpha(filteredScanlines, width, height),
             6 => DecodePngRgba(filteredScanlines, width, height),
             _ => throw new PdfFormatException("IMAGE-FORMAT", $"Unreachable color_type={colorType}")
         };
@@ -697,6 +734,92 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         return rawPixels;
     }
 
+    /// <summary>
+    /// Decode 8-bit grayscale (color_type=0) PNG scanlines to raw RGB pixel buffer.
+    /// Each pixel is a single gray sample, expanded to R=G=B=gray.
+    /// </summary>
+    private static byte[] DecodePngGray(byte[] filteredScanlines, int width, int height)
+    {
+        const int bpp = 1; // bytes per pixel: single gray sample
+        int bytesPerFilteredRow = width * bpp;
+        int rowStride = bytesPerFilteredRow + 1; // +1 for filter byte
+        byte[] rawPixels = new byte[height * width * 3];
+        byte[] prevRow = new byte[bytesPerFilteredRow];
+
+        for (int row = 0; row < height; row++)
+        {
+            int srcRowStart = row * rowStride;
+            if (srcRowStart >= filteredScanlines.Length) break;
+
+            byte filterType = filteredScanlines[srcRowStart];
+
+            byte[] curRow = new byte[bytesPerFilteredRow];
+            int copyLen = Math.Min(bytesPerFilteredRow, filteredScanlines.Length - srcRowStart - 1);
+            for (int x = 0; x < copyLen; x++)
+                curRow[x] = filteredScanlines[srcRowStart + 1 + x];
+
+            ApplyPngUnFilter(filterType, curRow, prevRow, bytesPerFilteredRow, bpp);
+
+            int dstRowStart = row * width * 3;
+            for (int x = 0; x < width; x++)
+            {
+                byte gray = curRow[x];
+                rawPixels[dstRowStart + x * 3]     = gray;
+                rawPixels[dstRowStart + x * 3 + 1] = gray;
+                rawPixels[dstRowStart + x * 3 + 2] = gray;
+            }
+
+            prevRow = curRow;
+        }
+
+        return rawPixels;
+    }
+
+    /// <summary>
+    /// Decode 8-bit grayscale+alpha (color_type=4) PNG scanlines to raw RGB pixel buffer.
+    /// Each pixel is 2 bytes (gray, alpha). Alpha is composited onto a white background:
+    /// out = (alpha/255)*gray + (1 - alpha/255)*255.
+    /// </summary>
+    private static byte[] DecodePngGrayAlpha(byte[] filteredScanlines, int width, int height)
+    {
+        const int bpp = 2; // bytes per pixel: gray, alpha
+        int bytesPerFilteredRow = width * bpp;
+        int rowStride = bytesPerFilteredRow + 1; // +1 for filter byte
+        byte[] rawPixels = new byte[height * width * 3];
+        byte[] prevRow = new byte[bytesPerFilteredRow];
+
+        for (int row = 0; row < height; row++)
+        {
+            int srcRowStart = row * rowStride;
+            if (srcRowStart >= filteredScanlines.Length) break;
+
+            byte filterType = filteredScanlines[srcRowStart];
+
+            byte[] curRow = new byte[bytesPerFilteredRow];
+            int copyLen = Math.Min(bytesPerFilteredRow, filteredScanlines.Length - srcRowStart - 1);
+            for (int x = 0; x < copyLen; x++)
+                curRow[x] = filteredScanlines[srcRowStart + 1 + x];
+
+            // Un-filter in gray+alpha domain (bpp=2)
+            ApplyPngUnFilter(filterType, curRow, prevRow, bytesPerFilteredRow, bpp);
+
+            // Composite gray onto white using the per-pixel alpha
+            int dstRowStart = row * width * 3;
+            for (int x = 0; x < width; x++)
+            {
+                float alpha = curRow[x * bpp + 1] / 255f;
+                byte composited = (byte)(alpha * curRow[x * bpp] + (1f - alpha) * 255f + 0.5f);
+                rawPixels[dstRowStart + x * 3]     = composited;
+                rawPixels[dstRowStart + x * 3 + 1] = composited;
+                rawPixels[dstRowStart + x * 3 + 2] = composited;
+            }
+
+            prevRow = curRow;
+        }
+
+        return rawPixels;
+    }
+
     private static void ApplyPngUnFilter(byte filterType, byte[] row, byte[] prev, int rowLen, int bpp)
     {
         switch (filterType)
@@ -747,12 +870,180 @@ internal sealed class OwnedPdfWriter : IPdfWriter
 
     // ── content stream builder ────────────────────────────────────────────────
 
+    // Phase 14: build an inline PDF axial-shading dictionary (ShadingType 2) for a linear-gradient
+    // background. /Coords are absolute page coordinates spanning the CSS gradient line; the content
+    // stream clips to the box rect then paints with `sh`. Stop positions are normalized so the ends
+    // pin to 0/1 (a documented v1 approximation for offset start/end stops).
+    private static string BuildAxialShadingDict(LinearGradient g, Rect rect, float pageHeightPt)
+    {
+        float w = rect.Width;
+        float h = rect.Height;
+        float bgX = rect.X;
+        float bgY = pageHeightPt - rect.Y - rect.Height;
+        double cx = bgX + w / 2.0;
+        double cy = bgY + h / 2.0;
+
+        double theta = g.AngleDegrees * Math.PI / 180.0;
+        double dirX = Math.Sin(theta);
+        double dirY = Math.Cos(theta); // PDF y-up: 0°→+y (to top), 90°→+x (to right)
+        double len = Math.Abs(w * Math.Sin(theta)) + Math.Abs(h * Math.Cos(theta));
+        double half = len / 2.0;
+        double x0 = cx - dirX * half;
+        double y0 = cy - dirY * half;
+        double x1 = cx + dirX * half;
+        double y1 = cy + dirY * half;
+
+        IReadOnlyList<GradientStop> stops = g.Stops;
+        int n = stops.Count;
+        var pos = new float[n];
+        for (int i = 0; i < n; i++)
+            pos[i] = stops[i].Position ?? (n == 1 ? 0f : (float)i / (n - 1));
+        pos[0] = 0f;
+        pos[n - 1] = 1f;
+        for (int i = 1; i < n; i++)
+            if (pos[i] < pos[i - 1]) pos[i] = pos[i - 1];
+
+        var colors = new (float R, float G, float B)[n];
+        for (int i = 0; i < n; i++)
+            colors[i] = ParseColor(stops[i].Color);
+
+        var sb = new StringBuilder();
+        sb.Append("<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [");
+        sb.Append(Num(x0)); sb.Append(' '); sb.Append(Num(y0)); sb.Append(' ');
+        sb.Append(Num(x1)); sb.Append(' '); sb.Append(Num(y1));
+        sb.Append("] /Domain [0 1] /Function ");
+        sb.Append(BuildStitchingFunction(colors, pos));
+        sb.Append(" /Extend [true true] >>");
+        return sb.ToString();
+
+        static string Num(double v) => v.ToString("F4", CultureInfo.InvariantCulture);
+    }
+
+    // Phase 15: build an inline PDF radial-shading dictionary (ShadingType 3) for a radial-gradient
+    // background. For a circle: /Coords = [cx cy 0 cx cy r] (two concentric circles, r0=0,
+    // r1=farthest-corner). For an ellipse: /Coords = [0 0 0 0 0 1] (unit circle at origin), and the
+    // caller emits an anisotropic CTM [rx 0 0 ry cx cy cm] in the content stream BEFORE calling sh.
+    // Out param ellipseCm is null for circle, non-null for ellipse.
+    private static string BuildRadialShadingDict(
+        RadialGradient g, Rect rect, float pageHeightPt, out string? ellipseCm)
+    {
+        float w = rect.Width;
+        float h = rect.Height;
+        float bgX = rect.X;
+        float bgY = pageHeightPt - rect.Y - rect.Height;  // PDF y-up: bottom-left of box
+
+        // Center in PDF coords (y-up). CSS PositionY=0 is top → PDF cy = bgY + h.
+        double cx = bgX + g.PositionX * w;
+        double cy = bgY + (1.0 - g.PositionY) * h;  // y-flip: CSS top=0 → PDF bottom
+
+        IReadOnlyList<GradientStop> stops = g.Stops;
+        int n = stops.Count;
+        var pos = new float[n];
+        for (int i = 0; i < n; i++)
+            pos[i] = stops[i].Position ?? (n == 1 ? 0f : (float)i / (n - 1));
+        pos[0] = 0f;
+        pos[n - 1] = 1f;
+        for (int i = 1; i < n; i++)
+            if (pos[i] < pos[i - 1]) pos[i] = pos[i - 1];
+
+        var colors = new (float R, float G, float B)[n];
+        for (int i = 0; i < n; i++)
+            colors[i] = ParseColor(stops[i].Color);
+
+        var sb = new StringBuilder();
+        if (string.Equals(g.Shape, "circle", StringComparison.OrdinalIgnoreCase))
+        {
+            // Farthest-corner radius: distance from center to farthest box corner (P4 — NOT half-dimensions).
+            double r = Math.Max(
+                Math.Max(Dist(cx, cy, bgX, bgY),         Dist(cx, cy, bgX + w, bgY)),
+                Math.Max(Dist(cx, cy, bgX, bgY + h),     Dist(cx, cy, bgX + w, bgY + h)));
+
+            sb.Append("<< /ShadingType 3 /ColorSpace /DeviceRGB /Coords [");
+            sb.Append(Num(cx)); sb.Append(' '); sb.Append(Num(cy)); sb.Append(" 0 ");
+            sb.Append(Num(cx)); sb.Append(' '); sb.Append(Num(cy)); sb.Append(' '); sb.Append(Num(r));
+            sb.Append("] /Domain [0 1] /Function ");
+            sb.Append(BuildStitchingFunction(colors, pos));
+            sb.Append(" /Extend [true true] >>");
+            ellipseCm = null;
+        }
+        else  // ellipse (CSS default)
+        {
+            // Unit-circle shading; the content stream applies an anisotropic CTM before sh.
+            sb.Append("<< /ShadingType 3 /ColorSpace /DeviceRGB /Coords [0 0 0 0 0 1]");
+            sb.Append(" /Domain [0 1] /Function ");
+            sb.Append(BuildStitchingFunction(colors, pos));
+            sb.Append(" /Extend [true true] >>");
+
+            // Farthest-corner ellipse radii (A2): max distance along each axis.
+            double rx = Math.Max(Math.Abs(cx - bgX), Math.Abs(cx - (bgX + w)));
+            double ry = Math.Max(Math.Abs(cy - bgY), Math.Abs(cy - (bgY + h)));
+            // Anisotropic scale + translate to place and stretch the unit circle onto the ellipse.
+            ellipseCm = $"{Num(rx)} 0 0 {Num(ry)} {Num(cx)} {Num(cy)} cm";
+        }
+        return sb.ToString();
+
+        static double Dist(double x1, double y1, double x2, double y2) =>
+            Math.Sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+        static string Num(double v) => v.ToString("F4", CultureInfo.InvariantCulture);
+    }
+
+    private static string BuildStitchingFunction((float R, float G, float B)[] colors, float[] pos)
+    {
+        int n = colors.Length;
+        if (n == 2)
+            return Exp(colors[0], colors[1]);
+
+        var sb = new StringBuilder();
+        sb.Append("<< /FunctionType 3 /Domain [0 1] /Functions [");
+        for (int i = 0; i < n - 1; i++)
+        {
+            sb.Append(Exp(colors[i], colors[i + 1]));
+            if (i < n - 2) sb.Append(' ');
+        }
+        sb.Append("] /Bounds [");
+        for (int i = 1; i < n - 1; i++)
+        {
+            sb.Append(pos[i].ToString("F4", CultureInfo.InvariantCulture));
+            if (i < n - 2) sb.Append(' ');
+        }
+        sb.Append("] /Encode [");
+        for (int i = 0; i < n - 1; i++)
+        {
+            sb.Append("0 1");
+            if (i < n - 2) sb.Append(' ');
+        }
+        sb.Append("] >>");
+        return sb.ToString();
+
+        static string Exp((float R, float G, float B) c0, (float R, float G, float B) c1) =>
+            $"<< /FunctionType 2 /Domain [0 1] /C0 [{Col(c0)}] /C1 [{Col(c1)}] /N 1 >>";
+
+        static string Col((float R, float G, float B) c) =>
+            $"{c.R.ToString("F4", CultureInfo.InvariantCulture)} " +
+            $"{c.G.ToString("F4", CultureInfo.InvariantCulture)} " +
+            $"{c.B.ToString("F4", CultureInfo.InvariantCulture)}";
+    }
+
+    // Phase 15: emit a `cm` operator for an affine matrix [a b c d e f].
+    private static void AppendCm(
+        StringBuilder sb, (double A, double B, double C, double D, double E, double F) m)
+    {
+        sb.Append(m.A.ToString("F6", CultureInfo.InvariantCulture)); sb.Append(' ');
+        sb.Append(m.B.ToString("F6", CultureInfo.InvariantCulture)); sb.Append(' ');
+        sb.Append(m.C.ToString("F6", CultureInfo.InvariantCulture)); sb.Append(' ');
+        sb.Append(m.D.ToString("F6", CultureInfo.InvariantCulture)); sb.Append(' ');
+        sb.Append(m.E.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+        sb.Append(m.F.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" cm");
+    }
+
     private static byte[] BuildContentStream(
         PositionedPage page,
         float pageHeightPt,
         List<(string ResourceName, FontObjectIds Ids, EmbeddedFontInfo Info)> fontResources,
         List<(string ResourceName, int ObjectId, string Src)> imageResources,
-        Dictionary<string, Dictionary<int, ushort>> cpToNewGidMap)
+        Dictionary<string, Dictionary<int, ushort>> cpToNewGidMap,
+        Dictionary<PositionedElement, string> gradientResNames,
+        Dictionary<PositionedElement, string> radialEllipseCms)
     {
         // Build family → resourceName map for fast lookup
         var familyToResName = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -764,16 +1055,116 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         foreach ((string rn, _, string src) in imageResources)
             srcToResName[src] = rn;
 
+        // Phase 15: resolve each transform group's pivot (PDF coords, y-up) from its origin block's
+        // rect (the element whose Source has HasTransform=true). Descendant elements share the same
+        // TransformGroup reference so the block + its text transform as one rigid group.
+        var transformPivots = new Dictionary<TransformGroup, (double Px, double Py)>();
+        foreach (PositionedElement el in page.Elements)
+        {
+            if (el.Source is { HasTransform: true, TransformGroup: { } originGroup })
+            {
+                double px = el.Position.X + el.Position.Width / 2.0;
+                double py = pageHeightPt - (el.Position.Y + el.Position.Height / 2.0);
+                transformPivots[originGroup] = (px, py);
+            }
+        }
+
         var sb = new StringBuilder(4096);
         sb.AppendLine("BT");
+
+        // Returns the pivot-composed PDF affine matrix for an element that belongs to a transform
+        // group, or null if no transform applies. The CSS-space matrix from TransformGroup is composed
+        // with the box-center pivot (T(px,py)*M_css*T(-px,-py)) here at write time using PDF coords.
+        (double A, double B, double C, double D, double E, double F)? TransformFor(PositionedElement el)
+        {
+            if (el.Source?.TransformGroup is { } grp
+                && grp.Matrix is { Length: 6 } m
+                && transformPivots.TryGetValue(grp, out (double Px, double Py) p))
+            {
+                // Apply pivot composition in PDF space: T(px,py) * M_css * T(-px,-py).
+                // T(-px,-py) pre-translates to origin, M_css applies, T(px,py) translates back.
+                // For rotation: the CSS matrix [cosA, sinA, -sinA, cosA, 0, 0] must have the
+                // PDF y-up flip applied. CSS y-down means sinA terms must be negated for PDF y-up.
+                // Apply the flip: negate b and c (the mixed-axis terms) to account for PDF y-inversion.
+                double a = m[0], b = -m[1], c = -m[2], d = m[3];
+                // CSS translation (m[4]=tx, m[5]=ty) carried into PDF space: tx is unchanged
+                // (x-axis shared), ty is negated (CSS +y is down, PDF +y is up). Without these the
+                // pivot composition silently dropped translate()/matrix() translation, emitting an
+                // identity cm for transform:translate(...) (Phase 15 fix).
+                double tx = m[4], ty = -m[5];
+                // Pivot composition with y-flipped matrix: T(px,py) * M_css * T(-px,-py), plus the
+                // matrix's own translation. For a pure translate the pivot terms cancel, leaving (tx,ty);
+                // for rotate/scale (tx=ty=0) this reduces to the validated Phase 14 formula.
+                double e = tx + p.Px - p.Px * a - p.Py * c;
+                double f = ty + p.Py - p.Px * b - p.Py * d;
+                return (a, b, c, d, e, f);
+            }
+            return null;
+        }
 
         string? currentFamily = null;
         float currentSize = 0f;
 
         foreach (PositionedElement el in page.Elements)
         {
-            // background-color: fill a solid rectangle before any content
-            if (el.Source?.BackgroundColor is { Length: > 0 } bgColorVal)
+            // background: linear-gradient → PDF axial shading clipped to the box rect (Phase 14).
+            if (el.Source?.BackgroundGradient is { Stops.Count: >= 2 }
+                && gradientResNames.TryGetValue(el, out string? shName))
+            {
+                sb.AppendLine("ET");
+                float gx = el.Position.X;
+                float gy = pageHeightPt - el.Position.Y - el.Position.Height;
+                float gw = el.Position.Width;
+                float gh = el.Position.Height;
+                sb.AppendLine("q");
+                if (TransformFor(el) is { } gRot)
+                    AppendCm(sb, gRot);
+                sb.Append(gx.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(gy.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(gw.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(gh.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" re W n");
+                sb.AppendLine($"/{shName} sh");
+                sb.AppendLine("Q");
+                sb.AppendLine("BT");
+                currentFamily = null;
+                currentSize = 0f;
+            }
+
+            // background: radial-gradient → PDF radial shading (ShadingType 3) clipped to the box
+            // rect (Phase 15). Clip ordering (Pitfall P3): clip re W n FIRST (in page user space),
+            // then element transform cm (if any), then ellipse anisotropic cm (if ellipse), then sh.
+            if (el.Source?.BackgroundRadialGradient is { Stops.Count: >= 2 }
+                && gradientResNames.TryGetValue(el, out string? radShName))
+            {
+                sb.AppendLine("ET");
+                float rx = el.Position.X;
+                float ry = pageHeightPt - el.Position.Y - el.Position.Height;
+                float rw = el.Position.Width;
+                float rh = el.Position.Height;
+                sb.AppendLine("q");
+                // P3: clip in page user space BEFORE any cm.
+                sb.Append(rx.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(ry.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(rw.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(rh.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" re W n");
+                // Element affine transform cm (if any).
+                if (TransformFor(el) is { } radRot)
+                    AppendCm(sb, radRot);
+                // Ellipse anisotropic cm — maps unit-circle shading to actual ellipse (ellipse only).
+                if (radialEllipseCms.TryGetValue(el, out string? ellipseCm))
+                    sb.AppendLine(ellipseCm);
+                sb.AppendLine($"/{radShName} sh");
+                sb.AppendLine("Q");
+                sb.AppendLine("BT");
+                currentFamily = null;
+                currentSize = 0f;
+            }
+
+            // background-color: fill a solid rectangle before any content (skipped when a gradient
+            // background is present — the gradient supersedes the solid fill).
+            if (el.Source?.BackgroundGradient is null
+                && el.Source?.BackgroundRadialGradient is null
+                && el.Source?.BackgroundColor is { Length: > 0 } bgColorVal)
             {
                 sb.AppendLine("ET");
                 (float bgR, float bgG, float bgB) = ParseColor(bgColorVal);
@@ -782,6 +1173,8 @@ internal sealed class OwnedPdfWriter : IPdfWriter
                 float bgW = el.Position.Width;
                 float bgH = el.Position.Height;
                 sb.Append("q").AppendLine();
+                if (TransformFor(el) is { } bgRot)
+                    AppendCm(sb, bgRot);
                 sb.Append(bgR.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
                 sb.Append(bgG.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
                 sb.Append(bgB.ToString("F4", CultureInfo.InvariantCulture)); sb.AppendLine(" rg");
@@ -1000,18 +1393,36 @@ internal sealed class OwnedPdfWriter : IPdfWriter
             // Synthetic italic: skew the text matrix with c=0.2 (≈11° slant).
             float pdfXt = el.Position.X;
             float pdfYt = pageHeightPt - el.Position.Y - inline.FontSize;
-            if (inline.Italic)
+            if (TransformFor(el) is { } tRot)
             {
-                sb.Append("1 0 0.2 1 ");
+                // Phase 14: rotate the text about the group pivot. Bake the rotation into Tm — the
+                // linear part orients glyphs, and the origin is the rotated text position. (Synthetic
+                // italic skew is dropped for rotated runs; watermarks are rarely italic.)
+                double ex = tRot.A * pdfXt + tRot.C * pdfYt + tRot.E;
+                double fy = tRot.B * pdfXt + tRot.D * pdfYt + tRot.F;
+                sb.Append(tRot.A.ToString("F6", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(tRot.B.ToString("F6", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(tRot.C.ToString("F6", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(tRot.D.ToString("F6", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(ex.ToString("F4", CultureInfo.InvariantCulture)); sb.Append(' ');
+                sb.Append(fy.ToString("F4", CultureInfo.InvariantCulture));
+                sb.AppendLine(" Tm");
             }
             else
             {
-                sb.Append("1 0 0 1 ");
+                if (inline.Italic)
+                {
+                    sb.Append("1 0 0.2 1 ");
+                }
+                else
+                {
+                    sb.Append("1 0 0 1 ");
+                }
+                sb.Append(pdfXt.ToString("F4", CultureInfo.InvariantCulture));
+                sb.Append(' ');
+                sb.Append(pdfYt.ToString("F4", CultureInfo.InvariantCulture));
+                sb.AppendLine(" Tm");
             }
-            sb.Append(pdfXt.ToString("F4", CultureInfo.InvariantCulture));
-            sb.Append(' ');
-            sb.Append(pdfYt.ToString("F4", CultureInfo.InvariantCulture));
-            sb.AppendLine(" Tm");
 
             // Synthetic bold: switch to fill+stroke rendering mode (Tr=2) before Tj.
             if (syntheticBold)

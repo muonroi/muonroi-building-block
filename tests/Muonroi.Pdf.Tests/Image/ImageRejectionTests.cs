@@ -55,15 +55,29 @@ public sealed class ImageRejectionTests
     }
 
     [Fact]
-    public void DecodePng_Grayscale_ThrowsPdfFormatException_PNG_GRAYSCALE()
+    public void DecodePng_Grayscale8_PassesThroughWithOriginalBytes()
     {
-        byte[] pngBytes = BuildMinimalPng(bitDepth: 0x08, colorType: 0x00); // color_type=0 (grayscale)
+        // color_type=0 (8-bit grayscale) is now supported — PureImageDecoder passes through original bytes.
+        byte[] pngBytes = BuildMinimalPng(bitDepth: 0x08, colorType: 0x00);
+        var decoder = new PureImageDecoder();
+
+        DecodedImage result = decoder.Decode(pngBytes, "image/png");
+
+        result.Should().NotBeNull();
+        result.Width.Should().Be(1);
+        result.Height.Should().Be(1);
+    }
+
+    [Fact]
+    public void DecodePng_16BitGrayscale_ThrowsPdfFormatException_PNG_16BIT()
+    {
+        byte[] pngBytes = BuildMinimalPng(bitDepth: 0x10, colorType: 0x00); // color_type=0 (grayscale), bit_depth=16
         var decoder = new PureImageDecoder();
 
         Action act = () => decoder.Decode(pngBytes, "image/png");
 
         act.Should().Throw<PdfFormatException>()
-            .Which.RuleId.Should().Be("PNG-GRAYSCALE");
+            .Which.RuleId.Should().Be("PNG-16BIT");
     }
 
     [Fact]

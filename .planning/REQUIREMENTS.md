@@ -262,6 +262,42 @@
 | DESIGN-01 – DESIGN-03 | Phase 9 | v1.0 | Pending |
 | TCIS-01 – TCIS-02 | Phase 9 | v1.0 | Pending |
 | COMM-01 – COMM-02 | Phase 9 | v1.0 | Pending |
+| MON-01 – MON-08 | Phase 17 | v1.1 | Pending |
+| FLEX-01 – FLEX-08 | Phase 18 | v1.2 | Done (2026-06-21; verified 5/5 SC, 8/8 FLEX) |
+| GRID-01 – GRID-08 | Phase 19 | v1.2 | Done (2026-06-21; GRID-06/07/08 closed by 19-04 — 12 operand-value facts, 10 grid goldens, count guard 84) |
+
+### Phase 19 — CSS Grid Layout Engine (GRID)
+
+- **GRID-01**: `LegacyPrintPolicy` gates `display:grid`/`inline-grid` + grid sub-properties on the EXISTING `PdfPolicySettings.AllowModernLayout` flag (mirror the Phase-18 flex gate); no new config key.
+- **GRID-02**: With `AllowModernLayout=true`, grid is accepted (no violation, sub-props not dropped); `DefaultStrictPolicy` remains always-strict. The Phase-18 "grid still blocked with flag on" test is flipped to "grid accepted".
+- **GRID-03**: With `AllowModernLayout=false` (default), grid behaviour is unchanged — strict emits `forbidden.display.grid`; soft-degrade warns + renders as block. `LegacyPrintPolicyTests` strict/default grid expectations unchanged.
+- **GRID-04**: `GridContainerBox : BoxNode` + `BoxTreeBuilder` maps `grid`/`inline-grid`→`GridContainerBox` when the flag is on (else degrade-to-block); grid container + item props resolved (track lists w/ `repeat()`/`minmax()`, `grid-template-areas`, `grid-column`/`grid-row`/`grid-area`, gaps).
+- **GRID-05**: `GridLayoutEngine` resolves track sizes (px/%/fr/auto/minmax/repeat), places explicit + named-area + auto-flow (sparse) items, honors gaps and justify/align items/self/content; recurses children through the existing dispatch. Wired via `BlockLayoutEngine.DispatchLayout` (`case GridContainerBox`) + `LayoutEngine` ctor.
+- **GRID-06**: Unit tests assert `PositionedElement.Position` (X/Y/W/H) by value for representative grid scenarios (fixed tracks, fr distribution, minmax, repeat, gap, explicit line placement, span, auto-placement row/column, named areas, nested grid).
+- **GRID-07**: New `GridLayout` golden corpus (standalone, outside `AllCases`) + `GridLayoutGoldenTests` rendered with `AllowModernLayout=true`; baselines committed.
+- **GRID-08**: Existing baselines (default-path + 9 Phase-18 flex) remain byte-identical (structural suite green, no re-baseline); flex still renders with the flag on; `Muonroi.Pdf.Tests` + `Muonroi.Pdf.Governance.Tests` green (per-project); build validated against .NET 8/9.
+
+### Phase 18 — Flexbox Layout Engine (FLEX)
+
+- **FLEX-01**: `PdfPolicySettings.AllowModernLayout` (bool, default false) added in `Muonroi.Pdf.Abstractions`; bound from `PdfConfigs:Policy`.
+- **FLEX-02**: With `AllowModernLayout=true`, `LegacyPrintPolicy` accepts `display:flex`/`inline-flex` and flex sub-properties (no violation); `DefaultStrictPolicy` remains always-strict.
+- **FLEX-03**: With `AllowModernLayout=false` (default), flex behaviour is unchanged — strict emits `forbidden.display.flex` (Error); soft-degrade emits the Warning + renders as block. No existing policy test changes.
+- **FLEX-04**: CSS Grid stays blocked even when `AllowModernLayout=true` (`forbidden.display.grid` / soft-degrade unchanged) — grid is Phase 19.
+- **FLEX-05**: `FlexContainerBox : BoxNode` + `BoxTreeBuilder` maps `flex`/`inline-flex`→`FlexContainerBox` when the flag is on (else degrade-to-block); flex container + item props resolved (incl. `flex`/`flex-flow` shorthand, `gap`, `flex-basis`, `order`).
+- **FLEX-06**: `FlexLayoutEngine` positions items per `flex-direction`, `flex-grow/shrink/basis`, `justify-content`, `align-items`/`align-content`/`align-self`, `flex-wrap`, `gap`, `order`; recurses children through the existing dispatch (nested layouts compose). Wired via `BlockLayoutEngine.DispatchLayout` + threaded `AllowModernLayout`.
+- **FLEX-07**: Unit tests assert `PositionedElement.Position` (X/Y/W/H) for representative flex scenarios (row distribution, grow/shrink, justify/align, wrap, gap, column direction, nested). New `FlexLayout` golden corpus + baselines added.
+- **FLEX-08**: Existing 82 golden baselines remain byte-identical (structural snapshot suite green, no re-baseline); `Muonroi.Pdf.Tests` + `Muonroi.Pdf.Governance.Tests` green (per-project); build validated against .NET 8/9.
+
+### Phase 17 — Monetization Rail (MON)
+
+- **MON-01**: `Muonroi.Billing.Abstractions` defines `IBillingProvider`, `UsageLineItem`, `IUsageAggregator`, and `PricingPlan` contracts (no payment-SDK dependency).
+- **MON-02**: A record-only default `IBillingProvider` records billable events and never calls an external service; provider failures are logged with context (No Silent Catch), never swallowed silently.
+- **MON-03**: `IUsageAggregator` rolls per-tenant metered usage (from `ITenantQuotaStore`) into priced `UsageLineItem`s for a billing period via a `PricingPlan`.
+- **MON-04**: Per-tier quota limits (incl. `MaxPdfRendersPerDay`) are sourced from the licensed tier rather than hard-coded `int.MaxValue`.
+- **MON-05**: control-plane host registers `UseQuotaEnforcement()`; a tenant over its tier limit receives HTTP 429 at the API boundary; the OSS render path is never blocked (SC5).
+- **MON-06**: control-plane exposes an invoice-preview endpoint returning the computed amount for a tenant + period from aggregated usage and the `PricingPlan` (replaces `PricingEndpoints` placeholder prices).
+- **MON-07**: license-server exposes a subscription + renewal lifecycle (renew endpoint, expiry/grace) so renewal is not manual re-issue only; exposes tier→quota-limit mapping.
+- **MON-08**: Full suites green across the three repos; `Muonroi.Pdf` (OSS) byte-identical (no golden re-baseline); no billing reference leaks into the OSS engine.
 
 **Coverage:**
 - v0.1 requirements: 86 total (PKG×7, ABST×14, DI×4, PIPE×8, LAYOUT×7, PAGE×8, FONT×6, IMG×5, SEC×7, DET×3, TEL×5, GOV×3, TEST×4, PERF×2, GATE×3)

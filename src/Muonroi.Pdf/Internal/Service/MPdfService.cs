@@ -15,6 +15,7 @@ using Muonroi.Pdf.Abstractions.Telemetry;
 using Muonroi.Pdf.Internal.Font;
 using Muonroi.Pdf.Internal.Layout;
 using Muonroi.Pdf.Internal.Layout.Boxes;
+using Muonroi.Pdf.Internal.Layout.Geometry;
 using Muonroi.Pdf.Internal.Telemetry;
 using Muonroi.Tenancy.Abstractions;
 
@@ -98,9 +99,12 @@ internal sealed class MPdfService(
                 throw new PdfPolicyException(policy.Violations);
             }
 
+            RunningContentSpec? running = await BuildRunningContentAsync(options, styled.PageRule, cts.Token).ConfigureAwait(false);
+
             var layout = new LayoutEngine();
             IPositionedPageList pages = await layout.LayoutAsync(
-                styled, options, _configs.Limits, _fontResolver, _resourceResolver, _imageDecoder, cts.Token)
+                styled, options, _configs.Limits, _configs.Policy.AllowModernLayout,
+                _fontResolver, _resourceResolver, _imageDecoder, cts.Token, running)
                 .ConfigureAwait(false);
 
             long byteCount = await _writer.WriteAsync(pages, options, destination, cts.Token).ConfigureAwait(false);
@@ -131,6 +135,65 @@ internal sealed class MPdfService(
             _log.LogError(ex, "PDF render failed for template {TemplateId}", options.TemplateId ?? string.Empty);
             throw;
         }
+    }
+
+    // Phase 13/14: build the full-HTML running header/footer spec. Header/footer columns come from
+    // options.Header/Footer (programmatic API) OR, when a band is left null by the API, from the CSS
+    // @page margin boxes (@top-*/@bottom-*). Precedence is API-wins-per-band (Phase 14 locked
+    // decision): a non-null options.Header overrides the entire @top-* band, options.Footer the
+    // @bottom-* band. Each non-empty column fragment is wrapped (base font + forced text-align),
+    // parsed, and cascaded into a styled fragment document. LayoutEngine lays them out + stamps per
+    // page; counter(page)/counter(pages) substitution happens during pagination.
+    private async Task<RunningContentSpec?> BuildRunningContentAsync(
+        PdfRenderOptions options, IPageRule? pageRule, CancellationToken ct)
+    {
+        PdfHeaderFooter? header = options.Header;
+        PdfHeaderFooter? footer = options.Footer;
+
+        // API wins per band: CSS margin boxes only fill a band the API left null.
+        bool topFromCss = header is null && (pageRule?.HasTopMarginBoxes ?? false);
+        bool bottomFromCss = footer is null && (pageRule?.HasBottomMarginBoxes ?? false);
+
+        bool hasHeader = header is not null || topFromCss;
+        bool hasFooter = footer is not null || bottomFromCss;
+        if (!hasHeader && !hasFooter) return null;
+
+        async Task<IStyledDocument?> ColumnAsync(string? fragment, string align)
+        {
+            if (string.IsNullOrWhiteSpace(fragment)) return null;
+            string wrapper =
+                "<html><head><style>" +
+                "html,body{margin:0;padding:0;}" +
+                "html,body,p,div,span,td,th{font-family:\"Times New Roman\";font-size:11px;}" +
+                ".hf{text-align:" + align + ";}" +
+                "</style></head><body><div class=\"hf\">" + fragment + "</div></body></html>";
+
+            IParsedDocument parsed = await _htmlParser.ParseAsync(wrapper, ct).ConfigureAwait(false);
+            return await _cascadeEngine.CascadeAsync(parsed, null, ct).ConfigureAwait(false);
+        }
+
+        string? headerLeft = header?.LeftHtml ?? (topFromCss ? pageRule?.TopLeftHtml : null);
+        string? headerCenter = header?.CenterHtml ?? (topFromCss ? pageRule?.TopCenterHtml : null);
+        string? headerRight = header?.RightHtml ?? (topFromCss ? pageRule?.TopRightHtml : null);
+        string? footerLeft = footer?.LeftHtml ?? (bottomFromCss ? pageRule?.BottomLeftHtml : null);
+        string? footerCenter = footer?.CenterHtml ?? (bottomFromCss ? pageRule?.BottomCenterHtml : null);
+        string? footerRight = footer?.RightHtml ?? (bottomFromCss ? pageRule?.BottomRightHtml : null);
+
+        return new RunningContentSpec
+        {
+            HeaderLeft = hasHeader ? await ColumnAsync(headerLeft, "left").ConfigureAwait(false) : null,
+            HeaderCenter = hasHeader ? await ColumnAsync(headerCenter, "center").ConfigureAwait(false) : null,
+            HeaderRight = hasHeader ? await ColumnAsync(headerRight, "right").ConfigureAwait(false) : null,
+            FooterLeft = hasFooter ? await ColumnAsync(footerLeft, "left").ConfigureAwait(false) : null,
+            FooterCenter = hasFooter ? await ColumnAsync(footerCenter, "center").ConfigureAwait(false) : null,
+            FooterRight = hasFooter ? await ColumnAsync(footerRight, "right").ConfigureAwait(false) : null,
+            // Margin-box bands have no explicit HeightMm — the layout falls back to measured height.
+            HeaderHeightPt = (float)((header?.HeightMm ?? 0d) * Units.MmToPt),
+            FooterHeightPt = (float)((footer?.HeightMm ?? 0d) * Units.MmToPt),
+            HeaderShowLine = header?.ShowLine ?? false,
+            FooterShowLine = footer?.ShowLine ?? false,
+            LineColor = "#888888",
+        };
     }
 
     public async Task<(byte[] Bytes, PdfRenderResult Metadata)> RenderToBytesAsync(
@@ -195,7 +258,8 @@ internal sealed class MPdfService(
 
             var layout = new LayoutEngine();
             IPositionedPageList fragmentPages = await layout.LayoutAsync(
-                styled, options, _configs.Limits, _fontResolver, _resourceResolver, _imageDecoder, cts.Token)
+                styled, options, _configs.Limits, _configs.Policy.AllowModernLayout,
+                _fontResolver, _resourceResolver, _imageDecoder, cts.Token)
                 .ConfigureAwait(false);
 
             if (fragmentPages is PositionedPageList pageList)

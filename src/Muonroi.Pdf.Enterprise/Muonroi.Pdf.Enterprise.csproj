@@ -12,12 +12,16 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <Description>Enterprise extensions for Muonroi.Pdf: template registry client, Redis hot-reload, SSIM quality scorer, and capability gates.</Description>
     <PackageTags>pdf;html;enterprise;templates;muonroi</PackageTags>
-    <!-- Assembly signing: Enterprise only — OSS stays unsigned (contributor friction-free) -->
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>../../Muonroi.snk</AssemblyOriginatorKeyFile>
+    <!-- Assembly signing: Enterprise only — OSS stays unsigned (contributor friction-free).
+         OpenSSL 3 on Linux rejects SHA-1 strong-name signing; keep signing enabled on Windows CI/release. -->
+    <SignAssembly Condition="'$(OS)' == 'Windows_NT'">true</SignAssembly>
+    <SignAssembly Condition="'$(OS)' != 'Windows_NT'">false</SignAssembly>
+    <AssemblyOriginatorKeyFile Condition="'$(OS)' == 'Windows_NT'">../../Muonroi.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <!-- One-way reference: Enterprise -> OSS. The OSS engine must never reference Enterprise (SC5). -->
     <ProjectReference Include="..\Muonroi.Pdf\Muonroi.Pdf.csproj" />
+    <!-- Enterprise -> Enterprise: allowed. Governance.Enterprise is also strong-named with Muonroi.snk. -->
+    <ProjectReference Include="..\Muonroi.Governance.Enterprise\Muonroi.Governance.Enterprise.csproj" />
   </ItemGroup>
 </Project>

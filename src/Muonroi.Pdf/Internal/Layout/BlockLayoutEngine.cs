@@ -11,6 +11,14 @@ internal sealed class BlockLayoutEngine
     // Set by LayoutEngine after TableLayoutEngine is constructed (avoids circular ctor dependency).
     internal TableLayoutEngine? TableEngine { get; set; }
 
+    // Set by LayoutEngine after FlexLayoutEngine is constructed (same post-construction
+    // pattern as TableEngine — breaks the BlockLayoutEngine ↔ FlexLayoutEngine ctor cycle).
+    internal FlexLayoutEngine? FlexEngine { get; set; }
+
+    // Set by LayoutEngine after GridLayoutEngine is constructed (same post-construction pattern as
+    // FlexEngine/TableEngine — breaks the BlockLayoutEngine ↔ GridLayoutEngine ctor cycle).
+    internal GridLayoutEngine? GridEngine { get; set; }
+
     // CSS 2.1 §8.3.1: max(positives) + min(negatives) handles mixed-sign margins.
     internal static float CollapseMargins(float a, float b)
     {
@@ -399,7 +407,8 @@ internal sealed class BlockLayoutEngine
                 // so the fill/image renders correctly.
                 bool suppressBodyBox = blockChild.IsBodyRoot
                     && blockChild.BackgroundColor == null
-                    && blockChild.BackgroundImageSrc == null;
+                    && blockChild.BackgroundImageSrc == null
+                    && blockChild.BackgroundGradient == null;
 
                 if (!suppressBodyBox)
                 {
@@ -468,6 +477,42 @@ internal sealed class BlockLayoutEngine
                 {
                     Source = tableChild,
                     Position = new Rect(tableOriginX + tableChild.MarginLeft, startY, childWidth, h),
+                    PageIndex = pageIndex
+                });
+                ctx.CurrentY = startY + h;
+                return h;
+            }
+
+            case FlexContainerBox flexChild:
+            {
+                // Mirror the TableBox case: FlexEngine.Layout emits the per-item PositionedElements
+                // into `output`; here we emit the CONTAINER element and advance CurrentY.
+                float h = FlexEngine != null
+                    ? FlexEngine.Layout(flexChild, ctx, output, pageIndex)
+                    : (flexChild.Height > 0f ? flexChild.Height : 0f);
+                float flexOriginX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
+                output.Add(new PositionedElement
+                {
+                    Source = flexChild,
+                    Position = new Rect(flexOriginX + flexChild.MarginLeft, startY, childWidth, h),
+                    PageIndex = pageIndex
+                });
+                ctx.CurrentY = startY + h;
+                return h;
+            }
+
+            case GridContainerBox gridChild:
+            {
+                // Mirror the FlexContainerBox case: GridEngine.Layout emits the per-item
+                // PositionedElements into `output`; here we emit the CONTAINER element and advance CurrentY.
+                float h = GridEngine != null
+                    ? GridEngine.Layout(gridChild, ctx, output, pageIndex)
+                    : (gridChild.Height > 0f ? gridChild.Height : 0f);
+                float gridOriginX = ctx.ContentOriginX > 0f ? ctx.ContentOriginX : ctx.PageMarginLeftPt;
+                output.Add(new PositionedElement
+                {
+                    Source = gridChild,
+                    Position = new Rect(gridOriginX + gridChild.MarginLeft, startY, childWidth, h),
                     PageIndex = pageIndex
                 });
                 ctx.CurrentY = startY + h;

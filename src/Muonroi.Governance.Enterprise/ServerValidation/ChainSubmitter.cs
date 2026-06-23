@@ -14,15 +14,22 @@ public sealed class ChainSubmitter(
     IHttpClientFactory httpClientFactory,
     IMLog<ChainSubmitter>? logger = null,
     LicenseState? licenseState = null,
-    IServiceScopeFactory? scopeFactory = null)
+    IServiceScopeFactory? scopeFactory = null,
+    IFailedChainSubmissionStore? failedStore = null)
 {
     private readonly LicenseState _licenseState = licenseState ?? LicenseState.CreateFree();
 
     /// <summary>
-    /// Executes the Submit Async operation.
+    /// Submits an action chain to the license server. On transient failure (network error / 5xx)
+    /// the batch is persisted to the failed-submission store (when configured) for later retry via
+    /// <see cref="RetryPendingAsync"/>, so the audit trail is not silently lost.
     /// </summary>
-    public async Task<ChainSubmissionResponse> SubmitAsync(IEnumerable<FingerprintChainEntry> entries, string? tenantId,
+    public Task<ChainSubmissionResponse> SubmitAsync(IEnumerable<FingerprintChainEntry> entries, string? tenantId,
         CancellationToken cancellationToken = default)
+        => SubmitInternalAsync(entries, tenantId, persistOnFailure: true, cancellationToken);
+
+    private async Task<ChainSubmissionResponse> SubmitInternalAsync(IEnumerable<FingerprintChainEntry> entries, string? tenantId,
+        bool persistOnFailure, CancellationToken cancellationToken = default)
     {
         List<FingerprintChainEntry> normalizedEntries = NormalizeEntries(entries);
         if (!TryResolveTenantPartition(tenantId, normalizedEntries, out string? normalizedTenant, out string? tenantError))
@@ -120,20 +127,20 @@ public sealed class ChainSubmitter(
             return async;
         }
 
+        ChainSubmissionRequest request = new()
+        {
+            LicenseId = configs.LicenseFilePath ?? "UNKNOWN", // Simplified for now
+            TenantId = normalizedTenant,
+            Entries = normalizedEntries,
+            SubmittedAt = DateTimeOffset.UtcNow
+        };
+
         try
         {
             EnsureAuditTrailLicensed();
 
             HttpClient client = httpClientFactory.CreateClient("LicenseServer");
             string endpoint = configs.Online.ChainSubmissionEndpoint ?? "/api/v1/chain/submit";
-
-            ChainSubmissionRequest request = new()
-            {
-                LicenseId = configs.LicenseFilePath ?? "UNKNOWN", // Simplified for now
-                TenantId = normalizedTenant,
-                Entries = normalizedEntries,
-                SubmittedAt = DateTimeOffset.UtcNow
-            };
 
             HttpResponseMessage response = await client.PostAsJsonAsync(endpoint, request, cancellationToken);
 
@@ -172,6 +179,13 @@ public sealed class ChainSubmitter(
             status = "error";
             activity?.SetStatus(ActivityStatusCode.Error, $"server-status:{response.StatusCode}");
 
+            // 5xx is a transient server-side fault — persist for retry so the audit chain is not lost.
+            // 4xx is a deterministic rejection (bad request / unauthorized) and is NOT enqueued.
+            if (persistOnFailure && (int)response.StatusCode >= 500)
+            {
+                await TryEnqueueFailedAsync(request, $"Server returned {response.StatusCode}", cancellationToken);
+            }
+
             ChainSubmissionResponse submitAsync = new()
             {
                 Accepted = false,
@@ -184,6 +198,14 @@ public sealed class ChainSubmitter(
             logger?.LogError(ex, "[License] Error submitting action chain to server.");
             status = "error";
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+
+            // Network/timeout faults are transient — persist for retry. License/validation
+            // exceptions are deterministic and are NOT enqueued (they would never succeed).
+            if (persistOnFailure && IsTransient(ex, cancellationToken))
+            {
+                await TryEnqueueFailedAsync(request, ex.Message, cancellationToken);
+            }
+
             ChainSubmissionResponse async = new()
             {
                 Accepted = false,
@@ -481,6 +503,115 @@ public sealed class ChainSubmitter(
         return false;
 
     }
+
+    /// <summary>
+    /// Re-submits all pending (previously-failed) audit chain submissions. Accepted batches are
+    /// removed from the queue; batches that exhaust <paramref name="maxAttempts"/> are dead-lettered
+    /// (removed and logged) so the queue cannot grow unbounded. No-op when no failed-submission
+    /// store is configured. Intended to be called on a schedule or at startup by the host.
+    /// </summary>
+    public async Task<ChainRetryResult> RetryPendingAsync(int maxAttempts = 5, CancellationToken cancellationToken = default)
+    {
+        ChainRetryResult result = new();
+        if (failedStore is null)
+        {
+            return result;
+        }
+
+        IReadOnlyList<PendingChainSubmission> pendings = await failedStore.ListPendingAsync(cancellationToken);
+        foreach (PendingChainSubmission pending in pendings)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // persistOnFailure:false — this method owns the pending lifecycle; do not double-enqueue.
+            ChainSubmissionResponse response = await SubmitInternalAsync(
+                pending.Request.Entries, pending.Request.TenantId, persistOnFailure: false, cancellationToken);
+
+            if (response.Accepted)
+            {
+                await failedStore.RemoveAsync(pending.Id, cancellationToken);
+                result.Succeeded++;
+                continue;
+            }
+
+            pending.AttemptCount++;
+            pending.LastAttemptUtc = DateTimeOffset.UtcNow;
+            pending.LastError = response.Error;
+
+            if (pending.AttemptCount >= maxAttempts)
+            {
+                await failedStore.RemoveAsync(pending.Id, cancellationToken);
+                result.Dropped++;
+                logger?.LogError(
+                    "[License] Dead-lettering audit chain submission '{Id}' after {Attempts} attempts. Last error: {Error}",
+                    pending.Id, pending.AttemptCount, pending.LastError);
+            }
+            else
+            {
+                await failedStore.UpdateAsync(pending, cancellationToken);
+                result.StillPending++;
+            }
+        }
+
+        return result;
+    }
+
+    private async Task TryEnqueueFailedAsync(ChainSubmissionRequest request, string error, CancellationToken cancellationToken)
+    {
+        if (failedStore is null)
+        {
+            return;
+        }
+
+        try
+        {
+            PendingChainSubmission pending = new()
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Request = request,
+                FirstFailedAtUtc = DateTimeOffset.UtcNow,
+                LastAttemptUtc = DateTimeOffset.UtcNow,
+                AttemptCount = 1,
+                LastError = error
+            };
+            await failedStore.EnqueueAsync(pending, cancellationToken);
+            logger?.Warn("[License] Audit chain submission persisted for retry ({Count} entries). Reason: {Error}",
+                request.Entries.Count, error);
+        }
+        catch (Exception ex)
+        {
+            // Best-effort durability — never let persistence failure mask the original submit outcome.
+            logger?.LogError(ex, "[License] Failed to persist audit chain submission for retry.");
+        }
+    }
+
+    private static bool IsTransient(Exception ex, CancellationToken cancellationToken)
+    {
+        // Caller-initiated cancellation is not a transient failure.
+        if (ex is OperationCanceledException && cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+
+        return ex is HttpRequestException
+            || ex is TaskCanceledException // HTTP timeout (caller-cancellation handled above)
+            || ex is IOException
+            || ex.InnerException is System.Net.Sockets.SocketException;
+    }
+}
+
+/// <summary>
+/// Outcome of draining the pending audit-chain submission queue via
+/// <see cref="ChainSubmitter.RetryPendingAsync"/>.
+/// </summary>
+public sealed class ChainRetryResult
+{
+    /// <summary>Submissions accepted by the server and removed from the queue.</summary>
+    public int Succeeded { get; set; }
+    /// <summary>Submissions that exhausted retries and were dead-lettered (removed + logged).</summary>
+    public int Dropped { get; set; }
+    /// <summary>Submissions that failed again but remain queued for a future attempt.</summary>
+    public int StillPending { get; set; }
 }
 
 /// <summary>

@@ -13,9 +13,9 @@ using Muonroi.Pdf.Tests.Fixtures.Png;
 namespace Muonroi.Pdf.Tests.Image;
 
 /// <summary>
-/// Phase 11.2 — PngDecoder palette (color_type=3) and RGBA (color_type=6) support.
-/// Tests cover: palette without alpha, palette with tRNS, RGBA compositing, grayscale rejection,
-/// and a full render-pipeline smoke test with an inline RGBA data URI.
+/// PngDecoder palette (color_type=3), RGBA (color_type=6), and grayscale (color_type=0/4) support.
+/// Tests cover: palette without alpha, palette with tRNS, RGBA compositing, grayscale + grayscale-alpha
+/// decoding, 16-bit rejection, and a full render-pipeline smoke test with an inline RGBA data URI.
 /// </summary>
 [Collection(PdfRenderCollection.Name)]
 public sealed class PngDecoderTests
@@ -102,19 +102,74 @@ public sealed class PngDecoderTests
         rawRgb[lastRowStart + 2].Should().Be(255, "bottom-row B — fully transparent composited to white");
     }
 
-    // ── 4. Grayscale still fails loud ────────────────────────────────────────
+    // ── 4. Grayscale (color_type=0) decodes to R=G=B ─────────────────────────
 
     [Fact]
-    public void PngDecoder_grayscale_throws_clear_error()
+    public void PngDecoder_decodes_grayscale_to_rgb()
     {
-        // color_type=0 (grayscale) — not in scope for v1.0.1
-        byte[] pngBytes = BuildMinimalPngHeader(bitDepth: 8, colorType: 0);
+        byte[] png = PngFixtureBuilder.Gray8();
+        var decoder = new PureImageDecoder();
+
+        DecodedImage result = decoder.Decode(png, "image/png");
+
+        result.Width.Should().Be(8);
+        result.Height.Should().Be(8);
+
+        byte[] rawRgb = RoundTripPngToRawRgb(png, 8, 8);
+        rawRgb.Length.Should().Be(8 * 8 * 3);
+
+        // Column 0 gray=0 (black) → (0,0,0)
+        rawRgb[0].Should().Be(0, "column-0 gray sample expanded to R");
+        rawRgb[1].Should().Be(0, "column-0 gray sample expanded to G");
+        rawRgb[2].Should().Be(0, "column-0 gray sample expanded to B");
+
+        // Column 4 gray=128 → (128,128,128)
+        rawRgb[4 * 3].Should().Be(128,     "column-4 gray sample expanded to R");
+        rawRgb[4 * 3 + 1].Should().Be(128, "column-4 gray sample expanded to G");
+        rawRgb[4 * 3 + 2].Should().Be(128, "column-4 gray sample expanded to B");
+    }
+
+    // ── 4b. Grayscale+alpha (color_type=4) composites onto white ─────────────
+
+    [Fact]
+    public void PngDecoder_decodes_grayscale_alpha_composites_to_white()
+    {
+        byte[] png = PngFixtureBuilder.GrayAlpha8();
+        var decoder = new PureImageDecoder();
+
+        DecodedImage result = decoder.Decode(png, "image/png");
+
+        result.Width.Should().Be(8);
+        result.Height.Should().Be(8);
+
+        byte[] rawRgb = RoundTripPngToRawRgb(png, 8, 8);
+        rawRgb.Length.Should().Be(8 * 8 * 3);
+
+        // Top row (y=0): alpha=255 (opaque) → gray 200 → (200,200,200)
+        rawRgb[0].Should().Be(200, "top-row opaque gray — R");
+        rawRgb[1].Should().Be(200, "top-row opaque gray — G");
+        rawRgb[2].Should().Be(200, "top-row opaque gray — B");
+
+        // Bottom row (y=7): alpha=0 (transparent) → composited onto white → (255,255,255)
+        int lastRowStart = 7 * 8 * 3;
+        rawRgb[lastRowStart].Should().Be(255,     "bottom-row transparent composited to white — R");
+        rawRgb[lastRowStart + 1].Should().Be(255, "bottom-row transparent composited to white — G");
+        rawRgb[lastRowStart + 2].Should().Be(255, "bottom-row transparent composited to white — B");
+    }
+
+    // ── 4c. 16-bit grayscale still fails loud ────────────────────────────────
+
+    [Fact]
+    public void PngDecoder_16bit_grayscale_throws_clear_error()
+    {
+        // color_type=0, bit_depth=16 — 16-bit samples not supported
+        byte[] pngBytes = BuildMinimalPngHeader(bitDepth: 16, colorType: 0);
         var decoder = new PureImageDecoder();
 
         Action act = () => decoder.Decode(pngBytes, "image/png");
 
         act.Should().Throw<PdfFormatException>()
-           .Which.RuleId.Should().Be("PNG-GRAYSCALE");
+           .Which.RuleId.Should().Be("PNG-16BIT");
     }
 
     // ── 5. Smoke: RGBA inline data URI → PDF render returns non-zero stream ──

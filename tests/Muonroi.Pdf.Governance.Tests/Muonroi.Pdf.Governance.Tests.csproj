@@ -8,5 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muonroi.Pdf.Governance\Muonroi.Pdf.Governance.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Pdf.Enterprise\Muonroi.Pdf.Enterprise.csproj" />
+    <ProjectReference Include="..\..\src\Muonroi.Governance.Abstractions\Muonroi.Governance.Abstractions.csproj" />
   </ItemGroup>
 </Project>

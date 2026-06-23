@@ -361,6 +361,8 @@
 | Quickstart.DecisionTable/ | Decision table quickstart |
 | Quickstart.RuleEngine/ | Rule engine quickstart |
 | RuleSourceGen/ | Source generation example |
+| Muonroi.Pdf.Samples/ | PDF engine worked examples (invoice, header/footer, watermark+gradient, flex/grid opt-in, multi-page, policy rejection) — `dotnet run` renders to `pdf-output/` |
+| Muonroi.Pdf.AotSample/ | PDF engine NativeAOT smoke test (embedded font, no OS deps) |
 
 ---
 
@@ -453,3 +455,66 @@ QdrantExperienceStore: vector similarity search
 ExperienceStoreOrchestrator: routes to correct store by tier
 TokenBudgetEnforcer: enforces ExperienceBudgetConfig per tier
 ```
+
+---
+
+## PDF Modern-Layout Engine — Flexbox + Grid (Phase 18/19)
+
+> OSS `Muonroi.Pdf` (Apache-2.0). Real CSS Flexbox (Phase 18) + CSS Grid (Phase 19) layout, **opt-in** behind `PdfPolicySettings.AllowModernLayout` (default `false`). Flag OFF ⇒ unchanged: `display:flex`/`grid` hard-block (`forbidden.display.*`) or soft-degrade to block. Flag ON ⇒ both render. Same architecture for both; grid is the sibling of flex.
+
+### Opt-in flag + policy gate
+
+| File | Type / member | Notes |
+|------|--------------|-------|
+| `src/Muonroi.Pdf.Abstractions/PdfConfigs.cs` | `PdfPolicySettings.AllowModernLayout` (bool, default false) | Bound from `PdfConfigs:Policy`. Sits next to `SoftDegradeUnknownDisplay`. |
+| `src/Muonroi.Pdf.Governance/Policies/LegacyPrintPolicy.cs` | flex gate (`(display is "flex" or "inline-flex") && !allowModernLayout`); grid gate (`… "grid"/"inline-grid" … && !allowModernLayout`); sub-prop drop guarded `&& !allowModernLayout` | Default policy (`TryAddSingleton`). Flag ON ⇒ accept flex/grid + keep sub-props. `FlexGridSubProperties` HashSet lists the gated longhands. |
+| `src/Muonroi.Pdf.Governance/Policies/DefaultStrictPolicy.cs` | grid/flex always blocked | Unchanged — the always-strict explicit gate. |
+
+### Box types (`src/Muonroi.Pdf/Internal/Layout/Boxes/`)
+
+| File | Type | Key members |
+|------|------|-------------|
+| `FlexContainerBox.cs` | `FlexContainerBox : BoxNode` | `FlexDirection` (row/row-reverse/column/column-reverse), `FlexWrap` (nowrap/wrap/wrap-reverse), `JustifyContent`, `AlignItems`, `AlignContent`, `RowGap`/`ColumnGap` (pt), `IsInlineFlex` |
+| `GridContainerBox.cs` | `GridContainerBox : BoxNode` | `TemplateColumns`/`TemplateRows` (`List<GridTrack>`), `AutoColumns`/`AutoRows` (`GridTrack?`), `AutoFlow` (row/column; `dense` stripped), `RowGap`/`ColumnGap`, `JustifyItems`/`AlignItems` (item-in-cell), `JustifyContent`/`AlignContent` (track-group), `TemplateAreas` (`string[][]`), `IsInlineGrid` |
+| `GridTrack.cs` | `GridTrack` + `GridTrackKind` enum | Kind = Length/Percent/Fraction/Auto/MinMax; `Length`/`Percent`(0..1)/`Fraction`(fr)/`Min`/`Max`. `ParseTrackList`/`ParseSingleTrack` (handle `repeat()` + `minmax()`, nested parens). `MaxRepeatCount = 1000` (DoS clamp T-19-04). Never throws → malformed degrades to `Auto`. `auto-fill`/`auto-fit` skipped (out of scope). |
+| `BoxNode.cs` | flex/grid **item** props (any child box can be an item) | flex: `FlexGrow`/`FlexShrink` (float?), `FlexBasisRaw` (string?), `Order` (int?), `AlignSelf` (string?). grid: `GridColumnRaw`/`GridRowRaw`/`GridAreaRaw` (string?), `JustifySelf` (string?). All nullable = CSS initial. |
+
+### Layout engines (`src/Muonroi.Pdf/Internal/Layout/`)
+
+| File | Type | Entry + key helpers |
+|------|------|---------------------|
+| `FlexLayoutEngine.cs` | `FlexLayoutEngine(BlockLayoutEngine)` | `Layout(FlexContainerBox, LayoutContext, List<PositionedElement>, int) → float`. Helpers: `ResolveItem`→`ResolveBasis`→`MeasureContent` (max-content pass), `BuildLines` (wrap), `ResolveFlexibleLengths` (frozen-item grow/shrink, min-0 clamp), `MainAxisPositions` (justify incl. space-*), `CrossAxisOffset` (align-items/self + stretch), `ApplyAlignContent`, `EmitItem` (recurses item via `_blockEngine.Layout`). |
+| `GridLayoutEngine.cs` | `GridLayoutEngine(BlockLayoutEngine)` | `Layout(GridContainerBox, …) → float`. Helpers: `PlaceItems`→`ResolveExplicit`/`BuildAreaIndex`/sparse auto-flow (occupancy `HashSet<long>`, implicit tracks bounded by item count T-19-06); `BuildEffectiveTracks`→`ResolveTrackSizes` (fixed → auto/content via `MeasureTrack`/`MeasureContentMain` → fr split, `ResolveMinMax` clamp); `CumulativeOffsets`/`SpanSize`, `ApplyContentAlignment`, `AxisOffset`, `EmitItem`. |
+
+### Integration seams (where modern layout plugs into the existing engine)
+
+| File | Seam |
+|------|------|
+| `BoxTreeBuilder.cs` | display→box switch maps `flex`/`inline-flex`→`FlexContainerBox` and `grid`/`inline-grid`→`GridContainerBox` **only when `allowModernLayout`** (else fall through to `BlockBox`). `ResolveCssProperties` parses container + item props (incl. `flex`/`flex-flow` shorthand → `FlexBasisRaw=="0%"` for `flex:1`; `gap`; track lists via `GridTrack.ParseTrackList`). `ParseLengthPublic` exposed for `GridTrack` reuse. |
+| `BlockLayoutEngine.cs` | `internal FlexLayoutEngine? FlexEngine` / `internal GridLayoutEngine? GridEngine` (set post-ctor, like `TableEngine`). `DispatchLayout` `case FlexContainerBox` / `case GridContainerBox` delegate to the engine (which emits per-item `PositionedElement`s) then emit the container element + advance `CurrentY` — mirrors the `TableBox` case. |
+| `LayoutEngine.cs` | ctor wires `FlexEngine`/`GridEngine` (cycle-break). `allowModernLayout` threaded `MPdfService` → `LayoutAsync(… bool allowModernLayout …)` → `RunLayout` → `BoxTreeBuilder.Build(root, images, allowModernLayout)`. `RenderColumnInto` (running header/footer) passes `false` (first-cut deferral). |
+
+### Pipeline
+```
+MPdfService.RenderAsync
+  → policy gate (LegacyPrintPolicy): flex/grid accepted iff AllowModernLayout (else 403 PdfPolicyException / soft-degrade)
+  → LayoutEngine.LayoutAsync(allowModernLayout)
+    → BoxTreeBuilder.Build(allowModernLayout): flex/grid → Flex/GridContainerBox (or BlockBox if flag off)
+    → BlockLayoutEngine.DispatchLayout → case Flex/GridContainerBox → Flex/GridLayoutEngine.Layout
+       → resolve sizes/tracks → place items → recurse each item via _blockEngine.Layout (nested layouts compose)
+       → emit item + container PositionedElements
+  → OwnedPdfWriter paints backgrounds/borders/text from PositionedElements
+```
+
+### Tests (`tests/Muonroi.Pdf.Tests/`)
+| File | Covers |
+|------|--------|
+| `Layout/FlexLayoutTests.cs`, `Layout/GridLayoutTests.cs` | operand-value `PositionedElement.Position` assertions (12 each) — fr/minmax/repeat/named-areas/auto-placement/span/wrap/nested |
+| `Layout/FlexLayoutEngineSmokeTests.cs`, `Layout/GridLayoutEngineSmokeTests.cs` | wave-3 smoke gates (placement + fr distribution) |
+| `Golden/GoldenCorpus.cs` | `FlexLayout` (9) + `GridLayout` (10) **standalone groups, NOT in `AllCases`** — `AllCasesData()` drives the flag-LESS `DeterminismCanaryTests` which would throw on flex/grid; `ByName` = `AllCases.Concat(FlexLayout).Concat(GridLayout)` |
+| `Golden/FlexLayoutGoldenTests.cs`, `Golden/GridLayoutGoldenTests.cs` | render via `GoldenPdf.VerifyAsync(…, allowModernLayout:true)`; baselines under `TestResources/Golden/flex-*.pdf` / `grid-*.pdf` |
+| `Golden/FlexRegressionGuardTests.cs` | asserts default-path corpus count stays **84** (flex/grid add 0 to `AllCases`) — proves existing baselines byte-identical |
+| `Policy/LegacyPrintPolicyAllowModernLayoutTests.cs` | flag-on accept-path (flex + grid) + flag-off control |
+
+### Deferred (NOT implemented; documented as `// D-05`/`// D-01` in-code)
+Flex: true cross-font baseline (≈flex-start), inline-flex atomic, tall-container atomic for pagination. Grid: `subgrid`, `repeat(auto-fill|auto-fit)`, `grid-auto-flow: dense` (sparse only), masonry, baseline (≈start), %-tracks vs indefinite container, container page-splitting.
