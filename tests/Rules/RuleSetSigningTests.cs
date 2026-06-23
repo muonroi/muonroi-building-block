@@ -1,3 +1,9 @@
+using System.Text;
+using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Rules.Rules;
+using Muonroi.Tenancy.Core;
+using Xunit;
+
 namespace Muonroi.Rules.Tests;
 
 [Collection("NonParallel")]
@@ -31,7 +37,7 @@ public class RuleSetSigningTests
 
         string file = Path.Combine(dir, "default", "wf", "v1.json");
         await File.WriteAllTextAsync(file, json.Replace("wf", "tamper"));
-        await Assert.ThrowsAsync<InvalidDataException>(() => store.GetAsync("wf"));
+        await Assert.ThrowsAsync<MConfigurationException>(() => store.GetAsync("wf"));
 
         TenantContext.CurrentTenantId = null;
     }

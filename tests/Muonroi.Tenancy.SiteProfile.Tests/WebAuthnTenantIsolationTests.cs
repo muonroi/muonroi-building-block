@@ -21,8 +21,8 @@ public class WebAuthnTenantIsolationTests
 
         projectRoot.Should().NotBeNull("Could not find project root directory");
         
-        // From tests/Muonroi.Tenancy.SiteProfile.Tests/ to muonroi-building-block/src/Muonroi.Auth/...
-        var sourceFile = Path.GetFullPath(Path.Combine(projectRoot!, "..", "..", "src", "Muonroi.Auth", "Mfa", "WebAuthenticate", "WebAuthnService.cs"));
+        // From tests/Muonroi.Tenancy.SiteProfile.Tests/ to muonroi-building-block/src/Muonroi.Data.EntityFrameworkCore/...
+        var sourceFile = Path.GetFullPath(Path.Combine(projectRoot!, "..", "..", "src", "Muonroi.Data.EntityFrameworkCore", "Auth", "EfWebAuthnCredentialStore.cs"));
         
         File.Exists(sourceFile).Should().BeTrue($"Source file not found at {sourceFile}");
 
@@ -30,9 +30,9 @@ public class WebAuthnTenantIsolationTests
 
         // Regex to find .IgnoreQueryFilters()
         var matches = Regex.Matches(content, @"\.IgnoreQueryFilters\(\)");
-        matches.Count.Should().BeGreaterThan(0, "Expected some .IgnoreQueryFilters() calls in WebAuthnService.cs");
+        matches.Count.Should().BeGreaterThan(0, "Expected some .IgnoreQueryFilters() calls in EfWebAuthnCredentialStore.cs");
 
-        // For each match, verify that .Where(x => x.TenantId == TenantContext.CurrentTenantId) follows within the same statement
+        // For each match, verify that tenantId filter checks (x.TenantId == tenantId or x.TenantId == credential.TenantId) follows within the same statement
         foreach (Match match in matches)
         {
             // Take a chunk of code after the call to check for the filter
@@ -47,8 +47,8 @@ public class WebAuthnTenantIsolationTests
                 substring = substring.Substring(0, statementEnd);
             }
 
-            substring.Should().Contain("x.TenantId == TenantContext.CurrentTenantId", 
-                "Every .IgnoreQueryFilters() must be followed by a TenantId filter in the same statement for safety.");
+            var hasTenantFilter = substring.Contains("x.TenantId == tenantId") || substring.Contains("x.TenantId == credential.TenantId");
+            hasTenantFilter.Should().BeTrue("Every .IgnoreQueryFilters() must be followed by a TenantId filter in the same statement for safety.");
         }
     }
 

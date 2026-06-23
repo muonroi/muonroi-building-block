@@ -21,7 +21,7 @@ public class RuleEngineOrchestrationTests
 
         public Task ExecuteAsync(Context context, CancellationToken cancellationToken = default)
         {
-            throw new InvalidOperationException("boom");
+            throw new MInternalException("boom");
         }
     }
 

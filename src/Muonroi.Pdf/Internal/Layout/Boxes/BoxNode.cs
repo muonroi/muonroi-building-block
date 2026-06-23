@@ -185,4 +185,10 @@ internal abstract class BoxNode
     /// can hold the cascaded value and push it down to text-node descendants.
     /// </summary>
     public string? WhiteSpace { get; set; }
+
+    /// <summary>CSS border-radius in points (CSS3). Default: 0f (no rounding).</summary>
+    public float BorderRadius { get; set; } = 0f;
+
+    /// <summary>CSS opacity (CSS3). Default: 1f (opaque).</summary>
+    public float Opacity { get; set; } = 1f;
 }

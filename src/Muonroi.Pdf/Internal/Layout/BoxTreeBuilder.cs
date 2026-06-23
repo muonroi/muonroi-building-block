@@ -315,9 +315,47 @@ internal sealed class BoxTreeBuilder
         if (!string.IsNullOrEmpty(displayVal))
             box.Display = displayVal.ToLowerInvariant();
 
-        box.PageBreakBefore = style.GetValue("page-break-before");
-        box.PageBreakAfter = style.GetValue("page-break-after");
-        box.PageBreakInside = style.GetValue("page-break-inside");
+        var breakBeforeVal = style.GetValue("break-before");
+        if (breakBeforeVal is "page" or "always" or "left" or "right")
+            box.PageBreakBefore = "always";
+        else if (breakBeforeVal is "avoid")
+            box.PageBreakBefore = "avoid";
+        else
+            box.PageBreakBefore = style.GetValue("page-break-before");
+
+        var breakAfterVal = style.GetValue("break-after");
+        if (breakAfterVal is "page" or "always" or "left" or "right")
+            box.PageBreakAfter = "always";
+        else if (breakAfterVal is "avoid")
+            box.PageBreakAfter = "avoid";
+        else
+            box.PageBreakAfter = style.GetValue("page-break-after");
+
+        var breakInsideVal = style.GetValue("break-inside");
+        if (breakInsideVal is "avoid" or "avoid-page")
+            box.PageBreakInside = "avoid";
+        else
+            box.PageBreakInside = style.GetValue("page-break-inside");
+
+        // border-radius
+        var borderRadiusVal = style.GetValue("border-radius");
+        if (string.IsNullOrEmpty(borderRadiusVal))
+            borderRadiusVal = style.GetValue("border-top-left-radius");
+        if (!string.IsNullOrEmpty(borderRadiusVal) && borderRadiusVal != "0" && borderRadiusVal != "0px")
+        {
+            string rawRadius = borderRadiusVal.Split(' ')[0].Trim();
+            box.BorderRadius = ParseLength(rawRadius, fontSize);
+        }
+
+        // opacity
+        var opacityVal = style.GetValue("opacity");
+        if (!string.IsNullOrEmpty(opacityVal))
+        {
+            if (float.TryParse(opacityVal, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out float opacity))
+            {
+                box.Opacity = Math.Clamp(opacity, 0f, 1f);
+            }
+        }
 
         // text-align is an inherited property — live on BoxNode base
         var textAlignVal = style.GetValue("text-align");

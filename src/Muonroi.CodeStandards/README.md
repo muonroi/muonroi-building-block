@@ -21,7 +21,7 @@ Add the package reference to any Muonroi library or service project:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="Muonroi.CodeStandards" Version="1.0.0-alpha.15" />
+  <PackageReference Include="Muonroi.CodeStandards" Version="1.0.0-alpha.16" />
 </ItemGroup>
 ```
 

@@ -22,6 +22,24 @@ if "%ACTION%"=="build" (
       "  }" ^
       "  if ($isPackable) { dotnet pack $p.FullName -c Release -o $out --no-build }" ^
       "}" || exit /b 1
+    :: Validate that all packable projects produced packages
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+      "$out = Join-Path (Resolve-Path '%ROOT_DIR%') 'nupkgs';" ^
+      "$missing = @();" ^
+      "$projects = Get-ChildItem (Join-Path (Resolve-Path '%ROOT_DIR%') 'src') -Recurse -Filter 'Muonroi.*.csproj' | Where-Object { $_.FullName -notmatch '\\(bin|obj\\)' };" ^
+      "foreach ($p in $projects) {" ^
+      "  [xml]$x = Get-Content $p.FullName;" ^
+      "  $isPackable = $true;" ^
+      "  foreach ($g in @($x.Project.PropertyGroup)) {" ^
+      "    if ($g.IsPackable -and $g.IsPackable.Trim().ToLower() -eq 'false') { $isPackable = $false }" ^
+      "  }" ^
+      "  if ($isPackable) {" ^
+      "    $name = $p.BaseName;" ^
+      "    $nupkg = Get-ChildItem $out -Filter ($name + '*.nupkg');" ^
+      "    if ($nupkg.Count -eq 0) { $missing += $name }" ^
+      "  }" ^
+      "}" ^
+      "if ($missing.Count -gt 0) { Write-Host ('MISSING PACKAGED PROJECTS: ' + ($missing -join ', ')) -ForegroundColor Red; exit 1 }"
 
     echo Packing template packages from workspace...
     powershell -NoProfile -ExecutionPolicy Bypass -Command ^

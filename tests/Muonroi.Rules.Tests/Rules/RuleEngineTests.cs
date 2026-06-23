@@ -247,7 +247,7 @@ public class RuleEngineTests
 
         Func<Task> act = () => engine.ExecuteAsync("ctx", RuleType.Validation);
 
-        await act.Should().ThrowAsync<MInternalException>()
+        await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Rule failed");
     }
 
@@ -489,7 +489,7 @@ public class RuleEngineTests
 
         Func<Task> act = () => engine.ExecuteAsync(context, RuleType.Validation);
 
-        await act.Should().ThrowAsync<MInternalException>()
+        await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Transactional failure");
         context.BeginCalls.Should().Be(1);
         context.CommitCalls.Should().Be(0);

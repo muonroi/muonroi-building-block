@@ -274,6 +274,7 @@ public static class SiteGrpcExtensions
             {
                 var paramType = ctorParams[i].ParameterType;
                 args[i] = accessor.CreateClient(paramType, serviceName)
+                    ?? sp.GetService(paramType)
                     ?? throw new MInternalException(
                         $"Cannot resolve gRPC client '{paramType.Name}' for facade '{typeof(TImpl).Name}'. " +
                         $"Ensure AddGrpcClient<{paramType.Name}>() is registered and " +

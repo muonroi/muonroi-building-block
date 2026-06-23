@@ -14,7 +14,7 @@
     not flow transitively to downstream consumers of this service's packages.
   -->
   <ItemGroup>
-    <PackageReference Include="Muonroi.CodeStandards" Version="1.0.0-alpha.15">
+    <PackageReference Include="Muonroi.CodeStandards" Version="1.0.0-alpha.16">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

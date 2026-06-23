@@ -99,6 +99,13 @@
     <PackageVersion Include="Muonroi.Data.EntityFrameworkCore" Version="1.0.0-alpha.8" />
     <PackageVersion Include="Muonroi.Mediator" Version="1.0.0-alpha.8" />
     <PackageVersion Include="Muonroi.Governance.Abstractions" Version="1.0.0-alpha.1" />
+    <PackageVersion Include="Muonroi.Pdf" Version="1.0.0-alpha.17" />
+    <PackageVersion Include="Muonroi.Core.Abstractions" Version="1.0.0-alpha.16" />
+    <PackageVersion Include="Muonroi.Logging.Abstractions" Version="1.0.0-alpha.16" />
+    <PackageVersion Include="Muonroi.Logging" Version="1.0.0-alpha.16" />
+    <PackageVersion Include="Muonroi.Pdf.Abstractions" Version="1.0.0-alpha.16" />
+    <PackageVersion Include="Muonroi.Pdf.Governance" Version="1.0.0-alpha.16" />
+    <PackageVersion Include="Muonroi.Tenancy.Abstractions" Version="1.0.0-alpha.16" />
     <PackageVersion Include="Muonroi.RuleEngine.Abstractions" Version="1.0.0-alpha.1" />
     <PackageVersion Include="Muonroi.Tenancy.SiteProfile" Version="1.0.0-alpha.8" />
     <PackageVersion Include="Muonroi.Tenancy.SiteProfile.Grpc" Version="1.0.0-alpha.8" />

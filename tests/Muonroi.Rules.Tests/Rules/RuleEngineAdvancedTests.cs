@@ -187,7 +187,7 @@ public sealed class RuleEngineAdvancedTests
 
         Func<Task> act = () => engine.ExecuteAsync(context, RuleType.Validation);
 
-        await act.Should().ThrowAsync<MInternalException>()
+        await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("boom");
         context.BeginCalls.Should().Be(1);
         context.CommitCalls.Should().Be(0);

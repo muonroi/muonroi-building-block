@@ -5,7 +5,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Muonroi.BuildingBlock.Shared.svg)](https://www.nuget.org/packages/Muonroi.BuildingBlock.Shared/)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green.svg)](https://github.com/muonroi/muonroi-building-block/blob/main/LICENSE-APACHE)
 
-`Muonroi.BuildingBlock.Shared` is the OSS baseline package reserved for shared primitives — result types, pagination models, and common utilities — that are consumed by the other Muonroi Building Block packages. In the current `1.0.0-alpha.15` release the assembly exports no public types; the package is a versioned placeholder that establishes the package identity and dependency slot while the shared-types surface is being settled.
+`Muonroi.BuildingBlock.Shared` is the OSS baseline package reserved for shared primitives — result types, pagination models, and common utilities — that are consumed by the other Muonroi Building Block packages. In the current `1.0.0-alpha.16` release the assembly exports no public types; the package is a versioned placeholder that establishes the package identity and dependency slot while the shared-types surface is being settled.
 
 If you need the full Muonroi infrastructure stack today, reference [`Muonroi.BuildingBlock.All`](../Muonroi.BuildingBlock.All/) (Commercial) or the individual granular packages.
 
@@ -20,7 +20,7 @@ dotnet add package Muonroi.BuildingBlock.Shared --prerelease
 Because the assembly currently exports no public types, there is no DI registration or runtime call to make. Add the package reference to reserve the dependency slot:
 
 ```xml
-<PackageReference Include="Muonroi.BuildingBlock.Shared" Version="1.0.0-alpha.15" />
+<PackageReference Include="Muonroi.BuildingBlock.Shared" Version="1.0.0-alpha.16" />
 ```
 
 When shared types are promoted into this package in a later alpha, the public API will appear here.
@@ -37,7 +37,7 @@ No public types are exported in the current release. The table below will be pop
 
 | Type | Purpose |
 |------|---------|
-| *(none in 1.0.0-alpha.15)* | — |
+| *(none in 1.0.0-alpha.16)* | — |
 
 ## Samples
 
