@@ -21,6 +21,7 @@ public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactional
         typeof(MUserLoginAttempt),
         typeof(MUserRole),
         typeof(MUserToken),
+        typeof(MRefreshToken),
         typeof(MWebAuthnCredential)
     ];
     private readonly IMediator? _mediator;
