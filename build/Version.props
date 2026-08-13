@@ -15,6 +15,34 @@
 -->
 <Project>
 
+  <!-- net9.0: Override to pin framework-coupled packages to 9.0.x for .NET 9 shared runtime compatibility -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <!-- Microsoft.Extensions.* core packages -->
+    <MicrosoftExtensionsVersion>9.0.4</MicrosoftExtensionsVersion>
+    <!-- Microsoft.Extensions.Caching.* packages -->
+    <MicrosoftExtensionsCachingVersion>9.0.4</MicrosoftExtensionsCachingVersion>
+    <!-- Microsoft.Extensions.Http (non-resilience) -->
+    <MicrosoftExtensionsHttpVersion>9.0.4</MicrosoftExtensionsHttpVersion>
+    <!-- Microsoft.Extensions.Http.Polly -->
+    <MicrosoftExtensionsHttpPollyVersion>8.0.10</MicrosoftExtensionsHttpPollyVersion>
+    <!-- Microsoft.Extensions.Http.Resilience -->
+    <MicrosoftExtensionsHttpResilienceVersion>8.10.1</MicrosoftExtensionsHttpResilienceVersion>
+    <!-- Microsoft.EntityFrameworkCore.* (main packages) -->
+    <EfCoreVersion>9.0.4</EfCoreVersion>
+    <!-- Microsoft.EntityFrameworkCore.Design (versioned separately) -->
+    <EfCoreDesignVersion>9.0.4</EfCoreDesignVersion>
+    <!-- Npgsql.EntityFrameworkCore.PostgreSQL -->
+    <NpgsqlEfCoreVersion>9.0.4</NpgsqlEfCoreVersion>
+    <!-- Pomelo.EntityFrameworkCore.MySql -->
+    <PomeloMySqlVersion>9.0.0-preview.1.1</PomeloMySqlVersion>
+    <!-- Microsoft.AspNetCore.* packages -->
+    <AspNetCoreVersion>9.0.4</AspNetCoreVersion>
+    <!-- Microsoft.AspNetCore.SignalR.Client -->
+    <AspNetCoreSignalRVersion>9.0.4</AspNetCoreSignalRVersion>
+    <!-- Microsoft.AspNetCore.TestHost -->
+    <AspNetCoreTestHostVersion>9.0.4</AspNetCoreTestHostVersion>
+  </PropertyGroup>
+
   <!-- Default values: used when no TFM-specific condition matches (net9.0, net472, netstandard2.0, etc.) -->
   <PropertyGroup>
     <!-- Microsoft.Extensions.* core packages -->

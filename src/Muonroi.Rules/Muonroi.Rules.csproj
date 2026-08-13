@@ -18,6 +18,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="RulesEngine" />
-    <PackageReference Include="StackExchange.Redis" />
+
   </ItemGroup>
 </Project>

@@ -75,7 +75,7 @@ public sealed class ValidateOnlyMigrationTests
         services.AddLogging(b =>
         {
             b.AddProvider(logCapture);
-            b.AddMuonroiLogging();
+            b.AddMuonroiLogging(useAsyncQueue: false);
         });
 
         services.AddSiteDbInfrastructure(o =>

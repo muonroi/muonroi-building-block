@@ -1,5 +1,11 @@
-using MongoDB.Driver;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Muonroi.AspNetCore.Controllers;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.BackgroundJobs.Abstractions;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Data.Abstractions.Repositories;
@@ -630,7 +636,7 @@ public static class ArchitectureValidationExtensions
         // Summary is emitted by ArchitectureDiagnosticsStartupService on ApplicationStarted.
         if (throwOnViolation && _warningCount > 0)
         {
-            throw new MInternalException(
+            MGuard.Fail<object>(
                 $"Architecture validation failed with {_warningCount} warning(s). " +
                 "Set throwOnViolation=false to run anyway.");
         }

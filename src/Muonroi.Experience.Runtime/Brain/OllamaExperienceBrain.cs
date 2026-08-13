@@ -202,11 +202,11 @@ public sealed class OllamaExperienceBrain(
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new MInternalException($"OllamaExperienceBrain: AbstractAsync timed out after {options.AiTimeoutSeconds}s");
+            return MGuard.Fail<NeuronExperience>($"OllamaExperienceBrain: AbstractAsync timed out after {options.AiTimeoutSeconds}s");
         }
         catch (Exception ex)
         {
-            throw new MInternalException($"OllamaExperienceBrain: AbstractAsync failed — {ex.Message}");
+            return MGuard.Fail<NeuronExperience>($"OllamaExperienceBrain: AbstractAsync failed — {ex.Message}");
         }
     }
 

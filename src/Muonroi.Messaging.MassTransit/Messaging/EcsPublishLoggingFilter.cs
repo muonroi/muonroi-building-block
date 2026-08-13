@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
@@ -97,7 +98,7 @@ public class EcsPublishLoggingFilter<T>(
 
         if (!_licenseState.HasFeature(FreeTierFeatures.Premium.MessageBus))
         {
-            throw new MInternalException(
+            MGuard.Fail<object>(
                 "[LICENSE] Feature 'message-bus' is not available under your current license.");
         }
     }

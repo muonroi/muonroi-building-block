@@ -142,6 +142,34 @@ public class ResilienceTests
         public void Debug(string messageTemplate, params object?[] args) { }
 
         public void InfoTrace(string messageTemplate, params object?[] args) { }
+        
+        public void InfoContext(
+            string messageTemplate,
+            object? request = null,
+            object? response = null,
+            [System.Runtime.CompilerServices.CallerMemberName] string callerMethod = "",
+            [System.Runtime.CompilerServices.CallerFilePath] string callerFile = "",
+            [System.Runtime.CompilerServices.CallerLineNumber] int callerLine = 0) { }
+
+        public void ErrorContext(
+            Exception exception,
+            string messageTemplate,
+            object? contextData = null,
+            [System.Runtime.CompilerServices.CallerMemberName] string callerMethod = "",
+            [System.Runtime.CompilerServices.CallerFilePath] string callerFile = "",
+            [System.Runtime.CompilerServices.CallerLineNumber] int callerLine = 0) { }
+
+        public void Audit(
+            string action,
+            string entityType,
+            string entityId,
+            bool isSuccess,
+            string? actorId = null,
+            string? tenantId = null,
+            object? changes = null,
+            [System.Runtime.CompilerServices.CallerMemberName] string callerMethod = "",
+            [System.Runtime.CompilerServices.CallerFilePath] string callerFile = "",
+            [System.Runtime.CompilerServices.CallerLineNumber] int callerLine = 0) { }
     }
 
     private sealed class NullLogContextScope : IMLogContextScope

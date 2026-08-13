@@ -3,6 +3,7 @@ using Muonroi.Data.Dapper.Rls;
 using Muonroi.Data.Dapper.Rls.Setters;
 using Muonroi.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
 using Xunit;
 
 namespace Muonroi.Data.Dapper.Tests.Rls;
@@ -156,6 +157,9 @@ internal sealed class SpyIMLog<T> : IMLog<T>
     public void Error(Exception? ex, string messageTemplate, params object?[] args) => throw new NotImplementedException();
     public void Debug(string messageTemplate, params object?[] args) => throw new NotImplementedException();
     public void InfoTrace(string messageTemplate, params object?[] args) => throw new NotImplementedException();
+    public void InfoContext(string message, object? request = null, object? result = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0) => throw new NotImplementedException();
+    public void ErrorContext(Exception ex, string message, object? request = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0) => throw new NotImplementedException();
+    public void Audit(string action, string objectType, string objectId, bool isSuccess = true, string? previousStatus = null, string? newStatus = null, object? extraData = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0) => throw new NotImplementedException();
     public IMLogContextScope BeginProperty(string key, object? value) => throw new NotImplementedException();
 
     // ILogger<T> / ILogger members

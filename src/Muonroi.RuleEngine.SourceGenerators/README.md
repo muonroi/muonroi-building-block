@@ -20,7 +20,7 @@ Add the reference as an **analyzer**, not a regular assembly reference:
 ```xml
 <!-- YourProject.csproj -->
 <ItemGroup>
-  <PackageReference Include="Muonroi.RuleEngine.SourceGenerators" Version="1.0.0-alpha.15"
+  <PackageReference Include="Muonroi.RuleEngine.SourceGenerators" Version="1.0.0-alpha.16"
                     OutputItemType="Analyzer"
                     ReferenceOutputAssembly="false" />
 </ItemGroup>

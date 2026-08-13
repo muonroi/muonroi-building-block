@@ -137,7 +137,7 @@ public sealed class FileRuleSetAuditStore(
         string segment = value.Trim();
         if (!Regex.IsMatch(segment, "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$", RegexOptions.CultureInvariant))
         {
-            throw new MConfigurationException($"Invalid tenant segment: '{segment}'.");
+            MGuard.Fail<object>($"Invalid tenant segment: '{segment}'.");
         }
 
         return segment;

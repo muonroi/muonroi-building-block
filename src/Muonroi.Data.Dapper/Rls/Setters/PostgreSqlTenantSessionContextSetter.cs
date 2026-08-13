@@ -53,13 +53,8 @@ public sealed class PostgreSqlTenantSessionContextSetter : ITenantSessionContext
         IMLog<PostgreSqlTenantSessionContextSetter>? log = null)
     {
         _bypassRoleName = MGuard.NotEmpty(bypassRoleName);
-        if (!SafeIdentifier.IsMatch(_bypassRoleName))
-        {
-            throw new MArgumentException(
-                nameof(bypassRoleName),
-                $"BypassRoleName '{_bypassRoleName}' is not a valid PostgreSQL identifier. " +
+        MGuard.Against(!SafeIdentifier.IsMatch(_bypassRoleName), $"BypassRoleName '{_bypassRoleName}' is not a valid PostgreSQL identifier. " +
                 "It must match ^[A-Za-z_][A-Za-z0-9_]*$ (WR-01 defense-in-depth for SET ROLE).");
-        }
         _log = log;
     }
 

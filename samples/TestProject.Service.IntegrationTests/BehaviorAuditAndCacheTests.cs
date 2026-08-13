@@ -37,7 +37,7 @@ public sealed class BehaviorAuditAndCacheTests
         // Register logging + IMLog dependencies so IMLog<SiteAuditBehavior> resolves correctly.
         // SystemExecutionContextAccessor is required by MLog<T> constructor.
         services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
-        services.AddLogging(b => b.AddMuonroiLogging().AddProvider(logCapture));
+        services.AddLogging(b => b.AddMuonroiLogging(useAsyncQueue: false).AddProvider(logCapture));
 
         // Apply SiteAuditBehavior for 3 separate sites.
         var config = EmptyConfig;

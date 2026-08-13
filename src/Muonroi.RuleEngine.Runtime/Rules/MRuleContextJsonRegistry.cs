@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.Core.Abstractions.Exceptions;
 using System.Diagnostics.CodeAnalysis;
@@ -54,7 +55,7 @@ public sealed class MRuleContextJsonRegistry
         Func<string, JsonSerializerOptions, object> deserializer = static (json, options) =>
         {
             T? result = JsonSerializer.Deserialize<T>(json, options);
-            return result ?? throw new MConfigurationException(
+            return result ?? MGuard.Fail<object>(
                 $"Deserialization of type '{typeof(T).FullName}' returned null.",
                 "RuleContextType");
         };
@@ -93,7 +94,7 @@ public sealed class MRuleContextJsonRegistry
     {
         if (string.IsNullOrWhiteSpace(typeName))
         {
-            throw new MConfigurationException(
+            return MGuard.Fail<object>(
                 "Rule context type name must not be null or empty.",
                 "RuleContextType");
         }
@@ -108,7 +109,7 @@ public sealed class MRuleContextJsonRegistry
                     $"[Ecosystem] AUDIT: Rule context deserialization DENIED — type '{typeName}' not registered");
             }
 
-            throw new MConfigurationException(
+            return MGuard.Fail<object>(
                 $"Rule context type '{typeName}' is not registered. " +
                 "Register it via AddRuleContext<T>() during startup.",
                 "RuleContextType");
@@ -127,7 +128,7 @@ public sealed class MRuleContextJsonRegistry
                         $"type '{typeName}' not in tenant '{tenantId}' whitelist");
                 }
 
-                throw new MConfigurationException(
+                return MGuard.Fail<object>(
                     $"Rule context type '{typeName}' is not allowed for tenant '{tenantId}'.",
                     "RuleContextType");
             }
@@ -147,7 +148,7 @@ public sealed class MRuleContextJsonRegistry
         }
         catch (JsonException ex)
         {
-            throw new MConfigurationException(
+            return MGuard.Fail<object>(
                 $"Failed to deserialize rule context type '{typeName}': {ex.Message}",
                 "RuleContextType");
         }

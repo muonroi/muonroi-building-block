@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Core.Abstractions.Ecosystem;
@@ -57,7 +58,7 @@ public static class BackgroundJobHandler
 
         if (!s_providers.TryGetValue(cfg.JobType, out JobProviderRegistration? registration))
         {
-            throw new MConfigurationException(
+            MGuard.Configured(false, 
                 $"No background job provider registered for type '{cfg.JobType}'. " +
                 "Ensure the provider package (e.g., Muonroi.BackgroundJobs.Hangfire) is referenced and loaded.",
                 "BackgroundJobs:JobType");
@@ -82,6 +83,6 @@ public static class BackgroundJobHandler
         // extended via rules. See IMEcosystemRegistry.Has(MCapability.RuleEngine).
         // Implementation deferred to a future phase.
 
-        return registration(services, configuration);
+        return MGuard.NotNull(registration)(services, configuration);
     }
 }

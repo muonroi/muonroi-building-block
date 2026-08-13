@@ -22,8 +22,8 @@ public static class RuleTracerServiceCollectionExtensions
 
         // Register default redactor — consumers can override by registering their own ITraceRedactor before calling this
         services.TryAddSingleton<ITraceRedactor, DefaultTraceRedactor>();
-        services.TryAddSingleton<IRuleTraceStore, RedisRuleTraceStore>();
-        services.TryAddSingleton<IRuleDebuggerModeService, RuleDebuggerModeService>();
+        services.TryAddSingleton<IRuleTraceStore, NullRuleTraceStore>();
+        services.TryAddSingleton<IRuleDebuggerModeService, NullRuleDebuggerModeService>();
         services.TryAddSingleton<IRuleExecutionTracer, RuleExecutionTracer>();
         return services;
     }

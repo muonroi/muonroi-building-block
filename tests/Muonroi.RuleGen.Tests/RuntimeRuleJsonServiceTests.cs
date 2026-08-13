@@ -79,7 +79,7 @@ public sealed class RuntimeRuleJsonServiceTests
         try
         {
             Action act = () => RuntimeRuleJsonService.Load(path, defaultWorkflow: null, tenantId: null);
-            act.Should().Throw<MConfigurationException>()
+            act.Should().Throw<MInternalException>()
                 .WithMessage("*does not contain any rules*");
         }
         finally

@@ -58,6 +58,42 @@ internal sealed class LoggerSpy<T> : IMLog<T>
     }
 
     /// <inheritdoc/>
+    public void InfoContext(string messageTemplate, params object?[] args)
+    {
+        Entries.Add(CreateEntry(LogLevel.Information, messageTemplate, null, args));
+    }
+
+    /// <inheritdoc/>
+    public void InfoContext(string messageTemplate, object? arg0 = null, object? arg1 = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0)
+    {
+        Entries.Add(CreateEntry(LogLevel.Information, messageTemplate, null, new[] { arg0, arg1 }));
+    }
+
+    /// <inheritdoc/>
+    public void ErrorContext(Exception? ex, string messageTemplate, params object?[] args)
+    {
+        Entries.Add(CreateEntry(LogLevel.Error, messageTemplate, ex, args));
+    }
+
+    /// <inheritdoc/>
+    public void ErrorContext(Exception? ex, string messageTemplate, object? arg0 = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0)
+    {
+        Entries.Add(CreateEntry(LogLevel.Error, messageTemplate, ex, new[] { arg0 }));
+    }
+
+    /// <inheritdoc/>
+    public void Audit(string messageTemplate, params object?[] args)
+    {
+        Entries.Add(CreateEntry(LogLevel.Information, messageTemplate, null, args));
+    }
+
+    /// <inheritdoc/>
+    public void Audit(string messageTemplate, string? auditType = null, string? action = null, bool isSuccess = true, string? targetId = null, string? targetType = null, object? metadata = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0)
+    {
+        Entries.Add(CreateEntry(LogLevel.Information, messageTemplate, null, new[] { auditType, action, isSuccess, targetId, targetType, metadata }));
+    }
+
+    /// <inheritdoc/>
     public IDisposable? BeginScope<TState>(TState state)
         where TState : notnull
     {

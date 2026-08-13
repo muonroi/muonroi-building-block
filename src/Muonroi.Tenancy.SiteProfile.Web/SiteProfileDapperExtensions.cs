@@ -74,7 +74,7 @@ public static class SiteProfileDapperExtensions
         configure(options);
 
         if (options.WriteConnectionString is null)
-            throw new MArgumentException(nameof(configure), "SiteDapperInfrastructureOptions.WriteConnectionString resolver is required.");
+            return MGuard.Fail<IServiceCollection>("SiteDapperInfrastructureOptions.WriteConnectionString resolver is required.");
 
         // Store options as singleton for downstream use by IConnectionStringProvider
         services.AddSingleton(options);
@@ -99,7 +99,7 @@ public static class SiteProfileDapperExtensions
 
             return sp.GetKeyedService<IDapper>(siteId)
                 ?? sp.GetKeyedService<IDapper>("default")
-                ?? throw new MInternalException(
+                ?? MGuard.Fail<IDapper>(
                     $"No keyed IDapper registered for site '{siteId}' or 'default'. " +
                     $"Ensure ISiteProfile.RegisterServices() calls: " +
                     $"services.AddKeyedScoped<IDapper, TImpl>(\"{siteId}\")");
@@ -125,7 +125,7 @@ public static class SiteProfileDapperExtensions
 
             if (writeDapper is IDapperRead readCapable) return readCapable;
 
-            throw new MInternalException(
+            return MGuard.Fail<IDapperRead>(
                 $"No keyed IDapperRead registered for site '{siteId}' or 'default'. " +
                 $"Either register a dedicated read replica: " +
                 $"services.AddKeyedScoped<IDapperRead, TReadImpl>(\"{siteId}\"), " +

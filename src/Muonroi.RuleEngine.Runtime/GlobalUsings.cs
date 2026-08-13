@@ -24,7 +24,7 @@ global using Muonroi.RuleEngine.DecisionTable.Feel;
 global using DecisionTableModel = Muonroi.RuleEngine.DecisionTable.Models.DecisionTable;
 global using System.Collections.Immutable;
 global using RulesEngine.Models;
-global using StackExchange.Redis;
+
 global using System;
 global using System.Collections.Concurrent;
 global using System.Collections.Generic;

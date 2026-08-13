@@ -4,6 +4,7 @@
 
 using System.Reflection;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Pdf.Abstractions;
 
 namespace Muonroi.Pdf.Internal.Font;
@@ -50,7 +51,7 @@ internal static class BundledFonts
         Assembly asm = typeof(BundledFonts).Assembly;
         using Stream? stream = asm.GetManifestResourceStream(resourceName);
         if (stream is null)
-            throw new MInternalException(
+            return MGuard.Fail<ReadOnlyMemory<byte>>(
                 $"Embedded resource '{resourceName}' not found. Ensure the TTF file is marked as EmbeddedResource.",
                 "FONT-RESOURCE-MISSING");
         using var ms = new MemoryStream((int)stream.Length);

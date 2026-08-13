@@ -47,7 +47,7 @@ public class DbContextConfiguratorTests
         DbContextOptionsBuilder<ConfiguratorTestDbContext> builder = new();
         SqlServerDbContextConfigurator<ConfiguratorTestDbContext> configurator = new();
 
-        Assert.Throws<MArgumentException>(() => configurator.Configure(builder, connectionString!));
+        Assert.Throws<MArgumentException>((Action)(() => configurator.Configure(builder, connectionString!)));
     }
 
     [Fact]
@@ -75,6 +75,6 @@ public class DbContextConfiguratorTests
         DbContextOptionsBuilder<ConfiguratorTestDbContext> builder = new();
         SqliteDbContextConfigurator<ConfiguratorTestDbContext> configurator = new();
 
-        Assert.Throws<MArgumentException>(() => configurator.Configure(builder, connectionString!));
+        Assert.Throws<MArgumentException>((Action)(() => configurator.Configure(builder, connectionString!)));
     }
 }

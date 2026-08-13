@@ -1,12 +1,10 @@
 using System.Collections;
 using System.Reflection;
 using Microsoft.Extensions.Options;
-using Muonroi.Caching.Redis.Routing;
 using Muonroi.Core.Abstractions.Constants;
 using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Messaging.Abstractions.Contracts;
-using Muonroi.RuleEngine.Runtime.Compilation.Feel;
 using Muonroi.Core.Abstractions.Exceptions;
 using Headers = MassTransit.Headers;
 
@@ -23,15 +21,17 @@ namespace Muonroi.Messaging.MassTransit.Messaging;
 /// <param name="legacyRoutingRules">The legacy pass/fail routing rules.</param>
 /// <param name="sendEndpointProvider">The send endpoint provider used for redirects.</param>
 /// <param name="configs">The message bus routing configuration.</param>
+/// <param name="routingExpressionEvaluator">The routing expression evaluator.</param>
 /// <param name="executionContextAccessor">The execution context accessor for tenant fallback.</param>
-/// <param name="redisRoutingTableStore">The optional Redis routing table store.</param>
+/// <param name="dynamicRoutingTableStore">The dynamic routing table store to look up routing definitions.</param>
 public sealed class RuleEngineRoutingFilter<T>(
     IEnumerable<IMessageRouter<T>> routers,
     IEnumerable<IMessageRoutingRule<T>> legacyRoutingRules,
     ISendEndpointProvider sendEndpointProvider,
     IOptions<MessageBusConfigs> configs,
+    IRoutingExpressionEvaluator? routingExpressionEvaluator = null,
     ISystemExecutionContextAccessor? executionContextAccessor = null,
-    IRedisRoutingTableStore? redisRoutingTableStore = null) : IFilter<ConsumeContext<T>>
+    IDynamicRoutingTableStore? dynamicRoutingTableStore = null) : IFilter<ConsumeContext<T>>
     where T : class
 {
     private static readonly string[] FallbackHeaderKeys =
@@ -50,8 +50,9 @@ public sealed class RuleEngineRoutingFilter<T>(
     private readonly IEnumerable<IMessageRoutingRule<T>> _legacyRoutingRules = MGuard.NotNull(legacyRoutingRules);
     private readonly ISendEndpointProvider _sendEndpointProvider = MGuard.NotNull(sendEndpointProvider);
     private readonly MessageBusConfigs _configs = MGuard.NotNull(configs).Value;
+    private readonly IRoutingExpressionEvaluator? _routingExpressionEvaluator = routingExpressionEvaluator;
     private readonly ISystemExecutionContextAccessor? _executionContextAccessor = executionContextAccessor;
-    private readonly IRedisRoutingTableStore? _redisRoutingTableStore = redisRoutingTableStore;
+    private readonly IDynamicRoutingTableStore? _dynamicRoutingTableStore = dynamicRoutingTableStore;
 
     /// <inheritdoc />
     public async Task Send(ConsumeContext<T> context, IPipe<ConsumeContext<T>> next)
@@ -105,14 +106,14 @@ public sealed class RuleEngineRoutingFilter<T>(
         List<IMessageRouter<T>> routers = [];
 
         if (_configs.EnableRedisRoutingTable &&
-            _redisRoutingTableStore != null &&
+            _dynamicRoutingTableStore != null &&
             !string.IsNullOrWhiteSpace(routingContext.TenantId))
         {
-            IReadOnlyList<RoutingTableEntry> routes = await _redisRoutingTableStore.GetRoutesAsync(
+            IReadOnlyList<RoutingTableEntry> routes = await _dynamicRoutingTableStore.GetRoutesAsync(
                 routingContext.MessageType,
                 routingContext.TenantId,
                 cancellationToken);
-            routers.AddRange(routes.Select(route => new RedisRoutingTableRouter(route, message, routingContext)));
+            routers.AddRange(routes.Select(route => new RedisRoutingTableRouter(route, message, routingContext, _routingExpressionEvaluator)));
         }
 
         routers.AddRange(_routers);
@@ -273,10 +274,11 @@ public sealed class RuleEngineRoutingFilter<T>(
     /// <param name="entry">The Redis routing entry.</param>
     /// <param name="message">The message used to build FEEL variables.</param>
     /// <param name="context">The routing context used to build FEEL variables.</param>
-    private sealed class RedisRoutingTableRouter(RoutingTableEntry entry, T message, IRoutingContext context) : IMessageRouter<T>
+    /// <param name="evaluator">The FEEL expression evaluator.</param>
+    private sealed class RedisRoutingTableRouter(RoutingTableEntry entry, T message, IRoutingContext context, IRoutingExpressionEvaluator? evaluator) : IMessageRouter<T>
     {
         private readonly RoutingTableEntry _entry = MGuard.NotNull(entry);
-        private readonly Func<IDictionary<string, object>, bool>? _predicate = string.IsNullOrWhiteSpace(entry.FeelExpression) ? null : FeelExpressionCompiler.Compile(entry.FeelExpression);
+        private readonly Func<IDictionary<string, object>, bool>? _predicate = string.IsNullOrWhiteSpace(entry.FeelExpression) || evaluator == null ? null : evaluator.Compile(entry.FeelExpression);
         private readonly IDictionary<string, object> _variables = BuildFeelVariables(message, context);
 
         /// <inheritdoc />

@@ -39,7 +39,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
         _signer = signer;
         if (_configs.RequireSignature && _signer is null)
         {
-            throw new MConfigurationException("RuleStore requires signature but no IRuleSetSigner is configured.", "RequireSignature");
+            MGuard.Fail<object>("RuleStore requires signature but no IRuleSetSigner is configured.", "RequireSignature");
         }
 
         string pattern = string.IsNullOrWhiteSpace(_configs.AllowedPathSegmentPattern)
@@ -127,7 +127,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
         FileInfo fileInfo = new(path);
         if (fileInfo.Length > _configs.MaxRuleSetSizeBytes)
         {
-            throw new MConfigurationException(
+            MGuard.Fail<object>(
                 $"Ruleset exceeds MaxRuleSetSizeBytes ({_configs.MaxRuleSetSizeBytes}). Workflow={workflowName}, Version={ver}.");
         }
 
@@ -136,7 +136,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
 
         if (_configs.RequireSignature && _signer is null)
         {
-            throw new MConfigurationException("Ruleset signature is required but no signer is configured.");
+            MGuard.Fail<object>("Ruleset signature is required but no signer is configured.");
         }
 
         if (_signer is not null)
@@ -144,13 +144,13 @@ public sealed class FileRuleSetStore : IRuleSetStore
             string sigPath = EnsureUnderRoot(Path.Combine(dir, $"v{ver}.sig"));
             if (!File.Exists(sigPath))
             {
-                throw new MConfigurationException("Signature file missing.");
+                MGuard.Fail<object>("Signature file missing.");
             }
 
             string signature = await File.ReadAllTextAsync(sigPath, cancellationToken);
             if (!_signer.Verify(content, signature))
             {
-                throw new MConfigurationException("Ruleset signature validation failed.");
+                MGuard.Fail<object>("Ruleset signature validation failed.");
             }
         }
 
@@ -173,7 +173,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
         string path = EnsureUnderRoot(Path.Combine(dir, $"v{version}.json"));
         if (!File.Exists(path))
         {
-            throw new MNotFoundException("RuleSetVersion", path);
+            MGuard.Fail<object>("RuleSetVersion", path);
         }
 
         Directory.CreateDirectory(dir);
@@ -252,7 +252,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
         int size = Encoding.UTF8.GetByteCount(json);
         if (size > _configs.MaxRuleSetSizeBytes)
         {
-            throw new MConfigurationException(
+            MGuard.Fail<object>(
                 $"Ruleset size ({size} bytes) exceeds MaxRuleSetSizeBytes ({_configs.MaxRuleSetSizeBytes}).");
         }
     }
@@ -261,12 +261,12 @@ public sealed class FileRuleSetStore : IRuleSetStore
     {
         if (string.IsNullOrWhiteSpace(segment))
         {
-            throw new MConfigurationException($"{paramName} cannot be empty.");
+            MGuard.Fail<object>($"{paramName} cannot be empty.");
         }
 
         if (!_segmentRegex.IsMatch(segment))
         {
-            throw new MConfigurationException($"{paramName} contains invalid characters: '{segment}'.");
+            MGuard.Fail<object>($"{paramName} contains invalid characters: '{segment}'.");
         }
 
         return segment;
@@ -281,7 +281,7 @@ public sealed class FileRuleSetStore : IRuleSetStore
         if (!fullPath.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(fullPath, _rootPath, StringComparison.OrdinalIgnoreCase))
         {
-            throw new MConfigurationException("Resolved path escapes ruleset root path.");
+            MGuard.Fail<object>("Resolved path escapes ruleset root path.");
         }
 
         return fullPath;

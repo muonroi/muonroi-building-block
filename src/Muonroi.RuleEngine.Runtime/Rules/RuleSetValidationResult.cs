@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
@@ -33,6 +34,6 @@ public sealed class RuleSetValidationResult
         }
 
         string message = string.Join("; ", Errors.Select(x => x.Message));
-        throw new MConfigurationException(message);
+        MGuard.Fail<object>(message);
     }
 }

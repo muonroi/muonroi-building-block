@@ -231,7 +231,7 @@ public sealed class MRuleEngineBehavior<TRequest, TResponse>(
                 return builtNotification;
             }
 
-            throw new MInternalException($"Rule '{ResolvedRuleCode(rule)}' returned an invalid notification instance.");
+            return MGuard.Fail<INotification>($"Rule '{ResolvedRuleCode(rule)}' returned an invalid notification instance.");
         }
 
         object? notification = Activator.CreateInstance(attribute.NotificationType);
@@ -240,7 +240,7 @@ public sealed class MRuleEngineBehavior<TRequest, TResponse>(
             return typedNotification;
         }
 
-        throw new MInternalException($"Notification type '{attribute.NotificationType.FullName}' must implement INotification.");
+        return MGuard.Fail<INotification>($"Notification type '{attribute.NotificationType.FullName}' must implement INotification.");
     }
 
     /// <summary>

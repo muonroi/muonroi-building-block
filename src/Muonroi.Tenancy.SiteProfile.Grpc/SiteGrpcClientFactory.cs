@@ -40,7 +40,7 @@ internal sealed class SiteGrpcClientFactory(
 
         if (descriptor is null)
         {
-            throw new MInternalException(
+            return MGuard.Fail<TBase>(
                 $"No gRPC client registered for site '{siteId}' (or 'default') with service name '{serviceName}'. " +
                 $"Ensure Program.cs calls: services.AddSiteGrpcClient<TClient>(\"{siteId}\", \"{serviceName}\") " +
                 $"and services.AddGrpcClient<TClient>() is also registered.");
@@ -50,7 +50,7 @@ internal sealed class SiteGrpcClientFactory(
         object? client = grpcClientFactoryAccessor.CreateClient(descriptor.ClientType, serviceName);
         if (client is null)
         {
-            throw new MInternalException(
+            return MGuard.Fail<TBase>(
                 $"No gRPC client cached for site '{siteId}' service '{serviceName}' " +
                 $"(type: {descriptor.ClientType.Name}). " +
                 $"Ensure app.InitializeSiteGrpcClients() is called in Program.cs.");
@@ -89,7 +89,7 @@ internal sealed class SiteGrpcClientFactory(
 
         if (facade is null)
         {
-            throw new MInternalException(
+            return MGuard.Fail<TFacade>(
                 $"No gRPC facade registered for site '{siteId}' (or 'default') with service name '{serviceName}'. " +
                 $"Ensure Program.cs calls: services.AddSiteGrpcFacadeClient<TFacade, TImpl>(\"{siteId}\", \"{serviceName}\") " +
                 $"and services.AddSiteGrpcFacadeClient<TFacade, TImpl>(\"default\", \"{serviceName}\") as fallback.");

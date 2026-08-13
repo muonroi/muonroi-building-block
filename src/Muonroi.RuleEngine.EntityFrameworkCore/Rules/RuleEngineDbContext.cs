@@ -50,7 +50,7 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
                 string currentJson = entry.CurrentValues.GetValue<string>(nameof(RuleSetRecord.Json));
                 if (!string.Equals(originalJson, currentJson, StringComparison.Ordinal))
                 {
-                    throw new MInternalException(
+                    MGuard.State(false, 
                         $"Cannot modify Json of ruleset version with status '{originalStatus}'. Published versions are immutable.");
                 }
             }
@@ -59,7 +59,7 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
             RuleSetStatus newStatus = entry.CurrentValues.GetValue<RuleSetStatus>(nameof(RuleSetRecord.Status));
             if (newStatus != originalStatus && !IsAllowedTransition(originalStatus, newStatus))
             {
-                throw new MInternalException(
+                MGuard.State(false, 
                     $"Invalid status transition from '{originalStatus}' to '{newStatus}' for ruleset version.");
             }
         }
@@ -86,7 +86,7 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
                 string currentContent = entry.CurrentValues.GetValue<string>(nameof(PdfTemplateVersionRecord.ContentJson));
                 if (!string.Equals(originalContent, currentContent, StringComparison.Ordinal))
                 {
-                    throw new MInternalException(
+                    MGuard.State(false, 
                         $"Cannot modify ContentJson of PDF template version with status '{originalStatus}'. Published versions are immutable.");
                 }
             }
@@ -95,7 +95,7 @@ public sealed class RuleEngineDbContext(DbContextOptions<RuleEngineDbContext> op
             PdfTemplateStatus newStatus = entry.CurrentValues.GetValue<PdfTemplateStatus>(nameof(PdfTemplateVersionRecord.Status));
             if (newStatus != originalStatus && !IsAllowedPdfTemplateTransition(originalStatus, newStatus))
             {
-                throw new MInternalException(
+                MGuard.State(false, 
                     $"Invalid status transition from '{originalStatus}' to '{newStatus}' for PDF template version.");
             }
         }

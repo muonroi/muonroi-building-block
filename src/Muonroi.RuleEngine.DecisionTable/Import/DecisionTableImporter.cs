@@ -37,27 +37,15 @@ public static partial class DecisionTableImporter
         MGuard.NotEmpty(csvContent, nameof(csvContent));
 
         string[] lines = csvContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 3)
-        {
-            throw new MConfigurationException("Table must contain hit policy, headers and at least one rule");
-        }
+        MGuard.State(lines.Length >= 3, "Table must contain hit policy, headers and at least one rule");
 
         string[] hitParts = lines[0].Split(',');
-        if (hitParts.Length < 2 || !hitParts[0].Equals("HitPolicy", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new MConfigurationException("Missing HitPolicy declaration");
-        }
+        MGuard.State(hitParts.Length >= 2 && hitParts[0].Equals("HitPolicy", StringComparison.OrdinalIgnoreCase), "Missing HitPolicy declaration");
 
-        if (!Enum.TryParse(hitParts[1], true, out RawHitPolicy policy))
-        {
-            throw new MConfigurationException($"Invalid hit policy {hitParts[1]}");
-        }
+        MGuard.State(Enum.TryParse(hitParts[1], true, out RawHitPolicy policy), $"Invalid hit policy {hitParts[1]}");
 
         string[] headers = lines[1].Split(',');
-        if (headers.Length < 2)
-        {
-            throw new MConfigurationException("Decision table requires at least one input and one output column");
-        }
+        MGuard.State(headers.Length >= 2, "Decision table requires at least one input and one output column");
 
         RawDecisionTable table = new()
         {
@@ -72,10 +60,7 @@ public static partial class DecisionTableImporter
         for (int rowIndex = 2; rowIndex < lines.Length; rowIndex++)
         {
             string[] cols = lines[rowIndex].Split(',');
-            if (cols.Length != headers.Length)
-            {
-                throw new MConfigurationException($"Row {rowIndex - 1} has incorrect number of columns");
-            }
+            MGuard.State(cols.Length == headers.Length, $"Row {rowIndex - 1} has incorrect number of columns");
 
             Dictionary<string, string> inputs = new()
             {

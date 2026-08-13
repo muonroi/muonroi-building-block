@@ -45,7 +45,7 @@ public sealed class MigrationRunnerTests
         services.AddLogging(b =>
         {
             b.AddProvider(logCapture);
-            b.AddMuonroiLogging();
+            b.AddMuonroiLogging(useAsyncQueue: false);
         });
 
         // Infrastructure: all 3 DbContexts point at SQLite memory for migration tests

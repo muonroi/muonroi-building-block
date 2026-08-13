@@ -14,6 +14,7 @@ using System.IO.Compression;
 using System.Text;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Pdf.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Pdf.Internal.Font;
 using Muonroi.Pdf.Internal.Layout;
 using Muonroi.Pdf.Internal.Layout.Boxes;
@@ -48,7 +49,7 @@ internal sealed class OwnedPdfWriter : IPdfWriter
         CancellationToken ct = default)
     {
         if (pages is not PositionedPageList pageList)
-            throw new MInternalException(
+            return MGuard.Fail<long>(
                 "OwnedPdfWriter requires PositionedPageList from the Muonroi.Pdf engine");
 
         byte[] pdfBytes = BuildPdf(pageList, options, ct);

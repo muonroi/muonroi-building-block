@@ -43,7 +43,7 @@ public sealed class RuleSetValidationResultTests
 
         Action act = () => result.ThrowIfInvalid();
 
-        act.Should().Throw<MConfigurationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*Error one*")
             .WithMessage("*Error two*");
     }

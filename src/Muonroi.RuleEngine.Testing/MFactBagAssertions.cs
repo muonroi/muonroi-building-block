@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.RuleEngine.Testing;
 
@@ -19,12 +20,12 @@ public sealed class MFactBagAssertion(FactBag facts)
         IReadOnlyDictionary<string, object?> map = facts.AsReadOnly();
         if (!map.TryGetValue(key, out object? actual))
         {
-            throw new MInternalException($"Expected fact '{key}' to exist.");
+            MGuard.State(false, $"Expected fact '{key}' to exist.");
         }
 
         if (expectedValue is not null && !Equals(actual, expectedValue))
         {
-            throw new MInternalException(
+            MGuard.State(false, 
                 $"Expected fact '{key}' to equal '{expectedValue}', actual '{actual ?? "<null>"}'.");
         }
 
@@ -35,7 +36,7 @@ public sealed class MFactBagAssertion(FactBag facts)
     {
         if (facts.AsReadOnly().ContainsKey(key))
         {
-            throw new MInternalException($"Expected fact '{key}' to not exist.");
+            MGuard.State(false, $"Expected fact '{key}' to not exist.");
         }
 
         return this;

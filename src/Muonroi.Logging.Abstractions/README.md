@@ -59,6 +59,8 @@ builder.Logging.AddMuonroiLogging();
 - `IMLogFactory` — factory interface for creating `IMLog` instances by type or category name.
 - `IMLogContext` — ambient property bag; push key-value pairs into the logging context with `PushProperty` / `PushProperties`.
 - `IMLogContextScope` — disposable scope returned by `BeginProperty` / `PushProperty`; disposing it removes the property from the context.
+- `IInterceptedLogWriter` — interceptor abstraction for custom logging sinks; the signature takes `CategoryName` for contextual routing.
+- `LogEvent` — performance-oriented model in `Muonroi.Logging.Abstractions.Models` implementing `Reset()` for aggressive `ObjectPool` reuse.
 - `LogPropertyConventions` — static constants for standard structured-log property keys: `TenantId`, `UserId`, `CorrelationId`, `TraceSessionId`, `RuleCode`, `RequestName`.
 
 ## API Reference
@@ -70,6 +72,8 @@ builder.Logging.AddMuonroiLogging();
 | `IMLogFactory` | Creates `IMLog` and `IMLog<T>` instances by type parameter or category name string. |
 | `IMLogContext` | Ambient context bag. `PushProperty(key, value)` and `PushProperties(dict)` attach properties to all log events within the returned scope. |
 | `IMLogContextScope` | Disposable returned by `BeginProperty` / `PushProperty`. Dispose to remove the pushed property from the ambient context. |
+| `IInterceptedLogWriter` | Interceptor abstraction for custom logging sinks, taking `CategoryName` in its signature for contextual routing. |
+| `LogEvent` | Performance-oriented model (in `Models`) implementing `Reset()` for aggressive `ObjectPool` reuse to minimize allocation overhead. |
 | `LogPropertyConventions` | String constants: `TenantId`, `UserId`, `CorrelationId`, `TraceSessionId`, `RuleCode`, `RequestName`. |
 
 ## Samples

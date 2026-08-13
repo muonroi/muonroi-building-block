@@ -36,21 +36,22 @@ public sealed class CanaryRolloutService(
 
         if ((request.TargetTenantIds?.Length ?? 0) == 0 && !request.TargetPercentage.HasValue)
         {
-            throw new MInternalException("StartCanary requires either TargetTenantIds or TargetPercentage.");
+            MGuard.State(false, "StartCanary requires either TargetTenantIds or TargetPercentage.");
         }
 
         if (request.TargetPercentage.HasValue && (request.TargetPercentage < 1 || request.TargetPercentage > 99))
         {
-            throw new MInternalException("TargetPercentage must be in range [1..99].");
+            MGuard.State(false, "TargetPercentage must be in range [1..99].");
         }
 
         RuleSetRecord? rule = await dbContext.RuleSets
             .FirstOrDefaultAsync(
                 x => x.TenantId == tenantId && x.WorkflowName == workflow && x.Version == request.Version,
-                cancellationToken) ?? throw new MNotFoundException("RuleSetVersion", $"{workflow}/v{request.Version}");
+                cancellationToken);
+        rule = MGuard.Found(rule, "RuleSetVersion", $"{workflow}/v{request.Version}");
         if (rule.Status is RuleSetStatus.Draft or RuleSetStatus.PendingApproval or RuleSetStatus.Rejected)
         {
-            throw new MInternalException(
+            MGuard.State(false, 
                 "Only Approved/Active/Superseded versions can be used for canary rollout.");
         }
 
@@ -126,12 +127,12 @@ public sealed class CanaryRolloutService(
         string actor = promotedBy.Trim();
         DateTimeOffset now = DateTimeOffset.UtcNow;
 
-        CanaryRolloutRecord rollout = await dbContext.CanaryRollouts
-            .FirstOrDefaultAsync(x => x.Id == rolloutId && x.TenantId == tenantId, cancellationToken)
-            ?? throw new MNotFoundException("CanaryRollout", rolloutId);
+        CanaryRolloutRecord? rollout = await dbContext.CanaryRollouts
+            .FirstOrDefaultAsync(x => x.Id == rolloutId && x.TenantId == tenantId, cancellationToken);
+        rollout = MGuard.Found(rollout, "CanaryRollout", rolloutId);
         if (rollout.Status != CanaryStatus.Active)
         {
-            throw new MInternalException("Only active canary rollouts can be promoted.");
+            MGuard.State(false, "Only active canary rollouts can be promoted.");
         }
 
         await store.SetActiveVersionAsync(rollout.WorkflowName, rollout.Version, cancellationToken);
@@ -183,12 +184,12 @@ public sealed class CanaryRolloutService(
         string actor = rolledBackBy.Trim();
         DateTimeOffset now = DateTimeOffset.UtcNow;
 
-        CanaryRolloutRecord rollout = await dbContext.CanaryRollouts
-            .FirstOrDefaultAsync(x => x.Id == rolloutId && x.TenantId == tenantId, cancellationToken)
-            ?? throw new MNotFoundException("CanaryRollout", rolloutId);
+        CanaryRolloutRecord? rollout = await dbContext.CanaryRollouts
+            .FirstOrDefaultAsync(x => x.Id == rolloutId && x.TenantId == tenantId, cancellationToken);
+        rollout = MGuard.Found(rollout, "CanaryRollout", rolloutId);
         if (rollout.Status != CanaryStatus.Active)
         {
-            throw new MInternalException("Only active canary rollouts can be rolled back.");
+            MGuard.State(false, "Only active canary rollouts can be rolled back.");
         }
 
         rollout.Status = CanaryStatus.RolledBack;

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Muonroi.Core.Abstractions.Exceptions;
@@ -45,7 +46,7 @@ public sealed class RuleGraphParser(IMJsonSerializeService json)
     {
         if (!TryExtractGraph(graphJson, out RuleFlowGraph? graph) || graph is null)
         {
-            throw new MConfigurationException("Invalid or empty graph JSON.");
+            MGuard.Fail<object>("Invalid or empty graph JSON.");
         }
 
         List<RuleFlowNode> executableNodes = [.. graph.Nodes.Where(n => ExecutableTypes.Contains(n.Type))];

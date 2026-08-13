@@ -111,7 +111,7 @@ public class RuleEngineGenericTests
         var engine = new RuleEngine<TestContext>();
         engine.AddRule(new FailRule());
         Func<Task> act = () => engine.ExecuteAsync(new TestContext(), RuleType.Business);
-        await act.Should().ThrowAsync<MInternalException>();
+        await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
     [Fact]

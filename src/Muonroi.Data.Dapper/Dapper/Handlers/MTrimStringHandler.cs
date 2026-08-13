@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Data.Dapper.Dapper.Handlers;
@@ -25,6 +26,6 @@ public class MTrimStringHandler : SqlMapper.TypeHandler<string>
     /// <exception cref="NotImplementedException">Thrown as this method is not currently implemented.</exception>
     public override void SetValue(IDbDataParameter parameter, string? value)
     {
-        throw new MInternalException("MTrimStringHandler.Parse is not implemented.", MErrorCodes.Data.NotImplemented);
+        MGuard.State(false, "MTrimStringHandler.Parse is not implemented.", MErrorCodes.Data.NotImplemented);
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Muonroi.Core.Abstractions.Guards;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Muonroi.BackgroundJobs.Abstractions;
@@ -25,12 +26,9 @@ public static class BackgroundJobHandler
         BackgroundJobConfigs cfg = new();
         configuration.GetSection(BackgroundJobConfigs.SectionName).Bind(cfg);
 
-        if (cfg.JobType != JobType.Quartz)
-        {
-            throw new MConfigurationException(
+        MGuard.Configured(cfg.JobType == JobType.Quartz,
                 $"Invalid JobType '{cfg.JobType}' for package '{nameof(BackgroundJobs.Quartz)}'.",
                 "BackgroundJobConfigs:JobType");
-        }
 
         services.AddQuartz(q =>
         {

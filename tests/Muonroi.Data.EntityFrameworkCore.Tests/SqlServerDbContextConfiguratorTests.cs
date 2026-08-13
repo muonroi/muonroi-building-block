@@ -1,3 +1,5 @@
+using Muonroi.Data.EntityFrameworkCore.SqlServer;
+
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class SqlServerDbContextConfiguratorTests
@@ -26,13 +28,13 @@ public class SqlServerDbContextConfiguratorTests
     }
 
     [Fact]
-    public void Configure_NullConnectionString_Throws()
+    public async Task Configure_NullConnectionString_Throws()
     {
         DbContextOptionsBuilder<SqlServerConfiguratorTestDbContext> builder = new();
         SqlServerDbContextConfigurator<SqlServerConfiguratorTestDbContext> configurator = new();
         string? connectionString = null;
 
-        Assert.ThrowsAny<Exception>(() => configurator.Configure(builder, connectionString!));
+        await Assert.ThrowsAnyAsync<Exception>(() => Task.Run(() => configurator.Configure(builder, connectionString!)));
     }
 
     [Fact]

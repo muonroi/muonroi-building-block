@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Serializers;
@@ -32,7 +33,6 @@ public sealed class DecisionTableJsonSerializer
     /// <exception cref="InvalidDataException">Thrown when the JSON cannot be deserialized.</exception>
     public static DecisionTableModel Deserialize(string json)
     {
-        return JsonSerializer.Deserialize<DecisionTableModel>(json, Options) // MBB002-exempt: static helper with custom JsonOptions (WriteIndented + WhenWritingNull) not available in wrapper
-               ?? throw new MConfigurationException("Cannot deserialize decision table JSON.");
+        return MGuard.Configured(JsonSerializer.Deserialize<DecisionTableModel>(json, Options), "Cannot deserialize decision table JSON.");
     }
 }

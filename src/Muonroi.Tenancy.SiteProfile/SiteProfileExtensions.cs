@@ -191,7 +191,7 @@ public static class SiteProfileExtensions
             var options = sp.GetService<IOptions<SiteProfileOptions>>()?.Value;
             if (options?.StrictMode == true)
             {
-                throw new MInternalException(
+                return MGuard.Fail<ISiteProfileResolver>(
                     $"[SITE-SAFETY] No ISiteProfile registered for site '{siteCode}'. " +
                     $"StrictMode is enabled — no fallback to 'default'. " +
                     $"Available: [{string.Join(", ", profileMap.Keys)}]");
@@ -208,7 +208,7 @@ public static class SiteProfileExtensions
                 return new SiteProfileResolver(fallback);
             }
 
-            throw new MInternalException(
+            return MGuard.Fail<ISiteProfileResolver>(
                 $"No ISiteProfile registered for site '{siteCode}'. " +
                 $"Available: [{string.Join(", ", profileMap.Keys)}]");
         });
@@ -266,7 +266,7 @@ public static class SiteProfileExtensions
             service = sp.GetKeyedService<TService>("default");
             if (service is not null) return service;
 
-            throw new MInternalException(
+            return MGuard.Fail<TService>(
                 $"No keyed service '{typeof(TService).Name}' registered for site '{siteId}' or 'default'. " +
                 $"Ensure ISiteProfile.RegisterServices() calls: " +
                 $"services.AddKeyedScoped<{typeof(TService).Name}, TImpl>(\"{siteId}\")");

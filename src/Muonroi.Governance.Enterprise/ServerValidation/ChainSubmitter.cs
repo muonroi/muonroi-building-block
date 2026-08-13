@@ -3,6 +3,7 @@ using Muonroi.Core.Abstractions.Security;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
 using System.Net.Http.Json;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Governance.Enterprise.ServerValidation;
 
@@ -390,12 +391,7 @@ public sealed class ChainSubmitter(
             }
         }
 
-        if (_licenseState.HasFeature(FreeTierFeatures.Premium.AuditTrail))
-        {
-            return;
-        }
-
-        throw new MInternalException(
+        MGuard.State(_licenseState.HasFeature(FreeTierFeatures.Premium.AuditTrail),
             "[LICENSE] Feature 'audit-trail' is not available under your current license.");
     }
 

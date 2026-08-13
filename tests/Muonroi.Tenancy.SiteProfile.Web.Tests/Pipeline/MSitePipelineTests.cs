@@ -23,7 +23,7 @@ public class MSitePipelineTests
     private const string TestStepName = "SaveStep";
 
     /// <summary>
-    /// Minimal IMLog<T> implementation for testing (NSubstitute cannot proxy ILogger<T>).
+    /// Minimal IMLog&lt;T&gt; implementation for testing (NSubstitute cannot proxy ILogger&lt;T&gt;).
     /// </summary>
     private sealed class FakeLog<T> : IMLog<T>
     {
@@ -36,6 +36,9 @@ public class MSitePipelineTests
         public void Error(Exception? ex, string messageTemplate, params object?[] args) { }
         public void Debug(string messageTemplate, params object?[] args) { }
         public void InfoTrace(string messageTemplate, params object?[] args) { }
+        public void InfoContext(string message, object? request = null, object? result = null, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "", [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0) { }
+        public void ErrorContext(Exception ex, string message, object? request = null, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "", [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0) { }
+        public void Audit(string action, string objectType, string objectId, bool isSuccess = true, string? previousStatus = null, string? newStatus = null, object? extraData = null, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "", [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0) { }
 
         private sealed class NullLogScope : IMLogContextScope
         {

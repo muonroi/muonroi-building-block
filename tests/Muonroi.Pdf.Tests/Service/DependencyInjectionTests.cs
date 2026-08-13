@@ -11,7 +11,7 @@ namespace Muonroi.Pdf.Tests.Service;
 
 /// <summary>
 /// SC1 / DI-02 / DI-04: proves <c>AddPdf</c> registers the full pipeline, wires
-/// <see cref="DefaultFontResolver"/> as the default <see cref="IFontResolver"/> (Phase 11.3),
+/// <c>DefaultFontResolver</c> as the default <see cref="IFontResolver"/> (Phase 11.3),
 /// and is idempotent when called twice.
 /// </summary>
 public sealed class DependencyInjectionTests

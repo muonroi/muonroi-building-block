@@ -67,7 +67,7 @@ public sealed class RulesEngineServiceTests
 
         Func<Task> act = () => sut.SaveRuleSetAsync("wf1", "bad");
 
-        await act.Should().ThrowAsync<MConfigurationException>();
+        await act.Should().ThrowAsync<MInternalException>();
         await _store.DidNotReceive().SaveAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
@@ -246,7 +246,7 @@ public sealed class RulesEngineServiceTests
         RulesEngineService sut = CreateSut(provider);
         Func<Task> action = () => sut.ExecuteWithResultAsync("wf-missing-rule", new TestExecutionContext { Value = 1 });
 
-        await action.Should().ThrowAsync<MConfigurationException>()
+        await action.Should().ThrowAsync<MInternalException>()
             .WithMessage("*unknown rule code*");
     }
 
@@ -363,7 +363,7 @@ public sealed class RulesEngineServiceTests
         RulesEngineService sut = CreateSut(provider);
         Func<Task> action = () => sut.ExecuteWithResultAsync("wf-no-impl", new NoImplementationContext { Value = 7 });
 
-        await action.Should().ThrowAsync<MConfigurationException>()
+        await action.Should().ThrowAsync<MInternalException>()
             .WithMessage("*no rule implementations were discovered*");
     }
 

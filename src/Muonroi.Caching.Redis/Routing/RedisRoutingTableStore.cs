@@ -4,12 +4,14 @@ using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using StackExchange.Redis;
 
+using Muonroi.Messaging.Abstractions.Contracts;
+
 namespace Muonroi.Caching.Redis.Routing;
 
 /// <summary>
-/// Redis-backed implementation of <see cref="IRedisRoutingTableStore"/> with local in-process caching.
+/// Redis-backed implementation of <see cref="IDynamicRoutingTableStore"/> with local in-process caching.
 /// </summary>
-public sealed class RedisRoutingTableStore : IRedisRoutingTableStore, IDisposable
+public sealed class RedisRoutingTableStore : IDynamicRoutingTableStore, IDisposable
 {
     private readonly IDatabase _database;
     private readonly ISubscriber _subscriber;
@@ -156,9 +158,7 @@ public sealed class RedisRoutingTableStore : IRedisRoutingTableStore, IDisposabl
 
     private static string NormalizeRequired(string value, string paramName)
     {
-        return string.IsNullOrWhiteSpace(value)
-            ? throw new Core.Abstractions.Exceptions.MArgumentException(paramName, "Value is required.")
-            : value.Trim();
+        return MGuard.NotEmpty(value, paramName).Trim();
     }
 
     private static string? NormalizeOptional(string? value)

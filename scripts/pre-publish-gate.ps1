@@ -16,8 +16,22 @@ $solutionFile = Join-Path $rootPath "Muonroi.BuildingBlock.sln"
 Write-Host "--- Starting Muonroi Pre-Publish Gate ---" -ForegroundColor Cyan
 
 # 1. Run Tests
+$dockerRunning = $false
+try {
+    $null = docker ps 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $dockerRunning = $true
+    }
+} catch {}
+
+$testFilter = "Category!=SlowIntegration"
+if (-not $dockerRunning) {
+    Write-Host "WARNING: Docker is not running or not available. Excluding container-based integration tests (MsSql/PostgreSql) from verification." -ForegroundColor Yellow
+    $testFilter += "&FullyQualifiedName!~MsSql&FullyQualifiedName!~Postgres"
+}
+
 Write-Host "[1/2] Running full test suite (Happy-case Coverage)..." -ForegroundColor Yellow
-dotnet test $solutionFile -c Release --filter "Category!=SlowIntegration" --nologo
+dotnet test $solutionFile -c Release --filter $testFilter --nologo
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Test suite failed! Pre-publish gate blocked."

@@ -21,7 +21,7 @@ public class DecisionTableImporterTests
     public void ImportCsv_TooFewLines_ShouldThrow()
     {
         Action act = () => DecisionTableImporter.ImportCsv("HitPolicy,First\nAge,Result");
-        act.Should().Throw<MConfigurationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*hit policy*headers*rule*");
     }
 
@@ -30,7 +30,7 @@ public class DecisionTableImporterTests
     {
         string csv = "NotHitPolicy,First\nAge,Result\n25,Pass";
         Action act = () => DecisionTableImporter.ImportCsv(csv);
-        act.Should().Throw<MConfigurationException>().WithMessage("*HitPolicy*");
+        act.Should().Throw<MInternalException>().WithMessage("*HitPolicy*");
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class DecisionTableImporterTests
     {
         string csv = "HitPolicy,InvalidPolicy\nAge,Result\n25,Pass";
         Action act = () => DecisionTableImporter.ImportCsv(csv);
-        act.Should().Throw<MConfigurationException>().WithMessage("*Invalid hit policy*");
+        act.Should().Throw<MInternalException>().WithMessage("*Invalid hit policy*");
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class DecisionTableImporterTests
     {
         string csv = "HitPolicy,First\nAge,Result\n25";
         Action act = () => DecisionTableImporter.ImportCsv(csv);
-        act.Should().Throw<MConfigurationException>().WithMessage("*incorrect*columns*");
+        act.Should().Throw<MInternalException>().WithMessage("*incorrect*columns*");
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public class DecisionTableImporterTests
     {
         string csv = "HitPolicy,First\nAge\n25";
         Action act = () => DecisionTableImporter.ImportCsv(csv);
-        act.Should().Throw<MConfigurationException>().WithMessage("*at least one input and one output*");
+        act.Should().Throw<MInternalException>().WithMessage("*at least one input and one output*");
     }
 
     [Fact]

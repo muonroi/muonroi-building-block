@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.RuleEngine.DecisionTable.Feel;
 using System.Collections.Concurrent;
@@ -86,7 +87,7 @@ public static class FeelExpressionCompiler
             "<=" => comparison <= 0,
             ">" => comparison > 0,
             ">=" => comparison >= 0,
-            _ => throw new MInternalException($"Unsupported comparison '{operation}'.", MErrorCodes.Rule.UnsupportedFeelComparison)
+            _ => MGuard.Fail<bool>($"Unsupported comparison '{operation}'.", MErrorCodes.Rule.UnsupportedFeelComparison)
         };
     }
 

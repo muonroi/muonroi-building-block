@@ -47,7 +47,7 @@ public sealed partial class SiteSqlBuilder
 
         var filtered = propertyNames.Where(p => _columnMap.HasColumn(p)).ToArray();
         if (filtered.Length == 0)
-            throw new MArgumentException(nameof(propertyNames), "All property names were filtered out by HasColumn. At least one column must be selectable.");
+            MGuard.Against(filtered.Length == 0, "All property names were filtered out by HasColumn. At least one column must be selectable.");
 
         return string.Join(", ", filtered.Select(p =>
         {
@@ -70,7 +70,7 @@ public sealed partial class SiteSqlBuilder
 
         var filtered = propertyNames.Where(p => _columnMap.HasColumn(p)).ToArray();
         if (filtered.Length == 0)
-            throw new MArgumentException(nameof(propertyNames), "All property names were filtered out by HasColumn. At least one column must be selectable.");
+            MGuard.Against(filtered.Length == 0, "All property names were filtered out by HasColumn. At least one column must be selectable.");
 
         var cols = string.Join(", ", filtered.Select(p =>
         {
@@ -114,7 +114,7 @@ public sealed partial class SiteSqlBuilder
 
         var all = baseCols.Concat(extraCols).ToArray();
         if (all.Length == 0)
-            throw new MArgumentException(nameof(propertyNames), "No columns available: all base properties filtered and no extra columns defined.");
+            MGuard.Against(all.Length == 0, "No columns available: all base properties filtered and no extra columns defined.");
 
         return string.Join(", ", all);
     }
@@ -149,7 +149,7 @@ public sealed partial class SiteSqlBuilder
 
         var all = baseCols.Concat(extraCols).ToArray();
         if (all.Length == 0)
-            throw new MArgumentException(nameof(propertyNames), "No columns available: all base properties filtered and no extra columns defined.");
+            MGuard.Against(all.Length == 0, "No columns available: all base properties filtered and no extra columns defined.");
 
         return $"SELECT {string.Join(", ", all)} FROM {tableName}";
     }
@@ -326,8 +326,7 @@ public sealed partial class SiteSqlBuilder
         return MarkerRegex().Replace(rawSql, match =>
         {
             string propertyName = match.Groups[1].Value;
-            if (!_columnMap.HasColumn(propertyName))
-                throw new MInternalException(
+            MGuard.State(_columnMap.HasColumn(propertyName), 
                     $"Column '{propertyName}' is not available for this site. " +
                     $"Use InterpolateMarkersSafe() or check HasColumn(\"{propertyName}\") before using this marker.");
             string columnName = _columnMap.Column(propertyName);

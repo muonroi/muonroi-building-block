@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleGen.Cli;
 using Muonroi.RuleGen.Models;
 using Muonroi.RuleGen.Services;
@@ -354,7 +355,7 @@ internal static class ExtractCommand
                 }
 
                 string sourceParent = Path.GetDirectoryName(sourcePath)
-                    ?? throw new MInternalException($"Cannot resolve parent directory for source path '{sourcePath}'.");
+                    ?? MGuard.Fail<string>($"Cannot resolve parent directory for source path '{sourcePath}'.");
                 return Path.Combine(sourceParent, "Rules");
             }
 
@@ -368,11 +369,11 @@ internal static class ExtractCommand
             {
                 string projectPath = Path.GetFullPath(project, context.WorkingDirectory);
                 string projectDir = Path.GetDirectoryName(projectPath)
-                    ?? throw new MInternalException($"Cannot resolve directory for project path '{projectPath}'.");
+                    ?? MGuard.Fail<string>($"Cannot resolve directory for project path '{projectPath}'.");
                 return Path.Combine(projectDir, "Generated", "Rules");
             }
 
-            throw new MInternalException(
+            return MGuard.Fail<string>(
                 "Missing output location. Provide --output or at least one of --source/--source-dir/--project so output can be inferred.");
         }
 

@@ -69,7 +69,7 @@ public sealed class RulesEngineServiceDryRunTests
         JsonElement context = JsonDocument.Parse("{\"value\":1}").RootElement.Clone();
         Func<Task> action = async () => await service.DryRunAsync("CodeWorkflow", json, context);
 
-        await action.Should().ThrowAsync<MConfigurationException>();
+        await action.Should().ThrowAsync<MInternalException>();
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public sealed class RulesEngineServiceDryRunTests
             context,
             "Muonroi.RuleEngine.Runtime.Tests.DoesNotExistContext");
 
-        await action.Should().ThrowAsync<MConfigurationException>()
+        await action.Should().ThrowAsync<MInternalException>()
             .WithMessage("*is not registered*");
     }
 
@@ -148,7 +148,7 @@ public sealed class RulesEngineServiceDryRunTests
             context,
             typeof(DryRunCodeContext).FullName);
 
-        await action.Should().ThrowAsync<MConfigurationException>();
+        await action.Should().ThrowAsync<MInternalException>();
     }
 
     [Fact]
@@ -219,7 +219,7 @@ public sealed class RulesEngineServiceDryRunTests
             context,
             "Muonroi.RuleEngine.Runtime.Tests.DoesNotExistGraphContext");
 
-        await action.Should().ThrowAsync<MConfigurationException>()
+        await action.Should().ThrowAsync<MInternalException>()
             .WithMessage("*is not registered*");
     }
 

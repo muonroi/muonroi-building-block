@@ -19,19 +19,19 @@
     <ProjectReference Include="..\Muonroi.Caching.Memory\Muonroi.Caching.Memory.csproj" />
     <ProjectReference Include="..\Muonroi.Governance.Abstractions\Muonroi.Governance.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Integration.Abstractions\Muonroi.Integration.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Messaging.Abstractions\Muonroi.Messaging.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Templating.Abstractions\Muonroi.Templating.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Jint" />
-    <PackageReference Include="MailKit" />
+
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="RulesEngine" />
-    <PackageReference Include="Scriban" />
-    <PackageReference Include="StackExchange.Redis" />
+
   </ItemGroup>
 </Project>

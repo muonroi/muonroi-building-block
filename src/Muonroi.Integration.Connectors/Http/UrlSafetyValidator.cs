@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Integration.Connectors.Http;
 
@@ -25,24 +26,18 @@ public static class UrlSafetyValidator
     /// </exception>
     public static async Task ValidateAsync(string? url)
     {
-        if (string.IsNullOrWhiteSpace(url))
-            throw new MInternalException("URL must not be null or empty", BlockedUrlErrorCode);
-
-        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
-            throw new MInternalException("URL is not a valid absolute URI", BlockedUrlErrorCode);
-
+        MGuard.State(!string.IsNullOrWhiteSpace(url), "URL must not be null or empty", BlockedUrlErrorCode);
+        Uri.TryCreate(url, UriKind.Absolute, out Uri? uri);
+        uri = MGuard.NotNull(uri, "URL is not a valid absolute URI");
         // Only http and https schemes are allowed
-        if (!uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase) &&
-            !uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new MInternalException($"URL scheme '{uri.Scheme}' is not allowed; only http and https are permitted", BlockedUrlErrorCode);
-        }
+        MGuard.State(uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase) ||
+                     uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase),
+            $"URL scheme '{uri.Scheme}' is not allowed; only http and https are permitted", BlockedUrlErrorCode);
 
         // Check if host is a literal IP address
         if (IPAddress.TryParse(uri.Host, out IPAddress? literalIp))
         {
-            if (IsBlockedAddress(literalIp))
-                throw new MInternalException(BlockedUrlMessage, BlockedUrlErrorCode);
+            MGuard.State(!IsBlockedAddress(literalIp), BlockedUrlMessage, BlockedUrlErrorCode);
             return;
         }
 
@@ -61,8 +56,7 @@ public static class UrlSafetyValidator
 
         foreach (IPAddress ip in addresses)
         {
-            if (IsBlockedAddress(ip))
-                throw new MInternalException(BlockedUrlMessage, BlockedUrlErrorCode);
+            MGuard.State(!IsBlockedAddress(ip), BlockedUrlMessage, BlockedUrlErrorCode);
         }
     }
 

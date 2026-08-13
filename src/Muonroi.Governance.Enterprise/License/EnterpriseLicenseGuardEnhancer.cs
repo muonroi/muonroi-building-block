@@ -4,6 +4,7 @@ using Muonroi.Governance.Enterprise.Policy;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Tenancy.Core;
 using System.Diagnostics.CodeAnalysis;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Governance.License;
 
@@ -53,18 +54,12 @@ public sealed class EnterpriseLicenseGuardEnhancer(
 
         if (actionType.StartsWith("api.", StringComparison.OrdinalIgnoreCase) && policyEnforcer != null)
         {
-            if (!policyEnforcer.CheckApiRateLimit())
-            {
-                throw new MInternalException("[POLICY] API rate limit exceeded.");
-            }
+            MGuard.State(policyEnforcer.CheckApiRateLimit(), "[POLICY] API rate limit exceeded.");
         }
 
         if (actionType.StartsWith("db.", StringComparison.OrdinalIgnoreCase) && policyEnforcer != null)
         {
-            if (!policyEnforcer.CheckDbRateLimit())
-            {
-                throw new MInternalException("[POLICY] DB rate limit exceeded.");
-            }
+            MGuard.State(policyEnforcer.CheckDbRateLimit(), "[POLICY] DB rate limit exceeded.");
         }
     }
 
@@ -186,20 +181,14 @@ public sealed class EnterpriseLicenseGuardEnhancer(
                 status = "tamper_detected";
                 activity?.SetStatus(ActivityStatusCode.Error, "Anti-tampering detector signaled possible tampering.");
 
-                if (GetEffectiveFailMode() != LicenseFailMode.Soft)
-                {
-                    throw new MInternalException("[SEC_TAMPER] Security violation detected via anti-tamper sensors.", MErrorCodes.Governance.TamperDetected);
-                }
+                MGuard.State(GetEffectiveFailMode() == LicenseFailMode.Soft, "[SEC_TAMPER] Security violation detected via anti-tamper sensors.", MErrorCodes.Governance.TamperDetected);
 
                 return;
             }
 
             if (force || GetEffectiveFailMode() != LicenseFailMode.Soft)
             {
-                if (AntiTamperDetector.IsMethodHooked(typeof(LicenseGuard).GetMethod(nameof(LicenseGuard.RecordAction))!))
-                {
-                    throw new MInternalException("[SEC_TAMPER] Execution integrity compromised.", MErrorCodes.Governance.IntegrityCompromised);
-                }
+                MGuard.State(!AntiTamperDetector.IsMethodHooked(typeof(LicenseGuard).GetMethod(nameof(LicenseGuard.RecordAction))!), "[SEC_TAMPER] Execution integrity compromised.", MErrorCodes.Governance.IntegrityCompromised);
             }
         }
         catch (Exception ex)
@@ -252,11 +241,8 @@ public sealed class EnterpriseLicenseGuardEnhancer(
             return;
         }
 
-        if (MEnterpriseFailClosedMatrix.ShouldBlock(requestedFeature, MEnterpriseFailureReason.MissingSignedPolicy))
-        {
-            throw new MInternalException(
-                $"[SEC_FAIL_CLOSED] Enterprise Production requires a valid signed policy for '{requestedFeature}'.",
-                MErrorCodes.Governance.SecurityViolation);
-        }
+        MGuard.State(!MEnterpriseFailClosedMatrix.ShouldBlock(requestedFeature, MEnterpriseFailureReason.MissingSignedPolicy),
+            $"[SEC_FAIL_CLOSED] Enterprise Production requires a valid signed policy for '{requestedFeature}'.",
+            MErrorCodes.Governance.SecurityViolation);
     }
 }

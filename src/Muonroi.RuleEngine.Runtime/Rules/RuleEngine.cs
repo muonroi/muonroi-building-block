@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Mediator.Exceptions;
 using Muonroi.Logging.Abstractions;
@@ -81,7 +82,7 @@ public sealed class RuleEngine<T>(
             baseCode = rule.Code;
             if (string.IsNullOrWhiteSpace(baseCode))
             {
-                throw new MInternalException("Rule code cannot be empty");
+                MGuard.Fail<object>("Rule code cannot be empty");
             }
         }
         catch
@@ -126,19 +127,19 @@ public sealed class RuleEngine<T>(
 
             if (!visiting.Add(code))
             {
-                throw new MInternalException($"Circular rule dependency detected for '{code}'.", "CIRCULAR_DEPENDENCY");
+                MGuard.Fail<object>($"Circular rule dependency detected for '{code}'.", "CIRCULAR_DEPENDENCY");
             }
 
             if (!dict.TryGetValue(code, out (IRule<T> Rule, RuleDescriptor Descriptor) entry))
             {
-                throw new MNotFoundException("Rule", code);
+                MGuard.Fail<object>("Rule", code);
             }
 
             foreach (string dep in entry.Descriptor.DependsOn)
             {
                 if (!dict.ContainsKey(dep))
                 {
-                    throw new MNotFoundException("RuleDependency", dep);
+                    MGuard.Fail<object>("RuleDependency", dep);
                 }
 
                 Visit(dep);

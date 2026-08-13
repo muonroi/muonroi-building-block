@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Core.Abstractions.Context;
 using Muonroi.Core.Abstractions.Exceptions;
@@ -151,7 +152,7 @@ public sealed class SchemaValidationPostgresTests : IDisposable
         services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
         services.AddLogging(b =>
         {
-            b.AddMuonroiLogging();
+            b.AddMuonroiLogging(useAsyncQueue: false);
             b.AddProvider(logCapture);
             b.SetMinimumLevel(LogLevel.Trace);
         });

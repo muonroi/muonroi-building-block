@@ -39,10 +39,7 @@ public sealed class MComplianceEvidencePackService(
         CancellationToken cancellationToken = default)
     {
         MGuard.NotNull(request);
-        if (!_exportService.IsEnabled)
-        {
-            throw new MInternalException("Compliance export is not enabled.");
-        }
+        MGuard.State(_exportService.IsEnabled, "Compliance export is not enabled.");
 
         MComplianceExportQuery filters = new()
         {
@@ -156,10 +153,7 @@ public sealed class MComplianceEvidencePackService(
         CancellationToken cancellationToken = default)
     {
         MGuard.NotEmpty(packFilePath);
-        if (!File.Exists(packFilePath))
-        {
-            throw new MInternalException($"Evidence pack not found: {packFilePath}");
-        }
+        MGuard.State(File.Exists(packFilePath), $"Evidence pack not found: {packFilePath}");
 
         string payload = await File.ReadAllTextAsync(packFilePath, cancellationToken);
         MComplianceEvidencePackDocument? pack =
@@ -244,10 +238,10 @@ public sealed class MComplianceEvidencePackService(
 
         // Fallback: local HMAC. Fail closed if no real key material is configured — a guessable
         // default key would make signatures forgeable by anyone reading the OSS source.
-        string keyMaterial = ResolveHmacKeyMaterial()
-            ?? throw new MInternalException(
-                "Compliance evidence-pack signing key is not configured: set LicenseConfigs.ProjectSeed " +
+        string? keyMaterialValue = ResolveHmacKeyMaterial();
+        MGuard.State(keyMaterialValue is not null, "Compliance evidence-pack signing key is not configured: set LicenseConfigs.ProjectSeed " +
                 "or FingerprintSalt, or register an IMControlPlaneSigner for RSA signing.");
+        string keyMaterial = MGuard.NotNull(keyMaterialValue);
 
         byte[] key = Encoding.UTF8.GetBytes(keyMaterial);
         using HMACSHA256 hmac = new(key);

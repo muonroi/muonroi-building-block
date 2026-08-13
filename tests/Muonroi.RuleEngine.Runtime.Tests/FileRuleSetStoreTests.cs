@@ -98,7 +98,7 @@ public sealed class FileRuleSetStoreTests : IDisposable
 
         Func<Task> act = () => _sut.SetActiveVersionAsync("wf1", 99);
 
-        await act.Should().ThrowAsync<MNotFoundException>();
+        await act.Should().ThrowAsync<MInternalException>();
     }
 
     [Fact]
@@ -172,7 +172,7 @@ public sealed class FileRuleSetStoreTests : IDisposable
 
         Action act = () => new FileRuleSetStore(_rootPath, configs: Options.Create(configs));
 
-        act.Should().Throw<MConfigurationException>();
+        act.Should().Throw<MInternalException>();
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public sealed class FileRuleSetStoreTests : IDisposable
 
         Func<Task> act = () => store.SaveAsync("wf1", largeJson);
 
-        await act.Should().ThrowAsync<MConfigurationException>();
+        await act.Should().ThrowAsync<MInternalException>();
     }
 
     [Fact]
@@ -213,6 +213,6 @@ public sealed class FileRuleSetStoreTests : IDisposable
     {
         Func<Task> act = () => _sut.SaveAsync("../../../etc", """{"p":"v"}""");
 
-        await act.Should().ThrowAsync<MConfigurationException>();
+        await act.Should().ThrowAsync<MInternalException>();
     }
 }

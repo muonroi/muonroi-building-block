@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Serilog.Sinks.OpenTelemetry;
 
 namespace Muonroi.Observability.Logging;
@@ -25,18 +26,22 @@ public static class MSerilogAction
             .ReadFrom.Configuration(context.Configuration)
             .ReadFrom.Services(services)
             .Enrich.FromLogContext()
-            .Enrich.With(services.GetRequiredService<TenantIdEnricher>());
+            .Enrich.With(services.GetRequiredService<TenantIdEnricher>())
+            .Enrich.With(services.GetRequiredService<ServiceContextEnricher>());
 
-        AddOpenTelemetrySink(context.Configuration, loggerConfiguration);
-        AddFileSink(context.Configuration, loggerConfiguration);
-
-        if (useConsole)
+        loggerConfiguration.WriteTo.Async(a =>
         {
-            _ = loggerConfiguration.WriteTo.Console();
-        }
+            AddOpenTelemetrySink(context.Configuration, a);
+            AddFileSink(context.Configuration, a);
+
+            if (useConsole)
+            {
+                _ = a.Console();
+            }
+        });
     }
 
-    private static void AddOpenTelemetrySink(IConfiguration configuration, LoggerConfiguration loggerConfiguration)
+    private static void AddOpenTelemetrySink(IConfiguration configuration, Serilog.Configuration.LoggerSinkConfiguration sinkConfig)
     {
         IConfigurationSection otelSection = configuration.GetSection("Serilog:OpenTelemetry");
         if (!otelSection.Exists())
@@ -56,7 +61,7 @@ public static class MSerilogAction
             _ => "Grpc"
         };
 
-        loggerConfiguration.WriteTo.OpenTelemetry(options =>
+        sinkConfig.OpenTelemetry(options =>
         {
             options.Endpoint = endpoint;
             options.Protocol = Enum.Parse<OtlpProtocol>(protocol);
@@ -76,7 +81,7 @@ public static class MSerilogAction
         });
     }
 
-    private static void AddFileSink(IConfiguration configuration, LoggerConfiguration loggerConfiguration)
+    private static void AddFileSink(IConfiguration configuration, Serilog.Configuration.LoggerSinkConfiguration sinkConfig)
     {
         IConfigurationSection fileSection = configuration.GetSection("Serilog:File");
         string? path = fileSection["Path"];
@@ -95,10 +100,10 @@ public static class MSerilogAction
         }
         catch (Exception)
         {
-            throw new MConfigurationException("Invalid log file path.", "Serilog:LogFilePath");
+            MGuard.Configured(false, "Invalid log file path.", "Serilog:LogFilePath");
         }
 
-        loggerConfiguration.WriteTo.File(
+        sinkConfig.File(
             new Serilog.Formatting.Json.JsonFormatter(),
             path,
             rollingInterval: RollingInterval.Infinite);

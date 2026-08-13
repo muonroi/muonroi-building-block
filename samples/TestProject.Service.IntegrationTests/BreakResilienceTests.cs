@@ -34,7 +34,7 @@ public sealed class BreakResilienceTests
         var services = new ServiceCollection();
         // IMLog<T> requires SystemExecutionContextAccessor + AddMuonroiLogging()
         services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
-        services.AddLogging(b => b.AddMuonroiLogging());
+        services.AddLogging(b => b.AddMuonroiLogging(useAsyncQueue: false));
 
         services.AddScoped<ISiteProfileResolver>(_ => new FakeSiteProfileResolver(holder.SiteId));
         services.AddSitePipeline();

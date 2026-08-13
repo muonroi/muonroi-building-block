@@ -1,5 +1,6 @@
 using Confluent.Kafka;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
@@ -13,7 +14,7 @@ public class KafkaBusConfigurator : IBusConfigurator
     /// </summary>
     public void Configure(IBusRegistrationConfigurator configurator, MessageBusConfigs configs)
     {
-        KafkaConfigs kafka = configs.Kafka ?? throw new MConfigurationException("Kafka configuration missing", "MessageBus:Kafka");
+        KafkaConfigs kafka = configs.Kafka ?? MGuard.Fail<KafkaConfigs>("Kafka configuration missing", "MessageBus:Kafka");
         if (!string.IsNullOrWhiteSpace(configs.Runtime.EndpointPrefix))
         {
             configurator.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(configs.Runtime.EndpointPrefix, false));

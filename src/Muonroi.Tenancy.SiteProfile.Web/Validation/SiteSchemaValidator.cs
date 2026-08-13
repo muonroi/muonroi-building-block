@@ -91,7 +91,7 @@ public sealed class SiteSchemaValidator : IHostedService
             string message =
                 $"[SiteSchemaValidator] Schema validation FAILED — {allMismatches.Count} mismatch(es) found:\n" +
                 string.Join("\n", allMismatches);
-            throw new MInternalException(message);
+            MGuard.State(false, message);
         }
         else
         {

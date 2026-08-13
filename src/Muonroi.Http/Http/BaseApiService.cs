@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using System.Net.Http.Json;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
@@ -42,6 +43,6 @@ public abstract class BaseApiService(
 
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken)
-            ?? throw new MInternalException("Response deserialization returned null.");
+            ?? MGuard.Fail<TResponse>("Response deserialization returned null.");
     }
 }

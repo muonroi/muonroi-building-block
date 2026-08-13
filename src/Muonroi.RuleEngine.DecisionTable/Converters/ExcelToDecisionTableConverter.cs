@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.RuleEngine.DecisionTable.Models;
 
 namespace Muonroi.RuleEngine.DecisionTable.Converters;
@@ -35,10 +36,7 @@ public sealed class ExcelToDecisionTableConverter
         using IExcelDataReader reader = ExcelReaderFactory.CreateReader(stream);
 
         System.Data.DataSet ds = reader.AsDataSet();
-        if (ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
-        {
-            throw new MConfigurationException("Excel file is empty.");
-        }
+        MGuard.State(ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0, "Excel file is empty.");
 
         System.Data.DataTable sheet = ds.Tables[0];
         System.Data.DataRow header = sheet.Rows[0];
@@ -61,8 +59,7 @@ public sealed class ExcelToDecisionTableConverter
             }
             else
             {
-                throw new MConfigurationException(
-                    $"Invalid header '{raw}'. Use 'in:<name>' or 'out:<name>' format.");
+                MGuard.State(false, $"Invalid header '{raw}'. Use 'in:<name>' or 'out:<name>' format.");
             }
         }
 

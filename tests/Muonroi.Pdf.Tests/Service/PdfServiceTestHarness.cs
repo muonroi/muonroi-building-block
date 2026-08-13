@@ -105,6 +105,12 @@ internal static class PdfServiceTestHarness
         public void Error(Exception? ex, string messageTemplate, params object?[] args) { }
         public void Debug(string messageTemplate, params object?[] args) { }
         public void InfoTrace(string messageTemplate, params object?[] args) { }
+        public void InfoContext(string messageTemplate, params object?[] args) { }
+        public void InfoContext(string messageTemplate, object? arg0 = null, object? arg1 = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0) { }
+        public void ErrorContext(Exception? ex, string messageTemplate, params object?[] args) { }
+        public void ErrorContext(Exception? ex, string messageTemplate, object? arg0 = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0) { }
+        public void Audit(string messageTemplate, params object?[] args) { }
+        public void Audit(string messageTemplate, string? auditType = null, string? action = null, bool isSuccess = true, string? targetId = null, string? targetType = null, object? metadata = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0) { }
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => NoOpScope.Instance;
         public bool IsEnabled(LogLevel logLevel) => false;

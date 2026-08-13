@@ -165,7 +165,7 @@ public sealed class RulesEngineServiceInternalTests
         MRuleContextJsonRegistry registry = new();
         Action act = () => registry.DeserializeContext("Missing.Context.Type", "{}");
 
-        act.Should().Throw<MConfigurationException>()
+        act.Should().Throw<MInternalException>()
             .WithMessage("*not registered*");
     }
 
@@ -233,7 +233,7 @@ public sealed class RulesEngineServiceInternalTests
         };
 
         TargetInvocationException ex = (await act.Should().ThrowAsync<TargetInvocationException>()).Which;
-        ex.InnerException.Should().BeOfType<MConfigurationException>();
+        ex.InnerException.Should().BeOfType<MInternalException>();
         ex.InnerException!.Message.Should().Contain("Dry-run context type mismatch");
     }
 
@@ -255,7 +255,7 @@ public sealed class RulesEngineServiceInternalTests
         };
 
         TargetInvocationException ex = (await act.Should().ThrowAsync<TargetInvocationException>()).Which;
-        ex.InnerException.Should().BeOfType<MConfigurationException>();
+        ex.InnerException.Should().BeOfType<MInternalException>();
         ex.InnerException!.Message.Should().Contain("Legacy dry-run context type mismatch");
     }
 
@@ -380,7 +380,7 @@ public sealed class RulesEngineServiceInternalTests
         };
 
         TargetInvocationException ex = (await act.Should().ThrowAsync<TargetInvocationException>()).Which;
-        ex.InnerException.Should().BeOfType<MConfigurationException>();
+        ex.InnerException.Should().BeOfType<MInternalException>();
         ex.InnerException!.Message.Should().Contain("Flow-graph context type mismatch");
     }
 

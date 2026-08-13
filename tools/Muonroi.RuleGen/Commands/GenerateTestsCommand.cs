@@ -1,7 +1,7 @@
 using Muonroi.RuleGen.Cli;
 using Muonroi.RuleGen.Services;
 using Muonroi.RuleGen.Writers;
-using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.RuleGen.Commands;
 
@@ -14,7 +14,7 @@ internal static class GenerateTestsCommand
 
         if (string.IsNullOrWhiteSpace(rules) || string.IsNullOrWhiteSpace(output))
         {
-            throw new MInternalException("Missing required options --rules and --output.");
+            MGuard.Fail<object>("Missing required options --rules and --output.");
         }
 
         string rulesDir = Path.GetFullPath(rules, context.WorkingDirectory);

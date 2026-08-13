@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Integration.Abstractions;
 using MailKit.Net.Smtp;
 using MimeKit;
@@ -35,7 +36,8 @@ public sealed class SmtpConnector : IServiceTaskConnector
         var sw = System.Diagnostics.Stopwatch.StartNew();
         JsonElement root = context.Config.RootElement;
 
-        string to = root.GetProperty("to").GetString() ?? throw new MInternalException("to is required");
+        string? toOpt = root.GetProperty("to").GetString();
+        string to = MGuard.NotNull(toOpt);
         string subject = root.TryGetProperty("subject", out var s) ? s.GetString() ?? "" : "";
         string body = root.TryGetProperty("body", out var b) ? b.GetString() ?? "" : "";
         string from = root.TryGetProperty("from", out var f) ? f.GetString() ?? "noreply@muonroi.dev" : "noreply@muonroi.dev";

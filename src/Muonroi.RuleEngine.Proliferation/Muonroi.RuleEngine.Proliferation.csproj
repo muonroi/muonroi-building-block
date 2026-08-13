@@ -15,9 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BouncyCastle.Cryptography" />
-    <PackageReference Include="MailKit" />
-    <PackageReference Include="MimeKit" />
-    <PackageReference Include="Scriban" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
@@ -27,5 +24,6 @@
     <ProjectReference Include="..\Muonroi.Tenancy.Core\Muonroi.Tenancy.Core.csproj" />
     <ProjectReference Include="..\Muonroi.Integration.Abstractions\Muonroi.Integration.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Integration.Connectors\Muonroi.Integration.Connectors.csproj" />
+    <ProjectReference Include="..\Muonroi.Templating.Abstractions\Muonroi.Templating.Abstractions.csproj" />
   </ItemGroup>
 </Project>

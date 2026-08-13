@@ -15,6 +15,10 @@
     <PackageReference Include="ExcelDataReader" />
     <PackageReference Include="ExcelDataReader.DataSet" />
     <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.SqlServer\Muonroi.Data.EntityFrameworkCore.SqlServer.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.MySql\Muonroi.Data.EntityFrameworkCore.MySql.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.PostgreSQL\Muonroi.Data.EntityFrameworkCore.PostgreSQL.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.Sqlite\Muonroi.Data.EntityFrameworkCore.Sqlite.csproj" />
     <ProjectReference Include="..\Muonroi.RuleEngine.Abstractions\Muonroi.RuleEngine.Abstractions.csproj" />
   </ItemGroup>
 </Project>

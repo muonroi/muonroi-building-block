@@ -1,7 +1,10 @@
 using Muonroi.Core.Abstractions.Exceptions;
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Muonroi.Logging.Abstractions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Tenancy.SiteProfile.Web;
 
@@ -173,7 +176,7 @@ internal sealed class SiteMigrationRunner(
             if (failures.Count > 0)
             {
                 string details = string.Join("\n  - ", failures);
-                throw new MInternalException(
+                MGuard.Fail<object>(
                     $"[SiteMigration] Pending migrations detected — deployment must apply migrations before starting:\n  - {details}");
             }
         }

@@ -35,3 +35,7 @@ global using Xunit;
 global using Muonroi.Core.Abstractions.Context;
 global using NSubstitute;
 global using Muonroi.Messaging.Abstractions.Contracts;
+
+global using Muonroi.Data.EntityFrameworkCore.PostgreSQL;
+global using Muonroi.Data.EntityFrameworkCore.SqlServer;
+global using Muonroi.Data.EntityFrameworkCore.Sqlite;

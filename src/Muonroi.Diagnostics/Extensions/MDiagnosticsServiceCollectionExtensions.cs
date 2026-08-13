@@ -21,13 +21,4 @@ public static class MDiagnosticsServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>
-    /// Registers Redis-backed diagnostics services.
-    /// </summary>
-    public static IServiceCollection AddMuonroiDiagnosticsRedis(this IServiceCollection services)
-    {
-        services.AddSingleton<IMTraceContext, MTraceContext>();
-        services.AddSingleton<ITraceSessionStore, RedisTraceSessionStore>();
-        return services;
-    }
 }

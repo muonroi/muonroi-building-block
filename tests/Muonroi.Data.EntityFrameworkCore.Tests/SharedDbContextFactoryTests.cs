@@ -54,7 +54,8 @@ public class SharedDbContextFactoryTests
             () =>
             {
                 SharedDbContextFactory<FactoryTestDbContext> factory = new();
-                Assert.Throws<MConfigurationException>(() => factory.CreateDbContext([]));
+                MInternalException exception = Assert.Throws<MInternalException>(() => factory.CreateDbContext([]));
+                Assert.Equal("Database configuration is not properly set.", exception.Message);
             });
     }
 
@@ -109,7 +110,8 @@ public class SharedDbContextFactoryTests
             () =>
             {
                 SharedDbContextFactory<FactoryTestDbContext> factory = new();
-                Assert.Throws<MConfigurationException>(() => factory.CreateDbContext([]));
+                MInternalException exception = Assert.Throws<MInternalException>(() => factory.CreateDbContext([]));
+                Assert.Equal("Unsupported database type: MongoDb", exception.Message);
             });
     }
 

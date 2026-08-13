@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Experience.Abstractions;
 
 namespace Muonroi.Experience.Runtime.Internal;
@@ -19,6 +20,6 @@ internal static class TierCollectionNames
         ExperienceTier.Behavioral => Behavioral,
         ExperienceTier.SelfQA => SelfQA,
         ExperienceTier.RawTrajectory => Raw,
-        _ => throw new MArgumentException(nameof(tier), $"Unknown ExperienceTier: {tier}")
+        _ => MGuard.Fail<string>($"Unknown ExperienceTier: {tier}")
     };
 }

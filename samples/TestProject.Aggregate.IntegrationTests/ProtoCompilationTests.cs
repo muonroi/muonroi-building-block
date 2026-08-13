@@ -141,7 +141,7 @@ public sealed class ProtoCompilationTests
     /// </summary>
     private static (int exitCode, string output) RunDotnetBuild(string csprojPath)
     {
-        var psi = new ProcessStartInfo("dotnet", $"build \"{csprojPath}\" --no-incremental -v:minimal")
+        var psi = new ProcessStartInfo("dotnet", $"build \"{csprojPath}\" --no-incremental /p:BuildProjectReferences=false -v:minimal")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,

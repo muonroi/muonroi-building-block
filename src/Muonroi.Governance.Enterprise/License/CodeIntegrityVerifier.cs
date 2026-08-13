@@ -59,10 +59,7 @@ public sealed class CodeIntegrityVerifier(
 
         string message = "[SEC_INTEGRITY] Assembly integrity validation failed: " + string.Join(", ", mismatches);
         logger?.Warn(message);
-        if (throwOnFailure)
-        {
-            throw new MInternalException(message, MErrorCodes.Governance.CodeIntegrityFailed);
-        }
+        MGuard.State(!throwOnFailure, message, MErrorCodes.Governance.CodeIntegrityFailed);
 
         return false;
     }
