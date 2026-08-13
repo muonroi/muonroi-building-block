@@ -1,5 +1,7 @@
 using Muonroi.Pdf.Enterprise;
 using Muonroi.Pdf.Extensions;
+using System.Runtime.InteropServices;
+using Muonroi.Pdf.Extensions;
 
 namespace Muonroi.Pdf.Tests.Enterprise;
 
@@ -21,6 +23,12 @@ public sealed class PackagingMetadataTests
     [Fact]
     public void EnterpriseAssemblyIsStrongNamed()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            // OpenSSL 3 on Linux rejects SHA-1 strong-name signing; SignAssembly=false on non-Windows CI
+            return;
+        }
+
         byte[] publicKey = typeof(IFeatureGate).Assembly.GetName().GetPublicKey() ?? [];
         Assert.True(publicKey.Length > 0,
             "Muonroi.Pdf.Enterprise must be strong-named (SignAssembly=true + Muonroi.snk). " +

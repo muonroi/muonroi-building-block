@@ -31,9 +31,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="RulesEngine" />
-    <PackageReference Include="Scriban" />
 
   </ItemGroup>
 </Project>
