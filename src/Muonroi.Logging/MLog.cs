@@ -19,13 +19,15 @@ public sealed class MLog<T>(
     IMLogContext logContext,
     IMTraceContext? traceContext = null,
     IMLogArgumentResolver? resolver = null,
-    IExceptionClassifier? exceptionClassifier = null) : IMLog<T>
+    IExceptionClassifier? exceptionClassifier = null,
+    IInterceptedLogWriter? interceptor = null) : IMLog<T>
 {
     private readonly ILogger<T> _inner = MGuard.NotNull(inner);
     private readonly ISystemExecutionContextAccessor _accessor = MGuard.NotNull(accessor);
     private readonly IMLogContext _logContext = MGuard.NotNull(logContext);
     private readonly IMLogArgumentResolver _resolver = resolver ?? new MLogArgumentResolver();
     private readonly IExceptionClassifier? _exceptionClassifier = exceptionClassifier;
+    private readonly IInterceptedLogWriter _interceptor = interceptor ?? new InterceptedLogWriter();
 
     /// <inheritdoc />
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
@@ -50,7 +52,14 @@ public sealed class MLog<T>(
         Func<TState, Exception?, string> formatter)
     {
         using IDisposable? scope = BeginExecutionScope();
-        _inner.Log(logLevel, eventId, state, exception, formatter);
+        if (exception != null)
+        {
+            _interceptor.Write(logLevel, _inner, exception, formatter(state, exception));
+        }
+        else
+        {
+            _interceptor.Write(logLevel, _inner, formatter(state, exception));
+        }
     }
 
     /// <inheritdoc />
@@ -62,43 +71,50 @@ public sealed class MLog<T>(
     /// <inheritdoc />
     public void Info(string messageTemplate, params object?[] args)
     {
-        _inner.LogInformation(messageTemplate, args);
+        _interceptor.Write(LogLevel.Information, _inner, messageTemplate, args);
         RecordTrace("INFO", messageTemplate, args);
     }
 
     /// <inheritdoc />
     public void Warn(string messageTemplate, params object?[] args)
     {
-        _inner.LogWarning(messageTemplate, args);
+        _interceptor.Write(LogLevel.Warning, _inner, messageTemplate, args);
         RecordTrace("WARN", messageTemplate, args);
     }
 
     /// <inheritdoc />
     public void Error(Exception? ex, string messageTemplate, params object?[] args)
     {
-        _inner.LogError(ex, messageTemplate, args);
+        if (ex != null)
+        {
+            _interceptor.Write(LogLevel.Error, _inner, ex, messageTemplate, args);
+        }
+        else
+        {
+            _interceptor.Write(LogLevel.Error, _inner, messageTemplate, args);
+        }
         RecordTrace("ERROR", messageTemplate, args, ex);
     }
 
     /// <inheritdoc />
     public void Debug(string messageTemplate, params object?[] args)
     {
-        _inner.LogDebug(messageTemplate, args);
+        _interceptor.Write(LogLevel.Debug, _inner, messageTemplate, args);
         RecordTrace("DEBUG", messageTemplate, args);
     }
 
     /// <inheritdoc />
     public void InfoTrace(string messageTemplate, params object?[] args)
     {
-        _inner.LogInformation(messageTemplate, args);
+        _interceptor.Write(LogLevel.Trace, _inner, messageTemplate, args);
         RecordTrace("TRACE", messageTemplate, args);
     }
 
     /// <inheritdoc />
     public void InfoContext(string message, object? request = null, object? result = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0)
     {
-        _inner.LogInformation(
-            "{Message} | Caller: {CallerMemberName} at {CallerFilePath}:{CallerLineNumber} | Request: {@Request} | Result: {@Result}", 
+        _interceptor.Write(LogLevel.Information, _inner,
+            "{Message} | Caller: {CallerMemberName} at {CallerFilePath}:{CallerLineNumber} | Request: {@Request} | Result: {@Result}",
             message, memberName, filePath, lineNumber, _resolver.Resolve(request), _resolver.Resolve(result));
         RecordTrace("INFO", "{Message} | Caller: {CallerMemberName}", new object?[] { message, memberName });
     }
@@ -108,9 +124,10 @@ public sealed class MLog<T>(
     {
         var classification = _exceptionClassifier?.Classify(ex) ?? ExceptionClassification.Unknown(ex);
         
-        _inner.LogError(ex,
+        _interceptor.Write(LogLevel.Error, _inner, ex,
             "{Message} | ErrorCode: {ErrorCode} | Retryable: {Retryable} | Caller: {CallerMemberName} at {CallerFilePath}:{CallerLineNumber} | Request: {@Request}", 
             message, classification.ErrorCode, classification.Retryable, memberName, filePath, lineNumber, _resolver.Resolve(request));
+            
             
         RecordTrace("ERROR", "{Message} | ErrorCode: {ErrorCode} | Caller: {CallerMemberName}", new object?[] { message, classification.ErrorCode, memberName }, ex);
     }
@@ -124,7 +141,7 @@ public sealed class MLog<T>(
             [LogPropertyConventions.EventCategory] = "business"
         });
 
-        _inner.LogInformation(
+        _interceptor.Write(LogLevel.Information, _inner,
             "Audit: {AuditAction} on {ObjectType} {ObjectId} | Success: {IsSuccess} | Prev: {PreviousStatus} | New: {NewStatus} | Data: {@ExtraData} | Caller: {CallerMemberName}",
             action, objectType, objectId, isSuccess, previousStatus, newStatus, _resolver.Resolve(extraData), memberName);
         RecordTrace("AUDIT", "Audit: {AuditAction} on {ObjectType} {ObjectId} | Success: {IsSuccess}", new object?[] { action, objectType, objectId, isSuccess });

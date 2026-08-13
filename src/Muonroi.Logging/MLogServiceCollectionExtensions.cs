@@ -27,6 +27,7 @@ public static class MLogServiceCollectionExtensions
         // Register default gap implementations for Argument Resolver and Exception Classifier
         builder.Services.AddSingleton<Muonroi.Logging.Abstractions.IMLogArgumentResolver, MLogArgumentResolver>();
         builder.Services.AddSingleton<Muonroi.Logging.Abstractions.Exceptions.IExceptionClassifier, Muonroi.Logging.Exceptions.DefaultExceptionClassifier>();
+        builder.Services.AddSingleton<Muonroi.Logging.Abstractions.IInterceptedLogWriter, InterceptedLogWriter>();
         return builder;
     }
 }
