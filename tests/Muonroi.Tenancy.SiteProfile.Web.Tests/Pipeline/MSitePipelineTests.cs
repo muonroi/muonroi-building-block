@@ -23,7 +23,7 @@ public class MSitePipelineTests
     private const string TestStepName = "SaveStep";
 
     /// <summary>
-    /// Minimal IMLog<T> implementation for testing (NSubstitute cannot proxy ILogger<T>).
+    /// Minimal IMLog&lt;T&gt; implementation for testing (NSubstitute cannot proxy ILogger&lt;T&gt;).
     /// </summary>
     private sealed class FakeLog<T> : IMLog<T>
     {

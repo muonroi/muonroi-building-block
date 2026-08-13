@@ -302,7 +302,7 @@ public sealed class VisualRegressionTests
     /// <summary>
     /// Bug C guard: for a list-unordered document the content stream must contain a
     /// non-.notdef GID Tj call that maps to U+2022 BULLET (•).  Before the fix,
-    /// the marker <see cref="InlineBox"/> had an empty <c>FontFamily</c> (AngleSharp returns ""
+    /// the marker <c>InlineBox</c> had an empty <c>FontFamily</c> (AngleSharp returns ""
     /// not null for unset properties) so <c>OwnedPdfWriter</c> silently skipped it and the
     /// glyph was never emitted.
     ///
