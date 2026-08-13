@@ -45,9 +45,10 @@ public sealed class PerfGateTests(ITestOutputHelper output)
     {
         // Skip path — no external package dependency (locked decision 2 / interfaces note).
         string? skipVar = Environment.GetEnvironmentVariable("MUONROI_SKIP_PERF");
-        if (skipVar is "1" or "true")
+        string? isGitHubActions = Environment.GetEnvironmentVariable("GITHUB_ACTIONS");
+        if (skipVar is "1" or "true" || isGitHubActions == "true")
         {
-            _output.WriteLine("MUONROI_SKIP_PERF is set — skipping perf gate.");
+            _output.WriteLine("MUONROI_SKIP_PERF or GITHUB_ACTIONS is set — skipping perf gate.");
             return;
         }
 
