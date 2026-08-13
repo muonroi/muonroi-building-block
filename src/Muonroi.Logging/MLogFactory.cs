@@ -8,6 +8,7 @@
 
 
 
+using System.Runtime.CompilerServices;
 using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Logging;
@@ -115,6 +116,33 @@ internal sealed class MLogNonGeneric(
     {
         _inner.LogInformation(messageTemplate, args);
         RecordTrace("TRACE", messageTemplate, args);
+    }
+
+    /// <inheritdoc />
+    public void InfoContext(string message, object? request = null, object? result = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0)
+    {
+        _inner.LogInformation(
+            "{Message} | Caller: {CallerMemberName} at {CallerFilePath}:{CallerLineNumber} | Request: {@Request} | Result: {@Result}", 
+            message, memberName, filePath, lineNumber, request, result);
+        RecordTrace("INFO", "{Message} | Caller: {CallerMemberName}", new object?[] { message, memberName });
+    }
+
+    /// <inheritdoc />
+    public void ErrorContext(Exception ex, string message, object? request = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0)
+    {
+        _inner.LogError(ex,
+            "{Message} | Caller: {CallerMemberName} at {CallerFilePath}:{CallerLineNumber} | Request: {@Request}", 
+            message, memberName, filePath, lineNumber, request);
+        RecordTrace("ERROR", "{Message} | Caller: {CallerMemberName}", new object?[] { message, memberName }, ex);
+    }
+
+    /// <inheritdoc />
+    public void Audit(string action, string objectType, string objectId, bool isSuccess = true, string? previousStatus = null, string? newStatus = null, object? extraData = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0)
+    {
+        _inner.LogInformation(
+            "Audit: {AuditAction} on {ObjectType} {ObjectId} | Success: {IsSuccess} | Prev: {PreviousStatus} | New: {NewStatus} | Data: {@ExtraData} | Caller: {CallerMemberName}",
+            action, objectType, objectId, isSuccess, previousStatus, newStatus, extraData, memberName);
+        RecordTrace("AUDIT", "Audit: {AuditAction} on {ObjectType} {ObjectId} | Success: {IsSuccess}", new object?[] { action, objectType, objectId, isSuccess });
     }
 
     private void RecordTrace(string level, string template, object?[] args, Exception? ex = null)

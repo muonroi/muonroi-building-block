@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Muonroi.Logging.Abstractions;
 
 /// <summary>
@@ -46,6 +48,21 @@ public interface IMLog : ILogger
     /// Logs with an explicit trace node name override (for rule-level context).
     /// </summary>
     void InfoTrace(string messageTemplate, params object?[] args);
+
+    /// <summary>
+    /// Logs an informational event with caller context and structured request/result tracking.
+    /// </summary>
+    void InfoContext(string message, object? request = null, object? result = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0);
+
+    /// <summary>
+    /// Logs an error event with caller context and structured tracking.
+    /// </summary>
+    void ErrorContext(Exception ex, string message, object? request = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0);
+
+    /// <summary>
+    /// Logs a business audit event.
+    /// </summary>
+    void Audit(string action, string objectType, string objectId, bool isSuccess = true, string? previousStatus = null, string? newStatus = null, object? extraData = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0);
 }
 
 /// <summary>
