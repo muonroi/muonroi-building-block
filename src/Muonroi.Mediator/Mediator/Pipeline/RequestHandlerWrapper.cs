@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Mediator.Mediator;
 using Muonroi.Mediator.Mediator.Interfaces;
@@ -41,7 +42,7 @@ internal sealed class RequestHandlerWrapperImpl<TRequest, TResponse> : RequestHa
     {
         IRequestHandler<TRequest, TResponse> handler =
             (IRequestHandler<TRequest, TResponse>?)serviceFactory(typeof(IRequestHandler<TRequest, TResponse>))
-            ?? throw new MInternalException(
+            ?? MGuard.Fail<IRequestHandler<TRequest, TResponse>>(
                 $"No handler registered for request type '{typeof(TRequest).FullName}'. " +
                 $"Register an IRequestHandler<{typeof(TRequest).Name},{typeof(TResponse).Name}> in DI.");
 

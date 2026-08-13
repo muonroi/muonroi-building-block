@@ -156,8 +156,7 @@ public abstract class MSiteCommandHandler<TRequest, TResponse>
     public async Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken)
     {
         ValidationResult result = await ValidateAsync(request, cancellationToken).ConfigureAwait(false);
-        if (!result.IsValid)
-            throw new MInternalException($"Validation failed: {result.Error}");
+        MGuard.State(result.IsValid, $"Validation failed: {result.Error}");
         return await ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
     }
 }

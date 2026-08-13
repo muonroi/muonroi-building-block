@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Mediator.Mediator;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
@@ -29,7 +30,7 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
         DatabaseConfigs? databaseConfigs = configuration.GetSection("DatabaseConfigs").Get<DatabaseConfigs>();
         if (databaseConfigs == null || string.IsNullOrEmpty(databaseConfigs.DbType))
         {
-            throw new MConfigurationException("Database configuration is not properly set.", "DatabaseConfigs");
+            MGuard.Fail<object>("Database configuration is not properly set.", "DatabaseConfigs");
         }
 
         DbContextOptionsBuilder<TContext> builder = new();
@@ -39,12 +40,12 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
             nameof(DbTypes.MySql) => databaseConfigs.ConnectionStrings?.MySqlConnectionString,
             nameof(DbTypes.PostgreSql) => databaseConfigs.ConnectionStrings?.PostgreSqlConnectionString,
             nameof(DbTypes.Sqlite) => databaseConfigs.ConnectionStrings?.SqliteConnectionString,
-            _ => throw new MConfigurationException("Unsupported database type: " + databaseConfigs.DbType, "DatabaseConfigs:DbType")
-        } ?? throw new MConfigurationException("Connection string is not provided or is empty.", "DatabaseConfigs:ConnectionStrings");
+            _ => MGuard.Fail<string>("Unsupported database type: " + databaseConfigs.DbType, "DatabaseConfigs:DbType")
+        } ?? MGuard.Fail<string>("Connection string is not provided or is empty.", "DatabaseConfigs:ConnectionStrings");
 
         connectionString =
             MStringExtension.DecryptConfigurationValue(configuration, connectionString, true, string.Empty)
-            ?? throw new MConfigurationException("Connection string is not provided or is empty.", "DatabaseConfigs:ConnectionStrings");
+            ?? MGuard.Fail<string>("Connection string is not provided or is empty.", "DatabaseConfigs:ConnectionStrings");
 
         _ = databaseConfigs.DbType switch
         {
@@ -53,7 +54,7 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
                 Microsoft.EntityFrameworkCore.ServerVersion.AutoDetect(connectionString)),
             nameof(DbTypes.PostgreSql) => builder.UseNpgsql(connectionString),
             nameof(DbTypes.Sqlite) => builder.UseSqlite(connectionString),
-            _ => throw new MConfigurationException("Unsupported database type: " + databaseConfigs.DbType, "DatabaseConfigs:DbType")
+            _ => MGuard.Fail<DbContextOptionsBuilder<TContext>>("Unsupported database type: " + databaseConfigs.DbType, "DatabaseConfigs:DbType")
         };
 
         // Try to create with design-time compatible constructor
@@ -112,7 +113,7 @@ public class SharedDbContextFactory<TContext> : IDesignTimeDbContextFactory<TCon
             }
         }
 
-        throw new MInternalException(
+        return MGuard.Fail<TContext>(
             $"Could not find a suitable constructor for {contextType.Name}. " +
             "Ensure it has a constructor accepting DbContextOptions.");
     }

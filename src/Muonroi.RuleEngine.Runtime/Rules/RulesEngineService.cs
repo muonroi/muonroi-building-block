@@ -3,6 +3,7 @@ using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Rules;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Muonroi.Core.Abstractions.Guards;
@@ -249,7 +250,7 @@ public sealed class RulesEngineService(
             message = $"{message} Compensation: {string.Join("; ", execution.CompensationErrors)}";
         }
 
-        throw new MInternalException(message);
+        return MGuard.Fail<FactBag>(message);
     }
 
     /// <summary>
@@ -276,7 +277,7 @@ public sealed class RulesEngineService(
         {
             if (string.IsNullOrWhiteSpace(contextType))
             {
-                throw new MConfigurationException(
+                MGuard.Fail<object>(
                     "Graph-based dry-run requires 'contextType' (assembly-qualified name or full type name).");
             }
 
@@ -290,7 +291,7 @@ public sealed class RulesEngineService(
         {
             if (string.IsNullOrWhiteSpace(contextType))
             {
-                throw new MConfigurationException(
+                MGuard.Fail<object>(
                     "Code-based ruleset dry-run requires 'contextType' (assembly-qualified name or full type name).");
             }
 
@@ -371,7 +372,7 @@ public sealed class RulesEngineService(
             message = $"{message} Compensation: {string.Join("; ", execution.CompensationErrors)}";
         }
 
-        throw new MInternalException(message);
+        return MGuard.Fail<FactBag>(message);
     }
 
     private async Task<OrchestratorResult> ExecuteCodeWorkflowWithResultAsync<TContext>(
@@ -383,7 +384,7 @@ public sealed class RulesEngineService(
         Dictionary<string, List<IRule<TContext>>> rulesByCode = ResolveRulesByCode<TContext>(codes);
         if (rulesByCode.Count == 0)
         {
-            throw new MConfigurationException("Ruleset uses code-based workflow but no rule implementations were discovered.");
+            return MGuard.Fail<OrchestratorResult>("Ruleset uses code-based workflow but no rule implementations were discovered.");
         }
 
         List<string> missingCodes = [];
@@ -409,7 +410,7 @@ public sealed class RulesEngineService(
 
         if (missingCodes.Count > 0)
         {
-            throw new MConfigurationException(
+            return MGuard.Fail<OrchestratorResult>(
                 $"Ruleset references unknown rule code(s): {string.Join(", ", missingCodes.Distinct(StringComparer.OrdinalIgnoreCase))}.");
         }
 
@@ -445,13 +446,13 @@ public sealed class RulesEngineService(
             BindingFlags.Instance | BindingFlags.NonPublic);
         if (bridge is null)
         {
-            throw new MConfigurationException($"Method {nameof(ExecuteCodeWorkflowBridgeAsync)} not available — code workflow bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
+            return MGuard.Fail<FactBag>($"Method {nameof(ExecuteCodeWorkflowBridgeAsync)} not available — code workflow bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
         if (closed.Invoke(this, [codes, context, executionMode, cancellationToken]) is not Task<FactBag> invoke)
         {
-            throw new MInternalException("Unable to invoke code-based dry-run bridge.");
+            return MGuard.Fail<FactBag>("Unable to invoke code-based dry-run bridge.");
         }
 
         return await invoke;
@@ -465,7 +466,7 @@ public sealed class RulesEngineService(
     {
         if (context is not TContext typed)
         {
-            throw new MConfigurationException($"Dry-run context type mismatch. Expected '{typeof(TContext).FullName}'.");
+            return MGuard.Fail<Task<FactBag>>($"Dry-run context type mismatch. Expected '{typeof(TContext).FullName}'.");
         }
 
         return ExecuteCodeWorkflowAsync(codes, typed, executionMode, cancellationToken);
@@ -481,13 +482,13 @@ public sealed class RulesEngineService(
             BindingFlags.Instance | BindingFlags.NonPublic);
         if (bridge is null)
         {
-            throw new MConfigurationException($"Method {nameof(ExecuteLegacyWorkflowBridgeAsync)} not available — legacy workflow bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
+            return MGuard.Fail<FactBag>($"Method {nameof(ExecuteLegacyWorkflowBridgeAsync)} not available — legacy workflow bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
         if (closed.Invoke(this, [workflowName, workflows, context]) is not Task<FactBag> invoke)
         {
-            throw new MInternalException("Unable to invoke legacy dry-run bridge.");
+            return MGuard.Fail<FactBag>("Unable to invoke legacy dry-run bridge.");
         }
 
         return await invoke;
@@ -500,7 +501,7 @@ public sealed class RulesEngineService(
     {
         if (context is not TContext typed)
         {
-            throw new MConfigurationException($"Legacy dry-run context type mismatch. Expected '{typeof(TContext).FullName}'.");
+            return MGuard.Fail<Task<FactBag>>($"Legacy dry-run context type mismatch. Expected '{typeof(TContext).FullName}'.");
         }
 
         return ExecuteLegacyWorkflowAsync(workflowName, workflows, typed);
@@ -524,7 +525,7 @@ public sealed class RulesEngineService(
         {
             if (!string.IsNullOrEmpty(result.ExceptionMessage))
             {
-                throw new MInternalException(result.ExceptionMessage ?? "Rule execution failed.", MErrorCodes.Rule.ExecutionFailed);
+                MGuard.Fail<object>(result.ExceptionMessage ?? "Rule execution failed.", MErrorCodes.Rule.ExecutionFailed);
             }
 
             if (result.ActionResult?.Exception is not null)
@@ -986,7 +987,7 @@ public sealed class RulesEngineService(
             message = $"{message} Compensation: {string.Join("; ", execution.CompensationErrors)}";
         }
 
-        throw new MInternalException(message);
+        return MGuard.Fail<FactBag>(message);
     }
 
     private async Task<OrchestratorResult> ExecuteFlowGraphWithResultAsync<TContext>(
@@ -1461,13 +1462,13 @@ public sealed class RulesEngineService(
             BindingFlags.Instance | BindingFlags.NonPublic);
         if (bridge is null)
         {
-            throw new MConfigurationException($"Method {nameof(ExecuteFlowGraphBridgeAsync)} not available — flow graph bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
+            return MGuard.Fail<FactBag>($"Method {nameof(ExecuteFlowGraphBridgeAsync)} not available — flow graph bridge not configured.", MErrorCodes.Rule.MissingWorkflowBridge);
         }
 
         MethodInfo closed = bridge.MakeGenericMethod(context.GetType());
         if (closed.Invoke(this, [workflowName, graphJson, context, cancellationToken]) is not Task<FactBag> invoke)
         {
-            throw new MInternalException("Unable to invoke flow-graph execution bridge.");
+            return MGuard.Fail<FactBag>("Unable to invoke flow-graph execution bridge.");
         }
 
         return await invoke;
@@ -1481,7 +1482,7 @@ public sealed class RulesEngineService(
     {
         if (context is not TContext typed)
         {
-            throw new MConfigurationException($"Flow-graph context type mismatch. Expected '{typeof(TContext).FullName}'.");
+            return MGuard.Fail<Task<FactBag>>($"Flow-graph context type mismatch. Expected '{typeof(TContext).FullName}'.");
         }
 
         return ExecuteFlowGraphAsync(workflowName, graphJson, typed, cancellationToken);
@@ -1600,5 +1601,8 @@ public sealed class RulesEngineService(
             Exception? exception,
             Func<TState, Exception?, string> formatter)
         { }
+        public void InfoContext(string messageTemplate, object? factBag = null, object? additionalData = null, [CallerMemberName] string callerMember = "", [CallerFilePath] string callerFilePath = "", [CallerLineNumber] int callerLineNumber = 0) { }
+        public void ErrorContext(Exception exception, string messageTemplate, object? additionalData = null, [CallerMemberName] string callerMember = "", [CallerFilePath] string callerFilePath = "", [CallerLineNumber] int callerLineNumber = 0) { }
+        public void Audit(string eventType, string action, string actor, bool isSuccess, string? subject = null, string? description = null, object? additionalData = null, [CallerMemberName] string callerMember = "", [CallerFilePath] string callerFilePath = "", [CallerLineNumber] int callerLineNumber = 0) { }
     }
 }

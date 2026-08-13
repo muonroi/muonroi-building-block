@@ -34,16 +34,11 @@ public sealed class MRuleWorkflowRunner<TContext>(
         {
             cancellationToken.ThrowIfCancellationRequested();
             executedCount++;
-            if (executedCount > maxSteps)
-            {
-                throw new MInternalException(
-                    $"Workflow '{workflow.Name}' exceeded max steps ({maxSteps}). Possible cyclic transition.");
-            }
+            MGuard.State(executedCount <= maxSteps, $"Workflow '{workflow.Name}' exceeded max steps ({maxSteps}). Possible cyclic transition.");
 
             if (!workflow.Steps.TryGetValue(currentStepId, out MRuleWorkflowStep<TContext>? step))
             {
-                throw new MInternalException(
-                    $"Workflow '{workflow.Name}' references unknown step '{currentStepId}'.");
+                return MGuard.Fail<MRuleWorkflowResult<TContext>>($"Workflow '{workflow.Name}' references unknown step '{currentStepId}'.");
             }
 
             executionContext.CurrentStepId = currentStepId;

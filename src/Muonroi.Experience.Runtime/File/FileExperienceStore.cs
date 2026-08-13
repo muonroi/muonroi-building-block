@@ -222,7 +222,7 @@ public sealed class FileExperienceStore : IExperienceStore
         bool success = await StoreAsync(stored, ct);
         if (!success)
         {
-            throw new MInternalException("Principle budget exceeded — source entries preserved");
+            return MGuard.Fail<NeuronExperience>("Principle budget exceeded — source entries preserved");
         }
 
         return stored;
@@ -294,7 +294,7 @@ public sealed class FileExperienceStore : IExperienceStore
             ExperienceTier.Behavioral => "behavioral.json",
             ExperienceTier.SelfQA => "selfqa.json",
             ExperienceTier.RawTrajectory => "raw.json",
-            _ => throw new MArgumentException(nameof(tier), $"Unknown ExperienceTier: {tier}")
+            _ => MGuard.Fail<string>($"Unknown ExperienceTier: {tier}")
         });
 
     private async Task<List<NeuronExperience>> LoadTierAsync(ExperienceTier tier, CancellationToken ct)

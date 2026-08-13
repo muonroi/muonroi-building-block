@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Exceptions;
 using System.Text.RegularExpressions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Tenancy.SiteProfile.Web.Dapper;
 
@@ -36,12 +37,9 @@ public static partial class ColumnNameValidator
     /// <exception cref="InvalidOperationException">Thrown when the column name is not a valid SQL identifier.</exception>
     public static void EnsureValidIdentifier(string? columnName, string propertyName)
     {
-        if (!IsValidIdentifier(columnName))
-        {
-            throw new MInternalException(
-                $"[SQL-SAFETY] Column name '{columnName}' for property '{propertyName}' " +
-                $"is not a valid SQL identifier. Expected pattern: ^[A-Za-z_][A-Za-z0-9_.]*$ (max 128 chars). " +
-                $"Check your ISiteColumnMap.Column() implementation.");
-        }
+        MGuard.State(IsValidIdentifier(columnName),
+            $"[SQL-SAFETY] Column name '{columnName}' for property '{propertyName}' " +
+            $"is not a valid SQL identifier. Expected pattern: ^[A-Za-z_][A-Za-z0-9_.]*$ (max 128 chars). " +
+            $"Check your ISiteColumnMap.Column() implementation.");
     }
 }

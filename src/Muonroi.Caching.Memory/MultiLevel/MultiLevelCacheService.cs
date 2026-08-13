@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Exceptions;
 
 namespace Muonroi.Caching.Memory.MultiLevel;
@@ -466,10 +467,7 @@ public class MultiLevelCacheService : IMultiLevelCacheService
             }
         }
 
-        if (!_licenseState.HasFeature(FreeTierFeatures.Premium.DistributedCache))
-        {
-            throw new MInternalException(
-                "[LICENSE] Feature 'distributed-cache' is not available under your current license.");
-        }
+        MGuard.State(_licenseState.HasFeature(FreeTierFeatures.Premium.DistributedCache),
+            "[LICENSE] Feature 'distributed-cache' is not available under your current license.");
     }
 }

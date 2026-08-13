@@ -26,7 +26,7 @@ public class UrlSafetyValidatorTests
     [Fact]
     public async Task ValidateAsync_NotAUrl_Throws()
     {
-        await Assert.ThrowsAsync<MInternalException>(() => UrlSafetyValidator.ValidateAsync("not-a-url"));
+        await Assert.ThrowsAsync<MArgumentException>(() => UrlSafetyValidator.ValidateAsync("not-a-url"));
     }
 
     // ─── Non-http schemes ───────────────────────────────────────────────────

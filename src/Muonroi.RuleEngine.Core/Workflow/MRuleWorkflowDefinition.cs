@@ -31,10 +31,7 @@ public sealed class MRuleWorkflowDefinition<TContext>
         Dictionary<string, MRuleWorkflowStep<TContext>> map = new(StringComparer.OrdinalIgnoreCase);
         foreach (MRuleWorkflowStep<TContext> step in MGuard.NotNull(steps, nameof(steps)))
         {
-            if (!map.TryAdd(step.Id, step))
-            {
-                throw new MInternalException($"Duplicate workflow step id '{step.Id}'.");
-            }
+            MGuard.State(map.TryAdd(step.Id, step), $"Duplicate workflow step id '{step.Id}'.");
         }
 
         MGuard.State(map.Count > 0, "Workflow must contain at least one step.");

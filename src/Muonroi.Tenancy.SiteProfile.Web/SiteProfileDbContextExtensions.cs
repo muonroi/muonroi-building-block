@@ -49,10 +49,10 @@ public static class SiteProfileDbContextExtensions
         configure(options);
 
         if (options.TenantId is null)
-            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(configure), "SiteDbInfrastructureOptions.TenantId resolver is required.");
+            return MGuard.Fail<IServiceCollection>("SiteDbInfrastructureOptions.TenantId resolver is required.");
 
         if (options.ConnectionString is null)
-            throw new Muonroi.Core.Abstractions.Exceptions.MArgumentException(nameof(configure), "SiteDbInfrastructureOptions.ConnectionString resolver is required.");
+            return MGuard.Fail<IServiceCollection>("SiteDbInfrastructureOptions.ConnectionString resolver is required.");
 
         // Store options for AddSiteDbContext to consume
         services.AddSingleton(options);

@@ -388,6 +388,24 @@ public static class MGuard
     }
 
     /// <summary>
+    /// Ensures a required configuration condition is met.
+    /// Throws <see cref="MConfigurationException"/> when the condition is false.
+    /// </summary>
+    public static void Configured(
+        bool condition,
+        string errorMessage,
+        string configKey,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0)
+    {
+        if (!condition)
+        {
+            throw new MConfigurationException(errorMessage, configKey, callerMember, callerFile, callerLine);
+        }
+    }
+
+    /// <summary>
     /// Ensures the caller is authenticated. Throws <see cref="MUnauthorizedException"/> when not.
     /// </summary>
     /// <param name="isAuthenticated">Whether the caller is authenticated.</param>
@@ -434,14 +452,30 @@ public static class MGuard
     /// <summary>
     /// Ensures the entity was found. Returns the non-null value or throws <see cref="MNotFoundException"/>.
     /// </summary>
-    /// <typeparam name="T">The type of the entity.</typeparam>
-    /// <param name="value">The entity value to check.</param>
-    /// <param name="entityName">The name of the entity for diagnostics.</param>
-    /// <param name="callerMember">Compiler-injected: name of the calling member.</param>
-    /// <param name="callerFile">Compiler-injected: source file path of the caller.</param>
-    /// <param name="callerLine">Compiler-injected: source line number of the caller.</param>
-    /// <returns>The non-null entity value.</returns>
-    /// <exception cref="MNotFoundException">Thrown when <paramref name="value"/> is null.</exception>
+    public static T Found<T>(
+        T? value,
+        string entityName,
+        object key,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0) where T : class
+    {
+        if (value is null)
+        {
+            throw new MNotFoundException(entityName, key)
+            {
+                CallerMethod = callerMember,
+                CallerFile = callerFile,
+                CallerLine = callerLine,
+                SourcePackage = MException.ExtractPackageName(callerFile)
+            };
+        }
+        return value;
+    }
+
+    /// <summary>
+    /// Ensures the entity was found. Returns the non-null value or throws <see cref="MNotFoundException"/>.
+    /// </summary>
     public static T Found<T>(
         T? value,
         string entityName,
@@ -512,5 +546,20 @@ public static class MGuard
         }
 
         return tenantId;
+    }
+
+
+    /// <summary>
+    /// Throws an internal exception unconditionally and returns T to satisfy expression constraints.
+    /// </summary>
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    public static T Fail<T>(
+        string errorMessage,
+        string? errorCode = null,
+        [CallerMemberName] string? callerMember = null,
+        [CallerFilePath] string? callerFile = null,
+        [CallerLineNumber] int callerLine = 0)
+    {
+        throw new MInternalException(errorMessage, errorCode, callerMember, callerFile, callerLine);
     }
 }

@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq.Expressions;
@@ -144,7 +145,7 @@ internal static class ExpressionTreeVisitor
                     VisitAsObject(forNode.List, varsParameter),
                     Expression.Constant(forNode.Body)),
             FeelListLiteralNode listNode => BuildListLiteral(listNode, varsParameter),
-            _ => throw new MInternalException($"Unsupported FEEL syntax node '{node.GetType().Name}'.", MErrorCodes.Rule.UnsupportedFeelSyntax)
+            _ => MGuard.Fail<System.Linq.Expressions.Expression>($"Unsupported FEEL syntax node '{node.GetType().Name}'.", MErrorCodes.Rule.UnsupportedFeelSyntax)
         };
     }
 
@@ -159,7 +160,7 @@ internal static class ExpressionTreeVisitor
             FeelBinaryOperator.GreaterThanOrEqual => Expression.GreaterThanOrEqual(comparison, Expression.Constant(0)),
             FeelBinaryOperator.LessThan => Expression.LessThan(comparison, Expression.Constant(0)),
             FeelBinaryOperator.LessThanOrEqual => Expression.LessThanOrEqual(comparison, Expression.Constant(0)),
-            _ => throw new MInternalException($"Unsupported comparison operator '{node.Operator}'.", MErrorCodes.Rule.UnsupportedComparisonOperator)
+            _ => MGuard.Fail<System.Linq.Expressions.Expression>($"Unsupported comparison operator '{node.Operator}'.", MErrorCodes.Rule.UnsupportedComparisonOperator)
         };
     }
 
@@ -171,7 +172,7 @@ internal static class ExpressionTreeVisitor
             FeelBinaryOperator.Subtract => "-",
             FeelBinaryOperator.Multiply => "*",
             FeelBinaryOperator.Divide => "/",
-            _ => throw new MInternalException($"Unsupported arithmetic operator '{node.Operator}'.", MErrorCodes.Rule.UnsupportedArithmeticOperator)
+            _ => MGuard.Fail<string>($"Unsupported arithmetic operator '{node.Operator}'.", MErrorCodes.Rule.UnsupportedArithmeticOperator)
         };
         return Expression.Call(ArithmeticMethod,
             VisitAsObject(node.Left, varsParameter),
@@ -286,7 +287,7 @@ internal static class ExpressionTreeVisitor
             {
                 return $"{left}{right}";
             }
-            throw new MInternalException($"Cannot perform '{op}' on non-numeric values.");
+            return MGuard.Fail<object>($"Cannot perform '{op}' on non-numeric values.");
         }
 
         return op switch
@@ -295,7 +296,7 @@ internal static class ExpressionTreeVisitor
             "-" => (object)(l - r),
             "*" => (object)(l * r),
             "/" => r == 0 ? throw new DivideByZeroException("Division by zero in FEEL expression.") : (object)(l / r),
-            _ => throw new MInternalException($"Unsupported arithmetic operator '{op}'.", MErrorCodes.Rule.UnsupportedArithmeticOperator)
+            _ => MGuard.Fail<object>($"Unsupported arithmetic operator '{op}'.", MErrorCodes.Rule.UnsupportedArithmeticOperator)
         };
     }
 
@@ -429,7 +430,7 @@ internal static class FeelExpressionParser
         {
             if (!Match(kind))
             {
-                throw new MInternalException($"Expected token '{kind}' but found '{Current.Kind}'.");
+                MGuard.Fail<object>($"Expected token '{kind}' but found '{Current.Kind}'.");
             }
         }
 
@@ -697,7 +698,7 @@ internal static class FeelExpressionParser
                 return new FeelVariableNode(identifier);
             }
 
-            throw new MInternalException($"Unexpected token '{Current.Text}'.");
+            return MGuard.Fail<FeelSyntaxNode>($"Unexpected token '{Current.Text}'.");
         }
 
         private FeelToken Current => _tokens[_position];
@@ -741,7 +742,7 @@ internal static class FeelExpressionParser
                 }
                 if (index >= expression.Length)
                 {
-                    throw new MInternalException("Unterminated string literal.");
+                    MGuard.Fail<object>("Unterminated string literal.");
                 }
                 tokens.Add(new FeelToken(FeelTokenKind.String, expression[start..index]));
                 index++;
@@ -841,7 +842,7 @@ internal static class FeelExpressionParser
                 '-' => new FeelToken(FeelTokenKind.Minus, "-"),
                 '*' => new FeelToken(FeelTokenKind.Star, "*"),
                 '/' => new FeelToken(FeelTokenKind.Slash, "/"),
-                _ => throw new MInternalException($"Unsupported token '{current}'.")
+                _ => MGuard.Fail<FeelToken>($"Unsupported token '{current}'.")
             });
             index++;
         }

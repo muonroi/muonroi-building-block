@@ -77,7 +77,7 @@ public sealed class PipelineBenchmarkTests(ITestOutputHelper output)
     {
         var services = new ServiceCollection();
         services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
-        services.AddLogging(b => b.AddMuonroiLogging());
+        services.AddLogging(b => b.AddMuonroiLogging(useAsyncQueue: false));
         services.AddScoped<ISiteProfileResolver>(_ => new FakeSiteProfileResolver(holder.SiteId));
         services.AddSitePipeline();
         configure?.Invoke(services);

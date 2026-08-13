@@ -4,6 +4,7 @@ using System.Text.Json;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Logging.Abstractions;
+using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Governance.License;
 
@@ -73,8 +74,9 @@ public sealed class LicenseHeartbeatService(
 
     private async Task SendHeartbeatAsync(CancellationToken cancellationToken)
     {
-        ActivationProof proof = state.ActivationProof
-            ?? throw new MInternalException("Activation proof is required for heartbeat.");
+        ActivationProof? proofNullable = state.ActivationProof;
+        MGuard.State(proofNullable is not null, "Activation proof is required for heartbeat.");
+        ActivationProof proof = proofNullable!;
 
         string nonce = runtimeStatus.CurrentHeartbeatNonce ?? proof.HeartbeatNonce ?? string.Empty;
         if (string.IsNullOrWhiteSpace(nonce))

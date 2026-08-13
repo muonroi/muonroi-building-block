@@ -20,8 +20,8 @@ public static class DesignSystemTemplateProvider
         foreach (string name in names)
         {
             string resourceName = $"Muonroi.Pdf.DesignSystem.Default.Templates.{name}.html";
-            using Stream? stream = assembly.GetManifestResourceStream(resourceName)
-                ?? throw new MInternalException(
+            using Stream stream = assembly.GetManifestResourceStream(resourceName)
+                ?? MGuard.Fail<Stream>(
                     $"Embedded resource not found: {resourceName}. " +
                     $"Available resources: {string.Join(", ", assembly.GetManifestResourceNames())}");
             using var reader = new StreamReader(stream);
@@ -41,9 +41,7 @@ public static class DesignSystemTemplateProvider
     {
         string key = MGuard.NotNull(name).ToLowerInvariant();
 
-        if (_cache.TryGetValue(key, out string? html))
-            return html;
-
-        throw new MNotFoundException("Design system template (valid: invoice, receipt, report)", name);
+        _cache.TryGetValue(key, out string? html);
+        return MGuard.Found(html, "Design system template (valid: invoice, receipt, report)", name);
     }
 }

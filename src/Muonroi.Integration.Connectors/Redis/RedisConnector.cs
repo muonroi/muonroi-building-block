@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Integration.Abstractions;
 using StackExchange.Redis;
 
@@ -45,10 +46,10 @@ public sealed class RedisConnector(IConnectionMultiplexer? redis = null) : IServ
         var sw = System.Diagnostics.Stopwatch.StartNew();
         JsonElement root = context.Config.RootElement;
 
-        string operation = root.GetProperty("operation").GetString()?.ToUpperInvariant()
-            ?? throw new MInternalException("operation is required");
-        string key = root.GetProperty("key").GetString()
-            ?? throw new MInternalException("key is required");
+        string? operationOpt = root.GetProperty("operation").GetString()?.ToUpperInvariant();
+        string operation = MGuard.NotNull(operationOpt);
+        string? keyOpt = root.GetProperty("key").GetString();
+        string key = MGuard.NotNull(keyOpt);
 
         IDatabase db = _redis.GetDatabase();
 

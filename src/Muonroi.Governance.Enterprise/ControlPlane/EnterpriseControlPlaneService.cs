@@ -126,8 +126,9 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlaneLicenseRecord? record = FindLicense(registry, request.LicenseId)
-                ?? throw new MInternalException($"License '{request.LicenseId}' was not found.");
+            MControlPlaneLicenseRecord? recordNullable = FindLicense(registry, request.LicenseId);
+            MGuard.State(recordNullable is not null, $"License '{request.LicenseId}' was not found.");
+            MControlPlaneLicenseRecord record = MGuard.NotNull(recordNullable);
             if (record.Status != MManagedLicenseStatus.Revoked)
             {
                 record.Status = MManagedLicenseStatus.Revoked;
@@ -168,7 +169,9 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlaneLicenseRecord? record = FindLicense(registry, request.LicenseId) ?? throw new MInternalException($"License '{request.LicenseId}' was not found.");
+            MControlPlaneLicenseRecord? recordNullable = FindLicense(registry, request.LicenseId);
+            MGuard.State(recordNullable is not null, $"License '{request.LicenseId}' was not found.");
+            MControlPlaneLicenseRecord record = MGuard.NotNull(recordNullable);
             record.TenantAssignments = normalizedTenants;
             if (record.Payload != null)
             {
@@ -209,11 +212,10 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlaneLicenseRecord? license = FindLicense(registry, request.LicenseId) ?? throw new MInternalException($"License '{request.LicenseId}' was not found.");
-            if (license.Status != MManagedLicenseStatus.Active)
-            {
-                throw new MInternalException($"License '{request.LicenseId}' is not active.");
-            }
+            MControlPlaneLicenseRecord? licenseNullable = FindLicense(registry, request.LicenseId);
+            MGuard.State(licenseNullable is not null, $"License '{request.LicenseId}' was not found.");
+            MControlPlaneLicenseRecord license = MGuard.NotNull(licenseNullable);
+            MGuard.State(license.Status == MManagedLicenseStatus.Active, $"License '{request.LicenseId}' is not active.");
 
             int nextVersion = registry.PolicyBundles
                 .Where(x => x.LicenseId.Equals(request.LicenseId, StringComparison.OrdinalIgnoreCase))
@@ -276,12 +278,10 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlanePolicyBundleRecord? bundle = FindBundle(registry, request.BundleId) ?? throw new MInternalException($"Policy bundle '{request.BundleId}' was not found.");
-            if (bundle.Status != MPolicyBundleStatus.Draft)
-            {
-                throw new MInternalException(
-                    $"Bundle '{request.BundleId}' cannot be approved from status '{bundle.Status}'.");
-            }
+            MControlPlanePolicyBundleRecord? bundleNullable = FindBundle(registry, request.BundleId);
+            MGuard.State(bundleNullable is not null, $"Policy bundle '{request.BundleId}' was not found.");
+            MControlPlanePolicyBundleRecord bundle = MGuard.NotNull(bundleNullable);
+            MGuard.State(bundle.Status == MPolicyBundleStatus.Draft, $"Bundle '{request.BundleId}' cannot be approved from status '{bundle.Status}'.");
 
             bundle.Policy.Signature = _signer.Sign(BuildPolicySigningData(bundle.Policy));
             bundle.Status = MPolicyBundleStatus.Approved;
@@ -320,13 +320,10 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlanePolicyBundleRecord? bundle = FindBundle(registry, request.BundleId) ?? throw new MInternalException($"Policy bundle '{request.BundleId}' was not found.");
-            if (bundle.Status is not MPolicyBundleStatus.Approved and
-                not MPolicyBundleStatus.Activated)
-            {
-                throw new MInternalException(
-                    $"Bundle '{request.BundleId}' cannot be activated from status '{bundle.Status}'.");
-            }
+            MControlPlanePolicyBundleRecord? bundleNullable = FindBundle(registry, request.BundleId);
+            MGuard.State(bundleNullable is not null, $"Policy bundle '{request.BundleId}' was not found.");
+            MControlPlanePolicyBundleRecord bundle = MGuard.NotNull(bundleNullable);
+            MGuard.State(bundle.Status is MPolicyBundleStatus.Approved or MPolicyBundleStatus.Activated, $"Bundle '{request.BundleId}' cannot be activated from status '{bundle.Status}'.");
 
             if (string.IsNullOrWhiteSpace(bundle.Policy.Signature))
             {
@@ -383,27 +380,28 @@ public sealed class MEnterpriseControlPlaneService(
         lock (_stateLock)
         {
             MControlPlaneRegistry registry = _store.Load();
-            MControlPlaneLicenseRecord? license = FindLicense(registry, request.LicenseId) ?? throw new MInternalException($"License '{request.LicenseId}' was not found.");
-            MControlPlanePolicyBundleRecord? currentActive = registry.PolicyBundles
+            MControlPlaneLicenseRecord? licenseNullable = FindLicense(registry, request.LicenseId);
+            MGuard.State(licenseNullable is not null, $"License '{request.LicenseId}' was not found.");
+            MControlPlaneLicenseRecord license = MGuard.NotNull(licenseNullable);
+            MControlPlanePolicyBundleRecord? currentActiveNullable = registry.PolicyBundles
                 .Where(x =>
                     x.LicenseId.Equals(request.LicenseId, StringComparison.OrdinalIgnoreCase) &&
                     x.Status == MPolicyBundleStatus.Activated)
                 .OrderByDescending(x => x.Version)
-                .FirstOrDefault() ?? throw new MInternalException(
-                    $"No active policy bundle exists for license '{request.LicenseId}'.");
-            MControlPlanePolicyBundleRecord? targetBundle = registry.PolicyBundles
+                .FirstOrDefault();
+            MGuard.State(currentActiveNullable is not null, $"No active policy bundle exists for license '{request.LicenseId}'.");
+            MControlPlanePolicyBundleRecord currentActive = MGuard.NotNull(currentActiveNullable);
+            MControlPlanePolicyBundleRecord? targetBundleNullable = registry.PolicyBundles
                 .Where(x => x.LicenseId.Equals(request.LicenseId, StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefault(x => x.Version == request.TargetVersion) ?? throw new MInternalException(
-                    $"Target version '{request.TargetVersion}' was not found for license '{request.LicenseId}'.");
+                .FirstOrDefault(x => x.Version == request.TargetVersion);
+            MGuard.State(targetBundleNullable is not null, $"Target version '{request.TargetVersion}' was not found for license '{request.LicenseId}'.");
+            MControlPlanePolicyBundleRecord targetBundle = MGuard.NotNull(targetBundleNullable);
             if (targetBundle.BundleId.Equals(currentActive.BundleId, StringComparison.OrdinalIgnoreCase))
             {
                 return currentActive;
             }
 
-            if (targetBundle.Status == MPolicyBundleStatus.Draft)
-            {
-                throw new MInternalException("Rollback target cannot be a draft bundle.");
-            }
+            MGuard.State(targetBundle.Status != MPolicyBundleStatus.Draft, "Rollback target cannot be a draft bundle.");
 
             if (string.IsNullOrWhiteSpace(targetBundle.Policy.Signature))
             {

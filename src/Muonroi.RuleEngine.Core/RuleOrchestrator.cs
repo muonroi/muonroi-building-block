@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Interfaces;
@@ -204,7 +205,7 @@ public sealed class RuleOrchestrator<TContext>(
                             ? string.Join("; ", result.Errors)
                             : $"Rule {rule.Name} failed.";
                         logger?.Warn("Rule {Rule} failed: {Error}", rule.Name, errorMessage);
-                        throw new MInternalException(errorMessage);
+                        MGuard.State(false, errorMessage);
                     }
 
                     executedRuleCount++;
@@ -788,7 +789,7 @@ public sealed class RuleOrchestrator<TContext>(
 
             if (!visiting.Add(code))
             {
-                throw new MInternalException("Cyclic rule dependency detected.", "CIRCULAR_DEPENDENCY");
+                MGuard.State(false, "Cyclic rule dependency detected.", "CIRCULAR_DEPENDENCY");
             }
 
             foreach (string dep in map[code].DependsOn
@@ -797,7 +798,7 @@ public sealed class RuleOrchestrator<TContext>(
             {
                 if (!map.ContainsKey(dep))
                 {
-                    throw new MNotFoundException("RuleDependency", dep);
+                    MGuard.Fail<object>("RuleDependency", dep);
                 }
 
                 Visit(dep);
@@ -807,7 +808,7 @@ public sealed class RuleOrchestrator<TContext>(
             {
                 if (!typeMap.TryGetValue(depType, out string? depCode))
                 {
-                    throw new MNotFoundException("RuleDependency", depType.Name);
+                    MGuard.Fail<object>("RuleDependency", depType.Name);
                 }
 
                 Visit(depCode);

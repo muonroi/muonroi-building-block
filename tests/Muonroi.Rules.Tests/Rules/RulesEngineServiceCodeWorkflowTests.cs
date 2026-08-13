@@ -15,7 +15,7 @@ public sealed class RulesEngineServiceCodeWorkflowTests
 
         Func<Task> act = () => service.ExecuteAsync("wf", new CodeWorkflowContext());
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*no rule implementations were discovered*");
     }
 
@@ -33,7 +33,7 @@ public sealed class RulesEngineServiceCodeWorkflowTests
 
         Func<Task> act = () => service.ExecuteAsync("wf", new CodeWorkflowContext());
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*ambiguous rule code mappings*");
     }
 
@@ -68,7 +68,7 @@ public sealed class RulesEngineServiceCodeWorkflowTests
 
         Func<Task> act = () => service.ExecuteAsync("wf", new CodeWorkflowContext());
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*unknown rule code(s): missing-code*");
     }
 

@@ -49,7 +49,7 @@ public class RedisRsaKeyStore : IRsaKeyStore
 
         if (string.IsNullOrWhiteSpace(kid))
         {
-            throw new MInternalException("Unable to resolve current RSA key id.");
+            return MGuard.Fail<SigningCredentials>("Unable to resolve current RSA key id.");
         }
 
         SecurityKey? key = GetKey(kid);
@@ -59,7 +59,7 @@ public class RedisRsaKeyStore : IRsaKeyStore
             key = GetKey(MGuard.NotNull(_cache.GetString(CurrentKidKey)));
             if (key is not RsaSecurityKey fallbackKey)
             {
-                throw new MInternalException("Unable to resolve current RSA signing key.");
+                return MGuard.Fail<SigningCredentials>("Unable to resolve current RSA signing key.");
             }
 
             rsaKey = fallbackKey;
@@ -217,17 +217,9 @@ public class RedisRsaKeyStore : IRsaKeyStore
 
     private static byte[] ReadMasterKey(IConfiguration configuration)
     {
-        string? raw = configuration["Auth:RsaMasterKey"];
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            throw new MConfigurationException("Missing configuration Auth:RsaMasterKey (base64, 32 bytes).", "Auth:RsaMasterKey");
-        }
-
+        string raw = MGuard.Configured(configuration["Auth:RsaMasterKey"], "Auth:RsaMasterKey");
         byte[] key = Convert.FromBase64String(raw);
-        if (key.Length != 32)
-        {
-            throw new MConfigurationException("Auth:RsaMasterKey must be a base64-encoded 32-byte key.", "Auth:RsaMasterKey");
-        }
+        MGuard.Configured(key.Length == 32, "Auth:RsaMasterKey must be a base64-encoded 32-byte key.", "Auth:RsaMasterKey");
 
         return key;
     }

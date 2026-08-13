@@ -157,7 +157,7 @@ public sealed class OTelMeterTests
                 // SystemExecutionContextAccessor is required by MLog<T> constructor.
                 services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
                 services.AddSingleton(resolver);
-                services.AddLogging(b => b.AddMuonroiLogging());
+                services.AddLogging(b => b.AddMuonroiLogging(useAsyncQueue: false));
             })
             .Configure(app =>
             {

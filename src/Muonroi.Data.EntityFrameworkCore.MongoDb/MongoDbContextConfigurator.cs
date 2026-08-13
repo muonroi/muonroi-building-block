@@ -25,7 +25,7 @@ public class MongoDbContextConfigurator<T> : IDbContextConfigurator<T> where T :
     /// <exception cref="NotSupportedException">Always thrown for MongoDB.</exception>
     public void Configure(DbContextOptionsBuilder<T> options, string connectionString)
     {
-        throw new MInternalException(
+        MGuard.Fail<object>(
             "MongoDB does not use DbContextOptionsBuilder. Configure MongoDB services directly in the IServiceCollection.",
             MErrorCodes.Data.MongoNotSupported);
     }
@@ -40,11 +40,11 @@ public class MongoDbContextConfigurator<T> : IDbContextConfigurator<T> where T :
     {
         string? mongoDbConnectionString = configuration.GetConnectionString("MongoDbConnectionString");
         if (string.IsNullOrEmpty(mongoDbConnectionString))
-            throw new MConfigurationException("MongoDb connection string is not configured.", "ConnectionStrings:MongoDbConnectionString");
+            return MGuard.Fail<IServiceCollection>("MongoDb connection string is not configured.", "ConnectionStrings:MongoDbConnectionString");
 
         string? mongoDbName = configuration.GetSection("DatabaseConfigs")["DatabaseName"];
         if (string.IsNullOrEmpty(mongoDbName))
-            throw new MConfigurationException("MongoDb database name is not configured.", "DatabaseConfigs:DatabaseName");
+            return MGuard.Fail<IServiceCollection>("MongoDb database name is not configured.", "DatabaseConfigs:DatabaseName");
 
         string result = $"{mongoDbConnectionString}/{mongoDbName}?authSource=admin";
 

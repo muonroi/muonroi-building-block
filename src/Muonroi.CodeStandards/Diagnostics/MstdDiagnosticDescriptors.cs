@@ -32,4 +32,13 @@ internal static class MstdDiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "All Muonroi code must log via IMLog/IMLog<T>. Direct Console/Debug/Trace/Serilog logging and raw ILogger usage are forbidden — inject IMLog<T> instead. Suppress with '#pragma warning disable MSTD0003' or [SuppressMessage] only for pre-DI bootstrap code where IMLog is genuinely unavailable.");
+
+    public static readonly DiagnosticDescriptor Mstd0004DirectMGuardBypass = new(
+        id: "MSTD0004",
+        title: "Standard Muonroi exceptions must be thrown via MGuard",
+        messageFormat: "Manually throwing '{0}' is forbidden, use the corresponding MGuard method instead",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Do not manually 'throw new MInternalException', 'MConfigurationException', 'MArgumentException', or 'MNotFoundException'. Use the MGuard utility methods instead to ensure consistent exception classification and logging.");
 }

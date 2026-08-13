@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Governance.Abstractions.License;
 
@@ -69,7 +70,7 @@ public sealed class LicenseGuard : ILicenseGuard
 
         if (!HasFeature(actionType))
         {
-            throw new MInternalException(
+            MGuard.Fail<object>(
                 $"[LICENSE] Feature '{actionType}' is not included in your license. Tier: {Tier}.");
         }
 
@@ -107,7 +108,7 @@ public sealed class LicenseGuard : ILicenseGuard
     {
         if (!HasFeature(featureName))
         {
-            throw new MInternalException(
+            MGuard.Fail<object>(
                 $"[LICENSE] Feature '{featureName}' is not available under your current license. Tier: {Tier}.");
         }
     }
@@ -197,7 +198,7 @@ public sealed class LicenseGuard : ILicenseGuard
             return;
         }
 
-        throw new MInternalException("[SEC_ERR_01] License validation failed.");
+        MGuard.Fail<object>("[SEC_ERR_01] License validation failed.");
     }
 
     private void HandleChainTampered()
@@ -207,7 +208,7 @@ public sealed class LicenseGuard : ILicenseGuard
             return;
         }
 
-        throw new MInternalException("[SEC_ERR_02] Security chain integrity check failed.");
+        MGuard.Fail<object>("[SEC_ERR_02] Security chain integrity check failed.");
     }
 
     private static string? ResolveTenantId(LicenseActionContext? context = null)

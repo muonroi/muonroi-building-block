@@ -11,7 +11,7 @@ public class FileRuleSetStoreSecurityTests
         string root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         FileRuleSetStore store = new(root);
 
-        await Assert.ThrowsAsync<MConfigurationException>(() =>
+        await Assert.ThrowsAsync<MInternalException>(() =>
             store.SaveAsync("../escape", """[{ "WorkflowName":"escape", "Rules":[] }]"""));
 
         TenantContext.CurrentTenantId = null;
@@ -29,7 +29,7 @@ public class FileRuleSetStoreSecurityTests
         FileRuleSetStore store = new(root, null, configs);
         string payload = new('x', 512);
 
-        await Assert.ThrowsAsync<MConfigurationException>(() => store.SaveAsync("wf", payload));
+        await Assert.ThrowsAsync<MInternalException>(() => store.SaveAsync("wf", payload));
 
         TenantContext.CurrentTenantId = null;
     }
@@ -65,7 +65,7 @@ public class FileRuleSetStoreSecurityTests
             RequireSignature = true
         };
 
-        await Assert.ThrowsAsync<MConfigurationException>(async () =>
+        await Assert.ThrowsAsync<MInternalException>(async () =>
         {
             FileRuleSetStore store = new(root, null, configs);
             await store.SaveAsync("wf", """[{ "WorkflowName":"wf", "Rules":[] }]""");

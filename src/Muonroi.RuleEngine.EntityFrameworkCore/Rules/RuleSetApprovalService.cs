@@ -28,15 +28,15 @@ public sealed class RuleSetApprovalService(
         string actor = submittedBy.Trim();
         DateTimeOffset now = DateTimeOffset.UtcNow;
 
-        RuleSetRecord record = await dbContext.RuleSets
+        RuleSetRecord? record = await dbContext.RuleSets
             .FirstOrDefaultAsync(
                 x => x.TenantId == tenantId && x.WorkflowName == workflow && x.Version == version,
-                cancellationToken)
-            ?? throw new MNotFoundException("RuleSetVersion", $"{workflow}/v{version}");
+                cancellationToken);
+        record = MGuard.Found(record, "RuleSetVersion", $"{workflow}/v{version}");
 
         if (record.Status is not RuleSetStatus.Draft and not RuleSetStatus.Rejected)
         {
-            throw new MInternalException(
+            MGuard.State(false, 
                 $"Ruleset '{workflow}' v{version} cannot be submitted from status '{record.Status}'.");
         }
 
@@ -87,22 +87,22 @@ public sealed class RuleSetApprovalService(
         string actor = approvedBy.Trim();
         DateTimeOffset now = DateTimeOffset.UtcNow;
 
-        RuleSetRecord record = await dbContext.RuleSets
+        RuleSetRecord? record = await dbContext.RuleSets
             .FirstOrDefaultAsync(
                 x => x.TenantId == tenantId && x.WorkflowName == workflow && x.Version == version,
-                cancellationToken)
-            ?? throw new MNotFoundException("RuleSetVersion", $"{workflow}/v{version}");
+                cancellationToken);
+        record = MGuard.Found(record, "RuleSetVersion", $"{workflow}/v{version}");
 
         if (record.Status != RuleSetStatus.PendingApproval)
         {
-            throw new MInternalException(
+            MGuard.State(false, 
                 $"Ruleset '{workflow}' v{version} cannot be approved from status '{record.Status}'.");
         }
 
         if (!string.IsNullOrWhiteSpace(record.SubmittedBy) &&
             string.Equals(record.SubmittedBy, actor, StringComparison.OrdinalIgnoreCase))
         {
-            throw new MInternalException("Maker-checker violation: submitter cannot approve their own ruleset.");
+            MGuard.State(false, "Maker-checker violation: submitter cannot approve their own ruleset.");
         }
 
         record.Status = RuleSetStatus.Approved;
@@ -154,15 +154,15 @@ public sealed class RuleSetApprovalService(
         string actor = rejectedBy.Trim();
         DateTimeOffset now = DateTimeOffset.UtcNow;
 
-        RuleSetRecord record = await dbContext.RuleSets
+        RuleSetRecord? record = await dbContext.RuleSets
             .FirstOrDefaultAsync(
                 x => x.TenantId == tenantId && x.WorkflowName == workflow && x.Version == version,
-                cancellationToken)
-            ?? throw new MNotFoundException("RuleSetVersion", $"{workflow}/v{version}");
+                cancellationToken);
+        record = MGuard.Found(record, "RuleSetVersion", $"{workflow}/v{version}");
 
         if (record.Status != RuleSetStatus.PendingApproval)
         {
-            throw new MInternalException(
+            MGuard.State(false, 
                 $"Ruleset '{workflow}' v{version} cannot be rejected from status '{record.Status}'.");
         }
 

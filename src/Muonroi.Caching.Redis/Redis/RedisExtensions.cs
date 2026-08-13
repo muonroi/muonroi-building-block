@@ -73,11 +73,8 @@ public static class RedisExtensions
         }
 
         // Only Host and Port are required - Password is optional for Redis instances without authentication
-        if (string.IsNullOrEmpty(redisConfigs.Host) || string.IsNullOrEmpty(redisConfigs.Port))
-        {
-            throw new MConfigurationException(
-                $"Invalid {RedisConfigs.DefaultSectionName}: Host and Port are required", RedisConfigs.DefaultSectionName);
-        }
+        MGuard.Configured(!string.IsNullOrEmpty(redisConfigs.Host) && !string.IsNullOrEmpty(redisConfigs.Port),
+            $"Invalid {RedisConfigs.DefaultSectionName}: Host and Port are required", RedisConfigs.DefaultSectionName);
 
         ConfigurationOptions configurationOptions = new()
         {
@@ -504,12 +501,7 @@ public static class RedisExtensions
             return;
         }
 
-        if ((licenseState ?? LicenseState.CreateFree()).HasFeature(FreeTierFeatures.Premium.DistributedCache))
-        {
-            return;
-        }
-
-        throw new MInternalException(
+        MGuard.State((licenseState ?? LicenseState.CreateFree()).HasFeature(FreeTierFeatures.Premium.DistributedCache),
             "[LICENSE] Feature 'distributed-cache' is not available under your current license.");
     }
 

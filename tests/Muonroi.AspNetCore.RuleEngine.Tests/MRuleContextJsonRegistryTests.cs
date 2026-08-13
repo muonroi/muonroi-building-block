@@ -49,7 +49,7 @@ public class MRuleContextJsonRegistryTests
     // Test 2: Unregistered type throws MConfigurationException
     // ---------------------------------------------------------------------------
     [Fact]
-    public void DeserializeContext_WithUnregisteredType_ThrowsMConfigurationException_ContainingTypeName()
+    public void DeserializeContext_WithUnregisteredType_ThrowsMInternalException_ContainingTypeName()
     {
         // Arrange
         var registry = new MRuleContextJsonRegistry();
@@ -60,7 +60,7 @@ public class MRuleContextJsonRegistryTests
 
         // Assert
         act.Should()
-           .Throw<MConfigurationException>()
+           .Throw<MInternalException>()
            .WithMessage($"*{typeName}*");
     }
 
@@ -96,7 +96,7 @@ public class MRuleContextJsonRegistryTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void DeserializeContext_NullOrEmptyTypeName_ThrowsMConfigurationException(string? typeName)
+    public void DeserializeContext_NullOrEmptyTypeName_ThrowsMInternalException(string? typeName)
     {
         // Arrange
         var registry = new MRuleContextJsonRegistry();
@@ -105,14 +105,14 @@ public class MRuleContextJsonRegistryTests
         Action act = () => registry.DeserializeContext(typeName!, "{}");
 
         // Assert
-        act.Should().Throw<MConfigurationException>();
+        act.Should().Throw<MInternalException>();
     }
 
     // ---------------------------------------------------------------------------
     // Test 5: Malformed JSON throws MConfigurationException (wraps JsonException)
     // ---------------------------------------------------------------------------
     [Fact]
-    public void DeserializeContext_MalformedJson_ThrowsMConfigurationException()
+    public void DeserializeContext_MalformedJson_ThrowsMInternalException()
     {
         // Arrange
         var registry = new MRuleContextJsonRegistry();
@@ -124,7 +124,7 @@ public class MRuleContextJsonRegistryTests
         Action act = () => registry.DeserializeContext("TestRuleContext", malformedJson);
 
         // Assert
-        act.Should().Throw<MConfigurationException>();
+        act.Should().Throw<MInternalException>();
     }
 
     // ---------------------------------------------------------------------------
@@ -162,7 +162,7 @@ public class MRuleContextJsonRegistryTests
         Action act = () => registry.DeserializeContext("Unregistered.Type", "{}");
 
         // Assert — still throws, but logging audit path was hit
-        act.Should().Throw<MConfigurationException>().WithMessage("*Unregistered.Type*");
+        act.Should().Throw<MInternalException>().WithMessage("*Unregistered.Type*");
     }
 
     // ---------------------------------------------------------------------------
@@ -187,7 +187,7 @@ public class MRuleContextJsonRegistryTests
         Action act = () => registry.DeserializeContext("AnotherRuleContext", """{"Tag":"x"}""", "tenant-A");
 
         // Assert
-        act.Should().Throw<MConfigurationException>()
+        act.Should().Throw<MInternalException>()
            .WithMessage("*tenant-A*");
     }
 
@@ -232,7 +232,7 @@ public class MRuleContextJsonRegistryTests
             {
                 registry.DeserializeContext(typeName, json);
             }
-            catch (MConfigurationException)
+            catch (MInternalException)
             {
                 // Expected for any types not yet registered
             }

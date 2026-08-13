@@ -319,10 +319,7 @@ public class MDbContext : DbContext, IMUnitOfWork, IMDataContext, ITransactional
     {
         MGuard.NotNull(transaction);
 
-        if (transaction != _currentTransaction)
-        {
-            throw new MInternalException($"Transaction {transaction.TransactionId} is not current");
-        }
+        MGuard.State(transaction == _currentTransaction, $"Transaction {transaction.TransactionId} is not current");
 
         try
         {

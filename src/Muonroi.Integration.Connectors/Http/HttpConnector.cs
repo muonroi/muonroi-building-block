@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Integration.Abstractions;
 
 namespace Muonroi.Integration.Connectors.Http;
@@ -49,7 +50,8 @@ public sealed class HttpConnector(IHttpClientFactory httpClientFactory, ILogger<
         Stopwatch sw = Stopwatch.StartNew();
         JsonElement root = context.Config.RootElement;
 
-        string url = root.GetProperty("url").GetString() ?? throw new MInternalException("url is required");
+        string? urlOpt = root.GetProperty("url").GetString();
+        string url = MGuard.NotNull(urlOpt);
         string method = root.TryGetProperty("method", out JsonElement m) ? m.GetString() ?? "GET" : "GET";
         int timeout = root.TryGetProperty("timeout", out JsonElement t) ? t.GetInt32() : 30;
 

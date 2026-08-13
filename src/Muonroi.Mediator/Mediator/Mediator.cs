@@ -56,7 +56,7 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
             ?.GetGenericArguments()[0];
 
         if (responseType == null)
-            throw new MInternalException($"Object of type {requestType.Name} does not implement IRequest<T>.");
+            MGuard.Fail<object>($"Object of type {requestType.Name} does not implement IRequest<T>.");
 
         RequestHandlerBase wrapper = RequestHandlerWrapperCache.GetOrCreate(requestType, responseType);
         return wrapper.Handle(request, serviceFactory, cancellationToken);
@@ -95,7 +95,10 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
     {
         MGuard.Against(notification is null, "Notification cannot be null.");
         if (notification is not INotification n)
-            throw new MInternalException("Notification does not implement INotification.");
+        {
+            _ = MGuard.Fail<object>("Notification does not implement INotification.");
+            n = default!;
+        }
         
         MNotificationStrategy strategy = n is IMStrategyNotification s ? s.Strategy : MNotificationStrategy.Sequential;
         NotificationHandlerWrapperBase wrapper = RequestHandlerWrapperCache.GetOrCreateNotification(n.GetType());
@@ -138,7 +141,7 @@ public class MMediator(ServiceFactory serviceFactory) : IMediator
             ?.GetGenericArguments()[0];
 
         if (responseType == null)
-            throw new MInternalException($"Object of type {requestType.Name} does not implement IStreamRequest<T>.");
+            MGuard.Fail<object>($"Object of type {requestType.Name} does not implement IStreamRequest<T>.");
 
         StreamHandlerWrapperBase wrapper = RequestHandlerWrapperCache.GetOrCreateStream(requestType, responseType);
         return wrapper.CreateStream(request, serviceFactory, cancellationToken);

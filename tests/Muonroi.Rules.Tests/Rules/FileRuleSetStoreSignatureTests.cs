@@ -48,7 +48,7 @@ public class FileRuleSetStoreSignatureTests : IDisposable
 
         Func<Task> act = () => store.GetAsync("tampered-wf");
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*signature validation failed*");
     }
 
@@ -68,7 +68,7 @@ public class FileRuleSetStoreSignatureTests : IDisposable
 
         Func<Task> act = () => store.GetAsync("missingsig-wf");
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*Signature file missing*");
     }
 
@@ -97,7 +97,7 @@ public class FileRuleSetStoreSignatureTests : IDisposable
 
         Func<Task> act = () => store.GetAsync("big-wf");
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*exceeds*");
     }
 

@@ -1,5 +1,8 @@
 using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
+using System;
+using System.IO;
 
 namespace Muonroi.Core.Abstractions.Security;
 
@@ -25,14 +28,9 @@ public static class MSecureFileReader
         string? baseDirectory = null,
         IMEcosystemRegistry? registry = null)
     {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            throw new MConfigurationException(
-                "Key file path must not be null or empty.",
-                "KeyFilePath");
-        }
+        string safePath = MGuard.Configured(path, "KeyFilePath");
 
-        string resolvedPath = ResolveAndValidate(path, baseDirectory);
+        string resolvedPath = ResolveAndValidate(safePath, baseDirectory);
 
         // +Auth: verify caller permission on key material access (per D-24).
         // The Auth capability being present signals that auth middleware enforces
@@ -50,12 +48,7 @@ public static class MSecureFileReader
             // Tenant scope validation hook: future versions inject tenant path constraints here.
         }
 
-        if (!File.Exists(resolvedPath))
-        {
-            throw new MConfigurationException(
-                $"Key file not found at path: '{resolvedPath}'.",
-                "KeyFilePath");
-        }
+        MGuard.Configured(File.Exists(resolvedPath), $"Key file not found at path: '{resolvedPath}'.", "KeyFilePath");
 
         string content = File.ReadAllText(resolvedPath);
 
@@ -86,13 +79,7 @@ public static class MSecureFileReader
     {
         // D-19: Reject any path containing ".." before normalization.
         // Checked on the raw string to catch obfuscation attempts on all platforms.
-        if (path.Contains(".."))
-        {
-            throw new MConfigurationException(
-                $"Path traversal detected in key file path: '{path}'. " +
-                "Key file paths must not contain '..' segments.",
-                "KeyFilePath");
-        }
+        MGuard.Configured(!path.Contains(".."), $"Path traversal detected in key file path: '{path}'. Key file paths must not contain '..' segments.", "KeyFilePath");
 
         // D-20: Cross-platform normalization — handles both forward and backward slashes.
         string basePath = string.IsNullOrWhiteSpace(baseDirectory)
@@ -108,12 +95,7 @@ public static class MSecureFileReader
         if (!Path.IsPathRooted(path))
         {
             string normalizedBase = Path.GetFullPath(basePath);
-            if (!fullPath.StartsWith(normalizedBase, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new MConfigurationException(
-                    $"Key file path '{path}' resolves outside the base directory '{normalizedBase}'.",
-                    "KeyFilePath");
-            }
+            MGuard.Configured(fullPath.StartsWith(normalizedBase, StringComparison.OrdinalIgnoreCase), $"Key file path '{path}' resolves outside the base directory '{normalizedBase}'.", "KeyFilePath");
         }
 
         return fullPath;

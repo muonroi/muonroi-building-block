@@ -101,11 +101,8 @@ public static class MConfigurationExtension
         {
             try
             {
-                string? secretKey = configuration.GetCryptConfigValue(ConfigKey);
-                if (string.IsNullOrEmpty(secretKey))
-                {
-                    throw new MConfigurationException("SecretKey cannot be an empty string", ConfigKey);
-                }
+                string? secretKeyOpt = configuration.GetCryptConfigValue(ConfigKey);
+                string secretKey = MGuard.Configured(secretKeyOpt, ConfigKey);
 
                 configValue = configuration.GetCryptConfigValue(keyOfConfig, secretKey);
             }

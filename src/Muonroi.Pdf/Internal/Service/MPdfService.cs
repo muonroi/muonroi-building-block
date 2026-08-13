@@ -88,7 +88,7 @@ internal sealed class MPdfService(
 
             if (styled is not IPdfDocumentContext documentContext)
             {
-                throw new MInternalException(
+                return MGuard.Fail<PdfRenderResult>(
                     "Styled document must implement IPdfDocumentContext for policy validation.");
             }
 
@@ -247,7 +247,7 @@ internal sealed class MPdfService(
             IStyledDocument styled = await _cascadeEngine.CascadeAsync(parsed, null, cts.Token).ConfigureAwait(false);
 
             if (styled is not IPdfDocumentContext documentContext)
-                throw new MInternalException("Styled document must implement IPdfDocumentContext for policy validation.");
+                return MGuard.Fail<PdfRenderResult>("Styled document must implement IPdfDocumentContext for policy validation.");
 
             PolicyValidationResult policy = await _cssPolicy.ValidateAsync(documentContext, cts.Token).ConfigureAwait(false);
             if (!policy.Accepted)

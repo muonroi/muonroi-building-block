@@ -12,7 +12,8 @@ public class RabbitMqBusConfiguratorTests
             RabbitMq = null
         };
 
-        Assert.Throws<MConfigurationException>(() => configurator.Configure(Substitute.For<IBusRegistrationConfigurator>(), configs));
+        MInternalException exception = Assert.Throws<MInternalException>(() => configurator.Configure(Substitute.For<IBusRegistrationConfigurator>(), configs));
+        Assert.Equal("RabbitMQ configuration missing", exception.Message);
     }
 
     [Fact]

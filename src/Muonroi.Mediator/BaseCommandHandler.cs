@@ -156,6 +156,6 @@ public abstract class BaseCommandHandler(
     {
         MGuard.Against(destination is null, "Destination cannot be null.");
         object? mapped = Mapper.Map(source, (object)destination!);
-        return mapped is null ? throw new MInternalException("Mapping resulted in null.") : (T)mapped;
+        return mapped is null ? MGuard.Fail<dynamic>("Mapping resulted in null.") : (T)mapped;
     }
 }

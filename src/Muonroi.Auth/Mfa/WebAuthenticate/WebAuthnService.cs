@@ -157,7 +157,7 @@ public class WebAuthenticateService(
 
         List<WebAuthnCredentialInfo> credentials = await credentialStore.GetCredentialsByUserAsync(tenantId, userId, ct);
         WebAuthnCredentialInfo? credential = credentials.FirstOrDefault(x => x.CredentialId.SequenceEqual(credentialId))
-            ?? throw new MInternalException("Credential not found for user.");
+            ?? MGuard.Fail<WebAuthnCredentialInfo>("Credential not found for user.");
         VerifyAssertionResult verificationResult = await fido2.MakeAssertionAsync(
             new MakeAssertionParams
             {
@@ -191,11 +191,11 @@ public class WebAuthenticateService(
         string? raw = await challengeCache.GetStringAsync(key, ct);
         if (string.IsNullOrWhiteSpace(raw))
         {
-            throw new MInternalException("Registration challenge not found or expired.");
+            MGuard.Fail<object>("Registration challenge not found or expired.");
         }
 
         CredentialCreateOptions? options = jsonService.Deserialize<CredentialCreateOptions>(raw);
-        return options ?? throw new MInternalException("Registration challenge payload is invalid.");
+        return options ?? MGuard.Fail<CredentialCreateOptions>("Registration challenge payload is invalid.");
     }
 
     private async Task<AssertionOptions> GetRequiredAuthenticationOptionsAsync(Guid userId, CancellationToken ct)
@@ -204,11 +204,11 @@ public class WebAuthenticateService(
         string? raw = await challengeCache.GetStringAsync(key, ct);
         if (string.IsNullOrWhiteSpace(raw))
         {
-            throw new MInternalException("Authentication challenge not found or expired.");
+            MGuard.Fail<object>("Authentication challenge not found or expired.");
         }
 
         AssertionOptions? options = jsonService.Deserialize<AssertionOptions>(raw);
-        return options ?? throw new MInternalException("Authentication challenge payload is invalid.");
+        return options ?? MGuard.Fail<AssertionOptions>("Authentication challenge payload is invalid.");
     }
 
     private async Task<bool> IsCredentialIdUniqueToUserAsync(IsCredentialIdUniqueToUserParams input, CancellationToken ct)
@@ -251,8 +251,7 @@ public class WebAuthenticateService(
         {
             return Base64UrlEncoder.DecodeBytes(response.Id);
         }
-
-        throw new MInternalException("Assertion response does not contain credential id.");
+        return MGuard.Fail<byte[]>("Assertion response does not contain credential id.");
     }
 
     private static string? TryEncodeUserHandle(byte[]? userHandle)

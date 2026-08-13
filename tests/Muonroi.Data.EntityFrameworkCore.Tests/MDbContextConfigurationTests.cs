@@ -158,7 +158,8 @@ public class MDbContextConfigurationTests
             ConnectionStrings = new ConnectionStrings()
         };
 
-        Assert.Throws<MConfigurationException>(() => InvokeDecrypt(configs, configuration));
+        MConfigurationException exception = Assert.Throws<MConfigurationException>(() => InvokeDecrypt(configs, configuration));
+        Assert.Equal("Required configuration 'DatabaseConfigs:ConnectionStrings' is missing or empty.", exception.Message);
     }
 
     [Fact]
@@ -250,7 +251,8 @@ public class MDbContextConfigurationTests
     public void ConfigureDbContext_Invalid_DbType_Throws()
     {
         ServiceCollection services = [];
-        Assert.Throws<MConfigurationException>(() => InvokeConfigure(services, "Invalid"));
+        MInternalException exception = Assert.Throws<MInternalException>(() => InvokeConfigure(services, "Invalid"));
+        Assert.Equal("Unsupported database type: Invalid", exception.Message);
     }
 
     [Fact]

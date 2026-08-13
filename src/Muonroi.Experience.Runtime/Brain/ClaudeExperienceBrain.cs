@@ -166,11 +166,11 @@ public sealed class ClaudeExperienceBrain(
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new MInternalException($"ClaudeExperienceBrain: AbstractAsync timed out after {options.AiTimeoutSeconds}s");
+            return MGuard.Fail<NeuronExperience>($"ClaudeExperienceBrain: AbstractAsync timed out after {options.AiTimeoutSeconds}s");
         }
         catch (Exception ex)
         {
-            throw new MInternalException($"ClaudeExperienceBrain: AbstractAsync failed — {ex.Message}");
+            return MGuard.Fail<NeuronExperience>($"ClaudeExperienceBrain: AbstractAsync failed — {ex.Message}");
         }
     }
 

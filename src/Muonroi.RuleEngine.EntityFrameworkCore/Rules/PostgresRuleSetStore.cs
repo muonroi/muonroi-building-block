@@ -123,15 +123,12 @@ public sealed class PostgresRuleSetStore(
             .FirstOrDefaultAsync(
                 x => x.TenantId == tenantId && x.WorkflowName == normalizedWorkflow && x.Version == version,
                 cancellationToken);
-        if (target is null)
-        {
-            throw new MNotFoundException("RuleSetVersion", $"{normalizedWorkflow}/v{version}");
-        }
+        target = MGuard.Found(target, "RuleSetVersion", $"{normalizedWorkflow}/v{version}");
 
         if (_options.RequireApproval &&
             target.Status is RuleSetStatus.Draft or RuleSetStatus.PendingApproval or RuleSetStatus.Rejected)
         {
-            throw new MInternalException(
+            MGuard.State(false, 
                 "Only approved ruleset versions can be activated when approval workflow is enabled.");
         }
 

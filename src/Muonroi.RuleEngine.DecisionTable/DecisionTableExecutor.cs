@@ -118,11 +118,14 @@ public sealed class DecisionTableExecutor(IFeelCellEvaluator? feelEvaluator = nu
             return [];
         }
 
+        if (hitPolicy == HitPolicy.Unique)
+        {
+            MGuard.State(matches.Count <= 1, $"Hit policy '{HitPolicy.Unique}' requires a single match, but found {matches.Count}.");
+        }
+
         return hitPolicy switch
         {
             HitPolicy.First => [matches[0]],
-            HitPolicy.Unique when matches.Count > 1 => throw new MInternalException(
-                $"Hit policy '{HitPolicy.Unique}' requires a single match, but found {matches.Count}."),
             HitPolicy.Unique => [matches[0]],
             HitPolicy.Collect => [.. matches],
             HitPolicy.Priority => [matches.OrderBy(x => x.Row.Order).First()],

@@ -131,11 +131,12 @@ public static class DapperRlsServiceCollectionExtensions
             case DapperRlsProvider.MySql:
                 // WR-03: fail fast. MySQL emulated isolation is deferred to v2+.
                 // Accepting the configuration explicitly rather than wiring a half-baked pipeline.
-                throw new MInternalException(
+                MGuard.State(false,
                     $"Dapper RLS for provider '{rlsOpts.Provider}' is not yet available. " +
                     "MySQL emulated isolation is deferred to v2+. " +
                     "Use DapperRlsProvider.MsSql or DapperRlsProvider.PostgreSql.",
                     "NOT_SUPPORTED");
+                break;
 
             case DapperRlsProvider.PostgreSql:
             default:

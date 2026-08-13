@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using System.Collections;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
@@ -91,7 +92,7 @@ internal sealed class SiteProfileStartupValidator(
                 $"Ensure each ISiteProfile.RegisterServices() calls " +
                 $"services.AddKeyed*<TService, TImpl>(siteId) for every " +
                 $"AddSiteResolvedService<TService>() in Program.cs.";
-            throw new MInternalException(message);
+            MGuard.Fail<object>(message);
         }
 
         logger.LogInformation(

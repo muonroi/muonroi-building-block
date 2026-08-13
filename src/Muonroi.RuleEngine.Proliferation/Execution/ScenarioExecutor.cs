@@ -138,12 +138,7 @@ public sealed class ScenarioExecutor(
     private async Task<string> GetRuleSetJsonAsync(string workflowName, CancellationToken ct)
     {
         string? json = await ruleSetStore.GetAsync(workflowName, version: null, ct);
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            throw new MNotFoundException("Ruleset", workflowName);
-        }
-
-        return json;
+        return MGuard.Found(string.IsNullOrWhiteSpace(json) ? null : json, "Ruleset", workflowName);
     }
 
     /// <summary>Evaluates whether the result matched the expected behavior.</summary>

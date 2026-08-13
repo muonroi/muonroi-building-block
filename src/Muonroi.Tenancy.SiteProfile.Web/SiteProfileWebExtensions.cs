@@ -114,11 +114,11 @@ public static class SiteProfileWebExtensions
         configure(options);
 
         if (options.SiteCodeAccessor is null)
-            throw new MInternalException(
+            return MGuard.Fail<IServiceCollection>(
                 "SiteCodeAccessor is required. Set it in AddSiteInfrastructure options.");
 
         if (options.ManifestProfiles is null && options.SiteAssemblies.Length == 0)
-            throw new MInternalException(
+            return MGuard.Fail<IServiceCollection>(
                 "Either ManifestProfiles (AOT) or SiteAssemblies (reflection) is required.");
 
         // 1. Register all site profiles with per-request resolution
@@ -204,11 +204,11 @@ public static class SiteProfileWebExtensions
         foreach (var attr in behaviorAttributes)
         {
             if (!typeof(ISiteProfileBehavior).IsAssignableFrom(attr.BehaviorType))
-                throw new MInternalException(
+                return MGuard.Fail<IServiceCollection>(
                     $"Type '{attr.BehaviorType.FullName}' does not implement ISiteProfileBehavior.");
 
             var behavior = (ISiteProfileBehavior?)Activator.CreateInstance(attr.BehaviorType)
-                ?? throw new MInternalException(
+                ?? MGuard.Fail<ISiteProfileBehavior>(
                     $"Failed to create instance of behavior type '{attr.BehaviorType.FullName}'. " +
                     "Ensure the type has a public parameterless constructor.");
 

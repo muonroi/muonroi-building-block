@@ -39,7 +39,7 @@ public sealed class DbContextRoutingTests
         services.AddLogging(b =>
         {
             b.AddProvider(logCapture);
-            b.AddMuonroiLogging();
+            b.AddMuonroiLogging(useAsyncQueue: false);
         });
 
         services.AddSiteDbInfrastructure(o =>

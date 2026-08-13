@@ -158,9 +158,7 @@ public sealed class RedisRoutingTableStore : IDynamicRoutingTableStore, IDisposa
 
     private static string NormalizeRequired(string value, string paramName)
     {
-        return string.IsNullOrWhiteSpace(value)
-            ? throw new Core.Abstractions.Exceptions.MArgumentException(paramName, "Value is required.")
-            : value.Trim();
+        return MGuard.NotEmpty(value, paramName).Trim();
     }
 
     private static string? NormalizeOptional(string? value)

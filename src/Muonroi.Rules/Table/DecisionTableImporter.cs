@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Guards;
 
@@ -94,24 +94,24 @@ public static partial class DecisionTableImporter
         string[] lines = csvContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 3)
         {
-            throw new MConfigurationException("Table must contain hit policy, headers and at least one rule");
+            MGuard.Fail<object>("Table must contain hit policy, headers and at least one rule");
         }
 
         string[] hitParts = lines[0].Split(',');
         if (hitParts.Length < 2 || !hitParts[0].Equals("HitPolicy", StringComparison.OrdinalIgnoreCase))
         {
-            throw new MConfigurationException("Missing HitPolicy declaration");
+            MGuard.Fail<object>("Missing HitPolicy declaration");
         }
 
         if (!Enum.TryParse(hitParts[1], true, out HitPolicy policy))
         {
-            throw new MConfigurationException($"Invalid hit policy {hitParts[1]}");
+            MGuard.Fail<object>($"Invalid hit policy {hitParts[1]}");
         }
 
         string[] headers = lines[1].Split(',');
         if (headers.Length < 2)
         {
-            throw new MConfigurationException("Decision table requires at least one input and one output column");
+            MGuard.Fail<object>("Decision table requires at least one input and one output column");
         }
 
         DecisionTable table = new()
@@ -129,7 +129,7 @@ public static partial class DecisionTableImporter
             string[] cols = lines[rowIndex].Split(',');
             if (cols.Length != headers.Length)
             {
-                throw new MConfigurationException($"Row {rowIndex - 1} has incorrect number of columns");
+                MGuard.Fail<object>($"Row {rowIndex - 1} has incorrect number of columns");
             }
 
             Dictionary<string, string> inputs = new()

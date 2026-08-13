@@ -360,10 +360,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         T? existingEntity = DbBaseContext.Set<T>().Local
             .FirstOrDefault(e => e.EntityId == newEntity.EntityId);
 
-        if (existingEntity != null)
-        {
-            throw new MInternalException("Entity already exists in the context.");
-        }
+        MGuard.State(existingEntity == null, "Entity already exists in the context.");
 
         DateTime utcNow = _dateTimeService.UtcNow();
         UpdateTimestampsForAdd(newEntity, utcNow);
@@ -547,7 +544,7 @@ public class MRepository<T> : IMRepository<T> where T : MEntity
         }
         catch (Exception)
         {
-            throw new MInternalException("Bulk insert failed.");
+            MGuard.State(false, "Bulk insert failed.");
         }
     }
 }

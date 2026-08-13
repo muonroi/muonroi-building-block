@@ -48,7 +48,7 @@ public class FileRuleSetStoreTests : IDisposable
     {
         var configs = new RuleStoreConfigs { RequireSignature = true };
         Action act = () => new FileRuleSetStore(_rootPath, signer: null, configs: configs);
-        act.Should().Throw<MConfigurationException>();
+        act.Should().Throw<MInternalException>();
     }
 
     [Fact]
@@ -129,7 +129,7 @@ public class FileRuleSetStoreTests : IDisposable
         await store.SaveAsync("test-wf", "{\"v\":1}");
 
         Func<Task> act = () => store.SetActiveVersionAsync("test-wf", 99);
-        await act.Should().ThrowAsync<MNotFoundException>();
+        await act.Should().ThrowAsync<MInternalException>();
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public class FileRuleSetStoreTests : IDisposable
         var store = new FileRuleSetStore(_rootPath, configs: configs);
 
         Func<Task> act = () => store.SaveAsync("test-wf", new string('x', 100));
-        await act.Should().ThrowAsync<MConfigurationException>();
+        await act.Should().ThrowAsync<MInternalException>();
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public class FileRuleSetStoreTests : IDisposable
         var store = new FileRuleSetStore(_rootPath);
 
         Func<Task> act = () => store.SaveAsync("../../../etc/passwd", "{}");
-        await act.Should().ThrowAsync<MConfigurationException>();
+        await act.Should().ThrowAsync<MInternalException>();
     }
 
     [Fact]
@@ -180,6 +180,6 @@ public class FileRuleSetStoreTests : IDisposable
         var store = new FileRuleSetStore(_rootPath);
 
         Func<Task> act = () => store.SaveAsync("invalid name with spaces!", "{}");
-        await act.Should().ThrowAsync<MConfigurationException>();
+        await act.Should().ThrowAsync<MInternalException>();
     }
 }

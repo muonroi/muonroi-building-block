@@ -297,7 +297,7 @@ public sealed class RuntimeRuleSetController(
     {
         if (payload.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
         {
-            throw new MConfigurationException($"Request field '{fieldName}' is required.", fieldName);
+            MGuard.Configured(false, $"Request field '{fieldName}' is required.", fieldName);
         }
 
         return payload.GetRawText();

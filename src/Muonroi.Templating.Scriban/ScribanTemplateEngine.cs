@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Templating.Abstractions;
 using Scriban;
 using Scriban.Runtime;
@@ -33,7 +34,7 @@ public sealed class ScribanTemplateEngine : ITemplateEngine
         if (parsedTemplate.HasErrors)
         {
             string errors = string.Join("; ", parsedTemplate.Messages);
-            throw new MInternalException($"Scriban parse error: {errors}");
+            return MGuard.Fail<string>($"Scriban parse error: {errors}");
         }
 
         ScribanFactBagScriptObject scriptObject = new(variables);

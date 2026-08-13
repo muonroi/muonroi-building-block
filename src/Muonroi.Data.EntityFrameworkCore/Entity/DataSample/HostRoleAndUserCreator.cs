@@ -1,5 +1,6 @@
 using Muonroi.Core.Abstractions.Ecosystem;
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using BCrypts = BCrypt.Net.BCrypt;
 
 namespace Muonroi.Data.EntityFrameworkCore.Entity.DataSample;
@@ -104,12 +105,7 @@ public class HostRoleAndUserCreator<TContext>(
         if (registry?.Has(MCapability.Auth) != true) return;
 
         string? envPassword = Environment.GetEnvironmentVariable("MUONROI_SEED_ADMIN_PASSWORD");
-        if (!string.IsNullOrWhiteSpace(envPassword) && envPassword.Length < 8)
-        {
-            throw new MConfigurationException(
-                "Seed admin password does not meet minimum complexity (8+ chars).",
-                "MUONROI_SEED_ADMIN_PASSWORD");
-        }
+        MGuard.Configured(string.IsNullOrWhiteSpace(envPassword) || envPassword.Length >= 8, "Seed admin password does not meet minimum complexity (8+ chars).", "MUONROI_SEED_ADMIN_PASSWORD");
     }
 
     /// <summary>

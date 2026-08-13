@@ -1,4 +1,5 @@
 using Muonroi.Core.Abstractions.Exceptions;
+using Muonroi.Core.Abstractions.Guards;
 using Serilog.Sinks.OpenTelemetry;
 
 namespace Muonroi.Observability.Logging;
@@ -99,7 +100,7 @@ public static class MSerilogAction
         }
         catch (Exception)
         {
-            throw new MConfigurationException("Invalid log file path.", "Serilog:LogFilePath");
+            MGuard.Configured(false, "Invalid log file path.", "Serilog:LogFilePath");
         }
 
         sinkConfig.File(

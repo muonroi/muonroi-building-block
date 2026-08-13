@@ -220,7 +220,7 @@ public sealed class QdrantExperienceStore : IExperienceStore
         bool success = await StoreAsync(stored, ct);
         if (!success)
         {
-            throw new MInternalException("Principle budget exceeded — source entries preserved");
+            return MGuard.Fail<NeuronExperience>("Principle budget exceeded — source entries preserved");
         }
 
         return stored;

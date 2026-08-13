@@ -51,7 +51,7 @@ public static class InfrastructureExtensions
         string? projectSeed = configuration.GetValue<string>("LicenseConfigs:ProjectSeed");
         if (string.IsNullOrWhiteSpace(projectSeed) || projectSeed.Length < 16)
         {
-            throw new MConfigurationException("[SEC_FATAL] ProjectSeed is missing or too weak. " +
+            MGuard.Fail<object>("[SEC_FATAL] ProjectSeed is missing or too weak. " +
                                                 "A unique 16+ char seed is required for security chaining.", "LicenseConfigs:ProjectSeed");
         }
 
@@ -304,7 +304,7 @@ public static class InfrastructureExtensions
                 string privateKeyStr = configs.GetEffectivePrivateKey();
                 if (string.IsNullOrWhiteSpace(privateKeyStr))
                 {
-                    throw new MConfigurationException(
+                    return MGuard.Fail<ITokenSigner>(
                         "TokenConfigs.UseRsa is true but no RSA private key was provided. " +
                         "Set TokenConfigs:PrivateKey (inline PEM) or TokenConfigs:PrivateKeyPath (file path), " +
                         "or set TokenConfigs:UseRsa=false to use HMAC with SymmetricSecretKey.",
@@ -317,7 +317,7 @@ public static class InfrastructureExtensions
 
             if (string.IsNullOrWhiteSpace(configs.SymmetricSecretKey))
             {
-                throw new MConfigurationException(
+                return MGuard.Fail<ITokenSigner>(
                     "TokenConfigs.UseRsa is false but TokenConfigs.SymmetricSecretKey is empty. " +
                     "Set TokenConfigs:SymmetricSecretKey or set TokenConfigs:UseRsa=true with a private key.",
                     "TokenConfigs:SymmetricSecretKey");
@@ -441,7 +441,7 @@ public static class InfrastructureExtensions
         bool enableEncryption = configuration.GetValue<bool>("EnableEncryption");
         if (!enableEncryption)
         {
-            throw new MInternalException("[SEC_FATAL] EnableEncryption must be true in Production with paid license.", MErrorCodes.AspNetCore.EncryptionRequired);
+            MGuard.Fail<object>("[SEC_FATAL] EnableEncryption must be true in Production with paid license.", MErrorCodes.AspNetCore.EncryptionRequired);
         }
     }
 }

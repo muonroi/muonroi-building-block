@@ -173,7 +173,8 @@ public class EcosystemSecurityIntegrationTests : IDisposable
         Action act = () => registry.DeserializeContext("UnknownType", "{}");
 
         // Assert
-        act.Should().Throw<MConfigurationException>();
+        act.Should().Throw<MInternalException>()
+           .WithMessage("*Rule context type 'UnknownType' is not registered*");
     }
 
     /// <summary>

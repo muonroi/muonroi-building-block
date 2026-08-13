@@ -29,7 +29,7 @@ public sealed class PipelineDemoTests
         var services = new ServiceCollection();
         // IMLog<T> requires SystemExecutionContextAccessor + AddMuonroiLogging()
         services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
-        services.AddLogging(b => b.AddMuonroiLogging().AddProvider(logCapture));
+        services.AddLogging(b => b.AddMuonroiLogging(useAsyncQueue: false).AddProvider(logCapture));
 
         // ISiteProfileResolver stub reads from holder at resolve time
         services.AddScoped<ISiteProfileResolver>(_ => new FakeSiteProfileResolver(holder.SiteId));

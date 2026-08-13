@@ -150,8 +150,7 @@ public class MSitePipeline<TContext>(
             string firstError = result.Errors.Count > 0
                 ? result.Errors[0]
                 : "Unknown pipeline error";
-            throw new MInternalException(
-                $"[Pipeline:{_serviceName}] Step '{stepName}' failed: {firstError}");
+            MGuard.State(false, $"[Pipeline:{_serviceName}] Step '{stepName}' failed: {firstError}");
         }
 
         _log?.Info(

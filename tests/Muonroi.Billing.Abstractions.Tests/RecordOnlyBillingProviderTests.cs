@@ -67,6 +67,26 @@ public sealed class RecordOnlyBillingProviderTests
             LastException = ex;
         }
 
+        public void InfoContext(string messageTemplate, params object?[] args) { }
+
+        public void InfoContext(string messageTemplate, object? arg0 = null, object? arg1 = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0) { }
+
+        public void ErrorContext(Exception? ex, string messageTemplate, params object?[] args)
+        {
+            ErrorCount++;
+            LastException = ex;
+        }
+
+        public void ErrorContext(Exception? ex, string messageTemplate, object? arg0 = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0)
+        {
+            ErrorCount++;
+            LastException = ex;
+        }
+
+        public void Audit(string messageTemplate, params object?[] args) { }
+
+        public void Audit(string messageTemplate, string? auditType = null, string? action = null, bool isSuccess = true, string? targetId = null, string? targetType = null, object? metadata = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0) { }
+
         public IMLogContextScope BeginProperty(string key, object? value) => throw new NotSupportedException();
 
         public void Info(string messageTemplate, params object?[] args) { }

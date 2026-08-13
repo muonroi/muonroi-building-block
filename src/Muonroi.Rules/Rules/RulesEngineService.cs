@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Governance.License;
 using Muonroi.RuleEngine.Abstractions;
@@ -107,7 +108,7 @@ public sealed class RulesEngineService(
             Dictionary<string, List<IRule<TContext>>> rulesByCode = ResolveRulesByCode<TContext>(codes);
             if (rulesByCode.Count == 0)
             {
-                throw new MConfigurationException("Ruleset uses code-based workflow but no rule implementations were discovered.");
+                MGuard.Fail<object>("Ruleset uses code-based workflow but no rule implementations were discovered.");
             }
 
             List<string> missingCodes = [];
@@ -133,7 +134,7 @@ public sealed class RulesEngineService(
 
             if (missingCodes.Count > 0)
             {
-                throw new MConfigurationException(
+                MGuard.Fail<object>(
                     $"Ruleset references unknown rule code(s): {string.Join(", ", missingCodes.Distinct(StringComparer.OrdinalIgnoreCase))}.");
             }
 
@@ -141,7 +142,7 @@ public sealed class RulesEngineService(
             {
                 string detail = string.Join(" | ",
                     ambiguousCodes.Select(kv => $"{kv.Key} => [{string.Join(", ", kv.Value)}]"));
-                throw new MConfigurationException($"Ruleset contains ambiguous rule code mappings: {detail}.");
+                MGuard.Fail<object>($"Ruleset contains ambiguous rule code mappings: {detail}.");
             }
 
             RuleEngine<TContext> orchestrator = new(licenseGuard: _licenseGuard);
@@ -181,7 +182,7 @@ public sealed class RulesEngineService(
         {
             if (!string.IsNullOrEmpty(result.ExceptionMessage))
             {
-                throw new MInternalException(result.ExceptionMessage ?? "Rule execution failed.", MErrorCodes.Rule.ExecutionFailed);
+                MGuard.Fail<object>(result.ExceptionMessage ?? "Rule execution failed.", MErrorCodes.Rule.ExecutionFailed);
             }
 
             if (result.ActionResult?.Exception is not null)
@@ -229,15 +230,15 @@ public sealed class RulesEngineService(
     {
         if (string.IsNullOrWhiteSpace(workflowName))
         {
-            throw new MConfigurationException("Workflow name is required.");
+            MGuard.Fail<object>("Workflow name is required.");
         }
 
         if (string.IsNullOrWhiteSpace(json))
         {
-            throw new MConfigurationException("Ruleset payload is empty.");
+            MGuard.Fail<object>("Ruleset payload is empty.");
         }
 
-        JsonElement root;
+        JsonElement root = default;
         try
         {
             using JsonDocument doc = JsonDocument.Parse(json);
@@ -245,12 +246,12 @@ public sealed class RulesEngineService(
         }
         catch (JsonException ex)
         {
-            throw new MConfigurationException($"Ruleset payload is not valid JSON: {ex.Message}");
+            MGuard.Fail<object>($"Ruleset payload is not valid JSON: {ex.Message}");
         }
 
         if (root.ValueKind is not JsonValueKind.Array and not JsonValueKind.Object)
         {
-            throw new MConfigurationException("Ruleset payload must be a JSON object or array.");
+            MGuard.Fail<object>("Ruleset payload must be a JSON object or array.");
         }
 
         JsonElement workflow = root.ValueKind == JsonValueKind.Array
@@ -258,7 +259,7 @@ public sealed class RulesEngineService(
             : root;
         if (workflow.ValueKind != JsonValueKind.Object)
         {
-            throw new MConfigurationException("Ruleset workflow definition is invalid.");
+            MGuard.Fail<object>("Ruleset workflow definition is invalid.");
         }
 
         if (workflow.TryGetProperty("WorkflowName", out JsonElement wfNameEl) &&
@@ -267,7 +268,7 @@ public sealed class RulesEngineService(
             string? workflowNameFromPayload = wfNameEl.GetString();
             if (!string.Equals(workflowNameFromPayload, workflowName, StringComparison.OrdinalIgnoreCase))
             {
-                throw new MConfigurationException(
+                MGuard.Fail<object>(
                     $"WorkflowName mismatch. Expected '{workflowName}', payload has '{workflowNameFromPayload}'.");
             }
         }
@@ -276,7 +277,7 @@ public sealed class RulesEngineService(
         {
             if (rulesEl.ValueKind != JsonValueKind.Array || rulesEl.GetArrayLength() == 0)
             {
-                throw new MConfigurationException("Rules collection must be a non-empty array.");
+                MGuard.Fail<object>("Rules collection must be a non-empty array.");
             }
         }
     }

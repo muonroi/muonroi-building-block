@@ -93,6 +93,13 @@ public class RuleOrchestratorLoggingTests
             Logs.Add(FormatMessage(messageTemplate, args));
         }
 
+        public void InfoContext(string messageTemplate, params object?[] args) => Info(messageTemplate, args);
+        public void InfoContext(string messageTemplate, object? arg0 = null, object? arg1 = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0) => Info(messageTemplate, arg0, arg1);
+        public void ErrorContext(Exception? ex, string messageTemplate, params object?[] args) => Error(ex, messageTemplate, args);
+        public void ErrorContext(Exception? ex, string messageTemplate, object? arg0 = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0) => Error(ex, messageTemplate, arg0);
+        public void Audit(string messageTemplate, params object?[] args) => Info(messageTemplate, args);
+        public void Audit(string messageTemplate, string? auditType = null, string? action = null, bool isSuccess = true, string? targetId = null, string? targetType = null, object? metadata = null, string memberName = "", string sourceFilePath = "", int sourceLineNumber = 0) => Info(messageTemplate, auditType, action);
+
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
             return NullScope.Instance;

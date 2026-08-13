@@ -29,9 +29,9 @@ public static class MDbContextConfiguration
         where TDbContext : MDbContext
         where TPermission : Enum
     {
-        DatabaseConfigs? databaseConfigs = configuration.GetSection(nameof(DatabaseConfigs)).Get<DatabaseConfigs>();
-        if (databaseConfigs == null || string.IsNullOrEmpty(databaseConfigs.DbType))
-            throw new MConfigurationException("Database configuration is not properly set.", "DatabaseConfigs");
+        DatabaseConfigs? rawConfigs = configuration.GetSection(nameof(DatabaseConfigs)).Get<DatabaseConfigs>();
+        MGuard.Configured(rawConfigs != null && !string.IsNullOrEmpty(rawConfigs.DbType), "Database configuration is not properly set.", "DatabaseConfigs");
+        DatabaseConfigs databaseConfigs = MGuard.NotNull(rawConfigs);
 
         // Register DatabaseConfigs for use in MigrationManager and other services
         services.TryAddSingleton(databaseConfigs);
@@ -39,13 +39,10 @@ public static class MDbContextConfiguration
         if (databaseConfigs.DbType == nameof(DbTypes.MongoDb))
         {
             Type? mongoConfiguratorType = Type.GetType("Muonroi.Data.EntityFrameworkCore.MongoDb.MongoDbContextConfigurator`1, Muonroi.Data.EntityFrameworkCore.MongoDb");
-            if (mongoConfiguratorType == null)
-            {
-                throw new MConfigurationException("Database provider package for MongoDb is not installed. Please reference Muonroi.Data.EntityFrameworkCore.MongoDb package.", "DatabaseConfigs:DbType");
-            }
+            MGuard.Configured(mongoConfiguratorType != null, "Database provider package for MongoDb is not installed. Please reference Muonroi.Data.EntityFrameworkCore.MongoDb package.", "DatabaseConfigs:DbType");
 
-            var mongoConfigurator = Activator.CreateInstance(mongoConfiguratorType.MakeGenericType(typeof(TDbContext)));
-            var method = mongoConfiguratorType.MakeGenericType(typeof(TDbContext)).GetMethod("ConfigureMongoDb");
+            var mongoConfigurator = Activator.CreateInstance(MGuard.NotNull(mongoConfiguratorType).MakeGenericType(typeof(TDbContext)));
+            var method = MGuard.NotNull(mongoConfiguratorType).MakeGenericType(typeof(TDbContext)).GetMethod("ConfigureMongoDb");
             method?.Invoke(mongoConfigurator, new object[] { services, configuration });
         }
         else
@@ -105,10 +102,17 @@ public static class MDbContextConfiguration
             "services.AddRedisRsaKeyStore() to register BCryptPasswordHasher.";
 
         public string HashPassword(string password, out string salt)
-            => throw new MInternalException(Msg, "NOT_CONFIGURED");
+        {
+            MGuard.State(false, Msg, "NOT_CONFIGURED");
+            salt = string.Empty;
+            return string.Empty;
+        }
 
         public bool VerifyPassword(string enteredPassword, string storedHash)
-            => throw new MInternalException(Msg, "NOT_CONFIGURED");
+        {
+            MGuard.State(false, Msg, "NOT_CONFIGURED");
+            return false;
+        }
     }
 
 
@@ -120,18 +124,23 @@ public static class MDbContextConfiguration
         // Encryption is OPT-IN, not mandatory
         if (!enableEncryption)
         {
-            return databaseConfigs.DbType switch
+            MGuard.State(databaseConfigs.DbType is nameof(DbTypes.SqlServer) or nameof(DbTypes.MySql) or nameof(DbTypes.PostgreSql) or nameof(DbTypes.Sqlite), "Unsupported database type: " + databaseConfigs.DbType);
+            
+            string? rawConn = databaseConfigs.DbType switch
             {
                 nameof(DbTypes.SqlServer) => databaseConfigs.ConnectionStrings?.SqlServerConnectionString,
                 nameof(DbTypes.MySql) => databaseConfigs.ConnectionStrings?.MySqlConnectionString,
                 nameof(DbTypes.PostgreSql) => databaseConfigs.ConnectionStrings?.PostgreSqlConnectionString,
                 nameof(DbTypes.Sqlite) => databaseConfigs.ConnectionStrings?.SqliteConnectionString,
-                _ => throw new MConfigurationException("Unsupported database type: " + databaseConfigs.DbType, "DatabaseConfigs:DbType")
-            } ?? throw new MConfigurationException("Connection string is empty.", "DatabaseConfigs:ConnectionStrings");
+                _ => null
+            };
+            return MGuard.Configured(rawConn, "DatabaseConfigs:ConnectionStrings");
         }
 
         // Encryption enabled - decrypt the connection string
-        return databaseConfigs.DbType switch
+        MGuard.State(databaseConfigs.DbType is nameof(DbTypes.SqlServer) or nameof(DbTypes.MySql) or nameof(DbTypes.PostgreSql) or nameof(DbTypes.Sqlite), "Unsupported database type: " + databaseConfigs.DbType);
+        
+        string? encryptedConn = databaseConfigs.DbType switch
         {
             nameof(DbTypes.SqlServer) => MStringExtension.DecryptConfigurationValue(configuration,
                 databaseConfigs.ConnectionStrings?.SqlServerConnectionString, isSecretDefault, secretKey, fingerprint),
@@ -141,29 +150,29 @@ public static class MDbContextConfiguration
                 databaseConfigs.ConnectionStrings?.PostgreSqlConnectionString, isSecretDefault, secretKey, fingerprint),
             nameof(DbTypes.Sqlite) => MStringExtension.DecryptConfigurationValue(configuration,
                 databaseConfigs.ConnectionStrings?.SqliteConnectionString, isSecretDefault, secretKey, fingerprint),
-            _ => throw new MConfigurationException("Unsupported database type: " + databaseConfigs.DbType, "DatabaseConfigs:DbType")
-        } ?? throw new MConfigurationException("Connection string is not provided or is empty.", "DatabaseConfigs:ConnectionStrings");
+            _ => null
+        };
+        return MGuard.Configured(encryptedConn, "DatabaseConfigs:ConnectionStrings");
     }
 
     private static void ConfigureDbContext<T, TPermission>(IServiceCollection services, string dbType, bool isSecretDefault, string secretKey)
         where T : MDbContext
         where TPermission : Enum
     {
+        MGuard.State(dbType is nameof(DbTypes.SqlServer) or nameof(DbTypes.MySql) or nameof(DbTypes.PostgreSql) or nameof(DbTypes.Sqlite), "Unsupported database type: " + dbType);
+        
         Type? configuratorType = dbType switch
         {
             nameof(DbTypes.SqlServer) => Type.GetType("Muonroi.Data.EntityFrameworkCore.SqlServer.SqlServerDbContextConfigurator`1, Muonroi.Data.EntityFrameworkCore.SqlServer"),
             nameof(DbTypes.MySql) => Type.GetType("Muonroi.Data.EntityFrameworkCore.MySql.MySqlDbContextConfigurator`1, Muonroi.Data.EntityFrameworkCore.MySql"),
             nameof(DbTypes.PostgreSql) => Type.GetType("Muonroi.Data.EntityFrameworkCore.PostgreSQL.PostgreSqlDbContextConfigurator`1, Muonroi.Data.EntityFrameworkCore.PostgreSQL"),
             nameof(DbTypes.Sqlite) => Type.GetType("Muonroi.Data.EntityFrameworkCore.Sqlite.SqliteDbContextConfigurator`1, Muonroi.Data.EntityFrameworkCore.Sqlite"),
-            _ => throw new MConfigurationException("Unsupported database type: " + dbType, "DatabaseConfigs:DbType")
+            _ => null
         };
 
-        if (configuratorType == null)
-        {
-            throw new MConfigurationException($"Database provider package for {dbType} is not installed. Please reference Muonroi.Data.EntityFrameworkCore.{dbType} package.", "DatabaseConfigs:DbType");
-        }
+        MGuard.Configured(configuratorType != null, $"Database provider package for {dbType} is not installed. Please reference Muonroi.Data.EntityFrameworkCore.{dbType} package.", "DatabaseConfigs:DbType");
 
-        services.AddScoped(typeof(IDbContextConfigurator<T>), configuratorType.MakeGenericType(typeof(T)));
+        services.AddScoped(typeof(IDbContextConfigurator<T>), MGuard.NotNull(configuratorType).MakeGenericType(typeof(T)));
 
         _ = services.AddDbContext<T>((serviceProvider, options) =>
         {
@@ -172,8 +181,8 @@ public static class MDbContextConfiguration
             ILicenseGuard? guard = serviceProvider.GetService<ILicenseGuard>();
             IConfiguration config = serviceProvider.GetRequiredService<IConfiguration>();
 
-            DatabaseConfigs dbConfigs = config.GetSection(nameof(DatabaseConfigs)).Get<DatabaseConfigs>()
-                            ?? throw new MConfigurationException("DatabaseConfigs not found.", "DatabaseConfigs");
+            DatabaseConfigs? rawDbConfigs = config.GetSection(nameof(DatabaseConfigs)).Get<DatabaseConfigs>();
+            DatabaseConfigs dbConfigs = MGuard.Configured(rawDbConfigs, "DatabaseConfigs");
 
             bool enableEncryption = config.GetValue("EnableEncryption", false);
             string connectionString;
@@ -181,9 +190,8 @@ public static class MDbContextConfiguration
             if (enableEncryption)
             {
                 // ENTANGLEMENT: Perform the decryption inside the guard's secure scope using LIVE key
-                if (guard is null)
-                    throw new MConfigurationException("ILicenseGuard is required when encryption is enabled.", "EnableEncryption");
-                connectionString = guard.DecryptSecurely("db_connection", "dummy", (key, _) =>
+                MGuard.Configured(guard != null, "ILicenseGuard is required when encryption is enabled.", "EnableEncryption");
+                connectionString = MGuard.NotNull(guard).DecryptSecurely("db_connection", "dummy", (key, _) =>
                     DecryptConnectionString(dbConfigs, config, isSecretDefault, secretKey, key));
             }
             else

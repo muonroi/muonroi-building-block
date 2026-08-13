@@ -41,7 +41,7 @@ public sealed class TelemetryMiddlewareTests
                 // SystemExecutionContextAccessor is required by MLog<T> constructor.
                 services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
                 services.AddSingleton<ISiteProfileResolver>(new FakeSiteProfileResolver("ALPHA"));
-                services.AddLogging(b => b.AddMuonroiLogging());
+                services.AddLogging(b => b.AddMuonroiLogging(useAsyncQueue: false));
             },
             app =>
             {
@@ -84,7 +84,7 @@ public sealed class TelemetryMiddlewareTests
                 services.AddSingleton<ISiteProfileResolver>(new FakeSiteProfileResolver("ALPHA"));
                 services.AddLogging(b =>
                 {
-                    b.AddMuonroiLogging();
+                    b.AddMuonroiLogging(useAsyncQueue: false);
                     b.AddProvider(logCapture);
                     b.SetMinimumLevel(LogLevel.Trace);
                 });
@@ -133,7 +133,7 @@ public sealed class TelemetryMiddlewareTests
                 // SystemExecutionContextAccessor is required by MLog<T> constructor.
                 services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
                 services.AddSingleton<ISiteProfileResolver>(new FakeSiteProfileResolver("ALPHA"));
-                services.AddLogging(b => b.AddMuonroiLogging());
+                services.AddLogging(b => b.AddMuonroiLogging(useAsyncQueue: false));
             },
             app =>
             {
@@ -152,7 +152,7 @@ public sealed class TelemetryMiddlewareTests
                 // SystemExecutionContextAccessor is required by MLog<T> constructor.
                 services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionContextAccessor>();
                 services.AddSingleton<ISiteProfileResolver>(new FakeSiteProfileResolver("BRAVO"));
-                services.AddLogging(b => b.AddMuonroiLogging());
+                services.AddLogging(b => b.AddMuonroiLogging(useAsyncQueue: false));
             },
             app =>
             {

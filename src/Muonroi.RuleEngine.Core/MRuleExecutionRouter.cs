@@ -1,3 +1,4 @@
+using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
 
@@ -37,7 +38,7 @@ public sealed class MRuleExecutionRouter<TContext>(
     {
         if (traditionalPath is null)
         {
-            throw new MInternalException("Traditional path delegate is required for Traditional mode.");
+            return MGuard.Fail<FactBag>("Traditional path delegate is required for Traditional mode.");
         }
 
         await traditionalPath(cancellationToken);

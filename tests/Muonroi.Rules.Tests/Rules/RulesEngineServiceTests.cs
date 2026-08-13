@@ -13,7 +13,7 @@ public class RulesEngineServiceTests
 
         Func<Task> act = () => service.SaveRuleSetAsync("", "{}");
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*Workflow name*");
     }
 
@@ -24,7 +24,7 @@ public class RulesEngineServiceTests
 
         Func<Task> act = () => service.SaveRuleSetAsync("test", "");
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*payload is empty*");
     }
 
@@ -35,7 +35,7 @@ public class RulesEngineServiceTests
 
         Func<Task> act = () => service.SaveRuleSetAsync("test", "not json");
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*not valid JSON*");
     }
 
@@ -47,7 +47,7 @@ public class RulesEngineServiceTests
 
         Func<Task> act = () => service.SaveRuleSetAsync("CorrectName", json);
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*WorkflowName mismatch*");
     }
 
@@ -144,7 +144,7 @@ public class RulesEngineServiceTests
 
         Func<Task> act = () => service.SaveRuleSetAsync("test", "42");
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*must be a JSON object or array*");
     }
 
@@ -156,7 +156,7 @@ public class RulesEngineServiceTests
 
         Func<Task> act = () => service.SaveRuleSetAsync("test", json);
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*non-empty array*");
     }
 
@@ -168,7 +168,7 @@ public class RulesEngineServiceTests
 
         Func<Task> act = () => service.SaveRuleSetAsync("test", json);
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*non-empty array*");
     }
 
@@ -179,7 +179,7 @@ public class RulesEngineServiceTests
 
         Func<Task> act = () => service.SaveRuleSetAsync("test", """["bad-workflow"]""");
 
-        await act.Should().ThrowAsync<MConfigurationException>()
+        await act.Should().ThrowAsync<MInternalException>()
             .WithMessage("*workflow definition is invalid*");
     }
 

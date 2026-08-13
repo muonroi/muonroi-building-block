@@ -96,7 +96,7 @@ public static class GrpcHandler
             if (!MGuard.NotNull(grpcServicesConfig.Services).TryGetValue(client.Key, out GrpcServiceConfig? serviceConfig) ||
                 string.IsNullOrWhiteSpace(serviceConfig.Uri))
             {
-                throw new MNotFoundException("GrpcClient", client.Key);
+                MGuard.Fail<dynamic>("GrpcClient", client.Key);
             }
 
             services.AddGrpcClientConfigured(client.Value, serviceConfig, grpcServicesConfig.ClientDefaults);
@@ -163,7 +163,7 @@ public static class GrpcHandler
         object? result = method.Invoke(null, [services, serviceUri, new GrpcClientDefaultsConfig(), null]);
 
         return result as IHttpClientBuilder
-               ?? throw new MInternalException("Failed to create the gRPC client builder.");
+               ?? MGuard.Fail<dynamic>("Failed to create the gRPC client builder.");
     }
 
     private static IHttpClientBuilder AddGrpcClientConfigured(
@@ -183,7 +183,7 @@ public static class GrpcHandler
 
         object? result = method.Invoke(null, [services, serviceConfig.Uri, defaults, serviceConfig]);
         return result as IHttpClientBuilder
-               ?? throw new MInternalException("Failed to create the gRPC client builder.");
+               ?? MGuard.Fail<dynamic>("Failed to create the gRPC client builder.");
     }
 
     private static IHttpClientBuilder AddGrpcClientGeneric<TClient>(
