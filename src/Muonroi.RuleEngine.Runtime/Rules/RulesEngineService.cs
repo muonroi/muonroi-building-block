@@ -3,6 +3,14 @@ using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Rules;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Muonroi.Core.Abstractions.Guards;
+using Muonroi.RuleEngine.Abstractions;
+using Muonroi.RuleEngine.Abstractions.Models;
+using Muonroi.RuleEngine.Runtime.Adapters;
+using Muonroi.RuleEngine.Runtime.Compilation.Feel;
+using Muonroi.Templating.Abstractions;
 
 namespace Muonroi.RuleEngine.Runtime.Rules;
 
@@ -1091,8 +1099,8 @@ public sealed class RulesEngineService(
                 _serviceProvider?.GetService<IMJsonSerializeService>()
                 ?? new Muonroi.Core.Abstractions.SeedWorks.MJsonSerializeService();
 
-            IEnumerable<IScribanFunctionProvider>? functionProviders =
-                _serviceProvider?.GetServices<IScribanFunctionProvider>();
+            ITemplateEngine? templateEngine =
+                _serviceProvider?.GetService<ITemplateEngine>();
 
             _log?.Info("Resolved node '{NodeId}' as Liquid/Scriban adapter.", entry.NodeId);
             return WrapRuleEntry(
@@ -1104,7 +1112,7 @@ public sealed class RulesEngineService(
                     projector,
                     jsonSvc,
                     liquidLog,
-                    functionProviders),
+                    templateEngine),
                 entry);
         }
 
@@ -1350,8 +1358,8 @@ public sealed class RulesEngineService(
                 ?? new Muonroi.Core.Abstractions.SeedWorks.MJsonSerializeService();
             if (log is null) return null;
 
-            IEnumerable<IScribanFunctionProvider>? functionProviders =
-                _serviceProvider?.GetServices<IScribanFunctionProvider>();
+            ITemplateEngine? templateEngine =
+                _serviceProvider?.GetService<ITemplateEngine>();
 
             _log?.Info("Resolved node '{NodeId}' as Liquid/Scriban adapter inside sub-flow.", entry.NodeId);
             return WrapRuleEntry(
@@ -1363,7 +1371,7 @@ public sealed class RulesEngineService(
                     projector,
                     jsonSvc,
                     log,
-                    functionProviders),
+                    templateEngine),
                 entry);
         }
 

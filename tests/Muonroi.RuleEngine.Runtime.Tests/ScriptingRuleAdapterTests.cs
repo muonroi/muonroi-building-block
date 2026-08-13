@@ -4,6 +4,7 @@ using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Adapters;
 using Muonroi.RuleEngine.Runtime.Adapters;
+using Muonroi.Templating.Scriban;
 using NSubstitute;
 using Scriban.Runtime;
 using System.Diagnostics;
@@ -78,7 +79,8 @@ public sealed class ScriptingRuleAdapterTests
             "message",
             new TestProjector(),
             new MJsonSerializeService(),
-            Substitute.For<IMLog<LiquidRuleAdapter<TestContext>>>());
+            Substitute.For<IMLog<LiquidRuleAdapter<TestContext>>>(),
+            new ScribanTemplateEngine());
         FactBag facts = new();
 
         RuleResult result = await sut.EvaluateAsync(new TestContext(20, "gold"), facts, CancellationToken.None);
@@ -97,7 +99,8 @@ public sealed class ScriptingRuleAdapterTests
             "payload",
             new TestProjector(),
             new MJsonSerializeService(),
-            Substitute.For<IMLog<LiquidRuleAdapter<TestContext>>>());
+            Substitute.For<IMLog<LiquidRuleAdapter<TestContext>>>(),
+            new ScribanTemplateEngine());
         FactBag facts = new();
 
         RuleResult result = await sut.EvaluateAsync(new TestContext(42, "vip"), facts, CancellationToken.None);
@@ -119,7 +122,7 @@ public sealed class ScriptingRuleAdapterTests
             new TestProjector(),
             new MJsonSerializeService(),
             Substitute.For<IMLog<LiquidRuleAdapter<TestContext>>>(),
-            [new TestScribanFunctionProvider()]);
+            new ScribanTemplateEngine([new TestScribanFunctionProvider()]));
         FactBag facts = new();
 
         RuleResult result = await sut.EvaluateAsync(new TestContext(42, "vip"), facts, CancellationToken.None);
@@ -139,7 +142,8 @@ public sealed class ScriptingRuleAdapterTests
             "message",
             new TestProjector(),
             new MJsonSerializeService(),
-            log);
+            log,
+            new ScribanTemplateEngine());
 
         RuleResult result = await sut.EvaluateAsync(new TestContext(42, "vip"), new FactBag(), CancellationToken.None);
 
@@ -231,7 +235,8 @@ public sealed class ScriptingRuleAdapterTests
             "output",
             new TestProjector(),
             new MJsonSerializeService(),
-            Substitute.For<IMLog<LiquidRuleAdapter<TestContext>>>());
+            Substitute.For<IMLog<LiquidRuleAdapter<TestContext>>>(),
+            new ScribanTemplateEngine());
     }
 
     public sealed record TestContext(int Amount, string CustomerTier)

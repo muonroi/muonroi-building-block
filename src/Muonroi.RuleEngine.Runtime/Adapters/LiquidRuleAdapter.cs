@@ -1,54 +1,63 @@
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Muonroi.Core.Abstractions.Exceptions;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Logging.Abstractions;
 using Muonroi.RuleEngine.Abstractions.Adapters;
-using Scriban;
-using Scriban.Runtime;
+using Muonroi.Templating.Abstractions;
 
 namespace Muonroi.RuleEngine.Runtime.Adapters;
 
 /// <summary>
-/// Renders a Scriban/Liquid template as an <see cref="IRule{TContext}"/> action.
+/// Renders a template as an <see cref="IRule{TContext}"/> action.
 /// Always evaluates to <see cref="RuleResult.Passed()"/> on successful render;
 /// <see cref="RuleResult.Failure(string[])"/> if rendering throws.
 /// Rendered output is written to <see cref="FactBag"/> under <c>LiquidOutputKey</c>.
 /// </summary>
-/// <remarks>
-/// Upgraded from Phase A (simple {{ key }} replacement) to Scriban engine.
-/// Scriban is Liquid-compatible — existing {{ key }} templates continue working.
-/// Supports full control flow (if/else, for), filters, nested access, and async rendering.
-/// </remarks>
-/// <typeparam name="TContext">The rule execution context type.</typeparam>
-/// <remarks>
-/// Initializes a new instance of the <see cref="LiquidRuleAdapter{TContext}"/> class.
-/// </remarks>
-/// <param name="code">Rule code for this node.</param>
-/// <param name="template">Liquid/Scriban template.</param>
-/// <param name="outputFormat">Output format (json|text|object).</param>
-/// <param name="outputKey">FactBag key to store rendered output.</param>
-/// <param name="projector">Context projector for variables.</param>
-/// <param name="json">JSON serializer.</param>
-/// <param name="log">Logger instance.</param>
-/// <param name="functionProviders">Optional custom Scriban function providers.</param>
-public sealed class LiquidRuleAdapter<TContext>(
-    string code,
-    string template,
-    string outputFormat,
-    string outputKey,
-    IContextProjector<TContext> projector,
-    IMJsonSerializeService json,
-    IMLog<LiquidRuleAdapter<TContext>> log,
-    IEnumerable<IScribanFunctionProvider>? functionProviders = null) : IRule<TContext>
+public sealed class LiquidRuleAdapter<TContext> : IRule<TContext>
 {
-    private readonly string _code = code;
-    private readonly string _template = template;
-    private readonly string _outputFormat = outputFormat;  // json|text|object
-    private readonly string _outputKey = string.IsNullOrWhiteSpace(outputKey) ? "liquidOutput" : outputKey;     // FactBag key for rendered output
-    private readonly IContextProjector<TContext> _projector = projector;
-    private readonly IMJsonSerializeService _json = json;
-    private readonly IMLog<LiquidRuleAdapter<TContext>> _log = log;
-    private readonly IEnumerable<IScribanFunctionProvider>? _functionProviders = functionProviders;
-    private Template? _parsedTemplate;
+    private readonly string _code;
+    private readonly string _template;
+    private readonly string _outputFormat;
+    private readonly string _outputKey;
+    private readonly IContextProjector<TContext> _projector;
+    private readonly IMJsonSerializeService _json;
+    private readonly IMLog<LiquidRuleAdapter<TContext>> _log;
+    private readonly ITemplateEngine? _templateEngine;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LiquidRuleAdapter{TContext}"/> class.
+    /// </summary>
+    /// <param name="code">The node code.</param>
+    /// <param name="template">The template.</param>
+    /// <param name="outputFormat">The output format.</param>
+    /// <param name="outputKey">The output key.</param>
+    /// <param name="projector">The context projector.</param>
+    /// <param name="json">The json service.</param>
+    /// <param name="log">The logger.</param>
+    /// <param name="templateEngine">The template engine.</param>
+    public LiquidRuleAdapter(
+        string code,
+        string template,
+        string outputFormat,
+        string outputKey,
+        IContextProjector<TContext> projector,
+        IMJsonSerializeService json,
+        IMLog<LiquidRuleAdapter<TContext>> log,
+        ITemplateEngine? templateEngine = null)
+    {
+        _code = code;
+        _template = template;
+        _outputFormat = outputFormat;
+        _outputKey = string.IsNullOrWhiteSpace(outputKey) ? "liquidOutput" : outputKey;
+        _projector = projector;
+        _json = json;
+        _log = log;
+        _templateEngine = templateEngine;
+    }
 
     /// <inheritdoc />
     public string Code => _code;
@@ -63,7 +72,7 @@ public sealed class LiquidRuleAdapter<TContext>(
     public HookPoint HookPoint => HookPoint.BeforeRule;
 
     /// <inheritdoc />
-    public RuleType Type => RuleType.Business; // actions modify state
+    public RuleType Type => RuleType.Business;
 
     /// <inheritdoc />
     public string Name => $"Liquid:{_code}";
@@ -74,12 +83,18 @@ public sealed class LiquidRuleAdapter<TContext>(
     /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(TContext ctx, FactBag facts, CancellationToken ct)
     {
+        if (_templateEngine == null)
+        {
+            _log.Warn("No ITemplateEngine registered. Cannot evaluate liquid template '{Code}'.", _code);
+            return RuleResult.Failure($"No ITemplateEngine registered for '{_code}'.");
+        }
+
         Dictionary<string, object?> variables = BuildVariables(ctx, facts);
 
         string rendered;
         try
         {
-            rendered = await RenderAsync(_template, variables, ct);
+            rendered = await _templateEngine.RenderAsync(_template, variables, ct);
         }
         catch (Exception ex)
         {
@@ -87,7 +102,6 @@ public sealed class LiquidRuleAdapter<TContext>(
             return RuleResult.Failure($"Liquid render error in '{_code}': {ex.Message}");
         }
 
-        // Parse output according to requested format
         object? output = _outputFormat switch
         {
             "json" or "object" => _json.Deserialize<object>(rendered),
@@ -102,47 +116,6 @@ public sealed class LiquidRuleAdapter<TContext>(
     /// <inheritdoc />
     public Task ExecuteAsync(TContext context, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
-
-    private async Task<string> RenderAsync(
-        string template,
-        IDictionary<string, object?> variables,
-        CancellationToken ct)
-    {
-        _parsedTemplate ??= Template.Parse(template);
-
-        if (_parsedTemplate.HasErrors)
-        {
-            string errors = string.Join("; ", _parsedTemplate.Messages);
-            throw new MInternalException($"Scriban parse error: {errors}");
-        }
-
-        ScribanFactBagScriptObject scriptObject = new(variables);
-
-        // Register custom function providers
-        if (_functionProviders is not null)
-        {
-            foreach (IScribanFunctionProvider provider in _functionProviders)
-            {
-                provider.Register(scriptObject);
-            }
-        }
-
-        // D-04: 5-second timeout matching JS sandbox budget
-        using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(TimeSpan.FromSeconds(5));
-
-        TemplateContext context = new()
-        {
-            StrictVariables = false,
-            MemberRenamer = member => member.Name,  // Preserve original casing
-            LoopLimit = 10_000,                     // D-05: match JS 10k statement limit
-            CancellationToken = cts.Token,          // D-04: interrupt long-running loops via CheckAbort()
-        };
-        context.PushGlobal(scriptObject);
-
-        string result = await _parsedTemplate.RenderAsync(context);
-        return result;
-    }
 
     private Dictionary<string, object?> BuildVariables(TContext ctx, FactBag facts)
     {

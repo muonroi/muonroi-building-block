@@ -20,6 +20,7 @@
     <ProjectReference Include="..\Muonroi.Governance.Abstractions\Muonroi.Governance.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Integration.Abstractions\Muonroi.Integration.Abstractions.csproj" />
     <ProjectReference Include="..\Muonroi.Messaging.Abstractions\Muonroi.Messaging.Abstractions.csproj" />
+    <ProjectReference Include="..\Muonroi.Templating.Abstractions\Muonroi.Templating.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Jint" />
