@@ -16,9 +16,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BouncyCastle.Cryptography" />
-    <PackageReference Include="MailKit" />
-    <PackageReference Include="MimeKit" />
+
+
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-    <PackageReference Include="Scriban" />
+
   </ItemGroup>
 </Project>

@@ -104,14 +104,14 @@ public class RuleEngineRoutingFilterTests
     public async Task Send_WhenRedisRouteMatches_AppliesRedirect()
     {
         RoutingFilterFixture fixture = new(enableRedisRoutingTable: true);
-        fixture.RedisStore.GetRoutesAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        fixture.DynamicStore.GetRoutesAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns([new RoutingTableEntry(typeof(TestMessage).FullName!, "tenant-a", "vip-route", 0, "rabbitmq://host/vip-orders", "CustomerTier = \"vip\"")]);
         fixture.Routers = [new DelegateRouter("fallback", 100, static _ => RoutingDecision.RedirectTo("rabbitmq://host/fallback"))];
         RuleEngineRoutingFilter<TestMessage> filter = fixture.CreateFilter();
 
         await filter.Send(fixture.Context, fixture.Next);
 
-        await fixture.RedisStore.Received(1).GetRoutesAsync(typeof(TestMessage).FullName!, "tenant-a", fixture.Context.CancellationToken);
+        await fixture.DynamicStore.Received(1).GetRoutesAsync(typeof(TestMessage).FullName!, "tenant-a", fixture.Context.CancellationToken);
         await fixture.SendEndpointProvider.Received(1).GetSendEndpoint(new Uri("rabbitmq://host/vip-orders"));
         await fixture.Next.DidNotReceive().Send(fixture.Context);
     }
@@ -197,7 +197,7 @@ public class RuleEngineRoutingFilterTests
             {
                 ExecutionContextAccessor = null;
             }
-            RedisStore = Substitute.For<IRedisRoutingTableStore>();
+            DynamicStore = Substitute.For<IDynamicRoutingTableStore>();
             Routers = [];
             LegacyRules = [];
             Options = Microsoft.Extensions.Options.Options.Create(new MessageBusConfigs
@@ -233,9 +233,9 @@ public class RuleEngineRoutingFilterTests
         public SystemExecutionContextAccessor? ExecutionContextAccessor { get; }
 
         /// <summary>
-        /// Gets the Redis routing table store substitute.
+        /// Gets the dynamic routing table store substitute.
         /// </summary>
-        public IRedisRoutingTableStore RedisStore { get; }
+        public IDynamicRoutingTableStore DynamicStore { get; }
 
         /// <summary>
         /// Gets or sets the explicit routers.
@@ -263,8 +263,9 @@ public class RuleEngineRoutingFilterTests
                 LegacyRules,
                 SendEndpointProvider,
                 Options,
+                null,
                 ExecutionContextAccessor,
-                RedisStore);
+                DynamicStore);
         }
 
         private static Headers CreateHeaders(IReadOnlyDictionary<string, object?> values)

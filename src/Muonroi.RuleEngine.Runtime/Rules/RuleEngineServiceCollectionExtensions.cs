@@ -62,14 +62,6 @@ public static class RuleEngineServiceCollectionExtensions
 
         services.TryAddSingleton<IRuleSetChangeNotifier>(sp =>
         {
-            IConnectionMultiplexer? redis = sp.GetService<IConnectionMultiplexer>();
-            RuleStoreConfigs cfg = sp.GetRequiredService<IOptions<RuleStoreConfigs>>().Value;
-            IMJsonSerializeService serializer = sp.GetRequiredService<IMJsonSerializeService>();
-            if (redis is not null)
-            {
-                return new RedisRuleSetChangeNotifier(redis, cfg.RuleChangeChannel, serializer);
-            }
-
             return new InMemoryRuleSetChangeNotifier();
         });
 
@@ -109,25 +101,7 @@ public static class RuleEngineServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>
-    /// Registers Redis pub/sub notifier for cross-node hot reload.
-    /// </summary>
-    public static IServiceCollection AddMRuleEngineWithRedisHotReload(
-        this IServiceCollection services,
-        string redisConnectionString)
-    {
-        MGuard.NotNull(services);
-        MGuard.NotEmpty(redisConnectionString);
 
-        services.TryAddSingleton<IMJsonSerializeService, MJsonSerializeService>();
-        services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
-        services.Replace(ServiceDescriptor.Singleton<IRuleSetChangeNotifier>(sp =>
-            new RedisRuleSetChangeNotifier(
-                sp.GetRequiredService<IConnectionMultiplexer>(),
-                sp.GetRequiredService<IOptions<RuleStoreConfigs>>().Value.RuleChangeChannel,
-                sp.GetRequiredService<IMJsonSerializeService>())));
-        return services;
-    }
 
     /// <summary>
     /// Wires the CloudEvents bridge into the rule engine pipeline.

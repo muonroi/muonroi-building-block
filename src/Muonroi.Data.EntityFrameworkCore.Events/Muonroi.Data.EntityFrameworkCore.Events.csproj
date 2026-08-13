@@ -14,6 +14,10 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore\Muonroi.Data.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.SqlServer\Muonroi.Data.EntityFrameworkCore.SqlServer.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.MySql\Muonroi.Data.EntityFrameworkCore.MySql.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.PostgreSQL\Muonroi.Data.EntityFrameworkCore.PostgreSQL.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.Sqlite\Muonroi.Data.EntityFrameworkCore.Sqlite.csproj" />
     <ProjectReference Include="..\Muonroi.Mediator\Muonroi.Mediator.csproj" />
     <ProjectReference Include="..\Muonroi.Messaging.Abstractions\Muonroi.Messaging.Abstractions.csproj" />
   </ItemGroup>

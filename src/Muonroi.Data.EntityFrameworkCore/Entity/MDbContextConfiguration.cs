@@ -38,8 +38,15 @@ public static class MDbContextConfiguration
 
         if (databaseConfigs.DbType == nameof(DbTypes.MongoDb))
         {
-            MongoDbContextConfigurator<TDbContext> mongoConfigurator = new();
-            _ = mongoConfigurator.ConfigureMongoDb(services, configuration);
+            Type? mongoConfiguratorType = Type.GetType("Muonroi.Data.EntityFrameworkCore.MongoDb.MongoDbContextConfigurator`1, Muonroi.Data.EntityFrameworkCore.MongoDb");
+            if (mongoConfiguratorType == null)
+            {
+                throw new MConfigurationException("Database provider package for MongoDb is not installed. Please reference Muonroi.Data.EntityFrameworkCore.MongoDb package.", "DatabaseConfigs:DbType");
+            }
+
+            var mongoConfigurator = Activator.CreateInstance(mongoConfiguratorType.MakeGenericType(typeof(TDbContext)));
+            var method = mongoConfiguratorType.MakeGenericType(typeof(TDbContext)).GetMethod("ConfigureMongoDb");
+            method?.Invoke(mongoConfigurator, new object[] { services, configuration });
         }
         else
         {
@@ -142,16 +149,21 @@ public static class MDbContextConfiguration
         where T : MDbContext
         where TPermission : Enum
     {
-        _ = dbType switch
+        Type? configuratorType = dbType switch
         {
-            nameof(DbTypes.SqlServer) => services
-                .AddScoped<IDbContextConfigurator<T>, SqlServerDbContextConfigurator<T>>(),
-            nameof(DbTypes.MySql) => services.AddScoped<IDbContextConfigurator<T>, MySqlDbContextConfigurator<T>>(),
-            nameof(DbTypes.PostgreSql) => services
-                .AddScoped<IDbContextConfigurator<T>, PostgreSqlDbContextConfigurator<T>>(),
-            nameof(DbTypes.Sqlite) => services.AddScoped<IDbContextConfigurator<T>, SqliteDbContextConfigurator<T>>(),
+            nameof(DbTypes.SqlServer) => Type.GetType("Muonroi.Data.EntityFrameworkCore.SqlServer.SqlServerDbContextConfigurator`1, Muonroi.Data.EntityFrameworkCore.SqlServer"),
+            nameof(DbTypes.MySql) => Type.GetType("Muonroi.Data.EntityFrameworkCore.MySql.MySqlDbContextConfigurator`1, Muonroi.Data.EntityFrameworkCore.MySql"),
+            nameof(DbTypes.PostgreSql) => Type.GetType("Muonroi.Data.EntityFrameworkCore.PostgreSQL.PostgreSqlDbContextConfigurator`1, Muonroi.Data.EntityFrameworkCore.PostgreSQL"),
+            nameof(DbTypes.Sqlite) => Type.GetType("Muonroi.Data.EntityFrameworkCore.Sqlite.SqliteDbContextConfigurator`1, Muonroi.Data.EntityFrameworkCore.Sqlite"),
             _ => throw new MConfigurationException("Unsupported database type: " + dbType, "DatabaseConfigs:DbType")
         };
+
+        if (configuratorType == null)
+        {
+            throw new MConfigurationException($"Database provider package for {dbType} is not installed. Please reference Muonroi.Data.EntityFrameworkCore.{dbType} package.", "DatabaseConfigs:DbType");
+        }
+
+        services.AddScoped(typeof(IDbContextConfigurator<T>), configuratorType.MakeGenericType(typeof(T)));
 
         _ = services.AddDbContext<T>((serviceProvider, options) =>
         {

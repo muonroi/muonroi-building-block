@@ -121,7 +121,7 @@ public static class RedisExtensions
             services.Configure(configure);
         }
 
-        services.TryAddSingleton<IRedisRoutingTableStore, RedisRoutingTableStore>();
+        services.TryAddSingleton<Muonroi.Messaging.Abstractions.Contracts.IDynamicRoutingTableStore, RedisRoutingTableStore>();
         return services;
     }
 

@@ -12,5 +12,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../../../../src/Muonroi.Data.EntityFrameworkCore/Muonroi.Data.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Muonroi.Data.EntityFrameworkCore.SqlServer\Muonroi.Data.EntityFrameworkCore.SqlServer.csproj" />
   </ItemGroup>
 </Project>

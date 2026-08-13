@@ -1,5 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using Muonroi.Data.EntityFrameworkCore.Entity;
+using System;
 using Muonroi.Messaging.Abstractions.Attributes;
 
 namespace Muonroi.Messaging.MassTransit.Messaging;
@@ -29,9 +28,16 @@ public class MuonroiInboxFilter<TConsumer, TMessage>(IMLog<MuonroiInboxFilter<TC
             return;
         }
 
-        if (!context.TryGetPayload<MEventOutboxDbContext>(out var dbContext))
+        if (!context.TryGetPayload<IServiceProvider>(out var serviceProvider))
         {
-            // If DB context is not available in payload, we can't do inbox dedup
+            // If DI container is not available in payload, we can't do inbox dedup
+            await next.Send(context);
+            return;
+        }
+
+        var inboxStore = serviceProvider.GetService(typeof(Muonroi.Messaging.Abstractions.Contracts.IMessageInboxStore)) as Muonroi.Messaging.Abstractions.Contracts.IMessageInboxStore;
+        if (inboxStore == null)
+        {
             await next.Send(context);
             return;
         }
@@ -45,8 +51,7 @@ public class MuonroiInboxFilter<TConsumer, TMessage>(IMLog<MuonroiInboxFilter<TC
         }
 
         // Check if message already processed (D-07)
-        var alreadyProcessed = await dbContext.MessageInbox
-            .AnyAsync(x => x.MessageId == messageId && x.ConsumerName == consumerType.Name);
+        var alreadyProcessed = await inboxStore.HasBeenProcessedAsync(messageId, consumerType.Name);
 
         if (alreadyProcessed)
         {
@@ -59,12 +64,7 @@ public class MuonroiInboxFilter<TConsumer, TMessage>(IMLog<MuonroiInboxFilter<TC
         await next.Send(context);
 
         // Record in inbox (must be in same transaction as consumer changes)
-        dbContext.MessageInbox.Add(new MessageInbox
-        {
-            MessageId = messageId,
-            ConsumerName = consumerType.Name,
-            ProcessedAt = DateTime.UtcNow
-        });
+        await inboxStore.RecordProcessedAsync(messageId, consumerType.Name);
     }
 
     /// <inheritdoc/>

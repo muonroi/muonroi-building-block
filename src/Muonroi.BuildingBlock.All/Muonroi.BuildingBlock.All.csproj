@@ -13,10 +13,15 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MailKit" />
     <PackageReference Include="Microsoft.Bcl.Memory" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
-    <PackageReference Include="Scriban" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.SqlServer\Muonroi.Data.EntityFrameworkCore.SqlServer.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.MySql\Muonroi.Data.EntityFrameworkCore.MySql.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.PostgreSQL\Muonroi.Data.EntityFrameworkCore.PostgreSQL.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.Sqlite\Muonroi.Data.EntityFrameworkCore.Sqlite.csproj" />
+    <ProjectReference Include="..\Muonroi.Data.EntityFrameworkCore.MongoDb\Muonroi.Data.EntityFrameworkCore.MongoDb.csproj" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.AspNetCore\Muonroi.AspNetCore.csproj" />

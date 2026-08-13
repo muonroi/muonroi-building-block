@@ -5,7 +5,6 @@ using Muonroi.Core.Abstractions.Guards;
 using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Governance.Abstractions.License;
 using Muonroi.Governance.License;
-using StackExchange.Redis;
 
 namespace Muonroi.Rules.Rules;
 
@@ -32,13 +31,6 @@ public static class RuleEngineServiceCollectionExtensions
 
         services.TryAddSingleton<IRuleSetChangeNotifier>(sp =>
         {
-            IConnectionMultiplexer? redis = sp.GetService<IConnectionMultiplexer>();
-            if (redis is not null)
-            {
-                IMJsonSerializeService jsonSerializeService = sp.GetRequiredService<IMJsonSerializeService>();
-                return new RedisRuleSetChangeNotifier(redis, configs.RuleChangeChannel, jsonSerializeService);
-            }
-
             return new InMemoryRuleSetChangeNotifier();
         });
 
