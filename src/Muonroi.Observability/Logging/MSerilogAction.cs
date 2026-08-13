@@ -25,7 +25,8 @@ public static class MSerilogAction
             .ReadFrom.Configuration(context.Configuration)
             .ReadFrom.Services(services)
             .Enrich.FromLogContext()
-            .Enrich.With(services.GetRequiredService<TenantIdEnricher>());
+            .Enrich.With(services.GetRequiredService<TenantIdEnricher>())
+            .Enrich.With(services.GetRequiredService<ServiceContextEnricher>());
 
         loggerConfiguration.WriteTo.Async(a =>
         {

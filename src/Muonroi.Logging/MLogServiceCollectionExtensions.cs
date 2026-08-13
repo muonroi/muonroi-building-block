@@ -23,6 +23,10 @@ public static class MLogServiceCollectionExtensions
         builder.Services.AddSingleton(typeof(IMLog<>), typeof(MLog<>));
         builder.Services.AddSingleton<IMLogFactory, MLogFactory>();
         builder.Services.AddSingleton<ILogScopeFactory, MLogScopeFactory>();
+        
+        // Register default gap implementations for Argument Resolver and Exception Classifier
+        builder.Services.AddSingleton<Muonroi.Logging.Abstractions.IMLogArgumentResolver, MLogArgumentResolver>();
+        builder.Services.AddSingleton<Muonroi.Logging.Abstractions.Exceptions.IExceptionClassifier, Muonroi.Logging.Exceptions.DefaultExceptionClassifier>();
         return builder;
     }
 }

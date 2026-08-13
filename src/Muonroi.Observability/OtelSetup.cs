@@ -38,6 +38,7 @@ public static class OtelSetup
     {
         services.EnsureFeatureOrThrow(FreeTierFeatures.Premium.AuditTrail);
         services.TryAddSingleton<TenantIdEnricher>();
+        services.TryAddSingleton<ServiceContextEnricher>();
         OpenTelemetryConfigs configs = new();
         configuration.GetSection(OpenTelemetryConfigs.SectionName).Bind(configs);
 

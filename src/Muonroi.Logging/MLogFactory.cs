@@ -157,6 +157,12 @@ internal sealed class MLogNonGeneric(
     /// <inheritdoc />
     public void Audit(string action, string objectType, string objectId, bool isSuccess = true, string? previousStatus = null, string? newStatus = null, object? extraData = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0)
     {
+        using var scope = _inner.BeginScope(new Dictionary<string, object>
+        {
+            [LogPropertyConventions.EventKind] = "audit",
+            [LogPropertyConventions.EventCategory] = "business"
+        });
+
         _inner.LogInformation(
             "Audit: {AuditAction} on {ObjectType} {ObjectId} | Success: {IsSuccess} | Prev: {PreviousStatus} | New: {NewStatus} | Data: {@ExtraData} | Caller: {CallerMemberName}",
             action, objectType, objectId, isSuccess, previousStatus, newStatus, _resolver.Resolve(extraData), memberName);
