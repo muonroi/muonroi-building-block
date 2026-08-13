@@ -27,16 +27,19 @@ public static class MSerilogAction
             .Enrich.FromLogContext()
             .Enrich.With(services.GetRequiredService<TenantIdEnricher>());
 
-        AddOpenTelemetrySink(context.Configuration, loggerConfiguration);
-        AddFileSink(context.Configuration, loggerConfiguration);
-
-        if (useConsole)
+        loggerConfiguration.WriteTo.Async(a =>
         {
-            _ = loggerConfiguration.WriteTo.Console();
-        }
+            AddOpenTelemetrySink(context.Configuration, a);
+            AddFileSink(context.Configuration, a);
+
+            if (useConsole)
+            {
+                _ = a.Console();
+            }
+        });
     }
 
-    private static void AddOpenTelemetrySink(IConfiguration configuration, LoggerConfiguration loggerConfiguration)
+    private static void AddOpenTelemetrySink(IConfiguration configuration, Serilog.Configuration.LoggerSinkConfiguration sinkConfig)
     {
         IConfigurationSection otelSection = configuration.GetSection("Serilog:OpenTelemetry");
         if (!otelSection.Exists())
@@ -56,7 +59,7 @@ public static class MSerilogAction
             _ => "Grpc"
         };
 
-        loggerConfiguration.WriteTo.OpenTelemetry(options =>
+        sinkConfig.OpenTelemetry(options =>
         {
             options.Endpoint = endpoint;
             options.Protocol = Enum.Parse<OtlpProtocol>(protocol);
@@ -76,7 +79,7 @@ public static class MSerilogAction
         });
     }
 
-    private static void AddFileSink(IConfiguration configuration, LoggerConfiguration loggerConfiguration)
+    private static void AddFileSink(IConfiguration configuration, Serilog.Configuration.LoggerSinkConfiguration sinkConfig)
     {
         IConfigurationSection fileSection = configuration.GetSection("Serilog:File");
         string? path = fileSection["Path"];
@@ -98,7 +101,7 @@ public static class MSerilogAction
             throw new MConfigurationException("Invalid log file path.", "Serilog:LogFilePath");
         }
 
-        loggerConfiguration.WriteTo.File(
+        sinkConfig.File(
             new Serilog.Formatting.Json.JsonFormatter(),
             path,
             rollingInterval: RollingInterval.Infinite);

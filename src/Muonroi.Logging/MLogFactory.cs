@@ -8,8 +8,15 @@
 
 
 
+
+using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
+using Muonroi.Core.Abstractions.Context;
+using Muonroi.Core.Abstractions.Diagnostics;
 using Muonroi.Core.Abstractions.Guards;
+using Muonroi.Core.Abstractions.Interfaces;
+using Muonroi.Logging.Abstractions;
+using Muonroi.Logging.Abstractions.Exceptions;
 
 namespace Muonroi.Logging;
 
@@ -20,22 +27,26 @@ public sealed class MLogFactory(
     ILoggerFactory loggerFactory,
     ISystemExecutionContextAccessor accessor,
     IMLogContext logContext,
-    IMTraceContext? traceContext = null) : IMLogFactory
+    IMTraceContext? traceContext = null,
+    IMLogArgumentResolver? resolver = null,
+    IExceptionClassifier? exceptionClassifier = null) : IMLogFactory
 {
     private readonly ILoggerFactory _loggerFactory = MGuard.NotNull(loggerFactory);
     private readonly ISystemExecutionContextAccessor _accessor = MGuard.NotNull(accessor);
     private readonly IMLogContext _logContext = MGuard.NotNull(logContext);
+    private readonly IMLogArgumentResolver _resolver = resolver ?? new MLogArgumentResolver();
+    private readonly IExceptionClassifier? _exceptionClassifier = exceptionClassifier;
 
     /// <inheritdoc />
     public IMLog<T> CreateLogger<T>()
     {
-        return new MLog<T>(_loggerFactory.CreateLogger<T>(), _accessor, _logContext, traceContext);
+        return new MLog<T>(_loggerFactory.CreateLogger<T>(), _accessor, _logContext, traceContext, _resolver, _exceptionClassifier);
     }
 
     /// <inheritdoc />
     public IMLog CreateLogger(string categoryName)
     {
-        return new MLogNonGeneric(_loggerFactory.CreateLogger(categoryName), _accessor, _logContext, traceContext);
+        return new MLogNonGeneric(_loggerFactory.CreateLogger(categoryName), _accessor, _logContext, traceContext, _resolver, _exceptionClassifier);
     }
 
     /// <inheritdoc />
@@ -52,11 +63,15 @@ internal sealed class MLogNonGeneric(
     ILogger inner,
     ISystemExecutionContextAccessor accessor,
     IMLogContext logContext,
-    IMTraceContext? traceContext = null) : IMLog
+    IMTraceContext? traceContext = null,
+    IMLogArgumentResolver? resolver = null,
+    IExceptionClassifier? exceptionClassifier = null) : IMLog
 {
     private readonly ILogger _inner = MGuard.NotNull(inner);
     private readonly ISystemExecutionContextAccessor _accessor = MGuard.NotNull(accessor);
     private readonly IMLogContext _logContext = MGuard.NotNull(logContext);
+    private readonly IMLogArgumentResolver _resolver = resolver ?? new MLogArgumentResolver();
+    private readonly IExceptionClassifier? _exceptionClassifier = exceptionClassifier;
 
     /// <inheritdoc />
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
@@ -123,17 +138,20 @@ internal sealed class MLogNonGeneric(
     {
         _inner.LogInformation(
             "{Message} | Caller: {CallerMemberName} at {CallerFilePath}:{CallerLineNumber} | Request: {@Request} | Result: {@Result}", 
-            message, memberName, filePath, lineNumber, request, result);
+            message, memberName, filePath, lineNumber, _resolver.Resolve(request), _resolver.Resolve(result));
         RecordTrace("INFO", "{Message} | Caller: {CallerMemberName}", new object?[] { message, memberName });
     }
 
     /// <inheritdoc />
     public void ErrorContext(Exception ex, string message, object? request = null, [CallerMemberName] string memberName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0)
     {
+        var classification = _exceptionClassifier?.Classify(ex) ?? ExceptionClassification.Unknown(ex);
+        
         _inner.LogError(ex,
-            "{Message} | Caller: {CallerMemberName} at {CallerFilePath}:{CallerLineNumber} | Request: {@Request}", 
-            message, memberName, filePath, lineNumber, request);
-        RecordTrace("ERROR", "{Message} | Caller: {CallerMemberName}", new object?[] { message, memberName }, ex);
+            "{Message} | ErrorCode: {ErrorCode} | Retryable: {Retryable} | Caller: {CallerMemberName} at {CallerFilePath}:{CallerLineNumber} | Request: {@Request}", 
+            message, classification.ErrorCode, classification.Retryable, memberName, filePath, lineNumber, _resolver.Resolve(request));
+            
+        RecordTrace("ERROR", "{Message} | ErrorCode: {ErrorCode} | Caller: {CallerMemberName}", new object?[] { message, classification.ErrorCode, memberName }, ex);
     }
 
     /// <inheritdoc />
@@ -141,7 +159,7 @@ internal sealed class MLogNonGeneric(
     {
         _inner.LogInformation(
             "Audit: {AuditAction} on {ObjectType} {ObjectId} | Success: {IsSuccess} | Prev: {PreviousStatus} | New: {NewStatus} | Data: {@ExtraData} | Caller: {CallerMemberName}",
-            action, objectType, objectId, isSuccess, previousStatus, newStatus, extraData, memberName);
+            action, objectType, objectId, isSuccess, previousStatus, newStatus, _resolver.Resolve(extraData), memberName);
         RecordTrace("AUDIT", "Audit: {AuditAction} on {ObjectType} {ObjectId} | Success: {IsSuccess}", new object?[] { action, objectType, objectId, isSuccess });
     }
 
