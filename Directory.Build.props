@@ -51,6 +51,7 @@
     <!-- CS1591: test code is not part of the public API surface, no XML docs required.
          xUnit1030: xUnit's ConfigureAwait guidance is advisory for test methods; not a ship defect. -->
     <NoWarn>$(NoWarn);CS1591;xUnit1030</NoWarn>
+    <VSTestFailTestsOnNothingFound>false</VSTestFailTestsOnNothingFound>
   </PropertyGroup>
 
   <!-- Common Test Dependencies — versions managed by Directory.Packages.props (CPM) -->
