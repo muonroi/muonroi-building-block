@@ -1,6 +1,3 @@
-using FluentAssertions;
-using Xunit;
-
 namespace Muonroi.BackgroundJobs.Abstractions.Tests;
 
 public class SmokeTests

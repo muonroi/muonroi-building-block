@@ -1,5 +1,3 @@
-using FluentAssertions;
-using Xunit;
 namespace Muonroi.SignalR.Tests;
 
 public class SmokeTests

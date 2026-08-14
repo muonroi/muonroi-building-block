@@ -1,6 +1,3 @@
-using Microsoft.Extensions.FileSystemGlobbing;
-using System.Xml.Linq;
-
 namespace Muonroi.RuleGen.Services;
 
 internal static class SourceDiscoveryService

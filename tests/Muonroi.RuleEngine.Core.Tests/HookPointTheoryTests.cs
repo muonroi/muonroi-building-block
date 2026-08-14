@@ -1,6 +1,3 @@
-using Muonroi.RuleEngine.Core;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Core.Tests;
 
 public class HookPointTheoryTests

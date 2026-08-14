@@ -18,10 +18,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 using Hangfire;
-using Hangfire.MemoryStorage;
 using Muonroi.BackgroundJobs.Abstractions;       // BackgroundJobHandler.AddBackgroundJobs (extension on IServiceCollection)
 using Muonroi.Core.Abstractions.Context;         // ISystemExecutionContextAccessor, ITenantContextPolicy
-using Quickstart.BackgroundJobs.Api.Jobs;
 
 // Referencing Muonroi.BackgroundJobs.Hangfire is enough — its [ModuleInitializer]
 // calls BackgroundJobHandler.RegisterProvider(JobType.Hangfire, ...) automatically

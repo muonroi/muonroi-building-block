@@ -1,5 +1,3 @@
-using Muonroi.Rules;
-
 namespace Muonroi.Rules.Tests;
 
 [Collection("NonParallel")]

@@ -1,5 +1,3 @@
-using Muonroi.Messaging.Abstractions.Contracts;
-
 namespace Muonroi.Caching.Redis.Tests;
 
 /// <summary>

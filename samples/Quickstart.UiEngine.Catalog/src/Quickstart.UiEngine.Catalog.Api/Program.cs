@@ -1,8 +1,3 @@
-using Muonroi.Logging;
-using Quickstart.UiEngine.Catalog.Api;
-using Muonroi.UiEngine.Catalog.Controllers;
-using Muonroi.UiEngine.Catalog.Extensions;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

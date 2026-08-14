@@ -1,8 +1,3 @@
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Serialization;
-using System.Diagnostics;
-
 namespace Muonroi.Diagnostics.Context;
 
 internal sealed class MTraceSession(string sessionId, string? tenantId, string? userId, bool lineTraceEnabled, IMJsonSerializeService json) : ITraceSession

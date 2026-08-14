@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Quickstart.RuleEngine.Core.Api.Models;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Core;
-
 namespace Quickstart.RuleEngine.Core.Api.Controllers;
 
 [ApiController]

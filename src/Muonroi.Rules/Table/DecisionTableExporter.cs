@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Muonroi.Rules.Table;
 
 /// <summary>

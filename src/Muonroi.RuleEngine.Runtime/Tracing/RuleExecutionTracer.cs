@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Guards;
-
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
 /// <summary>

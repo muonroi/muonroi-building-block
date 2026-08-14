@@ -6,3 +6,4 @@ global using Xunit;
 global using Moq;
 global using Consul;
 global using System.Collections.Generic;
+global using FluentAssertions;

@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Governance.License;
-
 namespace Quickstart.Governance.Abstractions.Api.Controllers;
 
 [ApiController]

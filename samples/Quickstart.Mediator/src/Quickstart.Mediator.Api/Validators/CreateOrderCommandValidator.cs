@@ -1,6 +1,3 @@
-using FluentValidation;
-using Quickstart.Mediator.Api.Commands;
-
 namespace Quickstart.Mediator.Api.Validators;
 
 /// <summary>

@@ -1,8 +1,3 @@
-using System.Text.Json;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Logging.Abstractions;
-using Muonroi.RuleEngine.Proliferation.Models;
-
 namespace Muonroi.RuleEngine.Proliferation.Auth;
 
 /// <summary>

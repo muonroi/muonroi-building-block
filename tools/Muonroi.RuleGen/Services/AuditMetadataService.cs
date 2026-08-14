@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Muonroi.RuleGen.Services;
 
 internal static class AuditMetadataService

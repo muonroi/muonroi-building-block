@@ -1,11 +1,3 @@
-using FluentAssertions;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.RuleEngine.Runtime.Rules;
-using NSubstitute;
-using StackExchange.Redis;
-using Xunit;
-using Muonroi.Caching.Redis.RuleEngine;
-
 namespace Muonroi.Caching.Redis.Tests;
 
 public sealed class RedisRuleSetChangeNotifierTests

@@ -1,10 +1,3 @@
-using System.Diagnostics;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Muonroi.Core.Abstractions.Constants;
-using Muonroi.Tenancy.Core;
-using Muonroi.Tenancy;
-
 namespace Muonroi.Tenancy.Tests;
 
 public class TenantResolutionMiddlewareTests

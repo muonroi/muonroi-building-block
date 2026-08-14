@@ -1,7 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleEngine.Proliferation.Brain;
-using Muonroi.RuleEngine.Proliferation.Models;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests;
 
 public class ScenarioParserTests

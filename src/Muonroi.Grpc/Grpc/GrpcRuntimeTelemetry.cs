@@ -1,5 +1,3 @@
-using System.Diagnostics.Metrics;
-
 namespace Muonroi.Grpc.Grpc;
 
 /// <summary>

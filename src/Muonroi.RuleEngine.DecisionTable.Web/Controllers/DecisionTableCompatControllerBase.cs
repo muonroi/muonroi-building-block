@@ -1,14 +1,3 @@
-using System.Text;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Muonroi.Core.Abstractions.Constants;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models;
-using Muonroi.RuleEngine.DecisionTable.Models;
-using Muonroi.RuleEngine.DecisionTable.Serializers;
-using Muonroi.RuleEngine.DecisionTable.Stores;
-using Muonroi.RuleEngine.DecisionTable.Validators;
-using Muonroi.RuleEngine.DecisionTable.Web.ViewModels;
 using DecisionTableValidationResult = Muonroi.RuleEngine.DecisionTable.Validators.ValidationResult;
 
 namespace Muonroi.RuleEngine.DecisionTable.Web.Controllers;

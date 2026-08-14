@@ -1,7 +1,6 @@
-using Muonroi.RuleGen.Cli;
-using Muonroi.RuleGen.Commands;
-
 namespace Muonroi.RuleGen;
+
+using CommandLineParser = Muonroi.RuleGen.Cli.CommandLineParser;
 
 internal static class Program
 {

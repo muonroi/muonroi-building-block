@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace Muonroi.Billing.Abstractions.Tests;
 
 /// <summary>

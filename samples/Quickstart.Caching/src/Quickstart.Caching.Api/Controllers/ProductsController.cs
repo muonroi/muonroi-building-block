@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Caching.Abstractions.Distributed;
-using Muonroi.Caching.Memory.MultiLevel;
-using Quickstart.Caching.Api.Models;
-
 namespace Quickstart.Caching.Api.Controllers;
 
 /// <summary>

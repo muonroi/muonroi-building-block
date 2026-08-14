@@ -1,15 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Logging;
-using Muonroi.Tenancy.SiteProfile.Web.Validation;
-using Npgsql;
-using TestProject.Service.Core.Infrastructure.EntityConfigurations;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

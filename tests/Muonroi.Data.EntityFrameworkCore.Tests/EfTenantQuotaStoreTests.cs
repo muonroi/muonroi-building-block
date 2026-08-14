@@ -1,6 +1,3 @@
-using Muonroi.Quota.Abstractions;
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class EfTenantQuotaStoreTests

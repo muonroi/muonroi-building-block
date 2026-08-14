@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Response;
-
 namespace Muonroi.Tenancy.SiteProfile.Web.Services;
 
 /// <summary>

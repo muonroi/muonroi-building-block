@@ -1,6 +1,3 @@
-using Muonroi.Mediator.Mediator.Interfaces;
-using System.Text.Json;
-
 namespace Quickstart.Mediator.Api.PostProcessors;
 
 /// <summary>

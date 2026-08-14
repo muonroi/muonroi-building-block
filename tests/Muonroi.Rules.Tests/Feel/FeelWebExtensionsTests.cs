@@ -1,9 +1,3 @@
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Rules;
-using Muonroi.Rules.Controllers;
-using Muonroi.Rules.Contributors;
-
 namespace Muonroi.Rules.Tests.Feel;
 
 public sealed class FeelWebExtensionsTests

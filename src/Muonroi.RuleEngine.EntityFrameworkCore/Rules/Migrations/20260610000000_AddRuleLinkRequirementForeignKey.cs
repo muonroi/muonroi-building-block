@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore.Migrations;
-
 #nullable disable
 
 namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules.Migrations

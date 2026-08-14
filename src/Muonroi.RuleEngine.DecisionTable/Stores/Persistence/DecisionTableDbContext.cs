@@ -1,11 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Muonroi.Data.EntityFrameworkCore.Entity;
-using Muonroi.Data.EntityFrameworkCore.Entity.EFConfig;
-using Muonroi.Governance.License;
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Muonroi.RuleEngine.DecisionTable.Stores.Persistence;
 
 internal sealed class DecisionTableDbContext(

@@ -1,5 +1,3 @@
-using Muonroi.RuleEngine.Abstractions;
-
 namespace Muonroi.Messaging.Abstractions.Contracts;
 
 /// <summary>

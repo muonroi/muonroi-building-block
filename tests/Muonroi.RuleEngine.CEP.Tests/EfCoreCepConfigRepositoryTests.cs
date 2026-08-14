@@ -1,14 +1,3 @@
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.SeedWorks;
-using Muonroi.RuleEngine.CEP.Abstractions;
-using Muonroi.RuleEngine.CEP.Options;
-using Muonroi.RuleEngine.CEP.Persistence;
-using Muonroi.RuleEngine.CEP.Repositories;
-
 namespace Muonroi.RuleEngine.CEP.Tests;
 
 public sealed class EfCoreCepConfigRepositoryTests

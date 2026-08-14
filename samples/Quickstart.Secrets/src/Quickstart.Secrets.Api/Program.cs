@@ -1,5 +1,3 @@
-using Muonroi.Secrets.Secrets;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

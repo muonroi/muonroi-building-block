@@ -1,12 +1,3 @@
-using FluentAssertions;
-using Moq;
-using Microsoft.Extensions.Logging;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Resilience.Policies;
-using Polly;
-using Polly.CircuitBreaker;
-using Xunit;
-
 namespace Muonroi.Resilience.Tests;
 public class ResilienceTests
 {

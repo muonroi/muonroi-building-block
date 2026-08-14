@@ -1,10 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Http.Http;
-using Muonroi.Logging.Abstractions;
-using Polly;
-using Polly.Retry;
-using Quickstart.Http.Api.Models;
-
 namespace Quickstart.Http.Api.Services;
 
 /// <summary>

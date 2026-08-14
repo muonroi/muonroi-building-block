@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Stub core dependencies for MRepository / MSiteRepository

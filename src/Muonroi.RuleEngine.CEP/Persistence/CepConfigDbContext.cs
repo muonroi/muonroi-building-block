@@ -1,12 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Muonroi.Data.EntityFrameworkCore.Entity;
-using Muonroi.Data.EntityFrameworkCore.Entity.EFConfig;
-using Muonroi.Governance.License;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Mediator.Mediator.Interfaces;
-using Muonroi.RuleEngine.CEP.Options;
-
 namespace Muonroi.RuleEngine.CEP.Persistence;
 
 internal sealed class CepConfigDbContext(

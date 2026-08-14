@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.RuleEngine.CEP.Controllers;
-using Muonroi.RuleEngine.CEP.Repositories;
-
 namespace Muonroi.RuleEngine.CEP.Tests;
 
 public class CepControllerTests

@@ -1,14 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-using Muonroi.UiEngine.Catalog.Options;
-using System.Data;
-using System.Data.Common;
-
 namespace Muonroi.UiEngine.Catalog.Persistence;
 
 internal sealed class UiEngineCatalogDatabaseMigrator(

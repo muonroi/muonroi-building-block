@@ -1,10 +1,3 @@
-using Muonroi.AuthZ.Authorization;
-using Muonroi.AuthZ.Extensions;
-using Muonroi.Caching.Abstractions.Distributed;
-using Muonroi.RuleEngine.Abstractions;
-using Quickstart.AuthZ.Api.Infrastructure;
-using Quickstart.AuthZ.Api.Rules;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

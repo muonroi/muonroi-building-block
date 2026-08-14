@@ -1,9 +1,3 @@
-using MassTransit;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Logging;
-using Muonroi.Messaging.MassTransit.Messaging;
-using Quickstart.Messaging.Api.Consumers;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

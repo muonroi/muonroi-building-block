@@ -1,5 +1,3 @@
-using Muonroi.Pdf.Abstractions;
-
 namespace Quickstart.Pdf.SourceGenerators.Api.Models;
 
 [PdfTemplate("ReportModel-v1", "Templates/ReportTemplate.html")]

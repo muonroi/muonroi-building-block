@@ -1,13 +1,3 @@
-using FluentAssertions;
-using Muonroi.Integration.Abstractions;
-using Muonroi.Logging.Abstractions;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Abstractions.Adapters;
-using Muonroi.RuleEngine.Runtime.Adapters;
-using NSubstitute;
-using System.Text.Json;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 public sealed class ConnectorRuleAdapterTests

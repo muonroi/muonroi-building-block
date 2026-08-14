@@ -1,16 +1,3 @@
-using FluentAssertions;
-using Hangfire;
-using Hangfire.Common;
-using Hangfire.Server;
-using Hangfire.Storage;
-using Muonroi.BackgroundJobs.Abstractions;
-using Muonroi.BackgroundJobs.Hangfire.Hangfire;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Tenancy.Core;
-using NSubstitute;
-using Xunit;
-
 namespace Muonroi.BackgroundJobs.Hangfire.Tests;
 
 public sealed class JobContextActivatorFilterTests

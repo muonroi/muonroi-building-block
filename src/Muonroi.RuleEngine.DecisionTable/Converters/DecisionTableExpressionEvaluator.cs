@@ -1,8 +1,3 @@
-
-
-
-using Muonroi.RuleEngine.DecisionTable.Feel;
-
 namespace Muonroi.RuleEngine.DecisionTable.Converters;
 
 internal static partial class DecisionTableExpressionEvaluator

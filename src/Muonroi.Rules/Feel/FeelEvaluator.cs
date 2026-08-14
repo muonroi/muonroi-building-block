@@ -1,8 +1,3 @@
-using Muonroi.Core.Abstractions.Guards;
-using System.Globalization;
-using System.Text;
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.Rules.Feel;
 
 /// <summary>

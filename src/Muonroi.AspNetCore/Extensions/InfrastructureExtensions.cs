@@ -1,23 +1,5 @@
-using Asp.Versioning;
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
-using FluentValidation;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.IdentityModel.Tokens;
-using Muonroi.AspNetCore.Controllers;
-using Muonroi.AspNetCore.Controllers.ActionFilters;
-using Muonroi.AspNetCore.Controllers.Conventions;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.AspNetCore.DI.Autofac;
 using Muonroi.AspNetCore.Filters;
-using Muonroi.AspNetCore.Middleware;
-using Muonroi.Core.Extensions;
 using Muonroi.Tenancy.Core.Legacy;
-using Muonroi.UiEngine.Catalog.Services;
-using System.Security;
-using System.Text.Json.Serialization;
 
 namespace Muonroi.AspNetCore.Extensions;
 

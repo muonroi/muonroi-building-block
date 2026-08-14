@@ -1,7 +1,3 @@
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Quickstart.Observability.Api.Telemetry;
 
 /// <summary>

@@ -1,5 +1,3 @@
-using Muonroi.RuleEngine.Abstractions;
-
 namespace Muonroi.Mediator.Mediator.Interfaces;
 
 /// <summary>

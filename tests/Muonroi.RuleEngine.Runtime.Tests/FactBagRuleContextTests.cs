@@ -1,8 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Runtime.Adapters;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 public sealed class FactBagRuleContextTests

@@ -1,7 +1,3 @@
-using Grpc.Core;
-using Muonroi.Tenancy.SiteProfile.Grpc;
-using TestProject.Aggregate.Host.v1.Protos;
-
 namespace TestProject.Aggregate.Host.v1.Services;
 
 /// <summary>

@@ -1,12 +1,3 @@
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
-using Muonroi.RuleEngine.SourceGenerators.Diagnostics;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-
 namespace Muonroi.RuleEngine.SourceGenerators.Analyzers;
 
 /// <summary>

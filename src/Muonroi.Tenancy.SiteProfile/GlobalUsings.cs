@@ -1,0 +1,14 @@
+global using System;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Muonroi.Core.Abstractions.Guards;
+global using System.Reflection;
+global using Muonroi.Logging.Abstractions;
+global using Microsoft.Extensions.Hosting;
+global using Microsoft.Extensions.Options;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using System.Collections.Concurrent;
+global using System.Threading;
+global using System.Collections;
+global using Microsoft.Extensions.Logging;
+global using System.Diagnostics.CodeAnalysis;

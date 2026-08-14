@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.RuleEngine.DecisionTable;
-using Muonroi.RuleEngine.DecisionTable.Models;
-using Muonroi.RuleEngine.DecisionTable.Stores;
-
 namespace Quickstart.RuleEngine.DecisionTable.Api.Controllers;
 
 [ApiController]

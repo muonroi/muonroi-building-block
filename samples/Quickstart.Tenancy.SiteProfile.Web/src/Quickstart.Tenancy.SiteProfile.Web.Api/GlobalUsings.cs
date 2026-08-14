@@ -4,3 +4,4 @@ global using Microsoft.EntityFrameworkCore;
 global using Muonroi.Tenancy.SiteProfile;
 global using Muonroi.Tenancy.SiteProfile.Web;
 global using Muonroi.Tenancy.SiteProfile.Web.Repositories;
+global using Muonroi.Core.Abstractions.Interfaces;

@@ -1,6 +1,3 @@
-using AngleSharp.Css.Dom;
-using Muonroi.Pdf.Governance.Cascade;
-
 namespace Muonroi.Pdf.Governance.Policies;
 
 /// <summary>

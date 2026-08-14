@@ -1,9 +1,3 @@
-using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using Muonroi.Integration.Abstractions;
-using Muonroi.RuleEngine.Abstractions;
-
 namespace Quickstart.Integration.Api.Connectors;
 
 /// <summary>

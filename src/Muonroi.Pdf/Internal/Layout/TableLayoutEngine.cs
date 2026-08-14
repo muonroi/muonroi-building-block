@@ -1,6 +1,3 @@
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-
 namespace Muonroi.Pdf.Internal.Layout;
 
 // CSS 2.1 §17.5.2: column sizing + colspan/rowspan.

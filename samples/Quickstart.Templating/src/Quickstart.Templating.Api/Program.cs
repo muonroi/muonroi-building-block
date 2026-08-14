@@ -1,5 +1,3 @@
-using Microsoft.OpenApi.Models;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // --- Feature-specific registrations ---

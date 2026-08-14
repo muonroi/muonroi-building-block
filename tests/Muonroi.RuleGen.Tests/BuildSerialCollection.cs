@@ -1,5 +1,3 @@
-using Xunit;
-
 namespace Muonroi.RuleGen.Tests;
 
 /// <summary>

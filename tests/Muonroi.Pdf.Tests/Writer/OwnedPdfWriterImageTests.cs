@@ -1,15 +1,3 @@
-using System.IO;
-using System.IO.Compression;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Muonroi.Pdf.Abstractions.Engine;
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-using Muonroi.Pdf.Internal.Writer;
-
 namespace Muonroi.Pdf.Tests.Writer;
 
 /// <summary>

@@ -1,11 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Muonroi.Logging.Abstractions;
-using Muonroi.RuleEngine.Proliferation.Brain;
-using Muonroi.RuleEngine.Proliferation.Models;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-
 namespace Muonroi.RuleEngine.Proliferation.Worker;
 
 /// <summary>

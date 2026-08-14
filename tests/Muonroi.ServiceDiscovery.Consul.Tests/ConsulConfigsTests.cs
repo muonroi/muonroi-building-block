@@ -1,10 +1,3 @@
-using FluentAssertions;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using Muonroi.ServiceDiscovery.Consul.Consul;
-using Xunit;
-
 namespace Muonroi.ServiceDiscovery.Consul.Tests;
 
 public class ConsulConfigsTests

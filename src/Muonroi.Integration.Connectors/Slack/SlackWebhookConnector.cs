@@ -1,7 +1,3 @@
-using System.Text;
-using System.Text.Json;
-using Muonroi.Integration.Abstractions;
-
 namespace Muonroi.Integration.Connectors.Slack;
 
 /// <summary>

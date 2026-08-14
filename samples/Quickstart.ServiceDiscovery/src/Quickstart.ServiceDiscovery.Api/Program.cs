@@ -1,5 +1,3 @@
-using Muonroi.ServiceDiscovery.Consul.Consul;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

@@ -1,11 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Muonroi.AspNetCore.Diagnostics;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-
 namespace Muonroi.AspNetCore.Extensions;
 
 /// <summary>

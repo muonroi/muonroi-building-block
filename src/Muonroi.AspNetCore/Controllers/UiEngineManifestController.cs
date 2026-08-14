@@ -1,6 +1,3 @@
-using Muonroi.UiEngine.Catalog.Models;
-using Muonroi.UiEngine.Catalog.Services;
-
 namespace Muonroi.AspNetCore.Controllers;
 
 /// <inheritdoc />

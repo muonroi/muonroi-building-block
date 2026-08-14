@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.SeedWorks;
-
 namespace Muonroi.Messaging.Abstractions.Events;
 
 /// <summary>

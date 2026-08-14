@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.RuleEngine.CEP.Repositories;
-
 namespace Muonroi.RuleEngine.CEP.Tests;
 
 public class CepConfigRepositoryTests

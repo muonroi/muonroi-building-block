@@ -1,0 +1,12 @@
+global using FluentAssertions;
+global using Hangfire;
+global using Hangfire.Common;
+global using Hangfire.Server;
+global using Hangfire.Storage;
+global using Muonroi.BackgroundJobs.Abstractions;
+global using Muonroi.BackgroundJobs.Hangfire.Hangfire;
+global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.Tenancy.Core;
+global using NSubstitute;
+global using Xunit;

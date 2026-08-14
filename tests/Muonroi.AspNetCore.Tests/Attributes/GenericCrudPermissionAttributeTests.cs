@@ -1,6 +1,3 @@
-using Muonroi.AspNetCore.Attributes;
-using Xunit;
-
 namespace Muonroi.AspNetCore.Tests.Attributes;
 
 public class GenericCrudPermissionAttributeTests

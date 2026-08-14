@@ -1,7 +1,3 @@
-using System.IO;
-using Muonroi.Data.Dapper.MsSql.IntegrationTests.Fixtures;
-using Muonroi.Data.Dapper.Rls;
-
 namespace Muonroi.Data.Dapper.MsSql.IntegrationTests.Rls;
 
 /// <summary>

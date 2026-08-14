@@ -1,5 +1,3 @@
-﻿using System;
-
 namespace Muonroi.RuleGen.VisualStudio;
 
 internal static class PackageIds

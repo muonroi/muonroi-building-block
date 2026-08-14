@@ -1,8 +1,3 @@
-using Muonroi.Tenancy.SiteProfile;
-using Muonroi.Tenancy.SiteProfile.Web.Configuration;
-using Muonroi.Tenancy.SiteProfile.Web.Handlers;
-using TestProject.Service.Core.Contracts;
-
 namespace TestProject.Service.Sites.Bravo;
 
 /// <summary>

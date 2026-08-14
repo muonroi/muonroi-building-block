@@ -1,7 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleGen.Cli;
-using Xunit;
-
 namespace Muonroi.RuleGen.Tests;
 
 public sealed class CommandContextTests

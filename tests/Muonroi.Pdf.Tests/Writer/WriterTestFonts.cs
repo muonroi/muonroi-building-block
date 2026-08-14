@@ -1,9 +1,6 @@
-using System.Collections.Generic;
-using System.Linq;
-using Muonroi.Pdf.Abstractions;
-using Muonroi.Pdf.Internal.Font;
-
 namespace Muonroi.Pdf.Tests.Writer;
+
+using FontStyle = Muonroi.Pdf.Abstractions.FontStyle;
 
 /// <summary>
 /// Supplies a deterministic embedded font (the project's TestFont.ttf resource) for writer

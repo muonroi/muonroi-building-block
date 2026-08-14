@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>

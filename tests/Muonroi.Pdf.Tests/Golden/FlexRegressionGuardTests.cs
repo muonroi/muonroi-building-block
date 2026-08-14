@@ -1,5 +1,3 @@
-using System.Linq;
-
 namespace Muonroi.Pdf.Tests.Golden;
 
 /// <summary>

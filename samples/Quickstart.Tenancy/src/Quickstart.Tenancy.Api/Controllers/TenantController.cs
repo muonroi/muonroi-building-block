@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Tenancy.Abstractions;
-using Muonroi.Tenancy.Abstractions.Interfaces;
-using Muonroi.Tenancy.Core;
-
 namespace Quickstart.Tenancy.Api.Controllers;
 
 /// <summary>

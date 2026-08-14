@@ -1,0 +1,14 @@
+global using Muonroi.Core.Abstractions.Exceptions;
+global using System.Reflection;
+global using FluentAssertions;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
+global using Muonroi.Tenancy.SiteProfile.Web;
+global using NSubstitute;
+global using Xunit;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.EntityFrameworkCore;
+global using Muonroi.Tenancy.SiteProfile;
+global using System.Text.RegularExpressions;
+global using Muonroi.Tenancy.Core;

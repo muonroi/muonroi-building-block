@@ -1,6 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using Muonroi.Pdf.Abstractions.Exceptions;
-
 namespace Muonroi.Pdf.Internal.Image;
 
 [SuppressMessage("Muonroi.CodeStandards", "MSTD0001",

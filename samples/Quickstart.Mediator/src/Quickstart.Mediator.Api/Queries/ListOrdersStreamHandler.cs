@@ -1,8 +1,3 @@
-using Muonroi.Mediator.Mediator.Interfaces;
-using Quickstart.Mediator.Api.Commands;
-using Quickstart.Mediator.Api.Models;
-using System.Runtime.CompilerServices;
-
 namespace Quickstart.Mediator.Api.Queries;
 
 /// <summary>

@@ -1,9 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.BackgroundJobs.Abstractions;
-
 namespace Muonroi.BackgroundJobs.Quartz;
 
 /// <summary>

@@ -1,5 +1,3 @@
-using Muonroi.Auth.TokenBinding;
-
 namespace Muonroi.Auth.Tests;
 
 public class TokenBindingTests

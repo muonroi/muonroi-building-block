@@ -19,3 +19,7 @@ global using System.Collections.Generic;
 global using System.Threading.Tasks;
 global using Microsoft.Extensions.Options;
 global using Microsoft.AspNetCore.Http;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using Muonroi.Auth.Keys;
+global using Muonroi.Auth.Mfa.WebAuthenticate;
+global using Muonroi.Auth.TokenBinding;

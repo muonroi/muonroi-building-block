@@ -1,13 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Muonroi.Integration.Abstractions;
-using Muonroi.Integration.Connectors.Database;
-using Muonroi.Integration.Connectors.Email;
-using Muonroi.Integration.Connectors.Http;
-using Muonroi.Integration.Connectors.Presets;
-using Muonroi.Integration.Connectors.Redis;
-using Muonroi.Integration.Connectors.Slack;
-
 namespace Muonroi.Integration.Connectors.Registration;
 
 /// <summary>

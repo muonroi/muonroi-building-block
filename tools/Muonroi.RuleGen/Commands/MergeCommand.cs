@@ -1,14 +1,3 @@
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleGen.Cli;
-using Muonroi.RuleGen.Models;
-using Muonroi.RuleGen.Services;
-using Muonroi.RuleGen.Writers;
-using Spectre.Console;
-using System.Text;
-
 namespace Muonroi.RuleGen.Commands;
 
 internal static class MergeCommand

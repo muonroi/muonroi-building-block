@@ -1,10 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.UiEngine.Catalog.Models;
-using Muonroi.UiEngine.Catalog.Services;
-
 namespace Muonroi.UiEngine.Catalog.Controllers;
 
 /// <summary>

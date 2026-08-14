@@ -1,5 +1,3 @@
-using TestProject.Service.Core.Contracts;
-
 namespace TestProject.Service.Core.Services;
 
 /// <summary>

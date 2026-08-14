@@ -1,6 +1,3 @@
-using System.Text;
-using System.Text.Json;
-
 namespace Muonroi.RuleEngine.Proliferation.Brain;
 
 /// <summary>

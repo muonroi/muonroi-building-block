@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-
 namespace Muonroi.RuleEngine.CEP.Observability;
 
 /// <summary>

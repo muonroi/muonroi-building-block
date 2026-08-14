@@ -1,7 +1,3 @@
-using Muonroi.RuleGen.Cli;
-using Muonroi.RuleGen.Services;
-using Muonroi.RuleGen.Writers;
-
 namespace Muonroi.RuleGen.Commands;
 
 internal static class VerifyCommand

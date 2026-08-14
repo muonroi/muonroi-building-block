@@ -1,10 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Logging;
-using Muonroi.Resilience;
-using Polly;
-using Polly.Retry;
-using Quickstart.Resilience.Api.Services;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

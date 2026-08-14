@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Governance.License;
-
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>

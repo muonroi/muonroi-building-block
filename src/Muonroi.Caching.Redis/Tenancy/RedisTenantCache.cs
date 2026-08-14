@@ -1,6 +1,3 @@
-using StackExchange.Redis;
-using Muonroi.Core.Abstractions.Guards;
-
 namespace Muonroi.Caching.Redis.Tenancy;
 
 /// <summary>

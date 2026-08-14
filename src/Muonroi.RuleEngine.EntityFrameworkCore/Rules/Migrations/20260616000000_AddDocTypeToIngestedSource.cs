@@ -1,8 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Muonroi.RuleEngine.EntityFrameworkCore.Rules;
-
 #nullable disable
 
 namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules.Migrations

@@ -1,23 +1,3 @@
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Muonroi.Pdf.Abstractions;
-using Muonroi.Pdf.Abstractions.Policy;
-using Muonroi.Pdf.Extensions;
-using Muonroi.Pdf.Governance.Policies;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-using Muonroi.Pdf.Tests.Service;
-using Xunit;
-using Xunit.Abstractions;
-
 namespace Muonroi.Pdf.Tests.Layout;
 
 /// <summary>

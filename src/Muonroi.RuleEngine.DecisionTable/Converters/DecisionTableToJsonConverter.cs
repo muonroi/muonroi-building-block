@@ -1,8 +1,3 @@
-using Muonroi.RuleEngine.DecisionTable.Constants;
-using Muonroi.RuleEngine.DecisionTable.Models;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.SeedWorks;
-
 namespace Muonroi.RuleEngine.DecisionTable.Converters;
 
 /// <summary>

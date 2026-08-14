@@ -1,4 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.RuleEngine.NRules.Tests;
 
 public class NRulesEngineTests

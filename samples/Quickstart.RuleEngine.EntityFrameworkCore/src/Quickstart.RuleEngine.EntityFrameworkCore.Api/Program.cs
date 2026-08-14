@@ -1,5 +1,3 @@
-using Muonroi.RuleEngine.EntityFrameworkCore;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

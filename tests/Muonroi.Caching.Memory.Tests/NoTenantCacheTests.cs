@@ -1,5 +1,3 @@
-using Muonroi.Caching.Abstractions.Distributed;
-
 namespace Muonroi.Caching.Memory.Tests;
 
 public class NoTenantCacheTests

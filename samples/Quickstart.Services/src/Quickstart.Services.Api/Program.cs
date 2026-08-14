@@ -1,7 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Muonroi.Mapping.Abstractions;
-using Quickstart.Services.Api.Domain;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

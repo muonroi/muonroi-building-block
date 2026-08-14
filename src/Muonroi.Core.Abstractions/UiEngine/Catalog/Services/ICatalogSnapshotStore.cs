@@ -1,5 +1,3 @@
-using Muonroi.UiEngine.Catalog.Models;
-
 namespace Muonroi.UiEngine.Catalog.Services;
 
 /// <summary>

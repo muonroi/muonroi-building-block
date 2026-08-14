@@ -1,14 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.SeedWorks;
-using Muonroi.Core.Helpers;
-using Muonroi.UiEngine.Catalog.Options;
-using Muonroi.UiEngine.Catalog.Persistence;
-using Muonroi.UiEngine.Catalog.Services;
-
 namespace Muonroi.UiEngine.Catalog.Extensions;
 
 /// <summary>

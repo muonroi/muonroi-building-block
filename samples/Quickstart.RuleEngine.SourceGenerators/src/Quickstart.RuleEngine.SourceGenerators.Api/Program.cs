@@ -1,6 +1,3 @@
-using Quickstart.RuleEngine.SourceGenerators.Api.Models;
-using Quickstart.RuleEngine.SourceGenerators.Api.Rules;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Register Rule Engine

@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-
 namespace Quickstart.RuleEngine.Runtime.Web.Api.Controllers;
 
 /// <summary>

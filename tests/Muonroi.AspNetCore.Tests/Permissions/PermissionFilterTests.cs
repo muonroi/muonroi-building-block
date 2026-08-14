@@ -1,22 +1,5 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Muonroi.AspNetCore.Attributes;
-using Muonroi.AspNetCore.Controllers.ActionFilters;
-using Muonroi.AspNetCore.Exceptions;
-using Muonroi.AspNetCore.Tests.Helpers;
-using Muonroi.Core.Abstractions.Constants;
-using Muonroi.Core.Abstractions.Enums;
-using Muonroi.Tenancy.Core;
 using Muonroi.Tenancy.Core.Legacy;
 using TenantContext = Muonroi.Tenancy.Core.TenantContext;
-using Xunit;
 
 namespace Muonroi.AspNetCore.Tests.Permissions;
 

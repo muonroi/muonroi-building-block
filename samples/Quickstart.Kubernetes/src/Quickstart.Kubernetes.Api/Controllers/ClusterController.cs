@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Muonroi.Kubernetes.Kubernetes;
-
 namespace Quickstart.Kubernetes.Api.Controllers;
 
 /// <summary>

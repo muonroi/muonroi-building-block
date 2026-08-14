@@ -1,6 +1,3 @@
-using AngleSharp.Dom;
-using Microsoft.Extensions.Logging;
-
 namespace Muonroi.Pdf.Governance.Cascade;
 
 /// <summary>

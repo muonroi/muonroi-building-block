@@ -1,10 +1,3 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ObjectPool;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Logging.Abstractions.Models;
-using Muonroi.Logging.Queueing;
-using Muonroi.Core.Abstractions.Guards;
-
 namespace Muonroi.Logging;
 
 /// <summary>

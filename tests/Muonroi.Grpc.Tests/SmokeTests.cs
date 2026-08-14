@@ -1,6 +1,3 @@
-using FluentAssertions;
-using Xunit;
-
 namespace Muonroi.Grpc.Tests;
 
 public class SmokeTests

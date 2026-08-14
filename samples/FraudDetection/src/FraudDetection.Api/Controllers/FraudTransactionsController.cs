@@ -1,11 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.RuleEngine.CEP;
-using Muonroi.RuleEngine.CEP.Abstractions;
-using Muonroi.RuleEngine.CEP.Builder;
-using FraudDetection.Api.Models;
-using FraudDetection.Api.Services;
-
 namespace FraudDetection.Api.Controllers;
 
 /// <summary>

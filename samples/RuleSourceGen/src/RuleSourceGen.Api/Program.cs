@@ -1,6 +1,3 @@
-using Muonroi.RuleEngine.Core;
-using RuleSourceGen.Api.Models;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();

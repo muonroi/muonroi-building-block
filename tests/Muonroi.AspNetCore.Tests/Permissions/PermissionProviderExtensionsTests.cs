@@ -1,10 +1,3 @@
-using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.AspNetCore.Extensions;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models;
-using Xunit;
-
 namespace Muonroi.AspNetCore.Tests.Permissions;
 
 public class PermissionProviderExtensionsTests

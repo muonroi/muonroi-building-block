@@ -1,10 +1,6 @@
-using System.Collections.Concurrent;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Muonroi.Logging.Abstractions;
-
 namespace Muonroi.Pdf.Internal.Font;
+
+using FontStyle = Muonroi.Pdf.Abstractions.FontStyle;
 
 /// <summary>
 /// Default <see cref="IFontResolver"/> that reads font registrations from

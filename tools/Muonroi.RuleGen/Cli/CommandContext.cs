@@ -1,6 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace Muonroi.RuleGen.Cli;
 
 internal sealed class CommandContext

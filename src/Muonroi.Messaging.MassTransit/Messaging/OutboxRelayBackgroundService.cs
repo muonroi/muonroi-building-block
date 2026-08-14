@@ -1,11 +1,3 @@
-using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Messaging.Abstractions.Contracts;
-using Muonroi.Messaging.Abstractions.Events;
-
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>

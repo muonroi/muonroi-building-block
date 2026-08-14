@@ -1,11 +1,3 @@
-using System.Text.Json;
-using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using Muonroi.RuleEngine.Proliferation.Brain;
-using Muonroi.RuleEngine.Proliferation.Models;
-using Muonroi.RuleEngine.Proliferation.Worker;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests;
 
 public class ProliferationWorkerTests

@@ -1,5 +1,3 @@
-using Muonroi.Pdf.Enterprise.Quality;
-
 namespace Muonroi.Pdf.Tests.Enterprise;
 
 public sealed class SsimScorerTests

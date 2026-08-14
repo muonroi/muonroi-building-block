@@ -1,9 +1,3 @@
-
-
-
-
-using Polly.CircuitBreaker;
-
 namespace Quickstart.Resilience.Api.Services;
 
 /// <summary>

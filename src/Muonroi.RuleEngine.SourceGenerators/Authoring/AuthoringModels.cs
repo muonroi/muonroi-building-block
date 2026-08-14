@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Muonroi.RuleEngine.SourceGenerators.Authoring;
 
 internal sealed record AuthoringManifestDefinition(

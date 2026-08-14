@@ -12,3 +12,6 @@ global using Muonroi.Core.Pagination;
 global using Muonroi.Core.Timing;
 global using Muonroi.Core.Abstractions.Models.Common;
 global using Xunit;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using Muonroi.Core.Abstractions.Ecosystem;
+global using Muonroi.Core.Abstractions.Security;

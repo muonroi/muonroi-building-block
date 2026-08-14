@@ -1,8 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleEngine.Proliferation.Brain;
-using Muonroi.RuleEngine.Proliferation.Models;
-using System.Text.Json;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests;
 
 public class VectorSemanticDeduplicatorTests

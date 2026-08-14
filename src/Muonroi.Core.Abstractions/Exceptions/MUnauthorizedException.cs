@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace Muonroi.Core.Abstractions.Exceptions;
 
 /// <summary>

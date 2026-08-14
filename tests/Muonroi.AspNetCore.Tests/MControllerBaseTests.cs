@@ -1,5 +1,3 @@
-using Muonroi.Logging.Abstractions;
-
 namespace Muonroi.AspNetCore.Tests;
 
 public class MControllerBaseTests

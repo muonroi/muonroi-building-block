@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.RuleEngine.CEP.Abstractions;
-using Muonroi.RuleEngine.CEP.Builder;
-
 namespace Muonroi.RuleEngine.CEP.Controllers;
 
 /// <summary>

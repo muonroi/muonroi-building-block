@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Security;
-
 namespace Muonroi.Core.Abstractions.Models.Common;
 
 /// <summary> Represents the configuration for tokens. </summary>

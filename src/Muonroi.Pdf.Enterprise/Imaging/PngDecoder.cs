@@ -1,9 +1,3 @@
-using System;
-using System.Buffers.Binary;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.IO.Compression;
-
 namespace Muonroi.Pdf.Enterprise.Imaging;
 
 /// <summary>

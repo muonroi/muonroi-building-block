@@ -1,5 +1,3 @@
-using Quickstart.BackgroundJobs.Hangfire.Api.Jobs;
-
 namespace Quickstart.BackgroundJobs.Hangfire.Api.Controllers;
 
 [ApiController]

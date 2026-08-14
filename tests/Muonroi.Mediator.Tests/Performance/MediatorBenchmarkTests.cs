@@ -1,9 +1,3 @@
-using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Mediator.Mediator.Interfaces;
-using Muonroi.Mediator.Mediator;
-using System.Diagnostics;
-
 namespace Muonroi.Mediator.Tests.Performance;
 
 public class MediatorBenchmarkTests

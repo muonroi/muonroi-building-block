@@ -1,6 +1,3 @@
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Internal.Image;
-
 namespace Muonroi.Pdf.Tests.Image;
 
 /// <summary>

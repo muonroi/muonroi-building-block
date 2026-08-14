@@ -1,5 +1,3 @@
-using Muonroi.AspNetCore.Diagnostics;
-
 namespace Muonroi.AspNetCore.Diagnostics;
 
 /// <summary>

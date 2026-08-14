@@ -1,6 +1,3 @@
-using TestProject.Aggregate.Core.Contracts;
-using TestProject.Aggregate.Core.Handlers;
-
 namespace TestProject.Aggregate.Sites.Bravo;
 
 /// <summary>

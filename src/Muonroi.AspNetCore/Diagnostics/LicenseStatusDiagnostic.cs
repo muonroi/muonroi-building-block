@@ -1,5 +1,3 @@
-using Muonroi.Governance.License;
-
 namespace Muonroi.AspNetCore.Diagnostics;
 
 /// <summary>

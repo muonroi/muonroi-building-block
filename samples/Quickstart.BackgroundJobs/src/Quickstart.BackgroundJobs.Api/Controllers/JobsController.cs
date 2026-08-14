@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.BackgroundJobs.Abstractions;
-using Quickstart.BackgroundJobs.Api.Jobs;
-
 namespace Quickstart.BackgroundJobs.Api.Controllers;
 
 /// <summary>

@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 // Muonroi.RuleGen.Mcp is a developer MCP (Model Context Protocol) tool server.
 // It throws standard BCL exceptions (InvalidOperationException, FileNotFoundException,
 // DirectoryNotFoundException) as tool-error responses, not as Muonroi service exceptions.

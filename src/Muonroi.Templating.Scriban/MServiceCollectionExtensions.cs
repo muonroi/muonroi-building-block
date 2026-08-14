@@ -1,6 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Templating.Abstractions;
-
 namespace Muonroi.Templating.Scriban;
 
 /// <summary>

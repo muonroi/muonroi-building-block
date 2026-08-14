@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Globalization;
-
 namespace Muonroi.Pdf.Internal.Layout.Boxes;
 
 /// <summary>

@@ -1,6 +1,3 @@
-using Microsoft.Extensions.Hosting;
-using Muonroi.Logging.Abstractions;
-
 namespace Muonroi.Experience.Runtime.Evolution;
 
 /// <summary>

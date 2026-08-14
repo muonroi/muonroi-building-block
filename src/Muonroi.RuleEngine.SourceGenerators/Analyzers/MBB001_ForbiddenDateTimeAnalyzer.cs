@@ -1,7 +1,3 @@
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Diagnostics;
-using Muonroi.RuleEngine.SourceGenerators.Diagnostics;
-
 namespace Muonroi.RuleEngine.SourceGenerators.Analyzers;
 
 /// <summary>

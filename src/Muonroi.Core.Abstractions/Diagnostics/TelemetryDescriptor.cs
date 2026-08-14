@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Muonroi.Core.Abstractions.Diagnostics;
 
 /// <summary>

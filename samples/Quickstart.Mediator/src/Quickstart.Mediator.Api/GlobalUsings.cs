@@ -1,0 +1,17 @@
+global using Muonroi.Mediator.Mediator.Interfaces;
+global using Quickstart.Mediator.Api.Models;
+global using Quickstart.Mediator.Api.Notifications;
+global using Muonroi.Mediator.Mediator;
+global using Muonroi.Mediator.Mediator.Attributes;
+global using Microsoft.AspNetCore.Mvc;
+global using Quickstart.Mediator.Api.Commands;
+global using Quickstart.Mediator.Api.Queries;
+global using Muonroi.Mediator.Exceptions;
+global using System.Diagnostics;
+global using System.Text.Json;
+global using FluentValidation;
+global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.Logging;
+global using Quickstart.Mediator.Api.Pipeline;
+global using System.Reflection;
+global using System.Runtime.CompilerServices;

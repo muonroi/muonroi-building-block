@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Muonroi.RuleEngine.Core.Events;
 
 /// <summary>

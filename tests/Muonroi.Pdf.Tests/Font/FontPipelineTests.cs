@@ -1,9 +1,6 @@
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Internal.Font;
-using Muonroi.Pdf.Tests.Helpers;
-using NSubstitute;
-
 namespace Muonroi.Pdf.Tests.Font;
+
+using FontStyle = Muonroi.Pdf.Abstractions.FontStyle;
 
 public sealed class FontPipelineTests
 {

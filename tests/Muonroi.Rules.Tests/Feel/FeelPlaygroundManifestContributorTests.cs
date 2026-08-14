@@ -1,5 +1,3 @@
-using Muonroi.Rules.Contributors;
-
 namespace Muonroi.Rules.Tests.Feel;
 
 public sealed class FeelPlaygroundManifestContributorTests

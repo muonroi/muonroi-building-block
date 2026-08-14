@@ -1,6 +1,3 @@
-using Muonroi.BackgroundJobs.Abstractions;
-using Quickstart.BackgroundJobs.Quartz.Api.Jobs;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Execution context accessor required by TenantAwareJobBase

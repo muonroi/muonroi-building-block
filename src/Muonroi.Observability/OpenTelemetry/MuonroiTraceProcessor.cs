@@ -1,7 +1,3 @@
-using System.Diagnostics;
-using Muonroi.Core.Abstractions.Exceptions;
-using OpenTelemetry;
-
 namespace Muonroi.Observability.OpenTelemetry;
 
 /// <summary>

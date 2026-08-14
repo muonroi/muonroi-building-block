@@ -1,5 +1,3 @@
-using System.Threading;
-
 namespace Muonroi.Data.Dapper.Rls.Bypass;
 
 /// <summary>

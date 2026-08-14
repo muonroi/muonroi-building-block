@@ -1,9 +1,3 @@
-using System.ComponentModel;
-using System.Text;
-using ModelContextProtocol.Server;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.RuleGen.Mcp.Models;
-
 namespace Muonroi.RuleGen.Mcp.Tools.Scaffold;
 
 internal static class ScaffoldTemplates

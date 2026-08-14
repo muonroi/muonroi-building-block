@@ -1,6 +1,3 @@
-using Quickstart.RuleEngine.SourceGenerators.Api.Models;
-using Muonroi.RuleEngine.Abstractions;
-
 namespace Quickstart.RuleEngine.SourceGenerators.Api.Rules;
 
 public partial class UserValidationRules

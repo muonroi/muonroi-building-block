@@ -1,7 +1,3 @@
-using Muonroi.Pdf.Extensions;
-using Muonroi.Pdf.Abstractions;
-using Microsoft.OpenApi.Models;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // --- Feature-specific registrations ---

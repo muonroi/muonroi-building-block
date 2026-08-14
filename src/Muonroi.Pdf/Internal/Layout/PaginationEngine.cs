@@ -1,6 +1,3 @@
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-
 namespace Muonroi.Pdf.Internal.Layout;
 
 // Distributes PositionedElements across pages, applies counter substitution, and stamps the

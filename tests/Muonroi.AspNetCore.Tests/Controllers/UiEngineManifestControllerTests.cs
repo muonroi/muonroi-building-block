@@ -1,11 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.AspNetCore.Controllers;
-using Muonroi.UiEngine.Catalog.Models;
-using Muonroi.UiEngine.Catalog.Services;
-using Muonroi.Core.Abstractions.Models.Common;
-using NSubstitute;
-using Xunit;
-
 namespace Muonroi.AspNetCore.Tests.Controllers;
 
 public class UiEngineManifestControllerTests

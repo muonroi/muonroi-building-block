@@ -1,7 +1,3 @@
-using Muonroi.RuleEngine.CEP;
-using Muonroi.RuleEngine.CEP.Builder;
-using Quickstart.CEP.Api.Models;
-
 namespace Quickstart.CEP.Api.Services;
 
 /// <summary>

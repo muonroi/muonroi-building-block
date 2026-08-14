@@ -1,5 +1,3 @@
-using Muonroi.Logging.Abstractions;
-
 namespace Quickstart.Observability.Api.Logging;
 
 /// <summary>

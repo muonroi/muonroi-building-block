@@ -1,9 +1,3 @@
-using System.Text.Json;
-using System.Xml;
-using FluentAssertions;
-using Muonroi.RuleEngine.Proliferation.Export;
-using Muonroi.RuleEngine.Proliferation.Models;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests.Export;
 
 public class XUnitXmlWriterTests

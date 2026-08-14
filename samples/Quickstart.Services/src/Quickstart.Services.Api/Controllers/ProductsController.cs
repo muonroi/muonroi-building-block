@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Quickstart.Services.Api.Domain;
-
 namespace Quickstart.Services.Api.Controllers;
 
 /// <summary>

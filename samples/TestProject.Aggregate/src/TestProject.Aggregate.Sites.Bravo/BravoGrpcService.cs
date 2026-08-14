@@ -1,7 +1,3 @@
-using Grpc.Core;
-using Muonroi.Tenancy.SiteProfile.Grpc;
-using TestProject.Aggregate.Sites.Bravo.Protos;
-
 namespace TestProject.Aggregate.Sites.Bravo;
 
 /// <summary>

@@ -1,5 +1,3 @@
-using System.Diagnostics.Metrics;
-
 namespace Muonroi.Tenancy.SiteProfile.Web.Telemetry;
 
 /// <summary>

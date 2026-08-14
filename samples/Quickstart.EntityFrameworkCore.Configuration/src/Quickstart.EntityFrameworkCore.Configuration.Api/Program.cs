@@ -1,6 +1,3 @@
-using Quickstart.EntityFrameworkCore.Configuration.Api;
-using Muonroi.Data.EntityFrameworkCore.Entity;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContextConfigure<AppDbContext, AppPermission>(builder.Configuration);

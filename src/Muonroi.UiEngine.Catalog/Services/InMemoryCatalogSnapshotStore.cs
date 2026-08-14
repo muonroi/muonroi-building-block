@@ -1,7 +1,3 @@
-using System.Collections.Concurrent;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.UiEngine.Catalog.Models;
-
 namespace Muonroi.UiEngine.Catalog.Services;
 
 internal sealed class InMemoryCatalogSnapshotStore(

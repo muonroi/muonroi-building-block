@@ -1,10 +1,3 @@
-using Muonroi.AspNetCore.Http;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Exceptions;
-using System.Diagnostics;
-using System.Net;
-using System.Net.Http;
-
 namespace Muonroi.AspNetCore.Tests.Http;
 
 /// <summary>

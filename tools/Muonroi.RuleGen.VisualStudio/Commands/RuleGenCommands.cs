@@ -1,17 +1,6 @@
-using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Muonroi.RuleGen.VisualStudio.Commands;
+
+using Process = System.Diagnostics.Process;
 
 internal sealed class RuleGenCommands
 {

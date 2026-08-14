@@ -1,13 +1,3 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Muonroi.AspNetCore.Controllers;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models;
-using Muonroi.Core.Abstractions.Models.Common;
-using NSubstitute;
-using Xunit;
-
 namespace Muonroi.AspNetCore.Tests.Controllers;
 
 public class TestRuntimeManifestController(

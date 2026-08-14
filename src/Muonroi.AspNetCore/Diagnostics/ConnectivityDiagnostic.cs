@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace Muonroi.AspNetCore.Diagnostics;
 
 /// <summary>

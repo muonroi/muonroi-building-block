@@ -1,8 +1,3 @@
-using Muonroi.Mediator.Behaviours;
-using Muonroi.Mediator.Mediator.Attributes;
-using Muonroi.Mediator.Mediator.Interfaces;
-using Muonroi.RuleEngine.Abstractions;
-
 namespace Muonroi.Mediator.Tests.Behaviours;
 
 /// <summary>

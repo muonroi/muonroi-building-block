@@ -1,8 +1,3 @@
-using Microsoft.Extensions.Options;
-using Muonroi.Core.Abstractions.Diagnostics;
-using System.Diagnostics;
-using System.Net.Http;
-
 namespace Muonroi.AspNetCore.Http;
 
 /// <summary>

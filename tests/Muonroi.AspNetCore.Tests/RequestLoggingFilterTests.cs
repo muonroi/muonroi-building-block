@@ -1,4 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.AspNetCore.Tests;
 
 public class RequestLoggingFilterTests

@@ -1,8 +1,3 @@
-using Muonroi.AspNetCore.Attributes;
-using Muonroi.AspNetCore.Exceptions;
-using Muonroi.Core.Abstractions.Enums;
-using Xunit;
-
 namespace Muonroi.AspNetCore.Tests.Permissions;
 
 public enum SamplePermission

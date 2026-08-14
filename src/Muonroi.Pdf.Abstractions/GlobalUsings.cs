@@ -4,3 +4,6 @@ global using System.Diagnostics;
 global using System.IO;
 global using System.Threading;
 global using System.Threading.Tasks;
+global using Muonroi.Pdf.Abstractions;
+global using System.Linq;
+global using Muonroi.Pdf.Abstractions.Policy;

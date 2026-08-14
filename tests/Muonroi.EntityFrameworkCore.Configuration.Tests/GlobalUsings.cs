@@ -7,3 +7,4 @@ global using System.Linq;
 global using System.Reflection;
 global using System.Text;
 global using Xunit;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;

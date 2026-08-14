@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Muonroi.Tenancy.SiteProfile;
 
 /// <summary>

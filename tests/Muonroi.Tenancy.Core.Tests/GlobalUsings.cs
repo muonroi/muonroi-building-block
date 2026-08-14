@@ -19,3 +19,4 @@ global using Muonroi.Tenancy.Abstractions;
 global using Muonroi.Tenancy.Core;
 global using Muonroi.Tenancy.Core.Shared;
 global using Xunit;
+global using Muonroi.Tenancy.Core.Legacy;

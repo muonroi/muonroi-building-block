@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Rules.Feel;
-using Muonroi.Rules.Flags;
-
 namespace Quickstart.Rules.Api.Controllers;
 
 [ApiController]

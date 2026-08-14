@@ -1,15 +1,3 @@
-using Muonroi.Governance.Abstractions.License;
-using Muonroi.Governance.Abstractions.Integrity;
-using Muonroi.Governance.Enterprise.License;
-using Muonroi.Core.Abstractions.SeedWorks;
-using Muonroi.Governance.License;
-using Muonroi.Logging.Abstractions;
-using Microsoft.Extensions.Hosting;
-using NSubstitute;
-using System.Net;
-using System.Net.Http.Json;
-using FluentAssertions;
-
 namespace Muonroi.Governance.Enterprise.Tests.License;
 
 public class LicenseActivationHostedServiceTests : IDisposable

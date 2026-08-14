@@ -1,7 +1,3 @@
-using Grpc.Core;
-using Muonroi.Core.Abstractions.Guards;
-using Qdrant.Client;
-using Qdrant.Client.Grpc;
 using QdrantGrpc = Qdrant.Client.Grpc;
 
 namespace Muonroi.Experience.Runtime.Qdrant;

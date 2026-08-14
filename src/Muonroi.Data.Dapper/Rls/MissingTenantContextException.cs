@@ -1,6 +1,3 @@
-using System.Runtime.CompilerServices;
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.Data.Dapper.Rls;
 
 /// <summary>

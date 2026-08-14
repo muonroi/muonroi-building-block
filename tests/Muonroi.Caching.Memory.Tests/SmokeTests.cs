@@ -1,5 +1,3 @@
-using FluentAssertions;
-using Xunit;
 namespace Muonroi.Caching.Memory.Tests;
 
 public class SmokeTests

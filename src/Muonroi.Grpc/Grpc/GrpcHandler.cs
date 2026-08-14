@@ -1,15 +1,6 @@
-using Grpc.Net.Client;
-using Grpc.Net.Client.Configuration;
-using Grpc.Net.ClientFactory;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Governance.Abstractions.License;
-using Muonroi.Governance.License;
-
 namespace Muonroi.Grpc.Grpc;
+
+using RetryPolicy = global::Grpc.Net.Client.Configuration.RetryPolicy;
 
 /// <summary>
 /// Provides registration helpers for Muonroi gRPC server and client infrastructure.

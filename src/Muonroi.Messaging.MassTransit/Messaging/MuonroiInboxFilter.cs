@@ -1,6 +1,3 @@
-using System;
-using Muonroi.Messaging.Abstractions.Attributes;
-
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>

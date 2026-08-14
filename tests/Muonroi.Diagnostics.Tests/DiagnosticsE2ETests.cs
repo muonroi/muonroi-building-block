@@ -1,19 +1,3 @@
-using FluentAssertions;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Diagnostics.Extensions;
-using Muonroi.Logging;
-using Muonroi.Mediator.Behaviours;
-using Muonroi.Mediator.Mediator;
-using Muonroi.Mediator.Mediator.Interfaces;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Core;
-using Xunit;
-
 namespace Muonroi.Diagnostics.Tests;
 
 public class DiagnosticsE2ETests

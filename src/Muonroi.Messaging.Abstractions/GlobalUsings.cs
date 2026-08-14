@@ -8,3 +8,7 @@ global using System.Linq;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using Muonroi.Tenancy.Abstractions;
+global using Muonroi.RuleEngine.Abstractions;
+global using System.Diagnostics;
+global using System.Diagnostics.Metrics;
+global using Muonroi.Core.Abstractions.Interfaces;

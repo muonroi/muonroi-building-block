@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Diagnostics;
-
 namespace Muonroi.Mediator.Diagnostics;
 
 /// <summary>

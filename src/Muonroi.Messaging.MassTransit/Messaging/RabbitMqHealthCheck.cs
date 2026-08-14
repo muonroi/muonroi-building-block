@@ -1,6 +1,3 @@
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using RabbitMQ.Client;
-
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>

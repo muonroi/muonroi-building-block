@@ -1,8 +1,3 @@
-using Muonroi.Logging;
-using TestProject.Service.Sites.Default;
-using TestProject.Service.Sites.Alpha;
-using TestProject.Service.Sites.Bravo;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

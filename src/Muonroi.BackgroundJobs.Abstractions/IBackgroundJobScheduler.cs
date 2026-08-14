@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace Muonroi.BackgroundJobs.Abstractions;
 
 /// <summary>

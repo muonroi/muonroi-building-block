@@ -1,11 +1,3 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Constants;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models;
-using Muonroi.Rules.Feel;
-
 namespace Muonroi.Rules.Controllers;
 
 /// <summary>

@@ -1,11 +1,3 @@
-using Fido2NetLib;
-using Fido2NetLib.Objects;
-using Microsoft.Extensions.Caching.Distributed;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Tenancy.Core;
-
 namespace Muonroi.Auth.Mfa.WebAuthenticate;
 
 /// <summary>

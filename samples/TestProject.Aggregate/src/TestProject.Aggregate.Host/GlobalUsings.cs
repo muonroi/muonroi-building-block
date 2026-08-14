@@ -4,3 +4,8 @@ global using Grpc.Core;
 global using Google.Protobuf.WellKnownTypes;
 global using Microsoft.Extensions.DependencyInjection;
 global using TestProject.Aggregate.Host.v1.Protos;
+global using TestProject.Aggregate.Core.Infrastructure;
+global using TestProject.Aggregate.Host.v1.Services;
+global using TestProject.Aggregate.Sites.Default;
+global using TestProject.Aggregate.Sites.Alpha;
+global using TestProject.Aggregate.Sites.Bravo;

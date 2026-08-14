@@ -1,5 +1,3 @@
-using Muonroi.Tenancy.Core;
-
 namespace Muonroi.Tenancy.Core.Tests;
 
 public class DefaultTenantIdResolverTests

@@ -4,6 +4,8 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 .vscode
 node_modules
+# EmitCompilerGeneratedFiles debug output (CompilerGeneratedFilesOutputPath)
+samples/Quickstart.RuleEngine.SourceGenerators/src/Quickstart.RuleEngine.SourceGenerators.Api/Generated/
 # User-specific files
 *.rsuser
 *.suo

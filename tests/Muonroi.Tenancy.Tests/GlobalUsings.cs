@@ -14,6 +14,6 @@ global using System;
 global using System.Collections.Generic;
 global using System.Security.Claims;
 global using System.Threading.Tasks;
+global using System.Diagnostics.Metrics;
 global using Xunit;
-
 [assembly: CollectionBehavior(DisableTestParallelization = true)]

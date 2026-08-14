@@ -1,8 +1,3 @@
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Tests.Helpers;
-
 namespace Muonroi.Pdf.Tests.Layout;
 
 public sealed class PaginationTests

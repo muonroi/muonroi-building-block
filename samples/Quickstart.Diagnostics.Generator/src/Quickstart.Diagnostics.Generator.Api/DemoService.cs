@@ -1,6 +1,3 @@
-using System;
-using Microsoft.AspNetCore.Mvc;
-
 // Since the generator expects Muonroi.Core.Abstractions.Diagnostics.MTraceableAttribute, we define it here if the package isn't referenced directly
 namespace Muonroi.Core.Abstractions.Diagnostics
 {

@@ -7,3 +7,5 @@ global using Polly;
 global using Polly.CircuitBreaker;
 global using Polly.Registry;
 global using Quickstart.Resilience.Api.Services;
+global using Muonroi.Logging;
+global using Polly.Retry;

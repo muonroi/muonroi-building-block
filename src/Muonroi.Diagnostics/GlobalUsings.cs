@@ -5,3 +5,5 @@ global using Muonroi.Diagnostics.Store;
 global using Muonroi.Core.Abstractions.Context;
 global using Muonroi.Core.Abstractions.Serialization;
 global using Muonroi.Core.Abstractions.Interfaces;
+global using System.Diagnostics;
+global using System.Collections.Concurrent;

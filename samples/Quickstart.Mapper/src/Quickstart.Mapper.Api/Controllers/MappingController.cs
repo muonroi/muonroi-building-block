@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Mapper.Mapper;
-using Quickstart.Mapper.Api.Models;
-
 namespace Quickstart.Mapper.Api.Controllers;
 
 /// <summary>

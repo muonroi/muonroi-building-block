@@ -1,7 +1,3 @@
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Guards;
-using Serilog.Core;
-
 namespace Muonroi.Observability.Logging;
 
 /// <summary>

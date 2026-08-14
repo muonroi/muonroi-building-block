@@ -1,5 +1,3 @@
-using Muonroi.Pdf.Internal.Layout.Boxes;
-
 namespace Muonroi.Pdf.Tests.Layout;
 
 /// <summary>

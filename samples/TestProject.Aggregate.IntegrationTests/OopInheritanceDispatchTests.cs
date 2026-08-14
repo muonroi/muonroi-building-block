@@ -1,12 +1,3 @@
-using Grpc.Core;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Logging;
-using Muonroi.Logging.Abstractions;
-using TestProject.Aggregate.Host.v1.Services;
-using TestProject.Aggregate.Host.v1.Services.Sites.Bravo;
-
 namespace TestProject.Aggregate.IntegrationTests;
 
 /// <summary>

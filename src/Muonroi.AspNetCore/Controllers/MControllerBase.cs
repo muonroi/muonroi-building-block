@@ -1,7 +1,3 @@
-
-
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Muonroi.AspNetCore.Controllers;
 
 /// <inheritdoc />

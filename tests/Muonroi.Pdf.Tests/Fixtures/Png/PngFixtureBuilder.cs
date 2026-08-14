@@ -1,6 +1,3 @@
-using System.IO;
-using System.IO.Compression;
-
 namespace Muonroi.Pdf.Tests.Fixtures.Png;
 
 /// <summary>

@@ -1,7 +1,3 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Rules.Contributors;
-
 namespace Muonroi.Rules;
 
 /// <summary>

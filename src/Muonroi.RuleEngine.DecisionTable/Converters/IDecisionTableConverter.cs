@@ -1,5 +1,3 @@
-using Muonroi.RuleEngine.DecisionTable.Models;
-
 namespace Muonroi.RuleEngine.DecisionTable.Converters;
 
 /// <summary>

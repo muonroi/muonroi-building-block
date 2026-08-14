@@ -1,8 +1,3 @@
-using Muonroi.Pdf.Abstractions.Policy;
-using Muonroi.Pdf.Governance.Cascade;
-using Muonroi.Pdf.Governance.Parsing;
-using Muonroi.Pdf.Governance.Policies;
-
 namespace Muonroi.Pdf.Tests.Policy;
 
 /// <summary>

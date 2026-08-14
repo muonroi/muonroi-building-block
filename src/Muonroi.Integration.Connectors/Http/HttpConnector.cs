@@ -1,12 +1,3 @@
-using System.Diagnostics;
-using System.Text;
-using System.Text.Json;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics.CodeAnalysis;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Integration.Abstractions;
-
 namespace Muonroi.Integration.Connectors.Http;
 
 /// <summary>

@@ -1,7 +1,3 @@
-using Microsoft.OpenApi.Models;
-using Quickstart.Pdf.SourceGenerators.Api.Models;
-using Quickstart.Pdf.SourceGenerators.Api.Models.Generated;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // --- Feature-specific registrations ---

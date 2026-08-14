@@ -1,6 +1,3 @@
-using Muonroi.Data.Dapper.PostgreSql.IntegrationTests.Fixtures;
-using Muonroi.Data.Dapper.Rls.Setters;
-
 namespace Muonroi.Data.Dapper.PostgreSql.IntegrationTests.Rls;
 
 /// <summary>

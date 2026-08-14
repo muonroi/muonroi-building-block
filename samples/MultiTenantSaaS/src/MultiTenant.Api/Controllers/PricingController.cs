@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using MultiTenant.Api.Models;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Core;
-
 namespace MultiTenant.Api.Controllers;
 
 [ApiController]

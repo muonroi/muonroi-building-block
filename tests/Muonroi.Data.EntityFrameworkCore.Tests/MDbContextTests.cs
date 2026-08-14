@@ -1,6 +1,6 @@
-using Muonroi.Governance.Abstractions.License;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
+
+using INotification = Muonroi.Mediator.Mediator.Interfaces.INotification;
 
 public class MDbContextTests
 {

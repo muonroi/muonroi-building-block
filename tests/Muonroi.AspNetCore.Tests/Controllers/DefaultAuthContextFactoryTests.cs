@@ -1,15 +1,3 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Muonroi.AspNetCore.Controllers;
-using Muonroi.AspNetCore.Tests.Helpers;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models;
-using NSubstitute;
-using Xunit;
-using Muonroi.Core.Abstractions.Models.Common;
-using Microsoft.EntityFrameworkCore;
-using Muonroi.Core.Abstractions.Constants;
-
 namespace Muonroi.AspNetCore.Tests.Controllers;
 
 public class DefaultAuthContextFactoryTests

@@ -1,7 +1,3 @@
-using FluentAssertions;
-using Muonroi.Experience.Runtime.Extraction;
-using Xunit;
-
 namespace Muonroi.Experience.Runtime.Tests;
 
 [Trait("Category", "Extraction")]

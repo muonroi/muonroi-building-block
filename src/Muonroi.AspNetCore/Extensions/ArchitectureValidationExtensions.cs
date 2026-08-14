@@ -1,18 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
-using Muonroi.AspNetCore.Controllers;
-using System.Reflection;
-using System.Text.RegularExpressions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.BackgroundJobs.Abstractions;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Data.Abstractions.Repositories;
-using Muonroi.Data.EntityFrameworkCore.Repositories;
-using Muonroi.Http.Http;
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Muonroi.AspNetCore.Extensions;
 
 /// <summary>

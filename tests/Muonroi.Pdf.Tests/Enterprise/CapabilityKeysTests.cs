@@ -1,5 +1,3 @@
-using Muonroi.Pdf.Enterprise;
-
 namespace Muonroi.Pdf.Tests.Enterprise;
 
 /// <summary>

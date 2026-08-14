@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace TestProject.Service.Core.Infrastructure;
 
 /// <summary>

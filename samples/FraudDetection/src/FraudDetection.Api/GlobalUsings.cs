@@ -1,0 +1,10 @@
+global using Microsoft.AspNetCore.Mvc;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.RuleEngine.CEP;
+global using Muonroi.RuleEngine.CEP.Abstractions;
+global using Muonroi.RuleEngine.CEP.Builder;
+global using FraudDetection.Api.Models;
+global using FraudDetection.Api.Services;
+global using Muonroi.Core.Abstractions.Constants;
+global using Muonroi.Core.Abstractions.Context;
+global using System.Collections.Concurrent;

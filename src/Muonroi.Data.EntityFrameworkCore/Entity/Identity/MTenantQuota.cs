@@ -1,5 +1,3 @@
-using Muonroi.Quota.Abstractions;
-
 namespace Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 
 /// <summary>

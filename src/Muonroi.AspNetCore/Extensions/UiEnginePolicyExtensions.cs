@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Muonroi.AspNetCore.Extensions;
 
 /// <inheritdoc />

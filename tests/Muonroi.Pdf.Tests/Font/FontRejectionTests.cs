@@ -1,6 +1,3 @@
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Internal.Font;
-
 namespace Muonroi.Pdf.Tests.Font;
 
 /// <summary>

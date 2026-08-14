@@ -1,7 +1,3 @@
-using Muonroi.Integration.Abstractions;
-using Muonroi.Integration.Connectors.Registration;
-using Quickstart.Integration.Api.Connectors;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

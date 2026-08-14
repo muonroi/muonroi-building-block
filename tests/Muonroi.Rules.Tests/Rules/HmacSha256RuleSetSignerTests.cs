@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-
 namespace Muonroi.Rules.Tests.Rules;
 
 public class HmacSha256RuleSetSignerTests

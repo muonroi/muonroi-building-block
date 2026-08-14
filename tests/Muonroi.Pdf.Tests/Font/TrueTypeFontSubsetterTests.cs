@@ -1,7 +1,3 @@
-using System.Buffers.Binary;
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Internal.Font;
-
 namespace Muonroi.Pdf.Tests.Font;
 
 public sealed class TrueTypeFontSubsetterTests

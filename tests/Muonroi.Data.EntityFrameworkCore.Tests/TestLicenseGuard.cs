@@ -1,5 +1,3 @@
-using Muonroi.Governance.Abstractions.License;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 internal sealed class TestLicenseGuard : ILicenseGuard

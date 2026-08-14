@@ -1,5 +1,3 @@
-using Muonroi.Governance.Abstractions.License;
-
 namespace Muonroi.Governance.License;
 
 internal sealed class NoopLicenseGuardEnhancer : ILicenseGuardEnhancer

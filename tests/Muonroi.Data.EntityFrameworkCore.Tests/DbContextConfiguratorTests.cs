@@ -1,4 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class DbContextConfiguratorTests

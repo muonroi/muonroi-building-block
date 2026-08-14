@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Models;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class MQueryTests

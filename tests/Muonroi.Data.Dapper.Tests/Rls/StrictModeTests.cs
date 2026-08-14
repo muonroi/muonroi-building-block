@@ -1,12 +1,3 @@
-using Dapper.Extensions;
-using FluentAssertions;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Muonroi.Data.Dapper.Rls;
-using Muonroi.Data.Dapper.Rls.Bypass;
-using Xunit;
-
 namespace Muonroi.Data.Dapper.Tests.Rls;
 
 /// <summary>

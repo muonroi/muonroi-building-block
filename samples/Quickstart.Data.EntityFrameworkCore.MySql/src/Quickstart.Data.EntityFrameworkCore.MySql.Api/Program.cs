@@ -1,6 +1,3 @@
-﻿using Quickstart.Data.EntityFrameworkCore.MySql.Api;
-using Muonroi.Data.EntityFrameworkCore.Entity;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Register Muonroi DbContext using the provider

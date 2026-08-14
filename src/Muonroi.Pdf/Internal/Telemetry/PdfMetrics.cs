@@ -1,7 +1,3 @@
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using Muonroi.Pdf.Abstractions.Telemetry;
-
 namespace Muonroi.Pdf.Internal.Telemetry;
 
 /// <summary>

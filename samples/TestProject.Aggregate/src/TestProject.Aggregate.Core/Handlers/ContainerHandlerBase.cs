@@ -1,5 +1,3 @@
-using TestProject.Aggregate.Core.Contracts;
-
 namespace TestProject.Aggregate.Core.Handlers;
 
 /// <summary>

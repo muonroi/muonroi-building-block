@@ -1,5 +1,3 @@
-using SixLabors.Fonts;
-using Muonroi.Pdf.Internal.Layout;
 using SLFont = SixLabors.Fonts.Font;
 using SLFontFamily = SixLabors.Fonts.FontFamily;
 using SLFontStyle = SixLabors.Fonts.FontStyle;

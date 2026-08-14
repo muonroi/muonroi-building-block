@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore.Storage;
-
 namespace Muonroi.Data.EntityFrameworkCore;
 
 /// <summary>

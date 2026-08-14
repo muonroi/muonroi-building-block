@@ -1,5 +1,3 @@
-using AngleSharp.Css.Dom;
-
 namespace Muonroi.Pdf.Governance.Cascade;
 
 internal sealed class AngleSharpComputedStyle : IComputedStyle

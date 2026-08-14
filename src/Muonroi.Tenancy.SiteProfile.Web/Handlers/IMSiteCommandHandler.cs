@@ -1,5 +1,3 @@
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Muonroi.Tenancy.SiteProfile.Web.Handlers;
 
 /// <summary>

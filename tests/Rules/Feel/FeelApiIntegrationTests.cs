@@ -1,12 +1,3 @@
-using System.Net.Http.Json;
-using System.Text.Json;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Hosting;
-using Muonroi.Rules.Feel;
-
 namespace Muonroi.Rules.Tests.Feel;
 
 public sealed class FeelApiIntegrationTests

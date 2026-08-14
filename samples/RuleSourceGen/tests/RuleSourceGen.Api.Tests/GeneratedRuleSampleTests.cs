@@ -1,7 +1,3 @@
-using Muonroi.RuleEngine.Abstractions;
-using RuleSourceGen.Api.Models;
-using RuleSourceGen.Api.Rules;
-
 namespace RuleSourceGen.Api.Tests;
 
 public class GeneratedRuleSampleTests

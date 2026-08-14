@@ -1,5 +1,3 @@
-using Quickstart.BackgroundJobs.Quartz.Api.Jobs;
-
 namespace Quickstart.BackgroundJobs.Quartz.Api.Controllers;
 
 [ApiController]

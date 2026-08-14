@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace Muonroi.RuleEngine.DecisionTable.Feel;
 
 internal sealed partial class FullFeelCellEvaluator(SimplifiedFeelCellEvaluator? fallback = null) : IFeelCellEvaluator

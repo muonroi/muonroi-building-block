@@ -1,5 +1,3 @@
-using Muonroi.Messaging.Abstractions.Contracts;
-
 namespace Quickstart.Data.Events.Api.Sagas;
 
 /// <summary>

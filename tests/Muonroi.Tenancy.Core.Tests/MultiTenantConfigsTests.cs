@@ -1,5 +1,3 @@
-using Muonroi.Tenancy.Core.Legacy;
-
 namespace Muonroi.Tenancy.Core.Tests;
 
 public class MultiTenantConfigsTests

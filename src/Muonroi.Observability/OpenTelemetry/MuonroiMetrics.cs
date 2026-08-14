@@ -1,5 +1,3 @@
-using System.Diagnostics.Metrics;
-
 namespace Muonroi.Observability.OpenTelemetry;
 
 /// <summary>

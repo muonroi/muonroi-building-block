@@ -1,10 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Mediator.Behaviours;
-using Muonroi.Mediator.Exceptions;
-using Muonroi.Mediator.Mediator;
-using Muonroi.Mediator.Mediator.Interfaces;
-using Muonroi.RuleEngine.Abstractions;
-
 namespace Muonroi.Mediator.Tests.Behaviours;
 
 public class MRuleEngineBehaviorTests

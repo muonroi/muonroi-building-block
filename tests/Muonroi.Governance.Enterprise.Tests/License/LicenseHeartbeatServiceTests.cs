@@ -1,15 +1,3 @@
-using Muonroi.Governance.Abstractions.License;
-using Muonroi.Governance.License;
-using Muonroi.Governance.Enterprise.ServerValidation;
-using Muonroi.Governance.Enterprise.Tests.ServerValidation;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Core.Abstractions.Interfaces;
-using NSubstitute;
-using System.Net;
-using System.Net.Http.Json;
-using Microsoft.Extensions.Hosting;
-using System.Reflection;
-
 namespace Muonroi.Governance.Enterprise.Tests.License;
 
 public class LicenseHeartbeatServiceTests : IDisposable

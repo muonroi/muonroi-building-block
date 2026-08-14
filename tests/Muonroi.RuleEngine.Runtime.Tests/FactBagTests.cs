@@ -1,8 +1,3 @@
-using System.Text.Json;
-using FluentAssertions;
-using Muonroi.RuleEngine.Abstractions;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 public sealed class FactBagTests

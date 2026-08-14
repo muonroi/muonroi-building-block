@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Ecosystem;
-
 namespace Muonroi.AspNetCore.Diagnostics;
 
 /// <summary>

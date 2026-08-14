@@ -1,9 +1,3 @@
-using Grpc.Core;
-using TestProject.Service.Core.Constants;
-using TestProject.Service.Core.Contracts;
-using TestProject.Service.Host.v1.Protos;
-using Muonroi.Tenancy.SiteProfile.Grpc;
-
 namespace TestProject.Service.Host.v1.Services;
 
 /// <summary>

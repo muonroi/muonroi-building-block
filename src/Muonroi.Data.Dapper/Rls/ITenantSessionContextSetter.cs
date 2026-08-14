@@ -1,5 +1,3 @@
-using System.Data;
-
 namespace Muonroi.Data.Dapper.Rls;
 
 /// <summary>

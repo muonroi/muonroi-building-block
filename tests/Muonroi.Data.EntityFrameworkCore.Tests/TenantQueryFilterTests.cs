@@ -1,8 +1,3 @@
-using Microsoft.EntityFrameworkCore.Metadata;
-using Muonroi.Core.Abstractions.SeedWorks;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 /// <summary>

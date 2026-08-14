@@ -1,7 +1,3 @@
-using Muonroi.Mediator.Mediator.Interfaces;
-using Quickstart.Mediator.Api.Models;
-using Quickstart.Mediator.Api.Notifications;
-
 namespace Quickstart.Mediator.Api.Commands;
 
 /// <summary>

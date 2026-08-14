@@ -1,11 +1,3 @@
-using System.Net;
-using System.Net.Http.Json;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Http.Http;
-using Muonroi.Logging.Abstractions;
-using Moq;
-using Polly;
-
 namespace Muonroi.Http.Tests;
 
 public class BaseApiServiceTests

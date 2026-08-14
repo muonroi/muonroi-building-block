@@ -5,3 +5,5 @@ global using Muonroi.Data.EntityFrameworkCore.Entity;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.Metadata.Builders;
 global using Muonroi.EntityFrameworkCore.Configuration;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Quickstart.EntityFrameworkCore.Configuration.Api;

@@ -1,8 +1,3 @@
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Muonroi.Auth.Tests;
 
 public sealed class AuthServiceCollectionExtensionsTests

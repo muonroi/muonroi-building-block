@@ -1,12 +1,3 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Logging;
-using Muonroi.Tenancy.SiteProfile.Web.Behaviors;
-using TestProject.Service.IntegrationTests.Helpers;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

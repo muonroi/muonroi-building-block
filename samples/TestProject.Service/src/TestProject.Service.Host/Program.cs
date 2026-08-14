@@ -1,15 +1,3 @@
-using Muonroi.Tenancy.SiteProfile.Web.Dapper;
-using Muonroi.Tenancy.SiteProfile.Web.Pipeline;
-using Muonroi.Tenancy.SiteProfile.Web.Validation;
-using TestProject.Service.Core.Contracts;
-using TestProject.Service.Core.Infrastructure;
-using TestProject.Service.Host.v1.Services;
-using TestProject.Service.Sites.Default;
-using TestProject.Service.Sites.Alpha;
-using TestProject.Service.Sites.Bravo;
-using TestProject.Service.Sites.Charlie;
-using Muonroi.Tenancy.SiteProfile.Grpc;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 IServiceCollection services = builder.Services;
 IConfiguration configuration = builder.Configuration;

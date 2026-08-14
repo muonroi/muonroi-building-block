@@ -1,5 +1,3 @@
-using Muonroi.Pdf.Internal.Layout;
-
 namespace Muonroi.Pdf.Tests.Layout;
 
 public sealed class FloatPlacementSolverTests

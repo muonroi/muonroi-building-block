@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace Muonroi.RuleGen.Services;
 
 internal static partial class FeelCSharpTranslator

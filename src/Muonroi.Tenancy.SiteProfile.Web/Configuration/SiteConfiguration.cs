@@ -1,5 +1,3 @@
-using Muonroi.Tenancy.SiteProfile;
-
 namespace Muonroi.Tenancy.SiteProfile.Web.Configuration;
 
 /// <summary>

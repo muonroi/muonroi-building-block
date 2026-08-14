@@ -1,10 +1,3 @@
-using FluentAssertions;
-using Microsoft.Extensions.Options;
-using Muonroi.RuleEngine.Core.Tracing;
-using Muonroi.RuleEngine.Runtime.Tracing;
-using System.Text.Json;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 public sealed class TraceRedactorTests

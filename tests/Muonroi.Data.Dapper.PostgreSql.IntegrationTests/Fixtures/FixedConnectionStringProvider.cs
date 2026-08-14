@@ -1,5 +1,3 @@
-using Dapper.Extensions;
-
 namespace Muonroi.Data.Dapper.PostgreSql.IntegrationTests.Fixtures;
 
 /// <summary>

@@ -1,4 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Rules.Tests;
 
 [Collection("NonParallel")]

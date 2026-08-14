@@ -1,5 +1,3 @@
-using Muonroi.Data.EntityFrameworkCore.Sqlite;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class SqliteDbContextConfiguratorTests

@@ -9,3 +9,8 @@ global using System.Threading;
 global using System.Threading.Tasks;
 global using Xunit;
 global using Muonroi.Data.Dapper.Rls.Bypass;
+global using Dapper.Extensions;
+global using System.IO;
+global using Muonroi.Data.Dapper.PostgreSql.IntegrationTests.Fixtures;
+global using Muonroi.Data.Dapper.Rls.Setters;
+global using Muonroi.Data.Dapper.Rls;

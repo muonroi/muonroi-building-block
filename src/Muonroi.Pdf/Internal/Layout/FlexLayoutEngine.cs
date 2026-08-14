@@ -1,7 +1,3 @@
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-
 namespace Muonroi.Pdf.Internal.Layout;
 
 // CSS Flexbox Layout Module Level 1 — the resolution algorithm (FLEX-06).

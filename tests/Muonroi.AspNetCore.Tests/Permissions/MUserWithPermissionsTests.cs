@@ -1,7 +1,3 @@
-using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
-using Muonroi.AspNetCore.Tests.Helpers;
-using Xunit;
-
 namespace Muonroi.AspNetCore.Tests.Permissions;
 
 public class MUserWithPermissionsTests

@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.RuleEngine.Abstractions.Exceptions;
 
 /// <summary>

@@ -1,12 +1,3 @@
-﻿using EnvDTE;
-using EnvDTE80;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-
 namespace Muonroi.RuleGen.VisualStudio;
 
 internal enum SelectionKind

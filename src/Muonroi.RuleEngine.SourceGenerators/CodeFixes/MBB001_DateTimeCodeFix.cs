@@ -1,7 +1,3 @@
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Editing;
-using System.Composition;
-
 namespace Muonroi.RuleEngine.SourceGenerators.CodeFixes;
 
 /// <summary>

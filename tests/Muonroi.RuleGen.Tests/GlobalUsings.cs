@@ -1,0 +1,11 @@
+global using Muonroi.RuleGen.Services;
+global using FluentAssertions;
+global using Xunit;
+global using System.Diagnostics;
+global using Muonroi.RuleGen.Cli;
+global using Muonroi.RuleGen.Models;
+global using Muonroi.RuleGen.Writers;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using Muonroi.RuleGen.Commands;
+global using System.Text.Json;
+global using System.Text;

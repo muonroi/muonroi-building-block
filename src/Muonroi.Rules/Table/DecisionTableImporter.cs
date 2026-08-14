@@ -1,7 +1,3 @@
-using System.Globalization;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-
 namespace Muonroi.Rules.Table;
 
 /// <summary>

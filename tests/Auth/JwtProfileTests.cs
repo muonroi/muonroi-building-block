@@ -1,6 +1,3 @@
-﻿using Muonroi.Auth.Jwt;
-using Muonroi.Auth.Keys;
-
 namespace Muonroi.Auth.Tests;
 
 public class JwtProfileTests

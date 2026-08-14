@@ -1,7 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Mapper.Mapper;
-
 namespace Muonroi.Mapper.Tests;
 
 public class MapperServiceCollectionExtensionsTests

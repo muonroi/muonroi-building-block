@@ -1,5 +1,3 @@
-using Muonroi.RuleEngine.Abstractions.Adapters;
-
 namespace Muonroi.RuleEngine.Runtime.Adapters;
 
 /// <summary>

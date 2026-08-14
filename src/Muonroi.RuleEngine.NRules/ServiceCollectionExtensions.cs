@@ -1,6 +1,3 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Muonroi.RuleEngine.NRules;
 
 /// <summary>DI helpers for registering the NRules engine.</summary>

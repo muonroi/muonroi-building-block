@@ -1,5 +1,3 @@
-using Muonroi.RuleEngine.DecisionTable.Dmn;
-using Muonroi.RuleEngine.DecisionTable.Models;
 using DecisionTableModel = Muonroi.RuleEngine.DecisionTable.Models.DecisionTable;
 
 namespace Muonroi.RuleEngine.DecisionTable.Tests.Dmn;

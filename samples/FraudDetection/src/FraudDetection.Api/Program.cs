@@ -1,8 +1,3 @@
-using Muonroi.Core.Abstractions.Constants;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.RuleEngine.CEP;
-using FraudDetection.Api.Services;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCepWeb();

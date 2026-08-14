@@ -1,5 +1,3 @@
-using Muonroi.RuleEngine.Core.Tracing;
-
 namespace Muonroi.RuleEngine.Runtime.Tracing;
 
 /// <summary>

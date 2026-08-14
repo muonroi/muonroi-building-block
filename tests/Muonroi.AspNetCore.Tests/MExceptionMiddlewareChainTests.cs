@@ -1,11 +1,6 @@
-using Muonroi.AspNetCore.Middleware;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Tenancy.Abstractions;
-using System.Diagnostics;
-using System.Reflection;
-
 namespace Muonroi.AspNetCore.Tests;
+
+using ITenantContext = Muonroi.Tenancy.Abstractions.ITenantContext;
 
 /// <summary>
 /// Tests that MExceptionMiddleware writes the muonroi-causal-chain response header

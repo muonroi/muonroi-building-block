@@ -1,0 +1,13 @@
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.EntityFrameworkCore;
+global using Muonroi.Messaging.Abstractions.Events;
+global using Quickstart.Data.Events.Api.Sagas;
+global using Muonroi.Data.EntityFrameworkCore.Extensions;
+global using Muonroi.Mediator.Mediator;
+global using Muonroi.Messaging.Abstractions.Contracts;
+global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.Data.EntityFrameworkCore.Saga;
+global using Muonroi.Governance.License;
+global using Muonroi.Logging.Abstractions;
+global using Muonroi.Mediator.Mediator.Interfaces;

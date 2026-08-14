@@ -1,10 +1,3 @@
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.RuleEngine.Runtime.Rules;
-using Xunit;
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 /// <summary>

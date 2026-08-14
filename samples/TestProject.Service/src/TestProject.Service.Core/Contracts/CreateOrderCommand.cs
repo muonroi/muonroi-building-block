@@ -1,5 +1,3 @@
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace TestProject.Service.Core.Contracts;
 
 /// <summary>Command for handler dispatch testing via MSiteCommandHandler keyed DI pattern.</summary>

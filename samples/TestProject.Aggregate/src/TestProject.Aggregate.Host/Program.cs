@@ -1,10 +1,3 @@
-using TestProject.Aggregate.Core.Infrastructure;
-using TestProject.Aggregate.Host.v1.Services;
-using TestProject.Aggregate.Sites.Default;
-using TestProject.Aggregate.Sites.Alpha;
-using TestProject.Aggregate.Sites.Bravo;
-using Muonroi.Tenancy.SiteProfile.Grpc;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 IServiceCollection services = builder.Services;
 IConfiguration configuration = builder.Configuration;

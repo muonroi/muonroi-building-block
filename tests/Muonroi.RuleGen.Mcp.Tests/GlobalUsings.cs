@@ -1,1 +1,15 @@
 global using Xunit;
+global using System.Security.Cryptography;
+global using System.Text.Json;
+global using Microsoft.Extensions.AI;
+global using Muonroi.Core.Abstractions.SeedWorks;
+global using Muonroi.Core.Helpers;
+global using Muonroi.RuleGen.Mcp.Infrastructure;
+global using Muonroi.RuleGen.Mcp.Prompts;
+global using Muonroi.RuleGen.Mcp.Resources;
+global using Muonroi.RuleGen.Mcp.Tools.Compliance;
+global using Muonroi.RuleGen.Mcp.Tools.DecisionTableGen;
+global using Muonroi.RuleGen.Mcp.Tools.Policy;
+global using Muonroi.RuleGen.Mcp.Tools.RuleGen;
+global using Muonroi.RuleGen.Mcp.Tools.Scaffold;
+global using System.IO.Compression;

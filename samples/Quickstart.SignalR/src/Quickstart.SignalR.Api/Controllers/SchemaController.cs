@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Models;
-using Muonroi.SignalR.SignalR;
-
 namespace Quickstart.SignalR.Api.Controllers;
 
 /// <summary>

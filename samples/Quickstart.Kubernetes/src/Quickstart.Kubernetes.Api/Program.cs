@@ -1,5 +1,3 @@
-using Muonroi.Kubernetes.Kubernetes;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

@@ -1,7 +1,3 @@
-using Muonroi.Mediator.Mediator.Interfaces;
-using Quickstart.Mediator.Api.Commands;
-using Quickstart.Mediator.Api.Models;
-
 namespace Quickstart.Mediator.Api.Queries;
 
 /// <summary>

@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace Quickstart.BackgroundJobs.Api.Jobs;
 
 /// <summary>

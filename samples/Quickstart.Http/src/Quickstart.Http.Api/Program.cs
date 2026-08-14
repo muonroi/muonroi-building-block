@@ -1,8 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Http.Http;
-using Muonroi.Logging;
-using Quickstart.Http.Api.Services;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

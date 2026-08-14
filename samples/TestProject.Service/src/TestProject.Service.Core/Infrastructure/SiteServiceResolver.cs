@@ -1,10 +1,3 @@
-using System.Reflection;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using TestProject.Service.Core.Constants;
-using Muonroi.Tenancy.SiteProfile;
-using Muonroi.Tenancy.SiteProfile.Grpc;
-
 namespace TestProject.Service.Core.Infrastructure;
 
 /// <summary>

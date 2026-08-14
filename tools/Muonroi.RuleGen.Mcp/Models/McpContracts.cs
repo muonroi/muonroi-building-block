@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Muonroi.RuleGen.Mcp.Models;
 
 internal sealed record RuleGenExtractResult(

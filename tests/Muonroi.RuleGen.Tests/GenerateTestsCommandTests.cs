@@ -1,9 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleGen.Cli;
-using Muonroi.RuleGen.Commands;
-using Xunit;
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.RuleGen.Tests;
 
 public sealed class GenerateTestsCommandTests

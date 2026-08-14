@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Logging.Abstractions;
 namespace Muonroi.ServiceDiscovery.Consul.Consul;
 
 /// <summary>

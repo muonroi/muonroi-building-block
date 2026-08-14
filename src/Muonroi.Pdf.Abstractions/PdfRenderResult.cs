@@ -1,5 +1,3 @@
-using Muonroi.Pdf.Abstractions.Policy;
-
 namespace Muonroi.Pdf.Abstractions;
 
 /// <summary>

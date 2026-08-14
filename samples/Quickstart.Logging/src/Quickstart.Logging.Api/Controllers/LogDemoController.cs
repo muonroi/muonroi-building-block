@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Logging.Abstractions;
-
 namespace Quickstart.Logging.Api.Controllers;
 
 /// <summary>

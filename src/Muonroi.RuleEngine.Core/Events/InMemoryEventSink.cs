@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 namespace Muonroi.RuleEngine.Core.Events;
 
 /// <summary>

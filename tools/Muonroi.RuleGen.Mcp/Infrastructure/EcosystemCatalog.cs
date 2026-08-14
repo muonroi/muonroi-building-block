@@ -1,5 +1,3 @@
-using Muonroi.RuleGen.Mcp.Models;
-
 namespace Muonroi.RuleGen.Mcp.Infrastructure;
 
 internal static class EcosystemCatalog
