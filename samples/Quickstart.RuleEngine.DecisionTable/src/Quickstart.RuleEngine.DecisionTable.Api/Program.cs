@@ -1,0 +1,24 @@
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Register Decision Table Engine
+builder.Services.AddDecisionTableEngine();
+
+// --- Standard wiring ---
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new()
+    {
+        Title = "Quickstart.RuleEngine.DecisionTable API",
+        Version = "v1",
+        Description = "Demonstrates Decision Table Engine."
+    });
+});
+
+WebApplication app = builder.Build();
+app.UseSwagger();
+app.UseSwaggerUI();
+app.MapControllers();
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
+app.Run();

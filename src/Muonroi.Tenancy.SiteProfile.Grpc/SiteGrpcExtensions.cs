@@ -140,7 +140,7 @@ public static class SiteGrpcExtensions
     /// <code>
     /// WebApplication app = builder.Build();
     /// app.InitializeSiteGrpcClients(); // &lt;-- required for Autofac compatibility
-    /// app.Run();
+    ///  await app.RunAsync();
     /// </code>
     /// </summary>
     /// <param name="app">The built web application.</param>

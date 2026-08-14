@@ -173,6 +173,33 @@ using (SiteProfileScope.ForSite(myTestProfile))
 - [`Muonroi.Tenancy.SiteProfile.Web`](../Muonroi.Tenancy.SiteProfile.Web/) — adds per-site EF Core / Dapper infrastructure, `SiteProfileStateMiddleware`, hot-reload, and `AddSiteDbInfrastructure()`
 - [`Muonroi.Tenancy.SiteProfile.SourceGenerators`](../Muonroi.Tenancy.SiteProfile.SourceGenerators/) — source generator that scaffolds `RegisterServices()` for `[GenerateSiteProfile]`-annotated partial classes
 
+
+## Ecosystem Combinations
+
+### + Tenancy.Core → Site on Top of Tenant
+Site profile resolution happens AFTER tenant resolution. `SiteProfileResolver` reads `TenantContext.CurrentTenantId` to determine which site profile to activate.
+
+### + Data.EntityFrameworkCore → Per-Site DbContext
+`AddSiteDbContext<T>()` registers a DbContext that is resolved per-site at runtime — each site gets its own connection string and schema:
+```csharp
+builder.Services.AddSiteDbInfrastructure<MySiteProfile>(options =>
+{
+    options.ConnectionString = site.ConnectionString;
+    options.ConfigureDbContext = (sp, ob) => ob.UseNpgsql(options.ConnectionString);
+});
+```
+
+### + SiteProfile.SourceGenerators → Zero Boilerplate Registration
+Source generators emit the DI registration code for all `ISiteProfile` implementations automatically — no hand-written `AddSiteProfile<T>()` calls needed.
+
+### + SiteProfile.Web → Middleware + Hot-Reload
+`SiteProfileStateMiddleware` sets the active site profile per request; hot-reload broadcasts changes via Redis pub/sub.
+
+## Samples
+- [`Quickstart.Tenancy.SiteProfile`](../../samples/Quickstart.Tenancy.SiteProfile)
+- [`TestProject.Service`](../../samples/TestProject.Service)
+
+
 ## License
 
 Apache-2.0. See [LICENSE-APACHE](../../LICENSE-APACHE).

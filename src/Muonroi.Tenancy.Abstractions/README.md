@@ -142,6 +142,25 @@ For a complete working example — including `TenantContext`, `DefaultTenantIdRe
 - [`Muonroi.Quota.Abstractions`](../Muonroi.Quota.Abstractions/) — quota contracts depended on by this package.
 - [`Muonroi.Core.Abstractions`](../Muonroi.Core.Abstractions/) — base platform contracts.
 
+
+## Ecosystem Combinations
+
+### + Tenancy.Core → Implementation of Abstractions
+`ITenantContext`, `ITenantIdResolver`, `ITenantConnectionStringFactory` defined here are implemented by `Muonroi.Tenancy.Core`. Reference Abstractions in your domain layer; reference Core only in the composition root.
+
+### + RuleEngine → Quota Enforcement Contract
+`ITenantQuotaTracker` (from this package) is used by `RuleOrchestrator` to gate rule evaluations per tenant. The in-memory default is provided here; replace with a persistent implementation for production.
+
+### + Data.EntityFrameworkCore → Tenant-Scoped Repositories
+`IRepository<T>` implementations use `ITenantContext.CurrentTenantId` from this package for all query scoping.
+
+### + All Packages → Universal Tenancy Contract
+Every Muonroi package that is tenant-aware depends on `Tenancy.Abstractions` — making it the foundation of the entire multi-tenant ecosystem.
+
+## Samples
+- [`Quickstart.Tenancy`](../../samples/Quickstart.Tenancy)
+
+
 ## License
 
 Apache-2.0. See [LICENSE-APACHE](../../LICENSE-APACHE).

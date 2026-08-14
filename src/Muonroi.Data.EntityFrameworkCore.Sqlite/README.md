@@ -1,42 +1,41 @@
 # Muonroi.Data.EntityFrameworkCore.Sqlite
 
-> EF Core provider package for SQLite in the Muonroi ecosystem.
-
 [![NuGet](https://img.shields.io/nuget/v/Muonroi.Data.EntityFrameworkCore.Sqlite.svg)](https://www.nuget.org/packages/Muonroi.Data.EntityFrameworkCore.Sqlite/)
 
-This package provides the SQLite implementation for `IDbContextConfigurator<T>`, enabling `Muonroi.Data.EntityFrameworkCore` to seamlessly connect to SQLite databases without changing your `MDbContext` application logic.
+> SQLite provider configuration for Muonroi DbContexts.
+
+## Overview
+Provides `SqliteDbContextConfigurator` for lightweight, file-based SQLite database connections. Ideal for local development or edge caching scenarios in the Muonroi ecosystem.
 
 ## Features
-
-- **SQLite Provider** — Wraps the official Microsoft Entity Framework Core SQLite provider.
-- **Seamless Integration** — Works out-of-the-box with `AddDbContextConfigure<TDbContext, TPermission>`.
-- **Automatic Configuration** — Reads `SqliteConnectionString` from the configuration automatically.
+- **SQLite Setup**: Simple configuration via `SqliteDbContextConfigurator`.
+- **Development Ready**: Eases the transition between SQLite in development and other providers in production.
 
 ## Installation
 
 ```bash
-dotnet add package Muonroi.Data.EntityFrameworkCore.Sqlite --prerelease
+dotnet add package Muonroi.Data.EntityFrameworkCore.Sqlite
 ```
 
 ## Quick Start
 
-Ensure your `appsettings.json` specifies `Sqlite` as the `DbType`:
-
-```json
-{
-  "DatabaseConfigs": {
-    "DbType": "Sqlite",
-    "ConnectionStrings": {
-      "SqliteConnectionString": "Data Source=app.db"
-    }
-  }
-}
-```
-
-The database configuration will automatically pick up this package when configuring your context:
-
 ```csharp
-// Program.cs
-builder.Services.AddDbContextConfigure<AppDbContext, AppPermission>(
-    builder.Configuration);
+builder.Services.AddMuonroiDbContext<MyDbContext>(options =>
+{
+    var configurator = new SqliteDbContextConfigurator();
+    configurator.Configure(options, "Data Source=app.db");
+});
 ```
+
+## Ecosystem Combinations
+
+### Muonroi.Data.EntityFrameworkCore.Sqlite + Muonroi.Experience.Runtime
+Combine `SqliteDbContextConfigurator` with local experience stores for lightweight edge-device persistence.
+
+## Samples
+
+Find complete running examples in the [../../samples/](../../samples/) directory.
+
+## License
+
+This project is licensed under the terms of the applicable Muonroi license.

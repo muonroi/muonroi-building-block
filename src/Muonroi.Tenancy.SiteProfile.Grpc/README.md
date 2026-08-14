@@ -70,7 +70,7 @@ services.AddSiteGrpcClient<DefaultFcdClient>("default", "fcd");
 
 WebApplication app = builder.Build();
 app.InitializeSiteGrpcClients(); // required before app.Run()
-app.Run();
+ await app.RunAsync();
 
 // Consuming service — inject ISiteGrpcClientFactory, no if/switch needed
 public class FcdAggregator(ISiteGrpcClientFactory factory)
@@ -141,6 +141,30 @@ Options are configured in code via the lambda — there is no automatic `appsett
 - [`Muonroi.Tenancy.SiteProfile`](../Muonroi.Tenancy.SiteProfile/) — core multi-site tenancy abstractions and `ISiteProfileResolver`; required by this package.
 - [`Muonroi.Tenancy.SiteProfile.Web`](../Muonroi.Tenancy.SiteProfile.Web/) — HTTP/REST equivalent of site resolution (middleware + `IHttpContextAccessor`-based `SiteCode` extraction).
 - [`Muonroi.Tenancy.SiteProfile.SourceGenerators`](../Muonroi.Tenancy.SiteProfile.SourceGenerators/) — source generator that processes `[GenerateSiteGrpcFacade]` and emits the facade implementation.
+
+
+## Ecosystem Combinations
+
+### + Tenancy.SiteProfile → gRPC Transport for Profile Resolution
+When site profile metadata lives in a central service, `SiteProfileGrpcClient` fetches it over gRPC instead of resolving locally — enabling centralized site management.
+
+### + Grpc → Base Service Patterns
+`SiteProfileGrpcService` uses `BaseGrpcService` patterns for interceptors, tenant propagation, and OTel tracing.
+
+### + Resilience → gRPC Failover
+Polly retry wraps gRPC calls to the site profile service. If the central service is temporarily unavailable, the last known profile is used from local cache.
+
+### + Caching.Memory → Profile Cache
+Resolved site profiles are cached in memory to avoid gRPC calls on every request:
+```csharp
+builder.Services
+    .AddSiteProfileGrpc(config)        // gRPC client for remote profiles
+    .AddMultiLevelCaching(config);    // cache resolved profiles locally
+```
+
+## Samples
+- [`Quickstart.Tenancy.SiteProfile`](../../samples/Quickstart.Tenancy.SiteProfile)
+
 
 ## License
 

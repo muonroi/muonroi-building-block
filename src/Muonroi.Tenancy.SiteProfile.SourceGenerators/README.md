@@ -126,6 +126,22 @@ No dedicated sample project is provided for this package. The generated extensio
 - [`Muonroi.Tenancy.SiteProfile.Generated.Runtime`](../Muonroi.Tenancy.SiteProfile.Generated.Runtime/) — provides `SiteProfileBootstrap.RegisterSiteServices(...)` and `SiteProfileManifestRunner.Register(...)` called by the generated code
 - [`Muonroi.Tenancy.SiteProfile.Web`](../Muonroi.Tenancy.SiteProfile.Web/) — adds `AddSiteProfileWeb()`, per-request middleware, EF Core / Dapper per-site DI helpers
 
+
+## Ecosystem Combinations
+
+### + SiteProfile → Generated Registration Code
+Source generators scan for `ISiteProfile` implementations and emit partial classes with `RegisterSiteServices()` calls — replacing the entire manual `AddSiteProfile<T>()` boilerplate.
+
+### + SiteProfile.Web → Generated Middleware Wiring
+Generated code includes the middleware registration order for `SiteProfileStateMiddleware` — no manual `app.UseSiteProfile()` calls needed.
+
+### + Data.EntityFrameworkCore → Generated DbContext Registration
+For each `ISiteProfile`, the generator emits code to register `AddSiteDbContext<T>()` with the correct connection string from the site profile.
+
+## Samples
+- [`Quickstart.Tenancy.SiteProfile`](../../samples/Quickstart.Tenancy.SiteProfile)
+
+
 ## License
 
 Apache-2.0. See [LICENSE-APACHE](../../LICENSE-APACHE).

@@ -50,7 +50,7 @@ app.MapGet("/ping-api", async (IConnectorRegistry registry, CancellationToken ct
     return result.Success ? Results.Ok(result.OutputFacts) : Results.Problem(result.ErrorMessage);
 });
 
-app.Run();
+ await app.RunAsync();
 ```
 
 ## Features
@@ -195,6 +195,26 @@ Requires `IConnectionMultiplexer` registered in DI.
 
 - [`Muonroi.Integration.Abstractions`](../Muonroi.Integration.Abstractions/) — Contracts: `IServiceTaskConnector`, `IConnectorRegistry`, `ConnectorContext`, `ConnectorResult`, `ConnectorMetadata`
 - [`Muonroi.Core.Abstractions`](../Muonroi.Core.Abstractions/) — Core exception and shared types used by connectors
+
+
+## Ecosystem Combinations
+
+### + Integration.Abstractions → Implements IServiceTaskConnector
+Connectors are the concrete `IServiceTaskConnector` implementations — HTTP APIs, gRPC services, database adapters.
+
+### + Resilience → Resilient Connector Calls
+Every connector call is wrapped with a Polly pipeline (retry + circuit breaker + timeout) automatically when `Muonroi.Resilience` is registered.
+
+### + Tenancy → Per-Tenant Connector Configuration
+Each tenant can have different connector endpoints and credentials resolved via `ITenantConnectionStringFactory`.
+
+### + Observability → Connector Call Tracing
+Each connector execution creates an OTel span with connector type, target endpoint, and result status.
+
+## Samples
+- [`Quickstart.Integration`](../../samples/Quickstart.Integration)
+- [`Quickstart.Integration.Abstractions`](../../samples/Quickstart.Integration.Abstractions)
+
 
 ## License
 

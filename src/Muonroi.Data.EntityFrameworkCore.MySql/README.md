@@ -1,42 +1,41 @@
 # Muonroi.Data.EntityFrameworkCore.MySql
 
-> EF Core provider package for MySQL in the Muonroi ecosystem.
-
 [![NuGet](https://img.shields.io/nuget/v/Muonroi.Data.EntityFrameworkCore.MySql.svg)](https://www.nuget.org/packages/Muonroi.Data.EntityFrameworkCore.MySql/)
 
-This package provides the MySQL implementation for `IDbContextConfigurator<T>`, enabling `Muonroi.Data.EntityFrameworkCore` to seamlessly connect to MySQL (and MariaDB) databases without changing your `MDbContext` application logic.
+> MySQL provider configuration for Muonroi DbContexts.
+
+## Overview
+Provides `MySqlDbContextConfigurator` to correctly configure MySQL/MariaDB database connections with standard Muonroi resiliency and connection string conventions.
 
 ## Features
-
-- **MySQL Provider** — Wraps the Pomelo Entity Framework Core provider for MySQL.
-- **Seamless Integration** — Works out-of-the-box with `AddDbContextConfigure<TDbContext, TPermission>`.
-- **Automatic Configuration** — Reads `MySqlConnectionString` from the configuration automatically.
+- **MySQL Integration**: Uses `MySqlDbContextConfigurator` for seamless setup.
+- **Resiliency**: Configures execution strategies suitable for MySQL.
 
 ## Installation
 
 ```bash
-dotnet add package Muonroi.Data.EntityFrameworkCore.MySql --prerelease
+dotnet add package Muonroi.Data.EntityFrameworkCore.MySql
 ```
 
 ## Quick Start
 
-Ensure your `appsettings.json` specifies `MySql` as the `DbType`:
-
-```json
-{
-  "DatabaseConfigs": {
-    "DbType": "MySql",
-    "ConnectionStrings": {
-      "MySqlConnectionString": "Server=localhost;Database=app;Uid=root;Pwd=password;"
-    }
-  }
-}
-```
-
-The database configuration will automatically pick up this package when configuring your context:
-
 ```csharp
-// Program.cs
-builder.Services.AddDbContextConfigure<AppDbContext, AppPermission>(
-    builder.Configuration);
+builder.Services.AddMuonroiDbContext<MyDbContext>(options =>
+{
+    var configurator = new MySqlDbContextConfigurator();
+    configurator.Configure(options, "Server=localhost;Database=mydb;Uid=root;Pwd=password;");
+});
 ```
+
+## Ecosystem Combinations
+
+### Muonroi.Data.EntityFrameworkCore.MySql + Muonroi.EntityFrameworkCore.Configuration
+Use `MySqlDbContextConfigurator` alongside `MEntityConfigurationBase` to apply standard column mappings to MySQL-specific data types.
+
+## Samples
+
+Find complete running examples in the [../../samples/](../../samples/) directory.
+
+## License
+
+This project is licensed under the terms of the applicable Muonroi license.

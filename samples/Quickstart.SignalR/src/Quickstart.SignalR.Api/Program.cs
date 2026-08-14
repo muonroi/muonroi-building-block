@@ -45,4 +45,4 @@ app.MapHub<MUiEngineHub>("/hubs/ui-engine");
 
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 
-app.Run();
+ await app.RunAsync();

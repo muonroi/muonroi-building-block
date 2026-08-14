@@ -199,6 +199,43 @@ services.AddSiteInfrastructure(configuration, o =>
 - [`Muonroi.Quota.Abstractions`](../Muonroi.Quota.Abstractions/) — quota contracts consumed by `SiteQuotaBehavior`
 - [`Muonroi.Mediator`](../Muonroi.Mediator/) — MediatR integration used by `AddSiteCommandHandler`
 
+
+## Ecosystem Combinations
+
+### + SiteProfile → Web Layer on Top of Core
+`SiteProfileStateMiddleware` sets the active `ISiteProfile` per request. `SiteProfileDbContextExtensions.AddSiteDbInfrastructure()` registers per-site EF Core DbContexts with `EfColumnSyncHostedService` for automatic column metadata sync.
+
+### + Data.Dapper → Per-Site Read/Write Connection Strings
+`AddSiteDapperInfrastructure()` registers `IDapper` (write) and `IDapperRead` (read replica) scoped to each site:
+```csharp
+builder.Services.AddSiteDapperInfrastructure<MySiteProfile>(options =>
+{
+    options.WriteConnectionString = site.PrimaryDb;
+    options.ReadConnectionString = site.ReadReplicaDb;
+});
+```
+
+### + Caching.Redis → Hot-Reload via Redis Pub/Sub
+When a site profile changes, Redis pub/sub broadcasts the change to all pods. `ISiteProfileChangeHandler` implementations receive the event and refresh their local state.
+
+### + Observability → Per-Site Request Metrics
+Site resolution time and per-site request counts exported as OTel metrics, enabling per-site performance analysis.
+
+### Full SiteProfile Web Stack
+```csharp
+builder.Services
+    .AddSiteProfile<SiteA>().AddSiteProfile<SiteB>() // or use source generators
+    .AddSiteProfileWeb()                              // middleware + hot-reload
+    .AddSiteDbInfrastructure<SiteA>(opts => ...)     // per-site EF
+    .AddSiteDapperInfrastructure<SiteA>(opts => ...) // per-site Dapper
+    .AddMultiLevelCaching(config);                   // hot-reload broadcast
+```
+
+## Samples
+- [`Quickstart.Tenancy.SiteProfile.Web`](../../samples/Quickstart.Tenancy.SiteProfile.Web)
+- [`TestProject.Service`](../../samples/TestProject.Service)
+
+
 ## License
 
 Apache-2.0. See [LICENSE-APACHE](../../LICENSE-APACHE).
