@@ -51,7 +51,11 @@ jobs:
         run: dotnet restore Muonroi.BuildingBlock.sln
 
       - name: Build Release
-        run: dotnet build Muonroi.BuildingBlock.sln -c Release --no-restore
+        # -maxcpucount:1: this 200+ project solution hits a transient MSBuild parallel-build
+        # race on GitHub-hosted runners (CS0006 "ref assembly could not be found" for a
+        # ProjectReference that hadn't finished writing obj/.../ref/*.dll yet). The publish
+        # workflow runs rarely, so trading build speed for determinism is worth it here.
+        run: dotnet build Muonroi.BuildingBlock.sln -c Release --no-restore -maxcpucount:1
 
       - name: Test (exclude Commercial-only and Integration tests)
         # Pdf.Tests.Golden are byte/structural snapshot tests whose decompressed PDF content
@@ -86,7 +90,8 @@ jobs:
         run: dotnet restore Muonroi.BuildingBlock.sln
 
       - name: Build Release
-        run: dotnet build Muonroi.BuildingBlock.sln -c Release --no-restore
+        # -maxcpucount:1: see the "Build Release" step in the validate job above.
+        run: dotnet build Muonroi.BuildingBlock.sln -c Release --no-restore -maxcpucount:1
 
       # ── Determine version ──────────────────────
       - name: Set version from tag (if triggered by tag push)
