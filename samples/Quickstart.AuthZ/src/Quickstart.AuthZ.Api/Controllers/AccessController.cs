@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.AuthZ.Authorization;
-using Quickstart.AuthZ.Api.Models;
-
 namespace Quickstart.AuthZ.Api.Controllers;
 
 /// <summary>

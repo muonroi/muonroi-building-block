@@ -1,6 +1,3 @@
-using Muonroi.RuleEngine.CEP.Builder;
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.RuleEngine.CEP.Tests;
 
 public class CepWindowBuilderTests

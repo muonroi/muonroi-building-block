@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using Muonroi.Logging.Abstractions;
-
 namespace Muonroi.RuleEngine.Proliferation.Brain;
 
 /// <summary>

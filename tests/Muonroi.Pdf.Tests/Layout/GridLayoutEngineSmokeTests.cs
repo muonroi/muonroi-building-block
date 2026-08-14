@@ -1,8 +1,3 @@
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-using Muonroi.Pdf.Tests.Helpers;
-
 namespace Muonroi.Pdf.Tests.Layout;
 
 // WAVE-3 SMOKE GATE (19-03): two operand-value assertions proving the grid engine (a) places

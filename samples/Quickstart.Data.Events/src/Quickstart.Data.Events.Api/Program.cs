@@ -1,8 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Muonroi.Data.EntityFrameworkCore.Extensions;
-using Muonroi.Mediator.Mediator;
-using Quickstart.Data.Events.Api.Sagas;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

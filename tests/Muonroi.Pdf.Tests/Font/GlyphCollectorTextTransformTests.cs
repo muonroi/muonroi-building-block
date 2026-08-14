@@ -1,15 +1,3 @@
-using System.IO.Compression;
-using System.Text;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Pdf.Abstractions;
-using Muonroi.Pdf.Extensions;
-using Muonroi.Pdf.Internal.Font;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-using Muonroi.Pdf.Tests.Service;
-using SixLabors.Fonts;
-
 namespace Muonroi.Pdf.Tests.Font;
 
 /// <summary>

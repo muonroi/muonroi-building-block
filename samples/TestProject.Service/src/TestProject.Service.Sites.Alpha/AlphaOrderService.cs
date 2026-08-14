@@ -1,6 +1,3 @@
-using TestProject.Service.Core.Contracts;
-using TestProject.Service.Core.Services;
-
 namespace TestProject.Service.Sites.Alpha;
 
 /// <summary>

@@ -4,3 +4,6 @@ global using Muonroi.Logging.Abstractions;
 global using Muonroi.Messaging.MassTransit.Messaging;
 global using Quickstart.Messaging.Api.Messages;
 global using Muonroi.Core.Abstractions.Interfaces;
+global using Microsoft.AspNetCore.Mvc;
+global using Muonroi.Logging;
+global using Quickstart.Messaging.Api.Consumers;

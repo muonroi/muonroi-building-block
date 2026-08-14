@@ -1,5 +1,3 @@
-using Muonroi.Data.Abstractions.Entities;
-
 namespace Muonroi.Data.Abstractions.Repositories;
 
 /// <summary>

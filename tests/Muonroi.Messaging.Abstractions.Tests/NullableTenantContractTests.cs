@@ -1,6 +1,3 @@
-using Muonroi.Messaging.Abstractions.Contracts;
-using Muonroi.Tenancy.Abstractions;
-
 namespace Muonroi.Messaging.Abstractions.Tests;
 
 /// <summary>

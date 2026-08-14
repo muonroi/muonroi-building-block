@@ -1,10 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.AspNetCore.Extensions;
-using System.Reflection;
-using Xunit;
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.AspNetCore.Tests.Extensions;
 
 // Classes to trigger validation warnings

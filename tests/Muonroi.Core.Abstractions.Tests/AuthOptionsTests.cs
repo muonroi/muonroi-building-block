@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Configuration;
-
 namespace Muonroi.Core.Abstractions.Tests;
 
 public class AuthOptionsTests

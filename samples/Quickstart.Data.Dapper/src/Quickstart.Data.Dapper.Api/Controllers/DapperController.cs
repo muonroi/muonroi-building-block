@@ -1,9 +1,3 @@
-using Dapper;
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Data.Dapper.Dapper;
-using Muonroi.Data.Dapper.Rls;
-using Muonroi.Data.Dapper.Rls.Bypass;
-
 namespace Quickstart.Data.Dapper.Api.Controllers;
 
 /// <summary>

@@ -1,8 +1,3 @@
-using System.Collections;
-using System.Globalization;
-using System.Text.RegularExpressions;
-using System.Xml;
-
 namespace Muonroi.Rules.Feel;
 
 /// <summary>

@@ -1,10 +1,3 @@
-using System.Net;
-using System.Text;
-using FluentAssertions;
-using Moq;
-using Moq.Protected;
-using Muonroi.RuleEngine.Proliferation.Brain;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests;
 
 public class InfraHealthMonitorTests

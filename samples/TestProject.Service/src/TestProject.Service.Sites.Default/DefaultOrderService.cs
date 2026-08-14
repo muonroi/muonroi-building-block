@@ -1,5 +1,3 @@
-using TestProject.Service.Core.Services;
-
 namespace TestProject.Service.Sites.Default;
 
 /// <summary>

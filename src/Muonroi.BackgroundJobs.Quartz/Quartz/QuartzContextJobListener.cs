@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Tenancy.Core;
-
 namespace Muonroi.BackgroundJobs.Quartz.Quartz;
 
 /// <summary>

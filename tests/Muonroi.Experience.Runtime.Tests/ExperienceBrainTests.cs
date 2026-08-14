@@ -1,12 +1,3 @@
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using FluentAssertions;
-using Moq;
-using Muonroi.Experience.Abstractions;
-using Muonroi.Experience.Runtime.Brain;
-using Xunit;
-
 namespace Muonroi.Experience.Runtime.Tests;
 
 [Trait("Category", "Extraction")]

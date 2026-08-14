@@ -1,10 +1,3 @@
-using System.Diagnostics;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Logging;
-using TestProject.Service.Core.Constants;
-using TestProject.Service.Core.Contracts;
-using Xunit.Abstractions;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

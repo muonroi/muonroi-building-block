@@ -1,5 +1,3 @@
-using Quickstart.Messaging.MassTransit.Api.Consumers;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Context accessor required by MuonroiConsumerBase<T>

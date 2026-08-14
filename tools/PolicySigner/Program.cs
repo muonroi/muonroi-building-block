@@ -1,9 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
-using Muonroi.BuildingBlock.Shared.License;
-using Muonroi.BuildingBlock.Shared.Policy;
-
 if (args.Length < 2)
 {
     Console.WriteLine("Usage: PolicySigner <private_key_path> <license_id> [output_path]");

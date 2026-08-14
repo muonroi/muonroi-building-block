@@ -1,8 +1,3 @@
-using Moq;
-using Muonroi.RuleEngine.Proliferation.Auth;
-using Muonroi.RuleEngine.Proliferation.Models;
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests.Auth;
 
 public class AuthStrategyResolverTests

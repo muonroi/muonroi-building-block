@@ -1,9 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Core;
-using RuleSourceGen.Api.Models;
-
 namespace RuleSourceGen.Api.Controllers;
 
 /// <summary>

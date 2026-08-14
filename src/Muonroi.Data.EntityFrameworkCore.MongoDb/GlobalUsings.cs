@@ -1,0 +1,13 @@
+global using MongoDB.Bson;
+global using MongoDB.Bson.Serialization.Attributes;
+global using MongoDB.Driver;
+global using System;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Muonroi.Core.Abstractions.Models.Common;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using Muonroi.Core.Abstractions.Guards;
+global using Muonroi.Data.EntityFrameworkCore.Entity;
+global using Muonroi.Data.EntityFrameworkCore.Entity.DatabaseConfig;
+global using System.Diagnostics.CodeAnalysis;

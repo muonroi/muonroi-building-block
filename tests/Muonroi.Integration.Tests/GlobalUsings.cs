@@ -1,0 +1,9 @@
+global using FluentAssertions;
+global using Microsoft.Extensions.DependencyInjection;
+global using Moq;
+global using Muonroi.Caching.Memory.MultiLevel;
+global using Muonroi.Core.Abstractions.Context;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using Muonroi.Governance.Abstractions.License;
+global using Muonroi.Governance.License;
+global using Muonroi.Integration.Connectors.Http;

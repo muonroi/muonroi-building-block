@@ -1,8 +1,3 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Serilog.Core;
-using Serilog.Events;
-
 namespace Muonroi.Observability.Logging;
 
 /// <summary>

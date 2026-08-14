@@ -1,7 +1,3 @@
-using System.Text;
-using AngleSharp.Css.Dom;
-using AngleSharp.Dom;
-
 namespace Muonroi.Pdf.Governance.Cascade;
 
 internal sealed class AngleSharpPageRule : IPageRule

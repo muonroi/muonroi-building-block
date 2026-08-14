@@ -1,6 +1,3 @@
-using Muonroi.Tenancy.SiteProfile;
-using TestProject.Aggregate.Core.Constants;
-
 namespace TestProject.Aggregate.Sites.Default;
 
 /// <summary>

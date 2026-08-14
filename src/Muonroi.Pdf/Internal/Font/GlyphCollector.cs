@@ -1,7 +1,3 @@
-using SixLabors.Fonts;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-
 namespace Muonroi.Pdf.Internal.Font;
 
 internal sealed class GlyphCollector

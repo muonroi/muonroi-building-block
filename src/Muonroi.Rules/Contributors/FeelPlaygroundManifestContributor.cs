@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Enums;
-
 namespace Muonroi.Rules.Contributors;
 
 /// <summary>

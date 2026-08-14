@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace Muonroi.SignalR.SignalR;
 
 /// <summary>

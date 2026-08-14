@@ -1,7 +1,6 @@
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Muonroi.RuleEngine.CEP.Tests;
+
+using INotification = Muonroi.Mediator.Mediator.Interfaces.INotification;
 
 internal sealed class StubDateTimeService(DateTime utcNow) : IMDateTimeService
 {

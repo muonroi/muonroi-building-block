@@ -1,7 +1,3 @@
-using Muonroi.AspNetCore.OpenApi.OpenApi;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.SeedWorks;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

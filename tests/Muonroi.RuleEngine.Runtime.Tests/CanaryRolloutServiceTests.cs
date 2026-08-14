@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-
-
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 public sealed class CanaryRolloutServiceTests

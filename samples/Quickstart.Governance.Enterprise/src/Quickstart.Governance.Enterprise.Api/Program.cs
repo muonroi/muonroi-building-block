@@ -1,10 +1,3 @@
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.SeedWorks;
-using Muonroi.Core.Helpers;
-using Muonroi.Governance.Enterprise;
-using Muonroi.Governance.Operations;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

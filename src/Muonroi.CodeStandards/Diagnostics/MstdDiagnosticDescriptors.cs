@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace Muonroi.CodeStandards.Diagnostics;
 
 internal static class MstdDiagnosticDescriptors

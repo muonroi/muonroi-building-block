@@ -1,10 +1,3 @@
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
-using Muonroi.RuleEngine.EntityFrameworkCore.Rules;
-using Muonroi.RuleEngine.EntityFrameworkCore.Rules.IngestedSourceEntities;
-using Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 /// <summary>

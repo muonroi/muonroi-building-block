@@ -1,10 +1,3 @@
-using FluentValidation;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Logging;
-using Muonroi.Mediator.Mediator;
-using Quickstart.Mediator.Api.Pipeline;
-using System.Reflection;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // ── Logging ──────────────────────────────────────────────────────────────────

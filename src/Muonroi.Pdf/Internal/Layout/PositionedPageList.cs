@@ -1,5 +1,3 @@
-using Muonroi.Pdf.Internal.Font;
-
 namespace Muonroi.Pdf.Internal.Layout;
 
 internal sealed class PositionedPageList : IPositionedPageList

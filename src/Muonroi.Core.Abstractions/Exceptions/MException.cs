@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using Muonroi.Core.Abstractions.Diagnostics;
-
 namespace Muonroi.Core.Abstractions.Exceptions;
 
 /// <summary>

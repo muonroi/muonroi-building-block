@@ -1,11 +1,3 @@
-using FluentAssertions;
-using Muonroi.BackgroundJobs.Abstractions;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Tenancy.Core;
-using NSubstitute;
-using Quartz;
-using Xunit;
-
 namespace Muonroi.BackgroundJobs.Quartz.Tests;
 
 public class QuartzContextJobListenerTests

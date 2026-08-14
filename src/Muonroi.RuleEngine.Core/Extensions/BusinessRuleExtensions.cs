@@ -1,6 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
-using Muonroi.RuleEngine.Abstractions.Models;
-
 namespace Muonroi.RuleEngine.Core.Extensions;
 
 internal sealed class CompositeBusinessRule<TContext>(

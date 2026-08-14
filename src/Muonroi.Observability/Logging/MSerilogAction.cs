@@ -1,7 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Serilog.Sinks.OpenTelemetry;
-
 namespace Muonroi.Observability.Logging;
 
 /// <summary>

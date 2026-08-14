@@ -1,10 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.RuleEngine.CEP;
-using Muonroi.RuleEngine.CEP.Abstractions;
-using Muonroi.RuleEngine.CEP.Builder;
-using Quickstart.CEP.Api.Models;
-using Quickstart.CEP.Api.Services;
-
 namespace Quickstart.CEP.Api.Controllers;
 
 /// <summary>

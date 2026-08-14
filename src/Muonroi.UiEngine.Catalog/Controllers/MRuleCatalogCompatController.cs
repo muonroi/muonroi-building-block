@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.UiEngine.Catalog.Models;
-using Muonroi.UiEngine.Catalog.Services;
-
 namespace Muonroi.UiEngine.Catalog.Controllers;
 
 /// <summary>

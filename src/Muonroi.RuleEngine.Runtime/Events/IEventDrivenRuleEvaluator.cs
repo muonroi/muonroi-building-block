@@ -1,5 +1,3 @@
-using Muonroi.RuleEngine.Core.Events;
-
 namespace Muonroi.RuleEngine.Runtime.Events;
 
 /// <summary>

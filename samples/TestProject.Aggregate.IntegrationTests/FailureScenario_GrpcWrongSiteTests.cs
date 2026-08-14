@@ -1,8 +1,3 @@
-using Grpc.Core;
-using Grpc.Net.Client;
-using TestProject.Aggregate.Host.v1.Protos;
-using TestProject.Aggregate.Sites.Bravo.Protos;
-
 namespace TestProject.Aggregate.IntegrationTests;
 
 /// <summary>

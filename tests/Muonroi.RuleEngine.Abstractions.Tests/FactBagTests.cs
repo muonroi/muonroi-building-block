@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Abstractions.Tests;
 
 public class FactBagTests

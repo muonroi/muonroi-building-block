@@ -1,10 +1,3 @@
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using AngleSharp.Css.Dom;
-using Microsoft.Extensions.Options;
-using Muonroi.Pdf.Abstractions.Telemetry;
-using Muonroi.Pdf.Governance.Cascade;
-
 namespace Muonroi.Pdf.Governance.Policies;
 
 /// <summary>

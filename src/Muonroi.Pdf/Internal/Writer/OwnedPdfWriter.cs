@@ -8,17 +8,6 @@
 // Fixed sentinel timestamp, fixed subset-prefix, fixed /ID — identical to PdfSharpCoreWriter.
 
 using System.Buffers.Binary;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.IO.Compression;
-using System.Text;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Pdf.Internal.Font;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
 
 namespace Muonroi.Pdf.Internal.Writer;
 

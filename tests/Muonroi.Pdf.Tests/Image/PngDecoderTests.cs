@@ -1,15 +1,3 @@
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Internal.Image;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-using Muonroi.Pdf.Internal.Writer;
-using Muonroi.Pdf.Tests.Fixtures.Png;
-
 namespace Muonroi.Pdf.Tests.Image;
 
 /// <summary>

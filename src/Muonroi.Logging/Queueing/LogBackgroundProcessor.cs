@@ -1,8 +1,3 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ObjectPool;
-using Muonroi.Logging.Abstractions.Models;
-
 namespace Muonroi.Logging.Queueing;
 
 /// <summary>

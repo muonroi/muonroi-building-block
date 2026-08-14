@@ -1,6 +1,3 @@
-using Grpc.Core;
-using TestProject.Aggregate.Host.v1.Protos;
-
 namespace TestProject.Aggregate.Host.v1.Services;
 
 /// <summary>

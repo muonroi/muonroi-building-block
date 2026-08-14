@@ -1,1 +1,10 @@
 global using Xunit;
+global using System.Net;
+global using System.Text;
+global using System.Text.Json;
+global using FluentAssertions;
+global using Microsoft.Extensions.Logging.Abstractions;
+global using Muonroi.Integration.Abstractions;
+global using Muonroi.Integration.Connectors.Http;
+global using Muonroi.Integration.Connectors.Presets;
+global using Muonroi.RuleEngine.Abstractions;

@@ -1,8 +1,3 @@
-using FluentAssertions;
-using Moq;
-using Muonroi.Experience.Abstractions;
-using Xunit;
-
 namespace Muonroi.Experience.Tests;
 
 [Trait("Category", "Abstractions")]

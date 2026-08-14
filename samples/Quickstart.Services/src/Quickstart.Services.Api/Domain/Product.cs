@@ -1,5 +1,3 @@
-using Muonroi.Data.Abstractions.Entities;
-
 namespace Quickstart.Services.Api.Domain;
 
 /// <summary>

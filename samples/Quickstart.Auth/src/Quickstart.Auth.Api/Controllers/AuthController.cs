@@ -1,10 +1,3 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using Muonroi.Auth.Jwt;
-using Muonroi.Core.Abstractions.Interfaces;
-using Quickstart.Auth.Api.Models;
-
 namespace Quickstart.Auth.Api.Controllers;
 
 /// <summary>

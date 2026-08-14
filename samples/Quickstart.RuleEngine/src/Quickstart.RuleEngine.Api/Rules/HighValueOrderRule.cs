@@ -1,6 +1,3 @@
-using Muonroi.RuleEngine.Abstractions;
-using Quickstart.RuleEngine.Api.Models;
-
 namespace Quickstart.RuleEngine.Api.Rules;
 
 [RuleGroup("order-discount")]

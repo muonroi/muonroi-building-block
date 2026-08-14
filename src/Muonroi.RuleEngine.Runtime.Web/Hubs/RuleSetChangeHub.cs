@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace Muonroi.RuleEngine.Runtime.Web.Hubs;
 
 /// <summary>

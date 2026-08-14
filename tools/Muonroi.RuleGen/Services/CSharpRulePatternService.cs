@@ -1,7 +1,3 @@
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Text.RegularExpressions;
-
 namespace Muonroi.RuleGen.Services;
 
 internal static class CSharpRulePatternService

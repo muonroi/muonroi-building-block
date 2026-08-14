@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Quickstart.Data.EntityFrameworkCore.Api.Data;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

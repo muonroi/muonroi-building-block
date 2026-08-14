@@ -1,8 +1,3 @@
-using Hangfire.Server;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Tenancy.Core;
-
 namespace Muonroi.BackgroundJobs.Hangfire.Hangfire;
 
 /// <summary>

@@ -1,9 +1,3 @@
-using System.Collections.Concurrent;
-using Muonroi.RuleEngine.CEP;
-using Muonroi.RuleEngine.CEP.Abstractions;
-using Muonroi.RuleEngine.CEP.Builder;
-using FraudDetection.Api.Models;
-
 namespace FraudDetection.Api.Services;
 
 /// <summary>

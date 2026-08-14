@@ -1,6 +1,3 @@
-using Muonroi.RuleGen.Cli;
-using Spectre.Console;
-
 namespace Muonroi.RuleGen.Commands;
 
 internal static class WatchCommand

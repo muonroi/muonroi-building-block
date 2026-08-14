@@ -1,7 +1,3 @@
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Muonroi.RuleGen.Models;
-
 namespace Muonroi.RuleGen.Services;
 
 internal static class RuleTypeDiscoveryService

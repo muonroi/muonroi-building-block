@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Quickstart.Grpc.Api.Services;
-
 namespace Quickstart.Grpc.Api.Controllers;
 
 /// <summary>

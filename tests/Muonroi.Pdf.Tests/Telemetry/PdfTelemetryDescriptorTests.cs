@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Pdf.Internal.Telemetry;
-
 namespace Muonroi.Pdf.Tests.Telemetry;
 
 /// <summary>

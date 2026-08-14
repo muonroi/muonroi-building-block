@@ -1,6 +1,3 @@
-using System.Xml.Linq;
-using Muonroi.RuleGen.Mcp.Models;
-
 namespace Muonroi.RuleGen.Mcp.Infrastructure;
 
 internal sealed class OssBoundaryCatalog

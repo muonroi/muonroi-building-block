@@ -1,23 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Logging.Abstractions.Exceptions;
-
 namespace Muonroi.Logging;
 
 /// <summary>

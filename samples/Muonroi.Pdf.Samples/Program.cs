@@ -9,11 +9,6 @@
 // they use a second provider built with that flag enabled — see BuildPdf().
 
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Muonroi.Pdf.Abstractions;
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Extensions;
 
 string outDir = Path.Combine(AppContext.BaseDirectory, "pdf-output");
 Directory.CreateDirectory(outDir);

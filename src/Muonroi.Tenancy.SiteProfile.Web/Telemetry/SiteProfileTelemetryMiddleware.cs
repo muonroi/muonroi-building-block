@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Http;
-using Muonroi.Logging.Abstractions;
-using System.Diagnostics;
-
 namespace Muonroi.Tenancy.SiteProfile.Web.Telemetry;
 
 /// <summary>

@@ -1,0 +1,17 @@
+global using FluentAssertions;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Muonroi.SignalR.SignalR;
+global using Xunit;
+global using System.Reflection;
+global using System.Security.Claims;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Http.Connections.Features;
+global using Microsoft.AspNetCore.Http.Features;
+global using Microsoft.AspNetCore.SignalR;
+global using Muonroi.Core.Abstractions.Constants;
+global using Muonroi.Core.Abstractions.Models.Common;
+global using Muonroi.Governance.License;
+global using Muonroi.Tenancy.Abstractions.Interfaces;
+global using Muonroi.Tenancy.Core;
+global using NSubstitute;

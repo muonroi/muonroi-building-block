@@ -1,9 +1,3 @@
-using FluentValidation;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Observability.OpenTelemetry;
-
 namespace Muonroi.AspNetCore.Middleware;
 
 /// <summary>

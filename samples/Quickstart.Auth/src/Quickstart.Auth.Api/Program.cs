@@ -1,8 +1,3 @@
-using Muonroi.Auth;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models.Common;
-using Muonroi.Core.Helpers;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

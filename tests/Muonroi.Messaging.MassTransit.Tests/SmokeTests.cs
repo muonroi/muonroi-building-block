@@ -1,6 +1,3 @@
-using Xunit;
-using FluentAssertions;
-
 namespace Muonroi.Messaging.MassTransit.Tests;
 
 public class SmokeTests

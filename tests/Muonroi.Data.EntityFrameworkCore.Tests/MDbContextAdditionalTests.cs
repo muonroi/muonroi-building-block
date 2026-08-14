@@ -1,7 +1,6 @@
-using Muonroi.Governance.Abstractions.License;
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
+
+using INotification = Muonroi.Mediator.Mediator.Interfaces.INotification;
 
 /// <summary>
 /// Additional tests for MDbContext covering timestamps, soft-delete, and transaction edge cases.

@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using TestProject.Service.Core.Infrastructure;
-
 namespace TestProject.Service.Sites.Default;
 
 /// <summary>

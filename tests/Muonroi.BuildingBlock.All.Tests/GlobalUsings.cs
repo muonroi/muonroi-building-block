@@ -8,3 +8,6 @@ global using Microsoft.Extensions.Hosting;
 global using Muonroi.Core.Abstractions.Context;
 global using Muonroi.AspNetCore.Extensions;
 global using Microsoft.Extensions.Configuration;
+global using System.Collections.Generic;
+global using Muonroi.Governance.Abstractions.License;
+global using FluentAssertions;

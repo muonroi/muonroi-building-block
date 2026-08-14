@@ -1,9 +1,3 @@
-using System.Diagnostics.Metrics;
-using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
-using Muonroi.Core.Abstractions.Constants;
-using Xunit;
-
 namespace Muonroi.Tenancy.Tests;
 
 /// <summary>

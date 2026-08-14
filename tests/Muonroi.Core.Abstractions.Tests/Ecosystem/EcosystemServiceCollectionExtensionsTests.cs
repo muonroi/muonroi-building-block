@@ -1,6 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Core.Abstractions.Ecosystem;
-
 namespace Muonroi.Core.Abstractions.Tests.Ecosystem;
 
 public class EcosystemServiceCollectionExtensionsTests

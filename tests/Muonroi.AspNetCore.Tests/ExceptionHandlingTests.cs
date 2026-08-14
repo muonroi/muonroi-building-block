@@ -1,17 +1,3 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Hosting;
-using Muonroi.AspNetCore.Filters;
-using Muonroi.AspNetCore.Middleware;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models;
-using Muonroi.Logging.Abstractions;
-using NSubstitute;
-using Xunit;
-
 namespace Muonroi.AspNetCore.Tests;
 
 public class ExceptionHandlingTests

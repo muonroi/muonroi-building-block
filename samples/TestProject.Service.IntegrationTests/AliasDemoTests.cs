@@ -1,9 +1,3 @@
-using System.Reflection;
-using TestProject.Service.Core.Constants;
-using TestProject.Service.Core.Contracts;
-using TestProject.Service.Sites.Charlie;
-using TestProject.Service.Sites.Default;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

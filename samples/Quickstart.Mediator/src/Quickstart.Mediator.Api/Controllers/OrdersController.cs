@@ -1,10 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Mediator.Mediator.Interfaces;
-using Quickstart.Mediator.Api.Commands;
-using Quickstart.Mediator.Api.Models;
-using Quickstart.Mediator.Api.Queries;
-using Muonroi.Mediator.Exceptions;
-
 namespace Quickstart.Mediator.Api.Controllers;
 
 /// <summary>

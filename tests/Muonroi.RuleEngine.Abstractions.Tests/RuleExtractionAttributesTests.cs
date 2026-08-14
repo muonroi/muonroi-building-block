@@ -1,6 +1,3 @@
-using Xunit;
-using Muonroi.RuleEngine.Abstractions.Authoring;
-
 namespace Muonroi.RuleEngine.Abstractions.Tests;
 
 public class RuleExtractionAttributesTests

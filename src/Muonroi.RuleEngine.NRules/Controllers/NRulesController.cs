@@ -1,7 +1,3 @@
-using System.Collections.Concurrent;
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Muonroi.RuleEngine.NRules.Controllers;
 
 /// <summary>

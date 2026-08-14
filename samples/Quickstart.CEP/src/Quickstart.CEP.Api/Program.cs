@@ -1,7 +1,3 @@
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.RuleEngine.CEP;
-using Quickstart.CEP.Api.Services;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // ── CEP web services ──────────────────────────────────────────────────────────

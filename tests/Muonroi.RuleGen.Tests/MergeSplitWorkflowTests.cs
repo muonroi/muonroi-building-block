@@ -1,6 +1,3 @@
-using System.Text.Json;
-using Xunit;
-
 namespace Muonroi.RuleGen.Tests;
 
 [Collection(BuildSerialCollection.Name)]

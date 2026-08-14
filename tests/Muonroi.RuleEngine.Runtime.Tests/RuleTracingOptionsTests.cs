@@ -1,7 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleEngine.Runtime.Tracing;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 public sealed class RuleTracingOptionsTests

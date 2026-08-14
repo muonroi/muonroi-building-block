@@ -1,6 +1,3 @@
-using System.Security.Claims;
-using Xunit;
-
 namespace Muonroi.Auth.Tests;
 
 public class ClaimValidationTheoryTests

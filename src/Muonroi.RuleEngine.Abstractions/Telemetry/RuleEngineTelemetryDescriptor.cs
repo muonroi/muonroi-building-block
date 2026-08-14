@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Muonroi.RuleEngine.Abstractions.Telemetry;
 
 /// <summary>

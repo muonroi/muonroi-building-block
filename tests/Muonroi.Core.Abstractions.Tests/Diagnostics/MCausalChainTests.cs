@@ -1,7 +1,3 @@
-using System.Diagnostics;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.Core.Abstractions.Tests.Diagnostics;
 
 public class MCausalChainTests

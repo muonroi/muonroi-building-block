@@ -1,7 +1,3 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Messaging.Abstractions.Contracts;
-
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>

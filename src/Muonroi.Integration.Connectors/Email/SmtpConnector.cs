@@ -1,10 +1,3 @@
-using System.Text.Json;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Integration.Abstractions;
-using MailKit.Net.Smtp;
-using MimeKit;
-
 namespace Muonroi.Integration.Connectors.Email;
 
 /// <summary>

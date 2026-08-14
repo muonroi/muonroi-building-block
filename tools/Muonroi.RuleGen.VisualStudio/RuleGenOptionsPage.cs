@@ -1,6 +1,3 @@
-﻿using Microsoft.VisualStudio.Shell;
-using System.ComponentModel;
-
 namespace Muonroi.RuleGen.VisualStudio;
 
 /// <summary>

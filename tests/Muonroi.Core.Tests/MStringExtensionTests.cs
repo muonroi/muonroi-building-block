@@ -1,4 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Core.Tests;
 
 public class MStringExtensionTests

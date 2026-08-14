@@ -1,0 +1,10 @@
+global using Muonroi.Mediator.Mediator.Interfaces;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using System.Reflection;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using TestProject.Service.Core.Constants;
+global using Muonroi.Tenancy.SiteProfile;
+global using Muonroi.Tenancy.SiteProfile.Grpc;
+global using TestProject.Service.Core.Contracts;

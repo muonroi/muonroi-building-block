@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-
 namespace Muonroi.AspNetCore.Controllers.Conventions;
 
 /// <summary>

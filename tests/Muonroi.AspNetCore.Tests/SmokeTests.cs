@@ -1,6 +1,3 @@
-using Xunit;
-using FluentAssertions;
-
 namespace Muonroi.AspNetCore.Tests;
 
 public class SmokeTests

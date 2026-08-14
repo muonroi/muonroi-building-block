@@ -1,17 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Logging.Abstractions;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.UiEngine.Catalog.Attributes;
-using Muonroi.UiEngine.Catalog.Models;
-using System.CodeDom.Compiler;
-using System.Globalization;
-using System.Reflection;
 using RuntimeRuleOptions = Muonroi.RuleEngine.Runtime.Rules.RuleOptions;
 
 namespace Muonroi.UiEngine.Catalog.Services;

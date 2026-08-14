@@ -1,11 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Mediator.Behaviours;
-using Muonroi.Mediator.Exceptions;
-using Muonroi.Mediator.Mediator;
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Muonroi.Mediator.Tests.Behaviours;
+
+using MUnauthorizedException = Muonroi.Mediator.Exceptions.MUnauthorizedException;
 
 public class MTenantValidationBehaviorTests
 {

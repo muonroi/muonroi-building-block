@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 namespace Muonroi.Core.Abstractions.Interfaces;
 
 /// <summary>

@@ -1,12 +1,3 @@
-using System.Net;
-using System.Text;
-using System.Text.Json;
-using Moq;
-using Moq.Protected;
-using Muonroi.Logging.Abstractions;
-using Muonroi.RuleEngine.Proliferation.Auth;
-using Muonroi.RuleEngine.Proliferation.Models;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests.Auth;
 
 public class ApiKeyRotationServiceTests

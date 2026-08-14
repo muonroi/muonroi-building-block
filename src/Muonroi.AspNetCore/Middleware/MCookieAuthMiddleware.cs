@@ -1,5 +1,3 @@
-using Muonroi.Core.Extensions;
-
 namespace Muonroi.AspNetCore.Middleware;
 
 /// <summary>

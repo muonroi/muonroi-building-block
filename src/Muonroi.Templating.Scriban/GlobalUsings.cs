@@ -1,0 +1,12 @@
+global using Scriban.Runtime;
+global using Microsoft.Extensions.DependencyInjection;
+global using Muonroi.Templating.Abstractions;
+global using System.Reflection;
+global using System.Text.Json;
+global using System;
+global using System.Collections.Generic;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using Muonroi.Core.Abstractions.Guards;
+global using Scriban;

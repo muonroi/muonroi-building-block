@@ -1,9 +1,3 @@
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Metrics;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.RuleEngine.CEP.Observability;
-
 namespace Muonroi.RuleEngine.CEP;
 
 /// <summary>

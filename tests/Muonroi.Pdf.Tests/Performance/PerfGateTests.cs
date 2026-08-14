@@ -1,11 +1,3 @@
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Threading.Tasks;
-using Muonroi.Pdf.Tests.Golden;
-using Xunit.Abstractions;
-
 namespace Muonroi.Pdf.Tests.Performance;
 
 /// <summary>

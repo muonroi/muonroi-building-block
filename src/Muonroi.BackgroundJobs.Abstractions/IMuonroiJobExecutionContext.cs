@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Context;
-
 namespace Muonroi.BackgroundJobs.Abstractions;
 
 /// <summary>

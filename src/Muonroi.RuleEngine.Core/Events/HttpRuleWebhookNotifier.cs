@@ -1,10 +1,3 @@
-using System.Net.Http.Json;
-using System.Text.Json;
-using Microsoft.Extensions.Options;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Integration.Connectors.Http;
-using Muonroi.Logging.Abstractions;
-
 namespace Muonroi.RuleEngine.Core.Events;
 
 /// <summary>

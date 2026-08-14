@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Quickstart.EntityFrameworkCore.Configuration.Api;
 
 public enum AppPermission

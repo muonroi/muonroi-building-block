@@ -1,5 +1,3 @@
-using Xunit;
-
 namespace Muonroi.UiEngine.Catalog.Tests;
 
 public class DummyTest

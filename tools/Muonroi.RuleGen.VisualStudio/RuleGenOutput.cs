@@ -1,10 +1,3 @@
-﻿using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using System;
-using System.IO;
-using System.Threading.Tasks;
-
 namespace Muonroi.RuleGen.VisualStudio;
 
 internal static class RuleGenOutput

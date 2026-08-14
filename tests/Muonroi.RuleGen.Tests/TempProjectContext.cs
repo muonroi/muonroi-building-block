@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Muonroi.RuleGen.Tests;
 
 internal sealed class TempProjectContext : IDisposable

@@ -1,9 +1,6 @@
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Mediator.Exceptions;
-using Muonroi.Mediator.Mediator.Context;
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Muonroi.Mediator.Behaviours;
+
+using MUnauthorizedException = Muonroi.Mediator.Exceptions.MUnauthorizedException;
 
 /// <summary>
 /// Validates and hydrates the Tenant context for requests implementing IMTenantRequest.

@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Context;
-
 namespace Muonroi.AspNetCore.Middleware;
 
 /// <summary>

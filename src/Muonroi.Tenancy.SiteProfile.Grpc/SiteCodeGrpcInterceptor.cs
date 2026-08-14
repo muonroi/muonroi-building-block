@@ -1,4 +1,3 @@
-﻿using System.Diagnostics.CodeAnalysis;
 namespace Muonroi.Tenancy.SiteProfile.Grpc;
 
 /// <summary>

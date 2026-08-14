@@ -1,11 +1,3 @@
-using System;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Pdf.Abstractions;
-using Muonroi.Pdf.Extensions;
-using Xunit;
-
 namespace Muonroi.Pdf.Tests.Service;
 
 /// <summary>

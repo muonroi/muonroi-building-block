@@ -1,19 +1,3 @@
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Observability.OpenTelemetry.Compat;
-using OpenTelemetry;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Metrics;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Configuration;
-using System.Diagnostics;
-using Muonroi.Observability.Logging;
-using Muonroi.Governance.Abstractions.License;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Observability.OpenTelemetry;
-
 namespace Muonroi.Observability;
 
 /// <summary>

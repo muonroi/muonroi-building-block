@@ -1,6 +1,3 @@
-using Muonroi.RuleGen.Models;
-using System.Text;
-
 namespace Muonroi.RuleGen.Writers;
 
 internal static class TestScaffoldWriter

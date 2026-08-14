@@ -1,9 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleEngine.Core.Events;
-using Muonroi.RuleEngine.Runtime.Events;
-using System.Text.Json;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Runtime.Tests.Events;
 
 public sealed class RuleExecutionEventPublisherTests

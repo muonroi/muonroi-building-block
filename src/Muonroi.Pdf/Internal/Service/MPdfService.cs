@@ -1,24 +1,3 @@
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Text;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Pdf.Abstractions;
-using Muonroi.Pdf.Abstractions.Engine;
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Abstractions.Policy;
-using Muonroi.Pdf.Abstractions.Telemetry;
-using Muonroi.Pdf.Internal.Font;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-using Muonroi.Pdf.Internal.Telemetry;
-using Muonroi.Tenancy.Abstractions;
-
 namespace Muonroi.Pdf.Internal.Service;
 
 /// <summary>

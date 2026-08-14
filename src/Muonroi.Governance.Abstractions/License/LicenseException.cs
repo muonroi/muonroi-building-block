@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.Governance.License;
 
 /// <summary>

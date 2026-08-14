@@ -4,3 +4,5 @@ global using MassTransit;
 global using Muonroi.Messaging.Abstractions.Events;
 global using Muonroi.Core.Abstractions.Context;
 global using Muonroi.Messaging.MassTransit.Messaging;
+global using Quickstart.Messaging.MassTransit.Api.Messages;
+global using Quickstart.Messaging.MassTransit.Api.Consumers;

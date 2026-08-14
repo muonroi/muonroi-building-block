@@ -1,10 +1,3 @@
-using FluentAssertions;
-using Muonroi.Mediator.Mediator.Interfaces;
-using TestProject.Service.Core.Constants;
-using TestProject.Service.Core.Contracts;
-using TestProject.Service.Sites.Alpha;
-using TestProject.Service.Sites.Bravo;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

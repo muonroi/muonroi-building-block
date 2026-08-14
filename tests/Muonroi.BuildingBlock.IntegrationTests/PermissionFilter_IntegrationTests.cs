@@ -1,10 +1,3 @@
-using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Diagnostics;
-using Xunit;
-
 namespace Muonroi.BuildingBlock.IntegrationTests;
 
 /// <summary>

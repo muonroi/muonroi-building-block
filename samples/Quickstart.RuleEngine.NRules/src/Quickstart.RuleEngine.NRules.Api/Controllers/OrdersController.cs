@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.RuleEngine.NRules;
-using Quickstart.RuleEngine.NRules.Api.Models;
-
 namespace Quickstart.RuleEngine.NRules.Api.Controllers;
 
 /// <summary>

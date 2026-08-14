@@ -1,5 +1,3 @@
-using RulesEngine.Models;
-
 namespace Muonroi.Rules.Rules;
 
 /// <summary>

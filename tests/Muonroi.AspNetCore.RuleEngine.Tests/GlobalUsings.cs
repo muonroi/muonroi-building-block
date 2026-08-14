@@ -42,3 +42,6 @@ global using Muonroi.RuleEngine.Runtime.Rules;
 global using Muonroi.Tenancy.Core;
 global using Muonroi.UiEngine.Catalog.Models;
 global using Muonroi.UiEngine.Catalog.Services;
+global using Muonroi.Core.Abstractions.Ecosystem;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using System.Text.Json;

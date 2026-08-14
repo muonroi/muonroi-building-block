@@ -1,5 +1,3 @@
-using Muonroi.RuleEngine.Testing;
-
 namespace Muonroi.RuleEngine.Core.Tests;
 
 public class MRuleEngineUpgradeTests

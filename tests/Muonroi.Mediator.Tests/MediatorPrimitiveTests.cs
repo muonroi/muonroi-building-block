@@ -1,5 +1,7 @@
 namespace Muonroi.Mediator.Tests;
 
+using MUnauthorizedException = Muonroi.Mediator.Exceptions.MUnauthorizedException;
+
 public sealed class MediatorPrimitiveTests
 {
     [Fact]

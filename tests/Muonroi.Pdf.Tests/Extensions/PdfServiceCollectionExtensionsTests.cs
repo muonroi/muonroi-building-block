@@ -1,11 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Pdf.Abstractions.Engine;
-using Muonroi.Pdf.Extensions;
-
 namespace Muonroi.Pdf.Tests.Extensions;
 
 /// <summary>

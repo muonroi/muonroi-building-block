@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Quickstart.Core.Api.Controllers;
 
 /// <summary>

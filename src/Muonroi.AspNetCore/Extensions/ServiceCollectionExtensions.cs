@@ -1,5 +1,3 @@
-using Asp.Versioning;
-
 namespace Muonroi.AspNetCore.Extensions;
 
 /// <summary>

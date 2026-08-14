@@ -1,5 +1,3 @@
-using Dapper.Extensions;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

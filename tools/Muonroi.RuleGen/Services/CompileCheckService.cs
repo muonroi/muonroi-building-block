@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Muonroi.RuleGen.Services;
 
 internal sealed record CompileCheckResult(bool Success, int ExitCode, string Output, string TargetPath);

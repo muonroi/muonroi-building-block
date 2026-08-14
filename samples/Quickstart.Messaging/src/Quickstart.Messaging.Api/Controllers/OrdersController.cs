@@ -1,7 +1,3 @@
-using MassTransit;
-using Microsoft.AspNetCore.Mvc;
-using Quickstart.Messaging.Api.Messages;
-
 namespace Quickstart.Messaging.Api.Controllers;
 
 /// <summary>

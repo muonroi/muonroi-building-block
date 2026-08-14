@@ -1,6 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
-using Muonroi.Caching.Abstractions.Distributed;
-
 namespace Quickstart.AuthZ.Api.Infrastructure;
 
 /// <summary>

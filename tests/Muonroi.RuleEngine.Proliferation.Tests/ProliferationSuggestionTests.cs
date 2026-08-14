@@ -1,6 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleEngine.Proliferation.Models;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests;
 
 public class ProliferationSuggestionTests

@@ -1,8 +1,3 @@
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Diagnostics;
-using System.Collections.Immutable;
-using System.Linq;
-
 namespace Muonroi.Tenancy.SiteProfile.SourceGenerators;
 
 /// <summary>

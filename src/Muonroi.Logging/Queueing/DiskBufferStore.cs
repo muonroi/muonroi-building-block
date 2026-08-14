@@ -1,7 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Muonroi.Logging.Abstractions.Models;
-
 namespace Muonroi.Logging.Queueing;
 
 /// <summary>

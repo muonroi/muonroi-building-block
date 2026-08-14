@@ -1,7 +1,6 @@
-using Muonroi.Tenancy.Abstractions;
-using Muonroi.Tenancy.Core;
-
 namespace Muonroi.Tenancy.Core.Tests;
+
+using TenantConnectionStringsOptions = Muonroi.Tenancy.Abstractions.TenantConnectionStringsOptions;
 
 public class MappingTenantConnectionStringFactoryTests
 {

@@ -1,8 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Mediator.Behaviours;
-using Muonroi.Mediator.Mediator;
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Muonroi.Mediator.Tests.Behaviours;
 
 public class MPrePostProcessorTests

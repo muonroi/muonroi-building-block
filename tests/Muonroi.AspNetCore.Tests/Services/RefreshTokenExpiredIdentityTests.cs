@@ -1,12 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using Muonroi.Core.Abstractions.Constants;
-using Muonroi.Core.Abstractions.Models.Common;
-using Muonroi.Data.EntityFrameworkCore.Auth;
-using Xunit;
-
 namespace Muonroi.AspNetCore.Tests.Services;
 
 /// <summary>

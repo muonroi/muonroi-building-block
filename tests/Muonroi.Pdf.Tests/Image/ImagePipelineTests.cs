@@ -1,8 +1,3 @@
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Internal.Image;
-using Muonroi.Pdf.Tests.Helpers;
-using NSubstitute;
-
 namespace Muonroi.Pdf.Tests.Image;
 
 public sealed class ImagePipelineTests

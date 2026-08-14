@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace Muonroi.RuleEngine.SourceGenerators.Authoring;
 
 internal static class FactSchemaWalker

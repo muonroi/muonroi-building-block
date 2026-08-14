@@ -1,11 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.SeedWorks;
-using Muonroi.Core.Helpers;
-using Muonroi.RuleGen.Mcp.Infrastructure;
-
 namespace Muonroi.RuleGen.Mcp;
 
 internal static class Program

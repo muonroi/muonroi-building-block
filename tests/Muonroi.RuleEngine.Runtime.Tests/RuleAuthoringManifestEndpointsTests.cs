@@ -1,13 +1,3 @@
-using FluentAssertions;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.RuleEngine.Abstractions.Authoring;
-using Muonroi.RuleEngine.Runtime.Rules;
-using System.Net;
-using System.Net.Http.Json;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 /// <summary>

@@ -1,5 +1,3 @@
-using Qdrant.Client.Grpc;
-
 namespace Muonroi.Experience.Runtime.Qdrant;
 
 /// <summary>

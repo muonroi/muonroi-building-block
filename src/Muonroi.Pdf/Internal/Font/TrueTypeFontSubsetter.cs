@@ -1,8 +1,3 @@
-using System.Buffers.Binary;
-using System.Diagnostics.CodeAnalysis;
-using System.Text;
-using Muonroi.Pdf.Abstractions.Exceptions;
-
 namespace Muonroi.Pdf.Internal.Font;
 
 /// <summary>

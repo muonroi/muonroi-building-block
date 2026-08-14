@@ -5,3 +5,7 @@ global using Microsoft.Extensions.Options;
 global using Muonroi.Experience.Runtime.File;
 global using Muonroi.Experience.Runtime.Interception;
 global using Muonroi.Experience.Abstractions;
+global using Moq;
+global using Muonroi.Experience.Runtime.Internal;
+global using Muonroi.Experience.Runtime.Brain;
+global using Muonroi.Experience.Runtime.Extraction;

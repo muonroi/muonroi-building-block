@@ -1,6 +1,6 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Tenancy.Abstractions;
 namespace Muonroi.AspNetCore.Tests;
+
+using ITenantContext = Muonroi.Tenancy.Abstractions.ITenantContext;
 
 public class MExceptionMiddlewareTests
 {

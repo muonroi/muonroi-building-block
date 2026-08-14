@@ -1,8 +1,3 @@
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-using Muonroi.Pdf.Tests.Helpers;
-
 namespace Muonroi.Pdf.Tests.Layout;
 
 // WAVE-3 SMOKE GATE (18-03): a single operand-value assertion proving the flex engine packs

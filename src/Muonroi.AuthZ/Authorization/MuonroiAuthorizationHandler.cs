@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using Muonroi.Core.Abstractions.Context;
-using System.Security.Claims;
-
 namespace Muonroi.AuthZ.Authorization;
 
 /// <summary>

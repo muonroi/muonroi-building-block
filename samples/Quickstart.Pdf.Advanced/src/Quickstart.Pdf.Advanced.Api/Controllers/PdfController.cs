@@ -1,9 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Pdf.Abstractions;
-using Muonroi.Pdf.DesignSystem;
-using Muonroi.Pdf.Enterprise;
-using Muonroi.Pdf.Enterprise.Quality;
-
 namespace Quickstart.Pdf.Advanced.Api.Controllers;
 
 /// <summary>

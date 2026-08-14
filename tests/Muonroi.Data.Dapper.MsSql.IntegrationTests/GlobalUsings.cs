@@ -11,3 +11,6 @@ global using System.Threading.Tasks;
 global using Xunit;
 global using Muonroi.Data.Dapper.Rls.Bypass;
 global using Muonroi.Data.Dapper.Rls.Setters;
+global using Dapper.Extensions;
+global using Muonroi.Data.Dapper.MsSql.IntegrationTests.Fixtures;
+global using Muonroi.Data.Dapper.Rls;

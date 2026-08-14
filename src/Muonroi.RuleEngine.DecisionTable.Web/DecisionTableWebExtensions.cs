@@ -1,10 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Governance.License;
-using Muonroi.RuleEngine.DecisionTable.Web.Contributors;
-using Muonroi.RuleEngine.DecisionTable;
-
 namespace Muonroi.RuleEngine.DecisionTable.Web;
 
 /// <summary>

@@ -1,0 +1,11 @@
+global using FluentAssertions;
+global using Microsoft.EntityFrameworkCore;
+global using Muonroi.RuleEngine.EntityFrameworkCore.Rules;
+global using Muonroi.RuleEngine.EntityFrameworkCore.Rules.IngestedSourceEntities;
+global using Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities;
+global using Xunit;
+global using Microsoft.Extensions.Options;
+global using Muonroi.Tenancy.Abstractions;
+global using Muonroi.Tenancy.Core;
+global using System.Data;
+global using System.Data.Common;

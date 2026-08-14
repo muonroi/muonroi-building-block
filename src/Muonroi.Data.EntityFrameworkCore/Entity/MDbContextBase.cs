@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Muonroi.Data.Abstractions.Entities;
-
 namespace Muonroi.Data.EntityFrameworkCore.Entity;
 
 /// <summary>

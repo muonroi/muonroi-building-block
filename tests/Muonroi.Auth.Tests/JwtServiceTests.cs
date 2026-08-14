@@ -1,9 +1,3 @@
-using FluentAssertions;
-using Microsoft.IdentityModel.Tokens;
-using Muonroi.Auth.Jwt;
-using Muonroi.Core.Abstractions.Interfaces;
-using Xunit;
-
 namespace Muonroi.Auth.Tests;
 
 public class JwtServiceTests

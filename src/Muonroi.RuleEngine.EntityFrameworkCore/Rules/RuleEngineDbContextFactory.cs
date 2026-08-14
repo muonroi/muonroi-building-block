@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore.Design;
-
 namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules;
 
 /// <summary>

@@ -3,3 +3,7 @@ global using Microsoft.Extensions.Logging;
 global using Muonroi.Core.Abstractions.Constants;
 global using Muonroi.Core.Abstractions.Interfaces;
 global using Polly;
+global using Muonroi.Logging.Abstractions;
+global using Muonroi.Core.Abstractions.Guards;
+global using System.Net.Http.Json;
+global using Muonroi.Core.Abstractions.Exceptions;

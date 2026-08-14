@@ -1,5 +1,3 @@
-using Muonroi.Data.EntityFrameworkCore.SqlServer;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class SqlServerDbContextConfiguratorTests

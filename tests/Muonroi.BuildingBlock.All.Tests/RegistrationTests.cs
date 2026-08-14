@@ -1,17 +1,3 @@
-
-using System.Reflection;
-using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using Muonroi.AspNetCore.Extensions;
-using Xunit;
-using Moq;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Governance.License;
-using Muonroi.Governance.Abstractions.License;
-
 namespace Muonroi.BuildingBlock.All.Tests;
 
 public class RegistrationTests

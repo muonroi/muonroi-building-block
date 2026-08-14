@@ -1,15 +1,3 @@
-using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Governance.License;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Core.Events;
-using Muonroi.RuleEngine.Runtime.Events;
-using Muonroi.RuleEngine.Runtime.Rules;
-using NSubstitute;
-using System.Text.Json;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Runtime.Tests.Events;
 
 public sealed class EventDrivenRuleEvaluatorTests

@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-
 namespace Muonroi.Core.Abstractions.Tests.Exceptions;
 
 public class MExceptionLayerTests

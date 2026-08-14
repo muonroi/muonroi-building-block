@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.RuleEngine.DecisionTable.Models;
-
 namespace Muonroi.RuleEngine.DecisionTable;
 
 /// <summary>

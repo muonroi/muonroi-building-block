@@ -1,10 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using Muonroi.Pdf.Abstractions.Exceptions;
-using Muonroi.Pdf.Internal.Font;
-using Muonroi.Pdf.Internal.Image;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-using SixLabors.Fonts;
-
 namespace Muonroi.Pdf.Internal.Layout;
 
 [SuppressMessage("Muonroi.CodeStandards", "MSTD0001",

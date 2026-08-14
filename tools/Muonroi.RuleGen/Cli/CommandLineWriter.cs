@@ -1,5 +1,3 @@
-﻿using Spectre.Console;
-
 namespace Muonroi.RuleGen.Cli;
 
 internal static class CommandLineWriter

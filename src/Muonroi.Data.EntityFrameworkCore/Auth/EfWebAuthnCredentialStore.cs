@@ -1,8 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Data.EntityFrameworkCore.Entity;
-using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
-
 namespace Muonroi.Data.EntityFrameworkCore.Auth;
 
 /// <summary>

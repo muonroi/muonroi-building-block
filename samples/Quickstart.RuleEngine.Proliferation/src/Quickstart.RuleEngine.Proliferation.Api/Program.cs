@@ -1,8 +1,3 @@
-using Muonroi.Integration.Connectors.Registration;
-using Muonroi.RuleEngine.Proliferation;
-using Muonroi.RuleEngine.Proliferation.Persistence;
-using Quickstart.RuleEngine.Proliferation.Api;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

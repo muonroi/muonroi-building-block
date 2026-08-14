@@ -1,8 +1,3 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Rules.Controllers;
-
 namespace Muonroi.Rules.Tests.Feel;
 
 public sealed class FeelControllerBaseTests

@@ -1,7 +1,3 @@
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using Muonroi.RuleEngine.CEP.Observability;
-
 namespace Muonroi.RuleEngine.CEP.Tests;
 
 public class CepEngineTests

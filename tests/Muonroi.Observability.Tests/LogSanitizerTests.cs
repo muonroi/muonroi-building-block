@@ -1,8 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using FluentAssertions;
-using Muonroi.Observability.Logging;
-using Xunit;
-
 namespace Muonroi.Observability.Tests;
 
 public class LogSanitizerTests

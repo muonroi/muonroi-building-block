@@ -1,7 +1,3 @@
-using Microsoft.EntityFrameworkCore.Metadata;
-using Muonroi.Core.Abstractions.SeedWorks;
-using Muonroi.Data.EntityFrameworkCore.Entity.EFConfig;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class CustomColumnOrderConventionTests

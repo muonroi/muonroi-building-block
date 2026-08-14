@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Secrets.Secrets;
-
 namespace Quickstart.Secrets.Api.Controllers;
 
 /// <summary>

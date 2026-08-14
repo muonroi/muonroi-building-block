@@ -1,5 +1,3 @@
-using Muonroi.AspNetCore.Extensions;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

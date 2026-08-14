@@ -1,8 +1,3 @@
-using LoanApproval.Api.Models;
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Core;
-
 namespace LoanApproval.Api.Controllers;
 
 [ApiController]

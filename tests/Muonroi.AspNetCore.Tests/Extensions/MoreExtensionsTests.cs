@@ -1,13 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using Muonroi.AspNetCore.Extensions;
-using Muonroi.AspNetCore.Cors;
-using Muonroi.Core.Abstractions.Interfaces;
-using System.Reflection;
-using Xunit;
-using NSubstitute;
-using Microsoft.Extensions.Logging;
-
 namespace Muonroi.AspNetCore.Tests.Extensions;
 
 public class FakePermissionProvider : IPermissionProvider

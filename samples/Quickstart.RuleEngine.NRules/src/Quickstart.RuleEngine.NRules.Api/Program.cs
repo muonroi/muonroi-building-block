@@ -1,7 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Helpers;
-using Muonroi.RuleEngine.NRules;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

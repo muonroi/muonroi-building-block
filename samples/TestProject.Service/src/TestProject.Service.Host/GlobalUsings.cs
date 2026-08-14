@@ -1,2 +1,16 @@
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Configuration;
+global using Muonroi.Tenancy.SiteProfile.Web.Dapper;
+global using Muonroi.Tenancy.SiteProfile.Web.Pipeline;
+global using Muonroi.Tenancy.SiteProfile.Web.Validation;
+global using TestProject.Service.Core.Contracts;
+global using TestProject.Service.Core.Infrastructure;
+global using TestProject.Service.Host.v1.Services;
+global using TestProject.Service.Sites.Default;
+global using TestProject.Service.Sites.Alpha;
+global using TestProject.Service.Sites.Bravo;
+global using TestProject.Service.Sites.Charlie;
+global using Muonroi.Tenancy.SiteProfile.Grpc;
+global using Grpc.Core;
+global using TestProject.Service.Core.Constants;
+global using TestProject.Service.Host.v1.Protos;

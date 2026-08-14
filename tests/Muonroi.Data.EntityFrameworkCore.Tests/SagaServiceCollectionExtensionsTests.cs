@@ -1,5 +1,3 @@
-using Muonroi.Data.EntityFrameworkCore.Saga;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class SagaServiceCollectionExtensionsTests

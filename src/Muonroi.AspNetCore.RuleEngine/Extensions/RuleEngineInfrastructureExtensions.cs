@@ -1,9 +1,3 @@
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
-using Muonroi.AspNetCore.Controllers;
-using Muonroi.AspNetCore.Controllers.Conventions;
-using Muonroi.RuleEngine.Runtime.Rules;
-using System.Reflection;
-
 namespace Muonroi.AspNetCore.Extensions;
 
 /// <summary>

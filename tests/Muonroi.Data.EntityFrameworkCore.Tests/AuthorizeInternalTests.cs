@@ -1,5 +1,3 @@
-using Muonroi.Data.EntityFrameworkCore.Auth;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 /// <summary>

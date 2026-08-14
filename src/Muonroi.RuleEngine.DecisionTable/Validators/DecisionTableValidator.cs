@@ -1,6 +1,3 @@
-using Muonroi.RuleEngine.DecisionTable.Feel;
-using Muonroi.RuleEngine.DecisionTable.Models;
-
 namespace Muonroi.RuleEngine.DecisionTable.Validators;
 
 /// <summary>

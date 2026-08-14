@@ -1,6 +1,3 @@
-using Muonroi.RuleEngine.EntityFrameworkCore.Rules.IngestedSourceEntities;
-using Muonroi.RuleEngine.EntityFrameworkCore.Rules.TraceabilityEntities;
-
 namespace Muonroi.RuleEngine.EntityFrameworkCore.Rules;
 
 /// <summary>

@@ -1,6 +1,3 @@
-using FluentAssertions;
-using Xunit;
-
 namespace Muonroi.Mediator.Tests;
 
 public class SmokeTests

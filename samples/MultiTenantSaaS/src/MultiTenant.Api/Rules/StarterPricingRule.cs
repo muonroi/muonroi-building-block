@@ -1,6 +1,3 @@
-using MultiTenant.Api.Models;
-using Muonroi.RuleEngine.Abstractions;
-
 namespace MultiTenant.Api.Rules;
 
 [TenantRuleGroup("pricing", "tenant-starter")]

@@ -1,7 +1,3 @@
-using Muonroi.Core.Abstractions.Models;
-using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
-using Xunit;
-
 namespace Muonroi.AspNetCore.Tests.Permissions;
 
 public class MPermissionEntityTests

@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Muonroi.Governance.Enterprise.License;
 
 /// <summary>

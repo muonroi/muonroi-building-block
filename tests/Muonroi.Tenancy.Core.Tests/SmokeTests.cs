@@ -1,6 +1,3 @@
-using Xunit;
-using FluentAssertions;
-
 namespace Muonroi.Tenancy.Core.Tests;
 
 public class SmokeTests

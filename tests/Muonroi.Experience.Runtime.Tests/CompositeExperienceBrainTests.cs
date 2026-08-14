@@ -1,9 +1,3 @@
-using FluentAssertions;
-using Moq;
-using Muonroi.Experience.Abstractions;
-using Muonroi.Experience.Runtime.Brain;
-using Xunit;
-
 namespace Muonroi.Experience.Runtime.Tests;
 
 [Trait("Category", "Extraction")]

@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Caching.Distributed;
-
 namespace Muonroi.Auth.Jwt;
 
 /// <summary>

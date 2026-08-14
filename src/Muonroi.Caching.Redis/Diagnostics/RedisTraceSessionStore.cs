@@ -1,8 +1,3 @@
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Core.Abstractions.Interfaces;
-using StackExchange.Redis;
-
 namespace Muonroi.Caching.Redis.Diagnostics;
 
 /// <summary>

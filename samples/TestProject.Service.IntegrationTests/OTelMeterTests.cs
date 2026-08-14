@@ -1,11 +1,3 @@
-using System.Diagnostics.Metrics;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Logging;
-using Muonroi.Tenancy.SiteProfile.Web.Telemetry;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

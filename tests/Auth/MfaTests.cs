@@ -1,5 +1,3 @@
-using Muonroi.Auth.Mfa.WebAuthenticate;
-
 namespace Muonroi.Auth.Tests;
 
 public class MfaTests

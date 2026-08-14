@@ -1,18 +1,3 @@
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Muonroi.Pdf.Abstractions.Engine;
-using Muonroi.Pdf.Abstractions.Telemetry;
-using Muonroi.Pdf.Extensions;
-
 namespace Muonroi.Pdf.Tests.Service;
 
 /// <summary>

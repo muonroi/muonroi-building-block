@@ -1,8 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Data.EntityFrameworkCore.Auth;
-
 namespace Muonroi.Data.EntityFrameworkCore.Extensions;
 
 /// <summary>

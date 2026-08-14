@@ -4,7 +4,6 @@
 // (ITenantContextPolicy has AppDomain reflection).
 
 using Microsoft.Extensions.Logging;
-using Muonroi.Logging.Abstractions;
 
 try
 {

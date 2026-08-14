@@ -1,6 +1,3 @@
-using Quickstart.RuleEngine.Core.Api.Models;
-using Muonroi.RuleEngine.Abstractions;
-
 namespace Quickstart.RuleEngine.Core.Api.Rules;
 
 public class PremiumDiscountRule : IRule<OrderContext>, ICompensatableRule<OrderContext>

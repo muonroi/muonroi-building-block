@@ -1,12 +1,3 @@
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using FluentAssertions;
-using Moq;
-using Muonroi.RuleEngine.Proliferation.Brain;
-using Muonroi.RuleEngine.Proliferation.Models;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests;
 
 /// <summary>

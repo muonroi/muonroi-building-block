@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Muonroi.RuleEngine.Proliferation.Persistence;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ProliferationDbContext>(options =>
     options.UseInMemoryDatabase("ProliferationDb"));

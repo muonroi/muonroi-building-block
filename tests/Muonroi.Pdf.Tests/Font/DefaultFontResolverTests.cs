@@ -1,12 +1,6 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
-using Muonroi.Pdf.Internal.Font;
-using Muonroi.Logging.Abstractions;
-using NSubstitute;
-
 namespace Muonroi.Pdf.Tests.Font;
+
+using FontStyle = Muonroi.Pdf.Abstractions.FontStyle;
 
 /// <summary>
 /// Phase 11.3 — unit tests for <see cref="DefaultFontResolver"/>.

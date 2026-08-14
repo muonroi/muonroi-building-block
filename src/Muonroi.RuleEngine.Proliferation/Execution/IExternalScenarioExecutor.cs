@@ -1,5 +1,3 @@
-using Muonroi.RuleEngine.Proliferation.Models;
-
 namespace Muonroi.RuleEngine.Proliferation.Execution;
 
 /// <summary>

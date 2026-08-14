@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace Quickstart.Integration.Api.Models;
 
 /// <summary>

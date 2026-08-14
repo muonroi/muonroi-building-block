@@ -1,7 +1,3 @@
-using System.Text.Json;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.RuleEngine.DecisionTable.Models;
-using Muonroi.RuleEngine.DecisionTable.Stores;
 using DecisionTableModel = Muonroi.RuleEngine.DecisionTable.Models.DecisionTable;
 
 namespace Muonroi.RuleEngine.DecisionTable.Tests;

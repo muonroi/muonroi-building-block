@@ -1,6 +1,3 @@
-using Muonroi.RuleEngine.DecisionTable.Web;
-using Muonroi.Rules;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 string? ruleDb = builder.Configuration.GetConnectionString("RuleDb");

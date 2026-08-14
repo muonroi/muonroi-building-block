@@ -1,5 +1,3 @@
-using Muonroi.Tenancy.Abstractions;
-
 namespace Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 
 /// <summary>

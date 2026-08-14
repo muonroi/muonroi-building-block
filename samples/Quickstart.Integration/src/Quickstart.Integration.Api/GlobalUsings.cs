@@ -1,0 +1,9 @@
+global using System.Diagnostics;
+global using System.Net.Http.Headers;
+global using System.Text.Json;
+global using Muonroi.Integration.Abstractions;
+global using Muonroi.RuleEngine.Abstractions;
+global using Microsoft.AspNetCore.Mvc;
+global using Quickstart.Integration.Api.Models;
+global using Muonroi.Integration.Connectors.Registration;
+global using Quickstart.Integration.Api.Connectors;

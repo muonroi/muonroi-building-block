@@ -1,0 +1,9 @@
+global using Microsoft.AspNetCore.Mvc;
+global using Quickstart.Http.Api.Models;
+global using Quickstart.Http.Api.Services;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.Http.Http;
+global using Muonroi.Logging;
+global using Muonroi.Logging.Abstractions;
+global using Polly;
+global using Polly.Retry;

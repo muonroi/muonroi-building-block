@@ -12,3 +12,5 @@ global using System.Threading.Tasks;
 global using Muonroi.Caching.Memory.MultiLevel;
 global using Muonroi.Tenancy.Core;
 global using Xunit;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using Muonroi.Caching.Abstractions.Distributed;

@@ -1,9 +1,3 @@
-using System.Text.Json;
-using FluentAssertions;
-using Muonroi.RuleEngine.Abstractions;
-using Muonroi.RuleEngine.Proliferation.Execution;
-using Muonroi.RuleEngine.Proliferation.Models;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests;
 
 public class ScenarioExecutorTests

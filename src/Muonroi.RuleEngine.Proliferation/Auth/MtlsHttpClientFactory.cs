@@ -1,9 +1,3 @@
-using System.Collections.Concurrent;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-using Muonroi.Logging.Abstractions;
-using Muonroi.RuleEngine.Proliferation.Models;
-
 namespace Muonroi.RuleEngine.Proliferation.Auth;
 
 /// <summary>

@@ -1,8 +1,3 @@
-using Muonroi.Core.Abstractions.Guards;
-using System.Net.Http.Json;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Logging.Abstractions;
-
 namespace Muonroi.Http.Http;
 
 /// <summary>

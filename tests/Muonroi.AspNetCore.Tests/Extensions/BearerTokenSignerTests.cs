@@ -1,5 +1,3 @@
-using Microsoft.IdentityModel.Tokens;
-
 namespace Muonroi.AspNetCore.Tests.Extensions;
 
 /// <summary>

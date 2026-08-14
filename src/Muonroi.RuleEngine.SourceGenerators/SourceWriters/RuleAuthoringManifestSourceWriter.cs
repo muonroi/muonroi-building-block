@@ -1,7 +1,3 @@
-using Muonroi.RuleEngine.SourceGenerators.Authoring;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace Muonroi.RuleEngine.SourceGenerators.SourceWriters;
 
 internal static class RuleAuthoringManifestSourceWriter

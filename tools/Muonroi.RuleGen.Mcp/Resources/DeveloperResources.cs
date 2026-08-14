@@ -1,7 +1,3 @@
-using ModelContextProtocol.Server;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.RuleGen.Mcp.Infrastructure;
-
 namespace Muonroi.RuleGen.Mcp.Resources;
 
 [McpServerResourceType]

@@ -1,14 +1,3 @@
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Muonroi.Pdf.Abstractions;
-using Muonroi.Pdf.Abstractions.Engine;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-using Muonroi.Pdf.Internal.Writer;
-
 namespace Muonroi.Pdf.Tests.Writer;
 
 [Collection(PdfRenderCollection.Name)]

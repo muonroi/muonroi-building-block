@@ -1,7 +1,3 @@
-using Muonroi.RuleGen.Cli;
-using FluentAssertions;
-using Xunit;
-
 namespace Muonroi.RuleGen.Tests;
 
 public class OptionReaderTests

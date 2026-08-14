@@ -1,8 +1,3 @@
-using Hangfire;
-using Hangfire.MemoryStorage;
-using Muonroi.BackgroundJobs.Abstractions;
-using Quickstart.BackgroundJobs.Hangfire.Api.Jobs;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Execution context accessor required by TenantAwareJobBase

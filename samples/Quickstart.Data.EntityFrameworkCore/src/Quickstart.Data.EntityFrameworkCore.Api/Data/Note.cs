@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.SeedWorks;
-
 namespace Quickstart.Data.EntityFrameworkCore.Api.Data;
 
 /// <summary>

@@ -1,7 +1,3 @@
-using Muonroi.Governance.Abstractions.License;
-using Muonroi.Governance.License;
-using System.Reflection;
-
 namespace Muonroi.Governance.Enterprise.Tests.License;
 
 public class AntiTamperDetectorTests

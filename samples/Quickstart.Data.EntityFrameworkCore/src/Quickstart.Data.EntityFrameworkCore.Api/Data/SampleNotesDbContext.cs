@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Muonroi.Data.EntityFrameworkCore.Entity;
-
 namespace Quickstart.Data.EntityFrameworkCore.Api.Data;
 
 /// <summary>

@@ -1,7 +1,3 @@
-using System.Text.Json;
-using Muonroi.RuleEngine.Abstractions;
-using Quickstart.Integration.Abstractions.Api.Controllers;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Feature-specific registrations ---

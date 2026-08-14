@@ -1,7 +1,3 @@
-﻿using Muonroi.AuthZ.Policies;
-using System.Net;
-using System.Text.Json;
-
 namespace Muonroi.AuthZ.Tests;
 
 public class OpaPolicyTests

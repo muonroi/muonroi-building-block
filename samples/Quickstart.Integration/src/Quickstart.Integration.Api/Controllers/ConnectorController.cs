@@ -1,9 +1,3 @@
-using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Integration.Abstractions;
-using Muonroi.RuleEngine.Abstractions;
-using Quickstart.Integration.Api.Models;
-
 namespace Quickstart.Integration.Api.Controllers;
 
 /// <summary>

@@ -1,12 +1,3 @@
-using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Diagnostics.Extensions;
-using Muonroi.Diagnostics.Store;
-using Xunit;
-
 namespace Muonroi.Diagnostics.Tests;
 
 public class MDiagnosticsServiceCollectionExtensionsTests

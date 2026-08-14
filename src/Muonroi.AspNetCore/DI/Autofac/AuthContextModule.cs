@@ -1,6 +1,3 @@
-using Autofac;
-using Muonroi.Http.Http;
-
 namespace Muonroi.AspNetCore.DI.Autofac;
 
 internal class AuthContextModule : global::Autofac.Module

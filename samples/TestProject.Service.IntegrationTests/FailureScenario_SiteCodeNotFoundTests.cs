@@ -1,10 +1,3 @@
-using Microsoft.Extensions.Configuration;
-using Muonroi.Core.Abstractions.Exceptions;
-using TestProject.Service.Core.Constants;
-using TestProject.Service.Core.Contracts;
-using TestProject.Service.Sites.Alpha;
-using TestProject.Service.Sites.Bravo;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

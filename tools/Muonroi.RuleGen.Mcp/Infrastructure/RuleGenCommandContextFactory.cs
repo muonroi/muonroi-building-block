@@ -1,6 +1,3 @@
-using System.Text.Json;
-using Muonroi.RuleGen.Cli;
-
 namespace Muonroi.RuleGen.Mcp.Infrastructure;
 
 internal static class RuleGenCommandContextFactory

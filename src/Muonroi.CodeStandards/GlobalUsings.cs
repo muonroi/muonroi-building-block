@@ -1,0 +1,13 @@
+global using System;
+global using System.Collections.Immutable;
+global using Microsoft.CodeAnalysis;
+global using Microsoft.CodeAnalysis.CSharp;
+global using Microsoft.CodeAnalysis.CSharp.Syntax;
+global using Microsoft.CodeAnalysis.Diagnostics;
+global using Muonroi.CodeStandards.Diagnostics;
+global using System.Linq;
+global using System.Composition;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Microsoft.CodeAnalysis.CodeActions;
+global using Microsoft.CodeAnalysis.CodeFixes;

@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace Quickstart.Services.Api.Domain;
 
 /// <summary>

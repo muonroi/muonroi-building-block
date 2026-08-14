@@ -1,6 +1,6 @@
-using Muonroi.Pdf.Abstractions;
-
 namespace Muonroi.Pdf.Internal.Font;
+
+using FontStyle = Muonroi.Pdf.Abstractions.FontStyle;
 
 internal sealed record EmbeddedFontInfo(
     string Family,

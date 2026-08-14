@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Muonroi.RuleEngine.Runtime.Adapters;
 
 /// <summary>

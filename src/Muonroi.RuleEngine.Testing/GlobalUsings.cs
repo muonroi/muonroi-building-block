@@ -3,3 +3,7 @@ global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Logging.Abstractions;
 global using Muonroi.RuleEngine.Abstractions;
 global using Muonroi.RuleEngine.Core;
+global using Muonroi.Core.Abstractions.Exceptions;
+global using Muonroi.Core.Abstractions.Guards;
+global using Muonroi.Core.Abstractions.SeedWorks;
+global using Muonroi.Logging.Abstractions;

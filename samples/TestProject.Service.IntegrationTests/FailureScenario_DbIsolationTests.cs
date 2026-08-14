@@ -1,8 +1,3 @@
-using Npgsql;
-using TestProject.Service.Sites.Default;
-using TestProject.Service.Sites.Alpha;
-using TestProject.Service.Sites.Bravo;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

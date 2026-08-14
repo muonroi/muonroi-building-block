@@ -1,7 +1,3 @@
-using FluentAssertions;
-using Muonroi.BackgroundJobs.Abstractions;
-using Xunit;
-
 namespace Muonroi.BackgroundJobs.Abstractions.Tests;
 
 public class BackgroundJobConfigsTests

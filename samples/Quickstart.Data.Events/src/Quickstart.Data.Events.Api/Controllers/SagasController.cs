@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Muonroi.Messaging.Abstractions.Events;
-using Quickstart.Data.Events.Api.Sagas;
-
 namespace Quickstart.Data.Events.Api.Controllers;
 
 /// <summary>

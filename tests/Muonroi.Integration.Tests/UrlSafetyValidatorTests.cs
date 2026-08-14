@@ -1,6 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Integration.Connectors.Http;
-
 namespace Muonroi.Integration.Tests;
 
 /// <summary>

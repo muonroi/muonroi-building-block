@@ -1,5 +1,3 @@
-using Muonroi.Governance.Abstractions.Integrity;
-
 namespace Muonroi.Governance.License;
 
 /// <summary>

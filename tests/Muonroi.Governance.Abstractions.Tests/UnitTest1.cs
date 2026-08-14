@@ -1,8 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Muonroi.Governance.Abstractions.Integrity;
-using Muonroi.Governance.License;
-
 namespace Muonroi.Governance.Abstractions.Tests;
 
 public class ActivationProofTests

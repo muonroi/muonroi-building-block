@@ -1,5 +1,3 @@
-using Muonroi.Data.Dapper.Dapper;
-
 namespace Muonroi.Data.Dapper.Dapper;
 
 /// <summary>

@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.AspNetCore.Extensions;
-using Xunit;
-using System.Reflection;
-using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Hosting;
-using NSubstitute;
-
 namespace Muonroi.AspNetCore.Tests.Extensions;
 
 public class ApplicationExtensionsTests

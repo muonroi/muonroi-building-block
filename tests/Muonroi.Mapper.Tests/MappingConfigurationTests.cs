@@ -1,8 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using FluentAssertions;
-using Muonroi.Mapper.Mapper;
-using Xunit;
-
 namespace Muonroi.Mapper.Tests;
 
 public class MappingConfigurationTests

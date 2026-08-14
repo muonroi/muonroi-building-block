@@ -1,11 +1,3 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-using Muonroi.Pdf.Extensions;
-
 namespace Muonroi.Pdf.Tests.Service;
 
 /// <summary>

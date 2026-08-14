@@ -1,8 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleEngine.Runtime.Rules;
-using RulesEngine.Models;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Runtime.Tests;
 
 public sealed class ExternalJsonRuleTests

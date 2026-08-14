@@ -1,8 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleGen.Cli;
-using Muonroi.RuleGen.Commands;
-using Xunit;
-
 namespace Muonroi.RuleGen.Tests;
 
 public sealed class VerifyCommandTests

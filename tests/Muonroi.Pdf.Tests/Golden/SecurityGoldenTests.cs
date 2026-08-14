@@ -1,7 +1,3 @@
-using System;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Muonroi.Pdf.Tests.Golden;
 
 /// <summary>

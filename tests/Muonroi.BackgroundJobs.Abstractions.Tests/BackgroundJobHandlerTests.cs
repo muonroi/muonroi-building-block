@@ -1,12 +1,3 @@
-using FluentAssertions;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using Muonroi.BackgroundJobs.Abstractions;
-using Muonroi.Core.Abstractions.Ecosystem;
-using Muonroi.Core.Abstractions.Exceptions;
-using Xunit;
-
 namespace Muonroi.BackgroundJobs.Abstractions.Tests;
 
 /// <summary>

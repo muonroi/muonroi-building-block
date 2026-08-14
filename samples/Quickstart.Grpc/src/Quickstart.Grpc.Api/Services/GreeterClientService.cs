@@ -1,7 +1,3 @@
-using Grpc.Core;
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Grpc.Grpc;
-
 namespace Quickstart.Grpc.Api.Services;
 
 /// <summary>

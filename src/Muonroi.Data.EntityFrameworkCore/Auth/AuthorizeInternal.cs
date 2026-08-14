@@ -1,8 +1,3 @@
-using Microsoft.IdentityModel.Tokens;
-using System.Diagnostics.CodeAnalysis;
-using System.IdentityModel.Tokens.Jwt;
-using Muonroi.Core.Abstractions.Interfaces;
-
 // MBB001-exempt: static extension method class — cannot inject IMDateTimeService; DI boundary is at the MDbContext call site.
 namespace Muonroi.Data.EntityFrameworkCore.Auth;
 

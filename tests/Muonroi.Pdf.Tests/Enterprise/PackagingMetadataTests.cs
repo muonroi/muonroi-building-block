@@ -1,7 +1,3 @@
-using Muonroi.Pdf.Enterprise;
-using Muonroi.Pdf.Extensions;
-using System.Runtime.InteropServices;
-
 namespace Muonroi.Pdf.Tests.Enterprise;
 
 /// <summary>

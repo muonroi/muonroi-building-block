@@ -1,5 +1,3 @@
-using Muonroi.Logging.Abstractions.Models;
-
 namespace Muonroi.Logging.Queueing;
 
 /// <summary>

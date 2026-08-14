@@ -1,5 +1,3 @@
-using Scriban.Runtime;
-
 namespace Muonroi.Templating.Scriban;
 
 /// <summary>

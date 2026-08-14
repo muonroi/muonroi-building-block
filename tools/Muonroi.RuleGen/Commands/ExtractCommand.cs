@@ -1,14 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.RuleGen.Cli;
-using Muonroi.RuleGen.Models;
-using Muonroi.RuleGen.Services;
-using Muonroi.RuleGen.Writers;
-using Spectre.Console;
-using System.Diagnostics;
-using System.IO;
-using System.Text.RegularExpressions;
-
 namespace Muonroi.RuleGen.Commands;
 
 internal static class ExtractCommand

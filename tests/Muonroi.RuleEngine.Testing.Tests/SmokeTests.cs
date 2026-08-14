@@ -1,6 +1,3 @@
-using FluentAssertions;
-using Xunit;
-
 namespace Muonroi.RuleEngine.Testing.Tests;
 
 public class SmokeTests

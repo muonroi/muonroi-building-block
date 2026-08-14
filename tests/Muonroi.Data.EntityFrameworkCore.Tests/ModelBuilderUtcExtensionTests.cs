@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore.Metadata;
-using Muonroi.Core.Abstractions.SeedWorks;
-
 namespace Muonroi.Data.EntityFrameworkCore.Tests;
 
 public class ModelBuilderUtcExtensionTests

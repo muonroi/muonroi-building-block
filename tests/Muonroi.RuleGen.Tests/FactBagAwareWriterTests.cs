@@ -1,8 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleGen.Models;
-using Muonroi.RuleGen.Writers;
-using Xunit;
-
 namespace Muonroi.RuleGen.Tests;
 
 /// <summary>

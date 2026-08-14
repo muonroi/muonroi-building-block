@@ -1,10 +1,3 @@
-using Grpc.Net.Client;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Logging;
-
 namespace TestProject.Aggregate.IntegrationTests.Helpers;
 
 /// <summary>

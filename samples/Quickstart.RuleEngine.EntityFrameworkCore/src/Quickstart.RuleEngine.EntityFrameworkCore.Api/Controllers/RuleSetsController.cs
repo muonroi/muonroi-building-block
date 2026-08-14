@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.RuleEngine.Runtime.Rules;
-
 namespace Quickstart.RuleEngine.EntityFrameworkCore.Api.Controllers;
 
 /// <summary>

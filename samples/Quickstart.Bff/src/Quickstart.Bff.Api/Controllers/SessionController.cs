@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Bff;
-using Quickstart.Bff.Api.Models;
-
 namespace Quickstart.Bff.Api.Controllers;
 
 /// <summary>

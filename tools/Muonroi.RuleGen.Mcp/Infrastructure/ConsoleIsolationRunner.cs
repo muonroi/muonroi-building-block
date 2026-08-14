@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Muonroi.RuleGen.Mcp.Infrastructure;
 
 public sealed class ConsoleIsolationRunner

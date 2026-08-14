@@ -1,8 +1,3 @@
-
-
-
-using Microsoft.EntityFrameworkCore.Storage;
-
 namespace Muonroi.Rules.Rules;
 
 

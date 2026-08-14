@@ -1,8 +1,3 @@
-using Autofac;
-using Muonroi.Mediator.Behaviours;
-using Muonroi.Mediator.Mediator;
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Muonroi.AspNetCore.DI.Autofac;
 
 internal class MediatorModule : global::Autofac.Module

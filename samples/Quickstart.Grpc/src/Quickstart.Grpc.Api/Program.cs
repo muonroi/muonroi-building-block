@@ -1,7 +1,3 @@
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Grpc.Grpc;
-using Quickstart.Grpc.Api.Services;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------------------------------------------------

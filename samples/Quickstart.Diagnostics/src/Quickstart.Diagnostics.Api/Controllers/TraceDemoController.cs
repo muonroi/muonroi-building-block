@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Core.Abstractions.Diagnostics;
-
 namespace Quickstart.Diagnostics.Api.Controllers;
 
 /// <summary>

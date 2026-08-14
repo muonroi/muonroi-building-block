@@ -1,7 +1,3 @@
-using Microsoft.Extensions.Logging;
-using Muonroi.BackgroundJobs.Abstractions;
-using Muonroi.Core.Abstractions.Context;
-
 namespace Quickstart.BackgroundJobs.Api.Jobs;
 
 /// <summary>

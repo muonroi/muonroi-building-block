@@ -1,6 +1,3 @@
-using Microsoft.Extensions.AI;
-using ModelContextProtocol.Server;
-
 namespace Muonroi.RuleGen.Mcp.Prompts;
 
 [McpServerPromptType]

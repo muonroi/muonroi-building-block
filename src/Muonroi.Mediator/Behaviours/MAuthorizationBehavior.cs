@@ -1,10 +1,6 @@
-using Muonroi.Core.Abstractions.Context;
-using Muonroi.Mediator.Exceptions;
-using Muonroi.Mediator.Mediator.Attributes;
-using Muonroi.Mediator.Mediator.Interfaces;
-using System.Collections.Concurrent;
-
 namespace Muonroi.Mediator.Behaviours;
+
+using MForbiddenException = Muonroi.Mediator.Exceptions.MForbiddenException;
 
 /// <summary>
 /// Enforces <see cref="MAuthorizeAttribute"/> constraints declared on <typeparamref name="TRequest"/>.

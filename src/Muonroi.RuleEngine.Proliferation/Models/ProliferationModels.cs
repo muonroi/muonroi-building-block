@@ -1,6 +1,3 @@
-using System.Text.Json;
-using Muonroi.RuleEngine.Proliferation.Brain;
-
 namespace Muonroi.RuleEngine.Proliferation.Models;
 
 /// <summary>Scope of a proliferation run.</summary>

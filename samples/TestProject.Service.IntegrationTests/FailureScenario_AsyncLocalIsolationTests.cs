@@ -1,11 +1,3 @@
-using System.Collections.Concurrent;
-using Microsoft.Extensions.Configuration;
-using TestProject.Service.Core.Constants;
-using TestProject.Service.Core.Contracts;
-using TestProject.Service.Sites.Default;
-using TestProject.Service.Sites.Alpha;
-using TestProject.Service.Sites.Bravo;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

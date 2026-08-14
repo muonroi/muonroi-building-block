@@ -1,6 +1,3 @@
-using Muonroi.AuthZ.Authorization;
-using Muonroi.RuleEngine.Abstractions;
-
 namespace Quickstart.AuthZ.Api.Rules;
 
 /// <summary>

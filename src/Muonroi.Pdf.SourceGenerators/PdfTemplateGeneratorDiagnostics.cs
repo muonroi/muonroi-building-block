@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace Muonroi.Pdf.SourceGenerators;
 
 /// <summary>

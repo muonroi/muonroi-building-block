@@ -1,8 +1,3 @@
-using FluentAssertions;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.RuleEngine.Proliferation.Brain;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests;
 
 public class BrainProviderFactoryTests

@@ -1,8 +1,3 @@
-using System.Net;
-using System.Net.Sockets;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-
 namespace Muonroi.Integration.Connectors.Http;
 
 /// <summary>

@@ -1,8 +1,3 @@
-using Muonroi.RuleGen.Cli;
-using Muonroi.RuleGen.Services;
-using Muonroi.RuleGen.Writers;
-using Muonroi.Core.Abstractions.Guards;
-
 namespace Muonroi.RuleGen.Commands;
 
 internal static class GenerateTestsCommand

@@ -1,7 +1,3 @@
-using Quickstart.RuleEngine.Core.Api.Models;
-using Quickstart.RuleEngine.Core.Api.Rules;
-using Muonroi.Core.Abstractions.Interfaces;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // --- Feature-specific registrations ---

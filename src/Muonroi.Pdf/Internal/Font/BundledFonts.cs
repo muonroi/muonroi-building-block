@@ -3,11 +3,10 @@
 // Bundled as embedded resources; no linking required by OFL.
 
 using System.Reflection;
-using Muonroi.Core.Abstractions.Exceptions;
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Pdf.Abstractions;
 
 namespace Muonroi.Pdf.Internal.Font;
+
+using FontStyle = Muonroi.Pdf.Abstractions.FontStyle;
 
 /// <summary>
 /// Static registry of Liberation Font embedded bytes and CSS family-name mapping.

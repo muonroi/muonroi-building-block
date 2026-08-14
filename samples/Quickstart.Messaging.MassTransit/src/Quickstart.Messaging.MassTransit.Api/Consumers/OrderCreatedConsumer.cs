@@ -1,5 +1,3 @@
-using Quickstart.Messaging.MassTransit.Api.Messages;
-
 namespace Quickstart.Messaging.MassTransit.Api.Consumers;
 
 public class OrderCreatedConsumer(

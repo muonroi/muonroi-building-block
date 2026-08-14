@@ -1,10 +1,5 @@
-using System.Linq;
-using System.Text;
-using AngleSharp.Css.Dom;
-using Muonroi.Core.Abstractions.Exceptions;
 using PdfFontStyle = Muonroi.Pdf.Abstractions.FontStyle;
 using PdfFontWeight = Muonroi.Pdf.Abstractions.FontWeight;
-using Muonroi.Core.Abstractions.Guards;
 
 namespace Muonroi.Pdf.Governance.Cascade;
 

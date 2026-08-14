@@ -1,6 +1,3 @@
-using Muonroi.RuleEngine.DecisionTable.Feel;
-using Muonroi.RuleEngine.DecisionTable.Web.ViewModels;
-
 namespace Muonroi.RuleEngine.DecisionTable.Web.Controllers;
 
 /// <summary>

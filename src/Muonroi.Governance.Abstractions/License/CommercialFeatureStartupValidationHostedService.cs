@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Hosting;
-
 namespace Muonroi.Governance.License;
 
 internal sealed class CommercialFeatureStartupValidationHostedService(

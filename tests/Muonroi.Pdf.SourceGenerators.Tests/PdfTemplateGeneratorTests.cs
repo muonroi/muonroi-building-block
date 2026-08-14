@@ -1,9 +1,3 @@
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Collections.Immutable;
-using System.Linq;
-using Muonroi.Pdf.SourceGenerators;
-
 namespace Muonroi.Pdf.SourceGenerators.Tests;
 
 /// <summary>

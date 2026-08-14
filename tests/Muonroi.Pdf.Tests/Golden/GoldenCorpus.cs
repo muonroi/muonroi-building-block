@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using Muonroi.Pdf.Abstractions;
-
 namespace Muonroi.Pdf.Tests.Golden;
 
 /// <summary>

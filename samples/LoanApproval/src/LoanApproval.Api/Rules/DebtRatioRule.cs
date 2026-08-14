@@ -1,6 +1,3 @@
-using LoanApproval.Api.Models;
-using Muonroi.RuleEngine.Abstractions;
-
 namespace LoanApproval.Api.Rules;
 
 [RuleGroup("loan-approval")]

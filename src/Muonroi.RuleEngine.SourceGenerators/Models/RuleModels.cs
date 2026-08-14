@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Muonroi.RuleEngine.SourceGenerators.Models;
 
 internal sealed record ParameterModel(

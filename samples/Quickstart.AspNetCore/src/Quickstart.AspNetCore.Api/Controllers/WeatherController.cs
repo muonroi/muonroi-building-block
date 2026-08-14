@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Quickstart.AspNetCore.Api.Models;
-
 namespace Quickstart.AspNetCore.Api.Controllers;
 
 /// <summary>

@@ -1,7 +1,3 @@
-using Muonroi.Mediator.Mediator;
-using Muonroi.Mediator.Mediator.Context;
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Muonroi.Mediator.Tests;
 
 public class ServiceCollectionExtensionsTests

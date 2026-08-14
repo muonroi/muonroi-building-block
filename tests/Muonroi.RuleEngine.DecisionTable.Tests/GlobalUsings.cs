@@ -1,0 +1,10 @@
+global using System.Xml.Linq;
+global using Muonroi.RuleEngine.DecisionTable.Dmn;
+global using Muonroi.RuleEngine.DecisionTable.Models;
+global using System.Text.Json;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Muonroi.RuleEngine.DecisionTable.Stores;
+global using Muonroi.RuleEngine.DecisionTable.Converters;
+global using Muonroi.RuleEngine.DecisionTable.Serializers;
+global using Muonroi.RuleEngine.DecisionTable.Validators;
+global using Muonroi.RuleEngine.Abstractions;

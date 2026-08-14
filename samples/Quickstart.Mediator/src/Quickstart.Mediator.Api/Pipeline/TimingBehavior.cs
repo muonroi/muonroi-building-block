@@ -1,6 +1,3 @@
-using Muonroi.Mediator.Mediator.Interfaces;
-using System.Diagnostics;
-
 namespace Quickstart.Mediator.Api.Pipeline;
 
 /// <summary>

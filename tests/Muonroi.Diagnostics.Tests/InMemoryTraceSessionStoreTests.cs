@@ -1,8 +1,3 @@
-using FluentAssertions;
-using Muonroi.Core.Abstractions.Diagnostics;
-using Muonroi.Diagnostics.Store;
-using Xunit;
-
 namespace Muonroi.Diagnostics.Tests;
 
 public class InMemoryTraceSessionStoreTests

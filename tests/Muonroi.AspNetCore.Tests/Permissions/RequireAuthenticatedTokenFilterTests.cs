@@ -1,18 +1,3 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
-using Muonroi.AspNetCore.Controllers.ActionFilters;
-using Muonroi.AspNetCore.Tests.Helpers;
-using Muonroi.Caching.Memory.MultiLevel;
-using Muonroi.Logging.Abstractions;
-using NSubstitute;
-using Xunit;
-using Microsoft.AspNetCore.Authorization;
-
 namespace Muonroi.AspNetCore.Tests.Permissions;
 
 public class RequireAuthenticatedTokenFilterTests

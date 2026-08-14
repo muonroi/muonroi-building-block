@@ -1,6 +1,3 @@
-using Muonroi.RuleEngine.DecisionTable.Models;
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Muonroi.RuleEngine.DecisionTable.Stores;
 
 /// <summary>

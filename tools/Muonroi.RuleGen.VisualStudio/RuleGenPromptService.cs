@@ -1,16 +1,3 @@
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.PlatformUI;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
-
 namespace Muonroi.RuleGen.VisualStudio;
 
 internal sealed class ExtractDialogResult

@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.ServiceDiscovery.Consul.Consul;
-
 namespace Quickstart.ServiceDiscovery.Api.Controllers;
 
 /// <summary>

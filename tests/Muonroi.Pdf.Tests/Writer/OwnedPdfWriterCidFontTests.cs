@@ -1,15 +1,6 @@
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Muonroi.Pdf.Abstractions.Engine;
-using Muonroi.Pdf.Internal.Font;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Layout.Boxes;
-using Muonroi.Pdf.Internal.Layout.Geometry;
-using Muonroi.Pdf.Internal.Writer;
-
 namespace Muonroi.Pdf.Tests.Writer;
+
+using FontStyle = Muonroi.Pdf.Abstractions.FontStyle;
 
 /// <summary>
 /// Plan 02 — CID Type0 / CIDFontType2 / ToUnicode CMap tests for OwnedPdfWriter.

@@ -1,5 +1,3 @@
-using TestProject.Aggregate.Core.Handlers;
-
 namespace TestProject.Aggregate.Sites.Default;
 
 /// <summary>

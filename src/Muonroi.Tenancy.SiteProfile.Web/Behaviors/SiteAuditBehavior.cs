@@ -1,9 +1,3 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Muonroi.Logging.Abstractions;
-using Muonroi.Tenancy.SiteProfile;
-
 namespace Muonroi.Tenancy.SiteProfile.Web.Behaviors;
 
 /// <summary>

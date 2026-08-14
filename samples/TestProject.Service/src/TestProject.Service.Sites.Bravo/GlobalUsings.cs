@@ -1,0 +1,16 @@
+global using Muonroi.Tenancy.SiteProfile.Web.Dapper;
+global using Muonroi.Tenancy.SiteProfile;
+global using Muonroi.Tenancy.SiteProfile.Web.Configuration;
+global using Muonroi.Tenancy.SiteProfile.Web.Handlers;
+global using TestProject.Service.Core.Contracts;
+global using Microsoft.EntityFrameworkCore;
+global using TestProject.Service.Core.Infrastructure;
+global using TestProject.Service.Core.Infrastructure.EntityConfigurations;
+global using TestProject.Service.Core.Services;
+global using Muonroi.RuleEngine.Abstractions;
+global using Muonroi.Tenancy.SiteProfile.Web.Pipeline;
+global using Muonroi.EntityFrameworkCore.Configuration;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Muonroi.Mediator.Mediator.Interfaces;
+global using TestProject.Service.Core.Constants;

@@ -7,18 +7,6 @@
 // The probe has InternalsVisibleTo access to the engine (see Muonroi.Pdf.csproj).
 
 using System;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Pdf.Abstractions;
-using Muonroi.Pdf.Abstractions.Engine;
-using Muonroi.Pdf.Internal.Layout;
-using Muonroi.Pdf.Internal.Writer;
-using Xunit.Abstractions;
 
 namespace Muonroi.Pdf.Tests.Service;
 

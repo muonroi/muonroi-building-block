@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace Muonroi.Pdf.Tests.Golden;
 
 /// <summary>

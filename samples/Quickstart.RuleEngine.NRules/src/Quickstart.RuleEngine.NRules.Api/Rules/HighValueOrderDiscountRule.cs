@@ -1,7 +1,3 @@
-using NRules.Fluent.Dsl;
-using Muonroi.RuleEngine.NRules;
-using Quickstart.RuleEngine.NRules.Api.Models;
-
 namespace Quickstart.RuleEngine.NRules.Api.Rules;
 
 /// <summary>

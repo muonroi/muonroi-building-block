@@ -1,10 +1,3 @@
-using System.Collections.Concurrent;
-using Jint;
-using Jint.Native;
-using Jint.Native.Object;
-using Jint.Runtime;
-using Jint.Runtime.Descriptors;
-
 namespace Muonroi.RuleEngine.Runtime.Compilation.JavaScript;
 
 /// <summary>

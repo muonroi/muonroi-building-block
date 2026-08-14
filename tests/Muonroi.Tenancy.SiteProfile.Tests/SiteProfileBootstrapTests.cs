@@ -1,11 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Tenancy.SiteProfile.Web;
-using Muonroi.Tenancy.SiteProfile;
-using FluentAssertions;
-using Xunit;
-
 namespace Muonroi.Tenancy.SiteProfile.Tests;
 
 public class SiteProfileBootstrapTests

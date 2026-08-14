@@ -1,21 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Muonroi.AspNetCore.Services;
-using Muonroi.AspNetCore.Tests.Helpers;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Core.Abstractions.Models;
-using Muonroi.Core.Abstractions.Models.Common;
-using Muonroi.Core.Abstractions.Models.Common.Requests.Login;
-using Muonroi.Core.Abstractions.Models.Common.Requests.Registers;
-using Muonroi.Core.Abstractions.Models.Common.Responses.Login;
-using Muonroi.Core.Abstractions.Response;
-using Muonroi.Core.Abstractions.Helpers;
-using Muonroi.Data.EntityFrameworkCore.Entity;
-using Muonroi.Data.EntityFrameworkCore.Entity.Identity;
-using Muonroi.Caching.Memory.MultiLevel;
-using Muonroi.Logging.Abstractions;
-using NSubstitute;
-using Xunit;
-
 namespace Muonroi.AspNetCore.Tests.Services;
 
 public class AuthServiceTests

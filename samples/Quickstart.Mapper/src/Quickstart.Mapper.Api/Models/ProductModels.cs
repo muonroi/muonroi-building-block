@@ -1,5 +1,3 @@
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Quickstart.Mapper.Api.Models;
 
 /// <summary>

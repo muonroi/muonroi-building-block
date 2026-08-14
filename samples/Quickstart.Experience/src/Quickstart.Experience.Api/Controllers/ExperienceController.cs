@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.Experience.Abstractions;
-using Muonroi.Experience.Runtime.Extraction;
-
 namespace Quickstart.Experience.Api.Controllers;
 
 [ApiController]

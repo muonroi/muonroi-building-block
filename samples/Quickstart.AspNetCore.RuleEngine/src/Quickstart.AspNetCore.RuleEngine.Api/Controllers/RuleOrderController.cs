@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Muonroi.AspNetCore.Models.Changes;
-using Muonroi.AspNetCore.Services;
-
 namespace Quickstart.AspNetCore.RuleEngine.Api.Controllers;
 
 /// <summary>

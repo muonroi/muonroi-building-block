@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Configuration.Memory;
-
 namespace TestProject.Service.IntegrationTests;
 
 /// <summary>

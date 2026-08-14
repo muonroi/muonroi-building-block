@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Muonroi.RuleGen.Tests;
 
 internal sealed record CliRunResult(int ExitCode, string StdOut, string StdErr)

@@ -1,4 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Auth.Tests;
 
 public class MAuthenticateTokenHelperCtorTests

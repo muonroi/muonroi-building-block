@@ -1,4 +1,3 @@
-using Muonroi.Core.Abstractions.Exceptions;
 namespace Muonroi.Messaging.MassTransit.Tests;
 
 public class AmqpContextConsumeFilterTests

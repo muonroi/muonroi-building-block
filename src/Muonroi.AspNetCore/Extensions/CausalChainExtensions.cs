@@ -1,8 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Muonroi.AspNetCore.Http;
-using Muonroi.Core.Abstractions.Diagnostics;
-
 namespace Muonroi.AspNetCore.Extensions;
 
 /// <summary>

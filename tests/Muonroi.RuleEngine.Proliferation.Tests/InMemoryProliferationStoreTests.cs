@@ -1,7 +1,3 @@
-using FluentAssertions;
-using Muonroi.RuleEngine.Proliferation.Models;
-using Muonroi.RuleEngine.Proliferation.Store;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests;
 
 public class InMemoryProliferationStoreTests

@@ -25,16 +25,6 @@
 // =============================================================================
 
 using Muonroi.Core.Abstractions.Context;
-using Muonroi.Governance.License;
-using Muonroi.Logging;
-using Muonroi.Observability;
-using Muonroi.Observability.OpenTelemetry;
-using OpenTelemetry;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Metrics;
-using Quickstart.Observability.Api.Logging;
-using Quickstart.Observability.Api.Telemetry;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 

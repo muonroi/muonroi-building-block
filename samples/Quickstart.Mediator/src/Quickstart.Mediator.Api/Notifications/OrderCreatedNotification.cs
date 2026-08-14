@@ -1,5 +1,3 @@
-using Muonroi.Mediator.Mediator.Interfaces;
-
 namespace Quickstart.Mediator.Api.Notifications;
 
 /// <summary>

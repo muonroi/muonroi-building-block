@@ -3,3 +3,7 @@ global using Microsoft.AspNetCore.Http;
 global using Microsoft.Extensions.DependencyInjection;
 global using System.Collections.Concurrent;
 global using System.Threading.Tasks;
+global using Muonroi.Caching.Abstractions.Distributed;
+global using Muonroi.Core.Abstractions.Guards;
+global using Muonroi.Core.Abstractions.Interfaces;
+global using Microsoft.Extensions.Configuration;

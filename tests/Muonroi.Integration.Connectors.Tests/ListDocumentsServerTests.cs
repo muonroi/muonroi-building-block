@@ -1,13 +1,3 @@
-using System.Net;
-using System.Text;
-using System.Text.Json;
-using FluentAssertions;
-using Microsoft.Extensions.Logging.Abstractions;
-using Muonroi.Integration.Abstractions;
-using Muonroi.Integration.Connectors.Http;
-using Muonroi.Integration.Connectors.Presets;
-using Muonroi.RuleEngine.Abstractions;
-
 namespace Muonroi.Integration.Connectors.Tests;
 
 /// <summary>

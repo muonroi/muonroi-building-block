@@ -1,5 +1,3 @@
-using Muonroi.Core.Timing;
-
 namespace Muonroi.AspNetCore.Services;
 
 /// <summary>

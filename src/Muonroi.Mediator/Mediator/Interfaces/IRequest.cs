@@ -1,5 +1,3 @@
-using Muonroi.Mediator.Mediator;
-
 namespace Muonroi.Mediator.Mediator.Interfaces;
 
 /// <summary>

@@ -1,9 +1,3 @@
-using Muonroi.RuleGen.Cli;
-using Muonroi.RuleGen.Models;
-using Muonroi.RuleGen.Services;
-using Muonroi.RuleGen.Writers;
-using Spectre.Console;
-
 namespace Muonroi.RuleGen.Commands;
 
 internal static class SplitCommand

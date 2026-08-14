@@ -1,14 +1,3 @@
-using System.Data.Common;
-using System.Reflection;
-using Dapper;
-using Dapper.Extensions;
-using FluentAssertions;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Muonroi.Data.Dapper.Rls;
-using Npgsql;
-using Xunit;
-
 namespace Muonroi.Data.Dapper.Tests.Rls;
 
 /// <summary>

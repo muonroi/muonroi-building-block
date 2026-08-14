@@ -1,8 +1,3 @@
-using Microsoft.Extensions.Options;
-using Muonroi.Core.Abstractions.Interfaces;
-using Muonroi.Quota.Abstractions;
-using Muonroi.RuleEngine.Abstractions;
-
 namespace Muonroi.Messaging.MassTransit.Messaging;
 
 /// <summary>

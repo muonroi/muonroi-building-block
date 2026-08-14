@@ -1,7 +1,3 @@
-using Microsoft.Extensions.Caching.Distributed;
-using Muonroi.Auth.Jwt;
-using Muonroi.Core.Abstractions.Interfaces;
-
 namespace Muonroi.Auth.Tests;
 
 public sealed class RedisTokenRevocationStoreTests

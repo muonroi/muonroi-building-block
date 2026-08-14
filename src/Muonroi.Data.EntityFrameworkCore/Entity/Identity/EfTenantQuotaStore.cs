@@ -1,7 +1,3 @@
-using Muonroi.Core.Abstractions.Guards;
-using Muonroi.Quota.Abstractions;
-using System.Globalization;
-
 namespace Muonroi.Data.EntityFrameworkCore.Entity.Identity;
 
 /// <summary>

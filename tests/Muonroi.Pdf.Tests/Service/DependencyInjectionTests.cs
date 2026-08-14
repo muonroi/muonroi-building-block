@@ -1,12 +1,3 @@
-using System.Linq;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Muonroi.Pdf.Abstractions.Engine;
-using Muonroi.Pdf.Abstractions.Policy;
-using Muonroi.Pdf.Extensions;
-using NSubstitute;
-
 namespace Muonroi.Pdf.Tests.Service;
 
 /// <summary>

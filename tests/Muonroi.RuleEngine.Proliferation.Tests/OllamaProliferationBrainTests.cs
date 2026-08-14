@@ -1,12 +1,3 @@
-using System.Net;
-using System.Text;
-using System.Text.Json;
-using FluentAssertions;
-using Moq;
-using Moq.Protected;
-using Muonroi.RuleEngine.Proliferation.Brain;
-using Muonroi.RuleEngine.Proliferation.Models;
-
 namespace Muonroi.RuleEngine.Proliferation.Tests;
 
 public class OllamaProliferationBrainTests

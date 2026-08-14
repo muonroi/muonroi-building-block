@@ -1,6 +1,3 @@
-using System;
-using Muonroi.Logging.Abstractions.Exceptions;
-
 namespace Muonroi.Logging.Exceptions;
 
 /// <summary>

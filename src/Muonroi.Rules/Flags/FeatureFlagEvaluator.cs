@@ -1,5 +1,3 @@
-using Muonroi.Logging.Abstractions;
-
 namespace Muonroi.Rules.Flags;
 
 /// <summary>
