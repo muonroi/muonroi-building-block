@@ -1,42 +1,41 @@
 # Muonroi.Data.EntityFrameworkCore.PostgreSQL
 
-> EF Core provider package for PostgreSQL in the Muonroi ecosystem.
-
 [![NuGet](https://img.shields.io/nuget/v/Muonroi.Data.EntityFrameworkCore.PostgreSQL.svg)](https://www.nuget.org/packages/Muonroi.Data.EntityFrameworkCore.PostgreSQL/)
 
-This package provides the PostgreSQL implementation for `IDbContextConfigurator<T>`, enabling `Muonroi.Data.EntityFrameworkCore` to seamlessly connect to PostgreSQL databases without changing your `MDbContext` application logic.
+> PostgreSQL provider configuration for Muonroi DbContexts.
+
+## Overview
+Provides `PostgreSqlDbContextConfigurator` to correctly configure PostgreSQL database connections with standard Muonroi resiliency and execution strategies.
 
 ## Features
-
-- **PostgreSQL Provider** — Wraps the Npgsql Entity Framework Core provider.
-- **Seamless Integration** — Works out-of-the-box with `AddDbContextConfigure<TDbContext, TPermission>`.
-- **Automatic Configuration** — Reads `PostgreSqlConnectionString` from the configuration automatically.
+- **PostgreSQL Integration**: Uses `PostgreSqlDbContextConfigurator` for standard setup.
+- **Npgsql Features**: Enables Postgres-specific capabilities within the Muonroi data architecture.
 
 ## Installation
 
 ```bash
-dotnet add package Muonroi.Data.EntityFrameworkCore.PostgreSQL --prerelease
+dotnet add package Muonroi.Data.EntityFrameworkCore.PostgreSQL
 ```
 
 ## Quick Start
 
-Ensure your `appsettings.json` specifies `PostgreSql` as the `DbType`:
-
-```json
-{
-  "DatabaseConfigs": {
-    "DbType": "PostgreSql",
-    "ConnectionStrings": {
-      "PostgreSqlConnectionString": "Host=localhost;Database=app;Username=postgres;Password=password"
-    }
-  }
-}
-```
-
-The database configuration will automatically pick up this package when configuring your context:
-
 ```csharp
-// Program.cs
-builder.Services.AddDbContextConfigure<AppDbContext, AppPermission>(
-    builder.Configuration);
+builder.Services.AddMuonroiDbContext<MyDbContext>(options =>
+{
+    var configurator = new PostgreSqlDbContextConfigurator();
+    configurator.Configure(options, "Host=localhost;Database=mydb;Username=postgres;Password=password");
+});
 ```
+
+## Ecosystem Combinations
+
+### Muonroi.Data.EntityFrameworkCore.PostgreSQL + Muonroi.EntityFrameworkCore.Configuration
+Use `PostgreSqlDbContextConfigurator` alongside `MEntityConfigurationBase` to handle NodaTime or JSONB configurations efficiently.
+
+## Samples
+
+Find complete running examples in the [../../samples/](../../samples/) directory.
+
+## License
+
+This project is licensed under the terms of the applicable Muonroi license.

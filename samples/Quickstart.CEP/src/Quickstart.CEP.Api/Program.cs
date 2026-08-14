@@ -88,4 +88,4 @@ app.UseSwaggerUI();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", service = "Quickstart.CEP" }));
 
-app.Run();
+ await app.RunAsync();

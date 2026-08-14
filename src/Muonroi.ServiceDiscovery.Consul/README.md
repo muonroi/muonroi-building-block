@@ -33,7 +33,7 @@ WebApplication app = builder.Build();
 app.UseServiceDiscovery(app.Environment);
 
 app.MapControllers();
-app.Run();
+ await app.RunAsync();
 ```
 
 `appsettings.json`:
@@ -115,6 +115,33 @@ Configuration section name: `ConsulConfigs` (value of `ConsulConfigs.SectionName
 
 - [`Muonroi.Core.Abstractions`](../Muonroi.Core.Abstractions/) — Core exception types used by this package (e.g. `MConfigurationException`).
 - [`Muonroi.Logging.Abstractions`](../Muonroi.Logging.Abstractions/) — Structured logging abstraction (`IMLog<T>`) used internally by the middleware.
+
+## Ecosystem Combinations
+
+### + Kubernetes → Environment-Aware Discovery
+`KubernetesClusterType` drives which Consul datacenter/namespace to query. In Development, Consul registration is a no-op — no local Consul needed for local dev.
+
+### + Resilience → Discovery With Failover
+Consul health checks combined with Polly circuit-breaker: if a discovered service becomes unhealthy, the circuit breaks and retries with a different instance:
+```csharp
+builder.Services
+    .AddConsulServiceDiscovery(config)
+    .AddMuonroiResilience(config); // retry with re-discovery on circuit open
+```
+
+### + Http → Dynamic Service Address Resolution
+`HttpClient` factory resolves service addresses from Consul at request time — no hardcoded URLs in configuration:
+```csharp
+builder.Services.AddHttpClient<IOrderService>()
+    .UseConsulServiceDiscovery("order-service");
+```
+
+### + Observability → Discovery Latency Metrics
+Consul lookup latency exported as OTel histogram `muonroi.servicediscovery.lookup_duration_ms`.
+
+## Samples
+- [`Quickstart.ServiceDiscovery`](../../samples/Quickstart.ServiceDiscovery)
+- [`Quickstart.ServiceDiscovery.Consul`](../../samples/Quickstart.ServiceDiscovery.Consul)
 
 ## License
 

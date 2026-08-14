@@ -1,113 +1,152 @@
 # Muonroi.SignalR
-
-> Real-time UI engine schema notifications over SignalR with optional per-tenant hub filtering.
+> Multi-tenant SignalR integration with real-time UI schema notification support for Muonroi.
 
 [![NuGet](https://img.shields.io/nuget/v/Muonroi.SignalR.svg)](https://www.nuget.org/packages/Muonroi.SignalR/)
-[![License: Commercial](https://img.shields.io/badge/license-Commercial-blue.svg)](https://github.com/muonroi/muonroi-building-block/blob/main/LICENSE-COMMERCIAL)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](../../LICENSE-APACHE)
 
-`Muonroi.SignalR` wires ASP.NET Core SignalR into the Muonroi open-core ecosystem. It ships a `Hub` that clients subscribe to for live schema change events, a broadcaster (`IUiEngineSchemaNotifier`) that pushes `SchemaChanged` messages to all subscribers, and a hub filter (`TenantHubFilter`) that enforces per-tenant context and license checks when multi-tenancy is enabled.
+## Overview
+
+`Muonroi.SignalR` provides extensions and filters for seamlessly integrating ASP.NET Core SignalR into the Muonroi Building Block ecosystem. It bridges real-time web socket communications with Muonroi's core tenets: multi-tenancy, strict authorization, and dynamic UI schema delivery.
+
+A primary feature of this package is the `TenantHubFilter`, which ensures that all real-time hub invocations are strictly scoped to the active tenant and validated against the enterprise license guard. Additionally, it ships with an out-of-the-box `MUiEngineHub` designed to stream UI schema modifications to connected clients dynamically.
+
+## Features
+
+- **Multi-Tenant Hub Filtering**: The `TenantHubFilter` intercepts all SignalR hub method invocations to enforce tenant resolution, token validation (`MTokenInfo`), and licensing (`ILicenseGuard`).
+- **Seamless DI Integration**: `AddSignalRWithTenant` makes registering SignalR with tenant-safety a single-line operation.
+- **UI Engine Integration**: Includes `MUiEngineHub` and `IUiEngineSchemaNotifier` for broadcasting real-time frontend schema updates to clients, enabling dynamic, hot-reloading user interfaces.
 
 ## Installation
 
 ```bash
-dotnet add package Muonroi.SignalR --prerelease
+dotnet add package Muonroi.SignalR
 ```
 
 ## Quick Start
 
+### 1. Registering SignalR
+
+During application startup, register SignalR using the provided extension method. This automatically attaches the `TenantHubFilter` to all Hubs globally.
+
 ```csharp
-using Muonroi.Logging;
-using Muonroi.SignalR.SignalR;
+using Muonroi.SignalR.Extensions;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-// Required: IMLog<T> used internally by MUiEngineSchemaNotifier.
-builder.Services.AddLogging(lb => lb.AddMuonroiLogging());
-
-// Registers SignalR + TenantHubFilter when MultiTenantConfigs:Enabled = true.
+// Adds SignalR and configures the TenantHubFilter
 builder.Services.AddSignalRWithTenant(builder.Configuration);
-
-// Broadcasts schema-change events to the "mui-engine-schema-watchers" group.
-builder.Services.AddSingleton<IUiEngineSchemaNotifier, MUiEngineSchemaNotifier>();
-
-WebApplication app = builder.Build();
-
-// Clients connect here and call SubscribeToSchemaChanges() to join the watcher group.
-app.MapHub<MUiEngineHub>("/hubs/ui-engine");
-
-app.Run();
 ```
 
-Trigger a broadcast from any service:
+### 2. Mapping the Hub
+
+Map the default `MUiEngineHub` to allow clients to subscribe to schema changes.
 
 ```csharp
-public class SchemaPublishService(IUiEngineSchemaNotifier notifier)
+var app = builder.Build();
+
+app.UseRouting();
+
+// Map the provided hub
+app.MapHub<MUiEngineHub>("/hubs/mui-engine");
+
+ await app.RunAsync();
+```
+
+### 3. Broadcasting Schema Updates
+
+Inject the `IUiEngineSchemaNotifier` into your backend services (like a schema designer controller) to notify connected clients when a schema changes.
+
+```csharp
+using Muonroi.SignalR.Notifications;
+
+public class SchemaDesignService
 {
-    public Task PublishAsync(MUiEngineSchemaVersion version, CancellationToken ct)
-        => notifier.NotifySchemaChangedAsync(version, ct);
+    private readonly IUiEngineSchemaNotifier _schemaNotifier;
+
+    public SchemaDesignService(IUiEngineSchemaNotifier schemaNotifier)
+    {
+        _schemaNotifier = schemaNotifier;
+    }
+
+    public async Task PublishNewSchemaAsync(string schemaId, string newDefinition)
+    {
+        // Save to DB...
+        
+        // Notify all clients subscribed to schema changes
+        await _schemaNotifier.NotifySchemaChangedAsync(schemaId, newDefinition);
+    }
 }
 ```
-
-Clients receive the `SchemaChanged` event with `(string schemaHash, MUiEngineSchemaVersion version)` arguments.
-
-## Features
-
-- `AddSignalRWithTenant(IConfiguration)` — single call that invokes `AddSignalR()` and conditionally registers `TenantHubFilter` when `MultiTenantConfigs:Enabled` is `true`.
-- `MUiEngineHub` — typed `Hub` with `SubscribeToSchemaChanges()` / `UnsubscribeFromSchemaChanges()` group management. Hub group name: `"mui-engine-schema-watchers"`.
-- `MUiEngineSchemaNotifier` — implements `IUiEngineSchemaNotifier`; resolves `IHubContext<MUiEngineHub>` at broadcast time and sends `SchemaChanged` to the watcher group. Gracefully skips if the hub context is unavailable.
-- `TenantHubFilter` — per-invocation `IHubFilter` that resolves tenant ID via `ITenantIdResolver`, enforces the `Premium.MultiTenant` license feature, and sets `TenantContext.CurrentTenantId` for the duration of the call.
-
-## Configuration
-
-### DI registration
-
-```csharp
-builder.Services.AddSignalRWithTenant(builder.Configuration);
-builder.Services.AddSingleton<IUiEngineSchemaNotifier, MUiEngineSchemaNotifier>();
-```
-
-### appsettings.json
-
-The `TenantHubFilter` is registered only when `MultiTenantConfigs:Enabled` is `true`. The section name is `"MultiTenantConfigs"` (from `MultiTenantConfigs.SectionName` in `Muonroi.Tenancy.Core`).
-
-```json
-{
-  "MultiTenantConfigs": {
-    "Enabled": true
-  }
-}
-```
-
-When `Enabled` is `false` (or the section is absent), the hub filter is not registered and no tenant resolution occurs.
 
 ## API Reference
 
-| Type | Purpose |
-|------|---------|
-| `SignalRServiceCollectionExtensions.AddSignalRWithTenant` | Extension method — registers SignalR and conditionally adds `TenantHubFilter` |
-| `MUiEngineHub` | SignalR `Hub`; exposes `SubscribeToSchemaChanges()` and `UnsubscribeFromSchemaChanges()` |
-| `IUiEngineSchemaNotifier` | Contract for broadcasting `MUiEngineSchemaVersion` payloads to connected clients |
-| `MUiEngineSchemaNotifier` | Default implementation of `IUiEngineSchemaNotifier`; sends `SchemaChanged` via `IHubContext<MUiEngineHub>` |
-| `TenantHubFilter` | `IHubFilter` that sets `TenantContext.CurrentTenantId` per hub invocation and validates tenant/license requirements |
-| `MUiEngineSchemaVersion` | Payload carrying `Version`, `SchemaHash`, `OpenApiHash`, and `GeneratedAtUtc` |
+### `TenantHubFilter`
+Implements `IHubFilter`. Intercepts `InvokeMethodAsync` to resolve the current tenant (via `ITenantIdResolver`), validates the user's token (`MTokenInfo`), and ensures the tenant's license (`ILicenseGuard`) is valid before allowing the hub method to execute. If validation fails, the connection is typically terminated or rejected.
+
+### `MUiEngineHub`
+A pre-built `Hub` allowing clients to call `SubscribeToSchemaChanges()` and `UnsubscribeFromSchemaChanges()`. It adds the connection to a specific group (`MSchemaWatcherGroup`).
+
+### `IUiEngineSchemaNotifier`
+Contract for broadcasting events to the `MUiEngineHub`. 
+- `NotifySchemaChangedAsync(string schemaId, string newDefinition)`
+
+### `SignalRServiceCollectionExtensions`
+- `AddSignalRWithTenant(IServiceCollection, IConfiguration)`: Core setup method for `Startup.cs` or `Program.cs`.
+
+## Client Usage (JavaScript Example)
+
+Connected clients can subscribe using the standard `@microsoft/signalr` package:
+
+```javascript
+import * as signalR from "@microsoft/signalr";
+
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/hubs/mui-engine", {
+        accessTokenFactory: () => "YOUR_JWT_TOKEN" // Required by TenantHubFilter
+    })
+    .build();
+
+connection.on("SchemaChanged", (schemaId, newDefinition) => {
+    console.log(`Schema ${schemaId} updated! Reloading UI...`);
+    // update your React/Vue/Angular state
+});
+
+await connection.start();
+await connection.invoke("SubscribeToSchemaChanges");
+```
+
+## Ecosystem Combinations
+
+> Works great standalone. Becomes **significantly more powerful** when combined.
+
+### + Tenancy -> Hub connections filtered by tenant: broadcast only reaches correct tenant's clients
+Ensure that real-time messages are securely isolated across tenant boundaries using TenantHubFilter.
+
+### + Auth -> JWT bearer auth for hub connections
+Use the MTokenInfo to authorize connections and map them to specific users.
+
+### + RuleEngine.Runtime.Web -> RuleSetChangeHub notifies clients when rules hot-reload
+Broadcast live updates to administrative dashboards whenever a decision table or rule set is modified.
+
+### + Caching.Redis -> Redis backplane for multi-pod SignalR scale-out
+Use the Redis backplane to ensure broadcasts reach all connected clients across a horizontally scaled cluster.
+
+### + Observability -> Hub message counts tracked per tenant as OTel metrics
+Measure concurrent connections and message throughput on a per-tenant basis natively.
+
+### Full Stack
+`csharp
+// combined registration
+builder.Services.AddSignalRWithTenant(builder.Configuration);
+builder.Services.AddMuonroiAuth();
+builder.Services.AddSignalR().AddStackExchangeRedis(builder.Configuration.GetConnectionString("Redis"));
+`
 
 ## Samples
+- samples/RealTimeDashboard/
+- samples/RuleSourceGen/
 
-- [Quickstart.SignalR](../../samples/Quickstart.SignalR/) — minimal ASP.NET Core API demonstrating `AddSignalRWithTenant`, `MUiEngineHub` mapping, and `IUiEngineSchemaNotifier` registration.
-
-## Compatibility
-
-- Target framework: `net8.0`
-- License: Commercial — requires activation. See [LICENSE-COMMERCIAL](../../LICENSE-COMMERCIAL).
-
-## Related Packages
-
-- [`Muonroi.Core.Abstractions`](../Muonroi.Core.Abstractions/) — defines `IUiEngineSchemaNotifier` (in `Muonroi.Core.Abstractions.Interfaces`) and `MUiEngineSchemaVersion` / `MUiEngineSchemaVersion` payload types.
-- [`Muonroi.Tenancy.Core`](../Muonroi.Tenancy.Core/) — provides `MultiTenantConfigs`, `ITenantIdResolver`, and `TenantContext` used by `TenantHubFilter`.
-- [`Muonroi.Tenancy.Abstractions`](../Muonroi.Tenancy.Abstractions/) — supplies `ITenantIdResolver` and `TenantContext` interfaces consumed by the filter.
-- [`Muonroi.Governance.Abstractions`](../Muonroi.Governance.Abstractions/) — provides `ILicenseGuard` and `FreeTierFeatures` used for license enforcement in `TenantHubFilter`.
-- [`Muonroi.Core`](../Muonroi.Core/) — core runtime utilities referenced by this package.
 
 ## License
 
-This package is distributed under the **Muonroi Commercial License**. A valid license key is required for use. See [LICENSE-COMMERCIAL](../../LICENSE-COMMERCIAL) or contact [leanhphi1706@gmail.com](mailto:leanhphi1706@gmail.com).
+Apache 2.0 — see [LICENSE-APACHE](../../LICENSE-APACHE).

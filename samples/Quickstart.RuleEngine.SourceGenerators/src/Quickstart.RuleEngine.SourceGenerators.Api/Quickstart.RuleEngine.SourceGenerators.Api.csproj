@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+    
+    <!-- Emit generated files for inspection -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Muonroi.RuleEngine.Core/Muonroi.RuleEngine.Core.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.RuleEngine.Abstractions/Muonroi.RuleEngine.Abstractions.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.RuleEngine.SourceGenerators/Muonroi.RuleEngine.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>

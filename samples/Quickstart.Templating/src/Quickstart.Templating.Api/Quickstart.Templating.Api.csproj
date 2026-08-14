@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Muonroi.Templating.Scriban/Muonroi.Templating.Scriban.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.Templating.Abstractions/Muonroi.Templating.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

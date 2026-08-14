@@ -107,4 +107,4 @@ if (app.Environment.IsDevelopment())
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 
-app.Run();
+ await app.RunAsync();

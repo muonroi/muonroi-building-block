@@ -174,6 +174,39 @@ Used by `Legacy.AddTenantContext()` only:
 - [`Muonroi.Tenancy`](../Muonroi.Tenancy/) — ASP.NET integration: `TenantResolutionMiddleware` and Redis tenant cache
 - [`Muonroi.Quota.Abstractions`](../Muonroi.Quota.Abstractions/) — `ITenantQuotaTracker`, `ITenantQuotaStore`, `QuotaType`, `TenantQuota`
 
+
+## Ecosystem Combinations
+
+### + Tenancy (middleware) → Full ASP.NET Tenant Resolution
+`Tenancy.Core` provides `TenantContext.CurrentTenantId` via `AsyncLocal<string>`; `Muonroi.Tenancy` provides the ASP.NET middleware that sets it from request headers/cookies.
+
+### + Data.EntityFrameworkCore → Schema-Per-Tenant EF Core
+`TenantSchemaSelector` sets the EF Core schema to the current `TenantId`. Every query goes to the correct tenant schema automatically:
+```csharp
+protected override void OnModelCreating(ModelBuilder mb)
+    => mb.HasDefaultSchema(TenantSchemaSelector.Current);
+```
+
+### + Mediator → `MTenantValidationBehavior`
+`TenantContext.CurrentTenantId` is read by `MTenantValidationBehavior` to block cross-tenant command execution.
+
+### + Logging → `ContextMirrorScope`
+`ContextMirrorScope` mirrors `CurrentTenantId` into the log scope automatically — every log entry is tagged with `tenantId` without any manual scope creation.
+
+### Full Tenancy Core Stack
+```csharp
+builder.Services
+    .AddTenantContext(config)                   // TenantContext + resolver + factory
+    .AddMDbContext<AppDbContext>(config)         // schema-per-tenant EF
+    .AddMMediator(opt => opt.AddMuonroiEcosystem()) // tenant validation in pipeline
+    .AddMuonroiLogging(config);                // auto-enriched tenant logs
+```
+
+## Samples
+- [`Quickstart.Tenancy.Core`](../../samples/Quickstart.Tenancy.Core)
+- [`Quickstart.Tenancy`](../../samples/Quickstart.Tenancy)
+
+
 ## License
 
 Apache-2.0. See [LICENSE-APACHE](../../LICENSE-APACHE) for the full text.

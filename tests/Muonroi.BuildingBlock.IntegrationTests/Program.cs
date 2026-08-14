@@ -24,7 +24,7 @@ public class Program
     public static void Main(string[] args)
     {
         WebApplication app = BuildApp(args);
-        app.Run();
+         await app.RunAsync();
     }
 
     /// <summary>

@@ -1,11 +1,11 @@
 # Muonroi.Tenancy
 
-> ASP.NET Core runtime layer for multi-tenancy: request-scoped tenant resolution middleware, per-tenant Redis cache, and OpenTelemetry metrics for auth failures.
+> ASP.NET Core runtime layer for multi-tenancy: request-scoped tenant resolution middleware and OpenTelemetry metrics for auth failures.
 
 [![NuGet](https://img.shields.io/nuget/v/Muonroi.Tenancy.svg)](https://www.nuget.org/packages/Muonroi.Tenancy/)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green.svg)](https://github.com/muonroi/muonroi-building-block/blob/main/LICENSE-APACHE)
 
-`Muonroi.Tenancy` is the ASP.NET Core runtime package of the Muonroi multi-tenancy stack. It provides `TenantResolutionMiddleware` — which extracts the tenant ID from the HTTP request (header, path segment, or subdomain), validates it against the caller's JWT claim, and propagates it through `TenantContext.CurrentTenantId` for the duration of the request. The package also ships `RedisTenantCache`, a Redis wrapper that namespaces all keys under `tenant:{tenantId}:` for clean per-tenant isolation, and `TenantResolutionTelemetry`, which emits OTel-native counters for auth failures.
+`Muonroi.Tenancy` is the ASP.NET Core runtime package of the Muonroi multi-tenancy stack. It provides `TenantResolutionMiddleware` — which extracts the tenant ID from the HTTP request (header, path segment, or subdomain), validates it against the caller's JWT claim, and propagates it through `TenantContext.CurrentTenantId` for the duration of the request. The package also ships `TenantResolutionTelemetry`, which emits OTel-native counters for auth failures.
 
 This package depends on `Muonroi.Tenancy.Abstractions` (contracts) and `Muonroi.Tenancy.Core` (context propagation and DI helpers).
 
@@ -40,7 +40,7 @@ app.UseAuthorization();
 app.UseMiddleware<TenantResolutionMiddleware>();
 
 app.MapControllers();
-app.Run();
+ await app.RunAsync();
 ```
 
 After the middleware runs, read the resolved tenant ID anywhere in the request pipeline:
@@ -49,15 +49,12 @@ After the middleware runs, read the resolved tenant ID anywhere in the request p
 string? tenantId = TenantContext.CurrentTenantId;
 ```
 
-### Per-tenant Redis cache
+### Per-tenant caching (using standard IDistributedCache)
 
 ```csharp
-// Inject IConnectionMultiplexer (registered via StackExchange.Redis)
-IConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379");
-var cache = new RedisTenantCache(redis, tenantId: "acme");
-
-await cache.SetAsync("settings:theme", "dark", expiry: TimeSpan.FromHours(1));
-RedisValue theme = await cache.GetAsync("settings:theme");
+// Once middleware resolves the tenant, cache keys should be prefixed
+string cacheKey = $"tenant:{tenantId}:settings:theme";
+await cache.SetStringAsync(cacheKey, "dark");
 ```
 
 ## Features
@@ -67,7 +64,6 @@ RedisValue theme = await cache.GetAsync("settings:theme");
 - **JWT claim cross-check**: if a resolved tenant ID conflicts with the `tenant_id` JWT claim the middleware returns `401 Unauthorized`; a missing claim also yields `401`.
 - **AsyncLocal propagation**: `TenantContext.CurrentTenantId` is set for the request scope and cleared in the `finally` block — safe for async code.
 - **OpenTelemetry tracing**: tenant ID is written to `Activity.Current` as both a tag (`tenant.id`) and baggage for distributed trace correlation.
-- **Per-tenant Redis isolation**: `RedisTenantCache` prefixes every key with `tenant:{tenantId}:` and uses `SCAN` (not `KEYS`) for bulk enumeration.
 - **OTel metrics**: `TenantResolutionTelemetry` exposes a `Counter<long>` instrument (`muonroi.tenancy.auth_failures`) with `failure_reason`, `header_tenant_id`, and `claim_tenant_id` dimensions.
 
 ## Configuration
@@ -98,7 +94,6 @@ builder.Services.AddTenantContext(options =>
 | Type | Purpose |
 |------|---------|
 | `TenantResolutionMiddleware` | ASP.NET Core middleware that resolves, validates, and propagates the tenant ID per request |
-| `RedisTenantCache` | Redis wrapper that namespaces all keys under `tenant:{tenantId}:` to enforce per-tenant isolation |
 | `TenantResolutionTelemetry` | Static helper exposing `AuthFailureCounter` (`Counter<long>`) and `RecordAuthFailure(reason, header, claim)` |
 | `TenantContext` *(from Muonroi.Tenancy.Core)* | `static string? CurrentTenantId` — AsyncLocal holder for the active tenant |
 
@@ -117,6 +112,36 @@ builder.Services.AddTenantContext(options =>
 - [`Muonroi.Tenancy.Abstractions`](../Muonroi.Tenancy.Abstractions/) — contracts: `ITenantContext`, `ITenantIdResolver`, `MultiTenantOptions`, quota interfaces
 - [`Muonroi.Tenancy.Core`](../Muonroi.Tenancy.Core/) — core implementations: `TenantContext`, `DefaultTenantIdResolver`, `TenantSchemaSelector`, `AddTenantContext` DI extension
 - [`Muonroi.Tenancy.SiteProfile`](../Muonroi.Tenancy.SiteProfile/) — site-profile layer for multi-site deployments with per-site EF Core / Dapper infrastructure
+
+
+## Ecosystem Combinations
+
+### + Tenancy.Core → Middleware on Top of Core State
+`TenantResolutionMiddleware` (this package) reads from HTTP requests and sets `TenantContext.CurrentTenantId` (from `Tenancy.Core`). The Core provides the `AsyncLocal<string>` state; this package provides the ASP.NET middleware that populates it.
+
+### + Caching.Redis → Distributed Tenant Cache
+Store tenant metadata in Redis so all pods share the same resolved tenant data without per-request DB lookups. Prefix keys by tenant ID using standard distributed caching interfaces.
+
+### + Tenancy.SiteProfile → Per-Site Behavior Branching
+After `TenantResolutionMiddleware` sets the tenant, `SiteProfileStateMiddleware` resolves the site profile — enabling per-site DI registrations, DbContexts, and behavior.
+
+### + Observability → Tenant-Tagged All Signals
+Once the middleware sets the tenant, `TenantIdEnricher` tags every OTel span, metric, and log entry with `tenant.id` automatically.
+
+### Full Multi-Tenant ASP.NET Stack
+```csharp
+builder.Services
+    .AddTenantContext(config)           // resolve + propagate tenant
+    .AddSiteProfileWeb()               // per-site behavior
+    .AddMuonroiObservability(config);  // tenant-tagged telemetry
+app.UseTenantResolution();            // middleware order matters: before auth
+app.UseSiteProfile();
+```
+
+## Samples
+- [`Quickstart.Tenancy`](../../samples/Quickstart.Tenancy)
+- [`MultiTenantSaaS`](../../samples/MultiTenantSaaS)
+
 
 ## License
 

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsMuonroiTestProject>false</IsMuonroiTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Muonroi.Pdf/Muonroi.Pdf.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.Pdf.Abstractions/Muonroi.Pdf.Abstractions.csproj" />
+    <ProjectReference Include="../../../../src/Muonroi.Pdf.SourceGenerators/Muonroi.Pdf.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Templates\ReportTemplate.html" />
+  </ItemGroup>
+</Project>

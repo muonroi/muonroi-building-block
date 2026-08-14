@@ -1,126 +1,132 @@
 # Muonroi.Http
-
-> HTTP client utilities for Muonroi: resilient typed client base, bearer-token propagation, and correlation-id / API-key header forwarding.
+> Resilient HTTP client utilities and context propagation for the Muonroi ecosystem.
 
 [![NuGet](https://img.shields.io/nuget/v/Muonroi.Http.svg)](https://www.nuget.org/packages/Muonroi.Http/)
-[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green.svg)](https://github.com/muonroi/muonroi-building-block/blob/main/LICENSE-APACHE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](../../LICENSE-APACHE)
 
-`Muonroi.Http` provides the three building blocks you need to write outbound HTTP clients in a Muonroi service: an abstract base class that runs every request through a Polly v8 `ResiliencePipeline`, and two `DelegatingHandler` implementations that automatically attach bearer tokens and forward correlation IDs / API keys. There is no bespoke `AddX()` extension — registration follows the standard ASP.NET `AddHttpClient(...).AddHttpMessageHandler<T>()` pattern.
+## Overview
+
+`Muonroi.Http` streamlines outbound HTTP communications within the Muonroi Building Block architecture. When microservices communicate with one another, or with external APIs, maintaining distributed context (like correlation IDs, API keys, and authorization tokens) is critical. 
+
+This package provides delegating handlers to automatically attach this contextual information to outbound requests. Additionally, it offers a `BaseApiService` class that integrates `Polly` resilience pipelines and standardized JSON deserialization, making typed HTTP clients easier to build and inherently more reliable.
+
+## Features
+
+- **Context Propagation**: Automatically forwards `CorrelationId` and `ApiKey` headers via the `CorrelationIdHandler`.
+- **Token Propagation**: Automatically attaches `Bearer` tokens to outbound requests when the current user is authenticated, using the `AuthenticateHeaderHandler`.
+- **Resilient Base Class**: `BaseApiService` wraps `IHttpClientFactory` and `Polly.ResiliencePipeline` to provide standardized error handling and retry mechanisms across all downstream API calls.
 
 ## Installation
 
 ```bash
-dotnet add package Muonroi.Http --prerelease
+dotnet add package Muonroi.Http
 ```
 
 ## Quick Start
 
+### 1. Registering Delegating Handlers
+
+You can register the provided handlers to automatically forward context for your named or typed HTTP clients.
+
 ```csharp
-// Program.cs
-using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Http.Http;
-using Muonroi.Logging;
 
-// 1. IMLog<T> logging (required by BaseApiService and AuthenticateHeaderHandler)
-builder.Services.AddLogging(lb => lb.AddMuonroiLogging());
+var builder = WebApplication.CreateBuilder(args);
 
-// 2. Auth context — drives the correlation-id + bearer handlers
-builder.Services.AddScoped<IAuthenticateInfoContext>(_ =>
-    new MAuthenticateInfoContext(isAuthenticated: false));
-
-// 3. Register the Muonroi DelegatingHandlers
-builder.Services.AddTransient<CorrelationIdHandler>();
+// Register the handlers
 builder.Services.AddTransient<AuthenticateHeaderHandler>();
+builder.Services.AddTransient<CorrelationIdHandler>();
 
-// 4. Named client with both handlers in the pipeline
-builder.Services.AddHttpClient("my-api", client =>
-    {
-        client.BaseAddress = new Uri("https://api.example.com/");
-    })
-    .AddHttpMessageHandler<CorrelationIdHandler>()
-    .AddHttpMessageHandler<AuthenticateHeaderHandler>();
-
-// 5. Your typed client derived from BaseApiService
-builder.Services.AddScoped<MyApiClient>();
+// Attach them to a named client
+builder.Services.AddHttpClient("DownstreamApi", client =>
+{
+    client.BaseAddress = new Uri("https://api.internal.com");
+})
+.AddHttpMessageHandler<AuthenticateHeaderHandler>()
+.AddHttpMessageHandler<CorrelationIdHandler>();
 ```
 
-Define the typed client:
+### 2. Building a Typed API Service
+
+Inherit from `BaseApiService` to quickly build a robust typed client.
 
 ```csharp
-using Muonroi.Core.Abstractions.Interfaces;
 using Muonroi.Http.Http;
-using Muonroi.Logging.Abstractions;
 using Polly;
-using Polly.Retry;
 
-public sealed class MyApiClient(
-    IHttpClientFactory httpClientFactory,
-    IAuthenticateInfoContext authContext,
-    IMLog<BaseApiService> logger)
-    : BaseApiService(httpClientFactory, authContext, logger)
+public class PaymentApiClient : BaseApiService
 {
-    private static readonly ResiliencePipeline<HttpResponseMessage> Pipeline =
-        new ResiliencePipelineBuilder<HttpResponseMessage>()
-            .AddRetry(new RetryStrategyOptions<HttpResponseMessage>
-            {
-                MaxRetryAttempts = 3,
-                BackoffType = DelayBackoffType.Exponential,
-                Delay = TimeSpan.FromMilliseconds(200)
-            })
-            .Build();
+    private readonly ResiliencePipeline<HttpResponseMessage> _pipeline;
 
-    public Task<OrderDto> GetOrderAsync(int id, CancellationToken ct = default)
+    public PaymentApiClient(
+        IHttpClientFactory httpClientFactory, 
+        IAuthenticateInfoContext authContext, 
+        IMLog<BaseApiService> logger,
+        ResiliencePipelineProvider<string> pipelineProvider) 
+        : base(httpClientFactory, authContext, logger)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, $"orders/{id}");
-        return SendAsync<OrderDto>("my-api", request, Pipeline, ct);
+        // Retrieve a pre-configured Polly pipeline (e.g., retries, circuit breakers)
+        _pipeline = pipelineProvider.GetPipeline<HttpResponseMessage>("default-api-pipeline");
+    }
+
+    public async Task<PaymentResultDto> ProcessPaymentAsync(PaymentRequestDto request, CancellationToken ct)
+    {
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/v1/payments")
+        {
+            Content = JsonContent.Create(request)
+        };
+
+        // SendAsync automatically executes via the Polly pipeline and deserializes the JSON response
+        return await SendAsync<PaymentResultDto>("DownstreamApi", httpRequest, _pipeline, ct);
     }
 }
 ```
 
-## Features
-
-- **`BaseApiService`** — abstract base class that executes outbound HTTP requests through a caller-supplied Polly v8 `ResiliencePipeline<HttpResponseMessage>`, calls `EnsureSuccessStatusCode()`, and deserializes the JSON body to `TResponse`.
-- **`CorrelationIdHandler`** — `DelegatingHandler` that reads `CorrelationId` and `ApiKey` from `IAuthenticateInfoContext` and forwards them as `X-Correlation-Id` / `X-Api-Key` headers on every outgoing request.
-- **`AuthenticateHeaderHandler`** — `DelegatingHandler` that reads `IsAuthenticated` and `GetAccessToken()` from `IAuthenticateInfoContext` and attaches an `Authorization: Bearer <token>` header when the context is authenticated.
-- **No bespoke DI extension** — wire the handlers via the standard `AddHttpClient(...).AddHttpMessageHandler<T>()` pipeline so they compose freely with other Polly policies registered at the `IHttpClientBuilder` level.
-
-## Configuration
-
-There is no dedicated options class. The handlers are stateless and draw all runtime data from the ambient `IAuthenticateInfoContext` (scoped, injected by the DI container per request).
-
-Register in the DI container as shown in the Quick Start:
-
-| Step | Call |
-|------|------|
-| Logging | `AddLogging(lb => lb.AddMuonroiLogging())` |
-| Auth context | Register `IAuthenticateInfoContext` (scoped) |
-| Handlers | `AddTransient<CorrelationIdHandler>()` and `AddTransient<AuthenticateHeaderHandler>()` |
-| Named client | `AddHttpClient("name", ...).AddHttpMessageHandler<CorrelationIdHandler>().AddHttpMessageHandler<AuthenticateHeaderHandler>()` |
-| Typed client | Inherit `BaseApiService`; inject `IHttpClientFactory`, `IAuthenticateInfoContext`, `IMLog<BaseApiService>` |
-
 ## API Reference
 
-| Type | Purpose |
-|------|---------|
-| `BaseApiService` | Abstract base for typed HTTP clients. Exposes `SendAsync<TResponse>(clientName, request, pipeline, ct)` which runs through the given Polly pipeline and deserializes JSON. |
-| `CorrelationIdHandler` | `DelegatingHandler`. Appends `X-Correlation-Id` and `X-Api-Key` headers from `IAuthenticateInfoContext`. |
-| `AuthenticateHeaderHandler` | `DelegatingHandler`. Appends `Authorization: Bearer <token>` from `IAuthenticateInfoContext` when `IsAuthenticated` is `true`. |
+### `BaseApiService`
+An abstract base class for creating typed HTTP clients. 
+- `SendAsync<TResponse>(string clientName, HttpRequestMessage request, ResiliencePipeline<HttpResponseMessage> pipeline, CancellationToken ct)`: Executes the request through the given Polly pipeline, ensures a success status code, and deserializes the JSON response to `TResponse`.
+
+### `AuthenticateHeaderHandler` (DelegatingHandler)
+Intercepts outbound requests and injects the `Authorization: Bearer <token>` header if the `IAuthenticateInfoContext` indicates the current user is authenticated.
+
+### `CorrelationIdHandler` (DelegatingHandler)
+Intercepts outbound requests and injects `X-Correlation-ID` and `X-API-KEY` headers (using `CustomHeader.CorrelationId` and `CustomHeader.ApiKey` constants) based on the current context.
+
+## Ecosystem Combinations
+
+> Works great standalone. Becomes **significantly more powerful** when combined.
+
+### + Auth -> DelegatingHandler injects Bearer token on outbound calls automatically
+Forward the active JWT token to downstream APIs seamlessly using AuthenticateHeaderHandler.
+
+### + Tenancy -> TenantHeaderHandler propagates TenantId to downstream services
+Ensure that cross-boundary HTTP requests carry the correct tenant context.
+
+### + Resilience -> BaseApiService wrapped with Polly retry + circuit breaker
+Protect your systems from cascading failures by automatically applying resilience pipelines to typed clients.
+
+### + Observability -> Every outbound HTTP call traced with OTel HttpClient instrumentation
+Export metrics and distributed tracing headers using W3C Trace Context automatically.
+
+### + Bff -> Bff uses Http client internals for backend proxying with token exchange
+Use the resilient HTTP tools to securely proxy frontend requests to backend microservices.
+
+### Full Stack
+`csharp
+// combined registration
+builder.Services.AddHttpClient<MyClient>().AddMuonroiDefaults(); // adds auth + tenant + resilience handlers
+builder.Services.AddMuonroiAuth();
+builder.Services.AddTenantContext();
+builder.Services.AddMuonroiObservability();
+`
 
 ## Samples
+- samples/BffProxy/
+- samples/ResilientMicroservices/
 
-- [Quickstart.Http](../../samples/Quickstart.Http/) — End-to-end example: typed client over JSONPlaceholder, both handlers in the pipeline, Swagger UI included.
-
-## Compatibility
-
-- Target framework: `net8.0`
-- License: Apache-2.0 (OSS)
-
-## Related Packages
-
-- [`Muonroi.Core.Abstractions`](../Muonroi.Core.Abstractions/) — defines `IAuthenticateInfoContext` consumed by the handlers.
-- [`Muonroi.Logging.Abstractions`](../Muonroi.Logging.Abstractions/) — defines `IMLog<T>` used by `BaseApiService` and `AuthenticateHeaderHandler`.
-- [`Muonroi.Resilience`](../Muonroi.Resilience/) — Polly pipeline helpers used alongside `BaseApiService.SendAsync`.
 
 ## License
 
-Apache-2.0. See [LICENSE-APACHE](../../LICENSE-APACHE) for full terms.
+Apache 2.0 — see [LICENSE-APACHE](../../LICENSE-APACHE).

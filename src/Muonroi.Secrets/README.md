@@ -1,103 +1,145 @@
 # Muonroi.Secrets
-
-> Lightweight secret-access abstraction backed by `IConfiguration` — lets services consume named secrets without coupling to a concrete vault provider.
+> Lightweight abstraction for secret retrieval in the Muonroi ecosystem.
 
 [![NuGet](https://img.shields.io/nuget/v/Muonroi.Secrets.svg)](https://www.nuget.org/packages/Muonroi.Secrets/)
-[![Commercial License](https://img.shields.io/badge/commercial-required-blue.svg)](https://github.com/muonroi/muonroi-building-block/blob/main/LICENSE-COMMERCIAL)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](../../LICENSE-APACHE)
 
-`Muonroi.Secrets` provides `ISecretProvider`, a single-method contract for retrieving named secrets, together with `ConfigurationSecretProvider` — a built-in implementation that reads values straight from the .NET `IConfiguration` pipeline. Any configuration source supported by .NET (environment variables, Azure Key Vault, AWS Secrets Manager, `appsettings.json`) feeds the provider automatically; no custom plumbing is required for the common case.
+## Overview
+
+`Muonroi.Secrets` provides a simple, standard abstraction for reading secure configuration values across Muonroi Building Block applications. It standardizes secret retrieval through the `ISecretProvider` interface, allowing application logic to depend on an agnostic source of truth for sensitive information like connection strings, API keys, and cryptographic salts.
+
+By default, this package includes a `ConfigurationSecretProvider` that reads directly from the ASP.NET Core `IConfiguration` root. In more complex environments (like Kubernetes or AWS), this interface allows easy swapping to dedicated providers (like HashiCorp Vault, AWS Secrets Manager, or Azure Key Vault) without rewriting consumer logic.
+
+## Features
+
+- **Standard Abstraction**: Clean `ISecretProvider` contract for reading named secrets.
+- **Built-in Implementation**: Includes `ConfigurationSecretProvider` that bridges `IConfiguration` natively out of the box.
+- **Environment Agnostic**: Perfect for transitioning an application from local `secrets.json` or environment variables to a cloud-native secret store.
 
 ## Installation
 
 ```bash
-dotnet add package Muonroi.Secrets --prerelease
+dotnet add package Muonroi.Secrets
 ```
 
 ## Quick Start
 
-Register `ConfigurationSecretProvider` as the `ISecretProvider` implementation:
+### 1. Registration
+
+Register the built-in `ConfigurationSecretProvider` in your Dependency Injection container.
 
 ```csharp
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Muonroi.Secrets.Secrets;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Wire the built-in configuration-backed provider
-builder.Services.AddSingleton<ISecretProvider>(sp =>
-    new ConfigurationSecretProvider(sp.GetRequiredService<IConfiguration>()));
-
-var app = builder.Build();
+// Register the provider, passing in the existing IConfiguration
+builder.Services.AddSingleton<ISecretProvider, ConfigurationSecretProvider>();
 ```
 
-Consume the secret in any service:
+### 2. Usage
+
+Inject `ISecretProvider` wherever you need to access secure configuration data securely.
 
 ```csharp
-public class OrderService(ISecretProvider secrets)
+using Muonroi.Secrets.Secrets;
+
+public class PaymentGatewayClient
 {
-    public void Process()
+    private readonly string _apiKey;
+
+    public PaymentGatewayClient(ISecretProvider secretProvider)
     {
-        string? apiKey = secrets.GetSecret("ExternalPayment:ApiKey");
-        // apiKey comes from whatever IConfiguration sources are registered
+        // Fetch the secret key safely
+        _apiKey = secretProvider.GetSecret("PaymentGateway:ApiKey") 
+            ?? throw new InvalidOperationException("API key is missing!");
+    }
+
+    public async Task ProcessPaymentAsync(decimal amount)
+    {
+        // Use _apiKey for authentication...
     }
 }
 ```
 
-## Features
+## API Reference
 
-- **Provider abstraction** — depend on `ISecretProvider`, swap the backing store without touching consumer code.
-- **Configuration-backed default** — `ConfigurationSecretProvider` reads from `IConfiguration[name]`, covering all standard .NET configuration sources out of the box.
-- **Zero added dependencies** — only `Microsoft.Extensions.Configuration.Abstractions` is required at runtime.
+### `ISecretProvider`
 
-## Configuration
-
-No extension method is shipped; register the provider directly:
+The core contract for the package.
 
 ```csharp
-// Option A — singleton backed by IConfiguration (most common)
-services.AddSingleton<ISecretProvider>(sp =>
-    new ConfigurationSecretProvider(sp.GetRequiredService<IConfiguration>()));
-
-// Option B — replace with a custom vault-backed implementation
-services.AddSingleton<ISecretProvider, MyVaultSecretProvider>();
-```
-
-Secret keys follow standard `IConfiguration` key syntax:
-
-```json
+namespace Muonroi.Secrets.Secrets
 {
-  "ExternalPayment": {
-    "ApiKey": "sk-live-..."
-  }
+    public interface ISecretProvider
+    {
+        string? GetSecret(string name);
+    }
 }
 ```
 
+### `ConfigurationSecretProvider`
+
+A lightweight implementation that simply delegates the secret lookup to the `IConfiguration` indexer.
+
 ```csharp
-// Reads "ExternalPayment:ApiKey" using colon-delimited hierarchy
-string? key = secrets.GetSecret("ExternalPayment:ApiKey");
+public class ConfigurationSecretProvider(IConfiguration configuration) : ISecretProvider
+{
+    public string? GetSecret(string name)
+    {
+        return configuration[name];
+    }
+}
 ```
 
-## API Reference
+## Advanced Use Cases
 
-| Type | Purpose |
-|------|---------|
-| `ISecretProvider` | Contract: `string? GetSecret(string name)` — retrieve a secret by key |
-| `ConfigurationSecretProvider` | `ISecretProvider` backed by `IConfiguration`; constructed with an `IConfiguration` instance |
+If you need to fetch secrets from an external cloud provider (e.g., AWS Secrets Manager), you can easily implement a custom `ISecretProvider` and replace the DI registration.
+
+```csharp
+public class AwsSecretProvider : ISecretProvider 
+{
+    public string? GetSecret(string name)
+    {
+        // Call AWS SDK to fetch secret synchronously, or implement caching for async fetching
+    }
+}
+```
+
+## Ecosystem Combinations
+
+> Works great standalone. Becomes **significantly more powerful** when combined.
+
+### + Auth -> JWT signing keys fetched via ISecretProvider (not hardcoded in config)
+Securely fetch your signing keys dynamically.
+
+### + Governance -> License activation keys resolved via ISecretProvider
+Retrieve the RSA public keys or activation tokens needed for ILicenseGuard.
+
+### + Tenancy -> Per-tenant secrets: provider.GetAsync($"tenants/{tenantId}/db-password")
+Safely isolate and fetch database credentials or API keys on a per-tenant basis.
+
+### + Kubernetes -> KubernetesSecretProvider reads from K8s secrets volume
+When running in Kubernetes, map the secret provider to native K8s secret volumes.
+
+### + Data.EntityFrameworkCore -> Connection strings fetched from secrets, not appsettings
+Inject the secret provider into your DbContext factory to resolve database connection strings securely.
+
+### Full Stack
+`csharp
+// combined registration
+builder.Services.AddSingleton<ISecretProvider, KubernetesSecretProvider>();
+builder.Services.AddMuonroiAuth();
+builder.Services.AddTenantContext();
+`
 
 ## Samples
+- samples/MultiTenantSaaS/
+- samples/KubernetesDeployment/
 
-No dedicated sample project exists for this package. See the Quick Start snippet above for a minimal integration.
-
-## Compatibility
-
-- Target framework: `net8.0`
-- License: Commercial — requires activation (see `LICENSE-COMMERCIAL`)
-
-## Related Packages
-
-- [`Muonroi.BuildingBlock.All`](../Muonroi.BuildingBlock.All/) — meta-package that bundles all commercial extensions, including `Muonroi.Secrets`
 
 ## License
 
-This package is distributed under the **Muonroi Commercial License**. A valid commercial license is required to use it in production. See [`LICENSE-COMMERCIAL`](../../LICENSE-COMMERCIAL) for terms.
+Apache 2.0 — see [LICENSE-APACHE](../../LICENSE-APACHE).

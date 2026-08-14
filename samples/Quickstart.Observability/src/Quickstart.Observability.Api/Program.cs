@@ -148,7 +148,7 @@ app.UseSwaggerUI(c =>
 
 app.MapControllers();
 
-app.Run();
+ await app.RunAsync();
 
 // =============================================================================
 // Helper — Approach B minimal setup

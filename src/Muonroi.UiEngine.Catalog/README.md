@@ -33,7 +33,7 @@ builder.Services.AddUiEngineCatalog(options =>
 
 var app = builder.Build();
 app.MapControllers();
-app.Run();
+ await app.RunAsync();
 ```
 
 Once the app is running the following endpoints are available:
@@ -130,6 +130,32 @@ No dedicated sample exists for this package. The Quick Start above is grounded d
 - [`Muonroi.RuleEngine.Runtime`](../Muonroi.RuleEngine.Runtime/) — rule runtime whose `RuleOptions` the scanner reads for runtime-registered rules
 - [`Muonroi.Integration.Abstractions`](../Muonroi.Integration.Abstractions/) — defines `IConnectorRegistry` consumed by the connector catalog endpoint
 - [`Muonroi.AspNetCore`](../Muonroi.AspNetCore/) — host package that wires the catalog into the broader UI engine manifest pipeline
+
+## Ecosystem Combinations
+
+### + Tenancy.SiteProfile → Per-Site UI Catalogs
+Each site profile can define its own UI component catalog. `UiManifestBuilder` reads the active site profile and serves only that site's components to the frontend.
+
+### + SignalR → Real-Time Catalog Updates
+When the UI catalog changes (hot-reload), `MUiEngineHub` broadcasts the updated manifest to all connected clients — the frontend updates without a page refresh.
+
+### + Governance → License-Gated UI Components
+Premium UI components are only included in the manifest if the active tenant's license tier includes them. Free-tier users see a reduced component set.
+
+### + Caching.Memory → Cached Manifests
+UI manifests are cached per-tenant per-site. Cache is invalidated on hot-reload events.
+
+### Full UI Engine Stack
+```csharp
+builder.Services
+    .AddUiEngineCatalog(config)            // component catalog
+    .AddSiteProfile<MySiteProfile>()       // per-site manifest
+    .AddSignalRWithTenant()                // real-time push
+    .AddGovernance(config);               // license-gated components
+```
+
+## Samples
+- [`Quickstart.UiEngine.Catalog`](../../samples/Quickstart.UiEngine.Catalog)
 
 ## License
 

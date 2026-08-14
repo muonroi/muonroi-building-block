@@ -151,6 +151,26 @@ This package defines `ConnectorResilienceConfig`, which the implementation packa
 - [`Muonroi.Integration.Persistence`](../Muonroi.Integration.Persistence/) — database-backed implementations of `IConnectorCredentialStore` and `IConnectorConfigStore`.
 - [`Muonroi.RuleEngine.Abstractions`](../Muonroi.RuleEngine.Abstractions/) — provides `FactBag` used in `ConnectorContext.InputFacts`.
 
+
+## Ecosystem Combinations
+
+### + Integration.Connectors → Connector Implementations
+Connectors (HTTP, gRPC, message broker adapters) implement the `IServiceTaskConnector` contract defined in Abstractions.
+
+### + Messaging.MassTransit → Event-Driven Integration
+`IIntegrationEventPublisher` implemented by MassTransit — publish integration events from your domain without a direct MassTransit dependency in the domain layer.
+
+### + Tenancy → Tenant-Scoped Integration Events
+`IIntegrationEvent` carries `TenantId` in its header — consumers always know which tenant's data they are processing.
+
+### + Integration.Persistence → Persistent Credential Store
+Connector credentials (API keys, OAuth tokens) stored encrypted via `Integration.Persistence` — retrieved via `IConnectorCredentialStore` from Abstractions.
+
+## Samples
+- [`Quickstart.Integration.Abstractions`](../../samples/Quickstart.Integration.Abstractions)
+- [`Quickstart.Integration`](../../samples/Quickstart.Integration)
+
+
 ## License
 
 Apache-2.0. See [LICENSE-APACHE](../../LICENSE-APACHE).

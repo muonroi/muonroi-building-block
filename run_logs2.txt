@@ -1,0 +1,431 @@
+﻿build-and-test	Test with Coverage	﻿2026-08-13T10:02:16.6596505Z ##[group]Run dotnet test Muonroi.BuildingBlock.sln --configuration Release --no-build --verbosity minimal --collect:"XPlat Code Coverage" --results-directory ./coverage --filter "FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~WatchRulesTool_Detects_Changes"
+build-and-test	Test with Coverage	2026-08-13T10:02:16.6600414Z ^[[36;1mdotnet test Muonroi.BuildingBlock.sln --configuration Release --no-build --verbosity minimal --collect:"XPlat Code Coverage" --results-directory ./coverage --filter "FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~WatchRulesTool_Detects_Changes"^[[0m
+build-and-test	Test with Coverage	2026-08-13T10:02:16.6706302Z shell: /usr/bin/bash -e {0}
+build-and-test	Test with Coverage	2026-08-13T10:02:16.6706577Z env:
+build-and-test	Test with Coverage	2026-08-13T10:02:16.6706777Z   DOTNET_NOLOGO: true
+build-and-test	Test with Coverage	2026-08-13T10:02:16.6707019Z   DOTNET_CLI_TELEMETRY_OPTOUT: true
+build-and-test	Test with Coverage	2026-08-13T10:02:16.6707293Z   DOTNET_ROOT: /usr/share/dotnet
+build-and-test	Test with Coverage	2026-08-13T10:02:16.6707539Z ##[endgroup]
+build-and-test	Test with Coverage	2026-08-13T10:02:18.0038985Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.CEP.Tests/bin/Release/net8.0/Muonroi.RuleEngine.CEP.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:02:18.1662398Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.Core.Tests/bin/Release/net8.0/Muonroi.RuleEngine.Core.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:02:18.3402107Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Bff.Tests/bin/Release/net8.0/Muonroi.Bff.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:02:18.5420835Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/AuthZ.Tests/bin/Release/net8.0/Muonroi.AuthZ.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:02:19.0581026Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:02:19.0610923Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:02:19.0713873Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:02:19.0741342Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:02:27.8919543Z 
+build-and-test	Test with Coverage	2026-08-13T10:02:27.9028593Z Passed!  - Failed:     0, Passed:     8, Skipped:     0, Total:     8, Duration: 339 ms - Muonroi.Bff.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:02:29.5432588Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.DecisionTable.Tests/bin/Release/net8.0/Muonroi.RuleEngine.DecisionTable.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:02:30.0821248Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:02:40.3471136Z 
+build-and-test	Test with Coverage	2026-08-13T10:02:40.3541481Z Passed!  - Failed:     0, Passed:   213, Skipped:     0, Total:   213, Duration: 1 s - Muonroi.RuleEngine.Core.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:02:40.6292350Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleGen.Tests/bin/Release/net8.0/Muonroi.RuleGen.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:02:41.0147406Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:02:52.4320502Z 
+build-and-test	Test with Coverage	2026-08-13T10:02:52.4441966Z Passed!  - Failed:     0, Passed:    21, Skipped:     0, Total:    21, Duration: 4 s - Muonroi.RuleEngine.CEP.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:02:55.0832123Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.AspNetCore.OpenApi.Tests/bin/Release/net8.0/Muonroi.AspNetCore.OpenApi.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:02:55.3891162Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:03:03.0340599Z 
+build-and-test	Test with Coverage	2026-08-13T10:03:03.0431509Z Passed!  - Failed:     0, Passed:    10, Skipped:     0, Total:    10, Duration: 421 ms - Muonroi.AuthZ.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:03.3551674Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.AspNetCore.Tests/bin/Release/net8.0/Muonroi.AspNetCore.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:03.9411185Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:03:05.3440904Z 
+build-and-test	Test with Coverage	2026-08-13T10:03:05.3525201Z Passed!  - Failed:     0, Passed:    74, Skipped:     0, Total:    74, Duration: 510 ms - Muonroi.RuleEngine.DecisionTable.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:05.5452678Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.BackgroundJobs.Abstractions.Tests/bin/Release/net8.0/Muonroi.BackgroundJobs.Abstractions.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:06.1211755Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:03:11.7170509Z 
+build-and-test	Test with Coverage	2026-08-13T10:03:11.7233058Z Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 129 ms - Muonroi.AspNetCore.OpenApi.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:11.7837140Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.BackgroundJobs.Hangfire.Tests/bin/Release/net8.0/Muonroi.BackgroundJobs.Hangfire.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:12.1703258Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:03:15.3764311Z 
+build-and-test	Test with Coverage	2026-08-13T10:03:15.3867722Z Passed!  - Failed:     0, Passed:    20, Skipped:     0, Total:    20, Duration: 366 ms - Muonroi.BackgroundJobs.Abstractions.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:15.4402486Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.BackgroundJobs.Quartz.Tests/bin/Release/net8.0/Muonroi.BackgroundJobs.Quartz.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:15.7441843Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:03:22.1810522Z 
+build-and-test	Test with Coverage	2026-08-13T10:03:22.1871632Z Passed!  - Failed:     0, Passed:     9, Skipped:     0, Total:     9, Duration: 397 ms - Muonroi.BackgroundJobs.Hangfire.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:22.2323763Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.BuildingBlock.All.Tests/bin/Release/net8.0/Muonroi.BuildingBlock.All.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:22.5461212Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:03:26.2003688Z 
+build-and-test	Test with Coverage	2026-08-13T10:03:26.2076814Z Passed!  - Failed:     0, Passed:     8, Skipped:     0, Total:     8, Duration: 426 ms - Muonroi.BackgroundJobs.Quartz.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:26.2892886Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.BuildingBlock.IntegrationTests/bin/Release/net8.0/Muonroi.BuildingBlock.IntegrationTests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:03:26.6341154Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:04.6241223Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:04.6344064Z Passed!  - Failed:     0, Passed:   533, Skipped:     0, Total:   533, Duration: 7 s - Muonroi.AspNetCore.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:04.9442387Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Caching.Abstractions.Tests/bin/Release/net8.0/Muonroi.Caching.Abstractions.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:05.5213503Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:14.2690791Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:14.2721973Z Passed!  - Failed:     0, Passed:     5, Skipped:     0, Total:     5, Duration: 67 ms - Muonroi.Caching.Abstractions.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:14.3232355Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Caching.Memory.Tests/bin/Release/net8.0/Muonroi.Caching.Memory.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:14.7241219Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:16.5830984Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:16.5884540Z Passed!  - Failed:     0, Passed:   150, Skipped:     0, Total:   150, Duration: 51 s - Muonroi.RuleGen.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:16.7182559Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Caching.Redis.Tests/bin/Release/net8.0/Muonroi.Caching.Redis.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:17.0760897Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:25.1831355Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:25.1931812Z Passed!  - Failed:     0, Passed:    99, Skipped:     0, Total:    99, Duration: 342 ms - Muonroi.Caching.Memory.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:25.2732494Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Core.Abstractions.Tests/bin/Release/net8.0/Muonroi.Core.Abstractions.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:25.6523461Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:32.8950518Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:32.9011595Z Passed!  - Failed:     0, Passed:   185, Skipped:     0, Total:   185, Duration: 476 ms - Muonroi.Core.Abstractions.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:32.9639766Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Core.Tests/bin/Release/net8.0/Muonroi.Core.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:33.3781206Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:38.9852916Z No test matches the given testcase filter `FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~WatchRulesTool_Detects_Changes` in /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.BuildingBlock.IntegrationTests/bin/Release/net8.0/Muonroi.BuildingBlock.IntegrationTests.dll
+build-and-test	Test with Coverage	2026-08-13T10:04:40.4402978Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:40.4601761Z Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 380 ms - Muonroi.BuildingBlock.All.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:40.5857769Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Data.Abstractions.Tests/bin/Release/net8.0/Muonroi.Data.Abstractions.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:41.1523290Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:41.9506142Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:41.9584819Z Passed!  - Failed:     0, Passed:    76, Skipped:     0, Total:    76, Duration: 448 ms - Muonroi.Core.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:42.0106198Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Data.Dapper.Tests/bin/Release/net8.0/Muonroi.Data.Dapper.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:42.3880472Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:42.4743206Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:42.4802086Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Data.EntityFrameworkCore.Tests/bin/Release/net8.0/Muonroi.Data.EntityFrameworkCore.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:42.8586970Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:48.1957746Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:48.2041556Z Passed!  - Failed:     0, Passed:     6, Skipped:     0, Total:     6, Duration: 304 ms - Muonroi.Data.Abstractions.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:48.2762345Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Governance.Tests/bin/Release/net8.0/Muonroi.Governance.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:48.7511181Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:52.6391128Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:52.6492107Z Passed!  - Failed:     0, Passed:    56, Skipped:     0, Total:    56, Duration: 1 s - Muonroi.Caching.Redis.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:52.8562409Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Grpc.Tests/bin/Release/net8.0/Muonroi.Grpc.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:53.2203856Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:55.6300735Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:55.6404006Z Passed!  - Failed:     0, Passed:   120, Skipped:     0, Total:   120, Duration: 618 ms - Muonroi.Data.Dapper.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:55.7590698Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Kubernetes.Tests/bin/Release/net8.0/Muonroi.Kubernetes.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:56.2881649Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:04:59.3460838Z 
+build-and-test	Test with Coverage	2026-08-13T10:04:59.3481862Z Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 84 ms - Muonroi.Kubernetes.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:59.4015486Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Mediator.Tests/bin/Release/net8.0/Muonroi.Mediator.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:04:59.8111737Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:06.7882973Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:06.8004237Z Passed!  - Failed:     0, Passed:    23, Skipped:     0, Total:    23, Duration: 566 ms - Muonroi.Grpc.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:06.9123847Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Messaging.Abstractions.Tests/bin/Release/net8.0/Muonroi.Messaging.Abstractions.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:07.2921300Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:11.2973347Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:11.3031844Z Passed!  - Failed:     0, Passed:   162, Skipped:     0, Total:   162, Duration: 8 s - Muonroi.Data.EntityFrameworkCore.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:11.3889160Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Messaging.MassTransit.Tests/bin/Release/net8.0/Muonroi.Messaging.MassTransit.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:12.0641710Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:13.5310602Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:13.5371834Z Passed!  - Failed:     0, Passed:    94, Skipped:     0, Total:    94, Duration: 719 ms - Muonroi.Mediator.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:13.6002572Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Observability.Tests/bin/Release/net8.0/Muonroi.Observability.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:13.9991427Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:22.2191136Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:22.2276945Z Passed!  - Failed:     0, Passed:    31, Skipped:     0, Total:    31, Duration: 176 ms - Muonroi.Messaging.Abstractions.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:22.3382380Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Resilience.Tests/bin/Release/net8.0/Muonroi.Resilience.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:22.7721419Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:23.6071326Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:23.6131863Z Passed!  - Failed:     0, Passed:    17, Skipped:     0, Total:    17, Duration: 799 ms - Muonroi.Observability.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:23.7082759Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.Abstractions.Tests/bin/Release/net8.0/Muonroi.RuleEngine.Abstractions.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:24.0302575Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:32.5100691Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:32.5151413Z Passed!  - Failed:     0, Passed:   115, Skipped:     0, Total:   115, Duration: 2 s - Muonroi.Governance.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:32.6003027Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.DecisionTable.Web.Tests/bin/Release/net8.0/Muonroi.RuleEngine.DecisionTable.Web.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:33.0881755Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:33.2347408Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:33.2407732Z Passed!  - Failed:     0, Passed:    89, Skipped:     0, Total:    89, Duration: 339 ms - Muonroi.RuleEngine.Abstractions.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:33.3220497Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.Runtime.Tests/bin/Release/net8.0/Muonroi.RuleEngine.Runtime.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:33.6601224Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:36.1101489Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:36.1160951Z Passed!  - Failed:     0, Passed:    30, Skipped:     0, Total:    30, Duration: 1 s - Muonroi.Messaging.MassTransit.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:36.1666465Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.Testing.Tests/bin/Release/net8.0/Muonroi.RuleEngine.Testing.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:36.4341262Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:48.1166624Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:48.1227927Z Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 105 ms - Muonroi.RuleEngine.Testing.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:48.1823775Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.ServiceDiscovery.Consul.Tests/bin/Release/net8.0/Muonroi.ServiceDiscovery.Consul.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:48.4662356Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:51.3770858Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:51.3824006Z Passed!  - Failed:     0, Passed:     5, Skipped:     0, Total:     5, Duration: 18 s - Muonroi.Resilience.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:51.4492367Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.SignalR.Tests/bin/Release/net8.0/Muonroi.SignalR.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:51.7613606Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:55.2530650Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:55.2581430Z Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 38 ms - Muonroi.RuleEngine.DecisionTable.Web.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:55.3282717Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Tenancy.Abstractions.Tests/bin/Release/net8.0/Muonroi.Tenancy.Abstractions.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:55.3570499Z 
+build-and-test	Test with Coverage	2026-08-13T10:05:55.3610493Z Passed!  - Failed:     0, Passed:     8, Skipped:     0, Total:     8, Duration: 380 ms - Muonroi.ServiceDiscovery.Consul.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:55.4182392Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Tenancy.Core.Tests/bin/Release/net8.0/Muonroi.Tenancy.Core.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:05:55.8771205Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:05:55.9301520Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:03.7577513Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:03.7631779Z Passed!  - Failed:     0, Passed:     6, Skipped:     0, Total:     6, Duration: 316 ms - Muonroi.SignalR.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:04.1501228Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:04.1549736Z Passed!  - Failed:     0, Passed:     6, Skipped:     0, Total:     6, Duration: 159 ms - Muonroi.Tenancy.Abstractions.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:04.4929441Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Logging.Abstractions.Tests/bin/Release/net9.0/Muonroi.Logging.Abstractions.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:04.5105157Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Governance.Abstractions.Tests/bin/Release/net9.0/Muonroi.Governance.Abstractions.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:04.9892315Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:05.0067319Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:05.3884731Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:05.3976046Z Passed!  - Failed:     0, Passed:    55, Skipped:     0, Total:    55, Duration: 422 ms - Muonroi.Tenancy.Core.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:05.5134942Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.BuildingBlock.Shared.Tests/bin/Release/net9.0/Muonroi.BuildingBlock.Shared.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:05.9781390Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:15.4051092Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:15.4086707Z Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 19 ms - Muonroi.BuildingBlock.Shared.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:15.4792351Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Logging.Tests/bin/Release/net9.0/Muonroi.Logging.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:15.6320550Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:15.6411835Z Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 216 ms - Muonroi.Logging.Abstractions.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:15.7202494Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Http.Tests/bin/Release/net9.0/Muonroi.Http.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:15.8751507Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:16.1091559Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:16.4220803Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:16.4281642Z Passed!  - Failed:     0, Passed:     6, Skipped:     0, Total:     6, Duration: 445 ms - Muonroi.Governance.Abstractions.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:16.4822509Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Mapper.Tests/bin/Release/net9.0/Muonroi.Mapper.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:16.7881529Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:17.9610692Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:17.9691679Z Passed!  - Failed:     0, Passed:   430, Skipped:     0, Total:   430, Duration: 8 s - Muonroi.RuleEngine.Runtime.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:18.0442361Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Secrets.Tests/bin/Release/net9.0/Muonroi.Secrets.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:18.3931368Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:20.9710783Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:20.9760238Z Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 130 ms - Muonroi.Secrets.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:21.0379782Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.UiEngine.Catalog.Tests/bin/Release/net9.0/Muonroi.UiEngine.Catalog.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:21.3274235Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:24.6884093Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:24.6971731Z Passed!  - Failed:     0, Passed:    15, Skipped:     0, Total:    15, Duration: 403 ms - Muonroi.Mapper.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:24.8472713Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Governance.Enterprise.Tests/bin/Release/net9.0/Muonroi.Governance.Enterprise.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:25.2356940Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:25.2441589Z Passed!  - Failed:     0, Passed:    26, Skipped:     0, Total:    26, Duration: 707 ms - Muonroi.Logging.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:25.2865196Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:25.3532994Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.Runtime.Web.Tests/bin/Release/net9.0/Muonroi.RuleEngine.Runtime.Web.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:25.8461376Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:26.2480478Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:26.2511578Z Passed!  - Failed:     0, Passed:     8, Skipped:     0, Total:     8, Duration: 524 ms - Muonroi.Http.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:26.3090621Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.SourceGen.Tests/bin/Release/net9.0/Muonroi.RuleEngine.SourceGen.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:26.6431149Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:38.6450738Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:38.6571729Z Passed!  - Failed:     0, Passed:    54, Skipped:     0, Total:    54, Duration: 5 s - Muonroi.RuleEngine.SourceGen.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:38.7782386Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Integration.Tests/bin/Release/net9.0/Muonroi.Integration.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:39.3193981Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:43.8129905Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:43.8221734Z Passed!  - Failed:     0, Passed:   110, Skipped:     0, Total:   110, Duration: 1 s - Muonroi.Governance.Enterprise.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:44.0102392Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/samples/RuleSourceGen/tests/RuleSourceGen.Api.Tests/bin/Release/net8.0/RuleSourceGen.Api.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:44.4051266Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:56.6880714Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:56.6951571Z Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 20 ms - Muonroi.UiEngine.Catalog.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:56.9787943Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Diagnostics.Tests/bin/Release/net8.0/Muonroi.Diagnostics.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:57.3971998Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:06:58.6734478Z 
+build-and-test	Test with Coverage	2026-08-13T10:06:58.6802383Z Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 92 ms - RuleSourceGen.Api.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:58.7151265Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleGen.Mcp.Tests/bin/Release/net8.0/Muonroi.RuleGen.Mcp.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:06:58.9929848Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:07:03.2760642Z 
+build-and-test	Test with Coverage	2026-08-13T10:07:03.2821530Z Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 2 s - Muonroi.RuleEngine.Runtime.Web.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:03.6483015Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.Proliferation.Tests/bin/Release/net8.0/Muonroi.RuleEngine.Proliferation.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:04.0345668Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:07:15.2540666Z 
+build-and-test	Test with Coverage	2026-08-13T10:07:15.2601504Z Passed!  - Failed:     0, Passed:    30, Skipped:     0, Total:    30, Duration: 544 ms - Muonroi.Diagnostics.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:15.7558271Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Tenancy.SiteProfile.SourceGenerators.Tests/bin/Release/net9.0/Muonroi.Tenancy.SiteProfile.SourceGenerators.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:16.0521601Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:07:26.8476306Z 
+build-and-test	Test with Coverage	2026-08-13T10:07:26.8542505Z Passed!  - Failed:     0, Passed:    24, Skipped:     0, Total:    24, Duration: 5 s - Muonroi.Tenancy.SiteProfile.SourceGenerators.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:27.3922645Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/samples/TestProject.Service.IntegrationTests/bin/Release/net8.0/TestProject.Service.IntegrationTests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:27.7001585Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:07:41.1320656Z 
+build-and-test	Test with Coverage	2026-08-13T10:07:41.1431659Z Passed!  - Failed:     0, Passed:    28, Skipped:     0, Total:    28, Duration: 455 ms - Muonroi.Integration.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:41.2553846Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/samples/TestProject.Aggregate.IntegrationTests/bin/Release/net8.0/TestProject.Aggregate.IntegrationTests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:41.7134224Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:07:43.5170473Z 
+build-and-test	Test with Coverage	2026-08-13T10:07:43.5201516Z Passed!  - Failed:     0, Passed:   260, Skipped:     0, Total:   260, Duration: 1 s - Muonroi.RuleEngine.Proliferation.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:43.5854219Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.AspNetCore.RuleEngine.Tests/bin/Release/net8.0/Muonroi.AspNetCore.RuleEngine.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:44.0804373Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:07:45.9461274Z 
+build-and-test	Test with Coverage	2026-08-13T10:07:45.9541696Z Passed!  - Failed:     0, Passed:    14, Skipped:     0, Total:    14, Duration: 3 s - Muonroi.RuleGen.Mcp.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:46.0634025Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.EntityFrameworkCore.Tests/bin/Release/net9.0/Muonroi.RuleEngine.EntityFrameworkCore.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:46.3951155Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:07:52.9564066Z No test matches the given testcase filter `FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~WatchRulesTool_Detects_Changes` in /home/runner/work/muonroi-building-block/muonroi-building-block/samples/TestProject.Service.IntegrationTests/bin/Release/net8.0/TestProject.Service.IntegrationTests.dll
+build-and-test	Test with Coverage	2026-08-13T10:07:54.1871193Z 
+build-and-test	Test with Coverage	2026-08-13T10:07:54.2892279Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Experience.Tests/bin/Release/net8.0/Muonroi.Experience.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:07:54.9471246Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:08:04.8160623Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:04.8191456Z Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 261 ms - Muonroi.Experience.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:05.6400447Z No test matches the given testcase filter `FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~WatchRulesTool_Detects_Changes` in /home/runner/work/muonroi-building-block/muonroi-building-block/samples/TestProject.Aggregate.IntegrationTests/bin/Release/net8.0/TestProject.Aggregate.IntegrationTests.dll
+build-and-test	Test with Coverage	2026-08-13T10:08:06.8031973Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:07.3593044Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Pdf.Governance.Tests/bin/Release/net8.0/Muonroi.Pdf.Governance.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:07.4504662Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Pdf.Tests/bin/Release/net8.0/Muonroi.Pdf.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:07.7211179Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:08:08.0841245Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:08:25.6660655Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:25.6741545Z Passed!  - Failed:     0, Passed:    39, Skipped:     0, Total:    39, Duration: 2 s - Muonroi.AspNetCore.RuleEngine.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:25.8033390Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Integration.Connectors.Tests/bin/Release/net8.0/Muonroi.Integration.Connectors.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:26.3971173Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:08:26.8880487Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:26.8912435Z Passed!  - Failed:     0, Passed:    12, Skipped:     0, Total:    12, Duration: 2 s - Muonroi.RuleEngine.EntityFrameworkCore.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:26.9693881Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.CodeStandards.Tests/bin/Release/net9.0/Muonroi.CodeStandards.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:27.5151281Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:08:33.7352145Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:33.7397251Z Passed!  - Failed:     0, Passed:    14, Skipped:     0, Total:    14, Duration: 1 s - Muonroi.Pdf.Governance.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:33.9486606Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Billing.Abstractions.Tests/bin/Release/net8.0/Muonroi.Billing.Abstractions.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:34.6541270Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:08:37.9470579Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:37.9521487Z Passed!  - Failed:     0, Passed:    23, Skipped:     0, Total:    23, Duration: 7 s - Muonroi.CodeStandards.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:38.5551879Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Auth/bin/Release/net8.0/Muonroi.Auth.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:38.9051262Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:08:39.8652450Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:39.8741647Z Passed!  - Failed:     0, Passed:    35, Skipped:     0, Total:    35, Duration: 808 ms - Muonroi.Integration.Connectors.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:39.9922175Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Auth.Tests/bin/Release/net8.0/Muonroi.Auth.Extended.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:40.5960306Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3361657Z [xUnit.net 00:00:13.99]     Muonroi.Pdf.Tests.Performance.PerfGateTests.PerfGate_50kbTemplate_ColdAndWarmWithinCeiling [FAIL]
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3491656Z   Failed Muonroi.Pdf.Tests.Performance.PerfGateTests.PerfGate_50kbTemplate_ColdAndWarmWithinCeiling [3 s]
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3520927Z   Error Message:
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3551434Z    Expected warmMs to be less than or equal to 400L because warm render 535 ms must be within ceiling 400 ms (dev goal: 80 ms), but found 535L (difference of 135).
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3580610Z   Stack Trace:
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3581771Z      at FluentAssertions.Execution.LateBoundTestFramework.Throw(String message)
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3608118Z    at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3630956Z    at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3632218Z    at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3681019Z    at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3793293Z    at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3821283Z    at FluentAssertions.Numeric.NumericAssertions`2.BeLessThanOrEqualTo(T expected, String because, Object[] becauseArgs)
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3842185Z    at Muonroi.Pdf.Tests.Performance.PerfGateTests.PerfGate_50kbTemplate_ColdAndWarmWithinCeiling() in /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Pdf.Tests/Performance/PerfGateTests.cs:line 87
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3870971Z --- End of stack trace from previous location ---
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3887688Z   Standard Output Messages:
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3927090Z  [PERF] Cold render :    561 ms  (gate ceiling: 1500 ms | dev-machine goal: 300 ms)
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3929113Z  [PERF] Warm render :    535 ms  (gate ceiling: 400 ms | dev-machine goal:  80 ms)
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3930644Z  [PERF] Warm = best of 5 iterations after cold render.
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3961100Z  [PERF] Tight dev-machine target met: cold=False (561<=300), warm=False (535<=80)
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3980566Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:42.3996376Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:43.4990980Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:43.5071722Z Passed!  - Failed:     0, Passed:    11, Skipped:     0, Total:    11, Duration: 217 ms - Muonroi.Billing.Abstractions.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:43.5557031Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Data.Dapper.MsSql.IntegrationTests/bin/Release/net8.0/Muonroi.Data.Dapper.MsSql.IntegrationTests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:43.8961528Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:08:51.2551688Z [xUnit.net 00:00:01.11]     Muonroi.Auth.Tests.MfaTests.RegisterSyncableAuthenticatorYieldsAal3 [SKIP]
+build-and-test	Test with Coverage	2026-08-13T10:08:51.2581309Z [xUnit.net 00:00:01.11]     Muonroi.Auth.Tests.MfaTests.RegisterNonSyncableAuthenticatorYieldsAal2 [SKIP]
+build-and-test	Test with Coverage	2026-08-13T10:08:51.6081371Z   Skipped Muonroi.Auth.Tests.MfaTests.RegisterSyncableAuthenticatorYieldsAal3 [1 ms]
+build-and-test	Test with Coverage	2026-08-13T10:08:51.6142024Z   Skipped Muonroi.Auth.Tests.MfaTests.RegisterNonSyncableAuthenticatorYieldsAal2 [1 ms]
+build-and-test	Test with Coverage	2026-08-13T10:08:55.6073742Z No test matches the given testcase filter `FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~WatchRulesTool_Detects_Changes` in /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Data.Dapper.MsSql.IntegrationTests/bin/Release/net8.0/Muonroi.Data.Dapper.MsSql.IntegrationTests.dll
+build-and-test	Test with Coverage	2026-08-13T10:08:56.9505444Z 
+build-and-test	Test with Coverage	2026-08-13T10:08:57.0852633Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Data.Dapper.PostgreSql.IntegrationTests/bin/Release/net8.0/Muonroi.Data.Dapper.PostgreSql.IntegrationTests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:08:57.7319569Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:09.1630679Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:09.1811631Z Passed!  - Failed:     0, Passed:   115, Skipped:     2, Total:   117, Duration: 16 s - Muonroi.Auth.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:09.3625417Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.EntityFrameworkCore.Configuration.Tests/bin/Release/net8.0/Muonroi.EntityFrameworkCore.Configuration.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:09.9517042Z No test matches the given testcase filter `FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~WatchRulesTool_Detects_Changes` in /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Data.Dapper.PostgreSql.IntegrationTests/bin/Release/net8.0/Muonroi.Data.Dapper.PostgreSql.IntegrationTests.dll
+build-and-test	Test with Coverage	2026-08-13T10:09:10.3151194Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:11.4970436Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:11.6362134Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Experience.Runtime.Tests/bin/Release/net8.0/Muonroi.Experience.Runtime.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:12.4170900Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:16.9680500Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:16.9735208Z Failed!  - Failed:     1, Passed:   666, Skipped:     0, Total:   667, Duration: 46 s - Muonroi.Pdf.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:17.0862426Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Pdf.SourceGenerators.Tests/bin/Release/net9.0/Muonroi.Pdf.SourceGenerators.Tests.dll (.NETCoreApp,Version=v9.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:17.6301180Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:20.1180938Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:20.1220344Z Passed!  - Failed:     0, Passed:    23, Skipped:     0, Total:    23, Duration: 666 ms - Muonroi.EntityFrameworkCore.Configuration.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:20.1578257Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.RuleEngine.NRules.Tests/bin/Release/net8.0/Muonroi.RuleEngine.NRules.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:20.6711300Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:21.7121145Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:21.7186229Z Passed!  - Failed:     0, Passed:   168, Skipped:     0, Total:   168, Duration: 17 s - Muonroi.Auth.Extended.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:21.7903516Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Rules.Tests/bin/Release/net8.0/Muonroi.Rules.Extended.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:22.2612259Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:24.7280818Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:24.7341604Z Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 2 s - Muonroi.Pdf.SourceGenerators.Tests.dll (net9.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:24.8036039Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Tenancy.SiteProfile.Grpc.Tests/bin/Release/net8.0/Muonroi.Tenancy.SiteProfile.Grpc.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:24.9200717Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:24.9257189Z Passed!  - Failed:     0, Passed:    75, Skipped:     0, Total:    75, Duration: 1 s - Muonroi.Experience.Runtime.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:24.9831086Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Tenancy.SiteProfile.Tests/bin/Release/net8.0/Muonroi.Tenancy.SiteProfile.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:25.1681156Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:25.3565165Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:32.1360799Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:32.1454656Z Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 236 ms - Muonroi.RuleEngine.NRules.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:32.2262650Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Tenancy.SiteProfile.Web.Tests/bin/Release/net8.0/Muonroi.Tenancy.SiteProfile.Web.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:32.9194231Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:36.2940474Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:36.3028588Z Passed!  - Failed:     0, Passed:    31, Skipped:     0, Total:    31, Duration: 722 ms - Muonroi.Tenancy.SiteProfile.Grpc.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:36.3482413Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Muonroi.Tenancy.Tests/bin/Release/net8.0/Muonroi.Tenancy.Extended.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:36.5951318Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:36.6101550Z Passed!  - Failed:     0, Passed:   425, Skipped:     0, Total:   425, Duration: 2 s - Muonroi.Rules.Extended.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:36.6824268Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Rules/bin/Release/net8.0/Muonroi.Rules.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:36.6873025Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:37.1071258Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:44.3389366Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:44.3461720Z Passed!  - Failed:     0, Passed:    18, Skipped:     0, Total:    18, Duration: 290 ms - Muonroi.Tenancy.Extended.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:44.4241993Z Test run for /home/runner/work/muonroi-building-block/muonroi-building-block/tests/Tenancy/bin/Release/net8.0/Muonroi.Tenancy.Tests.dll (.NETCoreApp,Version=v8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:44.8721423Z A total of 1 test files matched the specified pattern.
+build-and-test	Test with Coverage	2026-08-13T10:09:50.1722879Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:50.1841510Z Passed!  - Failed:     0, Passed:    64, Skipped:     0, Total:    64, Duration: 2 s - Muonroi.Rules.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:52.8325924Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:52.8374945Z Passed!  - Failed:     0, Passed:     4, Skipped:     0, Total:     4, Duration: 87 ms - Muonroi.Tenancy.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:52.8572758Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:52.8622205Z Passed!  - Failed:     0, Passed:    65, Skipped:     0, Total:    65, Duration: 602 ms - Muonroi.Tenancy.SiteProfile.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:56.9882331Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:56.9928409Z Passed!  - Failed:     0, Passed:   111, Skipped:     0, Total:   111, Duration: 213 ms - Muonroi.Tenancy.SiteProfile.Web.Tests.dll (net8.0)
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2315023Z 
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2321225Z Attachments:
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2323217Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/cb517931-c78b-4b96-b88b-a03fa89a608c/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2324955Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/d4b579c6-8839-4237-8c1d-09d64ebde28c/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2326573Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/534aff02-388c-4191-8c94-df3aa016ff19/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2328225Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/e7c0bc3f-0a90-4c7d-9f9c-d8f9dbaecf7b/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2330182Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/2a323997-bdf7-4317-9cf5-1bd04b849576/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2331934Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/125c7de6-374f-4845-a754-5f4483e690b5/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2334145Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/2a60a305-bd53-41b6-9a54-cc30c94ca8be/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2335841Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/0b09dbaa-ee8f-42e4-b736-8c736b9133f6/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2337516Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/0f7df5a8-b3a4-4995-aa05-a0ed83b03713/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2339182Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/55ff6018-c7f0-470e-885d-07926f427425/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2341144Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/536d9bd5-f2ea-4719-a894-a3c880599041/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2342812Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/f3d6a524-b575-4b17-9ca7-41ef980c6512/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2344491Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/7298b951-b29f-4a23-b005-5b4d7eb05293/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2346160Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/5724898c-4c8f-4b9b-a79b-f27f25c5dd99/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2347907Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/17feda0c-820a-4c73-89c9-97b8d3fe36b5/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2349610Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/6b2d46c7-0094-4c79-bec2-47184a290d57/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2351579Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/2e54641a-e17a-49f8-a9f1-047b0117f7bb/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2353268Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/a9bece65-fca0-4458-a158-1e02c3158d57/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2354953Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/e8bfa3b7-43b1-4f0c-aef6-86daf2f133e3/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2356660Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/94f6505d-6768-4782-96f9-3e81fcf3a111/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2358372Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/67fedbc5-6add-4a63-82ef-e1da31bbbc0b/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2360383Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/ee602dd4-6be8-4dd2-a589-6c5f12ab9f4a/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2362086Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/4b22aef9-5cfd-402d-af9e-97ade5a11fc0/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2363739Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/98aec8ac-f3a5-44e4-b7b6-d8b2a1bfa2cf/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2365369Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/87c8698a-c279-4282-8157-156cb8f14c30/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2367288Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/c74c7c78-3732-47e4-a038-53c7b383c851/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2368915Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/544e8737-e551-400a-9613-3979ee3c84c8/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2370783Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/f2a1a0a9-e134-4883-ba32-623f98d1a345/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2372426Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/3368fc3b-17c3-475b-a791-3192eb3c9dc5/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2374046Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/e4f8dc19-a1d2-4196-8247-c1043ec12a8d/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2375650Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/51903d33-2d0c-4d83-93d5-45829dd3318b/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2377501Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/dda3b189-010a-41da-9682-72595b280170/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2379148Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/a504f210-9d2b-43e4-92a7-e425d4097381/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2381001Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/03b44fe4-476e-4d58-b20e-1e5ed406573b/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2382630Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/c4c4c9e4-0cdb-482b-a994-33d0b673916d/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2384259Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/98c3b6b5-3834-4917-bfdb-9e1f45f9f067/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2385879Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/b3c98230-69fc-41e2-969f-7baf80d37ad5/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2387520Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/5de4fc40-73b8-4c68-a10a-64d3f81e3d3f/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2389162Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/18fe05b2-740e-43a4-a9ef-e7018e012953/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2391074Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/3af9affd-65c8-4129-a719-14e5c97ed1d4/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2392721Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/4b236d17-03a2-4cf9-b383-f1682c190598/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2394341Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/a55d27bd-366b-4830-8332-d8975ebf8ae6/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2395981Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/e431802c-ab52-4710-b2c1-7783fdfd27e7/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2397633Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/e1df3153-c0ad-49ce-8bbd-808f1f082ee8/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2399270Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/d082a570-54f0-4068-b365-9c5571eed165/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2401124Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/bf687849-9bb4-427e-a74e-8813cc1bef5c/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2402768Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/50369f53-ba25-492f-aa9c-79555c70c3bb/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2404380Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/485e7d78-6157-4012-9696-195e4f45738f/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2405987Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/98693ffb-9077-4773-b3b7-22fbb90f1e6e/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2407606Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/c085daee-a562-4706-97ec-d04748ed9aa8/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2409448Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/c0ba8334-439e-4d65-a38b-e0246c8b1740/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2411298Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/64e2a88d-c331-40b6-87f1-7c6fda3f2ef1/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2412933Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/989ccd9c-c940-4b58-9b8c-a7e5e26f30cb/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2414565Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/ff10e466-f1e0-4a56-815c-0818829bfe01/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2416196Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/7c7e428a-6aaf-4b1d-bc13-3f794a64a757/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2417841Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/78ed3964-af6e-436b-b110-2b42c1258efd/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2419684Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/bb4b819b-8ef7-4372-84c9-ba3643248ae4/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2421539Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/97266ba8-6dd3-4f7f-8d28-66ebe1b3c846/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2423181Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/398df3e0-20ea-4c3e-ae26-eb21b58ba34a/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2424796Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/4e751f72-3096-4055-bbad-afe7482510c5/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2426420Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/f3f43a81-c449-4156-b374-1f4c42f42dd9/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2428031Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/63434642-cfaa-4ba4-8782-14133e22313b/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2429664Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/e7d174d9-5f9d-455f-9ca2-3d33de3bab11/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2431678Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/e50eebff-89c2-49d2-b0c0-c8baea425d31/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2433390Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/cc9f7704-23e1-4044-9e7e-0d83e27c72dc/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2435051Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/44db859e-fa0b-4e62-acc3-9af6a843cabb/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2436694Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/50d81fc1-be5d-4652-9661-a4f584e56028/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2438333Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/649bedae-32a9-4298-afd0-4b3e73b994b7/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2440190Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/ef21583d-052b-4ca5-a68b-e1652bb5919d/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2441862Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/6b1bc2ce-f21c-4b15-a30d-436ecfa7147a/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2443507Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/fc69fa6d-b090-4677-b612-dacdbe7792ac/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2445145Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/e226ac35-02aa-4bbc-807c-36e122bfecee/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2446796Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/44eec7a6-5ace-40c0-817f-ec443bbe0e62/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2448399Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/da739f89-a994-46b2-a22c-28c7a21e8e0d/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2450357Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/599998eb-093d-4808-aa10-39294aef111c/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2452315Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/787cae7b-7428-4866-9406-d96b6acf94e6/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2453587Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/2d113bc2-554d-4152-9688-4d737f2b731c/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2454535Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/4ad5342e-e3ae-45f3-9d40-6db14195eacb/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2455566Z   /home/runner/work/muonroi-building-block/muonroi-building-block/coverage/c96e560f-5a12-4aa9-b7ae-aa27eeee1d3f/coverage.cobertura.xml
+build-and-test	Test with Coverage	2026-08-13T10:09:57.2983051Z ##[error]Process completed with exit code 1.

@@ -90,4 +90,4 @@ app.MapGet("/health", (IConnectorRegistry registry) => Results.Ok(new
     RegisteredConnectors = registry.ListAvailable().Select(m => m.Type)
 }));
 
-app.Run();
+ await app.RunAsync();

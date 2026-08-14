@@ -27,7 +27,7 @@ builder.Services.AddMConnectorPersistence(
 builder.Services.AddDataProtection();
 
 var app = builder.Build();
-app.Run();
+ await app.RunAsync();
 ```
 
 Inject `IConnectorConfigStore` or `IConnectorCredentialStore` wherever you need to read or persist connector data:
@@ -97,6 +97,22 @@ No dedicated sample exists for this package. See the Quick Start above for a min
 - [`Muonroi.Tenancy.Core`](../Muonroi.Tenancy.Core/) — provides `TenantContext.CurrentTenantId` used for query filters and key derivation
 - [`Muonroi.Core.Abstractions`](../Muonroi.Core.Abstractions/) — shared core contracts referenced by the persistence layer
 - [`Muonroi.Logging.Abstractions`](../Muonroi.Logging.Abstractions/) — `IMLog<T>` used for structured logging in `EfConnectorCredentialStore`
+
+
+## Ecosystem Combinations
+
+### + Integration.Abstractions → Credential Store Implementation
+`IConnectorCredentialStore` defined in Abstractions is implemented here with encrypted EF Core storage.
+
+### + Tenancy → Per-Tenant Credential Isolation
+Each tenant's connector credentials are stored and retrieved in isolation — tenant A cannot access tenant B's API keys.
+
+### + Governance → License-Gated Connector Count
+The number of active connectors a tenant can configure is enforced by the license tier via `ILicenseGuard`.
+
+## Samples
+- [`Quickstart.Integration.Persistence`](../../samples/Quickstart.Integration.Persistence)
+
 
 ## License
 

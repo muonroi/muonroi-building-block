@@ -81,6 +81,7 @@ bool result = FeelEvaluator.Evaluate(
 - `IRuleSetChangeNotifier` — auto-selects Redis pub/sub (`RedisRuleSetChangeNotifier`) or in-process (`InMemoryRuleSetChangeNotifier`) based on DI registration
 - `IRuleSetSigner` / `HmacSha256RuleSetSigner` — optional HMAC-SHA256 artifact signing and verification
 - `FeelEvaluator` — evaluates FEEL (Friendly Enough Expression Language) boolean and value expressions
+- `FeelParser` — provides low-level parsing of FEEL expressions into syntax trees
 - `FeelStandardLibrary` — built-in FEEL functions (string, date, list, math)
 - `DecisionTableImporter` — imports DMN-style decision tables
 - `FeatureFlagEvaluator` — tenant-scoped feature flag evaluation
@@ -171,6 +172,24 @@ No dedicated sample exists for this package. Refer to the samples for the replac
 - [`Muonroi.RuleEngine.Abstractions`](../Muonroi.RuleEngine.Abstractions/) — shared contracts (`IRule<TContext>`, `FactBag`, `RuleResult`, `IMRuleOrchestrator`)
 - [`Muonroi.RuleEngine.Core`](../Muonroi.RuleEngine.Core/) — orchestrator, workflow runner, audit hooks
 - [`Muonroi.RuleEngine.SourceGenerators`](../Muonroi.RuleEngine.SourceGenerators/) — source generator for rule extraction and DI registration
+
+## Ecosystem Combinations
+
+### + RuleEngine.DecisionTable → Full FEEL in Table Cells
+`FullFeelCellEvaluator` (from this package) is used by `DecisionTableExecutor` to evaluate FEEL expressions in cell conditions — enabling date arithmetic, list membership, and range checks in tables.
+
+### + RuleEngine.Runtime → FEEL Rules in Runtime Engine
+`FeelRuleAdapter` wraps FEEL expressions as `IRule<TContext>` — FEEL-based rules stored in the database are evaluated by the same `RuleOrchestrator` as compiled C# rules.
+
+### + Tenancy → Per-Tenant FEEL Variables
+FEEL expressions can reference tenant-specific variables injected via `FactBag` — different tenants get different evaluation results from the same expression.
+
+### + Observability → FEEL Evaluation Tracing
+Each FEEL expression evaluation creates an OTel span with the expression source, input variables, and result.
+
+## Samples
+- [`Quickstart.Rules`](../../samples/Quickstart.Rules)
+- [`Quickstart.DecisionTable`](../../samples/Quickstart.DecisionTable)
 
 ## License
 

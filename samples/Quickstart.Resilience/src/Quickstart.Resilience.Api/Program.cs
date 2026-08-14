@@ -113,4 +113,4 @@ app.UseSwaggerUI(options =>
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", pipelines = new[] { "muonroi-standard", "payment-gateway" } }));
 
-app.Run();
+ await app.RunAsync();

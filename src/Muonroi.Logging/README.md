@@ -37,7 +37,7 @@ builder.Services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionCo
 builder.Services.AddControllers();
 WebApplication app = builder.Build();
 app.MapControllers();
-app.Run();
+ await app.RunAsync();
 ```
 
 Inject `IMLog<T>` into any service or controller:
@@ -150,6 +150,35 @@ builder.Services.AddSingleton<ISystemExecutionContextAccessor, SystemExecutionCo
 
 - [`Muonroi.Logging.Abstractions`](../Muonroi.Logging.Abstractions/) — contracts only (`IMLog`, `IMLog<T>`, `IMLogFactory`, `IMLogContext`, `IMLogContextScope`, `ILogScopeFactory`, `LogPropertyConventions`); reference this instead of `Muonroi.Logging` in library projects that only consume the interfaces
 - [`Muonroi.Core.Abstractions`](../Muonroi.Core.Abstractions/) — provides `ISystemExecutionContextAccessor` and `ISystemExecutionContext` used for ambient context enrichment
+
+## Ecosystem Combinations
+
+### + Tenancy.Core → Tenant-Enriched Logs
+`ContextMirrorScope` automatically enriches every log entry with `tenantId`, `userId`, `correlationId` from the ambient `ISystemExecutionContext` — no manual log scope setup:
+```csharp
+_log.Info("Order processed"); // automatically tagged with tenantId + traceId
+```
+
+### + Observability → Unified Logs + Traces + Metrics
+When both packages are registered, log entries are correlated to OTel trace spans via `TraceId`/`SpanId`. Logs appear as events on their parent span in Jaeger/Grafana Tempo.
+
+### + Mediator → Pipeline Behavior Logging
+Request/response logging behavior wraps every `IMediator.Send()` with structured entry/exit logs including request type, duration, and success/failure.
+
+### + Diagnostics → Logs Inside Trace Nodes
+Log entries emitted within a diagnostic session are attached to the current trace node, creating a combined log+trace view.
+
+### Full Logging Stack
+```csharp
+builder.Services
+    .AddMuonroiLogging(config)             // IMLog<T> + structured Serilog
+    .AddTenantContext(config)              // auto-enrich with tenantId
+    .AddMuonroiObservability(config);      // correlate logs to OTel traces
+```
+
+## Samples
+- [`Quickstart.Logging`](../../samples/Quickstart.Logging)
+- [`Quickstart.Logging.Abstractions`](../../samples/Quickstart.Logging.Abstractions)
 
 ## License
 

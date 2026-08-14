@@ -1,42 +1,41 @@
 # Muonroi.Data.EntityFrameworkCore.SqlServer
 
-> EF Core provider package for SQL Server in the Muonroi ecosystem.
-
 [![NuGet](https://img.shields.io/nuget/v/Muonroi.Data.EntityFrameworkCore.SqlServer.svg)](https://www.nuget.org/packages/Muonroi.Data.EntityFrameworkCore.SqlServer/)
 
-This package provides the SQL Server implementation for `IDbContextConfigurator<T>`, enabling `Muonroi.Data.EntityFrameworkCore` to seamlessly connect to SQL Server databases without changing your `MDbContext` application logic.
+> SQL Server provider configuration for Muonroi DbContexts.
+
+## Overview
+Provides `SqlServerDbContextConfigurator` to correctly configure Microsoft SQL Server database connections, incorporating standard retry policies and execution strategies for enterprise resilience.
 
 ## Features
-
-- **SQL Server Provider** — Wraps the official Microsoft Entity Framework Core SQL Server provider.
-- **Seamless Integration** — Works out-of-the-box with `AddDbContextConfigure<TDbContext, TPermission>`.
-- **Automatic Configuration** — Reads `SqlServerConnectionString` from the configuration automatically.
+- **SQL Server Integration**: Utilizes `SqlServerDbContextConfigurator` for robust setup.
+- **Transient Error Handling**: Configured execution strategy for Azure SQL and on-premise environments.
 
 ## Installation
 
 ```bash
-dotnet add package Muonroi.Data.EntityFrameworkCore.SqlServer --prerelease
+dotnet add package Muonroi.Data.EntityFrameworkCore.SqlServer
 ```
 
 ## Quick Start
 
-Ensure your `appsettings.json` specifies `SqlServer` as the `DbType`:
-
-```json
-{
-  "DatabaseConfigs": {
-    "DbType": "SqlServer",
-    "ConnectionStrings": {
-      "SqlServerConnectionString": "Server=(localdb)\\mssqllocaldb;Database=app;Trusted_Connection=True;MultipleActiveResultSets=true"
-    }
-  }
-}
-```
-
-The database configuration will automatically pick up this package when configuring your context:
-
 ```csharp
-// Program.cs
-builder.Services.AddDbContextConfigure<AppDbContext, AppPermission>(
-    builder.Configuration);
+builder.Services.AddMuonroiDbContext<MyDbContext>(options =>
+{
+    var configurator = new SqlServerDbContextConfigurator();
+    configurator.Configure(options, "Server=.;Database=mydb;Integrated Security=True;");
+});
 ```
+
+## Ecosystem Combinations
+
+### Muonroi.Data.EntityFrameworkCore.SqlServer + Muonroi.Governance.Enterprise
+Leverage `SqlServerDbContextConfigurator` to reliably persist `AuditTrailTenantPartition` data in highly available enterprise deployments.
+
+## Samples
+
+Find complete running examples in the [../../samples/](../../samples/) directory.
+
+## License
+
+This project is licensed under the terms of the applicable Muonroi license.

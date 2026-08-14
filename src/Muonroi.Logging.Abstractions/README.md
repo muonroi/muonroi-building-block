@@ -90,6 +90,20 @@ builder.Logging.AddMuonroiLogging();
 
 - [`Muonroi.Logging`](../Muonroi.Logging/) — concrete implementation; registers `MLog<T>`, `MLogContext`, `MLogFactory`, and `ILogScopeFactory` via `builder.Logging.AddMuonroiLogging()`.
 
+## Ecosystem Combinations
+
+### + Logging → Implementation Behind IMLog
+`Muonroi.Logging` implements the `IMLog<T>` and `IMLogFactory` contracts defined here. Swap to a different implementation without changing any call sites.
+
+### + Tenancy → IMLog Auto-Enriched with TenantId
+When `ITenantContext` is active, all `IMLog<T>` implementations automatically scope log entries with the current tenant ID.
+
+### + All Packages → Universal Logging Contract
+Every Muonroi package accepts `IMLog<T>` instead of `ILogger<T>`, enabling consistent structured logging across the entire ecosystem.
+
+## Samples
+- [`Quickstart.Logging.Abstractions`](../../samples/Quickstart.Logging.Abstractions)
+
 ## License
 
 Apache-2.0. See [LICENSE-APACHE](../../LICENSE-APACHE) for details.
