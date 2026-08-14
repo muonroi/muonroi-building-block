@@ -136,12 +136,24 @@ public sealed class ProtoCompilationTests
     // Private helpers
     // -----------------------------------------------------------------------
 
+#if DEBUG
+    private const string BuildConfiguration = "Debug";
+#else
+    private const string BuildConfiguration = "Release";
+#endif
+
     /// <summary>
     /// Runs `dotnet build` on the given csproj and returns (exitCode, combinedOutput).
     /// </summary>
     private static (int exitCode, string output) RunDotnetBuild(string csprojPath)
     {
-        var psi = new ProcessStartInfo("dotnet", $"build \"{csprojPath}\" --no-incremental /p:BuildProjectReferences=false -v:minimal")
+        // BuildProjectReferences=false means this build reuses the ref assemblies its
+        // ProjectReferences already produced when the solution itself was built. Those
+        // ref assemblies live under obj/<Configuration>/..., so this standalone build MUST
+        // target the same Configuration this test assembly was itself compiled with —
+        // otherwise it looks for obj/Debug/.../ref/*.dll that a Release-only solution build
+        // (e.g. CI/publish pipelines) never produced, and fails with CS0006.
+        var psi = new ProcessStartInfo("dotnet", $"build \"{csprojPath}\" -c {BuildConfiguration} --no-incremental /p:BuildProjectReferences=false -v:minimal")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
