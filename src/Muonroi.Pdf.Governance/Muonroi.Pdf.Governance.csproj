@@ -13,6 +13,11 @@
          AngleSharp.Css trim warnings (IL2026/IL2055/IL3050) originate in AngleSharp.Css internals,
          not in this assembly. Mitigated via TrimmerRootDescriptor preserve="all" in AOT sample. -->
     <IsAotCompatible>true</IsAotCompatible>
+    <!-- NU5104: stable packages shouldn't depend on prerelease packages. AngleSharp.Css is pinned to
+         1.0.0-beta.147 (Directory.Packages.props); a stable 1.0.1 exists but jumping ~120 beta releases
+         is a real behavior-change risk for the CSS parsing this PDF engine depends on, so it's deferred
+         to a dedicated, test-verified upgrade rather than done under release pressure. -->
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AngleSharp" />
