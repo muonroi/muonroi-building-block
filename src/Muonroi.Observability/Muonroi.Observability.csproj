@@ -6,6 +6,11 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Description>OpenTelemetry integration for Muonroi: ActivitySource setup, metric counters, structured logging, and trace propagation.</Description>
+    <!-- NU5104: stable packages shouldn't depend on prerelease packages. OpenTelemetry.Instrumentation.GrpcNetClient
+         has never shipped a stable release upstream (every published version, up to 1.17.0-beta.1, is a
+         beta/rc) — there is no stable version to switch to, so this dependency is a permanent, legitimate
+         exception rather than a temporary workaround. -->
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Muonroi.Core.Abstractions\Muonroi.Core.Abstractions.csproj" />
