@@ -13,7 +13,7 @@ public static class MPasswordHelper
     /// <returns>The hashed password.</returns>
     public static string HashPassword(string password, out string salt)
     {
-        salt = BCrypts.GenerateSalt(8);
+        salt = BCrypts.GenerateSalt(PasswordHashingDefaults.BCryptWorkFactor);
         return BCrypts.HashPassword(password, salt);
     }
 

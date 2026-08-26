@@ -76,7 +76,7 @@ public class HostRoleAndUserCreator<TContext>(
             Name = StaticRoleAndUserNames.Host.Admin,
             Surname = StaticRoleAndUserNames.Host.User,
             EmailAddress = StaticRoleAndUserNames.Host.AdminEmail,
-            Password = BCrypts.HashPassword(seedPassword),
+            Password = BCrypts.HashPassword(seedPassword, PasswordHashingDefaults.BCryptWorkFactor),
             IsEmailConfirmed = true,
             ShouldChangePasswordOnNextLogin = true, // Always require password change on first login (D-02)
             IsActive = true,
