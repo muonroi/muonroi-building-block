@@ -8,7 +8,7 @@ public sealed class BCryptPasswordHasher : IPasswordHasher
     /// <inheritdoc />
     public string HashPassword(string password, out string salt)
     {
-        salt = BCrypts.GenerateSalt(8);
+        salt = BCrypts.GenerateSalt(PasswordHashingDefaults.BCryptWorkFactor);
         return BCrypts.HashPassword(password, salt);
     }
 

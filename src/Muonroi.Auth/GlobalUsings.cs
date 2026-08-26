@@ -7,6 +7,7 @@ global using Microsoft.Extensions.Options;
 global using Microsoft.IdentityModel.Tokens;
 global using Muonroi.Auth.Jwt;
 global using Muonroi.Caching.Memory.MultiLevel;
+global using Muonroi.Core.Abstractions.Constants;
 global using Muonroi.Core.Abstractions.Interfaces;
 global using Muonroi.Core.Abstractions.Models.Common;
 global using System;
